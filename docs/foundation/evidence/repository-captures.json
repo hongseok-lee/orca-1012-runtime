@@ -1,0 +1,62 @@
+{
+  "captured_revision": "a82855210ae36e580d629ca2ddfb87e4e96ed2f0",
+  "capture_environment": "client remote development browser; not management-host browser",
+  "commit_scope": "Only these two unmodified PNGs and this provenance file are added after the captured revision. The artifact commit is not a recapture of its final head.",
+  "limitations": [
+    "PR conversation URL is mutable; the PNG records its state at the capture time and captured revision.",
+    "Client producer metadata kind labels mention Expo Web Chromium; the captured URLs and pixels show GitHub pages, so these images do not establish Expo interaction or native iPhone/Mac results.",
+    "No runtime API, HA, durability, writer fencing, or feature qualification is inferred."
+  ],
+  "captures": [
+    {
+      "file": "pr1-public-repository.png",
+      "sha256": "feb0e21f08e38fb59ce59854a88e080ca25fd31b94bbd7a8c1d3611684a5b551",
+      "bytes": 4672707,
+      "image_dimensions": {
+        "width": 4320,
+        "height": 15546
+      },
+      "captured_url": "https://github.com/hongseok-lee/orca-1012-runtime/pull/1",
+      "captured_at_utc": "2026-10-12T22:12:24.416Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "147.0.7727.15"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "device_pixel_ratio": 3,
+      "full_page": true,
+      "captured_revision": "a82855210ae36e580d629ca2ddfb87e4e96ed2f0",
+      "anonymous_public_page": true,
+      "scope": "GitHub repository/document rendering; no Expo app or native-device result",
+      "visually_reviewed_for_readability_and_visible_secrets": true
+    },
+    {
+      "file": "foundation-spec-public-repository.png",
+      "sha256": "29580bd7ded00c489a2a8ac6ca43f302445fde660e53ac368a2ca2dc76dd36b9",
+      "bytes": 2173313,
+      "image_dimensions": {
+        "width": 4320,
+        "height": 8550
+      },
+      "captured_url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/a82855210ae36e580d629ca2ddfb87e4e96ed2f0/docs/plans/orca-1012-foundation-pr-specs.md",
+      "captured_at_utc": "2026-10-12T22:12:39.046Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "147.0.7727.15"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "device_pixel_ratio": 3,
+      "full_page": true,
+      "captured_revision": "a82855210ae36e580d629ca2ddfb87e4e96ed2f0",
+      "anonymous_public_page": true,
+      "scope": "GitHub repository/document rendering; no Expo app or native-device result",
+      "visually_reviewed_for_readability_and_visible_secrets": true
+    }
+  ]
+}
