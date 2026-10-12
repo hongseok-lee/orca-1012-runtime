@@ -1,0 +1,25 @@
+{
+  "kind": "Infrastructure documentation evidence; not product/HA screen",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/pull/4",
+  "targetSourceSHA": "c1623d05a35dd15dc3e1d7b99c89bd5ee16b8c71",
+  "capturedAtUTC": "2026-10-12T22:29:10.116Z",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "deviceScaleFactor": 1
+  },
+  "heading": "Verification and limitations",
+  "headingY": 99.703125,
+  "artifactSHA256": "8e03508544d9850ff06ccff899030fc60f4f3fab8530e029957550bc700f1c57",
+  "remoteExecution": true,
+  "visualReview": {
+    "actualPNGViewed": true,
+    "headingVisible": true,
+    "sqlResultsVisible": true,
+    "nfsResultsVisible": true,
+    "reviewedAtUTC": "2026-10-12T22:30:50.439964+00:00"
+  },
+  "artifact": "pr4-verification.png",
+  "revisionScope": "targetSourceSHA is the captured documentation revision; the later asset commit is recorded separately in the PR body."
+}
