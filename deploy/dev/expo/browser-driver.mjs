@@ -13,16 +13,138 @@ const context = await browser.newContext({
   isMobile: action !== 'repo', hasTouch: action !== 'repo'
 })
 const page = await context.newPage()
+const privatePageErrors = []
+page.on('pageerror', (error) => privatePageErrors.push({ at: new Date().toISOString(),
+  name: error.name, message: error.message, stack: error.stack }))
+page.on('console', async (message) => {
+  // Only the existing caught pairing exception, never general console/payload logs.
+  if (!message.text().startsWith('[pair] connect failed')) return
+  privatePageErrors.push({ at: new Date().toISOString(), name: 'caught-pairing-exception',
+    message: message.text() })
+  await writeFile(path.join(artifacts, 'private-browser-errors.json'),
+    JSON.stringify(privatePageErrors, null, 2) + '\n', { mode: 0o600 })
+})
+async function observeUiAndPersistence() {
+  const observed = await page.evaluate(() => {
+    const pathname = location.pathname
+    const route = ['/', '/pair-scan', '/pair-confirm', '/mobile-onboarding'].includes(pathname)
+      ? pathname : /^\/h\/[^/]+/.test(pathname) ? '/h/[hostId]' : 'other-route'
+    const labels = ['Open sessions in Chat UI', 'Skip notifications for now', 'Continue',
+      'Paste code instead', 'Save', 'Use Chat UI', 'Not now']
+    const controls = [...document.querySelectorAll('button,[role="button"]')]
+    const visibleControls = labels.filter((label) => controls.some((element) => {
+      const name = element.getAttribute('aria-label') ?? element.textContent?.trim()
+      const rect = element.getBoundingClientRect()
+      return name === label && rect.width > 0 && rect.height > 0
+    }))
+    const text = document.body.innerText
+    const hostRaw = localStorage.getItem('orca:hosts')
+    let hostsFormat = hostRaw === null ? 'absent' : 'invalid-json'
+    let hostCount = 0
+    let metadataShapeValid = false
+    if (hostRaw !== null) {
+      try {
+        const hosts = JSON.parse(hostRaw)
+        hostsFormat = Array.isArray(hosts) ? 'array' : typeof hosts
+        if (Array.isArray(hosts)) {
+          hostCount = hosts.length
+          metadataShapeValid = hosts.every((host) => host && typeof host.id === 'string' &&
+            typeof host.endpoint === 'string' && typeof host.publicKeyB64 === 'string' &&
+            !Object.hasOwn(host, 'deviceToken'))
+        }
+      } catch {}
+    }
+    const tokenKeys = Object.keys(localStorage).filter((key) => key.startsWith('orca:web-host-token:'))
+    return { route, visibleRoleButtons: visibleControls,
+      visibleLabels: labels.filter((label) => [...document.querySelectorAll('*')].some((element) => {
+        if (element.textContent?.trim() !== label) return false
+        const rect = element.getBoundingClientRect()
+        const style = getComputedStyle(element)
+        return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' &&
+          rect.bottom > 0 && rect.top < innerHeight && rect.right > 0 && rect.left < innerWidth
+      })), pairingFailureVisible: text.includes('Pairing failed:'),
+      pairingTimeoutVisible: text.includes("Couldn't connect within"),
+      permissionFallbackVisible: text.includes('Pair with desktop') || text.includes('Camera Access Disabled'),
+      persistence: { hostsPresent: hostRaw !== null, hostsFormat, hostCount, metadataShapeValid,
+        tokenEntryCount: tokenKeys.length,
+        tokenEntriesNonempty: tokenKeys.length > 0 && tokenKeys.every((key) => !!localStorage.getItem(key)) } }
+  })
+  await writeFile(path.join(artifacts, 'ui-persistence-status.json'),
+    JSON.stringify({ at: new Date().toISOString(), ...observed, backendSockets: evidence.backendSockets,
+      handshakeMarkers: evidence.handshakeMarkers }, null, 2) + '\n', { mode: 0o600 })
+}
+let uiObserver
+let caughtExceptionDiagnostics
+if (process.env.ORCA_DIAGNOSE_CAUGHT_EXCEPTION === '1') {
+  const cdp = await context.newCDPSession(page)
+  const scriptURLs = new Map()
+  cdp.on('Debugger.scriptParsed', (event) => scriptURLs.set(event.scriptId, event.url))
+  caughtExceptionDiagnostics = { enabled: true, caughtPauses: 0, illegalInvocation: [] }
+  cdp.on('Debugger.paused', async (event) => {
+    caughtExceptionDiagnostics.caughtPauses++
+    // Inspect only exception class/known message and code locations. No locals/payloads.
+    const illegal = event.data?.className === 'TypeError' &&
+      event.data?.description?.includes('Illegal invocation')
+    const frames = illegal ? event.callFrames.map((frame) => ({
+      file: frame.url || scriptURLs.get(frame.location.scriptId), methodName: frame.functionName,
+      lineNumber: frame.location.lineNumber + 1,
+      column: frame.location.columnNumber + 1
+    })) : null
+    await cdp.send('Debugger.resume').catch(() => {})
+    if (!illegal) return
+    const safe = { name: 'TypeError', message: 'Illegal invocation', at: new Date().toISOString(),
+      frames: [] }
+    try {
+      const response = await fetch(`${origin}/symbolicate`, { method: 'POST',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stack: frames }) })
+      const result = await response.json()
+      safe.frames = (result.stack ?? []).filter((frame) =>
+        frame.file?.startsWith('/tmp/orca-expo-local/')).map((frame) => ({
+          file: frame.file.replace('/tmp/orca-expo-local/', ''),
+          methodName: frame.methodName, lineNumber: frame.lineNumber, column: frame.column
+        }))
+    } catch {}
+    // A failed source-map lookup is recorded without raw bundle URLs or script contents.
+    safe.symbolicated = safe.frames.length > 0
+    safe.generatedPositions = frames.map(({ lineNumber, column }) => ({ lineNumber, column }))
+    caughtExceptionDiagnostics.illegalInvocation.push(safe)
+    await writeFile(path.join(artifacts, 'caught-exception-evidence.json'),
+      JSON.stringify(caughtExceptionDiagnostics, null, 2) + '\n', { mode: 0o600 })
+  })
+  await cdp.send('Debugger.enable')
+  await cdp.send('Debugger.setPauseOnExceptions', { state: 'all' })
+}
 const evidence = { kind: 'Expo Web Chromium, not native iPhone', browser: browser.version(),
   viewport: { width: 390, height: 844, deviceScaleFactor: 3 },
-  at: new Date().toISOString(), clicks: [], captures: [], backendSockets: [] }
+  at: new Date().toISOString(), clicks: [], captures: [], backendSockets: [], handshakeMarkers: [] }
+page.on('console', (message) => {
+  const known = ['[net] ws.onopen', '[net] handshake-timeout fired (e2ee_authenticated never arrived)',
+    '[net] e2ee auth FAILED', '[net] mobile capability negotiation could not be sent',
+    '[net] mobile capability negotiation unanswered', '[net] mobile capability negotiation unavailable']
+  const marker = known.find((item) => message.text().startsWith(item))
+  if (marker) evidence.handshakeMarkers.push({ marker, at: new Date().toISOString() })
+})
 page.on('websocket', (socket) => {
   const endpoint = new URL(socket.url())
   if (endpoint.hostname !== '127.0.0.1' || endpoint.port !== '16768') return
-  const observed = { origin: endpoint.origin, sentFrames: 0, receivedFrames: 0, closed: false }
+  const observed = { origin: endpoint.origin, sentFrames: 0, receivedFrames: 0, closed: false, frameKinds: [] }
   evidence.backendSockets.push(observed)
-  socket.on('framesent', () => observed.sentFrames++)
-  socket.on('framereceived', () => observed.receivedFrames++)
+  function kind(frame) {
+    if (typeof frame.payload !== 'string') return 'binary-envelope'
+    try {
+      const type = JSON.parse(frame.payload).type
+      if (['e2ee_hello', 'e2ee_ready', 'e2ee_authenticated', 'e2ee_error'].includes(type)) return type
+      return 'other-json-envelope'
+    } catch { return 'encrypted-text-envelope' }
+  }
+  socket.on('framesent', (frame) => {
+    observed.sentFrames++
+    observed.frameKinds.push({ direction: 'sent', kind: kind(frame) })
+  })
+  socket.on('framereceived', (frame) => {
+    observed.receivedFrames++
+    observed.frameKinds.push({ direction: 'received', kind: kind(frame) })
+  })
   socket.on('close', () => { observed.closed = true })
 })
 try {
@@ -83,15 +205,33 @@ try {
       await page.getByPlaceholder('orca://pair?code=... or paste the code').fill(offer)
       const validityPath = process.env.ORCA_PRIVATE_OFFER_VALIDITY_FILE
       const validity = validityPath ? JSON.parse(await readFile(validityPath, 'utf8')) : null
-      if (validity?.valid !== true || validity?.pending !== true) {
+      if (validity?.valid !== true || validity?.registryMatch !== true) {
         evidence.failureReason = 'offer-validity-not-confirmed-before-save'
         throw new Error('Offer validity metadata is required before Save')
       }
-      evidence.offerValidity = { valid: true, pending: true, checkedAt: validity.checkedAt,
+      evidence.offerValidity = { valid: true, registryMatch: true, pending: validity.pending, checkedAt: validity.checkedAt,
         directTimeExpiryApplied: false }
       await page.getByText('Save', { exact: true }).click()
       evidence.clicks.push('Save private pairing input; no capture')
-      await page.getByRole('button', { name: 'Open sessions in Chat UI', exact: true }).waitFor({ timeout: 60000 })
+      evidence.phase = 'pair-save-to-onboarding'
+      await observeUiAndPersistence()
+      uiObserver = setInterval(() => { observeUiAndPersistence().catch(() => {}) }, 2000)
+      await writeFile(path.join(artifacts, 'pair-progress.json'),
+        JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
+      const pairingError = page.getByText(/^Pairing failed:/).first()
+      const pairingOutcome = await Promise.race([
+        page.getByRole('button', { name: 'Open sessions in Chat UI', exact: true })
+          .waitFor({ timeout: 60000 }).then(() => 'onboarding'),
+        pairingError.waitFor({ timeout: 60000 }).then(() => 'ui-error')
+      ])
+      if (pairingOutcome === 'ui-error') {
+        const errorPath = path.join(artifacts, 'private-pairing-ui-error.json')
+        await writeFile(errorPath, JSON.stringify({ at: new Date().toISOString(),
+          error: await pairingError.innerText() }, null, 2) + '\n', { mode: 0o600 })
+        evidence.failureReason = 'normal-pairing-ui-error'
+        throw new Error('Normal pairing UI reported an error; details remain private')
+      }
+      evidence.phase = 'onboarding'
       await page.screenshot({ path: path.join(artifacts, 'onboarding.png') })
       evidence.captures.push('onboarding.png')
       await page.getByRole('button', { name: 'Open sessions in Chat UI', exact: true }).click()
@@ -138,10 +278,13 @@ try {
     const checkpoint = path.join(artifacts, 'initial-pair-evidence.json')
     await writeFile(checkpoint, JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
     await chmod(checkpoint, 0o600)
-    const cycles = Number(process.env.ORCA_RECONNECT_CYCLES ?? '2')
-    if (!Number.isInteger(cycles) || cycles < 1 || cycles > 2) throw new Error('Expected one or two assigned reconnects')
+    const stages = ['1새runner채택', '2임시source변경watch', '3source원복watch']
+    const backendEvidenceDir = process.env.ORCA_PRIVATE_RECONNECT_EVIDENCE_DIR
+    if (!backendEvidenceDir) throw new Error('Private backend stage evidence directory is required')
+    let previousBackendPid = Number(process.env.ORCA_INITIAL_BACKEND_PID)
     evidence.reconnects = []
-    for (let cycle = 1; cycle <= cycles; cycle++) {
+    for (let cycle = 1; cycle <= stages.length; cycle++) {
+      const stage = stages[cycle - 1]
       const initialCount = evidence.backendSockets.length
       const activeSocket = evidence.backendSockets
         .filter((socket) => !socket.closed && socket.sentFrames > 0 && socket.receivedFrames > 0).at(-1)
@@ -150,7 +293,15 @@ try {
       while (Date.now() < deadline) {
         const replacement = evidence.backendSockets.slice(initialCount)
           .find((socket) => !socket.closed && socket.sentFrames > 0 && socket.receivedFrames > 0)
-        if (replacement && activeSocket?.closed) {
+        let proof = null
+        try { proof = JSON.parse(await readFile(path.join(backendEvidenceDir, `stage-${cycle}.json`), 'utf8')) } catch {}
+        const backend = proof && { stage: proof.stage, pid: proof.pid ?? proof.childPid ?? proof.childPID,
+          generation: proof.generation, hash: proof.hash ?? proof.bundleHash ?? proof.bundleSha256,
+          encryptedApiPassed: proof.encryptedApiPassed ?? proof.encryptedStatusGetPassed ?? proof.encryptedAPI }
+        const backendReady = backend?.stage === stage && Number.isInteger(backend.pid) && backend.pid > 0 &&
+          backend.pid !== previousBackendPid && Number.isInteger(backend.generation) &&
+          /^[a-f0-9]{64}$/.test(backend.hash ?? '') && backend.encryptedApiPassed === true
+        if (replacement && activeSocket?.closed && backendReady) {
           const catalogError = page.getByText('Could not load workspaces from this host', { exact: true })
           const empty = page.getByText('No worktrees', { exact: true })
           const row = process.env.ORCA_EXPECTED_WORKSPACE_NAME
@@ -159,13 +310,14 @@ try {
             throw new Error('Catalog failed after reconnect')
           }
           if (await empty.isVisible() || (row && await page.getByText(row, { exact: true }).isVisible())) {
-            evidence.reconnects.push({ cycle, oldSocketClosed: true, replacementTrafficObserved: true,
+            evidence.reconnects.push({ cycle, stage, backend, oldSocketClosed: true, replacementTrafficObserved: true,
               workspaceVisible: true, at: new Date().toISOString() })
             const filename = `reconnected-workspace-${cycle}.png`
             await page.screenshot({ path: path.join(artifacts, filename) })
             evidence.captures.push(filename)
             await writeFile(path.join(artifacts, `reconnect-${cycle}-evidence.json`),
               JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
+            previousBackendPid = backend.pid
             reconnected = true
             break
           }
@@ -184,6 +336,19 @@ try {
   evidence.failureType = error?.name ?? 'Error'
   process.exitCode = 1
 } finally {
+  clearInterval(uiObserver)
+  await observeUiAndPersistence().catch(() => {})
+  if (privatePageErrors.length) {
+    // Private debugging input only: never publish raw stacks or credential URLs.
+    await writeFile(path.join(artifacts, 'private-browser-errors.json'),
+      JSON.stringify(privatePageErrors, null, 2) + '\n', { mode: 0o600 })
+  }
   await writeFile(path.join(artifacts, `${action}-evidence.json`), JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
+  // Publication is filename-allowlisted; private exception/offer/log files never enter it.
+  const safeEvidence = [`${action}-evidence.json`, 'ui-persistence-status.json', 'pair-progress.json',
+    'initial-pair-evidence.json', ...[1, 2, 3].map((cycle) => `reconnect-${cycle}-evidence.json`)]
+  await writeFile(path.join(artifacts, 'public-artifact-allowlist.json'),
+    JSON.stringify({ candidates: [...evidence.captures, ...safeEvidence],
+      requiresCredentialFreeReview: true, excludesPrivateDebugFiles: true }, null, 2) + '\n', { mode: 0o600 })
   await browser.close()
 }
