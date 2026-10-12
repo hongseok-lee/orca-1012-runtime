@@ -1,5 +1,10 @@
+import { dirname, join } from 'node:path'
 import type { SshTarget } from '../../shared/ssh-types'
 import { getControlSocketPath, type SystemSshResolvedConfig } from './ssh-control-socket'
+import { boundSshHostKeyStoreFile } from './ssh-host-key-store'
+
+/** Beside `ssh-host-keys.json`, so on-demand trust lives with the rest of Orca's host-key state. */
+const ON_DEMAND_KNOWN_HOSTS_FILE_NAME = 'ssh-known-hosts-on-demand'
 
 export type SystemSshBuildArgsOptions = {
   configFile?: string
@@ -33,6 +38,8 @@ export function buildSshArgs(target: SshTarget, options?: SystemSshBuildArgsOpti
   }
   // Forward stdin/stdout for relay communication
   args.push('-T')
+
+  appendOnDemandRuntimeHostKeyPolicy(args, target)
 
   // Why: ControlMaster multiplexes all SSH exec commands over a single connection,
   // eliminating the ~9s handshake overhead per command. Without this, each
@@ -105,6 +112,35 @@ export function buildSshArgs(target: SshTarget, options?: SystemSshBuildArgsOpti
   args.push('--', userHost)
 
   return args
+}
+
+/**
+ * Give the system transport the host-key policy the ssh2 path already applies to these targets.
+ *
+ * An on-demand runtime target carries a recipe-supplied ProxyCommand, and `shouldUseSystemSshTransport`
+ * routes every such target here — so it never reaches `ssh-host-key-decision`, where an unknown key on
+ * an `on-demand-runtime` owner is accepted. Left to OpenSSH's default, the first connection to a freshly
+ * provisioned host meets an unknown key under `BatchMode=yes`, cannot ask, and dies with "Host key
+ * verification failed" before authentication.
+ *
+ * `accept-new` is that same policy, not a weaker one: a first, unknown key is accepted, a *changed* key
+ * is still refused — matching the mismatch checks that run ahead of the ephemeral bypass. The record
+ * goes beside Orca's own store rather than the user's `known_hosts`, which we read but never write (D1).
+ *
+ * With no bound store there is nowhere to write that is ours, so the policy is left alone and the
+ * connection fails the same way it does today; silently falling back to `~/.ssh/known_hosts` would
+ * break D1 to hide the problem.
+ */
+function appendOnDemandRuntimeHostKeyPolicy(args: string[], target: SshTarget): void {
+  if (target.owner?.type !== 'on-demand-runtime') {
+    return
+  }
+  const storeFile = boundSshHostKeyStoreFile()
+  if (!storeFile) {
+    return
+  }
+  args.push('-o', 'StrictHostKeyChecking=accept-new')
+  args.push('-o', `UserKnownHostsFile=${join(dirname(storeFile), ON_DEMAND_KNOWN_HOSTS_FILE_NAME)}`)
 }
 
 export function getOrcaControlSocketPath(

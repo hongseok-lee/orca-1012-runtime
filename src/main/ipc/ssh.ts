@@ -30,6 +30,7 @@ export {
 } from '../ssh/ssh-target-registry'
 import { registerSshBrowseHandler } from './ssh-browse'
 import { registerCredentialHandler } from './ssh-passphrase'
+import { connectTarget } from './ssh-connect-flow'
 import type { OrcaRuntimeService } from '../runtime/orca-runtime'
 import {
   initializeSshConnectionGenerationSession,
@@ -69,7 +70,11 @@ import { registerSshPortForwardHandlers } from './ssh-port-forward-handlers'
 import { persistPortForwardsWithUnrestored } from './ssh-port-forward-persistence'
 import { clearRelayLostBackoff, relayLostBackoff } from './ssh-relay-lost-backoff'
 import { refreshActiveRelaySessions } from './ssh-relay-session-callbacks'
-import { broadcastPortForwards, relayStateOverrides } from './ssh-renderer-broadcast'
+import {
+  broadcastPortForwards,
+  getPublicSshState,
+  relayStateOverrides
+} from './ssh-renderer-broadcast'
 import { resetSshShutdownDrain } from './ssh-shutdown-drain'
 import { registerSshTargetCrudHandlers } from './ssh-target-crud-handlers'
 import { targetLifecycleInFlight } from './ssh-target-lifecycle-queue'
@@ -241,4 +246,55 @@ export async function resetSshHandlerStateForTests(): Promise<void> {
 
 export function getSshConnectionStore(): SshConnectionStore | null {
   return getSshTargetRegistryStore()
+}
+
+/**
+ * Headless-safe subset of `registerSshHandlers`, for `orca serve` runtimes that never
+ * create a `BrowserWindow` and never call `registerSshHandlers` at all.
+ *
+ * Why this exists: `connectRuntimeOwnedSshTarget` (ephemeral-vm-runtime-ssh.ts) needs
+ * `getSshConnectionStore()` and `connectRegisteredSshTarget()` to resolve to something,
+ * which only the store/registry/manager setters below provide. Everything else
+ * `registerSshHandlers` does — `ipcMain.handle` registration for the renderer-facing SSH
+ * CRUD/connect channels, the credential-prompt handler, the advertised-URL refresher, and
+ * the power-monitor reconnect hook — is renderer/window-dependent and must stay opt-in to
+ * a real window bootstrap. Skipping them is safe here: `getCurrentMainWindow` already
+ * defaults to `() => null` (see ssh-ipc-context.ts), and every call site that dereferences
+ * it (broadcastSshState, requestCredential, SshRelaySession) already treats a null window
+ * as "no renderer to notify" rather than an error — `requestCredential` in particular
+ * resolves the credential prompt to `null` immediately instead of hanging, so a headless
+ * connect that needs an interactive passphrase fails fast (auth-failed) rather than
+ * blocking forever waiting on a window that will never exist.
+ *
+ * Safe to call more than once (e.g. once per autobind attempt) — every step here is a
+ * plain setter, and it never touches `ipcMain` or the channel list `registerSshHandlers`
+ * owns, so it cannot conflict with a later real `registerSshHandlers` call (desktop
+ * reactivation, tests, etc.) or vice versa.
+ */
+export function initHeadlessSshConnectionStore(
+  store: Store,
+  runtime?: OrcaRuntimeService
+): void {
+  initializeSshConnectionGenerationSession()
+  setCurrentGetMainWindow(() => null)
+  setCurrentRuntime(runtime)
+  setSshTargetRegistryStore(new SshConnectionStore(store))
+  setPersistedStore(store)
+
+  if (!connectionManager) {
+    setConnectionManager(new SshConnectionManager(createSshConnectionCallbacks()))
+  }
+  if (!portForwardManager) {
+    setPortForwardManager(new SshPortForwardManager())
+  }
+  setSshConnectionManagerResolver(() => connectionManager)
+
+  // Why not registerSshConnectionHandlers(): that function also does
+  // `ipcMain.handle('ssh:connect', ...)` etc. for the renderer, which headless has no use
+  // for and must not register. This installs only the registry indirection
+  // `connectRegisteredSshTarget`/`getRegisteredSshState` need.
+  setSshTargetRegistryHandlers({
+    connect: connectTarget,
+    getState: (targetId: string) => getPublicSshState(targetId)
+  })
 }

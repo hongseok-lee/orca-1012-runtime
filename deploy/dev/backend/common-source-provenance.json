@@ -1,0 +1,68 @@
+{
+  "upstream_source": "776e424e76405a06851dd9ec9ff3b58ffbdb3eea",
+  "applied_common_patches": [
+    {
+      "filename": "0001-ssh-add-headless-safe-SSH-connection-store-init.patch",
+      "sha256": "a4dc681583cd7d40fd64c48a742a8deff634d86549fcb49975efd9fdde04999d"
+    },
+    {
+      "filename": "0005-ssh-apply-the-on-demand-runtime-host-key-policy-on-t.patch",
+      "sha256": "5f4677b46f2455e2e3734e4b5e38d58af4b37273ffa3f73d025def3b6fbb10de"
+    },
+    {
+      "filename": "0006-agent-control-adapter.patch",
+      "sha256": "3a5010eb309cb9384238cffc5b01d9150db99c8e366741a4981188f4f4f89939"
+    },
+    {
+      "filename": "0007-orcad-mobile-pairing.patch",
+      "sha256": "de6c32b1163136b37f7567d4b9ec8f5018d1abb3bc32581e6eeb964c6dc81977"
+    }
+  ],
+  "source_hashes": [
+    {
+      "path": "src/main/agent-hooks/server/server-lifecycle.ts",
+      "sha256": "854a48ec02300f17a8587748485bcf3d72f21226dbd116be377a13c02e476eeb"
+    },
+    {
+      "path": "src/main/ipc/ssh.ts",
+      "sha256": "ab16b16f40e9fb8ee468e05f92b0f40d7dfba9e50858e8aad15cfabf17b3bb0c"
+    },
+    {
+      "path": "src/main/orcad/orcad-entry.ts",
+      "sha256": "0fe540ddb5f34e83735d1b3ad2b64f50d78632351cfbddabcf4c77bcaf531de5"
+    },
+    {
+      "path": "src/main/server/serve-readiness.ts",
+      "sha256": "825ffe951914a2a25b3c277bea7b8ec8bf155a2e9c1feac110a5336bdb3125f9"
+    },
+    {
+      "path": "src/main/ssh/system-ssh-args.ts",
+      "sha256": "f8fa737ea23525e16198630af63ada86d9313697cb7a98aefc1cca26a51aa3cc"
+    },
+    {
+      "path": "src/main/startup/main-process-runtime-launch.ts",
+      "sha256": "70e326db94df4b4b6db84e26ae3ca16778f59d9b0b6ad332e4974c877008a186"
+    },
+    {
+      "path": "src/main/orcad/orcad-concurrent-clients.test.ts",
+      "sha256": "c56494ccc082f13fcd580f4bcb0f8346f5d7288483886a1d6881d0e8090d9f9b"
+    },
+    {
+      "path": "src/main/orcad/orcad-pairing.test.ts",
+      "sha256": "9c024c18dbdc75b49d5063403d5fc8445ab95ad219b3b15db39dea2c50ab5a76"
+    },
+    {
+      "path": "src/main/orcad/orcad-pairing.ts",
+      "sha256": "89029dff7792d27d67de6deb70b068c8beef6b0b5eb633cdb92648ef26603e10"
+    },
+    {
+      "path": "src/main/runtime/agent-control-adapter.test.ts",
+      "sha256": "528a207c49a5cdb3bf0218d17ec346bfd7c9cfdfa2f224c4af1de7d7966d577c"
+    },
+    {
+      "path": "src/main/runtime/agent-control-adapter.ts",
+      "sha256": "e47d2ccc8a6fcd53fd1e25beca277d62532c2814880d8a1e7a60ed6367f6d7e3"
+    }
+  ],
+  "baseline": "Public pinned upstream with common patches only; Electron autobind series excluded."
+}
