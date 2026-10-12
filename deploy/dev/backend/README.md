@@ -89,3 +89,36 @@ Actual validation must check browser secure context/WebCrypto, normal pairing,
 authenticated encrypted RPC, then source update generation/hash/PID and an existing
 endpoint observation. TCP connectivity and static manifests are not runtime
 acceptance. Client screenshots and Expo Web/native iPhone results are distinct.
+
+Before the client's actual Save, the backend operator checks the handed-off
+offer against the normal pairing source and the current private registry in
+the backend Pod. It writes a separate private0600 validity JSON; neither the
+offer nor the registry is published or modified. The client needs fresh
+metadata, not an invented expiry timer. The minimum fields used by this run are:
+
+```json
+{
+  "checkedAt": "<UTC timestamp from backend check>",
+  "policy": "direct-no-time-expiry",
+  "expiresAt": null,
+  "expired": false,
+  "registryMatch": true,
+  "pending": true,
+  "valid": true
+}
+```
+
+The normal direct offer schema has no time-expiry field; relay invite expiry
+applies only when a relay offer actually contains it. Registry equality and
+pending state are derived inside the backend's private runtime; do not export
+tokens, URLs or credential fingerprints as evidence. Refresh only through the
+existing normal issuance path. If that requires changing the running PID, wait
+for the coordinator's ordering instruction before doing so.
+
+After first normal client pairing/catalog/capture, coordinate exactly three
+connection transitions with the client: `1새runner채택`,
+`2임시source변경watch`, `3source원복watch`. Each stage waits for the backend
+PID/generation/hash/encrypted-API evidence and the client's reconnect observation
+before the next stage. New-runner initial startup is separate from source-watch
+validation. Temporary source edits are restored byte-for-byte; restoration must
+also trigger incremental reload and match the final PR source.
