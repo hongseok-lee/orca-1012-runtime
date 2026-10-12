@@ -8,8 +8,8 @@ const artifacts = process.env.ORCA_BROWSER_ARTIFACTS ?? '/home/node/artifacts/ex
 await mkdir(artifacts, { recursive: true })
 const browser = await chromium.launch({ headless: true })
 const context = await browser.newContext({
-  viewport: { width: 390, height: 844 }, deviceScaleFactor: 3,
-  isMobile: true, hasTouch: true
+  viewport: { width: 390, height: 844 }, deviceScaleFactor: action === 'repo' ? 1 : 3,
+  isMobile: action !== 'repo', hasTouch: action !== 'repo'
 })
 const page = await context.newPage()
 const evidence = { kind: 'Expo Web Chromium, not native iPhone', browser: browser.version(),
@@ -30,8 +30,17 @@ try {
       throw new Error('A public repository URL in the approved repository is required')
     }
     await page.setViewportSize({ width: 1440, height: 1000 })
-    evidence.viewport = { width: 1440, height: 1000, deviceScaleFactor: 3 }
+    evidence.viewport = { width: 1440, height: 1000, deviceScaleFactor: 1 }
     await page.goto(target, { waitUntil: 'domcontentloaded' })
+    const heading = process.env.ORCA_REPO_CAPTURE_HEADING
+    if (heading) {
+      await page.getByRole('heading', { name: heading, exact: true }).evaluate((element) => {
+        element.scrollIntoView({ block: 'start' })
+        window.scrollBy(0, -100)
+      })
+      evidence.captureHeading = heading
+    }
+    evidence.kind = 'Public repository/infrastructure documentation capture'
     await page.screenshot({ path: path.join(artifacts, 'public-repository.png') })
     evidence.publicURL = target
     evidence.captures.push('public-repository.png')
