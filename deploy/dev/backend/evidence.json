@@ -19,12 +19,23 @@
   },
   "node_native_preparation_exit": 0,
   "runner_tests": {
-    "passed": 3,
+    "passed": 4,
     "failed": 0,
     "cases": [
       "compile/graph failure preserves PID and artifacts; serial success restart; private log isolation",
       "owned SIGKILL and explicit stale-lock recovery",
-      "spawn error without exit; bounded stop"
+      "spawn error without exit; bounded stop",
+      "child ORCA_VERSION equals content-derived staged artifact version"
+    ],
+    "batches": [
+      {
+        "passed": 3,
+        "scope": "original failure/restart/private-log cases"
+      },
+      {
+        "passed": 1,
+        "scope": "new version-env alignment only; earlier cases not repeated"
+      }
     ]
   },
   "common_source_tests": {
@@ -98,5 +109,21 @@
   "format_check": {
     "initial_exit": 1,
     "corrected_exit": 0
+  },
+  "active_artifact_before_reload": {
+    "supervisorPid": 1553,
+    "runtimePid": 1764,
+    "podUidRecorded": true,
+    "mainBundleSha256": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+    "artifactVersion": "0.1.0+6791d076f8af",
+    "privateLogModes": [
+      "0600",
+      "0600",
+      "0600",
+      "0600",
+      "0600"
+    ],
+    "runtimeVersionBeforeFollowup": "0.0.0-orcad",
+    "versionFollowupAdoption": "awaiting first client capture; runtime restart not performed"
   }
 }
