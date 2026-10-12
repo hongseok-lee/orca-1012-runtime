@@ -1,7 +1,7 @@
 {
   "stage": "foundation; final runtime/client/reload review pending",
   "upstream_source": "776e424e76405a06851dd9ec9ff3b58ffbdb3eea",
-  "common_source_revision": "a1c6a270f319f9df62488e1cde8bbeefbdc6d776",
+  "common_source_revision": "02d01ca2b37affdbba7d76c287406eac4925e7ef",
   "remote_checkout_before_rebase": "222f6478e4271d1959bf9cd01cd0dd3a172d5b44",
   "restored_11_source_hashes_equal_after_rebase": true,
   "node": "24.15.0",
@@ -125,5 +125,24 @@
     ],
     "runtimeVersionBeforeFollowup": "0.0.0-orcad",
     "versionFollowupAdoption": "awaiting first client capture; runtime restart not performed"
+  },
+  "latest_main_rebase": {
+    "main": "0e14a79ce7944174849c278bb15deb7e07ab36da",
+    "common_product_inputs": 24028,
+    "runner_product_inputs": 24031,
+    "all_product_inputs_equal": true,
+    "native_common_install_repeated": false
+  },
+  "mobile_pairing_observation": {
+    "checkedAt": "2026-10-12T23:27:06.583Z",
+    "policy": "direct-no-time-expiry",
+    "expiresAt": null,
+    "expired": false,
+    "registryMatch": true,
+    "pending": false,
+    "valid": true,
+    "lastSeenAtIso": "2026-10-12T23:22:40.699Z",
+    "pendingRequiredForValidity": false,
+    "meaning": "Server auth callback reached; token still valid. Client capability/status.get/Save completion unconfirmed. No success inferred from frame counts."
   }
 }
