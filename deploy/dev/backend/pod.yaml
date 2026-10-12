@@ -1,0 +1,105 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "name": "orca-backend-dev",
+    "namespace": "orca-dev",
+    "labels": {
+      "app": "orca-backend-dev"
+    }
+  },
+  "spec": {
+    "restartPolicy": "Never",
+    "automountServiceAccountToken": false,
+    "terminationGracePeriodSeconds": 25,
+    "nodeSelector": {
+      "cloud.google.com/gke-spot": "true",
+      "kubernetes.io/arch": "amd64"
+    },
+    "securityContext": {
+      "runAsUser": 1000,
+      "runAsGroup": 1000,
+      "runAsNonRoot": true
+    },
+    "containers": [
+      {
+        "name": "backend",
+        "image": "docker.io/library/node@sha256:da81deb96d49fc84c9813bc4f16dfdb1d4d7e3671b74cd54fd944428f1444afe",
+        "imagePullPolicy": "IfNotPresent",
+        "workingDir": "/workspace/backend",
+        "command": [
+          "sleep"
+        ],
+        "args": [
+          "infinity"
+        ],
+        "env": [
+          {
+            "name": "HOME",
+            "value": "/home/orca-dev"
+          },
+          {
+            "name": "ORCA_USER_DATA",
+            "value": "/home/orca-dev/.local/share/orca-backend-dev"
+          },
+          {
+            "name": "COREPACK_HOME",
+            "value": "/home/orca-dev/.cache/corepack"
+          },
+          {
+            "name": "ORCAD_DEV_POD_UID",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.uid"
+              }
+            }
+          }
+        ],
+        "ports": [
+          {
+            "name": "rpc",
+            "containerPort": 16768
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "1",
+            "memory": "4Gi",
+            "ephemeral-storage": "8Gi"
+          },
+          "limits": {
+            "ephemeral-storage": "8Gi"
+          }
+        },
+        "volumeMounts": [
+          {
+            "name": "dev-storage",
+            "mountPath": "/home/orca-dev",
+            "subPath": "dev/backend/home"
+          },
+          {
+            "name": "dev-storage",
+            "mountPath": "/workspace/backend",
+            "subPath": "dev/backend/source"
+          }
+        ]
+      }
+    ],
+    "volumes": [
+      {
+        "name": "dev-storage",
+        "persistentVolumeClaim": {
+          "claimName": "agent-dev-homes"
+        }
+      }
+    ],
+    "tolerations": [
+      {
+        "effect": "NoSchedule",
+        "key": "cloud.google.com/gke-spot",
+        "operator": "Equal",
+        "value": "true"
+      }
+    ]
+  }
+}
