@@ -1,6 +1,6 @@
 # Development PostgreSQL and NFS storage
 
-This directory reproduces the storage part of the root [foundation PR specification](https://github.com/hongseok-lee/orca-1012-runtime/blob/foundation/pinned-upstream-and-pr-checks/docs/plans/orca-1012-foundation-pr-specs.md). It provides a new development dataset, not product HA, WAL recovery, or distributed writer fencing. The existing management environment and protected datasets are outside its scope.
+This directory reproduces the storage part of the root [foundation PR specification](../../../docs/plans/orca-1012-foundation-pr-specs.md). It provides a new development dataset, not product HA, WAL recovery, or distributed writer fencing. The existing management environment and protected datasets are outside its scope.
 
 | Role | Placement | CPU / memory requests | Ephemeral request / limit | Memory limit | Disk |
 | --- | --- | --- | --- | --- | --- |
