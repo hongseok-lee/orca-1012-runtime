@@ -81,6 +81,14 @@ try {
       await page.getByText('Paste code instead', { exact: true }).click()
       evidence.clicks.push('Paste code instead')
       await page.getByPlaceholder('orca://pair?code=... or paste the code').fill(offer)
+      const validityPath = process.env.ORCA_PRIVATE_OFFER_VALIDITY_FILE
+      const validity = validityPath ? JSON.parse(await readFile(validityPath, 'utf8')) : null
+      if (validity?.valid !== true || validity?.pending !== true) {
+        evidence.failureReason = 'offer-validity-not-confirmed-before-save'
+        throw new Error('Offer validity metadata is required before Save')
+      }
+      evidence.offerValidity = { valid: true, pending: true, checkedAt: validity.checkedAt,
+        directTimeExpiryApplied: false }
       await page.getByText('Save', { exact: true }).click()
       evidence.clicks.push('Save private pairing input; no capture')
       await page.getByRole('button', { name: 'Open sessions in Chat UI', exact: true }).waitFor({ timeout: 60000 })
@@ -127,37 +135,47 @@ try {
   }
   evidence.completed = true
   if (action === 'pair' && process.env.ORCA_OBSERVE_RECONNECT === '1') {
-    const initialCount = evidence.backendSockets.length
     const checkpoint = path.join(artifacts, 'initial-pair-evidence.json')
     await writeFile(checkpoint, JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
     await chmod(checkpoint, 0o600)
-    const deadline = Date.now() + 30 * 60 * 1000
-    let reconnected = false
-    while (Date.now() < deadline) {
-      const replacement = evidence.backendSockets.slice(initialCount)
-        .find((socket) => socket.sentFrames > 0 && socket.receivedFrames > 0)
-      if (replacement && evidence.backendSockets.slice(0, initialCount).some((socket) => socket.closed)) {
-        const catalogError = page.getByText('Could not load workspaces from this host', { exact: true })
-        const empty = page.getByText('No worktrees', { exact: true })
-        const row = process.env.ORCA_EXPECTED_WORKSPACE_NAME
-        if (await catalogError.isVisible()) {
-          evidence.failureReason = 'catalog-error-after-reconnect'
-          throw new Error('Catalog failed after reconnect')
+    const cycles = Number(process.env.ORCA_RECONNECT_CYCLES ?? '2')
+    if (!Number.isInteger(cycles) || cycles < 1 || cycles > 2) throw new Error('Expected one or two assigned reconnects')
+    evidence.reconnects = []
+    for (let cycle = 1; cycle <= cycles; cycle++) {
+      const initialCount = evidence.backendSockets.length
+      const activeSocket = evidence.backendSockets
+        .filter((socket) => !socket.closed && socket.sentFrames > 0 && socket.receivedFrames > 0).at(-1)
+      const deadline = Date.now() + 30 * 60 * 1000
+      let reconnected = false
+      while (Date.now() < deadline) {
+        const replacement = evidence.backendSockets.slice(initialCount)
+          .find((socket) => !socket.closed && socket.sentFrames > 0 && socket.receivedFrames > 0)
+        if (replacement && activeSocket?.closed) {
+          const catalogError = page.getByText('Could not load workspaces from this host', { exact: true })
+          const empty = page.getByText('No worktrees', { exact: true })
+          const row = process.env.ORCA_EXPECTED_WORKSPACE_NAME
+          if (await catalogError.isVisible()) {
+            evidence.failureReason = 'catalog-error-after-reconnect'
+            throw new Error('Catalog failed after reconnect')
+          }
+          if (await empty.isVisible() || (row && await page.getByText(row, { exact: true }).isVisible())) {
+            evidence.reconnects.push({ cycle, oldSocketClosed: true, replacementTrafficObserved: true,
+              workspaceVisible: true, at: new Date().toISOString() })
+            const filename = `reconnected-workspace-${cycle}.png`
+            await page.screenshot({ path: path.join(artifacts, filename) })
+            evidence.captures.push(filename)
+            await writeFile(path.join(artifacts, `reconnect-${cycle}-evidence.json`),
+              JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
+            reconnected = true
+            break
+          }
         }
-        if (await empty.isVisible() || (row && await page.getByText(row, { exact: true }).isVisible())) {
-          evidence.reconnect = { oldSocketClosed: true, replacementTrafficObserved: true,
-            workspaceVisible: true, at: new Date().toISOString() }
-          await page.screenshot({ path: path.join(artifacts, 'reconnected-workspace.png') })
-          evidence.captures.push('reconnected-workspace.png')
-          reconnected = true
-          break
-        }
+        await delay(500)
       }
-      await delay(500)
-    }
-    if (!reconnected) {
-      evidence.failureReason = 'reconnect-observation-timeout'
-      throw new Error('Reconnect observation timed out')
+      if (!reconnected) {
+        evidence.failureReason = 'reconnect-observation-timeout'
+        throw new Error('Reconnect observation timed out')
+      }
     }
   }
 } catch (error) {
