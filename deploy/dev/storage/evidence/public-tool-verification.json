@@ -1,0 +1,19 @@
+{
+  "syntax": "pass",
+  "rendered_yaml": "pass",
+  "private_applied_shape_comparison": [
+    "00-namespace-storage.yaml",
+    "10-postgres.yaml",
+    "20-nfs.yaml",
+    "30-agent-dev-homes.yaml"
+  ],
+  "declared_differences_only": true,
+  "private_file_mode": "0600",
+  "output_checkout_refusal": "pass",
+  "output_existing_file_refusal": "pass",
+  "unpinned_image_refusal": "pass",
+  "cloud_mutation": false,
+  "smoke_repeated": false,
+  "live_nfs_renderer": "pass; read-only actual Service matched existing private homes manifest",
+  "existing_secret_guard": "pass; existing Secret refused before password generation"
+}
