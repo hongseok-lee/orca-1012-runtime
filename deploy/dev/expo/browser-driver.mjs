@@ -14,7 +14,15 @@ const context = await browser.newContext({
 const page = await context.newPage()
 const evidence = { kind: 'Expo Web Chromium, not native iPhone', browser: browser.version(),
   viewport: { width: 390, height: 844, deviceScaleFactor: 3 },
-  at: new Date().toISOString(), clicks: [], captures: [] }
+  at: new Date().toISOString(), clicks: [], captures: [], backendSockets: [] }
+page.on('websocket', (socket) => {
+  const endpoint = new URL(socket.url())
+  if (endpoint.hostname !== '127.0.0.1' || endpoint.port !== '16768') return
+  const observed = { origin: endpoint.origin, sentFrames: 0, receivedFrames: 0 }
+  evidence.backendSockets.push(observed)
+  socket.on('framesent', () => observed.sentFrames++)
+  socket.on('framereceived', () => observed.receivedFrames++)
+})
 try {
   if (action === 'repo') {
     const target = process.env.ORCA_REPO_CAPTURE_URL
@@ -24,7 +32,7 @@ try {
     await page.setViewportSize({ width: 1440, height: 1000 })
     evidence.viewport = { width: 1440, height: 1000, deviceScaleFactor: 3 }
     await page.goto(target, { waitUntil: 'domcontentloaded' })
-    await page.screenshot({ path: path.join(artifacts, 'public-repository.png'), fullPage: true })
+    await page.screenshot({ path: path.join(artifacts, 'public-repository.png') })
     evidence.publicURL = target
     evidence.captures.push('public-repository.png')
   } else {
@@ -43,6 +51,11 @@ try {
     await page.screenshot({ path: path.join(artifacts, 'home.png') })
     evidence.captures.push('home.png')
     if (action === 'pair') {
+      if (!evidence.crypto.isSecureContext || !evidence.crypto.subtleAvailable ||
+          !evidence.crypto.randomValuesCallSucceeded || !evidence.crypto.subtleDigestSucceeded) {
+        evidence.failureReason = 'localhost-webcrypto-qualification-failed'
+        throw new Error('localhost WebCrypto qualification failed')
+      }
       const offerPath = process.env.ORCA_PRIVATE_PAIRING_FILE
       if (!offerPath) throw new Error('A private pairing file is required')
       const offer = (await readFile(offerPath, 'utf8')).trim()
@@ -59,13 +72,40 @@ try {
       await page.getByRole('button', { name: 'Open sessions in Chat UI', exact: true }).click()
       evidence.clicks.push('Use Chat UI')
       const skip = page.getByRole('button', { name: 'Skip notifications for now', exact: true })
+      await Promise.race([
+        skip.waitFor({ state: 'visible', timeout: 60000 }),
+        page.waitForURL(/\/h\/[^/?#]+$/, { timeout: 60000 })
+      ])
       if (await skip.isVisible()) { await skip.click(); evidence.clicks.push('Not now') }
       await page.waitForURL(/\/h\/[^/?#]+$/, { timeout: 60000 })
+      const catalogError = page.getByText('Could not load workspaces from this host', { exact: true })
+      const empty = page.getByText('No worktrees', { exact: true })
+      const workspaceName = process.env.ORCA_EXPECTED_WORKSPACE_NAME
+      const outcomes = [
+        catalogError.waitFor({ state: 'visible', timeout: 60000 }).then(() => 'error'),
+        empty.waitFor({ state: 'visible', timeout: 60000 }).then(() => 'empty')
+      ]
+      if (workspaceName) {
+        outcomes.push(page.getByText(workspaceName, { exact: true })
+          .waitFor({ state: 'visible', timeout: 60000 }).then(() => 'workspace'))
+      }
+      const settled = await Promise.race(outcomes)
+      evidence.catalogError = settled === 'error' || await catalogError.isVisible()
+      if (evidence.catalogError) {
+        evidence.failureReason = 'authenticated-catalog-error'
+        throw new Error('Catalog failed')
+      }
+      const socket = evidence.backendSockets.find((item) => item.sentFrames > 0 && item.receivedFrames > 0)
+      if (!socket) {
+        evidence.failureReason = 'browser-backend-socket-not-observed'
+        throw new Error('Browser backend socket was not observed')
+      }
+      evidence.authenticatedCatalog = { settled: true, result: settled,
+        basis: 'fresh browser profile; existing connected/loaded catalog UI' }
+      evidence.hostScreenVisible = true
+      evidence.emptyWorkspaceState = settled === 'empty'
       await page.screenshot({ path: path.join(artifacts, 'workspace.png') })
       evidence.captures.push('workspace.png')
-      evidence.hostScreenVisible = true
-      evidence.emptyWorkspaceState = await page.getByText('No worktrees', { exact: true }).isVisible()
-      evidence.catalogError = await page.getByText('Could not load workspaces from this host', { exact: true }).isVisible()
     }
   }
   evidence.completed = true
