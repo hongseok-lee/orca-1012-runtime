@@ -103,17 +103,29 @@ metadata, not an invented expiry timer. The minimum fields used by this run are:
   "expiresAt": null,
   "expired": false,
   "registryMatch": true,
-  "pending": true,
-  "valid": true
+  "pending": false,
+  "valid": true,
+  "pendingRequiredForValidity": false
 }
 ```
 
 The normal direct offer schema has no time-expiry field; relay invite expiry
 applies only when a relay offer actually contains it. Registry equality and
-pending state are derived inside the backend's private runtime; do not export
-tokens, URLs or credential fingerprints as evidence. Refresh only through the
-existing normal issuance path. If that requires changing the running PID, wait
-for the coordinator's ordering instruction before doing so.
+pending state are derived inside the backend's private runtime. Before Save,
+require `valid === true` and `registryMatch === true`; `pending` is observational
+metadata, not a validity requirement. Successful server authentication changes
+`lastSeenAt` from zero but does not invalidate the credential: `validateToken`
+still accepts the same unrevoked token on a fresh connection. Recheck the same
+offer against the current registry before retrying; do not reissue it merely
+because `pending` is false. Do not export tokens, URLs or credential fingerprints.
+If issuance is actually required, use only the existing normal issuance path and
+wait for the coordinator if it requires changing the running PID.
+
+A nonzero `lastSeenAt` supports reaching the server authentication callback;
+it does not prove client pairing or Save completed. The client processes the
+encrypted authentication response, settles capability negotiation before
+publishing `connected`, and the pairing candidate must return a successful
+`status.get` before the host is saved. WebSocket frame counts alone are insufficient.
 
 After first normal client pairing/catalog/capture, coordinate exactly three
 connection transitions with the client: `1새runner채택`,
