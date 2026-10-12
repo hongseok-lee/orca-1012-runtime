@@ -159,7 +159,7 @@ export async function startOrcadDev({
     // Each child uses its immutable generation path, including detached daemon siblings.
     const running = spawnRuntime(process.execPath, [join(dir, 'orcad.js'), ...args], {
       cwd: root,
-      env: { ...process.env, ORCA_VERSION: version },
+      env: { ...process.env, ORCA_VERSION: version, ORCA_APP_VERSION: version },
       stdio: ['ignore', log, log]
     })
     child = running
