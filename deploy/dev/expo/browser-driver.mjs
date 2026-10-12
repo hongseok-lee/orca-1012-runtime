@@ -35,10 +35,14 @@ try {
     const heading = process.env.ORCA_REPO_CAPTURE_HEADING
     if (heading) {
       await page.getByRole('heading', { name: heading, exact: true }).evaluate((element) => {
-        element.scrollIntoView({ block: 'start' })
-        window.scrollBy(0, -100)
+        element.scrollIntoView({ block: 'start', behavior: 'instant' })
+        window.scrollBy({ top: -100, left: 0, behavior: 'instant' })
       })
       evidence.captureHeading = heading
+      evidence.captureHeadingRect = await page.getByRole('heading', { name: heading, exact: true }).boundingBox()
+      if (!evidence.captureHeadingRect || evidence.captureHeadingRect.y < 0 || evidence.captureHeadingRect.y > 400) {
+        throw new Error('Capture heading is outside the readable viewport')
+      }
     }
     evidence.kind = 'Public repository/infrastructure documentation capture'
     await page.screenshot({ path: path.join(artifacts, 'public-repository.png') })
