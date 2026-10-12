@@ -1,6 +1,7 @@
 import { chromium } from 'playwright'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, chmod } from 'node:fs/promises'
 import path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
 
 const action = process.argv[2] ?? 'home'
 const origin = process.env.ORCA_EXPO_ORIGIN ?? 'http://127.0.0.1:8081'
@@ -18,10 +19,11 @@ const evidence = { kind: 'Expo Web Chromium, not native iPhone', browser: browse
 page.on('websocket', (socket) => {
   const endpoint = new URL(socket.url())
   if (endpoint.hostname !== '127.0.0.1' || endpoint.port !== '16768') return
-  const observed = { origin: endpoint.origin, sentFrames: 0, receivedFrames: 0 }
+  const observed = { origin: endpoint.origin, sentFrames: 0, receivedFrames: 0, closed: false }
   evidence.backendSockets.push(observed)
   socket.on('framesent', () => observed.sentFrames++)
   socket.on('framereceived', () => observed.receivedFrames++)
+  socket.on('close', () => { observed.closed = true })
 })
 try {
   if (action === 'repo') {
@@ -122,12 +124,46 @@ try {
     }
   }
   evidence.completed = true
+  if (action === 'pair' && process.env.ORCA_OBSERVE_RECONNECT === '1') {
+    const initialCount = evidence.backendSockets.length
+    const checkpoint = path.join(artifacts, 'initial-pair-evidence.json')
+    await writeFile(checkpoint, JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
+    await chmod(checkpoint, 0o600)
+    const deadline = Date.now() + 30 * 60 * 1000
+    let reconnected = false
+    while (Date.now() < deadline) {
+      const replacement = evidence.backendSockets.slice(initialCount)
+        .find((socket) => socket.sentFrames > 0 && socket.receivedFrames > 0)
+      if (replacement && evidence.backendSockets.slice(0, initialCount).some((socket) => socket.closed)) {
+        const catalogError = page.getByText('Could not load workspaces from this host', { exact: true })
+        const empty = page.getByText('No worktrees', { exact: true })
+        const row = process.env.ORCA_EXPECTED_WORKSPACE_NAME
+        if (await catalogError.isVisible()) {
+          evidence.failureReason = 'catalog-error-after-reconnect'
+          throw new Error('Catalog failed after reconnect')
+        }
+        if (await empty.isVisible() || (row && await page.getByText(row, { exact: true }).isVisible())) {
+          evidence.reconnect = { oldSocketClosed: true, replacementTrafficObserved: true,
+            workspaceVisible: true, at: new Date().toISOString() }
+          await page.screenshot({ path: path.join(artifacts, 'reconnected-workspace.png') })
+          evidence.captures.push('reconnected-workspace.png')
+          reconnected = true
+          break
+        }
+      }
+      await delay(500)
+    }
+    if (!reconnected) {
+      evidence.failureReason = 'reconnect-observation-timeout'
+      throw new Error('Reconnect observation timed out')
+    }
+  }
 } catch (error) {
   // Errors may contain credential-bearing locators or URLs; keep them out of artifacts.
   evidence.completed = false
   evidence.failureType = error?.name ?? 'Error'
   process.exitCode = 1
 } finally {
-  await writeFile(path.join(artifacts, `${action}-evidence.json`), JSON.stringify(evidence, null, 2) + '\n')
+  await writeFile(path.join(artifacts, `${action}-evidence.json`), JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 })
   await browser.close()
 }
