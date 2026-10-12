@@ -16,6 +16,15 @@ kubectl --kubeconfig="$ORCA_DEV_KUBECONFIG" --context="$ORCA_DEV_CONTEXT" -n orc
 
 Prepare the independently pinned public checkout in `/workspaces/orca` inside the Expo container. Keep the mobile frozen lock and root `src/shared` Metro inputs. Node, dependency installation, generated mobile engine preparation and Metro run inside the remote Pod. Product/browser builds do not run on the management host. For Node24's existing Corepack, a remote install command is `corepack pnpm@12.0.0 --dir /workspaces/orca/mobile install --frozen-lockfile`; verify actual available tooling first. Install lifecycle generation remains a mobile dependency preparation step; no desktop/image/release build is part of this path.
 
+After the one frozen install has completed and its lock/generated artifacts are confirmed, apply this **client HOME only** setting inside the Expo container. pnpm12 before-run verification was observed to spawn an additional install-stage check from `pnpm exec expo --version`; disabling that check prevents repeating it for every dev command. This changes neither product source nor the frozen lock and does not modify management-host settings. Keep any already-running verification intact.
+
+```sh
+# Inside orca-expo-dev/expo, as UID1000; never on the management host.
+corepack pnpm@12.0.0 config set verifyDepsBeforeRun false --global
+corepack pnpm@12.0.0 config get verifyDepsBeforeRun
+# Must print false. --global here affects only this container's HOME.
+```
+
 Run Expo in the remote Expo container using the existing mobile command, with a writable HOME and loopback origin:
 
 ```sh
