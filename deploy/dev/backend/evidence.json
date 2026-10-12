@@ -1,0 +1,93 @@
+{
+  "stage": "foundation; final runtime/client/reload review pending",
+  "upstream_source": "776e424e76405a06851dd9ec9ff3b58ffbdb3eea",
+  "common_source_revision": "a1c6a270f319f9df62488e1cde8bbeefbdc6d776",
+  "remote_checkout_before_rebase": "222f6478e4271d1959bf9cd01cd0dd3a172d5b44",
+  "restored_11_source_hashes_equal_after_rebase": true,
+  "node": "24.15.0",
+  "platform": "linux/amd64",
+  "spot": true,
+  "resources": {
+    "requests": {
+      "cpu": "1",
+      "memory": "4Gi",
+      "ephemeral-storage": "8Gi"
+    },
+    "limits": {
+      "ephemeral-storage": "8Gi"
+    }
+  },
+  "node_native_preparation_exit": 0,
+  "runner_tests": {
+    "passed": 3,
+    "failed": 0,
+    "cases": [
+      "compile/graph failure preserves PID and artifacts; serial success restart; private log isolation",
+      "owned SIGKILL and explicit stale-lock recovery",
+      "spawn error without exit; bounded stop"
+    ]
+  },
+  "common_source_tests": {
+    "files": 3,
+    "passed": 39,
+    "failed": 0
+  },
+  "initial_relay_build_exit": 0,
+  "runner_lint": {
+    "initial_error_count": 18,
+    "initial_rules": {
+      "curly": 16,
+      "consistent-existence-index-check": 2
+    },
+    "corrected_exit": 0
+  },
+  "api_before": {
+    "checkedAt": "2026-10-12T22:29:54.862Z",
+    "authenticatedEncryptedRPC": true,
+    "method": "status.get",
+    "ok": true,
+    "statusKeys": [
+      "runtimeId",
+      "rendererGraphEpoch",
+      "graphStatus",
+      "authoritativeWindowId",
+      "desktopWindowStatus",
+      "liveTabCount",
+      "liveLeafCount",
+      "runtimeProtocolVersion",
+      "minCompatibleRuntimeClientVersion",
+      "capabilities",
+      "degradations",
+      "worktreeCreateIdempotency",
+      "hostPlatform",
+      "terminalWindowsShell",
+      "floatingWorkspaceEnabled",
+      "protocolVersion",
+      "minCompatibleMobileVersion",
+      "pairedDeviceId",
+      "appVersion",
+      "remoteUpdateSupport",
+      "deviceScope"
+    ],
+    "readyHealth": {
+      "buildHash": "33406ac4020ba05d",
+      "buildVersion": "0.0.0-orcad",
+      "nodeVersion": "24.15.0",
+      "nodeAbi": "137",
+      "pid": 1764,
+      "daemonState": "live",
+      "daemonSelfTest": {
+        "ok": true,
+        "coverage": "pty-spawn",
+        "verdict": "healthy",
+        "durationMs": 44
+      },
+      "ownsFreshSessions": true
+    }
+  },
+  "legacy_adapter_enabled": false,
+  "client_capture": null,
+  "reload_status": "waiting for first client capture; no claim yet",
+  "image_desktop_release_builds": 0,
+  "feature_ha_persistence_contract_acceptance": false
+}

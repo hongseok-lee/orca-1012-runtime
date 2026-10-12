@@ -1,0 +1,21 @@
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "orca-backend-dev",
+    "namespace": "orca-dev"
+  },
+  "spec": {
+    "type": "ClusterIP",
+    "selector": {
+      "app": "orca-backend-dev"
+    },
+    "ports": [
+      {
+        "name": "rpc",
+        "port": 16768,
+        "targetPort": "rpc"
+      }
+    ]
+  }
+}

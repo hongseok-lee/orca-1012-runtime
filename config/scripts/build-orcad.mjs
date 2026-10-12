@@ -9,6 +9,7 @@
  */
 import { fork, spawnSync } from 'node:child_process'
 import { build } from 'esbuild'
+import { orcadBuildOptions, orcadGraphErrors } from './orcad-build-options.mjs'
 import { createHash } from 'node:crypto'
 import {
   chmodSync,
@@ -47,36 +48,6 @@ const OUT_FILE = join(OUT_DIR, 'orcad.js')
 const AGENT_BROWSER_SOURCE = join(ROOT, 'node_modules', 'agent-browser', 'bin', AGENT_BROWSER_NAME)
 const AGENT_BROWSER_OUTPUT = join(OUT_DIR, AGENT_BROWSER_NAME)
 
-// Native addons must exist on the host; they cannot be bundled.
-// `electron` is external so a residual import fails loudly at require() time rather
-// than silently bundling the npm package's installer shim, which is what happened the
-// first time and made the bundle look clean while it was not.
-// Why only these: measured, not guessed. `node-pty` is a hard `require.resolve` — orcad
-// exits at startup without it. `@parcel/watcher` is a guarded dynamic import, so the
-// server boots without it but every watch install fails. `fsevents` is macOS-only and
-// optional upstream. better-sqlite3 / keytar / cpu-features were externalized here
-// defensively and appear nowhere in the graph; listing them implied a shipping burden
-// that does not exist.
-const EXTERNAL = ['electron', 'node-pty', '@parcel/watcher', 'fsevents']
-
-/** Why: the UMD build's relative dynamic requires do not bundle. Same fix build-relay.mjs uses. */
-const jsoncParserEsm = {
-  name: 'jsonc-parser-esm',
-  setup(pluginBuild) {
-    pluginBuild.onResolve({ filter: /^jsonc-parser$/ }, () => ({
-      path: join(ROOT, 'node_modules', 'jsonc-parser', 'lib', 'esm', 'main.js')
-    }))
-  }
-}
-
-/** Why: optional native deps reference prebuilt .node files that may not exist here. */
-const externalNativeAddons = {
-  name: 'external-native-addons',
-  setup(pluginBuild) {
-    pluginBuild.onResolve({ filter: /\.node$/ }, (args) => ({ path: args.path, external: true }))
-  }
-}
-
 rmSync(OUT_DIR, { recursive: true, force: true })
 mkdirSync(OUT_DIR, { recursive: true })
 copyFileSync(AGENT_BROWSER_SOURCE, AGENT_BROWSER_OUTPUT)
@@ -88,21 +59,7 @@ if (process.platform !== 'win32') {
  *  directory under `outdir`, and both children must land flat beside orcad.js — that is where
  *  their runtime resolvers look for them. */
 function buildForkedChild(entryPoint, outfile) {
-  return build({
-    entryPoints: [entryPoint],
-    bundle: true,
-    platform: 'node',
-    target: 'node18',
-    format: 'cjs',
-    outfile,
-    external: EXTERNAL,
-    plugins: [externalNativeAddons],
-    metafile: true,
-    minify: true,
-    sourcemap: false,
-    define: { 'process.env.NODE_ENV': '"production"' },
-    logLevel: 'error'
-  })
+  return build({ ...orcadBuildOptions(ROOT, [entryPoint], { outfile }, false), logLevel: 'error' })
 }
 
 const childResults = await Promise.all([
@@ -111,18 +68,7 @@ const childResults = await Promise.all([
 ])
 
 const result = await build({
-  entryPoints: [ENTRY],
-  bundle: true,
-  platform: 'node',
-  target: 'node18',
-  format: 'cjs',
-  outfile: OUT_FILE,
-  external: EXTERNAL,
-  plugins: [jsoncParserEsm, externalNativeAddons],
-  metafile: true,
-  minify: true,
-  sourcemap: false,
-  define: { 'process.env.NODE_ENV': '"production"' },
+  ...orcadBuildOptions(ROOT, [ENTRY], { outfile: OUT_FILE }),
   logLevel: 'error'
 })
 
@@ -135,42 +81,7 @@ const output = Object.values(result.metafile.outputs).find(
 // Why both metafiles: the forked children ship in the same deployment and run under the
 // same plain Node. A daemon-entry that reached electron would fail at fork time, on the
 // path whose whole point is that terminals survive.
-function collectImporters(metafiles, matches) {
-  const importers = new Set()
-  for (const metafile of metafiles) {
-    for (const [file, info] of Object.entries(metafile.inputs)) {
-      for (const imported of info.imports ?? []) {
-        if (matches(imported.original ?? imported.path)) {
-          importers.add(file)
-        }
-      }
-    }
-  }
-  return importers
-}
-
-const metafiles = [result.metafile, ...childResults.map((child) => child.metafile)]
-const electronImporters = collectImporters(
-  metafiles,
-  (specifier) => specifier === 'electron' || specifier.startsWith('electron/')
-)
-const sqliteImporters = collectImporters(metafiles, (specifier) => specifier === 'node:sqlite')
-
-const graphErrors = []
-if (electronImporters.size > 0) {
-  graphErrors.push(
-    `${electronImporters.size} module(s) in the bundle import electron:\n${[...electronImporters]
-      .map((file) => `  - ${file}`)
-      .join('\n')}`
-  )
-}
-if (sqliteImporters.size > 0) {
-  graphErrors.push(
-    `${sqliteImporters.size} module(s) in the bundle import node:sqlite:\n${[...sqliteImporters]
-      .map((file) => `  - ${file}`)
-      .join('\n')}`
-  )
-}
+const graphErrors = orcadGraphErrors([result.metafile, ...childResults.map((c) => c.metafile)])
 
 if (graphErrors.length > 0) {
   console.error(`[build-orcad] ${graphErrors.join('\n')}`)
