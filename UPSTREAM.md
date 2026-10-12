@@ -15,3 +15,22 @@ Upstream workflow files and conflicting governance files are excluded.
 `mobile/google-services.json` is excluded because it contains an API-key-shaped
 service identifier. Remote development configuration has not been prepared.
 No existing private-platform patches are included.
+
+## Source baseline and separate development integration
+
+The root selected the public source commit above as the source-import baseline.
+Node-only development uses common patches 0001/0005/0006/0007 in a separate
+backend-owner change. This repository foundation PR does not apply those patches
+or modify product source. The 1012 design remains the requirements authority.
+
+Historical `bddb` HEAD is unavailable in the shallow cache. The root's private
+evidence establishes matching hashes for only 16 files, not complete historical
+source identity. Full Electron 34 cache source is not the Node baseline; Electron 30
+and cache evidence remain private references. Legacy cold/idle mapping is pending
+G-01/P1-29 feature work after explicit feature-start authorization; no implementation
+or preservation claim is made here.
+
+The original upstream AGENTS bytes are preserved as
+[upstream coding guidance](docs/foundation/upstream-coding-guidance.md), subordinate
+to the root [public operating rules](AGENTS.md). The import manifest records this
+post-import relocation without changing its source hash.

@@ -156,7 +156,7 @@
     },
     {
       "source_path": "AGENTS.md",
-      "path": "AGENTS.md",
+      "path": "docs/foundation/upstream-coding-guidance.md",
       "sha256": "4f70a2dba3d6f9685749622beef57cf64f6e554f9153931a518288f113eaef55"
     },
     {
@@ -128069,5 +128069,14 @@
       "reason": "service configuration contains API-key-shaped literal; excluded without exposing value"
     }
   ],
-  "private_platform_patches_imported": false
+  "private_platform_patches_imported": false,
+  "post_import_relocations": [
+    {
+      "source_path": "AGENTS.md",
+      "initial_public_path": "AGENTS.md",
+      "current_public_path": "docs/foundation/upstream-coding-guidance.md",
+      "sha256": "4f70a2dba3d6f9685749622beef57cf64f6e554f9153931a518288f113eaef55",
+      "reason": "root review: preserve upstream coding guidance subordinate to assigned public orchestration rules"
+    }
+  ]
 }
