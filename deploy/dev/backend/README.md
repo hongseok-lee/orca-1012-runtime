@@ -37,7 +37,8 @@ node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON config/scripts/dev-orcad.mjs
 The runner incrementally bundles the main/daemon/watcher entries together into
 memory, rejects Electron/node:sqlite imports, and stages complete artifacts in
 `out/orcad-dev/generations/`. It writes the existing content-derived `.version`,
-copies agent-browser, sets the child ORCA_VERSION to that exact artifact version, gracefully stops only its runtime PID and then starts the
+copies agent-browser, sets both child `ORCA_VERSION` and `ORCA_APP_VERSION` to
+that exact artifact version, gracefully stops only its runtime PID and then starts the
 new generation. Generation paths remain immutable so detached daemon siblings
 remain available. `out/orcad` release artifacts are untouched. The esbuild
 onEnd barrier serializes adoption; failed compilation/graph/artifact staging
@@ -127,6 +128,11 @@ encrypted authentication response, settles capability negotiation before
 publishing `connected`, and the pairing candidate must return a successful
 `status.get` before the host is saved. WebSocket frame counts alone are insufficient.
 
+The existing headless status updater reads `ORCA_APP_VERSION`, while Orcad
+readiness reads `ORCA_VERSION`. Check both against the generated `.version`;
+setting only the latter can leave authenticated `status.get.appVersion` at
+the updater's `0.0.0-dev` fallback even though readiness has the artifact version.
+
 After first normal client pairing/catalog/capture, coordinate exactly three
 connection transitions with the client: `1새runner채택`,
 `2임시source변경watch`, `3source원복watch`. Each stage waits for the backend
@@ -134,3 +140,11 @@ PID/generation/hash/encrypted-API evidence and the client's reconnect observatio
 before the next stage. New-runner initial startup is separate from source-watch
 validation. Temporary source edits are restored byte-for-byte; restoration must
 also trigger incremental reload and match the final PR source.
+
+The observed run preserved the original stage 1 proof/client acknowledgement,
+then adopted the approved two-variable version correction separately. That
+additional adoption kept the product bundle unchanged and has no independent
+UI checkpoint claim. Stage 2 records the corrected PID as its predecessor;
+stage 3 restores the original bytes and bundle hash. The first stage 3 API
+attempt failed with a connection error; a later normal encrypted `status.get`
+succeeded after readiness was independently observed. Retain both results.
