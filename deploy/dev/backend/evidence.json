@@ -1,5 +1,5 @@
 {
-  "stage": "foundation; final runtime/client/reload review pending",
+  "stage": "foundation validation complete; draft awaits root final review/merge; P1/P2 not started",
   "upstream_source": "776e424e76405a06851dd9ec9ff3b58ffbdb3eea",
   "common_source_revision": "02d01ca2b37affdbba7d76c287406eac4925e7ef",
   "remote_checkout_before_rebase": "222f6478e4271d1959bf9cd01cd0dd3a172d5b44",
@@ -25,7 +25,7 @@
       "compile/graph failure preserves PID and artifacts; serial success restart; private log isolation",
       "owned SIGKILL and explicit stale-lock recovery",
       "spawn error without exit; bounded stop",
-      "child ORCA_VERSION equals content-derived staged artifact version"
+      "child ORCA_VERSION and ORCA_APP_VERSION equal content-derived staged artifact version"
     ],
     "batches": [
       {
@@ -35,8 +35,14 @@
       {
         "passed": 1,
         "scope": "new version-env alignment only; earlier cases not repeated"
+      },
+      {
+        "passed": 1,
+        "scope": "existing version-propagation case updated to both env variables; no full suite rerun"
       }
-    ]
+    ],
+    "meaning": "four distinct focused cases; the existing version case rerun once for the approved dual-env correction",
+    "successful_test_executions": 5
   },
   "common_source_tests": {
     "files": 3,
@@ -97,14 +103,47 @@
     }
   },
   "legacy_adapter_enabled": false,
-  "client_capture": null,
-  "reload_status": "waiting for first client capture; no claim yet",
+  "client_capture": {
+    "implementationCommit": "f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e",
+    "kind": "ExpoWeb iPhone viewport notnativeiPhone",
+    "actualMode": "CI=1; automaticwatchunsupported",
+    "artifacts": {
+      "home.png": {
+        "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e/deploy/dev/expo/evidence/initial/home.png",
+        "httpStatus": 200,
+        "sha256": "4fc011037fa43f5ee330f3583c4e471a5fbf34364b0c460ce4284c45180a3b1a"
+      },
+      "onboarding.png": {
+        "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e/deploy/dev/expo/evidence/initial/onboarding.png",
+        "httpStatus": 200,
+        "sha256": "165b4e2e5fa6011a8b839dd53cd590f0fa203e8cde41f31858bcca510f83bc9d"
+      },
+      "workspace.png": {
+        "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e/deploy/dev/expo/evidence/initial/workspace.png",
+        "httpStatus": 200,
+        "sha256": "aa8f71e9672026020a5804ad4e9652a9156aa6506c338f65db88c81c39b17a1e"
+      },
+      "provenance.json": {
+        "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e/deploy/dev/expo/evidence/initial/provenance.json",
+        "httpStatus": 200,
+        "sha256": "6d7467cc429d9a514cd80537b3785b216e0f6abee5809cd8fb2751c32171fa3f"
+      }
+    },
+    "rootAccepted": true
+  },
+  "reload_status": "runner adoption + separately recorded dual-env correction + actual temporary source watch + byte-exact source restoration; all three assigned client reconnect checkpoints complete",
   "image_desktop_release_builds": 0,
   "feature_ha_persistence_contract_acceptance": false,
   "runtime_version_test": {
     "passed": 1,
     "failed": 0,
-    "targeted_only": true
+    "targeted_only": true,
+    "variables": [
+      "ORCA_VERSION",
+      "ORCA_APP_VERSION"
+    ],
+    "format_exit": 0,
+    "lint_exit": 0
   },
   "format_check": {
     "initial_exit": 1,
@@ -143,6 +182,257 @@
     "valid": true,
     "lastSeenAtIso": "2026-10-12T23:22:40.699Z",
     "pendingRequiredForValidity": false,
-    "meaning": "Server auth callback reached; token still valid. Client capability/status.get/Save completion unconfirmed. No success inferred from frame counts."
+    "meaning": "Historical pre-retry observation: server auth callback reached while client Save had not completed. Token remained valid despite pending=false. Later normal UI pairing/catalog/capture succeeded after the separately approved client timer receiver correction."
+  },
+  "reload_stages": [
+    {
+      "stage": "1새runner채택",
+      "pid": 2572,
+      "supervisorPid": 2525,
+      "generation": 1,
+      "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+      "aggregateBundleSha256": "6791d076f8af375482d43a44b21ef7c4b2755b845596fb13c563791a4b67caf7",
+      "artifactVersion": "0.1.0+6791d076f8af",
+      "encryptedApiPassed": true,
+      "pr2Revision": "02d01ca2b37affdbba7d76c287406eac4925e7ef",
+      "pr5Revision": "93dc6da34d89cd4dbbe058aa6682dc62907ce088",
+      "priorChildPid": 1764,
+      "kind": "runner adoption; initial build, not source-watch proof",
+      "apiAppVersion": "0.0.0-dev",
+      "readinessBuildVersion": "0.1.0+6791d076f8af",
+      "privateChildLog0600": true,
+      "all15SourceHashesMatchPR": true
+    },
+    {
+      "stage": "2임시source변경watch",
+      "pid": 2967,
+      "supervisorPid": 2827,
+      "generation": 2,
+      "hash": "29482c808a3b72806e718c48265c59237e20c32e7747bcc3c1a3f1ca168a7c23",
+      "aggregateBundleSha256": "dca56dd70bded2932c1e2d44d5b9d999c975a466e7e783883e4b28047aac5583",
+      "artifactVersion": "0.1.0+dca56dd70bde",
+      "encryptedApiPassed": true,
+      "pr2Revision": "02d01ca2b37affdbba7d76c287406eac4925e7ef",
+      "pr5Revision": "357a11368ccfb9f65c145b7a89385455a9e08791",
+      "priorChildPid": 2873,
+      "kind": "incremental source watch; temporary source change",
+      "apiAppVersion": "0.1.0+dca56dd70bde",
+      "readinessBuildVersion": "0.1.0+dca56dd70bde",
+      "privateChildLog0600": true,
+      "all15SourceHashesMatchPR": false,
+      "watchRelationship": {
+        "priorSupervisorPid": 2827,
+        "priorGeneration": 1,
+        "priorPid": 2873,
+        "priorHash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+        "sameSupervisor": true
+      },
+      "priorChildNormalExitObserved": true,
+      "serialExitBeforeStart": true
+    },
+    {
+      "stage": "3source원복watch",
+      "pid": 3037,
+      "supervisorPid": 2827,
+      "generation": 3,
+      "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+      "aggregateBundleSha256": "6791d076f8af375482d43a44b21ef7c4b2755b845596fb13c563791a4b67caf7",
+      "artifactVersion": "0.1.0+6791d076f8af",
+      "encryptedApiPassed": true,
+      "pr2Revision": "02d01ca2b37affdbba7d76c287406eac4925e7ef",
+      "pr5Revision": "357a11368ccfb9f65c145b7a89385455a9e08791",
+      "priorChildPid": 2967,
+      "kind": "incremental source watch; exact original source restoration",
+      "apiAppVersion": "0.1.0+6791d076f8af",
+      "readinessBuildVersion": "0.1.0+6791d076f8af",
+      "privateChildLog0600": true,
+      "all15SourceHashesMatchPR": true,
+      "watchRelationship": {
+        "priorSupervisorPid": 2827,
+        "priorGeneration": 2,
+        "priorPid": 2967,
+        "priorHash": "29482c808a3b72806e718c48265c59237e20c32e7747bcc3c1a3f1ca168a7c23",
+        "sameSupervisor": true
+      },
+      "priorChildNormalExitObserved": true,
+      "serialExitBeforeStart": true
+    }
+  ],
+  "additional_version_env_correction": {
+    "stage": "runner env correction after completed stage1",
+    "pid": 2873,
+    "supervisorPid": 2827,
+    "generation": 1,
+    "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+    "aggregateBundleSha256": "6791d076f8af375482d43a44b21ef7c4b2755b845596fb13c563791a4b67caf7",
+    "artifactVersion": "0.1.0+6791d076f8af",
+    "encryptedApiPassed": true,
+    "pr2Revision": "02d01ca2b37affdbba7d76c287406eac4925e7ef",
+    "pr5Revision": "357a11368ccfb9f65c145b7a89385455a9e08791",
+    "priorChildPid": 2572,
+    "kind": "additional runner adoption for two-env version correction; not source-watch or independent UI proof",
+    "apiAppVersion": "0.1.0+6791d076f8af",
+    "readinessBuildVersion": "0.1.0+6791d076f8af",
+    "privateChildLog0600": true,
+    "all15SourceHashesMatchPR": true,
+    "independentUiCheckpointClaimed": false,
+    "priorChildNormalExitObserved": true
+  },
+  "intermediate_version_mismatch": {
+    "stage": "original stage1",
+    "readinessGeneratedVersion": "0.1.0+6791d076f8af",
+    "statusGetAppVersion": "0.0.0-dev",
+    "correction": "runner-only two-env propagation; no product/RPC edit"
+  },
+  "stage3_api_attempts": [
+    {
+      "exit": 1,
+      "credentialFreeError": "Error: Could not connect to the remote Orca runtime.",
+      "passProofCreated": false,
+      "causeNotEstablished": true,
+      "readyAtFirstProbeNotEstablished": true,
+      "firstFailureLogMtime": "2026-10-12T23:49:14.000Z"
+    },
+    {
+      "exit": 0,
+      "authenticatedEncryptedStatusGet": true,
+      "appVersion": "0.1.0+6791d076f8af",
+      "checkedAt": "2026-10-12T23:50:49.717Z"
+    }
+  ],
+  "final_source_restoration": {
+    "byteExact": true,
+    "entrySha256": "0fe540ddb5f34e83735d1b3ad2b64f50d78632351cfbddabcf4c77bcaf531de5",
+    "mainBundleMatchesOriginal": true,
+    "aggregateBundleMatchesOriginal": true,
+    "all15OwnedSourceHashesMatchPR": true,
+    "temporaryProductChangeRetained": false,
+    "implementationPrRevision": "357a11368ccfb9f65c145b7a89385455a9e08791"
+  },
+  "client_reconnect_checkpoints": [
+    {
+      "cycle": 1,
+      "stage": "1새runner채택",
+      "at": "2026-10-12T23:41:36.985Z",
+      "backend": {
+        "stage": "1새runner채택",
+        "pid": 2572,
+        "generation": 1,
+        "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+        "encryptedApiPassed": true
+      },
+      "oldSocketClosed": true,
+      "replacementTrafficObserved": true,
+      "workspaceVisible": true,
+      "catalogError": false,
+      "checkpointSha256": "099a33895b7fedc71169bbebf586af9c8f3bd264d6b5c3d97cc37d6111fbf7ba"
+    },
+    {
+      "cycle": 2,
+      "stage": "2임시source변경watch",
+      "at": "2026-10-12T23:47:33.531Z",
+      "backend": {
+        "stage": "2임시source변경watch",
+        "pid": 2967,
+        "generation": 2,
+        "hash": "29482c808a3b72806e718c48265c59237e20c32e7747bcc3c1a3f1ca168a7c23",
+        "encryptedApiPassed": true
+      },
+      "oldSocketClosed": true,
+      "replacementTrafficObserved": true,
+      "workspaceVisible": true,
+      "catalogError": false,
+      "checkpointSha256": "146805a37eb3d1c9d42fb604f9c8685c523eb9eb6077e213837bd606392ad2e5"
+    },
+    {
+      "cycle": 3,
+      "stage": "3source원복watch",
+      "at": "2026-10-12T23:51:13.182Z",
+      "backend": {
+        "stage": "3source원복watch",
+        "pid": 3037,
+        "generation": 3,
+        "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+        "encryptedApiPassed": true
+      },
+      "oldSocketClosed": true,
+      "replacementTrafficObserved": true,
+      "workspaceVisible": true,
+      "catalogError": false,
+      "checkpointSha256": "a2a4039f5ffde7f33b4d1d9eef8e877443fd57354931ccb3d95e49564e7fc276"
+    }
+  ],
+  "final_owned_source_sha256": [
+    {
+      "path": "src/main/agent-hooks/server/server-lifecycle.ts",
+      "sha256": "854a48ec02300f17a8587748485bcf3d72f21226dbd116be377a13c02e476eeb"
+    },
+    {
+      "path": "src/main/ipc/ssh.ts",
+      "sha256": "ab16b16f40e9fb8ee468e05f92b0f40d7dfba9e50858e8aad15cfabf17b3bb0c"
+    },
+    {
+      "path": "src/main/orcad/orcad-concurrent-clients.test.ts",
+      "sha256": "c56494ccc082f13fcd580f4bcb0f8346f5d7288483886a1d6881d0e8090d9f9b"
+    },
+    {
+      "path": "src/main/orcad/orcad-entry.ts",
+      "sha256": "0fe540ddb5f34e83735d1b3ad2b64f50d78632351cfbddabcf4c77bcaf531de5"
+    },
+    {
+      "path": "src/main/orcad/orcad-pairing.test.ts",
+      "sha256": "9c024c18dbdc75b49d5063403d5fc8445ab95ad219b3b15db39dea2c50ab5a76"
+    },
+    {
+      "path": "src/main/orcad/orcad-pairing.ts",
+      "sha256": "89029dff7792d27d67de6deb70b068c8beef6b0b5eb633cdb92648ef26603e10"
+    },
+    {
+      "path": "src/main/runtime/agent-control-adapter.test.ts",
+      "sha256": "528a207c49a5cdb3bf0218d17ec346bfd7c9cfdfa2f224c4af1de7d7966d577c"
+    },
+    {
+      "path": "src/main/runtime/agent-control-adapter.ts",
+      "sha256": "e47d2ccc8a6fcd53fd1e25beca277d62532c2814880d8a1e7a60ed6367f6d7e3"
+    },
+    {
+      "path": "src/main/server/serve-readiness.ts",
+      "sha256": "825ffe951914a2a25b3c277bea7b8ec8bf155a2e9c1feac110a5336bdb3125f9"
+    },
+    {
+      "path": "src/main/ssh/system-ssh-args.ts",
+      "sha256": "f8fa737ea23525e16198630af63ada86d9313697cb7a98aefc1cca26a51aa3cc"
+    },
+    {
+      "path": "src/main/startup/main-process-runtime-launch.ts",
+      "sha256": "70e326db94df4b4b6db84e26ae3ca16778f59d9b0b6ad332e4974c877008a186"
+    },
+    {
+      "path": "config/scripts/dev-orcad.mjs",
+      "sha256": "132f3cd5ea4d57edcd0114ca99f5392cd5ff8933bc02954200d0b28989be38f1"
+    },
+    {
+      "path": "config/scripts/dev-orcad.test.mjs",
+      "sha256": "a7263352853bd5d9de8d19d8cdf89e9df0d3932a9f7b9816548e7d4de83c8a7e"
+    },
+    {
+      "path": "config/scripts/orcad-build-options.mjs",
+      "sha256": "676148d98a3f4a3a9a23a398692bb45b63a9f8a7bd182a1d8fac5540ae278e84"
+    },
+    {
+      "path": "config/scripts/build-orcad.mjs",
+      "sha256": "a0270720e2c93e03c343637fe9ab4b6bd41db06d9a175055ad726c31b696babb"
+    }
+  ],
+  "final_runtime": {
+    "supervisorPid": 2827,
+    "childPid": 3037,
+    "generation": 3,
+    "mainBundleSha256": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+    "version": "0.1.0+6791d076f8af",
+    "apiVersionReadinessVersionGeneratedVersionEqual": true,
+    "backendPodReady": true,
+    "backendPodRestartCount": 0,
+    "legacyAdapterVariablesSet": false
   }
 }
