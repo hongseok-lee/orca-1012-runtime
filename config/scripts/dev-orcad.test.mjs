@@ -278,7 +278,7 @@ test(
     const file = join(root, 'runtime-version')
     await writeFile(
       join(root, 'src/main/orcad/main.ts'),
-      `import {writeFileSync} from 'node:fs'; writeFileSync(${JSON.stringify(file)}, process.env.ORCA_VERSION); setInterval(() => {},1000);`
+      `import {writeFileSync} from 'node:fs'; writeFileSync(${JSON.stringify(file)}, JSON.stringify({runtime:process.env.ORCA_VERSION,app:process.env.ORCA_APP_VERSION})); setInterval(() => {},1000);`
     )
     const dev = await startOrcadDev({ root, onEvent: () => {} })
     try {
@@ -290,10 +290,10 @@ test(
           return false
         }
       })
-      assert.equal(
-        await readFile(file, 'utf8'),
-        await readFile(join(root, 'out/orcad-dev/current/.version'), 'utf8')
-      )
+      const received = JSON.parse(await readFile(file, 'utf8'))
+      const version = await readFile(join(root, 'out/orcad-dev/current/.version'), 'utf8')
+      assert.equal(received.runtime, version)
+      assert.equal(received.app, version)
     } finally {
       await dev.close()
       await rm(root, { recursive: true, force: true })
