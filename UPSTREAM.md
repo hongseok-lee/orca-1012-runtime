@@ -8,3 +8,10 @@
 - Upstream deployment and release workflows are excluded from the import.
 
 No private platform repository or its Git history is included in this repository.
+
+The import manifest records each included file hash and all exclusions.
+Upstream README is preserved as `README.upstream.md`.
+Upstream workflow files and conflicting governance files are excluded.
+`mobile/google-services.json` is excluded because it contains an API-key-shaped
+service identifier. Remote development configuration has not been prepared.
+No existing private-platform patches are included.
