@@ -1,0 +1,44 @@
+{
+  "kind": "ExpoWeb iPhone viewport; not nativeiPhone",
+  "actualExpoMode": "CI=1; automaticwatchunsupported",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3
+  },
+  "stage": "2\uc784\uc2dcsource\ubcc0\uacbdwatch",
+  "at": "2026-10-12T23:47:33.531Z",
+  "backend": {
+    "stage": "2\uc784\uc2dcsource\ubcc0\uacbdwatch",
+    "pid": 2967,
+    "generation": 2,
+    "hash": "29482c808a3b72806e718c48265c59237e20c32e7747bcc3c1a3f1ca168a7c23",
+    "encryptedApiPassed": true
+  },
+  "oldSocketClosed": true,
+  "replacementTrafficObserved": true,
+  "workspaceVisible": true,
+  "catalogError": false,
+  "catalogResult": "empty",
+  "sourceBaseRevision": "69b969b367329d4c4ea975491f575a810e2289d0",
+  "approvedWatchdogSha256": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b",
+  "implementationCommit": "f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e",
+  "artifact": {
+    "file": "reconnected-workspace-2.png",
+    "sha256": "73ddcf2d58b19201028ec7642af8121ac96cd5716f4613173da6142f9b4408b2"
+  },
+  "credentialFreeImageVisuallyReviewed": true,
+  "actualBackendWatchRelationship": {
+    "priorChildPid": 2873,
+    "pid": 2967,
+    "generation": 2,
+    "hash": "29482c808a3b72806e718c48265c59237e20c32e7747bcc3c1a3f1ca168a7c23",
+    "sourceChanged": true,
+    "changedSourcePaths": [
+      "src/main/orcad/orcad-entry.ts"
+    ],
+    "priorChildExited": true
+  },
+  "extraVersionAdoptionIsSeparate": true
+}

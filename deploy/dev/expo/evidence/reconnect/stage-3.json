@@ -1,0 +1,56 @@
+{
+  "kind": "ExpoWeb iPhone viewport; not nativeiPhone",
+  "actualExpoMode": "CI=1; automaticwatchunsupported",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3
+  },
+  "stage": "3source\uc6d0\ubcf5watch",
+  "at": "2026-10-12T23:51:13.182Z",
+  "backend": {
+    "stage": "3source\uc6d0\ubcf5watch",
+    "pid": 3037,
+    "generation": 3,
+    "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+    "encryptedApiPassed": true
+  },
+  "oldSocketClosed": true,
+  "replacementTrafficObserved": true,
+  "workspaceVisible": true,
+  "catalogError": false,
+  "catalogResult": "empty",
+  "sourceBaseRevision": "69b969b367329d4c4ea975491f575a810e2289d0",
+  "approvedWatchdogSha256": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b",
+  "implementationCommit": "f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e",
+  "artifact": {
+    "file": "reconnected-workspace-3.png",
+    "sha256": "73ddcf2d58b19201028ec7642af8121ac96cd5716f4613173da6142f9b4408b2"
+  },
+  "credentialFreeImageVisuallyReviewed": true,
+  "actualBackendWatchRelationship": {
+    "priorChildPid": 2967,
+    "pid": 3037,
+    "generation": 3,
+    "hash": "33406ac4020ba05d2812f0d4c9e2b10f3e7cb861b7cf7e66453ca9ba1c255979",
+    "sourceChanged": false,
+    "changedSourcePaths": [],
+    "priorChildExited": true,
+    "all15SourceHashesMatchPR": true
+  },
+  "extraVersionAdoptionIsSeparate": true,
+  "backendValidation": {
+    "encryptedApi": true,
+    "apiReadyChildMatches": true,
+    "artifactVersionMatchesChildEnv": true,
+    "readinessVersionMatchesArtifact": true,
+    "sourceScopeMatches": true,
+    "newOwnedChild": true,
+    "privateLog0600": true,
+    "expectedGeneration": true,
+    "apiVersionMatchesArtifact": true
+  },
+  "sourceRestored": true,
+  "backendFirstApiFailureAndFinalPassRecordedSeparatelyByOwner": true
+}

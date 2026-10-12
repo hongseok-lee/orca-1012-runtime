@@ -1,0 +1,27 @@
+{
+  "format-final": {
+    "exit": 0,
+    "summary": []
+  },
+  "lint-final": {
+    "exit": 0,
+    "summary": [
+      "Found 0 warnings and 0 errors."
+    ]
+  },
+  "test-final": {
+    "exit": 0,
+    "summary": [
+      "Test Files  1 passed (1)",
+      "Tests  9 passed (9)"
+    ]
+  },
+  "productSourceHashes": {
+    "/workspaces/orca": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b",
+    "/tmp/orca-expo-local": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b"
+  },
+  "testHashes": {
+    "/workspaces/orca": "da660ea296b228a3517572115ad54379ea629d678dbb7d81f464a999dab6406c",
+    "/tmp/orca-expo-local": "da660ea296b228a3517572115ad54379ea629d678dbb7d81f464a999dab6406c"
+  }
+}
