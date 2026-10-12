@@ -89,5 +89,14 @@
   "client_capture": null,
   "reload_status": "waiting for first client capture; no claim yet",
   "image_desktop_release_builds": 0,
-  "feature_ha_persistence_contract_acceptance": false
+  "feature_ha_persistence_contract_acceptance": false,
+  "runtime_version_test": {
+    "passed": 1,
+    "failed": 0,
+    "targeted_only": true
+  },
+  "format_check": {
+    "initial_exit": 1,
+    "corrected_exit": 0
+  }
 }

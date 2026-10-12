@@ -57,7 +57,9 @@ export function orcadGraphErrors(metafiles) {
     for (const metafile of metafiles) {
       for (const [file, info] of Object.entries(metafile.inputs)) {
         for (const imported of info.imports ?? []) {
-          if (matches(imported.original ?? imported.path)) {files.add(file)}
+          if (matches(imported.original ?? imported.path)) {
+            files.add(file)
+          }
         }
       }
     }
