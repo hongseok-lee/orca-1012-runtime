@@ -1,0 +1,888 @@
+{
+  "method": "root exact allowlist and authorized path/link generalization",
+  "authoritative_design_source_sha256": "76b52dc79f4ac5fd1274131564aba3cc1d53e1a88b0810fa031ae27ec0dfc200",
+  "source_unmodified": true,
+  "files": [
+    {
+      "source_path": "docs/plans/orca-1012-implementation-worklist.md",
+      "public_path": "docs/plans/orca-1012-implementation-worklist.md",
+      "source_sha256": "75877b87d5c08e0e1e565da30c2b304553bed2e06a52b78c2098a4b52802998d",
+      "public_sha256": "53a21b8621266333813415d50b5ae7dee8ce9ec2ed9d4aa3f24867cf357e8088",
+      "source_bytes": 43125,
+      "public_bytes": 43109,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "excluded_private_link_to_title": 6,
+        "agent_link_to_public_AGENTS": 2,
+        "historical_nfs_path": 1,
+        "protected_backup_path": 1,
+        "historical_source_checkout": 1,
+        "private_resource_identity": 4,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-parallel-execution-flow.md",
+      "public_path": "docs/plans/orca-1012-parallel-execution-flow.md",
+      "source_sha256": "4eb5fadfcff710c1816dfebd432a5dec058c0bed7618920f7ee309100f2fde83",
+      "public_sha256": "bd2fc7b7ba8f3feb22e35a55841419c99b314d4d35e9770028de3f4c1948d2ce",
+      "source_bytes": 28509,
+      "public_bytes": 28766,
+      "transformations": {
+        "retained_public_relative_link": 3,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-pr-development-workflow.md",
+      "public_path": "docs/plans/orca-1012-pr-development-workflow.md",
+      "source_sha256": "8aea8e56e7c1d14b458167c084a1c183570fb879e3b2858b8ddf229852808a7a",
+      "public_sha256": "0349a66448990a6038d50e268ed6bb9720b3ce96851a1051b6d55698f3693f51",
+      "source_bytes": 13162,
+      "public_bytes": 13419,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-foundation-pr-specs.md",
+      "public_path": "docs/plans/orca-1012-foundation-pr-specs.md",
+      "source_sha256": "df2119615d680705753922c5443a3316fa3bf30592221b58f3aea797b6b631c6",
+      "public_sha256": "df2119615d680705753922c5443a3316fa3bf30592221b58f3aea797b6b631c6",
+      "source_bytes": 8034,
+      "public_bytes": 8034,
+      "transformations": {
+        "unchanged_root_foundation_spec": 1
+      },
+      "byte_identical": true
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/C-01.md",
+      "public_path": "docs/plans/orca-1012-specs/C-01.md",
+      "source_sha256": "3b0d605b391a8c85288811f8593cefc7fa961a515fc722527d36b2b5aa8ad8db",
+      "public_sha256": "48d4b38d05b278096f65a9f5b86b22cae752998ab4b0bccd5050989504d5d094",
+      "source_bytes": 2125,
+      "public_bytes": 2382,
+      "transformations": {
+        "retained_public_relative_link": 2,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/COMMON.md",
+      "public_path": "docs/plans/orca-1012-specs/COMMON.md",
+      "source_sha256": "9aa08c26af6d7411b818eb9f649f8215b00840f19188e4be61784c8834ce4623",
+      "public_sha256": "8c8122bcd2333b94937ed83f5ba8a095a08fb18771dac25040c3e2379d31704d",
+      "source_bytes": 11798,
+      "public_bytes": 11962,
+      "transformations": {
+        "retained_public_relative_link": 7,
+        "excluded_private_link_to_title": 2,
+        "agent_link_to_public_AGENTS": 2,
+        "historical_nfs_path": 2,
+        "protected_backup_path": 1,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_session_or_resource_identity": 2,
+        "private_tool_call_reference": 0,
+        "private_byte_identity_clarification": 1
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/G-01.md",
+      "public_path": "docs/plans/orca-1012-specs/G-01.md",
+      "source_sha256": "6d582b7728723deb0b15da8f61a0f86659c8b2d59e957327137dcc0614248df4",
+      "public_sha256": "896ee0e438d6bbebbf6222a1232a71aa414caa80be0f9930f70f01a65bfbc281",
+      "source_bytes": 2814,
+      "public_bytes": 3071,
+      "transformations": {
+        "retained_public_relative_link": 2,
+        "historical_source_checkout": 1,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/G-02.md",
+      "public_path": "docs/plans/orca-1012-specs/G-02.md",
+      "source_sha256": "d73f12b0bc8471750bca5f27e1442a5d63b7734588a35d0ec3076388b351ab74",
+      "public_sha256": "daebb071defba587de8d566b91c4478925ed8272161e60b865f408b5ed3c0c59",
+      "source_bytes": 2390,
+      "public_bytes": 2647,
+      "transformations": {
+        "retained_public_relative_link": 8,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/G-03.md",
+      "public_path": "docs/plans/orca-1012-specs/G-03.md",
+      "source_sha256": "a65582dc724abf6df99f72f2d56fc5686e6670ec99293a053150e88479dfd7ac",
+      "public_sha256": "ed4af08ae0935f1dbe774c144f6da354ab292bd6d2f8960ab4db8e452b3b454d",
+      "source_bytes": 2410,
+      "public_bytes": 2667,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/G-04.md",
+      "public_path": "docs/plans/orca-1012-specs/G-04.md",
+      "source_sha256": "eac4f6fdfffc0e172bf7c576befd5759fc3e6905a1283418582d55f9a2f271d9",
+      "public_sha256": "36d63ce0a32f97e7e13b8802eef8f896b9cab7cf1ee09ab312af63e68d7686f1",
+      "source_bytes": 2134,
+      "public_bytes": 2391,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/G-05.md",
+      "public_path": "docs/plans/orca-1012-specs/G-05.md",
+      "source_sha256": "6f8b6c8d6426f3ab4670906b03b1a29dbcf454d5c354ad22e8b8ba7dacd662db",
+      "public_sha256": "5ff56011d1c4b3b6d1ddd00309a8ea89506a418a8f22e8c51f31c3032190e769",
+      "source_bytes": 2397,
+      "public_bytes": 2654,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/O-01.md",
+      "public_path": "docs/plans/orca-1012-specs/O-01.md",
+      "source_sha256": "2ebbd0d1fe37b23dfc2f7e8fee01d6ae2f9590ea44be49dd27b25e98a56ad977",
+      "public_sha256": "dafaaede82a24c22f54dc498ecc48a661c671d73f1f5de30c2da6761652a0811",
+      "source_bytes": 2885,
+      "public_bytes": 3010,
+      "transformations": {
+        "excluded_private_link_to_title": 2,
+        "retained_public_relative_link": 2,
+        "protected_backup_path": 2,
+        "historical_source_checkout": 0,
+        "private_resource_identity": 4,
+        "deletion_operation_identity": 1,
+        "private_tool_call_reference": 0,
+        "protected_archive_hash": 1
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/O-02.md",
+      "public_path": "docs/plans/orca-1012-specs/O-02.md",
+      "source_sha256": "eba3ac75e9890709afa133a7df70236656943024c23cc0a494caadb002587848",
+      "public_sha256": "3401db9320d2590b5e71b68e01e407d7915a72151fb5d0168f6fcfacb823570a",
+      "source_bytes": 2088,
+      "public_bytes": 2370,
+      "transformations": {
+        "excluded_private_link_to_title": 2,
+        "retained_public_relative_link": 4,
+        "historical_nfs_path": 1,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0,
+        "private_byte_identity_clarification": 4
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/O-03.md",
+      "public_path": "docs/plans/orca-1012-specs/O-03.md",
+      "source_sha256": "af32fca9e867350bc39fe4d12906337d0cb8bb13b1a9768b8fb8d4621785af0c",
+      "public_sha256": "2fbec58e77a2daf44d097ce00463b6dcb1b24a91ce5aa4ee03be418960d14524",
+      "source_bytes": 2407,
+      "public_bytes": 2550,
+      "transformations": {
+        "agent_link_to_public_AGENTS": 3,
+        "retained_public_relative_link": 1,
+        "private_memory_path": 1,
+        "private_template_snapshot_path": 1,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_session_or_resource_identity": 2,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-01.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-01.md",
+      "source_sha256": "9c5aa03b90e48a16f214ee32fa610eb4c21fad1546b8fe9843d3aa10fb9da0b3",
+      "public_sha256": "ff883ccf8ec6fde04e72325b789dc2edb148672216f7e2e5b37488c8ff659809",
+      "source_bytes": 3540,
+      "public_bytes": 3810,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "private_resource_identity": 2,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-02.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-02.md",
+      "source_sha256": "7617ff23afd9489b1764fbba6ba606789ad3b759ab40772d5901df84f608cf41",
+      "public_sha256": "2844f2f87c94d12cfd3c4fef79a3a855f5a10222143bf075e49a8565f02888c0",
+      "source_bytes": 3172,
+      "public_bytes": 3429,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-03.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-03.md",
+      "source_sha256": "e411b9367033ed0c9d170e09dff234000a8922c513c6167985729b73f820c41d",
+      "public_sha256": "b126758b06da14cd981a103cd1849080628990133dacc67ea787c0f14abfb969",
+      "source_bytes": 2588,
+      "public_bytes": 2845,
+      "transformations": {
+        "retained_public_relative_link": 3,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-04.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-04.md",
+      "source_sha256": "12014d19a5eb1eb5493e891ddb4cf8023939db83b591425c5b4dbf4fb50d1a3c",
+      "public_sha256": "fc92d1340ba6d33a0fc3a436d7a41db57629a00d050d88e903cf67ed4917226b",
+      "source_bytes": 2356,
+      "public_bytes": 2613,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-05.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-05.md",
+      "source_sha256": "51a24af9c6e4e28c6d307c5b0f960786c3dd6b980e3d78a8a316776613cbe6dc",
+      "public_sha256": "8ed1245cd1c8788a6f234027592bd7dd2273500555bb82190f94149a8accbb20",
+      "source_bytes": 2728,
+      "public_bytes": 2985,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-06.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-06.md",
+      "source_sha256": "31827fd23202a0b3f81c4c3e752c721671a6913d6927eea97fcf50f6c4f22881",
+      "public_sha256": "07cebbe3ca1ec86ff700122e0e0b4ff43cef21f2eb29c53724daba5f35f7aa74",
+      "source_bytes": 2460,
+      "public_bytes": 2717,
+      "transformations": {
+        "retained_public_relative_link": 3,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-07.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-07.md",
+      "source_sha256": "0e4f8ce9eee81992761191749f5d05e6d9a1707bf3a72e89e346bab770cd1317",
+      "public_sha256": "53707fe40130f873f39eab3c21bddb223f89cb684796079201922e016f86d13f",
+      "source_bytes": 2513,
+      "public_bytes": 2770,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-08.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-08.md",
+      "source_sha256": "b1c7864ca70bf9c5ed10ceb71688a783f1812eef29d4e5066daacc7f139b2937",
+      "public_sha256": "fc091730869b916da1ff88fbf568b84d99da7e55c2f22c31aa1354e7bd13b055",
+      "source_bytes": 2555,
+      "public_bytes": 2812,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-09.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-09.md",
+      "source_sha256": "1914aced6f5a981684ca891dde4f481a50979b9f644b4bcc8667a7745d6f9b81",
+      "public_sha256": "d0b195896c3f3448b5779ec6998d0b98eb96938d999453c915ba535d39330e8d",
+      "source_bytes": 2976,
+      "public_bytes": 3233,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-10.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-10.md",
+      "source_sha256": "c522bc27f9bdb6d0690beb26c74114f8947795dcc754d20c8711130cfcd27ea3",
+      "public_sha256": "8daaf36a6a2257dab521e34bfac31b9c8000feb91f178c678df1934ec29ad88e",
+      "source_bytes": 2608,
+      "public_bytes": 2865,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-11.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-11.md",
+      "source_sha256": "56dd1d4ddf8fa64b57b3604e472ba4958c1706b2efa64085a3cbdc2d9dc0701e",
+      "public_sha256": "13aef9f79b7580a2a2908278d86879ba871a19530b5d9701dcc6a6832dce9be7",
+      "source_bytes": 3310,
+      "public_bytes": 3567,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-12.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-12.md",
+      "source_sha256": "34fa6c0416164fb7c26b1ea2c85a25b1806ffe2e9bf78d0db76019879d10b921",
+      "public_sha256": "4f00ad2f161770324bdcb6787945d04b589c7ec53316dd47d76bcaa5fdfe7dd7",
+      "source_bytes": 2409,
+      "public_bytes": 2666,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-13.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-13.md",
+      "source_sha256": "e037a58663d33184b2dde89dbf9fac696b4c24e07f636704885fe51c54827913",
+      "public_sha256": "caa11969ef445cc5134e3e148519825f505a35593eec6b144e1d672a1aea8579",
+      "source_bytes": 2971,
+      "public_bytes": 3228,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-14.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-14.md",
+      "source_sha256": "37667fee2350f8bae4f126b85b75630a526a29857e8ccff8ed69868161f5b22d",
+      "public_sha256": "97d5e4e20b36bd9ab3b5f4a453f21a57334a5a60f8a83d67a2df0f0b15a410b6",
+      "source_bytes": 2486,
+      "public_bytes": 2743,
+      "transformations": {
+        "retained_public_relative_link": 7,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-15.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-15.md",
+      "source_sha256": "eb67ed6add63d800a4bcb07e2421a0be428f5c9cfd28d14289dfa7f5b48c22e0",
+      "public_sha256": "7db49ad73e3b627c451a8ab05485e2dc1eef9056938b9980a16fe6ee25d5dbd8",
+      "source_bytes": 2115,
+      "public_bytes": 2372,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-16.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-16.md",
+      "source_sha256": "7a97bcf0dd4ce1f17666bc0b6dcbb2e9573453c042785b05d09bda9b48f48335",
+      "public_sha256": "33de45aba53fb7a8d29689259da686d6205b2290b008d9fcfecb75f3c51c5a54",
+      "source_bytes": 4120,
+      "public_bytes": 4377,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-17.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-17.md",
+      "source_sha256": "90417ff571dc723471c4ec7565b2daaacde5f4324e635f46747c6983048164f0",
+      "public_sha256": "23a82e420f4a099ff2a282c80a8faf7a0266420263bec5a319466273376e1d9d",
+      "source_bytes": 3516,
+      "public_bytes": 3773,
+      "transformations": {
+        "retained_public_relative_link": 8,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-18.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-18.md",
+      "source_sha256": "3553de6977d4b8edde6fa403a088972586a2b13dd536760799e87aadf824c52d",
+      "public_sha256": "1fcf871944cd23fc9a94015650068fd7b0c0a3c23a308a684e9861c719add89a",
+      "source_bytes": 2688,
+      "public_bytes": 2945,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-19.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-19.md",
+      "source_sha256": "b7b2db492b5e52d19b5fe5f8099eec1a8406ad58f6868336dd1d0e5ac44feef1",
+      "public_sha256": "b232ad70ca4c94e63649fd5b46f9b3c3a25ad00597d30729356ef060d58d6fa3",
+      "source_bytes": 2539,
+      "public_bytes": 2796,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-20.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-20.md",
+      "source_sha256": "af1f6e82c10c36346a532cd45f8638a7a59a43b8f0d38cf6e6ae897242df3504",
+      "public_sha256": "68acdd75aaa8f98e5155eeaee4158ceea3a25118d0ce6df8df6631aa2f018e09",
+      "source_bytes": 2949,
+      "public_bytes": 3206,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-21.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-21.md",
+      "source_sha256": "20e3b3fe0a864df74edee3203face317858e2f71b3474278b842f1ae313c0b1f",
+      "public_sha256": "2d7e08d1e836c16143cd820d51b3568c8bbfbb1fa0b0a7d98517f30ca9feb037",
+      "source_bytes": 3108,
+      "public_bytes": 3365,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-22.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-22.md",
+      "source_sha256": "93e69ac9a58efe943406c209363562c490d3a81ce2b179305de15e695854b0b6",
+      "public_sha256": "a870856aa8d23ca35cb4a9ed3ba448fb1aef8de9fbf254b75154f7b60bbd0a1a",
+      "source_bytes": 2835,
+      "public_bytes": 3092,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-23.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-23.md",
+      "source_sha256": "b3cb20cdd3bff64f2d3086bf251b9a483f919b0ffbc0bf5449830748d41a8712",
+      "public_sha256": "9b8a60feffa8fe76c8877f250c0b5dd911c308a8cb87bf43628f57d173241070",
+      "source_bytes": 2469,
+      "public_bytes": 2726,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-24.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-24.md",
+      "source_sha256": "9e7eed342d720127fb8a8e1c07ada12f43a9ddad0049265c3e6594235b441025",
+      "public_sha256": "d7a0634713f7b13756e590b5d5ddffd0f9072ba60e8b1cdbdc7e4abd95df54b8",
+      "source_bytes": 3155,
+      "public_bytes": 3412,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-25.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-25.md",
+      "source_sha256": "5e4183152f85ff48f0bbd71cc71d383f76d6eb3aedcaf4aa3e8d0f4009daa8dc",
+      "public_sha256": "e470317ba0bcede56608d40721aa219c47bb72cf954d022c81592fbc924bc87d",
+      "source_bytes": 2482,
+      "public_bytes": 2739,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-26.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-26.md",
+      "source_sha256": "6cd5a1ac211b58f232d0146ccca1734746cdd471d6b15e296702d41908562a4a",
+      "public_sha256": "4650f73757d9d44745ee016611cccf73cb2fbfeed3cc01941e98a6eb4ecc1655",
+      "source_bytes": 3299,
+      "public_bytes": 3556,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-27.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-27.md",
+      "source_sha256": "71363714d94871f0dad8ae6e3d4c00f4d66bfe449d26e12d539daae438f12a44",
+      "public_sha256": "e93df8fe9ba4a69aa10f640f5d7f935063c33a24307008c09c11d8aa5abbef80",
+      "source_bytes": 2813,
+      "public_bytes": 3070,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-28.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-28.md",
+      "source_sha256": "7001a3b7aaa52fb5ffdc3e5f2a810f128cfffb62442a6d8b624e479106e1aa9e",
+      "public_sha256": "3d92eef10b53b64991e69ab66cef8b2e3348d141c3429c2b604dc77784145bbc",
+      "source_bytes": 2869,
+      "public_bytes": 3126,
+      "transformations": {
+        "retained_public_relative_link": 7,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-29.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-29.md",
+      "source_sha256": "abf91b639575e38cffc5256cf7cda1459c093802e403005e83a163e4d48f3138",
+      "public_sha256": "0c4bca7abcf115610a2922ca02008ffd291a7fcb87aaac61ed5cb41d23c056a8",
+      "source_bytes": 2298,
+      "public_bytes": 2555,
+      "transformations": {
+        "retained_public_relative_link": 2,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P1-30.md",
+      "public_path": "docs/plans/orca-1012-specs/P1-30.md",
+      "source_sha256": "aad2c37d1de3c2866836044b6117b455614e22b971b0b739897e2de257bcaad0",
+      "public_sha256": "60f06a33fc4e1c0469de024041e34d778f4880547cab00bd6095054d9ea56ae3",
+      "source_bytes": 4658,
+      "public_bytes": 4915,
+      "transformations": {
+        "retained_public_relative_link": 6,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-01.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-01.md",
+      "source_sha256": "568965578faf0c729c74a9d2ebf770dd147bc539a195a2e25e931a36ad091bfc",
+      "public_sha256": "975ad9df1d63a183e71cbf4f0bec2485bbd2a948625f56cc61f059194e142d71",
+      "source_bytes": 2631,
+      "public_bytes": 2888,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-02.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-02.md",
+      "source_sha256": "7002443ad2b498d058d383af16e417076b9772cb575d3e1436482e14c5fd2c6a",
+      "public_sha256": "3e2854f8a811fce325bd95c4c6a28bc942facd3f3afdf79814bec8757124e4d8",
+      "source_bytes": 2478,
+      "public_bytes": 2735,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-03.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-03.md",
+      "source_sha256": "1bcb5cabc031282210724841aee4b6f65e12203d39d6b6f7cc66fc25dde2d05c",
+      "public_sha256": "ddced025ab7707fb422269f8262650795b867c8e81704895157a87d3374196fd",
+      "source_bytes": 2746,
+      "public_bytes": 3003,
+      "transformations": {
+        "retained_public_relative_link": 7,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-04.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-04.md",
+      "source_sha256": "c1e151c96ef915475df21c9dca6271bc546e94dfe4b7c5a05a35e5e9070e0788",
+      "public_sha256": "ecdc2babbc450faefc19c00994d5bebcd9b67c839e9e6895d738618b4f7243eb",
+      "source_bytes": 2482,
+      "public_bytes": 2739,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-05.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-05.md",
+      "source_sha256": "d1b3f760206243afe08e6eb56f87ec8eb68f5fe279b0abf8e3544fcb956c2129",
+      "public_sha256": "27505ffb6aa33da6b2b7a1351fd188f36a9b27beeb376461e3ec2fc79be89a71",
+      "source_bytes": 2828,
+      "public_bytes": 3085,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-06.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-06.md",
+      "source_sha256": "7c92886c84d9cdc0e60f174272b6ef0fb43529e5b4872beedc0e0be221415295",
+      "public_sha256": "c7508e4cc67acd2c2b9dcd7a40e53bdd629d352a24a2d449d1585c1c239023f5",
+      "source_bytes": 3124,
+      "public_bytes": 3381,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-07.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-07.md",
+      "source_sha256": "8582434ab9a30ede3c334ffd0718d3ee544f93a308cb5bc2b0802ecb0da2a976",
+      "public_sha256": "6e16bd57af126cdde62849cdd9c0c714a1f82414ea7159afc254c651eb7580e5",
+      "source_bytes": 2478,
+      "public_bytes": 2735,
+      "transformations": {
+        "retained_public_relative_link": 5,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-08.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-08.md",
+      "source_sha256": "206adcf1272520dd31db847bf180a0538532c7604803d274226ec3774f54a36b",
+      "public_sha256": "e7848dcb360a6957e3d512271d91325a17f8e4b04aa9e5dff1865a377dc9e6b0",
+      "source_bytes": 2295,
+      "public_bytes": 2552,
+      "transformations": {
+        "retained_public_relative_link": 7,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-09.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-09.md",
+      "source_sha256": "f2e875ff143eeb57ac9ceab2e14f657e2fd646cae2ef63f50f586251c4107ba7",
+      "public_sha256": "6f99c2fd21e9c534127f10e80427979b72a85708959429828bdb390c60ca8287",
+      "source_bytes": 3030,
+      "public_bytes": 3287,
+      "transformations": {
+        "retained_public_relative_link": 4,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/P2-10.md",
+      "public_path": "docs/plans/orca-1012-specs/P2-10.md",
+      "source_sha256": "eb6224dcd0643788e62d96a2e47a674ecbf00b74dc4e0bd26a51ea0555e415cf",
+      "public_sha256": "6bb9a0efd869d48dfb723ff79dae9248e590a84f0e76649699b981ee84b17c75",
+      "source_bytes": 2296,
+      "public_bytes": 2553,
+      "transformations": {
+        "retained_public_relative_link": 3,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/README.md",
+      "public_path": "docs/plans/orca-1012-specs/README.md",
+      "source_sha256": "6a9b3dacc79ac4115cc57e36bb447347190d3954fd7ca8f011c0e5d999c790f1",
+      "public_sha256": "136087a681a2dbcc0f50d0632b08de32a83fc148b1d7179f7c17fc65cebe4544",
+      "source_bytes": 8315,
+      "public_bytes": 8434,
+      "transformations": {
+        "retained_public_relative_link": 55,
+        "agent_link_to_public_AGENTS": 2,
+        "excluded_private_link_to_title": 2,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/plans/orca-1012-specs/U-01.md",
+      "public_path": "docs/plans/orca-1012-specs/U-01.md",
+      "source_sha256": "a5e3c0693b93f7de743b69ef78c7cba253ac36ab7bec41117e8033e9fd85df2f",
+      "public_sha256": "b55556eccfa0b8c9c117bc14d4b98f6613acf3cfa2d19297b92ac396bdfab696",
+      "source_bytes": 2207,
+      "public_bytes": 2404,
+      "transformations": {
+        "retained_public_relative_link": 2,
+        "excluded_private_link_to_title": 1,
+        "historical_source_checkout": 0,
+        "deletion_operation_identity": 0,
+        "private_tool_call_reference": 0
+      },
+      "byte_identical": false
+    },
+    {
+      "source_path": "docs/reference/haagent-20261012/plans/orca-durable-session-snapshot-rpc-spec-20261010.md",
+      "public_path": "docs/reference/haagent-20261012/plans/orca-durable-session-snapshot-rpc-spec-20261010.md",
+      "source_sha256": "76b52dc79f4ac5fd1274131564aba3cc1d53e1a88b0810fa031ae27ec0dfc200",
+      "public_sha256": "e6ab9b74120802153dab1ccb257ff0a3d22fc9703093c2a68680bdeb11e5db53",
+      "source_bytes": 191448,
+      "public_bytes": 190691,
+      "transformations": {
+        "excluded_private_link_to_title": 42,
+        "operator_checkout_path": 1,
+        "historical_nfs_path": 1,
+        "historical_source_checkout": 2,
+        "deletion_operation_identity": 0,
+        "private_session_or_resource_identity": 1,
+        "private_tool_call_reference": 6
+      },
+      "byte_identical": false
+    }
+  ]
+}
