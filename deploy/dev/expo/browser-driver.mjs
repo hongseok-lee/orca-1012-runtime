@@ -51,7 +51,9 @@ try {
     evidence.publicURL = target
     evidence.captures.push('public-repository.png')
   } else {
-    await page.goto(origin, { waitUntil: 'domcontentloaded' })
+    evidence.phase = 'initial-web-navigation'
+    await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 300000 })
+    evidence.phase = 'home-render'
     evidence.crypto = await page.evaluate(async () => {
       let randomValuesCallSucceeded = false
       let subtleDigestSucceeded = false
