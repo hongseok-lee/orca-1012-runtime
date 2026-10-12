@@ -37,7 +37,7 @@ node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON config/scripts/dev-orcad.mjs
 The runner incrementally bundles the main/daemon/watcher entries together into
 memory, rejects Electron/node:sqlite imports, and stages complete artifacts in
 `out/orcad-dev/generations/`. It writes the existing content-derived `.version`,
-copies agent-browser, gracefully stops only its runtime PID and then starts the
+copies agent-browser, sets the child ORCA_VERSION to that exact artifact version, gracefully stops only its runtime PID and then starts the
 new generation. Generation paths remain immutable so detached daemon siblings
 remain available. `out/orcad` release artifacts are untouched. The esbuild
 onEnd barrier serializes adoption; failed compilation/graph/artifact staging

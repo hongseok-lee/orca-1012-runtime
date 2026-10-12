@@ -11,7 +11,9 @@ import { startOrcadDev, recoverOrcadDevLock } from './dev-orcad.mjs'
 async function until(predicate) {
   const deadline = Date.now() + 30_000
   while (Date.now() < deadline) {
-    if (await predicate()) {return}
+    if (await predicate()) {
+      return
+    }
     await delay(50)
   }
   throw new Error('Timed out waiting for runner state')
@@ -242,7 +244,9 @@ test(
       }
       assert.equal(next.exitCode, 0)
     } finally {
-      if (runner.exitCode === null && runner.signalCode === null) {runner.kill('SIGKILL')}
+      if (runner.exitCode === null && runner.signalCode === null) {
+        runner.kill('SIGKILL')
+      }
       await rm(root, { recursive: true, force: true })
     }
   }
@@ -265,3 +269,34 @@ test('spawn error without exit does not hang stop or shutdown', { timeout: 30_00
     await rm(root, { recursive: true, force: true })
   }
 })
+
+test(
+  'child receives the generated content-derived runtime version',
+  { timeout: 30_000 },
+  async () => {
+    const root = await fixture()
+    const file = join(root, 'runtime-version')
+    await writeFile(
+      join(root, 'src/main/orcad/main.ts'),
+      `import {writeFileSync} from 'node:fs'; writeFileSync(${JSON.stringify(file)}, process.env.ORCA_VERSION); setInterval(() => {},1000);`
+    )
+    const dev = await startOrcadDev({ root, onEvent: () => {} })
+    try {
+      await until(async () => {
+        try {
+          await stat(file)
+          return true
+        } catch {
+          return false
+        }
+      })
+      assert.equal(
+        await readFile(file, 'utf8'),
+        await readFile(join(root, 'out/orcad-dev/current/.version'), 'utf8')
+      )
+    } finally {
+      await dev.close()
+      await rm(root, { recursive: true, force: true })
+    }
+  }
+)

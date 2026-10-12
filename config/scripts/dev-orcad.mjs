@@ -70,9 +70,13 @@ export async function startOrcadDev({
   const event = (metadata) => onEvent(metadata)
 
   async function stopChild() {
-    if (stopping) {return stopping}
+    if (stopping) {
+      return stopping
+    }
     const running = child
-    if (!running) {return}
+    if (!running) {
+      return
+    }
     if (!running.pid || running.exitCode !== null || running.signalCode !== null) {
       child = null
       return
@@ -94,7 +98,9 @@ export async function startOrcadDev({
   }
 
   async function adopt(result) {
-    if (closing) {return}
+    if (closing) {
+      return
+    }
     if (result.errors.length) {
       recordPrivate(JSON.stringify(result.errors))
       event({ event: 'build_failed', reason: 'compile', errors: result.errors.length })
@@ -109,6 +115,7 @@ export async function startOrcadDev({
     const number = ++generation
     const dir = join(outputRoot, 'generations', `${number}-${randomUUID()}`)
     let hash
+    let version
     try {
       mkdirSync(dir, { recursive: true })
       for (const file of result.outputFiles) {
@@ -123,28 +130,36 @@ export async function startOrcadDev({
         join(root, 'node_modules/agent-browser/bin', browserName),
         join(dir, browserName)
       )
-      if (platform() !== 'win32') {chmodSync(join(dir, browserName), 0o755)}
+      if (platform() !== 'win32') {
+        chmodSync(join(dir, browserName), 0o755)
+      }
       const digest = createHash('sha256')
-      for (const filename of orcadArtifactFilenames())
-        {digest.update(readFileSync(join(dir, filename)))}
+      for (const filename of orcadArtifactFilenames()) {
+        digest.update(readFileSync(join(dir, filename)))
+      }
       hash = digest.digest('hex')
-      writeFileSync(join(dir, ORCAD_VERSION_FILENAME), `${ORCAD_VERSION}+${hash.slice(0, 12)}`)
+      version = `${ORCAD_VERSION}+${hash.slice(0, 12)}`
+      writeFileSync(join(dir, ORCAD_VERSION_FILENAME), version)
     } catch (error) {
       recordPrivate(error.stack)
       rmSync(dir, { recursive: true, force: true })
       event({ event: 'build_failed', reason: 'artifact', generation: number })
       return
     }
-    if (closing) {return}
+    if (closing) {
+      return
+    }
     await stopChild()
-    if (closing) {return}
+    if (closing) {
+      return
+    }
     const pointer = join(outputRoot, `.current-${randomUUID()}`)
     symlinkSync(relative(outputRoot, dir), pointer, 'dir')
     renameSync(pointer, join(outputRoot, 'current'))
     // Each child uses its immutable generation path, including detached daemon siblings.
     const running = spawnRuntime(process.execPath, [join(dir, 'orcad.js'), ...args], {
       cwd: root,
-      env: process.env,
+      env: { ...process.env, ORCA_VERSION: version },
       stdio: ['ignore', log, log]
     })
     child = running
@@ -165,7 +180,9 @@ export async function startOrcadDev({
   }
 
   async function close() {
-    if (closePromise) {return closePromise}
+    if (closePromise) {
+      return closePromise
+    }
     closing = true
     closePromise = (async () => {
       await stopChild()
@@ -230,15 +247,21 @@ export function recoverOrcadDevLock(root, confirmedOwner) {
     for (const pid of [owner.runnerPid, owner.runtimePid].filter(Boolean)) {
       if (process.platform === 'linux') {
         try {
-          if (/\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8'))) {continue}
+          if (/\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8'))) {
+            continue
+          }
         } catch (error) {
-          if (error.code !== 'ENOENT') {throw error}
+          if (error.code !== 'ENOENT') {
+            throw error
+          }
         }
       }
       try {
         process.kill(pid, 0)
       } catch (error) {
-        if (error.code === 'ESRCH') {continue}
+        if (error.code === 'ESRCH') {
+          continue
+        }
         throw error
       }
       throw new Error('Recorded owner PID is still live; recovery refused')
@@ -256,10 +279,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   let root = defaultRoot
   let recoveryOwner
   for (let i = 0; i < ownArgs.length; i += 2) {
-    if (ownArgs[i] === '--source-root' && ownArgs[i + 1]) {root = resolve(ownArgs[i + 1])}
-    else if (ownArgs[i] === '--confirm-owner-exited' && ownArgs[i + 1])
-      {recoveryOwner = ownArgs[i + 1]}
-    else {
+    if (ownArgs[i] === '--source-root' && ownArgs[i + 1]) {
+      root = resolve(ownArgs[i + 1])
+    } else if (ownArgs[i] === '--confirm-owner-exited' && ownArgs[i + 1]) {
+      recoveryOwner = ownArgs[i + 1]
+    } else {
       emit({ event: 'runner_failed', reason: 'arguments' })
       process.exit(64)
     }
