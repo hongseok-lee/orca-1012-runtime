@@ -1,0 +1,165 @@
+{
+  "observed_at": "2026-10-12T22:05:10.576971+00:00",
+  "scope": "new isolated foundation smoke; not WAL recovery, HA, writer fencing, Agent/provider, backend, Expo or native client qualification",
+  "source_base": "cb7c83095e53f0ed8e04cc2e1fad38b4c9f498c3",
+  "pinned_upstream": "776e424e76405a06851dd9ec9ff3b58ffbdb3eea",
+  "cluster": {
+    "autopilot": true,
+    "version": "1.36.4-gke.1391002",
+    "private_nodes": true,
+    "external_control_plane_allowlist": "operator management address /32; literal omitted"
+  },
+  "pods": [
+    {
+      "role": "nfs",
+      "ready": true,
+      "restart_count": 0,
+      "actual_node_spot": false,
+      "requested_resources": {
+        "limits": {
+          "ephemeral-storage": "256Mi",
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "250m",
+          "ephemeral-storage": "256Mi",
+          "memory": "512Mi"
+        }
+      },
+      "applied_resources": {
+        "limits": {
+          "ephemeral-storage": "256Mi",
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "250m",
+          "ephemeral-storage": "256Mi",
+          "memory": "512Mi"
+        }
+      },
+      "allocated_resources": {
+        "cpu": "250m",
+        "ephemeral-storage": "256Mi",
+        "memory": "512Mi"
+      },
+      "configured_pinned_image_matched_runtime": true,
+      "termination_grace_seconds": 30
+    },
+    {
+      "role": "postgres",
+      "ready": true,
+      "restart_count": 0,
+      "actual_node_spot": true,
+      "requested_resources": {
+        "limits": {
+          "ephemeral-storage": "512Mi",
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "250m",
+          "ephemeral-storage": "512Mi",
+          "memory": "512Mi"
+        }
+      },
+      "applied_resources": {
+        "limits": {
+          "ephemeral-storage": "512Mi",
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "250m",
+          "ephemeral-storage": "512Mi",
+          "memory": "512Mi"
+        }
+      },
+      "allocated_resources": {
+        "cpu": "250m",
+        "ephemeral-storage": "512Mi",
+        "memory": "512Mi"
+      },
+      "configured_pinned_image_matched_runtime": true,
+      "termination_grace_seconds": 25,
+      "spot_toleration": {
+        "key": "cloud.google.com/gke-spot",
+        "operator": "Equal",
+        "value": "true",
+        "effect": "NoSchedule"
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "role": "postgres",
+      "phase": "Bound",
+      "disk_type": "pd-balanced",
+      "size_gib": 10,
+      "reclaim_policy": "Retain"
+    },
+    {
+      "role": "nfs",
+      "phase": "Bound",
+      "disk_type": "pd-ssd",
+      "size_gib": 50,
+      "reclaim_policy": "Retain"
+    }
+  ],
+  "sql_smoke": {
+    "new_test_row_written_and_committed": true,
+    "separate_psql_read_matched": true,
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on",
+    "pgdata_and_wal_on_dedicated_block_disk": true
+  },
+  "nfs_smoke": {
+    "write_client_completed": true,
+    "independent_readonly_client_completed": true,
+    "independent_server_hash_matched": true,
+    "sha256": "3cce72547f38d4726c98328b075fd3f531483448ef06c639d779d02dd391a3f7",
+    "bytes": 29,
+    "uid": 1000,
+    "gid": 1000,
+    "mode": "0644",
+    "fresh_test_home_only": true,
+    "rw_mount_options": [
+      "vers=3",
+      "proto=tcp",
+      "port=2049",
+      "mountport=2049",
+      "mountproto=tcp",
+      "nolock",
+      "hard"
+    ]
+  },
+  "dev_directories": {
+    "paths": [
+      "dev/backend/home",
+      "dev/backend/source",
+      "dev/expo/home",
+      "dev/expo/source"
+    ],
+    "uid": 1000,
+    "gid": 1000,
+    "mode": "0755",
+    "ownership_update_recursive": false
+  },
+  "screenshots": {
+    "status": "pending remote client/browser preparation; PR remains draft",
+    "backend_source": "not started by infra worker",
+    "expo_source": "not started by infra worker"
+  },
+  "publication_redactions": [
+    "project and cluster identities",
+    "management address",
+    "private registry reference",
+    "internal IPs",
+    "node/Pod/PV/disk identities",
+    "backup and kubeconfig paths",
+    "Secret payloads and authentication material"
+  ],
+  "public_template_differences": [
+    "Operational namespace, dataset, StorageClass/PV names, NFS image and Service IP are operator inputs.",
+    "PostgreSQL originally requested 60s grace; actual admission used 25s and added one Spot toleration. Public template explicitly records those benign platform defaults.",
+    "The four dev role directories were prepared separately after deployment; README documents the same nonrecursive operation."
+  ]
+}

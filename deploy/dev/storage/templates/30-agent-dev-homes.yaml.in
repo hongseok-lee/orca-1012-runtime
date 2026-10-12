@@ -1,0 +1,45 @@
+# Render NFS_SERVICE_IP from the new Service before applying. Never use an old IP.
+# This RWX PV references the NFS backing SSD; it allocates no second disk.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${HOME_PV_NAME}
+  labels:
+    orca.dev/dataset: ${DATASET}
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes: [ReadWriteMany]
+  volumeMode: Filesystem
+  storageClassName: ""
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+  - vers=3
+  - proto=tcp
+  - port=2049
+  - mountport=2049
+  - mountproto=tcp
+  - nolock
+  - hard
+  claimRef:
+    namespace: ${NAMESPACE}
+    name: agent-dev-homes
+  nfs:
+    server: ${NFS_SERVICE_IP}
+    path: /x
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agent-dev-homes
+  namespace: ${NAMESPACE}
+  labels:
+    orca.dev/dataset: ${DATASET}
+spec:
+  accessModes: [ReadWriteMany]
+  volumeMode: Filesystem
+  storageClassName: ""
+  volumeName: ${HOME_PV_NAME}
+  resources:
+    requests:
+      storage: 50Gi
