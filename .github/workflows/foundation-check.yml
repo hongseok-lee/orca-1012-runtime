@@ -1,0 +1,20 @@
+name: Repository foundation
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  foundation:
+    name: Foundation checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check repository foundation
+        run: python3 tooling/check_repository_foundation.py
+      - name: Check publication boundary guards
+        run: python3 -m unittest discover -s tooling -p 'test_repository_foundation.py'
