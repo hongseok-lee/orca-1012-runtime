@@ -1,0 +1,192 @@
+{
+  "kind": "Expo Web Chromium, not native iPhone",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3
+  },
+  "at": "2026-10-12T23:34:52.409Z",
+  "clicks": [
+    "Pair Desktop",
+    "Paste code instead",
+    "Save private pairing input; no capture",
+    "Use Chat UI",
+    "Not now"
+  ],
+  "captures": [
+    "home.png",
+    "onboarding.png",
+    "workspace.png"
+  ],
+  "backendSockets": [
+    {
+      "origin": "ws://127.0.0.1:16768",
+      "sentFrames": 4,
+      "receivedFrames": 4,
+      "closed": true,
+      "frameKinds": [
+        {
+          "direction": "sent",
+          "kind": "e2ee_hello"
+        },
+        {
+          "direction": "received",
+          "kind": "e2ee_ready"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        }
+      ]
+    },
+    {
+      "origin": "ws://127.0.0.1:16768",
+      "sentFrames": 10,
+      "receivedFrames": 10,
+      "closed": false,
+      "frameKinds": [
+        {
+          "direction": "sent",
+          "kind": "e2ee_hello"
+        },
+        {
+          "direction": "received",
+          "kind": "e2ee_ready"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "sent",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        },
+        {
+          "direction": "received",
+          "kind": "encrypted-text-envelope"
+        }
+      ]
+    }
+  ],
+  "handshakeMarkers": [
+    {
+      "marker": "[net] ws.onopen",
+      "at": "2026-10-12T23:35:02.749Z"
+    },
+    {
+      "marker": "[net] ws.onopen",
+      "at": "2026-10-12T23:35:03.804Z"
+    }
+  ],
+  "phase": "onboarding",
+  "crypto": {
+    "origin": "http://127.0.0.1:8081",
+    "isSecureContext": true,
+    "subtleAvailable": true,
+    "randomValuesCallSucceeded": true,
+    "subtleDigestSucceeded": true
+  },
+  "offerValidity": {
+    "valid": true,
+    "registryMatch": true,
+    "pending": false,
+    "checkedAt": "2026-10-12T23:27:06.583Z",
+    "directTimeExpiryApplied": false
+  },
+  "catalogError": false,
+  "authenticatedCatalog": {
+    "settled": true,
+    "result": "empty",
+    "basis": "fresh browser profile; existing connected/loaded catalog UI"
+  },
+  "hostScreenVisible": true,
+  "emptyWorkspaceState": true,
+  "completed": true,
+  "actualExpoMode": "CI=1; automatic source watch disabled",
+  "expoMetroPid": 1673,
+  "sourceBaseRevision": "69b969b367329d4c4ea975491f575a810e2289d0",
+  "approvedProductFile": "mobile/src/transport/rpc-session-liveness-watchdog.ts",
+  "approvedProductFileSha256": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b",
+  "backendInitialPid": 1764
+}

@@ -47,8 +47,9 @@ export class RpcSessionLivenessWatchdog {
     this.missedProbeLimit = options.missedProbeLimit ?? MISSED_PROBE_LIMIT
     this.voluntaryProbeMinIntervalMs = options.voluntaryProbeMinIntervalMs ?? 0
     this.now = options.now ?? Date.now
-    this.setTimer = options.setTimer ?? setTimeout
-    this.clearTimer = options.clearTimer ?? clearTimeout
+    // Browser timers require the global receiver; preserve explicitly injected timers.
+    this.setTimer = options.setTimer ?? globalThis.setTimeout.bind(globalThis)
+    this.clearTimer = options.clearTimer ?? globalThis.clearTimeout.bind(globalThis)
   }
 
   start(identity: RpcSessionIdentity): void {

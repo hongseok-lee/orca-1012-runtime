@@ -1,0 +1,89 @@
+{
+  "enabled": true,
+  "caughtPauses": 9,
+  "illegalInvocation": [
+    {
+      "name": "TypeError",
+      "message": "Illegal invocation",
+      "at": "2026-10-12T23:28:26.819Z",
+      "frames": [
+        {
+          "file": "mobile/src/transport/rpc-session-liveness-watchdog.ts",
+          "methodName": "RpcSessionLivenessWatchdog#armIdle",
+          "lineNumber": 122,
+          "column": 22
+        },
+        {
+          "file": "mobile/src/transport/rpc-session-liveness-watchdog.ts",
+          "methodName": "RpcSessionLivenessWatchdog#start",
+          "lineNumber": 61,
+          "column": 9
+        },
+        {
+          "file": "mobile/src/transport/direct-rpc-client.ts",
+          "methodName": "DirectRpcClient#handleAuthenticated",
+          "lineNumber": 231,
+          "column": 18
+        },
+        {
+          "file": "mobile/src/transport/direct-rpc-client.ts",
+          "methodName": "RpcClientSocketFactory$argument_0.onAuthenticated",
+          "lineNumber": 94,
+          "column": 41
+        },
+        {
+          "file": "mobile/src/transport/rpc-client-socket-session.ts",
+          "methodName": "RpcClientSocketSession#handleHandshakeMessage",
+          "lineNumber": 233,
+          "column": 21
+        },
+        {
+          "file": "mobile/src/transport/rpc-client-socket-session.ts",
+          "methodName": "RpcClientSocketSession#handleMessage",
+          "lineNumber": 168,
+          "column": 11
+        },
+        {
+          "file": "mobile/src/transport/rpc-client-socket-session.ts",
+          "methodName": "socket.onmessage",
+          "lineNumber": 130,
+          "column": 18
+        }
+      ],
+      "symbolicated": true,
+      "generatedPositions": [
+        {
+          "lineNumber": 140227,
+          "column": 25
+        },
+        {
+          "lineNumber": 140173,
+          "column": 12
+        },
+        {
+          "lineNumber": 134984,
+          "column": 21
+        },
+        {
+          "lineNumber": 134869,
+          "column": 42
+        },
+        {
+          "lineNumber": 139234,
+          "column": 24
+        },
+        {
+          "lineNumber": 139171,
+          "column": 14
+        },
+        {
+          "lineNumber": 139134,
+          "column": 21
+        }
+      ]
+    }
+  ],
+  "actualExpoMode": "CI=1; automatic watch disabled",
+  "sourceBaseRevision": "69b969b367329d4c4ea975491f575a810e2289d0",
+  "sourceSha256": "e1e0a1acf023e625d3501bc9bb4bfe8985b3b5b29035607dc109c32e4bc44142"
+}

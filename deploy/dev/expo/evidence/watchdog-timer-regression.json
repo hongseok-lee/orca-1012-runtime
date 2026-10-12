@@ -1,0 +1,21 @@
+{
+  "kind": "Remote focused watchdog regression",
+  "at": "2026-10-12T23:31:22.952787+00:00",
+  "sourceBaseRevision": "69b969b367329d4c4ea975491f575a810e2289d0",
+  "file": "mobile/src/transport/rpc-session-liveness-watchdog.ts",
+  "beforeSha256": "e1e0a1acf023e625d3501bc9bb4bfe8985b3b5b29035607dc109c32e4bc44142",
+  "afterSha256": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b",
+  "canonicalAndEphemeralMirrorMatch": true,
+  "before": {
+    "exit": 1,
+    "existingPassed": 8,
+    "newRegressionFailed": "TypeError: Illegal invocation"
+  },
+  "after": {
+    "exit": 0,
+    "passed": 9
+  },
+  "command": "node ./node_modules/vitest/vitest.mjs run src/transport/rpc-session-liveness-watchdog.test.ts",
+  "runtime": "remote Expo Pod, Node24.15.0, existing frozen dependencies",
+  "nativeIPhoneVerified": false
+}

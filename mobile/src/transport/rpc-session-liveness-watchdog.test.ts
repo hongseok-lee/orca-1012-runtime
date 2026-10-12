@@ -23,6 +23,42 @@ describe('RpcSessionLivenessWatchdog', () => {
     return { identity, sendProbe, terminate, watchdog }
   }
 
+  it('calls default browser timers with the global receiver when starting and clearing', () => {
+    const schedule = globalThis.setTimeout
+    const cancel = globalThis.clearTimeout
+    const setTimer = vi.fn(function (this: unknown, ...args: Parameters<typeof setTimeout>) {
+      if (this !== globalThis) {
+        throw new TypeError('Illegal invocation')
+      }
+      return Reflect.apply(schedule, globalThis, args)
+    })
+    const clearTimer = vi.fn(function (this: unknown, ...args: Parameters<typeof clearTimeout>) {
+      if (this !== globalThis) {
+        throw new TypeError('Illegal invocation')
+      }
+      return Reflect.apply(cancel, globalThis, args)
+    })
+    vi.stubGlobal('setTimeout', setTimer)
+    vi.stubGlobal('clearTimeout', clearTimer)
+    try {
+      const identity = {}
+      const sendProbe = vi.fn(() => true)
+      const watchdog = new RpcSessionLivenessWatchdog({
+        transport: 'direct',
+        sendProbe,
+        terminate: vi.fn()
+      })
+      expect(() => watchdog.start(identity)).not.toThrow()
+      expect(() => watchdog.probeNow(identity)).not.toThrow()
+      expect(sendProbe).toHaveBeenCalledOnce()
+      expect(() => watchdog.stop(identity)).not.toThrow()
+      expect(setTimer).toHaveBeenCalledTimes(2)
+      expect(clearTimer).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('probes only after authenticated-inbound idle', async () => {
     const { identity, sendProbe, watchdog } = fixture()
     await vi.advanceTimersByTimeAsync(LIVENESS_IDLE_MS - 1)

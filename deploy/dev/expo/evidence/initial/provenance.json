@@ -1,0 +1,42 @@
+{
+  "kind": "Actual Expo Web iPhone viewport; not native iPhone",
+  "actualExpoMode": "CI=1; automatic watch disabled",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "dpr": 3
+  },
+  "browser": "Chromium147.0.7727.15",
+  "playwright": "1.59.1",
+  "browserImageDigest": "sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645",
+  "nodeImageDigest": "sha256:da81deb96d49fc84c9813bc4f16dfdb1d4d7e3671b74cd54fd944428f1444afe",
+  "node": "24.15.0",
+  "expoCLI": "55.0.36",
+  "sourceBaseRevision": "69b969b367329d4c4ea975491f575a810e2289d0",
+  "approvedWatchdogSha256": "982362db605f0ce8800e28de0045a4113e2921e6c9a109405e7cff40a3b42b2b",
+  "backendPid": 1764,
+  "metroPid": 1673,
+  "actualClicks": [
+    "Pair Desktop",
+    "Paste code instead",
+    "Save private offer (no input capture)",
+    "Use Chat UI",
+    "Not now"
+  ],
+  "catalog": "settled empty, no error",
+  "credentialFreeImagesVisuallyReviewed": true,
+  "artifacts": {
+    "home.png": {
+      "at": "2026-10-12T23:35:02.000Z",
+      "sha256": "4fc011037fa43f5ee330f3583c4e471a5fbf34364b0c460ce4284c45180a3b1a"
+    },
+    "onboarding.png": {
+      "at": "2026-10-12T23:35:03.000Z",
+      "sha256": "165b4e2e5fa6011a8b839dd53cd590f0fa203e8cde41f31858bcca510f83bc9d"
+    },
+    "workspace.png": {
+      "at": "2026-10-12T23:35:04.000Z",
+      "sha256": "aa8f71e9672026020a5804ad4e9652a9156aa6506c338f65db88c81c39b17a1e"
+    }
+  }
+}

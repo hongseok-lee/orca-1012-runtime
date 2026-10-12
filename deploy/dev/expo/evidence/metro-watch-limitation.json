@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-12T23:34:32.631703+00:00",
+  "currentOwnedMetroPid": 1673,
+  "currentState": "S",
+  "inotify": {
+    "max_user_watches": "12288",
+    "max_user_instances": "8192",
+    "max_queued_events": "16384"
+  },
+  "exactNonCICommand": [
+    "node",
+    "./node_modules/expo/bin/cli",
+    "start",
+    "--web",
+    "--port",
+    "8081",
+    "--localhost"
+  ],
+  "nonCIResult": "ENOSPC during FallbackWatcher registration",
+  "sysctlChanged": false,
+  "duplicateMetro": false,
+  "currentCI": "1",
+  "watchAcceptance": false,
+  "error": {
+    "code": "ENOSPC",
+    "syscall": "watch",
+    "file": "mobile/node_modules/.pnpm/metro-file-map@0.83.8_supports-color@8.1.1/node_modules/metro-file-map/src/watchers/FallbackWatcher.js",
+    "function": "FallbackWatcher.#watchdir",
+    "line": 133,
+    "nodeFrame": "node:internal/fs/watchers:316"
+  },
+  "actualMode": "CI=1; source watch disabled; corrected-bundle/pairing only"
+}
