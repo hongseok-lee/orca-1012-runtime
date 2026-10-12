@@ -1,0 +1,151 @@
+# Node24.15.0-bookworm and Playwright1.59.1-noble, pinned linux/amd64 manifests.
+# NFS role directories must be owned by1000:1000 before applying.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: orca-expo-dev
+  namespace: orca-dev
+  labels:
+    app.kubernetes.io/name: orca-expo-dev
+    app.kubernetes.io/component: expo-development
+    orca.dev/dataset: orca-1012-dev-v1
+  annotations:
+    orca.dev/upstream-source: 776e424e76405a06851dd9ec9ff3b58ffbdb3eea
+    orca.dev/source-parent: cb7c83095e53f0ed8e04cc2e1fad38b4c9f498c3
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Always
+  terminationGracePeriodSeconds: 30
+  nodeSelector:
+    kubernetes.io/arch: amd64
+    cloud.google.com/gke-spot: 'true'
+  tolerations:
+  - key: cloud.google.com/gke-spot
+    operator: Exists
+    effect: NoSchedule
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: expo
+    image: docker.io/library/node@sha256:da81deb96d49fc84c9813bc4f16dfdb1d4d7e3671b74cd54fd944428f1444afe
+    imagePullPolicy: IfNotPresent
+    command:
+    - /bin/sh
+    - -ec
+    args:
+    - exec sleep infinity
+    workingDir: /workspaces/orca
+    env:
+    - name: HOME
+      value: /home/node
+    - name: XDG_CONFIG_HOME
+      value: /home/node/.config
+    - name: XDG_DATA_HOME
+      value: /home/node/.local/share
+    - name: XDG_STATE_HOME
+      value: /home/node/.local/state
+    - name: XDG_CACHE_HOME
+      value: /home/node/.cache
+    - name: COREPACK_HOME
+      value: /home/node/.cache/corepack
+    - name: PNPM_HOME
+      value: /home/node/.local/share/pnpm
+    - name: NPM_CONFIG_CACHE
+      value: /home/node/.cache/npm
+    - name: PLAYWRIGHT_BROWSERS_PATH
+      value: /home/node/.cache/ms-playwright
+    - name: PATH
+      value: /home/node/.local/share/pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    ports:
+    - name: expo-web
+      containerPort: 8081
+      protocol: TCP
+    - name: backend-loop
+      containerPort: 16768
+      protocol: TCP
+    resources:
+      requests:
+        cpu: 750m
+        memory: 3Gi
+        ephemeral-storage: 6Gi
+      limits:
+        ephemeral-storage: 6Gi
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: expo-files
+      mountPath: /home/node
+      subPath: dev/expo/home
+    - name: expo-files
+      mountPath: /workspaces/orca
+      subPath: dev/expo/source
+    - name: temporary-files
+      mountPath: /tmp
+  - name: browser
+    image: mcr.microsoft.com/playwright@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
+    imagePullPolicy: IfNotPresent
+    command:
+    - /bin/sh
+    - -ec
+    args:
+    - exec sleep infinity
+    workingDir: /home/node
+    env:
+    - name: HOME
+      value: /home/node
+    - name: XDG_CACHE_HOME
+      value: /home/node/.cache/browser
+    - name: NPM_CONFIG_CACHE
+      value: /home/node/.cache/npm-browser
+    - name: PLAYWRIGHT_BROWSERS_PATH
+      value: /ms-playwright
+    - name: PLAYWRIGHT_SKIP_BROWSER_GC
+      value: '1'
+    ports:
+    - name: chromium-cdp
+      containerPort: 9222
+      protocol: TCP
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+        ephemeral-storage: 2Gi
+      limits:
+        ephemeral-storage: 2Gi
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: expo-files
+      mountPath: /home/node
+      subPath: dev/expo/home
+    - name: expo-files
+      mountPath: /workspaces/orca
+      subPath: dev/expo/source
+      readOnly: true
+    - name: temporary-files
+      mountPath: /tmp
+    - name: chromium-shared-memory
+      mountPath: /dev/shm
+  volumes:
+  - name: expo-files
+    persistentVolumeClaim:
+      claimName: agent-dev-homes
+  - name: temporary-files
+    emptyDir:
+      sizeLimit: 6Gi
+  - name: chromium-shared-memory
+    emptyDir:
+      medium: Memory
+      sizeLimit: 1Gi
