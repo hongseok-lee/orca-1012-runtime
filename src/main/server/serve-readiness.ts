@@ -26,6 +26,11 @@ export type ServeReadiness = {
   managedWslCliReconciliation: 'pending' | 'settled' | 'failed'
   pairing: ServePairingReadiness
   /**
+   * Further offers minted for other client scopes in the same launch (orcad `--mobile-pairing`
+   * mints 'mobile' and 'runtime' together). Additive: `pairing` stays the primary offer.
+   */
+  additionalPairings?: ServePairingReadiness[]
+  /**
    * Build identity, Node ABI and the cross-process terminal-daemon self-test.
    *
    * Optional because the Electron `--serve` host does not publish one yet; readers must
@@ -87,6 +92,9 @@ export function renderServeReadiness(
       advertisedEndpoint: readiness.advertisedEndpoint,
       managedWslCliReconciliation: readiness.managedWslCliReconciliation,
       pairing: readiness.pairing,
+      ...(readiness.additionalPairings?.length
+        ? { additionalPairings: readiness.additionalPairings }
+        : {}),
       ...(readiness.health ? { health: readiness.health } : {})
     })
   }
@@ -111,17 +119,23 @@ function renderHumanReadiness(readiness: ServeReadiness): string {
         `; terminals survive an orcad restart: ${daemon.ownsFreshSessions ? 'yes' : 'NO'}`
     )
   }
-  if (readiness.pairing.available) {
-    if (readiness.pairing.webClientUrl) {
-      lines.push(`Web client URL: ${readiness.pairing.webClientUrl}`)
+  const offers = [readiness.pairing, ...(readiness.additionalPairings ?? [])]
+  for (const [index, pairing] of offers.entries()) {
+    if (pairing.available) {
+      if (pairing.webClientUrl) {
+        lines.push(`Web client URL: ${pairing.webClientUrl}`)
+      }
+      if (pairing.scope === 'mobile' && pairing.qr) {
+        lines.push(`Mobile pairing QR:\n${pairing.qr}`)
+      }
+      // Why unlabelled for the primary: existing readers match the literal `Pairing URL:` line.
+      lines.push(
+        index === 0 ? `Pairing URL: ${pairing.url}` : `Pairing URL (${pairing.scope}): ${pairing.url}`
+      )
+    } else {
+      lines.push(`Pairing unavailable: ${pairing.reason}`)
+      lines.push(`Pairing guidance: ${pairing.guidance}`)
     }
-    if (readiness.pairing.scope === 'mobile' && readiness.pairing.qr) {
-      lines.push(`Mobile pairing QR:\n${readiness.pairing.qr}`)
-    }
-    lines.push(`Pairing URL: ${readiness.pairing.url}`)
-  } else {
-    lines.push(`Pairing unavailable: ${readiness.pairing.reason}`)
-    lines.push(`Pairing guidance: ${readiness.pairing.guidance}`)
   }
   return lines.join('\n')
 }

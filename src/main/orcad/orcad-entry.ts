@@ -14,7 +14,8 @@
 import process from 'node:process'
 import { setAppEnvironment, type AppEnvironment } from '../../shared/app-environment'
 import { setSecretStore, type SecretStore } from '../../shared/secret-store'
-import type { ServeReadiness } from '../server/serve-readiness'
+import type { ServePairingReadiness, ServeReadiness } from '../server/serve-readiness'
+import { mintOrcadPairingOffers, resolveOrcadPairingScopes } from './orcad-pairing'
 import { setRuntimeBrowserCommandsFactory } from '../runtime/runtime-browser-commands-factory'
 import { resolveOrcadBrowserProvider } from './orcad-browser-provider'
 import { resolveOrcadInstallRoot, resolveOrcadPath, resolveUserDataPath } from './orcad-app-paths'
@@ -86,6 +87,10 @@ export type OrcadOptions = {
   port?: number
   json?: boolean
   noPairing?: boolean
+  /** Also mint a 'mobile'-scope offer (phone app); the 'runtime' offer (desktop/web) stays. */
+  mobilePairing?: boolean
+  /** Drop the 'runtime' offer; only valid together with `mobilePairing`. */
+  noRuntimePairing?: boolean
   pairingAddress?: string
   /** Literal IP to bind. Defaults to loopback; see orcad-bind-address.ts. */
   bind?: string
@@ -154,6 +159,9 @@ async function startOrcadRuntime(
   const { AgentStatusObservedPaneIdentities, AgentStatusObservedPaneIdentityCapture } =
     await import('../runtime/agent-status-observed-pane-identity')
 
+  const { maybeStartAgentControlAdapter, stopAgentControlAdapter } =
+    await import('../runtime/agent-control-adapter')
+
   let rpc: InstanceType<typeof OrcaRuntimeRpcServer> | null = null
   let uninstallHookStatusRepublish = (): void => {}
   let uninstallObservedStatusIdentity = (): void => {}
@@ -162,6 +170,7 @@ async function startOrcadRuntime(
       await rpc?.stop()
     } finally {
       try {
+        stopAgentControlAdapter()
         // Why disconnect and not shut down: the daemon must outlive this process, or an
         // orcad restart goes back to killing every running terminal.
         await stopOrcadDaemon()
@@ -282,6 +291,9 @@ async function startOrcadRuntime(
     ...(options.port !== undefined ? { wsPort: options.port, preferPinnedWsPort: true } : {})
   })
   await rpc.start()
+  // Why: opt-in (ORCA_AGENT_ADAPTER_LISTEN) control-plane seam, the same call the Electron serve
+  // launch makes; a no-op when unset. After rpc.start so a bind failure never leaves it listening.
+  maybeStartAgentControlAdapter(runtime)
   const pushService = DesktopPushService.create({
     runtime,
     runtimeRpc: rpc,
@@ -295,17 +307,17 @@ async function startOrcadRuntime(
   const advertised = boundEndpoint
     ? resolveAdvertisedPairingEndpoint(boundEndpoint, options.pairingAddress)
     : null
-  const offer = options.noPairing
-    ? ({
-        available: false,
-        reason: 'disabled_by_operator',
-        guidance: 'Restart without --no-pairing to create a client pairing offer.'
-      } as const)
-    : rpc.createPairingOffer({
-        address: options.pairingAddress,
-        name: `CLI ${new Date().toLocaleDateString()}`,
-        scope: 'runtime'
-      })
+  // Why one offer per client kind instead of one switchable offer: the phone (scope 'mobile',
+  // held to the mobile RPC allowlist) and the desktop/web client (scope 'runtime') connect to the
+  // same host at once, and each is authenticated per connection by its own credential.
+  const pairingScopes = resolveOrcadPairingScopes(options)
+  const offers = mintOrcadPairingOffers(rpc, pairingScopes, options.pairingAddress)
+  const [primaryOffer, ...otherOffers] = offers
+  const pairing: ServePairingReadiness = primaryOffer ?? {
+    available: false,
+    reason: 'disabled_by_operator',
+    guidance: 'Restart without --no-pairing to create a client pairing offer.'
+  }
 
   const readiness: ServeReadiness = {
     runtimeId: runtime.getRuntimeId(),
@@ -314,17 +326,8 @@ async function startOrcadRuntime(
     // Why 'settled': the WSL CLI reconciliation barrier is a desktop-launch concern.
     // orcad never runs it, so there is no pending repair a client could race.
     managedWslCliReconciliation: 'settled',
-    pairing: offer.available
-      ? {
-          available: true,
-          url: offer.pairingUrl,
-          endpoint: offer.endpoint,
-          deviceId: offer.deviceId,
-          webClientUrl: offer.webClientUrl,
-          scope: 'runtime',
-          qr: null
-        }
-      : offer,
+    pairing,
+    ...(otherOffers.length > 0 ? { additionalPairings: otherOffers } : {}),
     // Why in the readiness payload: this is the one message a supervisor and a deploy
     // transaction both read, and a green orcad with a dead daemon is exactly the
     // looks-healthy-but-useless state they must not activate.
@@ -354,6 +357,10 @@ export function parseArgs(argv: string[]): OrcadOptions {
       options.json = true
     } else if (arg === '--no-pairing') {
       options.noPairing = true
+    } else if (arg === '--mobile-pairing') {
+      options.mobilePairing = true
+    } else if (arg === '--no-runtime-pairing') {
+      options.noRuntimePairing = true
     } else if (arg === '--bind') {
       const value = argv[i + 1]
       if (value === undefined) {
@@ -372,6 +379,8 @@ export function parseArgs(argv: string[]): OrcadOptions {
       throw new Error(`Unknown argument: ${arg}`)
     }
   }
+  // Why here: a contradictory pairing request must fail before the daemon, store and listener exist.
+  resolveOrcadPairingScopes(options)
   return options
 }
 

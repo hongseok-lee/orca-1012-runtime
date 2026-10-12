@@ -12,6 +12,7 @@ import { HOOK_REQUEST_SLOWLORIS_MS } from '../../../shared/agent-hook-listener/l
 import { isHookRequestTruncatedError } from '../../../shared/agent-hook-transport-interference'
 import { drainAgentHookSpool, type SpoolRecord } from '../../../shared/agent-hook-spool'
 import { clearAllListenerCaches } from '../../../shared/agent-hook-listener/listener-state'
+import { forwardAgentHookToControlPlane } from '../../runtime/agent-control-adapter'
 import { trackEmptyPaneKeyHook } from './server-transport-rules'
 import { AgentHookServerRuntimeEnv } from './server-runtime-env'
 
@@ -92,6 +93,8 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeEnv
         }
         // Why: merge transport headers before normalization so relay-compatible fields have one canonical path.
         const hookBody = mergeAgentHookRequestHeaders(body, req.headers)
+        // Why: opt-in (ORCA_AGENT_CONTROL_URL), fire-and-forget; inert when unset.
+        forwardAgentHookToControlPlane(source, hookBody)
         trackEmptyPaneKeyHook(hookBody)
         const aliasedBody = this.normalizeHookBodyPaneKeyAlias(hookBody)
         const normalized = this.normalizeLocalHookPayload(source, aliasedBody)
