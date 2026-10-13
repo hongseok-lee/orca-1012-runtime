@@ -6,6 +6,8 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 import { test } from "node:test";
+import type { SessionId } from "../../../shared/durable-runtime/identity.ts";
+import type { DurableTransaction } from "./connection.ts";
 import { counter, logicalId } from "../../../shared/durable-runtime/identity.ts";
 import { createDurablePool, DurableDatabaseError, withDurableTransaction } from "./connection.ts";
 import { runDurableMutation, resolveReceipt, type ReceiptIdentity } from "./atomic.ts";
@@ -14,8 +16,9 @@ import { lockAggregates } from "./locks.ts";
 import { appendSessionEvent, enqueueOutbox, appendAudit } from "../journal/store.ts";
 import { claimOutbox, markOutboxPublished, publishOutboxClaim } from "../journal/publisher.ts";
 
-if (!/^orca_p103_[a-z0-9_]+$/.test(process.env.PGDATABASE ?? ""))
+if (!/^orca_p103_[a-z0-9_]+$/.test(process.env.PGDATABASE ?? "")) {
   throw new Error("Owned P1-03 database required");
+}
 const pool = createDurablePool({ max: 8, application_name: "orca-p103-tests" });
 const hash = "a".repeat(64);
 const sql = (text: string, values: readonly unknown[] = []) =>
@@ -48,11 +51,7 @@ async function fixture() {
   });
   return { session };
 }
-async function business(
-  tx: import("./connection.ts").DurableTransaction,
-  session: import("../../../shared/durable-runtime/identity.ts").SessionId,
-  nativeId: string,
-) {
+async function business(tx: DurableTransaction, session: SessionId, nativeId: string) {
   const id = randomUUID();
   await tx.query(
     "INSERT INTO durable_runtime.messages(id,session_id,seq,body_or_blob_ref,intake_status) VALUES($1,$2,1,'{}','DURABLE')",
@@ -122,7 +121,9 @@ async function commitLossProxy() {
         dropped = true;
         client.destroy();
         upstream.destroy();
-      } else client.write(data);
+      } else {
+        client.write(data);
+      }
     });
     client.on("error", () => upstream.destroy());
     upstream.on("error", () => client.destroy());
@@ -153,7 +154,9 @@ async function commitLossProxy() {
     didDrop: () => dropped,
     close: async () => {
       await proxied.end();
-      for (const s of sockets) s.destroy();
+      for (const s of sockets) {
+        s.destroy();
+      }
       await new Promise<void>((resolve) => server.close(() => resolve()));
     },
   };
@@ -175,7 +178,9 @@ async function ownedCrash(stage: string) {
     for (let n = 0; n < 500; n++) {
       try {
         const result = JSON.parse(await readFile(report, "utf8"));
-        if (stage !== "PUBLISH_AND_MARK") child.kill("SIGKILL");
+        if (stage !== "PUBLISH_AND_MARK") {
+          child.kill("SIGKILL");
+        }
         await exited;
         return result.id as string;
       } catch (error) {
@@ -235,7 +240,9 @@ await test("P1-03 actual PG atomic and publication boundaries", async (t) => {
               pool,
               { ...request, locks: { sessionIds: [session] } },
               async (tx) => {
-                if (midway) await business(tx, session, randomUUID());
+                if (midway) {
+                  await business(tx, session, randomUUID());
+                }
                 throw new Error("synthetic-callback-failure");
               },
             ),
@@ -328,7 +335,9 @@ await test("P1-03 actual PG atomic and publication boundaries", async (t) => {
             committed.receipt.intakeAt instanceof Date,
         );
         const claims = await claimOutbox(pool, { owner: "drain-one", limit: 100, leaseMs: 5000 });
-        for (const claim of claims) await markOutboxPublished(pool, claim);
+        for (const claim of claims) {
+          await markOutboxPublished(pool, claim);
+        }
       },
     );
     await run(
@@ -364,7 +373,9 @@ await test("P1-03 actual PG atomic and publication boundaries", async (t) => {
           limit: 100,
           leaseMs: 5000,
         });
-        for (const claim of claims) await markOutboxPublished(pool, claim);
+        for (const claim of claims) {
+          await markOutboxPublished(pool, claim);
+        }
       },
     );
     await run(

@@ -47,12 +47,14 @@ function sourceKey(session: SessionId, source: JournalSource): string {
           source.incarnation,
           source.producerSeq,
         ];
-  if (tuple.some((part) => typeof part !== "string" || !part))
+  if (tuple.some((part) => typeof part !== "string" || !part)) {
     throw new DurableDatabaseError("JOURNAL_SOURCE");
+  }
   if (source.kind === "PRODUCER") {
     logicalId("producer", source.producerId);
-    if (counter("sequence:producer", source.producerSeq) === "0")
+    if (counter("sequence:producer", source.producerSeq) === "0") {
       throw new DurableDatabaseError("JOURNAL_SOURCE");
+    }
   }
   return JSON.stringify(tuple);
 }
@@ -71,7 +73,9 @@ export async function appendSessionEvent(
   );
   if (existing.rowCount) {
     const row = existing.rows[0];
-    if (!row.matches) throw new DurableDatabaseError("JOURNAL_SOURCE_CONFLICT");
+    if (!row.matches) {
+      throw new DurableDatabaseError("JOURNAL_SOURCE_CONFLICT");
+    }
     return {
       eventId: logicalId("event", row.event_id),
       sessionId: input.sessionId,
@@ -129,7 +133,9 @@ export async function enqueueOutbox(
       JSON.stringify(input.event),
     ],
   );
-  if (row.rowCount !== 1) throw new DurableDatabaseError("OUTBOX_IDENTITY_CONFLICT");
+  if (row.rowCount !== 1) {
+    throw new DurableDatabaseError("OUTBOX_IDENTITY_CONFLICT");
+  }
 }
 
 export type AuditTransition = {
