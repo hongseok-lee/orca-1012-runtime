@@ -39,4 +39,14 @@ Chat/provider/Browser의 나머지 방법은 임의 교체하지 않습니다. T
 
 `src/main/orcad/orcad-entry.ts`의 `new OrcaRuntimeRpcServer`와 `src/main/startup/main-process-runtime-launch.ts`의 `installRuntimeRpc`가 실제 상위 구성 접점입니다. 두 기존 호출은 아직 이 구성값을 전달하지 않습니다. 상위 서버가 borrowed Pool, dataset, 현재 앱 host를 읽는 owner callback, 확정된 허용 집합 및 poll 설정을 주입해야 합니다. 이 source는 환경변수/CLI flag/PG migration/bootstrap을 새로 발급하거나 live dev에 주입하지 않습니다.
 
-새 PG fixture 11개와 값 fixture 6개를 작성했습니다. 모두 미실행이며 PG/type/lint/test와 실제 인증·Expo 클릭·보고 PNG의 성공을 주장하지 않습니다. 지정된 Ready/heavy 배분 뒤 최초 실행합니다. 기존 Catalog/P115/HA 시험·설치·빌드·재촬영·runtime 재시작은 반복하지 않습니다. Root의 source review와 후속 실제 개발환경 활성화는 별도입니다. 이 PR은 실제 provider/fence/RW/controller/HA 합격을 뜻하지 않습니다.
+최초 PG fixture 11개와 값 fixture 6개가 각각 한 번 실행되어 모두 통과했습니다. PG는 `d0e55595`, 값 사례는 `e1822db1`에서 실행됐으며 성공한 PG를 반복하지 않았습니다. Scoped lint는 소유 .ts/.mts 18개에서 통과했습니다. 소유 type 진단은 교정 후 0개지만 전체 type 종료 코드 1과 외부 진단 25개를 유지합니다. 실제 인증·Expo 클릭·보고 PNG는 아직 이 source의 검증 결과가 아닙니다. 기존 Catalog/P115/HA 시험·설치·빌드·재촬영·runtime 재시작은 반복하지 않습니다. Root의 source review와 후속 실제 개발환경 활성화는 별도입니다. 이 PR은 실제 provider/fence/RW/controller/HA 합격을 뜻하지 않습니다.
+
+## 원 실패와 한정 교정
+
+`dae68ae3`의 generic arrow `<T>`는 .mts 문법 오류로 fixture 실행 전에 실패했습니다. `d0e55595`는 `<T,>`의 한 글자 교정만 적용한 최초 PG 실행 pin입니다. 변환 metadata의 상대경로 해석 오류는 준비 harness에서 고쳤고 제품 source를 대체하지 않았습니다.
+
+ESM의 `ssh2` named export `utils` 오류로 값 6개는 사례 진입 전에 실패했습니다. 기존 `orcadBuildOptions`의 CommonJS 설정을 재사용하고 top-level await의 6개 원 사례를 async 함수 안에서 순서 그대로 실행하는 검증 entry를 준비했습니다. Assertion·실제 auth/schema/helper를 바꾸지 않았고 이 harness에서 값 6개를 처음 실행했습니다.
+
+`e1822db1`은 type 표기와 동일한 collection snapshot의 표기만 교정했습니다. `read.ts`의 cast는 emit되지 않는 type 변경이며 Set/Map의 순회 전 snapshot을 유지합니다. Public auth·schema·미연결 mutation 정책은 변경하지 않았습니다.
+
+최초 lint의 514개 오류에는 생성된 .mjs bundle이 섞였습니다. 정확한 소유 source 파일만 지정한 후속 configured lint는 0개 오류입니다. 최초 type는 소유 6개·외부 34개 진단이었고, 교정 뒤 소유 0개·외부 25개 진단입니다. 이미 시작된 후속 type는 중단 확인 전에 종료 코드 1로 완료됐으며 최신 Root 지시 뒤 전체 type를 다시 실행하지 않았습니다. 원 로그와 코드·harness diff는 비공개 운영 증거에 보존했습니다.

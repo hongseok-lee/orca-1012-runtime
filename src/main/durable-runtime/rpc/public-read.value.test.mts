@@ -10,7 +10,8 @@ import { CATALOG_PUBLIC_READ_METHODS, CATALOG_PUBLIC_STREAM_METHODS, CATALOG_PUB
 import { SharedCatalogHeadHints } from './head-hints.ts'
 import { fixtureConfig, fixtureRuntime, fixtureContext, syntheticFingerprint, deferred } from './fixture-support.mts'
 import { RpcDispatcher } from '../../runtime/rpc/dispatcher.ts'
-import { defineMethod, defineStreamingMethod, eraseRpcMethods, isStreamingMethod, type RpcContext } from '../../runtime/rpc/core.ts'
+import { defineMethod, defineStreamingMethod, eraseRpcMethods, type RpcContext,
+  type RpcAnyMethodDeclaration, type RpcStreamingMethodDeclaration } from '../../runtime/rpc/core.ts'
 import { REPO_METHODS } from '../../runtime/rpc/methods/repo.ts'
 import { WORKTREE_METHODS } from '../../runtime/rpc/methods/worktree.ts'
 import { SESSION_TAB_METHODS } from '../../runtime/rpc/methods/session-tabs.ts'
@@ -22,6 +23,9 @@ import { fingerprintAuthenticatedPairingCredential } from '../../runtime/rpc/orc
 // WRITTEN, NOT EXECUTED. Root/bridge Ready handoff precedes first invocation.
 if (process.env.ORCA_P116_PUBLIC_READ_APPROVED !== 'root-ready') { throw new Error('Root Ready handoff required') }
 const noIo = { connect: () => { throw new Error('unexpected PG access') } } as unknown as Pool
+function isStreamingDeclaration(method: RpcAnyMethodDeclaration): method is RpcStreamingMethodDeclaration {
+  return 'stream' in method && method.stream === true
+}
 
 await test('server namespace, arrays and original host method are captured before I/O', () => {
   const input = fixtureConfig(noIo), allowed = ['synthetic-repo']
@@ -53,11 +57,11 @@ await test('existing registry names, params schemas and stream kinds stay identi
   for (let index = 0; index < original.length; index++) {
     assert.equal(bound[index].name, original[index].name)
     assert.equal(bound[index].params, original[index].params)
-    assert.equal(isStreamingMethod(bound[index]), isStreamingMethod(original[index]))
+    assert.equal(isStreamingDeclaration(bound[index]), isStreamingDeclaration(original[index]))
     if (isCatalogMethodNotConnected(bound[index].name) &&
       ![...CATALOG_PUBLIC_READ_METHODS, ...CATALOG_PUBLIC_STREAM_METHODS, ...CATALOG_PUBLIC_CLEANUP_METHODS].includes(bound[index].name as never)) {
       const method = bound[index]
-      await assert.rejects(async () => isStreamingMethod(method)
+      await assert.rejects(async () => isStreamingDeclaration(method)
         ? method.handler(undefined as never, fixtureContext(runtime), () => {})
         : method.handler(undefined as never, fixtureContext(runtime)),
         (error: unknown) => error instanceof CatalogReadError && error.code === 'CATALOG_METHOD_NOT_CONNECTED')
@@ -100,7 +104,7 @@ await test('shared-token admission forwards fingerprint only after the actual pa
   const owner = Object.assign(Object.create(RuntimeRpcRequestAdmission.prototype) as Record<string, unknown>, {
     runtime, authToken: token, admitLongPoll: () => null, releaseLongPoll: () => {},
     dispatcher: { dispatch: async (_request: unknown, options: unknown) => { received.push(options); return { ok: true } } }
-  }) as { handleMessage(raw: string): Promise<{ ok: boolean }> }
+  }) as unknown as { handleMessage(raw: string): Promise<{ ok: boolean }> }
   assert.equal((await owner.handleMessage(JSON.stringify({ id: 'synthetic-rejected', method: 'repo.list', authToken: 'invalid' }))).ok, false)
   assert.deepEqual(received, [])
   assert.equal((await owner.handleMessage(JSON.stringify({ id: 'synthetic-valid', method: 'repo.list', authToken: token }))).ok, true)

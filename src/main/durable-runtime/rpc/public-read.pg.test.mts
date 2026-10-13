@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
-import type { Pool, PoolClient } from 'pg'
+import type { PoolClient } from 'pg'
 import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
 import { readMigrations, applyMigrations } from '../db/migrate.ts'
 import { registerCatalogProject } from '../catalog/register.ts'
@@ -18,7 +18,7 @@ import { deferred, eventually, fixtureConfig, fixtureRuntime, fixtureContext } f
 if (process.env.ORCA_P116_PUBLIC_READ_APPROVED !== 'root-ready' ||
   !(process.env.PGDATABASE ?? '').startsWith('orca_p116_read_')) { throw new Error('Root Ready handoff and owned public-read DB required') }
 const pool = createDurablePool({ max: 6 })
-const transaction = <T>(body: (client: { query: PoolClient['query'] }) => Promise<T>) =>
+const transaction = <T,>(body: (client: { query: PoolClient['query'] }) => Promise<T>) =>
   withDurableTransaction(pool, tx => body(tx as unknown as { query: PoolClient['query'] }))
 const owner = pairedDeviceAttachmentPrincipal(randomUUID())
 const ui = { lastActiveRepoId: null, lastActiveWorktreeId: null, activeView: 'terminal', sidebarWidth: 240,
@@ -212,7 +212,7 @@ await test('new public-read PG composition boundaries; no prior Catalog/P115 sui
         await new Promise(resolve => setTimeout(resolve, 40))
         assert.equal(observed.polls(), polls); assert.equal(cleanups.size, 0)
         gate.resolve(); await pending
-        assert.deepEqual(frames, []); assert.deepEqual(errors, [])
+        assert.deepEqual(frames, [] as Frame[]); assert.deepEqual(errors, [])
         const afterInitial = new AbortController()
         await adapter.subscribe('session.tabs.subscribeAll', undefined, streamContext(runtime, 'disconnect-live', errors, afterInitial.signal), frame => frames.push(frame as Frame))
         assert.equal(frames.length, 1)
