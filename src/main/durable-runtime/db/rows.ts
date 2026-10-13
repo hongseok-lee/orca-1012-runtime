@@ -206,3 +206,57 @@ export type ProviderContextDeliveryRow = {
   source: string;
   observed_at: Date;
 };
+
+export type CatalogHeadRow = {
+  scope: string;
+  dataset_name: "orca-1012-dev-v1";
+  publication_epoch: string;
+  revision: RowRevision<"catalog-head">;
+};
+export type CatalogProjectGroupRow = {
+  id: string;
+  payload: Record<string, unknown>;
+  revision: RowRevision<"catalog-project-group">;
+  deleted_at: Date | null;
+};
+export type CatalogRepositoryRow = {
+  id: string;
+  project_group_id: string | null;
+  payload: Record<string, unknown>;
+  revision: RowRevision<"catalog-repository">;
+  deleted_at: Date | null;
+};
+export type CatalogWorkspaceMetadataRow = {
+  workspace_id: WorkspaceId;
+  kind: "GIT" | "REPO_FOLDER" | "FOLDER_WORKSPACE";
+  repo_id: string | null;
+  project_group_id: string | null;
+  reserved_path: string;
+  payload: Record<string, unknown>;
+  create_request: Record<string, unknown>;
+  runtime_unit_id: RuntimeUnitId | null;
+  provisioning_operation_id: OperationId | null;
+  created_at: Date;
+  updated_at: Date;
+};
+export type CatalogTabMetadataRow = {
+  tab_id: LogicalId<"tab">;
+  public_tab_id: string;
+  payload: Record<string, unknown>;
+  launch_request: Record<string, unknown>;
+  launch_token: string | null;
+  binding_revision: RowRevision<"catalog-tab-binding">;
+  updated_at: Date;
+};
+export type CatalogUiStateRow = {
+  scope: "host";
+  payload: Record<string, unknown>;
+  revision: RowRevision<"catalog-ui">;
+};
+export type CatalogNameReservationRow = {
+  namespace: string;
+  normalized_name: string;
+  workspace_id: WorkspaceId;
+  generated: boolean;
+  retired: boolean;
+};
