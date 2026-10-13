@@ -29,4 +29,8 @@
 
 기존 P113·P103·P112 suite, 설치·전체 build·기존 캡처는 반복하지 않았습니다. 실제 runtime source와 watch, 공개 controller·actuator·provider는 활성화하지 않았습니다. 검증은 소유 PG transaction과 synthetic trusted source/pin fixture에 한정됩니다. 실제 Agent challenge verifier/issuer·provider transport·physical fencing·새 RW·제품 I/O·HA·G04는 미확인입니다.
 
-첫 결과 문서 PNG는 client 고정 owner가 아직 촬영하지 않았습니다. 기존 이미지를 이번 실행 증거로 바꾸어 표시하지 않습니다. Raw private log와 credential은 공개 자료에 넣지 않았습니다. [선별 결과 JSON](evidence/first-results.json)은 범위·source/schema SHA·사례와 상태만 제공합니다.
+Client 고정 owner의 최초 결과 문서 캡처 1장을 게시합니다. 아래 이미지는 원 target `f4e9868840f0b779814cc835facdef7ef54624f6`의 GitHub 보고 화면을 2026-10-13 13:11:10.661 UTC에 촬영한 1140 × 1500 viewport capture입니다. 표의 하단은 viewport 밖에 있으며 full-page capture가 아닙니다. 최초 실행 `a7abf3af`의 PG 14개·값 계약 4개와 타입 표기 교정 `dded2443`의 focused type/lint 결과를 보고합니다. 실제 readiness·인증 verifier·physical fencing·HA 합격 화면은 아닙니다.
+
+![P115 최초 소유 PG 14개와 값 계약 4개 결과 보고 화면](evidence/p115-first-report.png)
+
+원 PNG SHA-256은 `b2f339f9cba0e783a371f3b99f07082698e9be6a78023055f9b159ce9cd06132`입니다. [같은 묶음의 원 provenance](evidence/p115-first-report-provenance.json)에 실제 target·시각·viewport·원 문서 hash와 실행 source 관계를 보존합니다. 추가 시험과 재촬영은 하지 않았습니다. Raw private log와 credential은 공개 자료에 넣지 않았습니다. [선별 결과 JSON](evidence/first-results.json)은 범위·source/schema SHA·사례와 상태만 제공합니다.

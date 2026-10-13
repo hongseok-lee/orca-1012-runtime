@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-13T13:11:10.661Z",
+  "kind": "P115 원격 최초 PG 14개 및 값 계약 4개 결과 보고 화면",
+  "PR": 32,
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/f4e9868840f0b779814cc835facdef7ef54624f6/docs/implementation/p1-15/first-verification-report.md",
+  "sourceURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/f4e9868840f0b779814cc835facdef7ef54624f6/docs/implementation/p1-15/first-verification-report.md",
+  "targetSHA": "f4e9868840f0b779814cc835facdef7ef54624f6",
+  "sourceSHA": "a7abf3af8e966f791295af69ac6c115569881b79",
+  "productSourceSHA": null,
+  "typeCorrectionSourceSHA": "dded2443c4dbca38003d128a7c5fd60f1ded9c39",
+  "reportDocumentSHA256": "555888fc2e5c95e9883c82e98113ffdc62fe68e9e12e3a9d0914d4962cdccb7c",
+  "resultDocumentSHA256": "f65bb6f7ce98b1038fead65b63aac62f28f3b3eaa2ded53d2a71f256758a6679",
+  "renderMode": "공개 GitHub Markdown 보고 화면",
+  "actualHeading": "P115 최초 관측 장애 core 검증 결과",
+  "actualRenderedResultText": "PG 14개와 값 계약 4개 모두 PASS",
+  "headingRect": {
+    "x": 370,
+    "y": 376,
+    "width": 721,
+    "height": 50.59375
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 1500
+  },
+  "DPR": 1,
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "artifactSHA256": "b2f339f9cba0e783a371f3b99f07082698e9be6a78023055f9b159ce9cd06132",
+  "artifactBytes": 354380,
+  "productUI": false,
+  "nativeIPhone": false,
+  "HAQualification": false,
+  "independentContext": true,
+  "ExpoPairingContextChanged": false,
+  "screenshotExecutions": 1
+}
