@@ -21,7 +21,7 @@ test('fresh PG reservation stays visible with an unverified physical census and 
     projectGroupIds: [], workspacePublicIds: [] } as unknown as CatalogAuthority, capabilities: [] }
   const result = projectCatalogPs(snapshot, prepareCatalogCall('worktree.ps', {}, context))
   assert.ok(!('unchanged' in result))
-  if ('unchanged' in result) return
+  if ('unchanged' in result) {return}
   assert.equal(result.totalCount, 1)
   assert.equal(result.worktrees[0].worktreeId, payload.id)
   assert.equal(result.worktrees[0].displayName, 'user label')

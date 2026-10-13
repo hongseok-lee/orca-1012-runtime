@@ -44,8 +44,8 @@ export async function mutateCatalogWorkspace(
   return runDurableMutation(pool, { ...catalogReceiptIdentity(call, catalogWorkspaceScope(found.workspace)), locks: {} }, async tx => {
     await lockCatalogMembership(tx, found.membership)
     const current = await resolveCatalogWorkspace(tx, `id:${found.workspace.public_id}`, call.context.authority)
-    if (current.workspace_id !== found.workspace.workspace_id) throw new CatalogError('CATALOG_IDENTITY_CHANGED')
-    if (current.deleted_at !== null) throw new CatalogError('CATALOG_WORKSPACE_DELETED')
+    if (current.workspace_id !== found.workspace.workspace_id) {throw new CatalogError('CATALOG_IDENTITY_CHANGED')}
+    if (current.deleted_at !== null) {throw new CatalogError('CATALOG_WORKSPACE_DELETED')}
     return body(tx, current, found.membership)
   })
 }
@@ -58,7 +58,7 @@ export async function lockCatalogWorkspaceMetadata(tx: DurableTransaction, membe
   }
   const row = await tx.query<{ deleted_at: Date | null }>(
     'SELECT deleted_at FROM durable_runtime.workspaces WHERE id=$1 FOR UPDATE', [membership.workspaceId])
-  if (!row.rows[0] || row.rows[0].deleted_at !== null) throw new CatalogError('CATALOG_WORKSPACE_DELETED')
+  if (!row.rows[0] || row.rows[0].deleted_at !== null) {throw new CatalogError('CATALOG_WORKSPACE_DELETED')}
 }
 
 /** Must be the last aggregate-lock phase. Audit/outbox share the receipt transaction. */
@@ -73,6 +73,6 @@ export async function publishCatalogMutation(
   await appendAudit(tx, { actorId: call.context.authority.principalId, kind,
     previousState: null, nextState: detail, occurredAt: now, receivedAt: now,
     producerId: eventId, producerSeq: counter('sequence:producer', head.revision), evidenceRefs: [] })
-  await enqueueOutbox(tx, { eventId, aggregateId: workspaceId ?? 'catalog', aggregateKind: 'catalog',
+  await enqueueOutbox(tx, { eventId, aggregateId: workspaceId ?? head.dataset_id, aggregateKind: 'catalog',
     revision: counter('row:catalog-head', head.revision), event: { kind, detail } })
 }

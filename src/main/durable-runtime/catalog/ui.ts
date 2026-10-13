@@ -20,10 +20,10 @@ const required = ['lastActiveRepoId', 'lastActiveWorktreeId', 'activeView', 'sid
 export function parseCatalogUi(input: object): PairedUiState {
   const shared = catalogSharedUi(input)
   for (const key of required) {
-    if (!(key in shared)) throw new CatalogError('CATALOG_UI_NOT_INITIALIZED')
+    if (!(key in shared)) {throw new CatalogError('CATALOG_UI_NOT_INITIALIZED')}
   }
   // Validate known fields while retaining incumbent persisted-only fields.
   const known = Object.fromEntries(Object.entries(shared).filter(([key]) => Object.hasOwn(UiUpdateFields.shape, key)))
-  if (!UiUpdateFields.safeParse(known).success) throw new CatalogError('CATALOG_UI_PAYLOAD')
+  if (!UiUpdateFields.safeParse(known).success) {throw new CatalogError('CATALOG_UI_PAYLOAD')}
   return shared as unknown as PairedUiState
 }

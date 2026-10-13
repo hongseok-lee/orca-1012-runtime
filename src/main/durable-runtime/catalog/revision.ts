@@ -5,9 +5,9 @@ import { captureCatalogJson } from './immutable.ts'
 import { CatalogError } from './errors.ts'
 
 export function catalogSnapshotVersion(revision: string): number {
-  if (!/^(0|[1-9][0-9]*)$/.test(revision)) throw new CatalogError('CATALOG_REVISION')
+  if (!/^(0|[1-9][0-9]*)$/.test(revision)) {throw new CatalogError('CATALOG_REVISION')}
   const value = BigInt(revision)
-  if (value > BigInt(Number.MAX_SAFE_INTEGER)) throw new CatalogError('CATALOG_REVISION_OVERFLOW')
+  if (value > BigInt(Number.MAX_SAFE_INTEGER)) {throw new CatalogError('CATALOG_REVISION_OVERFLOW')}
   return Number(value)
 }
 

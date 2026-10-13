@@ -27,7 +27,7 @@ export class CatalogCompatibilityFacade {
     const request = prepareCatalogCall(method, params, context)
     const entry = this.entries[method] as
       ((request: PreparedCatalogCall<Method>) => Promise<CatalogWireResults[Method]>) | undefined
-    if (!entry) throw new CatalogError('CATALOG_ENTRY_UNAVAILABLE')
+    if (!entry) {throw new CatalogError('CATALOG_ENTRY_UNAVAILABLE')}
     return entry(request)
   }
 }

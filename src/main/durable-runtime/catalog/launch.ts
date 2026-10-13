@@ -62,7 +62,7 @@ export function captureCatalogLaunch(input: PreparedCatalogLaunch): PreparedCata
   }
   makePaneKey(launch.tab.parentTabId, launch.tab.leafId)
   const workspace = launch.workspace
-  if ('ps' in workspace.payload) throw new CatalogError('CATALOG_INITIAL_PHYSICAL_PROJECTION_FORBIDDEN')
+  if ('ps' in workspace.payload) {throw new CatalogError('CATALOG_INITIAL_PHYSICAL_PROJECTION_FORBIDDEN')}
   const expected = workspace.kind === 'FOLDER_WORKSPACE'
     ? folderWorkspaceKey(workspace.payload.id)
     : getRepoMainWorktreeId({ id: workspace.repoId ?? '', path: workspace.reservedPath }) +
@@ -72,11 +72,11 @@ export function captureCatalogLaunch(input: PreparedCatalogLaunch): PreparedCata
   }
   if (workspace.kind === 'FOLDER_WORKSPACE') {
     const payload = workspace.payload as FolderWorkspace
-    if (payload.folderPath !== workspace.reservedPath || payload.projectGroupId !== workspace.projectGroupId) throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION')
+    if (payload.folderPath !== workspace.reservedPath || payload.projectGroupId !== workspace.projectGroupId) {throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION')}
   } else {
     const payload = workspace.payload as RuntimeWorktreeRecord
-    if (payload.path !== workspace.reservedPath || payload.repoId !== workspace.repoId) throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION')
+    if (payload.path !== workspace.reservedPath || payload.repoId !== workspace.repoId) {throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION')}
   }
-  if (workspace.aliases.some(alias => !alias)) throw new CatalogError('CATALOG_ALIAS')
+  if (workspace.aliases.some(alias => !alias)) {throw new CatalogError('CATALOG_ALIAS')}
   return launch
 }
