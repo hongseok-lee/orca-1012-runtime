@@ -1,5 +1,5 @@
 {
-  "sourceRevision": "eedd2b1ce1ad5667a64ba1d7264b8bfe590a836e",
+  "sourceRevision": "ae861915091894e91b66dcb766956205f870c83b",
   "remoteCheckedApiRevision": "aaaca9226c5f677e60c9a995ad1c18e3fe872304",
   "gatewayRevision": "9052837192bba831a4f0b444e02e51da57c13709",
   "schemaRevision": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
@@ -7,7 +7,7 @@
     "typecheck": "NOT RUN for latest source/test changes",
     "PG": "NOT RUN: remote access paused by root",
     "capture": "NOT TAKEN: actual results required first",
-    "newBoundaryCasesWritten": 9,
+    "newBoundaryCasesWritten": 10,
     "newBoundaryCasesExecuted": 0
   },
   "historicalValidation": {
@@ -42,5 +42,20 @@
     "First actual result report capture",
     "Root final base/review/acceptance/merge",
     "Actual provider delivery/interrupt, public wire and native gates"
+  ],
+  "catalogCore": {
+    "signature": "recordInputCancel(tx: DurableTransaction, snapshotRequest: CancelInputRequest, expectedUnitId: RuntimeUnitId | null)",
+    "exports": [
+      "input/cancel.ts",
+      "input/execution.ts"
+    ],
+    "nestedMutationOrCommit": false,
+    "wrapperReceiptContract": "preserved",
+    "validation": "NOT RUN; joined first unexecuted cases",
+    "extractionCommit": "b9b233092e70ef1d3b3147f21fb1dbeb7a80c639"
+  },
+  "localAdditionalCorrections": [
+    "Preserve interrupt outbox hint kind after spread; new Catalog case checks it",
+    "Snapshot scoped observer inputs before await"
   ]
 }
