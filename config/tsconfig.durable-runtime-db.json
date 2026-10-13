@@ -9,5 +9,9 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["../src/main/durable-runtime/db/**/*.ts", "../src/shared/durable-runtime/identity.ts"]
+  "include": [
+    "../src/main/durable-runtime/db/**/*.ts",
+    "../src/main/durable-runtime/db/**/*.mts",
+    "../src/shared/durable-runtime/identity.ts"
+  ]
 }

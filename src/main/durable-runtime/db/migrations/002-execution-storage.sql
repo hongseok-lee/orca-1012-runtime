@@ -46,6 +46,31 @@ CREATE TABLE execution_grants (
 );
 CREATE UNIQUE INDEX one_execution_owner ON execution_grants(runtime_unit_id) WHERE state IN ('RESERVED','ACTIVE','REVOKING');
 
+CREATE FUNCTION guard_execution_grant() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
+DECLARE unit runtime_units%ROWTYPE;
+BEGIN
+  IF TG_OP='UPDATE' AND (NEW.id,NEW.runtime_unit_id,NEW.attempt_id,NEW.execution_epoch) IS DISTINCT FROM (OLD.id,OLD.runtime_unit_id,OLD.attempt_id,OLD.execution_epoch) THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Execution grant identity is immutable';
+  END IF;
+  IF TG_OP='UPDATE' AND OLD.state='REVOKED' AND NEW IS DISTINCT FROM OLD THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Revoked execution cannot be revived';
+  END IF;
+  SELECT * INTO STRICT unit FROM runtime_units WHERE id=NEW.runtime_unit_id FOR UPDATE;
+  IF NEW.state IN ('RESERVED','ACTIVE','REVOKING') AND (unit.execution_epoch<>NEW.execution_epoch OR unit.active_attempt_id IS DISTINCT FROM NEW.attempt_id) THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Current execution attempt required';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER execution_grant_guard BEFORE INSERT OR UPDATE ON execution_grants FOR EACH ROW EXECUTE FUNCTION guard_execution_grant();
+CREATE FUNCTION guard_unit_owner_change() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
+BEGIN
+  IF NEW.execution_epoch<OLD.execution_epoch OR ((NEW.execution_epoch,NEW.active_attempt_id) IS DISTINCT FROM (OLD.execution_epoch,OLD.active_attempt_id) AND EXISTS(SELECT 1 FROM execution_grants WHERE runtime_unit_id=OLD.id AND state IN ('RESERVED','ACTIVE','REVOKING'))) THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Old execution grant must be revoked with proof';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER runtime_owner_guard BEFORE UPDATE ON runtime_units FOR EACH ROW EXECUTE FUNCTION guard_unit_owner_change();
+
 CREATE TABLE storage_domains (
   backend_id text NOT NULL CHECK (backend_id<>''),
   export_id text NOT NULL CHECK (export_id<>''),
@@ -94,8 +119,11 @@ CREATE UNIQUE INDEX one_storage_writer ON storage_write_grants(storage_binding_i
 CREATE FUNCTION guard_storage_writer() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
 DECLARE binding storage_bindings%ROWTYPE;
 BEGIN
-  IF TG_OP='UPDATE' AND (NEW.storage_binding_id,NEW.attempt_id,NEW.storage_epoch) IS DISTINCT FROM (OLD.storage_binding_id,OLD.attempt_id,OLD.storage_epoch) THEN
+  IF TG_OP='UPDATE' AND (NEW.id,NEW.storage_binding_id,NEW.attempt_id,NEW.storage_epoch) IS DISTINCT FROM (OLD.id,OLD.storage_binding_id,OLD.attempt_id,OLD.storage_epoch) THEN
     RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Storage grant identity is immutable';
+  END IF;
+  IF TG_OP='UPDATE' AND OLD.state='REVOKED' AND NEW IS DISTINCT FROM OLD THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Revoked storage grant cannot be revived';
   END IF;
   SELECT * INTO STRICT binding FROM storage_bindings WHERE id=NEW.storage_binding_id;
   -- A row write serializes overlapping paths and forces stale RR snapshots to abort.
@@ -128,6 +156,9 @@ CREATE FUNCTION keep_storage_identity() RETURNS trigger LANGUAGE plpgsql SET sea
 BEGIN
   IF (NEW.backend_id,NEW.export_id,NEW.canonical_directory) IS DISTINCT FROM (OLD.backend_id,OLD.export_id,OLD.canonical_directory) THEN
     RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Canonical storage domain identity is immutable';
+  END IF;
+  IF NEW.epoch<OLD.epoch OR (NEW.epoch<>OLD.epoch AND EXISTS(SELECT 1 FROM storage_write_grants WHERE storage_binding_id=OLD.id AND state IN ('RESERVED','ACTIVE','REVOKING'))) THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Old storage grant must be revoked with proof';
   END IF;
   RETURN NEW;
 END $$;
