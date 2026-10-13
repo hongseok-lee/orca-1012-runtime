@@ -2,7 +2,7 @@ import type {
   AttemptId, ExecutionEpoch, LogicalId, OperationId, ProducerId,
   RowRevision, RuntimeUnitId, Sequence,
 } from "../../../shared/durable-runtime/identity.ts";
-import type { PodUid } from "../runtime/runtime-evidence.ts";
+import type { Incarnation, PodUid } from "../runtime/runtime-evidence.ts";
 
 export type ObservationEpisodeRow = {
   id: LogicalId<"observation-episode">;
@@ -18,6 +18,7 @@ export type ObservationEpisodeRow = {
   revision: RowRevision<"observation-episode">;
   start_source_ref: string;
   start_producer_id: ProducerId | null;
+  start_producer_incarnation: Incarnation | null;
   fence_operation_id: OperationId | null;
   reason: string | null;
 };
@@ -33,6 +34,7 @@ export type ObservationChallengeRow = {
   issued_at: Date;
   request_source_ref: string;
   expected_producer_id: ProducerId | null;
+  expected_producer_incarnation: Incarnation | null;
   expected_watermark: Sequence<"observation"> | null;
   consumed_at: Date | null;
   superseded_at: Date | null;

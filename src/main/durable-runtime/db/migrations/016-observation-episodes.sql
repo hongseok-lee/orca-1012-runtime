@@ -15,13 +15,17 @@ ALTER TABLE observation_episodes
   ADD COLUMN revision bigint NOT NULL DEFAULT 0 CHECK(revision>=0),
   ADD COLUMN start_source_ref text NOT NULL CHECK(start_source_ref<>''),
   ADD COLUMN start_producer_id uuid,
+  ADD COLUMN start_producer_incarnation text CHECK(start_producer_incarnation IS NULL OR start_producer_incarnation<>''),
   ADD COLUMN fence_operation_id uuid,
   ADD COLUMN reason text CHECK(reason IS NULL OR reason<>''),
   ADD FOREIGN KEY(attempt_id,runtime_unit_id,execution_epoch,pod_uid)
     REFERENCES attempts(id,runtime_unit_id,execution_epoch,pod_uid),
   ADD FOREIGN KEY(fence_operation_id,runtime_unit_id) REFERENCES operations(id,runtime_unit_id),
+  ADD FOREIGN KEY(start_producer_id,start_producer_incarnation)
+    REFERENCES runtime_event_producers(producer_id,incarnation),
   ADD UNIQUE(id,runtime_unit_id,attempt_id,execution_epoch,pod_uid),
-  ADD CHECK((start_producer_id IS NULL)=(start_watermark IS NULL)),
+  ADD CHECK((start_producer_id IS NULL AND start_producer_incarnation IS NULL AND start_watermark IS NULL)
+    OR (start_producer_id IS NOT NULL AND start_producer_incarnation IS NOT NULL AND start_watermark IS NOT NULL)),
   ADD CHECK((state='RESOLVED')=(resolved_at IS NOT NULL)),
   ADD CHECK(resolved_at IS NULL OR resolved_at>=started_at),
   ADD CHECK(state<>'BLOCKED' OR reason IS NOT NULL),
@@ -41,10 +45,10 @@ BEGIN
     END IF;
   ELSE
     IF (NEW.id,NEW.runtime_unit_id,NEW.attempt_id,NEW.execution_epoch,NEW.pod_uid,
-        NEW.started_at,NEW.deadline_at,NEW.start_source_ref,NEW.start_producer_id,NEW.start_watermark)
+        NEW.started_at,NEW.deadline_at,NEW.start_source_ref,NEW.start_producer_id,NEW.start_producer_incarnation,NEW.start_watermark)
        IS DISTINCT FROM
        (OLD.id,OLD.runtime_unit_id,OLD.attempt_id,OLD.execution_epoch,OLD.pod_uid,
-        OLD.started_at,OLD.deadline_at,OLD.start_source_ref,OLD.start_producer_id,OLD.start_watermark)
+        OLD.started_at,OLD.deadline_at,OLD.start_source_ref,OLD.start_producer_id,OLD.start_producer_incarnation,OLD.start_watermark)
        OR NEW.revision<OLD.revision THEN
       RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Observation original tuple, start, six-hour deadline and producer watermark are immutable; revision cannot decrease';
     END IF;
@@ -73,16 +77,20 @@ CREATE TABLE observation_challenges (
   issued_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   request_source_ref text NOT NULL CHECK(request_source_ref<>''),
   expected_producer_id uuid,
+  expected_producer_incarnation text CHECK(expected_producer_incarnation IS NULL OR expected_producer_incarnation<>''),
   expected_watermark bigint CHECK(expected_watermark>=0),
   consumed_at timestamptz,
   superseded_at timestamptz,
   superseded_by text,
   FOREIGN KEY(episode_id,runtime_unit_id,attempt_id,execution_epoch,pod_uid)
     REFERENCES observation_episodes(id,runtime_unit_id,attempt_id,execution_epoch,pod_uid),
+  FOREIGN KEY(expected_producer_id,expected_producer_incarnation)
+    REFERENCES runtime_event_producers(producer_id,incarnation),
   UNIQUE(id,episode_id),
   FOREIGN KEY(superseded_by,episode_id) REFERENCES observation_challenges(id,episode_id)
     DEFERRABLE INITIALLY DEFERRED,
-  CHECK((expected_producer_id IS NULL)=(expected_watermark IS NULL)),
+  CHECK((expected_producer_id IS NULL AND expected_producer_incarnation IS NULL AND expected_watermark IS NULL)
+    OR (expected_producer_id IS NOT NULL AND expected_producer_incarnation IS NOT NULL AND expected_watermark IS NOT NULL)),
   CHECK(consumed_at IS NULL OR consumed_at>=issued_at),
   CHECK(superseded_at IS NULL OR superseded_at>=issued_at),
   CHECK(consumed_at IS NULL OR superseded_at IS NULL),
@@ -96,10 +104,10 @@ CREATE FUNCTION guard_observation_challenge() RETURNS trigger LANGUAGE plpgsql
 SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
 BEGIN
   IF (NEW.id,NEW.episode_id,NEW.runtime_unit_id,NEW.attempt_id,NEW.pod_uid,NEW.execution_epoch,
-      NEW.issued_at,NEW.request_source_ref,NEW.expected_producer_id,NEW.expected_watermark)
+      NEW.issued_at,NEW.request_source_ref,NEW.expected_producer_id,NEW.expected_producer_incarnation,NEW.expected_watermark)
      IS DISTINCT FROM
      (OLD.id,OLD.episode_id,OLD.runtime_unit_id,OLD.attempt_id,OLD.pod_uid,OLD.execution_epoch,
-      OLD.issued_at,OLD.request_source_ref,OLD.expected_producer_id,OLD.expected_watermark) THEN
+      OLD.issued_at,OLD.request_source_ref,OLD.expected_producer_id,OLD.expected_producer_incarnation,OLD.expected_watermark) THEN
     RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Observation challenge original request identity and correlation are immutable';
   END IF;
   IF (OLD.consumed_at IS NOT NULL AND NEW.consumed_at IS DISTINCT FROM OLD.consumed_at)

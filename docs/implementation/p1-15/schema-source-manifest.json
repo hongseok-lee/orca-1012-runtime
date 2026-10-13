@@ -62,7 +62,8 @@
       "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d"
     }
   ],
-  "016_checksum": "01d020cff3b437e23fec85f99393a8dac374ab86a1df91c4baf65a7cd3ee004e",
+  "016_checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
   "sql_pg_type_lint": "NOT_RUN",
-  "dev013016": "NOT_AUTHORIZED/NOT_APPLIED"
+  "dev013016": "NOT_AUTHORIZED/NOT_APPLIED",
+  "producer_identity_correction": "Root 지시로 start/expected producer UUID·incarnation·watermark triple과 011 producer pair FK를 추가했습니다. 016은 아직 미적용입니다."
 }
