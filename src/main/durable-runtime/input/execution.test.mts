@@ -6,7 +6,11 @@ import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { createDurablePool } from '../db/connection.ts'
 import { acceptInput } from './intake.ts'
-import { requestInputCancel } from './cancel.ts'
+import { requestInputCancel, recordInputCancel } from './cancel.ts'
+import { runDurableMutation } from '../db/atomic.ts'
+import { inputPayloadHash, inputScopeKey } from './canonical.ts'
+import { lockAggregates } from '../db/locks.ts'
+import { withDurableTransaction } from '../db/connection.ts'
 import { stageInputInTransaction } from './stage.ts'
 import { observeInputDeliveryInTransaction } from './observe.ts'
 import type { InputDeliveryObservation, ProviderCompletedProof } from './observation-types.ts'
@@ -220,4 +224,38 @@ caseTest('termination before Stop and late completion belong to original deliver
   await inExecution(pool,second,tx=>observeInputDeliveryInTransaction(tx,second.authority,fixed(second,delivery.deliveryId),{kind:'SETTLED',proof:complete}))
   const done=await pool.query(`SELECT m.intake_status,ci.interrupt_status FROM durable_runtime.messages m JOIN durable_runtime.cancel_intents ci ON ci.target_message_id=m.id WHERE m.id=$1`,[second.messageId])
   assert.equal(done.rows[0].intake_status,'SETTLED');assert.equal(done.rows[0].interrupt_status,'ALREADY_SETTLED')
+})
+
+caseTest('Catalog outer receipt and Tab tombstone compose cancel core once; rollback and original membership guard',async()=>{
+  const f=await executionFixture(pool),s=await stage(pool,f),r=dispatch(f,s.deliveryId)
+  await claim(pool,f,r,true)
+  const request=cancelRequest(f)
+  const outer={key:{principalId:f.authority.principal,sessionScope:inputScopeKey(f.authority),method:'verification.catalog.close',operationKey:randomUUID()},
+    payloadHash:inputPayloadHash({tab:f.terminalHandle,targetMessageId:f.messageId}),
+    locks:{sessionIds:[f.authority.sessionId],runtimeUnitIds:[f.context.runtimeUnitId]}}
+  const callback=async(tx:Parameters<typeof recordInputCancel>[0])=>{
+    await tx.query("UPDATE durable_runtime.tabs SET lifecycle='CLOSED',closed_at=clock_timestamp() WHERE terminal_handle=$1",[f.terminalHandle])
+    const facts=await recordInputCancel(tx,request,f.context.runtimeUnitId)
+    return {tabLifecycle:'CLOSED',...facts}
+  }
+  const before=await pool.query('SELECT context_revision FROM durable_runtime.sessions WHERE id=$1',[f.authority.sessionId])
+  await assert.rejects(runDurableMutation(pool,outer,async tx=>{await callback(tx);throw new Error('SYNTHETIC_CATALOG_ABORT')}),{code:'DB_FAILURE'})
+  const rolled=await pool.query('SELECT lifecycle FROM durable_runtime.tabs WHERE terminal_handle=$1',[f.terminalHandle]);assert.equal(rolled.rows[0].lifecycle,'OPEN')
+  const revision=await pool.query('SELECT context_revision FROM durable_runtime.sessions WHERE id=$1',[f.authority.sessionId]);assert.deepEqual(revision.rows,before.rows)
+  const accepted=await runDurableMutation(pool,outer,callback);assert.equal(accepted.status,'COMMITTED')
+  assert.equal(field(response(accepted),'interruptStatus'),'REQUESTED')
+  const replay=await runDurableMutation(pool,outer,async()=>{throw new Error('OUTER_REPLAY_MUST_NOT_RUN_CORE')});assert.equal(replay.status,'REPLAYED')
+  const intents=await pool.query('SELECT count(*)::text AS n FROM durable_runtime.cancel_intents WHERE target_message_id=$1',[f.messageId]);assert.equal(intents.rows[0].n,'1')
+  await assert.rejects(withDurableTransaction(pool,tx=>recordInputCancel(tx,request,f.context.runtimeUnitId)),{code:'INPUT_SESSION_LOCK_REQUIRED'})
+  await assert.rejects(withDurableTransaction(pool,async tx=>{
+    await lockAggregates(tx,{sessionIds:[f.authority.sessionId]})
+    return recordInputCancel(tx,request,f.context.runtimeUnitId)
+  }),{code:'CANCEL_UNIT_LOCK_REQUIRED'})
+  const otherUnit=logicalId('runtime-unit',randomUUID())
+  await pool.query("INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'SUSPENDED','ABSENT')",[otherUnit])
+  await assert.rejects(withDurableTransaction(pool,async tx=>{
+    await lockAggregates(tx,{sessionIds:[f.authority.sessionId],runtimeUnitIds:[f.context.runtimeUnitId,otherUnit]})
+    // Even an actually held Unit cannot replace the snapshot's original Session membership.
+    return recordInputCancel(tx,request,otherUnit)
+  }),{code:'CANCEL_MEMBERSHIP_CHANGED'})
 })

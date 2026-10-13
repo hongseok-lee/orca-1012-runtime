@@ -7,3 +7,4 @@ export type {
   InputDeliveryObservation,
   ProviderCompletedProof
 } from './observation-types.ts'
+export { recordInputCancel } from './cancel.ts'
