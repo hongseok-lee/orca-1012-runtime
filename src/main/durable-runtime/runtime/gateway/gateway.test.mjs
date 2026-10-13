@@ -6,7 +6,7 @@ import { writeFile, readFile, open } from 'node:fs/promises';
 import { fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createDurablePool, withDurableTransaction, DurableDatabaseError } from '../../db/connection.ts';
-import { runDurableMutation, resolveReceipt } from '../../db/atomic.ts';
+import { resolveReceipt } from '../../db/atomic.ts';
 import { LockedGatewayAuthority } from './authority.ts';
 import { inputDigest } from './input.ts';
 import { submitCommand, lookupCommand, takeOverCommand, originalIdentity } from './store.ts';
@@ -172,6 +172,22 @@ try {
     await rejected(()=>inGateway(f,async a=>{await claimCommand(a,original(r),'fixture-aborted');throw new DurableDatabaseError('FIXTURE_ABORT');}),'FIXTURE_ABORT');
     const row=await inGateway(f,a=>lookupCommand(a,original(r)));assert.equal(row.state,'ACCEPTED');assert.equal(row.execution_token,null);assert.equal((await counts(f)).history,1);
     return {acceptedPreserved:true,claimTokenAbsent:true,claimedHistoryRolledBack:true};
+  });
+  await test('adoption-rejects-original-target-swap-and-late-settlement',async()=>{
+    const f=await fixture(),r=request(f);await accept(f,r);
+    const claimed=await inGateway(f,a=>claimCommand(a,original(r),'fixture-original-executor'));
+    await pool.query('UPDATE durable_runtime.controller_leases SET owner=$2,term=2 WHERE scope=$1',[f.context.controller.scope,'fixture-adopter']);
+    await pool.query('UPDATE durable_runtime.operations SET controller_term=2 WHERE id=$1',[f.context.operationId]);
+    const next={...f,context:{...f.context,controller:{...f.context.controller,owner:'fixture-adopter',term:'2'}}};
+    const swapped={...original(r),originalEnvelope:{...r.envelope,expectedPodUid:'wrong-original-fixture-pod'}};
+    await rejected(()=>inGateway(next,a=>takeOverCommand(a,swapped)),'COMMAND_IDENTITY_CONFLICT');
+    await inGateway(next,a=>takeOverCommand(a,original(r)));
+    const outcome={state:'RESOLVED',result:{fixture:true},evidenceRefs:[]};
+    await rejected(()=>inGateway(f,a=>settleOwnedExecution(a,claimed.claim,outcome)),'COMMAND_AUTHORITY_STALE');
+    await rejected(()=>inGateway(next,a=>settleOwnedExecution(a,{...claimed.claim,executionToken:randomUUID()},outcome)),'COMMAND_EXECUTION_IDENTITY');
+    await rejected(()=>inGateway(next,a=>settleOwnedExecution(a,claimed.claim,outcome)),'COMMAND_RECONCILIATION_REQUIRED');
+    const duplicate=await inGateway(next,a=>claimCommand(a,original(r),'fixture-next-executor'));assert.equal(duplicate.disposition,'NOT_CLAIMABLE');
+    return {originalTargetSwapRejected:true,lateOldOwnerRejected:true,wrongTokenRejected:true,adoptionCannotReexecute:true};
   });
   await test('claimed-owned-worker-exit-keeps-unknown-non-reexecutable',async()=>{
     const f=await fixture(true),r=request(f);await accept(f,r);
