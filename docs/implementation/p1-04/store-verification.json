@@ -1,0 +1,167 @@
+{
+  "capturedAt": "2026-10-13T02:28:21.687Z",
+  "implementationRevision": "1d3680316ff22729f24ef75b0fb6197045af8ecf",
+  "schemaRevision": "34498b46c562a7a625d8dda3683f6ee56ecfdd8f",
+  "node": "v24.15.0",
+  "esbuild": "0.25.12",
+  "mode": "Narrow Node24 ESM verifiers; installed packages external; existing caches unchanged",
+  "canonicalEqual": true,
+  "sourceSha256": {
+    "src/main/durable-runtime/attachments/chunk-crash-writer.ts": "4e21fdf42f8b0d533998a4bf38664572b0615e79250a0cb9ebe60252413ba3fe",
+    "src/main/durable-runtime/attachments/materializer.test.mts": "e45aed956187393bd85b0c1eca23465ca568ac387bedf2071fb74ea1288f2189",
+    "src/main/durable-runtime/attachments/materializer.ts": "1dfc2d9c0329f3f571704b0b4d4edd80aaeb8fe4b74ea680a5d56e2a2862046f",
+    "src/main/durable-runtime/attachments/prepare-verification.mts": "3b02a6748c88e5f5a9100ce50a2b76b7a78bd64b0366142802df79e938d50e5e",
+    "src/main/durable-runtime/attachments/store-internals.ts": "f24b14fefb9c3e1a1665cd4f06933d10897d033217f619d673a81bb48b6c3fe2",
+    "src/main/durable-runtime/attachments/store.test.mts": "07d4ba719a38fe9416986e9642fe3f0e11fc4b74795a70f58bd091545c858d6d",
+    "src/main/durable-runtime/attachments/store.ts": "8983231a3e8d9abef3de86dd3cf88cb484d32b540e2830068ca6c10d15314e71",
+    "src/main/durable-runtime/attachments/types.ts": "a2c2a8d84ca2337dfaa8aabc5d9e58756a9361df65af50f3c15663d5e88ef282",
+    "src/main/durable-runtime/attachments/upload-store.ts": "cf206574fd838fb7ded0c99b3e22c941a0879853f95f6dcfa13973adc50aae95",
+    "config/tsconfig.durable-runtime-attachments.json": "d70f45d08abaf51a55d5adafa809f278b2e1c9528b4b1699541ac29d19d5657c",
+    "docs/implementation/p1-04/build-verifiers.mjs": "224629bd828cc10ff89d6fbe8305545548d01735fac600d7376fe45c0f7f82d9"
+  },
+  "applied": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    }
+  ],
+  "readback": {
+    "uploads": "11",
+    "blobs": "10",
+    "aliases": "11",
+    "accepted_references": "1"
+  },
+  "checks": {
+    "dedicatedTypecheck": "PASS exit0",
+    "repositoryConfiguredLint": "PASS 0 warnings/errors",
+    "format": "PASS"
+  },
+  "materializer": {
+    "pass": 4,
+    "fail": 0,
+    "cases": [
+      {
+        "result": "PASS",
+        "name": "same committed bytes materialize in new attempt roots and an identical file is reused"
+      },
+      {
+        "result": "PASS",
+        "name": "conflicting target is not overwritten; target and directory symlinks are refused"
+      },
+      {
+        "result": "PASS",
+        "name": "concurrent publication uses one complete file without partial overwrite"
+      },
+      {
+        "result": "PASS",
+        "name": "corrupt snapshot fails before file creation and empty wire bytes remain supported"
+      }
+    ],
+    "logSha256": "5ca048323b7f8cf96cd6ba1652508867a6bdb0a5f17b4daf379fee4e19db01c0"
+  },
+  "storeInitial": {
+    "pass": 6,
+    "fail": 1,
+    "cases": [
+      {
+        "result": "PASS",
+        "name": "ordered chunks survive retry; a conflicting replay or gap fails; incomplete commit preserves OPEN"
+      },
+      {
+        "result": "PASS",
+        "name": "single-frame retry preserves original text, zero bytes, and blob-only content deduplication"
+      },
+      {
+        "result": "PASS",
+        "name": "different principal cannot inspect, append, commit or resolve the same upload/alias"
+      },
+      {
+        "result": "PASS",
+        "name": "rollback after blob/alias/state writes leaves no partial publication and permits retry"
+      },
+      {
+        "result": "PASS",
+        "name": "actual writer process death rolls back only its uncommitted chunk, preserving the committed prefix"
+      },
+      {
+        "result": "PASS",
+        "name": "commit and abort contend on the same row and keep terminal state consistent"
+      },
+      {
+        "result": "FAIL",
+        "name": "input attachment FK rejects unknown blob relations and abort retains an accepted reference"
+      }
+    ],
+    "logSha256": "d0168ed677c11254364c97f919f81eaf4375aa134e014e8d7778717bd04477aa"
+  },
+  "storeFocused": {
+    "pass": 1,
+    "fail": 0,
+    "cases": [
+      {
+        "result": "PASS",
+        "name": "input attachment FK rejects unknown blob relations and abort retains an accepted reference"
+      }
+    ],
+    "logSha256": "2347ea0ce9749d497d03aab4d4f33c793914a04fc0a6327376918ae780a43916"
+  },
+  "evidenceBasis": "Seven distinct real-PG cases: six initial PASS and one fixture-corrected focused PASS. Not a repeated all-green suite. Store was divided into owned modules for repository max-lines; format and safe lint fixes followed initial behavioral checks, then typecheck and the accepted-reference test passed on final source.",
+  "observedFailures": [
+    {
+      "code": "ERR_MODULE_NOT_FOUND",
+      "path": "src/shared/rpc-contract/clipboard-params.ts -> ../clipboard-image",
+      "phase": "native Node loader before test bodies",
+      "resolution": "Root-approved esbuild verifier conversion; shared source unchanged"
+    },
+    {
+      "code": "TS2339",
+      "phase": "verifier narrowing",
+      "resolution": "Narrow fulfilled result before callback"
+    },
+    {
+      "code": "TS7060",
+      "phase": "MTS verifier generic syntax",
+      "resolution": "Use <T,>"
+    },
+    {
+      "code": "42P08",
+      "phase": "accepted-reference fixture UUID/text parameter reuse",
+      "resolution": "Separate UUID and public text parameters; focused case passed"
+    }
+  ],
+  "limits": [
+    "No public clipboard RPC, preview/provider, SSH or application activation",
+    "No native iPhone or Expo attachment UI acceptance",
+    "No P1-03 business receipt/uncertain COMMIT integration",
+    "No P1-10 Agent write gate, HA, Spot or whole-PG fault test",
+    "Materializer supported and tested only on Linux"
+  ]
+}
