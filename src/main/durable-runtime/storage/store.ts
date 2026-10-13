@@ -30,8 +30,9 @@ function trustedReference(value: string): void {
 function matchesBinding(c: CanonicalCandidate, b: Binding): boolean {
   return c.domain.backendId === b.backend_id && c.domain.exportId === b.export_id && c.canonicalDirectory === b.canonical_directory;
 }
-// SQL-only helper: it never commits, mounts, starts/stops a process, or performs a
-// cloud action. Caller provides a privileged authority and the P1-03 transaction.
+// DB mutations consume only prepared immutable local evidence, with synchronous
+// local validity checks. Collection/verification and pin acquisition/release are
+// outside the transaction. No production verifier/pin or actuator is supplied.
 export class StorageStore {
   constructor(private readonly authority: StorageEvidenceAuthority) {}
   private async event(tx: DurableTransaction, scope: StorageScope, binding: Binding, kind: string,
@@ -58,28 +59,21 @@ export class StorageStore {
   }): Promise<Binding> {
     trustedReference(input.directoryEvidenceRef);
     let evidence;
-    try { evidence = await this.authority.directory(input.directoryEvidenceRef); }
+    try { evidence = this.authority.directory(input.directoryEvidenceRef); }
     catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
     if (!evidence || evidence.evidenceRef !== input.directoryEvidenceRef) deny('STORAGE_DIRECTORY_UNVERIFIED');
-    let fresh;
-    try { fresh = await this.authority.revalidateDirectory(evidence); }
-    catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
-    if (!fresh || !sameDirectory(evidence.candidate, fresh.candidate)) deny('STORAGE_DIRECTORY_CHANGED');
-    const c = fresh.candidate;
+    if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');
+    const c = evidence.candidate;
     await lockAggregates(tx, { sessionIds: [input.sessionId], runtimeUnitIds: [input.unitId] });
     await this.unit(tx, input);
     await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [c.domain.backendId, c.domain.exportId]);
     await lockAggregates(tx, { storageDomains: [{ backendId: c.domain.backendId, exportId: c.domain.exportId }] });
-    // Revalidate after all locks too. The authority must hold a topology/path
-    // immutability boundary until commit; this module cannot lock arbitrary NFS.
-    let held;
-    try { held = await this.authority.revalidateDirectory(fresh); }
-    catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
-    if (!held || !sameDirectory(c, held.candidate)) deny('STORAGE_DIRECTORY_CHANGED');
+    // Local validity only, after lock waits. No stat/cloud/K8s callback in tx.
+    if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');
     const row = await tx.query<Binding>(`INSERT INTO durable_runtime.storage_bindings
       (id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
       VALUES($1,$2,$3,$4,$5,clock_timestamp(),'VERIFIED') RETURNING *`,
-      [input.bindingId, c.domain.backendId, c.domain.exportId, c.canonicalDirectory, held.evidenceRef]);
+      [input.bindingId, c.domain.backendId, c.domain.exportId, c.canonicalDirectory, evidence.evidenceRef]);
     await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
       [input.unitId, input.sessionId, input.bindingId]);
     await this.event(tx, input, row.rows[0], 'STORAGE_BINDING_REGISTERED');
@@ -131,13 +125,22 @@ export class StorageStore {
     await this.event(tx, target, binding.rows[0], 'STORAGE_BLOCKED', { reason });
     return { status: 'BLOCKED', reason, bindingRevision: binding.rows[0].revision, unitRevision: unit.rows[0].revision };
   }
-  private async directory(b: Binding): Promise<VerifiedDirectoryEvidence | null> {
+  private localPin(read: () => boolean): boolean {
+    try { return read() === true; } catch { return false; }
+  }
+  private directoryPinValid(evidence: VerifiedDirectoryEvidence): boolean {
+    try {
+      return !!evidence.topologyPinId && Object.isFrozen(evidence) &&
+        Object.isFrozen(evidence.candidate) && Object.isFrozen(evidence.candidate.domain) &&
+        this.authority.directoryPinValid(evidence) === true;
+    } catch { return false; }
+  }
+  private directory(b: Binding): VerifiedDirectoryEvidence | null {
     if (!b.identity_proof_ref) return null;
     try {
-      const held = await this.authority.directory(b.identity_proof_ref);
+      const held = this.authority.directory(b.identity_proof_ref);
       if (!held || held.evidenceRef !== b.identity_proof_ref || !matchesBinding(held.candidate, b)) return null;
-      const fresh = await this.authority.revalidateDirectory(held);
-      return fresh && sameDirectory(held.candidate, fresh.candidate) ? fresh : null;
+      return this.directoryPinValid(held) ? held : null;
     } catch { return null; }
   }
   private async revise(tx: DurableTransaction, binding: Binding, state: string, writer: string | null): Promise<Binding> {
@@ -149,7 +152,7 @@ export class StorageStore {
   async reserveWriter(tx: DurableTransaction, target: StorageTarget & { grantId: string }): Promise<StorageResult<WriterGrant>> {
     const { binding: b } = await this.lock(tx, target);
     await this.currentExecution(tx, target, false);
-    if (!(await this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
+    if (!(this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
     const conflict = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
       JOIN durable_runtime.storage_bindings b ON b.id=g.storage_binding_id
       WHERE g.state IN ('RESERVED','ACTIVE','REVOKING') AND b.backend_id=$1 AND b.export_id=$2
@@ -165,7 +168,7 @@ export class StorageStore {
   }
   async registerReadOnlyMount(tx: DurableTransaction, target: StorageTarget & { mountId: string }): Promise<StorageResult<string>> {
     const { binding: b } = await this.lock(tx, target);
-    if (!(await this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
+    if (!(this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
     await tx.query(`INSERT INTO durable_runtime.storage_mounts(id,storage_binding_id,attempt_id,pod_uid,mode,desired_state,observed_state,grant_epoch)
       VALUES($1,$2,$3,$4,'RO','ACTIVE','RESERVED',$5)`, [target.mountId, b.id, target.attemptId, target.podUid, b.epoch]);
     const updated = await this.revise(tx, b, b.access_state, b.writer_attempt_id);
@@ -189,14 +192,16 @@ export class StorageStore {
   }): Promise<StorageResult<string>> {
     const { binding: b, incarnation } = await this.lock(tx, target);
     if (target.writer) await this.currentExecution(tx, target, true);
-    const directory = await this.directory(b);
+    const directory = this.directory(b);
     let observation, expected;
     try {
-      observation = await this.authority.mount(target.mountEvidenceRef);
-      expected = await this.authority.executionTarget(target.attemptId, target.podUid, incarnation, target.executionEpoch);
+      observation = this.authority.mount(target.mountEvidenceRef);
+      expected = this.authority.executionTarget(target.attemptId, target.podUid, incarnation, target.executionEpoch);
     } catch { observation = null; expected = null; }
     const mode = target.writer ? 'RW' : 'RO';
     if (!directory || !observation || !expected || observation.evidenceRef !== target.mountEvidenceRef ||
+        !Object.isFrozen(observation) || !Object.isFrozen(observation.directory) || !Object.isFrozen(observation.target) ||
+        !Object.isFrozen(expected) || this.localPin(() => this.authority.executionTargetPinValid(expected!)) !== true || this.localPin(() => this.authority.mountPinValid(observation!)) !== true ||
         !sameDirectory(directory.candidate, observation.directory) || observation.mode !== mode ||
         !this.targetMatches(observation.target, target, incarnation) ||
         observation.target.nodeUid !== expected.nodeUid || observation.target.computeIdentityRef !== expected.computeIdentityRef ||
@@ -235,13 +240,16 @@ export class StorageStore {
   }): Promise<StorageResult<Binding>> {
     const { binding: b, incarnation } = await this.lock(tx, target);
     await this.grant(tx, target, target.grantId, target.expectedGrantRevision, 'REVOKING');
+    if (!this.directory(b)) return this.blocked(tx, target, b, 'DIRECTORY_PIN_INVALID');
     let stopped, expected;
     try {
-      stopped = await this.authority.permanentComputeStop(target.permanentStopRef);
-      expected = await this.authority.executionTarget(target.attemptId, target.podUid, incarnation, target.executionEpoch);
+      stopped = this.authority.permanentComputeStop(target.permanentStopRef);
+      expected = this.authority.executionTarget(target.attemptId, target.podUid, incarnation, target.executionEpoch);
     } catch { stopped = null; expected = null; }
     const proof = stopped?.proof;
-    if (!stopped || !expected || !proof || stopped.disposition !== 'DELETED_NO_REENTRY' ||
+    if (!stopped || !expected || !proof || !Object.isFrozen(stopped) || !Object.isFrozen(proof) ||
+        !Object.isFrozen(expected) || this.localPin(() => this.authority.executionTargetPinValid(expected!)) !== true ||
+        this.localPin(() => this.authority.computeStopPinValid(stopped!)) !== true || stopped.disposition !== 'DELETED_NO_REENTRY' ||
         proof.evidenceRef !== target.permanentStopRef || proof.kind !== 'COMPUTE_STOPPED' ||
         proof.observationSource !== 'COMPUTE_CONTROL_PLANE' || !this.targetMatches(expected, target, incarnation) ||
         proof.attemptId !== expected.attemptId || proof.podUid !== expected.podUid ||

@@ -27,24 +27,28 @@ class FixtureAuthority implements StorageEvidenceAuthority {
   targets = new Map<string, ExecutionTarget>();
   stops = new Map<string, VerifiedPermanentComputeStop>();
   changed = false;
-  async directory(ref: string) { return this.directories.get(ref) ?? null; }
-  async revalidateDirectory(value: VerifiedDirectoryEvidence) {
-    return this.changed ? null : this.directories.get(value.evidenceRef) ?? null;
+  directory(ref: string) { return this.directories.get(ref) ?? null; }
+  directoryPinValid(value: VerifiedDirectoryEvidence) {
+    return !this.changed && this.directories.get(value.evidenceRef) === value;
   }
-  async mount(ref: string) { return this.mounts.get(ref) ?? null; }
-  async executionTarget(id: string) { return this.targets.get(id) ?? null; }
-  async permanentComputeStop(ref: string) { return this.stops.get(ref) ?? null; }
+  mountPinValid(value: VerifiedMountEvidence) { return this.mounts.get(value.evidenceRef) === value; }
+  executionTargetPinValid(value: ExecutionTarget) { return this.targets.get(value.attemptId) === value; }
+  computeStopPinValid(value: VerifiedPermanentComputeStop) { return this.stops.get(value.proof.evidenceRef) === value; }
+  mount(ref: string) { return this.mounts.get(ref) ?? null; }
+  executionTarget(id: string) { return this.targets.get(id) ?? null; }
+  permanentComputeStop(ref: string) { return this.stops.get(ref) ?? null; }
   directoryFixture(ref: string, candidate: CanonicalCandidate) {
-    const value = { evidenceRef: ref, candidate } as VerifiedDirectoryEvidence;
+    const value = Object.freeze({ evidenceRef: ref, topologyPinId: 'synthetic-pin-' + ref,
+      candidate: Object.freeze({ ...candidate, domain: Object.freeze({ ...candidate.domain }) }) }) as VerifiedDirectoryEvidence;
     this.directories.set(ref, value); return value;
   }
   mountFixture(ref: string, target: ExecutionTarget, directory: CanonicalCandidate, mode: 'RO' | 'RW', actualReadOnly = mode === 'RO') {
-    this.mounts.set(ref, { evidenceRef: ref, target, directory, mode, actualReadOnly } as VerifiedMountEvidence);
+    this.mounts.set(ref, Object.freeze({ evidenceRef: ref, target, directory: Object.freeze({ ...directory, domain: Object.freeze({...directory.domain}) }), mode, actualReadOnly }) as VerifiedMountEvidence);
   }
   stopFixture(ref: string, target: ExecutionTarget, numericId = target.numericInstanceId) {
-    this.stops.set(ref, { proof: { ...target, kind: 'COMPUTE_STOPPED', observationSource: 'COMPUTE_CONTROL_PLANE',
-      evidenceRef: ref, observedAt: new Date().toISOString() }, numericInstanceId: numericId,
-      disposition: 'DELETED_NO_REENTRY' } as unknown as VerifiedPermanentComputeStop);
+    this.stops.set(ref, Object.freeze({ proof: Object.freeze({ ...target, kind: 'COMPUTE_STOPPED', observationSource: 'COMPUTE_CONTROL_PLANE',
+      evidenceRef: ref, observedAt: new Date().toISOString() }), numericInstanceId: numericId,
+      disposition: 'DELETED_NO_REENTRY' }) as unknown as VerifiedPermanentComputeStop);
   }
 }
 async function fixture(a: FixtureAuthority, domain = randomUUID(), directory = '/home') {
@@ -56,8 +60,8 @@ async function fixture(a: FixtureAuthority, domain = randomUUID(), directory = '
     canonicalDirectory: directory, podUid: 'fixture-server', generation: 'fixture-1', device: '123', inode: directory === '/home' ? '42' : '43' };
   const ref = 'fixture-directory-' + binding;
   a.directoryFixture(ref, candidate);
-  const execution = { attemptId: attempt, podUid: pod, incarnation, executionEpoch: counter('execution-epoch', '0'),
-    nodeUid: 'fixture-node-' + unit, computeIdentityRef: 'fixture-compute-' + unit, numericInstanceId: '123456' } as ExecutionTarget;
+  const execution = Object.freeze({ attemptId: attempt, podUid: pod, incarnation, executionEpoch: counter('execution-epoch', '0'),
+    nodeUid: 'fixture-node-' + unit, computeIdentityRef: 'fixture-compute-' + unit, numericInstanceId: '123456' }) as ExecutionTarget;
   a.targets.set(attempt, execution);
   await withDurableTransaction(pool, async tx => {
     await tx.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1::uuid,$2::text,'fixture','READY')", [workspace,workspace]);
@@ -180,7 +184,7 @@ await test('P1-10 actual PostgreSQL with synthetic authority', async t => {
       await withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:g}));
       await withDurableTransaction(pool,tx=>store.beginRevocation(tx,{...f.target,expectedBindingRevision:bindingRevision(1),grantId:g,expectedGrantRevision:'0',expectedGrantState:'RESERVED'}));
       a.stopFixture('fixture-atomic-stop',f.execution);
-      const nextExecution={...f.execution,attemptId:f.next,podUid:'fixture-next-pod',incarnation:'fixture-next-incarnation',executionEpoch:counter('execution-epoch','1'),numericInstanceId:'123457'} as ExecutionTarget;
+      const nextExecution=Object.freeze({...f.execution,attemptId:f.next,podUid:'fixture-next-pod',incarnation:'fixture-next-incarnation',executionEpoch:counter('execution-epoch','1'),numericInstanceId:'123457'}) as ExecutionTarget;
       a.targets.set(f.next,nextExecution);a.mountFixture('fixture-next-rw',nextExecution,f.candidate,'RW');
       await withDurableTransaction(pool,async tx=>{
         const stopped=await store.confirmRevocation(tx,{...f.target,expectedBindingRevision:bindingRevision(2),grantId:g,expectedGrantRevision:'1',permanentStopRef:'fixture-atomic-stop'});
@@ -203,6 +207,29 @@ await test('P1-10 actual PostgreSQL with synthetic authority', async t => {
       await sql("UPDATE durable_runtime.sessions SET lifecycle='CLOSED' WHERE id=$1",[f.target.sessionId]);
       await rejectCode(withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:randomUUID()})),'STORAGE_SESSION_CLOSED');
       assert.equal((await sql('SELECT count(*)::text AS n FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1',[f.target.bindingId])).rows[0].n,'0');
+    });
+
+    await run('prepared evidence accessor is synchronous; expired or Promise-valued local pin fails closed',async()=>{
+      const a=new FixtureAuthority(),f=await fixture(a),store=new StorageStore(a),g=randomUUID();
+      assert.ok(Object.isFrozen(a.directory(f.ref)));assert.equal(a.directory(f.ref),a.directory(f.ref));
+      await withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:g}));
+      // Deliberately violate the static contract from a fixture to test JS runtime safety.
+      a.directoryPinValid=(()=>Promise.resolve(true)) as unknown as FixtureAuthority['directoryPinValid'];
+      const blocked=await withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,expectedBindingRevision:bindingRevision(1),grantId:randomUUID()}));
+      assert.equal(blocked.status,'BLOCKED');assert.deepEqual(await grantState(g),{state:'RESERVED',revision:'0'});
+      assert.equal((await sql('SELECT identity_proof_ref FROM durable_runtime.storage_bindings WHERE id=$1',[f.target.bindingId])).rows[0].identity_proof_ref,f.ref);
+    });
+    await run('invalid local mount and stop pins preserve RESERVED then REVOKING',async()=>{
+      const a=new FixtureAuthority(),f=await fixture(a),store=new StorageStore(a),g=randomUUID();
+      await withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:g}));
+      a.mountFixture('fixture-local-rw',f.execution,f.candidate,'RW');a.mountPinValid=()=>false;
+      const blocked=await withDurableTransaction(pool,tx=>store.observeMount(tx,{...f.target,expectedBindingRevision:bindingRevision(1),mountId:randomUUID(),mountEvidenceRef:'fixture-local-rw',writer:{grantId:g,expectedRevision:'0'}}));
+      assert.equal(blocked.status,'BLOCKED');assert.deepEqual(await grantState(g),{state:'RESERVED',revision:'0'});
+      await withDurableTransaction(pool,tx=>store.beginRevocation(tx,{...f.target,expectedUnitRevision:unitRevision(1),expectedBindingRevision:bindingRevision(2),grantId:g,expectedGrantRevision:'0',expectedGrantState:'RESERVED'}));
+      a.stopFixture('fixture-local-stop',f.execution);a.computeStopPinValid=()=>false;
+      const stop=await withDurableTransaction(pool,tx=>store.confirmRevocation(tx,{...f.target,expectedUnitRevision:unitRevision(1),expectedBindingRevision:bindingRevision(3),grantId:g,expectedGrantRevision:'1',permanentStopRef:'fixture-local-stop'}));
+      assert.equal(stop.status,'BLOCKED');assert.deepEqual(await grantState(g),{state:'REVOKING',revision:'1'});
+      assert.equal((await state(f.target.bindingId)).epoch,'0');
     });
   } finally { await pool.end(); }
 });
