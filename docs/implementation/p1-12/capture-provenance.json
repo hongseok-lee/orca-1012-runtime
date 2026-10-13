@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-10-13T03:16:42.765Z",
+  "targetSourceRevision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4",
+  "viewport": {
+    "width": 1280,
+    "height": 1280
+  },
+  "deviceScaleFactor": 1,
+  "browserVersion": "147.0.7727.15",
+  "playwrightVersion": "1.59.1",
+  "reportSha256": "482879a82445a6f5e196ecc9b0be304e69708f531e242780cb964ea8aeea817a",
+  "resultSha256": "bb32f6cb72361b16124dc08ed60d790683bf4237e8ceef3b7c740799730cfe48",
+  "pngSha256": "a4fc8a4f5f31bb36a9873bcb789220be2c344b908086343fe57a309bde058879",
+  "scope": "Single final saved actual-PG fixture report; not product UI",
+  "distinctPassingCases": 13,
+  "fullSuiteRepeated": false,
+  "actualWorkerOrActiveKill": false
+}
