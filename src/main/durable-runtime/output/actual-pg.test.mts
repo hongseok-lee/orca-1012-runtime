@@ -146,6 +146,8 @@ check('Pod-zero and actual attempt metadata replacement keep journal epoch and r
   await pool.query(`UPDATE durable_runtime.sessions SET lifecycle='CLOSED' WHERE id=$1`, [scope.sessionId])
   const unit = randomUUID(); const binding = randomUUID()
   await pool.query(`INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'SUSPENDED','ABSENT')`, [unit])
+  await pool.query(`INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision)
+    VALUES($1,0,'{}',0)`, [unit])
   await pool.query(`INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$1)`, [unit])
   await pool.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state)
     VALUES($1,$2,$2,'/fixture-only','UNVERIFIED')`, [binding, unit])
