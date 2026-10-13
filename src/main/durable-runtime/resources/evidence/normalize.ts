@@ -24,7 +24,8 @@ export function snapshotJson(value: unknown): EvidenceJson {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value
   if (typeof value === 'number' && Number.isFinite(value)) return value
   if (Array.isArray(value)) return Object.freeze(value.map(snapshotJson))
-  if (typeof value === 'object' && value !== null && Object.getPrototypeOf(value) === Object.prototype) {
+  if (typeof value === 'object' && value !== null &&
+      (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
     const copy: { [key: string]: EvidenceJson } = Object.create(null)
     for (const key of Object.keys(value).sort()) {
       const descriptor = Object.getOwnPropertyDescriptor(value, key)
