@@ -1,0 +1,21 @@
+{
+  "config/scripts/durable-runtime-db.mjs": "df68ec6e7432f5f19dfa0cd59553466f5ac8182f375363e208893575c23d05c9",
+  "config/tsconfig.durable-runtime-db.json": "e4909d1fd430207d414d2eea95ea8aec7efe5cd88ddead12e6ae343e3b86f2d2",
+  "package.json": "9793ff6351cb46cc05f13ecb10a5e706d6d1e3507de1d610b51000463b30f5f8",
+  "pnpm-lock.yaml": "2d41a9584c9d94260e98df9279fe5778396d4d420031cb6da245170aa1c87cc3",
+  "src/main/durable-runtime/db/cas.ts": "e5b194fd602e6094d3054688ea0dc499dbe753e22d1c0016cb02eac39f54c637",
+  "src/main/durable-runtime/db/connection.ts": "91e06507d95eaa7c6b868f63abd6381de5a009f7bb2da91302eefcf404c328ec",
+  "src/main/durable-runtime/db/identity-type-contract.ts": "ee7837dd81fdfe67c1857f2622bcd3f0d0289ca4c3c07e6766ef234e7a250a2d",
+  "src/main/durable-runtime/db/locks.ts": "0c66e1cc09de232f74445e7e999e5d089be73ba4ee26496b3138fdf739c6e585",
+  "src/main/durable-runtime/db/migrate.ts": "2ec01fa1bd35f29edffa19a5f3089642d68146399a1d506e042beab85257abf1",
+  "src/main/durable-runtime/db/migrations/001-catalog.sql": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+  "src/main/durable-runtime/db/migrations/002-execution-storage.sql": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+  "src/main/durable-runtime/db/migrations/003-operations-resources.sql": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+  "src/main/durable-runtime/db/migrations/004-input-context.sql": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+  "src/main/durable-runtime/db/migrations/005-events-replay.sql": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+  "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+  "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+  "src/main/durable-runtime/db/postgres.test.mts": "daf95216532ab95523cb37e91a03106060e0b7c9c54ca537700c03bacd66fa8e",
+  "src/main/durable-runtime/db/rows.ts": "38997be9a0f5408f513e28c61d1df02cc485b72be3d8b2168ea09b8258b2bcba",
+  "src/shared/durable-runtime/identity.ts": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154"
+}

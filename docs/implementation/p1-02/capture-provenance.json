@@ -1,0 +1,12 @@
+{
+  "captured_at": "2026-10-13T01:49:51.166Z",
+  "kind": "browser-rendered saved actual SQL/test result report; not product UI",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "sources": {
+    "orca-dev-inspect.json": "99303241bf5ba2825e5bc88294f28318ba16de255f088e68cf309c9a124b95fc",
+    "verification.json": "8429e0e52ae722c24bc27d37d6c4d8671f581e2a8c200c186e579cdb01aab3a3"
+  },
+  "png_sha256": "8a09099e7b74230bd8c314f154e7e4c527543fbadaf23c6ee9cdaf4003fa2815",
+  "code_revision": "8064b0f2703c36df28a3d2735e0d6276d6f80ae1"
+}
