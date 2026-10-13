@@ -58,8 +58,8 @@ test('unknown child process creates no shared parent/time alias; a known child c
   assert.equal(missing.canonicalKey, null); assert.equal(missing.aliases.length, 0)
   assert.equal(missing.resolution, 'TARGET_UNRESOLVED'); assert.ok(missing.issues.includes('CHILD_PROCESS_IDENTITY_MISSING'))
   const known = (name: string) => prepareFailureObservation({ ...raw, sourceKind: 'CGROUP', counterTransition: {
-    cgroupIdentity: 'cgroup-' + name, processIdentity: name, incarnation: target.incarnation!, counter: 'oom_kill',
-    previous: '0', current: '1', previousSampleId: 'before-' + name, currentSampleId: 'after-' + name } })
+    cgroupIdentity: `cgroup-${  name}`, processIdentity: name, incarnation: target.incarnation!, counter: 'oom_kill',
+    previous: '0', current: '1', previousSampleId: `before-${  name}`, currentSampleId: `after-${  name}` } })
   const a = known('child-a'), b = known('child-b')
   assert.deepEqual(a.aliases.map(x => x.kind), ['COUNTER_TRANSITION']); assert.notEqual(a.canonicalKey, b.canonicalKey)
 })

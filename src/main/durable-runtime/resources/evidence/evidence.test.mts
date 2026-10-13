@@ -23,11 +23,11 @@ const cases: [string, Partial<FailureObservationInput>][] = [
   ['UNKNOWN_MEMORY_FAILURE', { signals: { ...signals } }],
   ['OTHER_TERMINATION', { sourceKind: 'SUPERVISOR', signals: { ...signals, otherTermination: true } }]
 ]
-for (const [expected, patch] of cases) test('classifies ' + expected + ' as data only', () => {
+for (const [expected, patch] of cases) {test(`classifies ${expected} as data only`, () => {
   const result = classify(patch)
   assert.equal(result.classification, expected); assert.equal(result.authority, 'DATA_ONLY')
   assert.equal(result.automaticGrowthCandidate, expected === 'ISOLATED_NODE_MEMORY_EXHAUSTION')
-})
+})}
 test('missing gVisor cgroup and low periodic usage do not negate explicit memory eviction', () => {
   const result = classify({ signals: { ...signals, memoryEviction: true }, gaps: ['CGROUP_NOT_EXPOSED'], evidence: { lastUsageBytes: '1' } })
   assert.equal(result.classification, 'ISOLATED_NODE_MEMORY_EXHAUSTION'); assert.ok(result.missing.includes('CGROUP_NOT_EXPOSED'))
@@ -93,7 +93,8 @@ function request(): KubernetesCollectionRequest {
 test('collector preserves old lastState container instead of assigning old termination to current ID', async () => {
   const o = await collectKubernetesEvidence({ sourceRef: 'fixture', authentication: 'BOUNDARY_AUTHENTICATED', readBatch: async () => batch() }, request())
   assert.equal(o.input.termination!.containerId, 'containerd://old'); assert.equal(o.input.termination!.state, 'LAST')
-  assert.equal(o.input.evidence && typeof o.input.evidence === 'object' && !Array.isArray(o.input.evidence) ? o.input.evidence.currentContainerId : null, 'containerd://new')
+  assert.ok(o.input.evidence && typeof o.input.evidence === 'object' && !Array.isArray(o.input.evidence))
+  assert.equal(Reflect.get(o.input.evidence, 'currentContainerId'), 'containerd://new')
   const r = { ...request(), target: { ...target, runtimeContainerId: 'containerd://new' } }
   const newer = await collectKubernetesEvidence({ sourceRef: 'fixture', authentication: 'BOUNDARY_AUTHENTICATED', readBatch: async () => batch() }, r)
   assert.equal(newer.input.termination, null); assert.equal(newer.canonicalKey, null)
