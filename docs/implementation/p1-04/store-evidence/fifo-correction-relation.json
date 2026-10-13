@@ -1,0 +1,11 @@
+{
+  "captureFile": "results.png",
+  "captureSha256": "d903dcb2432d5859fda2ff62858b19fc336f15300b2d96ee8a2a3404b9e48efe",
+  "captureImplementationRevision": "1d3680316ff22729f24ef75b0fb6197045af8ecf",
+  "capturePublicTargetRevision": "bdae20cfc187b04a270b5624e6aa670e69fb4046",
+  "captureEvidence": "PG7 distinct and original materializer4; saved actual verification report, not product UI",
+  "laterCorrectionImplementationRevision": "5a54339b32eb11707883cf118e8a6fcec876d33b",
+  "laterCorrectionEvidence": "../store-verification.json#fifoCorrection",
+  "laterCorrectionCaseCount": 1,
+  "relationship": "Same immutable original PNG/provenance; later O_NONBLOCK correction verified separately. No recapture or assertion that old PNG executed corrected/final head."
+}

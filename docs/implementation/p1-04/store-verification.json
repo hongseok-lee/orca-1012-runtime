@@ -163,5 +163,31 @@
     "No P1-03 business receipt/uncertain COMMIT integration",
     "No P1-10 Agent write gate, HA, Spot or whole-PG fault test",
     "Materializer supported and tested only on Linux"
-  ]
+  ],
+  "fifoCorrection": {
+    "capturedAt": "2026-10-13T02:36:45.560Z",
+    "sourceSha256": {
+      "src/main/durable-runtime/attachments/materializer.ts": "7670d1d06eb1666bbd78a637d537c922c434c6a2a53ee985894092b68dd8b598",
+      "src/main/durable-runtime/attachments/materializer.test.mts": "3726a432bfcbdf7ed654c0bf21383c6813f82db374ee74fd004cd0b84069e58c"
+    },
+    "canonicalEqual": true,
+    "focusedLogSha256": "a0802d30fcf9b6bd068c871217a25f9dced0c684dd853b4b416556f7fb06ebb8",
+    "testDurationMs": 21.876349,
+    "pass": 1,
+    "fail": 0,
+    "lintSummary": [
+      "Found 0 warnings and 0 errors.",
+      "Finished in 242ms on 2 files with 176 rules using 4 threads."
+    ],
+    "implementationRevision": "5a54339b32eb11707883cf118e8a6fcec876d33b",
+    "change": "verifyTarget opens O_RDONLY | O_NOFOLLOW | O_NONBLOCK; existing fstat non-regular rejection preserved",
+    "case": "one owned temporary FIFO is rejected promptly without a writer",
+    "typecheck": "PASS exit0",
+    "modifiedFileLint": "PASS 0 warnings/errors",
+    "format": "completed",
+    "priorCasesRepeated": false,
+    "captureRepeated": false
+  },
+  "finalImplementationRevision": "5a54339b32eb11707883cf118e8a6fcec876d33b",
+  "captureSourceBoundary": "Existing screenshot covers baseline implementation1d368031 and original PG7/materializer4 evidence. FIFO correction5a54339b has separate focused JSON evidence; screenshot/provenance not rewritten or labelled as final-head execution."
 }
