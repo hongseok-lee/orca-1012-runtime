@@ -39,5 +39,9 @@
   "relation": "캡처 대상은 rebase 전 68d6b974입니다. 중간 rebase 후 소유 파일 15 개와 검증 의존 파일 39 개의 bytes는 같고, 이후 변경은 artifact와 문서뿐입니다.",
   "captureRepeatedAfterArtifact": false,
   "providerQualification": false,
-  "rootAcceptance": "Root가 구현 설명과 과거 검증 화면을 담은 작업 설명 screenshot으로 수용했습니다. 신규 cold 결과 3 개는 원본 TAP와 JSON에 있습니다."
+  "rootAcceptance": "Root가 구현 설명과 과거 검증 화면을 담은 작업 설명 screenshot으로 수용했습니다. 신규 cold 결과 3 개는 원본 TAP와 JSON에 있습니다.",
+  "finalRebaseBase": "cb6e5be2eeb1fce5a9659b63047c55b91afcb38a",
+  "finalRebasePreHead": "7c53299d96fc0b7fa14e65cbe0918e648311e7a9",
+  "finalRebaseOwnerFilesByteIdentical": 17,
+  "finalRelation": "최종 rebase 전후 소유 파일 17 개의 이름과 bytes가 같습니다. 이후 변경은 dependency 상태를 설명하는 문서·검증 metadata·provenance뿐이며 PNG는 그대로입니다."
 }

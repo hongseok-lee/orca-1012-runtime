@@ -49,7 +49,7 @@
   "intermediateRebaseHead": "a0495d0b73c9df3b2340e588bd57c2240f912223",
   "typeOnlyContextDependency": {
     "requiredPR": 24,
-    "mergedIntoCurrentMain": false,
+    "mergedIntoCurrentMain": true,
     "publicContextTypeCopy": false,
     "publicContextStub": false,
     "verificationPin": "6a61748f2de23db95d176acf0ecc728851988b66",
@@ -59,6 +59,13 @@
       21,
       22
     ],
-    "finalRebase": "WAIT_ROOT_AFTER_PR24"
-  }
+    "finalRebase": "COMPLETED_ON_ROOT_ASSIGNED_MAIN",
+    "actualMain": "cb6e5be2eeb1fce5a9659b63047c55b91afcb38a",
+    "actualMainContextTypeSHA256": "aa26fe9ab9958e3bc0a2c18c97e9a6b0c1ed9dc26d68713cf273bf563350f202",
+    "sameTypeDeclarationsAsVerificationPin": true
+  },
+  "finalBase": "cb6e5be2eeb1fce5a9659b63047c55b91afcb38a",
+  "preFinalRebaseHead": "7c53299d96fc0b7fa14e65cbe0918e648311e7a9",
+  "ownerFilesByteIdenticalAfterRebase": 17,
+  "existingVerificationRepeated": false
 }

@@ -54,7 +54,11 @@ DOM metadata에는 요청 heading이 기록되어 있지만 실제 PNG를 직접
 
 Root 지시로 main `02bfba1aa971d9449cad41103211e8a3d3503451`에 중간 rebase 1 회를 수행했고, 당시 head는 `a0495d0b73c9df3b2340e588bd57c2240f912223`이다. 캡처 source와 중간 rebase source 사이 소유 파일 15 개는 byte-identical이며 검증에 사용한 공통 의존 파일 39 개도 동일하다. 그 뒤에는 artifact·문서만 납품하며 fixture·typecheck·install·capture를 재실행하지 않는다.
 
-현재 main `02bf`에는 `context/`가 없고 shared 타입과 renderer는 `../../context/types.ts`를 import type한다. 지정 context pin은 전용 검증 합성에만 사용했으며 public 공통 폴더에 타입을 복제하거나 stub을 추가하지 않았다. 실제 type-only 선행은 PR24이고, root가 정한 순서는 PR19 schema 013 → PR24 P107/08 → PR21 → PR22이다. 최종 rebase는 PR24 합류 뒤 root가 지정하며 현재 중간 rebase를 최종 합류라고 주장하지 않는다.
+Root가 PR24 final `50eca890`를 수락 댓글 `6146735821` 뒤 13:32:57 UTC에 merge했고, 지정 main은 `cb6e5be2eeb1fce5a9659b63047c55b91afcb38a`이다. Root 지시에 따라 PR21만 이 main에 최종 rebase 1 회를 수행했다. 문서 갱신 전 소유 파일 17 개의 exact 이름과 SHA-256이 모두 중간 납품 source `7c53299d96fc0b7fa14e65cbe0918e648311e7a9`와 일치했다. PNG·source·shared·fixture를 다시 실행하거나 바꾸지 않았다.
+
+Shared 타입과 renderer의 `../../context/types.ts` import type는 이제 actual main의 context 모듈을 사용한다. 검증 당시 조기 타입 pin `6a61748f2de23db95d176acf0ecc728851988b66`와 actual main의 해당 파일은 identity import의 줄바꿈만 다르며 타입 선언은 같다. Actual main context 타입 SHA-256은 `aa26fe9ab9958e3bc0a2c18c97e9a6b0c1ed9dc26d68713cf273bf563350f202`이다. 013 schema와 context/input의 upstream 변경은 소유 코드와 별도로 대조했다. 타입 복제나 stub은 추가하지 않았으며 이 합류를 실제 PG wiring·permit authority·provider 합격으로 확대하지 않는다.
+
+기존 기록상 distinct 19 개와 신규 cold 3 개·과거 16 개의 원 결과, 최초 실패·중괄호 교정·동일 변환 코드 증거를 재사용했다. 시험·빌드·설치·재촬영·runtime source sync/restart는 반복하지 않았다. 이후 변경은 최종 dependency 상태를 설명하는 문서와 provenance이며 root만 최종 수용·merge한다.
 
 ## 아직 연결하거나 확인하지 않은 경계
 
