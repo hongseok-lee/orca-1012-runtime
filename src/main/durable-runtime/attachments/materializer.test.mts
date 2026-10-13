@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { after, before, test } from 'node:test'
+import { promisify } from 'node:util'
 import { materializeAttachment } from './materializer.ts'
 import { reserveAttachmentAlias, attachmentFilename } from './store.ts'
 import {
@@ -89,4 +91,14 @@ test('corrupt snapshot fails before file creation and empty wire bytes remain su
   const empty = snapshot(Buffer.alloc(0))
   const result = await materializeAttachment(empty, path.join(root, 'empty'))
   assert.equal((await readFile(result.path)).length, 0)
+})
+
+test('a FIFO target is rejected without waiting for a writer', { timeout: 2000 }, async () => {
+  const record = snapshot(Buffer.from('synthetic FIFO verification bytes'))
+  const target = path.join(root, 'fifo-target')
+  await mkdir(target)
+  await promisify(execFile)('mkfifo', [path.join(target, attachmentFilename(record.uploadId))])
+  const started = performance.now()
+  await assert.rejects(materializeAttachment(record, target), { code: 'TARGET_CONFLICT' })
+  assert.ok(performance.now() - started < 1000, 'FIFO must be rejected promptly without a writer')
 })
