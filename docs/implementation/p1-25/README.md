@@ -16,7 +16,7 @@ filter requires re-reading its desired history. Future/malformed cursors and DB
 failure are errors. Append-only retention floor is 1; no rotation/deletion exists.
 
 Stream is `orca-1012-dev-v1:ops`, epoch 0; BIGINTs remain decimal strings.
-Publication maps only explicit metadata. Actual P112 RUNTIME_EVENT_OUTCOME/FAILED
+Publication maps only explicit metadata. Actual P112 RUNTIME_EVENT_OUTCOME (DONE/FAILED)
 and RUNTIME_EVENT_FAILED notification sources preserve their canonical kind and metadata
 from immutable terminal queue/producer/target records. Their occurredAt is the
 actual terminal-decision timestamp, not the arbitrary original payload time.

@@ -72,7 +72,7 @@ export function target(value: JsonValue): Record<string, JsonValue> {
     }
     result.sessionIds = [...new Set(source.sessionIds.map((item) => uuid(text(item))))].sort()
   }
-  if (Object.keys(result).length === 0) {
+  if (Object.keys(result).length === 0 || (Object.keys(result).length === 1 && Array.isArray(result.sessionIds) && result.sessionIds.length === 0)) {
     reject('REPLAY_SOURCE_METADATA')
   }
   return result
