@@ -26,6 +26,7 @@ export async function mapSource(
   tx: DurableTransaction,
   row: OutboxRow
 ): Promise<MappedSource | null> {
+  if (!row.event || typeof row.event !== 'object' || Array.isArray(row.event)) { return null }
   const source = object(row.event)
   if (typeof source.kind !== 'string') {
     return null
