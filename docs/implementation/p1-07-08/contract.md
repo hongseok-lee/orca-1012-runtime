@@ -127,3 +127,7 @@ Root 실행 계약, 2026-10-13. P1-05/06의 같은 입력 owner를 재사용한�
 
 복구 context는 UNKNOWN→취소→새 입력, queue FAILED 읽기, revision/동일 proof retry·옛 binding proof 격리, 이력만의 wake0을 검사한다. provider별 실검증은 후속 P111 계약에서 수행한다. 전체 build/통과 case 반복/새 Expo pairing은 하지 않는다. 조기 API commit과 정확한 source/schema SHA를 먼저 공유하고, 실제 실행·실패 교정·미연결 gate를 PR 명세/결과/실제 캡처에 기록한다.
 
+
+## Root Catalog composition addition
+
+Root explicitly assigned extraction of the existing cancel callback into recordInputCancel(tx, snapshotRequest, expectedUnitId), so outer receipt, Tab tombstone, cancel/context/outbox share one transaction. Session/Unit held locks and original membership must be verified. No nested runDurableMutation or COMMIT; existing wrapper receipt/semantics remain. All originalPayload/request values are fixed before first await. This boundary joins the first unexecuted new PG cases; existing focused/full cases are not repeated. No common DB files or remote reconnection are authorized by this extraction.
