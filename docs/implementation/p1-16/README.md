@@ -64,3 +64,16 @@ Root가 확정한 전역 outbox anchor의 [로컬 source 교정 인계](anchor-s
 Anchor source 90eb71b6의 [최초 실제 검증](anchor-verification-report.md)을 기록했습니다. Scoped typecheck와 새 fixture 2개 및 configured lint는 통과했고, 첫 PG 하위 사례 8개는 통과 4개와 실패 4개입니다. 원 로그를 보존하고 성공 사례를 재실행하지 않았으며 heavy 점유를 반환했습니다. 다음 교정·검증 및 최종 수락은 Root의 후속 지정에 따릅니다.
 
 Fixture 1a25f853의 [focused 교정 실제 결과](focused-verification-report.md)를 추가했습니다. 실패 사례 1·3·4·5만 4개 통과했고 기존 통과 2·6·7·8과 Node/anchor 전체는 실행하지 않았습니다. 서로 다른 PG 사례 8개가 누적으로 통과했으며 변경 fixture의 type/lint도 오류 0개입니다. 원 실패 이력과 미완 범위를 보존하고 heavy 점유를 반환했습니다. 실제 PNG와 최종 Root 리뷰는 대기 중입니다.
+
+
+## 최초 실제 결과 문서 캡처
+
+![P1-16 Catalog의 실제 결과 문서](evidence/p116-first-report.png)
+
+기존 단일 client owner가 2026-10-13 13:11:08.046 UTC에 원 결과 HTML을 최초 1회 렌더한 화면입니다. Viewport는 1140 × 1500, DPR은 1, Chromium은 147.0.7727.15입니다. 제품 UI나 Expo/native iPhone 화면이 아닙니다. Root가 PNG와 provenance를 직접 검토해 수용했습니다.
+
+캡처 target은 `765b5ebd9bc25fea645b846cf0d37c4db2e847a7`이며 실행 fixture는 `1a25f853d0b1004c21d1a70bbae038354dcc3c4e`, 제품 source는 `90eb71b6d16b4bab8f92b97fda4c3726b6922047`입니다. 이후 asset/doc 게시 head와 원 캡처 target은 다릅니다. [원 provenance](evidence/p116-first-report-provenance.json)의 실제 URL·시각·source·digest를 그대로 보존했습니다. PNG SHA-256은 `e940d6016d85ba327b45d25dc9cd6f20489c5271a2a3f60b8da3f3a61892f874`입니다.
+
+최초 PG 8개에서 4개가 통과하고 1·3·4·5가 실패했습니다. 그 실패 4개만 focused 교정 실행해 모두 통과했으므로 서로 다른 PG 사례는 총 8개입니다. 기존 순수 Node 11개와 anchor 2개는 총 13개이며 중복 합산하지 않습니다. 기존 성공 callback과 전체 시험 및 캡처를 반복하지 않았습니다. [원 첫 PG 결과](anchor-verification-report.md)와 [focused 결과](focused-verification-report.md)의 source 및 원 로그 digest 관계를 유지합니다. TAP parent를 별도 case로 세지 않습니다.
+
+BOUND, group/layout, shared Unit removal, 공개 RPC/provider/HA는 미완료입니다. 이 결과 문서 PNG는 그 경계를 해소하거나 실제 제품·native 화면 합격을 입증하지 않습니다. 이번 게시에서는 source·fixture 바이트, 원 결과 문서·JSON·raw 로그를 변경하지 않았고 재시험·rebase·재촬영을 하지 않았습니다.
