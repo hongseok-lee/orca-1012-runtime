@@ -1,8 +1,10 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { SessionId } from '../../../shared/durable-runtime/identity.ts'
 import { runDurableMutation } from '../db/atomic.ts'
+import { inputPayloadHash } from '../input/canonical.ts'
+import { snapshotIntentRequest } from './request.ts'
 import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts'
 import type { RuntimeUnitRow } from '../db/rows.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
@@ -16,7 +18,9 @@ function validate(request: UnitIntentRequest): void {
   logicalId('runtime-unit', authority.runtimeUnitId)
   counter('row:runtime-unit', request.expectedRevision)
   counter('intent-revision', request.expectedIntentRevision)
-  if (!authority.principalId || !authority.scope || !request.operationKey ||
+  if (typeof authority.principalId !== 'string' || !authority.principalId ||
+      typeof authority.scope !== 'string' || !authority.scope ||
+      typeof request.operationKey !== 'string' || !request.operationKey ||
       !['RUNNING', 'DELETED'].includes(request.desired) ||
       !Number.isSafeInteger(policy.operationDeadlineMs) || policy.operationDeadlineMs <= 0 ||
       (policy.idleDurationMs !== null && (!Number.isSafeInteger(policy.idleDurationMs) || policy.idleDurationMs <= 0))) {
@@ -71,8 +75,9 @@ async function chooseOperation(
 
 /** Same-transaction Catalog entry. Records intent, never invokes an actuator. */
 export async function recordUnitIntent(
-  tx: DurableTransaction, request: UnitIntentRequest, discoveredMembers: readonly SessionId[]
+  tx: DurableTransaction, input: UnitIntentRequest, discoveredMembers: readonly SessionId[]
 ): Promise<IntentRecorded> {
+  const request = snapshotIntentRequest(input)
   validate(request)
   const id = request.authority.runtimeUnitId
   const members = await lockUnitMembers(tx, id, discoveredMembers)
@@ -123,15 +128,16 @@ export async function recordUnitIntent(
 
 /** Authenticated unit scope is supplied first. P1-03 receipt-first replay skips
  * current intent/lifecycle checks, and alone owns uncertain COMMIT resolution. */
-export async function requestUnitIntent(pool: Pool, request: UnitIntentRequest): Promise<IntentMutation> {
+export async function requestUnitIntent(pool: Pool, input: UnitIntentRequest): Promise<IntentMutation> {
+  const request = snapshotIntentRequest(input)
   validate(request)
-  const payload = JSON.stringify([request.authority.runtimeUnitId, request.authority.scope,
+  const payload = [request.authority.runtimeUnitId, request.authority.scope,
     request.desired, request.expectedRevision, request.expectedIntentRevision,
-    request.policy.operationDeadlineMs, request.policy.idleDurationMs])
+    request.policy.operationDeadlineMs, request.policy.idleDurationMs]
   const identity = {
     key: { principalId: request.authority.principalId, sessionScope: request.authority.scope,
       method: 'lifecycle.request-unit-intent', operationKey: request.operationKey },
-    payloadHash: createHash('sha256').update(payload).digest('hex')
+    payloadHash: inputPayloadHash(payload)
   }
   const members = await discoverUnitMembers(pool, request.authority.runtimeUnitId)
   return runDurableMutation(pool, { ...identity, locks: {
