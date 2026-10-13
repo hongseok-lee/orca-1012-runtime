@@ -100,6 +100,7 @@ export async function tryAcquireControllerLease(pool: Pool, caller: ControllerIn
       VALUES($1,'',0,0,clock_timestamp()-interval '1 millisecond') ON CONFLICT(scope) DO NOTHING`, [instance.scope])
     const before = (await lockedLease(tx, instance.scope))!
     if (await liveAfterLock(tx, instance.scope)) {
+      if (before.term === '0' && before.owner === instance.owner) throw new DurableDatabaseError('CONTROLLER_LEASE_STATE')
       return before.owner === instance.owner
         ? { status: 'ACTIVE' as const, lease: record(before), transition: 'ALREADY_OWNED' as const }
         : { status: 'STANDBY' as const }
