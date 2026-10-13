@@ -1,0 +1,26 @@
+{
+  "migration": {
+    "version": "013-context-deliveries.sql",
+    "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+    "applied_at": "2026-10-13T03:38:47.344Z"
+  },
+  "source_early_head": "f827a64fa0ce6722a516a93884e8fff09cc428fa",
+  "result": "PASS: one distinct actualPG013 context schema boundary test",
+  "checks": {
+    "typecheck": "PASS",
+    "configured_lint": "PASS",
+    "format": "PASS"
+  },
+  "execution": {
+    "node": "24.15.0",
+    "pg_driver": "8.23.1",
+    "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+    "search_path": "\"$user\", public",
+    "scope": "isolated backend execution copy and owned orca_p107 schema DB"
+  },
+  "scope": "Session/attempt-unit-epoch-Pod FK, exact proof retry uniqueness, append-only proof/context (including legacy evidence), context revision decrease rejection, historical old binding storage; not provider proof verification or cancellation/claim/context module acceptance",
+  "private_log_sha256": "9e1be7b768ce6d5cc27fbfe458d5773251cae971f7eb20f0e7d46e13c25f4f1a",
+  "applied_scope": "only owned orca_p107 validation DB; no dev013 apply",
+  "test_failure_or_rerun": "none; one initial case passed; no prior suites repeated",
+  "capture": "No new schema capture; context consumer result image is pending and separate from schema JSON/TAP."
+}
