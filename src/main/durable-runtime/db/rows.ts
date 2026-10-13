@@ -2,6 +2,8 @@ import type {
   AgentId,
   AttemptId,
   ControllerTerm,
+  ContextRevision,
+  LogicalId,
   ExecutionEpoch,
   IntentRevision,
   MessageId,
@@ -29,6 +31,8 @@ export type SessionRow = {
   next_input_seq: Sequence<"input">;
   next_message_seq: Sequence<"message">;
   next_event_seq: Sequence<"journal">;
+  context_revision: ContextRevision;
+  provider_binding_revision: string;
 };
 export type RuntimeUnitRow = {
   id: RuntimeUnitId;
@@ -183,4 +187,22 @@ export type RuntimeEventQueueRow = {
   claim_token: string | null;
   claim_expires_at: Date | null;
   enqueue_transaction_id: string | null;
+};
+
+export type ProviderContextDeliveryRow = {
+  id: LogicalId<"provider-context-delivery">;
+  session_id: SessionId;
+  context_revision: ContextRevision;
+  context_hash: string;
+  provider_binding_revision: string;
+  runtime_unit_id: RuntimeUnitId;
+  attempt_id: AttemptId;
+  pod_uid: string;
+  execution_epoch: ExecutionEpoch;
+  provider: string;
+  native_session_ref: string;
+  native_turn_id: string | null;
+  evidence_ref: string;
+  source: string;
+  observed_at: Date;
 };
