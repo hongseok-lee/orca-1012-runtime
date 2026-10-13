@@ -23,7 +23,7 @@ const schemas = {
   'agentSession.requestHandoff': Wire.HandoffParams
 } as const
 export type StructuredMethod = keyof typeof schemas
-type JsonObject = { readonly [key: string]: JsonSnapshot }
+type JsonObject = Readonly<Record<string, JsonSnapshot>>
 export type StructuredTarget =
   | Readonly<{ kind: 'SESSION'; publicSessionId: string }>
   | Readonly<{ kind: 'WORKTREE'; worktree: string; publicSessionId: string | null }>

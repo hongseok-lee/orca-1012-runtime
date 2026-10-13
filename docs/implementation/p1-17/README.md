@@ -16,4 +16,10 @@ Projection은 기존 mutation/history/subscribe 타입을 import합니다. Nativ
 
 Root의 017 schema와 intake composition 계약을 읽었습니다. `structured_session_aliases`와 `structured_submissions`의 공용 DDL/rows는 DB owner의 exact pin을 기다립니다. `acceptInputInTransaction(tx, snapshotRequest, expectedUnitId)`는 Input owner의 실제 export가 도착한 뒤 소비합니다. 이 변경은 Input callback·rows·alias resolver를 복제하지 않았으며 create membership/Tab, send 원자 합류, history/P120 또는 registry를 구현하지 않았습니다.
 
-현재는 source 작성과 조기 API 납품 단계입니다. Bridge의 heavy 슬롯 배분 전이므로 pure fixture·typecheck·lint·PG 검증을 실행하지 않았습니다. 기존 provider suite·설치·촬영·rebase를 반복하지 않았습니다. 이번 변경에 실제 캡처는 없으며 기존 PR21 PNG를 P117 검증으로 재사용하지 않습니다. P117 전체 또는 실제 앱·provider·HA 합격을 선언하지 않습니다.
+2026-10-13 13:06 UTC에 기존 원격 Node 24.15.0과 읽기 전용 cache를 사용해 신규 pure fixture 8 개를 최초 실행했습니다. PASS 8 개, fail 0 개, skip 0 개입니다. 기준 source는 조기 API commit `1a4f791d772387ff586f0e2a05070f2a22f8088a`이며 당시 branch head는 `b9bdee579e060044ebbde6c91222b4330ca92ea1`입니다. 실제 schema/fingerprint·retryUnknown·safe counter·위조 caller 거절·첫 await 뒤 mutation 격리 및 최소 capability/projection 경계를 합성 자료로 확인했습니다. 인증·native 증거·COMMIT 자료는 fixture의 합성 입력이며 실제 증거를 발급하거나 실행하지 않았습니다.
+
+최초 typecheck는 fixture helper의 `assert.equal` 이후 never 분기의 refusal 조회 1 건으로 실패했습니다. 최초 lint는 Record/배열 타입 표기와 fixture의 배열 표현에서 5 건으로 실패했습니다. 원 실패 log를 보존했고 소유 source의 타입 표기 및 fixture helper/배열 표현만 교정했습니다. Product source 변경은 런타임에서 소거되는 타입 표기 2 곳이며 API 의미는 유지합니다. 교정 뒤 typecheck와 lint는 아직 미실행이며 다음 heavy 슬롯 배분을 기다립니다. 통과한 fixture 8 개는 반복하지 않았습니다.
+
+원 fixture SHA-256은 `d8ce260ac8b36d8c99b6af4f7617cc1c0319dc98ecc21b7609f9a21daa3402e7`이며 실행 bundle SHA-256은 `b6ba03ff592422a897ba4c8803f9161e21ec621f6d9c060f0066409b0db9f32f`입니다. 원 Node 출력은 기본 spec reporter입니다. Private 원 파일의 확장자가 .tap이지만 TAP 형식으로 기록하지 않습니다. 실제 first-run 기록과 교정 뒤 source digest를 분리합니다.
+
+첫 명령 종료 뒤 heavy 슬롯을 반환했습니다. PG query·provider 호출·실제 auth·public RPC 활성화·설치·기존 suite·촬영·rebase는 수행하지 않았습니다. 이번 변경에 실제 캡처는 없으며 기존 PR21 PNG를 P117 검증으로 재사용하지 않습니다. P117 전체 또는 실제 앱·provider·HA 합격을 선언하지 않습니다.

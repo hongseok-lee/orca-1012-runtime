@@ -58,7 +58,7 @@ export function snapshotStructuredJson(value: unknown): JsonSnapshot {
         }
         return Object.freeze(result)
       }
-      const result: { [key: string]: JsonSnapshot } = Object.create(null)
+      const result: Record<string, JsonSnapshot> = Object.create(null)
       for (const key of keys) {
         const descriptor = descriptors[key as string]
         if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
