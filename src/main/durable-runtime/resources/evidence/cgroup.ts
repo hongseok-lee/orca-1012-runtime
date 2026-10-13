@@ -6,7 +6,7 @@ export type CgroupFile = typeof CGROUP_FILES[number]
 export type CgroupFileResult =
   | { readonly status: 'READ'; readonly value: string }
   | { readonly status: 'NOT_EXPOSED' | 'PERMISSION_DENIED' | 'READ_FAILED' | 'INVALID'; readonly errorClass: string }
-export interface CgroupIdentity {
+export type CgroupIdentity = {
   readonly target: FailureTarget
   readonly cgroupIdentity: string
   readonly processIdentity: string
@@ -14,10 +14,10 @@ export interface CgroupIdentity {
 }
 // The boundary resolves and pins the exact original cgroup identity. No path
 // from a payload is opened here; the reader can access only this file allowlist.
-export interface ReadonlyCgroupReader {
+export type ReadonlyCgroupReader = {
   readFile(identity: CgroupIdentity, file: CgroupFile): Promise<string>
 }
-export interface CgroupSample {
+export type CgroupSample = {
   readonly sampleId: string
   readonly identity: CgroupIdentity
   readonly observedAt: string
@@ -34,7 +34,7 @@ function parseEvents(value: string): Readonly<Record<string, string>> {
   const result: Record<string, string> = Object.create(null)
   for (const line of value.trim().split('\n')) {
     const m = /^([a-z_]+)\s+([0-9]+)$/.exec(line)
-    if (!m || Object.hasOwn(result, m[1])) throw new Error('INVALID_COUNTER_FILE')
+    if (!m || Object.hasOwn(result, m[1])) {throw new Error('INVALID_COUNTER_FILE')}
     result[m[1]] = decimal(m[2], 'counter')
   }
   return Object.freeze(result)
@@ -48,10 +48,10 @@ export async function collectCgroupSample(reader: ReadonlyCgroupReader, raw: Cgr
   for (const file of CGROUP_FILES) {
     try {
       const value = await reader.readFile(identity, file)
-      if (typeof value !== 'string') throw new Error('INVALID_COUNTER_FILE')
-      if (file === 'memory.events.local') counters = parseEvents(value)
-      else if (file === 'memory.peak') peak = decimal(value.trim(), 'peak')
-      else max = value.trim() === 'max' ? 'max' : decimal(value.trim(), 'max')
+      if (typeof value !== 'string') {throw new Error('INVALID_COUNTER_FILE')}
+      if (file === 'memory.events.local') {counters = parseEvents(value)}
+      else if (file === 'memory.peak') {peak = decimal(value.trim(), 'peak')}
+      else {max = value.trim() === 'max' ? 'max' : decimal(value.trim(), 'max')}
       files[file] = Object.freeze({ status: 'READ', value })
     } catch (error) {
       const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
@@ -71,7 +71,7 @@ export function cgroupCounterTransition(before: CgroupSample, after: CgroupSampl
     return Object.freeze({ status: 'UNKNOWN', transition: null })
   }
   const previous = before.counters?.[name], current = after.counters?.[name]
-  if (previous === undefined || current === undefined) return Object.freeze({ status: 'UNKNOWN', transition: null })
+  if (previous === undefined || current === undefined) {return Object.freeze({ status: 'UNKNOWN', transition: null })}
   const status = BigInt(current) < BigInt(previous) ? 'RESET' : current === previous ? 'UNCHANGED' : 'INCREASED'
   return Object.freeze({ status, transition: Object.freeze({ cgroupIdentity: a.cgroupIdentity, processIdentity: a.processIdentity,
     incarnation: a.incarnation, counter: name, previous, current, previousSampleId: before.sampleId, currentSampleId: after.sampleId }) })

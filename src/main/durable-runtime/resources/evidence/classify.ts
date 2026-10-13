@@ -4,17 +4,17 @@ import { targetKey, originalEvidenceMatches } from './normalize.ts'
 export function classifyFailureEvidence(observations: readonly PreparedFailureObservation[]): ClassificationResult {
   const reasons = new Set<string>(), missing = new Set<string>(), conflicts = new Set<string>()
   const ids = observations.map(o => o.input.observationId)
-  if (!observations.length) missing.add('NO_OBSERVATIONS')
+  if (!observations.length) {missing.add('NO_OBSERVATIONS')}
   const keys = new Set(observations.map(o => targetKey(o.input.target)))
-  if (keys.size > 1) conflicts.add('DIFFERENT_EXECUTION_TARGETS')
+  if (keys.size > 1) {conflicts.add('DIFFERENT_EXECUTION_TARGETS')}
   const digests = new Map<string, string>()
   for (const o of observations) {
     const old = digests.get(o.input.sourceDedupKey)
-    if (old && old !== o.payloadDigest) conflicts.add('SOURCE_KEY_PAYLOAD_CONFLICT')
+    if (old && old !== o.payloadDigest) {conflicts.add('SOURCE_KEY_PAYLOAD_CONFLICT')}
     digests.set(o.input.sourceDedupKey, o.payloadDigest)
     for (const issue of o.issues) {
-      if (issue.includes('MISMATCH') || issue === 'COUNTER_RESET') conflicts.add(issue)
-      else missing.add(issue)
+      if (issue.includes('MISMATCH') || issue === 'COUNTER_RESET') {conflicts.add(issue)}
+      else {missing.add(issue)}
     }
   }
   const trusted = observations.filter(o => o.input.sourceAuthenticated && o.input.sourceKind !== 'UNTRUSTED_TEXT' &&
@@ -23,28 +23,28 @@ export function classifyFailureEvidence(observations: readonly PreparedFailureOb
   const any = (key: keyof PreparedFailureObservation['input']['signals']): boolean =>
     trusted.some(o => o.input.signals[key] === true)
   const memory = any('oomKilled') || any('memoryEviction') || any('nodeOom') || any('limitOom') || any('childOom')
-  if (memory && any('otherTermination')) conflicts.add('MEMORY_AND_OTHER_TERMINATION')
-  if (any('heapLimit') && memory) conflicts.add('HEAP_AND_KERNEL_MEMORY_EVIDENCE')
+  if (memory && any('otherTermination')) {conflicts.add('MEMORY_AND_OTHER_TERMINATION')}
+  if (any('heapLimit') && memory) {conflicts.add('HEAP_AND_KERNEL_MEMORY_EVIDENCE')}
   if (trusted.some(o => o.input.signals.childOom) && trusted.some(o => o.input.termination?.state !== 'SUPERVISOR' && o.input.signals.oomKilled)) {
     conflicts.add('CHILD_AND_CONTAINER_TERMINATION')
   }
   const termKeys = new Set(trusted.flatMap(o => o.aliases.filter(a => a.kind === 'TERMINATION').map(a => a.key)))
-  if (termKeys.size > 1) conflicts.add('DIFFERENT_TERMINATIONS')
+  if (termKeys.size > 1) {conflicts.add('DIFFERENT_TERMINATIONS')}
   const placements = trusted.flatMap(o => o.input.placement && originalEvidenceMatches(o, o.input.placement.provenance) ? [o.input.placement] : [])
-  if (trusted.some(o => !o.input.placement || !originalEvidenceMatches(o, o.input.placement.provenance))) missing.add('ORIGINAL_PLACEMENT_UNPROVEN')
+  if (trusted.some(o => !o.input.placement || !originalEvidenceMatches(o, o.input.placement.provenance))) {missing.add('ORIGINAL_PLACEMENT_UNPROVEN')}
   const complete = placements.filter(p => p.complete && !p.unknownPodUids.length)
-  if (new Set(complete.map(p => p.nodeUid)).size > 1) conflicts.add('PLACEMENT_NODE_CHANGED')
-  if (complete.some(p => p.otherUserPodUids.length) && complete.some(p => !p.otherUserPodUids.length)) conflicts.add('PLACEMENT_DISAGREEMENT')
+  if (new Set(complete.map(p => p.nodeUid)).size > 1) {conflicts.add('PLACEMENT_NODE_CHANGED')}
+  if (complete.some(p => p.otherUserPodUids.length) && complete.some(p => !p.otherUserPodUids.length)) {conflicts.add('PLACEMENT_DISAGREEMENT')}
   const resourceSamples = trusted.flatMap(o => o.input.resources?.applied && originalEvidenceMatches(o, o.input.resources.applied.provenance) ? [o.input.resources.applied.values] : [])
-  if (trusted.some(o => !o.input.resources?.applied || !originalEvidenceMatches(o, o.input.resources.applied.provenance))) missing.add('ORIGINAL_APPLIED_RESOURCES_UNPROVEN')
-  if (new Set(resourceSamples.map(r => r.memoryLimit)).size > 1) conflicts.add('ORIGINAL_APPLIED_LIMIT_DISAGREEMENT')
-  if (!trusted.length) missing.add('NO_AUTHENTICATED_RESOLVED_EVIDENCE')
+  if (trusted.some(o => !o.input.resources?.applied || !originalEvidenceMatches(o, o.input.resources.applied.provenance))) {missing.add('ORIGINAL_APPLIED_RESOURCES_UNPROVEN')}
+  if (new Set(resourceSamples.map(r => r.memoryLimit)).size > 1) {conflicts.add('ORIGINAL_APPLIED_LIMIT_DISAGREEMENT')}
+  if (!trusted.length) {missing.add('NO_AUTHENTICATED_RESOLVED_EVIDENCE')}
   const finish = (classification: FailureClass, candidate = false): ClassificationResult => Object.freeze({
     classification, reasons: Object.freeze([...reasons]), missing: Object.freeze([...missing]),
     conflicts: Object.freeze([...conflicts]), observationIds: Object.freeze([...new Set(ids)]),
     automaticGrowthCandidate: candidate && conflicts.size === 0, authority: 'DATA_ONLY'
   })
-  if (conflicts.size || !trusted.length) return finish('UNKNOWN_MEMORY_FAILURE')
+  if (conflicts.size || !trusted.length) {return finish('UNKNOWN_MEMORY_FAILURE')}
   if (any('childOom')) {
     const child = trusted.some(o => o.input.signals.childOom && o.input.signals.parentAlive === true &&
       o.input.affectedWorkIds.length > 0 && ((o.input.sourceKind === 'SUPERVISOR' && o.input.termination?.processIdentity) ||
@@ -67,7 +67,7 @@ export function classifyFailureEvidence(observations: readonly PreparedFailureOb
   const finiteLimit = resourceSamples.some(r => r.memoryLimit !== null && r.memoryLimit !== 'max')
   if (any('limitOom') && finiteLimit && !nodeFailure) {
     reasons.add('EXPLICIT_CONTAINER_LIMIT_OOM')
-    if (trusted.some(o => o.input.defaultLimitlessProfile)) reasons.add('MEMORY_LIMIT_PROFILE_DRIFT')
+    if (trusted.some(o => o.input.defaultLimitlessProfile)) {reasons.add('MEMORY_LIMIT_PROFILE_DRIFT')}
     return finish('CONTAINER_LIMIT_OOM')
   }
   if (finiteLimit) {
@@ -81,8 +81,8 @@ export function classifyFailureEvidence(observations: readonly PreparedFailureOb
     // Missing counters or a low periodic sample do not negate explicit OOM/eviction.
     return finish('ISOLATED_NODE_MEMORY_EXHAUSTION', true)
   }
-  if (!isolated) missing.add('PLACEMENT_INCOMPLETE_OR_NOT_ISOLATED')
-  if (!limitless) missing.add('ADMITTED_LIMIT_NOT_OBSERVED')
-  if (!eligible) missing.add('AGENT_PROFILE_SCOPE_NOT_VERIFIED')
+  if (!isolated) {missing.add('PLACEMENT_INCOMPLETE_OR_NOT_ISOLATED')}
+  if (!limitless) {missing.add('ADMITTED_LIMIT_NOT_OBSERVED')}
+  if (!eligible) {missing.add('AGENT_PROFILE_SCOPE_NOT_VERIFIED')}
   return finish('UNKNOWN_MEMORY_FAILURE')
 }

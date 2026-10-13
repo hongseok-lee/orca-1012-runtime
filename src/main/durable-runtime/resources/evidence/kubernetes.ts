@@ -4,13 +4,13 @@ import { evidenceTime, prepareFailureObservation, snapshotTarget, text } from '.
 
 type ObjectValue = Record<string, unknown>
 function object(value: unknown): ObjectValue {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('INVALID_OBJECT')
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {throw new Error('INVALID_OBJECT')}
   return value as ObjectValue
 }
 function optional(value: unknown): ObjectValue { return value === undefined || value === null ? {} : object(value) }
-function array(value: unknown): unknown[] { if (!Array.isArray(value)) throw new Error('INVALID_ARRAY'); return value }
+function array(value: unknown): unknown[] { if (!Array.isArray(value)) {throw new Error('INVALID_ARRAY');} return value }
 function stringOrNull(value: unknown): string | null {
-  if (value === undefined || value === null) return null
+  if (value === undefined || value === null) {return null}
   return text(value, 'Kubernetes field')
 }
 function resourceValues(raw: unknown): ResourceValues {
@@ -30,7 +30,7 @@ function resourceSnapshot(container: ObjectValue, status: ObjectValue, desired: 
     admitted: original?.admitted ?? null, applied: original?.applied ?? null
   })
 }
-export interface KubernetesCollectionRequest {
+export type KubernetesCollectionRequest = {
   readonly target: FailureTarget
   readonly namespace: string
   readonly podName: string
@@ -42,14 +42,14 @@ export interface KubernetesCollectionRequest {
   readonly defaultLimitlessProfile: boolean
   readonly desired: { readonly memoryRequest: string | null; readonly memoryLimit: string | null }
 }
-export interface PlatformPodOrigin {
+export type PlatformPodOrigin = {
   readonly podUid: string
   readonly nodeUid: string
   readonly batchId: string
   readonly kind: 'SYSTEM_DAEMONSET' | 'PLATFORM_BALLOON'
   readonly provenanceRef: string
 }
-export interface KubernetesReadBatch {
+export type KubernetesReadBatch = {
   readonly batchId: string
   readonly pod: unknown
   readonly node: unknown
@@ -65,7 +65,7 @@ export interface KubernetesReadBatch {
 // Only the authenticated workload/control-plane boundary may supply this
 // transport. No kubectl shell, credential setup, mutable client singleton or
 // fixture-to-verified factory is installed by this data module.
-export interface ReadonlyKubernetesTransport {
+export type ReadonlyKubernetesTransport = {
   readonly sourceRef: string
   readonly authentication: 'BOUNDARY_AUTHENTICATED' | 'UNVERIFIED'
   readBatch(request: KubernetesCollectionRequest): Promise<KubernetesReadBatch>
@@ -107,21 +107,21 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
     const statuses = array(status.containerStatuses ?? []).map(object).filter(c => c.name === target.containerName)
     let resources: ResourceObservation | null = null, termination: TerminationObservation | null = null
     let restartCount: number | null = null, currentContainerId: string | null = null
-    if (target.containerName === null || specs.length !== 1 || statuses.length !== 1) gaps.push('CONTAINER_STATUS_INCOMPLETE_OR_DUPLICATE')
+    if (target.containerName === null || specs.length !== 1 || statuses.length !== 1) {gaps.push('CONTAINER_STATUS_INCOMPLETE_OR_DUPLICATE')}
     else {
       const c = statuses[0], state = optional(c.state), last = optional(c.lastState)
       resources = resourceSnapshot(specs[0], c, request.desired, batch.originalResources)
       restartCount = Number.isSafeInteger(c.restartCount) && Number(c.restartCount) >= 0 ? Number(c.restartCount) : null
-      if (restartCount === null) gaps.push('RESTART_STATUS_INCOMPLETE')
+      if (restartCount === null) {gaps.push('RESTART_STATUS_INCOMPLETE')}
       currentContainerId = stringOrNull(c.containerID)
       const candidates = [ ['CURRENT', state.terminated], ['LAST', last.terminated] ] as const
       for (const [kind, rawTermination] of candidates) {
-        if (!rawTermination) continue
+        if (!rawTermination) {continue}
         const t = object(rawTermination), id = stringOrNull(t.containerID)
         // lastState.containerID belongs to the OLD execution; status.containerID
         // belongs to the current execution and is never used to fill this gap.
         if (id === null || target.incarnation === null) { gaps.push('TERMINATION_IDENTITY_INCOMPLETE'); continue }
-        if (id !== target.runtimeContainerId) continue
+        if (id !== target.runtimeContainerId) {continue}
         if (termination) { gaps.push('DUPLICATE_TERMINATION_MATCH'); termination = null; break }
         const reason = stringOrNull(t.reason)
         termination = Object.freeze({ state: kind, containerId: id, incarnation: target.incarnation,
@@ -130,11 +130,11 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
           exitCode: typeof t.exitCode === 'number' ? t.exitCode : null, signal: typeof t.signal === 'number' ? t.signal : null,
           reason: reason && ['OOMKilled','Completed','Error','ContainerCannotRun'].includes(reason) ? reason : 'UNRECOGNIZED_REASON' })
       }
-      if (!termination) gaps.push('ORIGINAL_TERMINATION_NOT_OBSERVED')
+      if (!termination) {gaps.push('ORIGINAL_TERMINATION_NOT_OBSERVED')}
     }
     const node = object(batch.node), nodeMeta = object(node.metadata), nodeUid = text(nodeMeta.uid, 'Node UID')
     let placement: PlacementObservation | null = null
-    if (nodeMeta.name !== spec.nodeName || nodeUid !== batch.placementNodeUid) gaps.push('PLACEMENT_NODE_IDENTITY_MISMATCH')
+    if (nodeMeta.name !== spec.nodeName || nodeUid !== batch.placementNodeUid) {gaps.push('PLACEMENT_NODE_IDENTITY_MISMATCH')}
     else {
       const otherUsers: string[] = [], platform: string[] = [], unknown: string[] = [], seen = new Set<string>()
       let hasTarget = false, complete = batch.placementComplete === true
@@ -146,24 +146,24 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
         if (uid === target.podUid) { hasTarget = true; continue }
         const origins = batch.platformOrigins.filter(o => o.podUid === uid && o.nodeUid === nodeUid && o.batchId === batchId &&
           ['SYSTEM_DAEMONSET','PLATFORM_BALLOON'].includes(o.kind) && typeof o.provenanceRef === 'string' && o.provenanceRef.length > 0)
-        if (origins.length === 1) platform.push(uid)
+        if (origins.length === 1) {platform.push(uid)}
         // Namespace/name/DaemonSet ownership alone never exclude a user Pod.
-        else otherUsers.push(uid)
+        else {otherUsers.push(uid)}
       }
       if (!hasTarget) { complete = false; gaps.push('PLACEMENT_TARGET_MISSING') }
       placement = Object.freeze({ batchId, nodeUid, targetPodUid: target.podUid, complete,
         otherUserPodUids: Object.freeze(otherUsers), platformPodUids: Object.freeze(platform), unknownPodUids: Object.freeze(unknown), provenance: null })
-      if (!complete) gaps.push('PLACEMENT_GAP')
+      if (!complete) {gaps.push('PLACEMENT_GAP')}
     }
     const evicted = status.reason === 'Evicted'
     const message = typeof status.message === 'string' ? status.message : ''
     const memoryEviction = evicted && /(?:resource:\s*memory\b|memory[- ]?pressure\b)/i.test(message)
     const otherEviction = evicted && /(?:ephemeral-storage|disk[- ]?pressure|resource:\s*(?:disk|pid)\b)/i.test(message)
-    if (evicted && !memoryEviction && !otherEviction) gaps.push('EVICTION_RESOURCE_UNKNOWN')
+    if (evicted && !memoryEviction && !otherEviction) {gaps.push('EVICTION_RESOURCE_UNKNOWN')}
     // Preserve allowlisted status identity, never env, credentials, full Pod,
     // arbitrary message/termination stderr or exception contents.
-    if (!batch.originalResources?.applied) gaps.push('ORIGINAL_APPLIED_RESOURCES_UNPROVEN')
-    if (!batch.originalPlacement) gaps.push('ORIGINAL_PLACEMENT_UNPROVEN')
+    if (!batch.originalResources?.applied) {gaps.push('ORIGINAL_APPLIED_RESOURCES_UNPROVEN')}
+    if (!batch.originalPlacement) {gaps.push('ORIGINAL_PLACEMENT_UNPROVEN')}
     const currentPlacement = placement
     return prepareFailureObservation({ ...base, termination, resources, placement: batch.originalPlacement ?? placement, gaps,
       signals: { ...emptySignals, oomKilled: termination?.reason === 'OOMKilled', memoryEviction, otherTermination: otherEviction },
@@ -180,7 +180,7 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
   }
 }
 
-export interface PodSampleRequest {
+export type PodSampleRequest = {
   readonly namespace: string
   readonly podName: string
   readonly podUid: string
@@ -188,7 +188,7 @@ export interface PodSampleRequest {
   readonly observedAt: string | Date
   readonly workloadKind: FailureObservationInput['workloadKind']
 }
-export interface ReadonlyPodSampleTransport {
+export type ReadonlyPodSampleTransport = {
   readPod(request: PodSampleRequest): Promise<unknown>
 }
 // Development Pods have no durable Unit/attempt binding. A diagnostic sample
@@ -197,15 +197,15 @@ export async function collectUnboundPodSample(transport: ReadonlyPodSampleTransp
   const request = Object.freeze({ namespace: text(raw.namespace, 'namespace'), podName: text(raw.podName, 'Pod name'),
     podUid: text(raw.podUid, 'Pod UID'), containerName: text(raw.containerName, 'container name'),
     observedAt: evidenceTime(raw.observedAt).original, workloadKind: raw.workloadKind })
-  if (!['AGENT','SERVE','PG','NFS','DEV','TEST','BUILD','UNKNOWN'].includes(request.workloadKind)) throw new Error('EVIDENCE_INPUT:kind')
+  if (!['AGENT','SERVE','PG','NFS','DEV','TEST','BUILD','UNKNOWN'].includes(request.workloadKind)) {throw new Error('EVIDENCE_INPUT:kind')}
   try {
     const pod = object(await transport.readPod(request)), meta = object(pod.metadata), spec = object(pod.spec), status = optional(pod.status)
-    if (meta.uid !== request.podUid || meta.name !== request.podName || meta.namespace !== request.namespace) throw new Error('POD_IDENTITY_MISMATCH')
+    if (meta.uid !== request.podUid || meta.name !== request.podName || meta.namespace !== request.namespace) {throw new Error('POD_IDENTITY_MISMATCH')}
     const specs = array(spec.containers).map(object).filter(c => c.name === request.containerName)
     const statuses = array(status.containerStatuses ?? []).map(object).filter(c => c.name === request.containerName)
     const c = statuses.length === 1 ? statuses[0] : null
     const terminated = (value: unknown) => {
-      if (!value) return null
+      if (!value) {return null}
       const t = object(value)
       return Object.freeze({ containerId: stringOrNull(t.containerID), finishedAt: t.finishedAt ? evidenceTime(text(t.finishedAt, 'finishedAt')).original : null,
         exitCode: typeof t.exitCode === 'number' ? t.exitCode : null,

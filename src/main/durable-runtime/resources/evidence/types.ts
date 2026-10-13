@@ -11,7 +11,7 @@ export type FailureClass = typeof FAILURE_CLASSES[number]
 // ComputeStoppedProof, a writer grant, or a production authentication factory.
 export type EvidenceJson = null | boolean | number | string |
   readonly EvidenceJson[] | { readonly [key: string]: EvidenceJson }
-export interface FailureTarget {
+export type FailureTarget = {
   readonly runtimeUnitId: RuntimeUnitId
   readonly attemptId: AttemptId
   readonly podUid: PodUid
@@ -20,11 +20,11 @@ export interface FailureTarget {
   readonly runtimeContainerId: string | null
   readonly incarnation: Incarnation | null
 }
-export interface EvidenceTime {
+export type EvidenceTime = {
   readonly original: string
   readonly epochNanoseconds: string
 }
-export interface TerminationObservation {
+export type TerminationObservation = {
   readonly state: 'CURRENT' | 'LAST' | 'SUPERVISOR'
   readonly containerId: string
   readonly incarnation: string
@@ -35,7 +35,7 @@ export interface TerminationObservation {
   readonly signal: number | null
   readonly reason: string | null
 }
-export interface CounterTransition {
+export type CounterTransition = {
   readonly cgroupIdentity: string
   readonly processIdentity: string
   readonly incarnation: string
@@ -45,7 +45,7 @@ export interface CounterTransition {
   readonly previousSampleId: string
   readonly currentSampleId: string
 }
-export interface MemorySignals {
+export type MemorySignals = {
   readonly oomKilled: boolean
   readonly memoryEviction: boolean
   readonly nodeOom: boolean
@@ -55,7 +55,7 @@ export interface MemorySignals {
   readonly parentAlive: boolean | null
   readonly otherTermination: boolean
 }
-export interface PlacementObservation {
+export type PlacementObservation = {
   readonly batchId: string
   readonly nodeUid: string
   readonly targetPodUid: string
@@ -65,24 +65,24 @@ export interface PlacementObservation {
   readonly unknownPodUids: readonly string[]
   readonly provenance: OriginalObservationProvenance | null
 }
-export interface ResourceValues {
+export type ResourceValues = {
   readonly memoryRequest: string | null
   readonly memoryLimit: string | null
   readonly cpuRequest: string | null
   readonly cpuLimit: string | null
 }
-export interface OriginalObservationProvenance {
+export type OriginalObservationProvenance = {
   readonly target: FailureTarget
   // Exact original termination/counter alias, not the latest Pod name/RV.
   readonly eventKey: string
   readonly sourceRef: string
   readonly observedAt: string
 }
-export interface BoundResourceObservation {
+export type BoundResourceObservation = {
   readonly values: ResourceValues
   readonly provenance: OriginalObservationProvenance
 }
-export interface ResourceObservation {
+export type ResourceObservation = {
   readonly desired: ResourceValues
   readonly observedSpec: ResourceValues | null
   readonly observedStatus: { readonly containerId: string | null; readonly values: ResourceValues } | null
@@ -91,7 +91,7 @@ export interface ResourceObservation {
   // applied plane means a positively observed absent limit for that execution.
   readonly applied: BoundResourceObservation | null
 }
-export interface FailureObservationInput {
+export type FailureObservationInput = {
   readonly observationId: string
   readonly sourceDedupKey: string
   readonly sourceKind: 'KUBERNETES' | 'CGROUP' | 'SUPERVISOR' | 'UNTRUSTED_TEXT'
@@ -113,12 +113,12 @@ export interface FailureObservationInput {
   // arbitrary stderr and model/chat text must not be retained in this object.
   readonly evidence: EvidenceJson
 }
-export interface EvidenceAlias {
+export type EvidenceAlias = {
   readonly kind: 'TERMINATION' | 'COUNTER_TRANSITION'
   readonly key: string
   readonly value: EvidenceJson
 }
-export interface PreparedFailureObservation {
+export type PreparedFailureObservation = {
   readonly schemaVersion: 1
   readonly input: FailureObservationInput & { readonly observedAt: string }
   readonly observedTime: EvidenceTime
@@ -129,7 +129,7 @@ export interface PreparedFailureObservation {
   readonly resolution: 'RESOLVED' | 'TARGET_UNRESOLVED'
   readonly issues: readonly string[]
 }
-export interface ClassificationResult {
+export type ClassificationResult = {
   readonly classification: FailureClass
   readonly reasons: readonly string[]
   readonly missing: readonly string[]
@@ -140,11 +140,11 @@ export interface ClassificationResult {
 }
 // Incident owner performs UNIQUE alias ownership checks in PostgreSQL. This
 // module never maintains an authoritative in-memory incident registry.
-export interface ExistingAliasBinding {
+export type ExistingAliasBinding = {
   readonly aliasKey: string
   readonly incidentId: string
 }
-export interface AliasResolution {
+export type AliasResolution = {
   readonly incidentId: string | null
   readonly conflicts: readonly string[]
   readonly aliases: readonly EvidenceAlias[]
