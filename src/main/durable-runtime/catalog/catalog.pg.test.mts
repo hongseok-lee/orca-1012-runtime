@@ -41,6 +41,11 @@ const authority = { principalId: principal, repositoryIds: [repoId], projectGrou
 const context = { authority, capabilities: [] }
 const used: string[] = []
 
+// Root's focused correction runs only failed cases 1, 3, 4 and 5.
+const selectedCases = process.env.ORCA_P116_PG_CASES
+const focusedFailedCasesOnly = selectedCases === '1,3,4,5'
+if (selectedCases !== undefined && !focusedFailedCasesOnly) {throw new Error('Exact Root Catalog case selection required')}
+
 function fixture(): PreparedCatalogLaunch {
   const name = selectSuggestedCreatureName(used, () => 0)
   const workspaceId = randomUUID(), path = `/synthetic/p116/workspaces/${name}`, publicId = `${repoId}::${path}`
@@ -83,14 +88,20 @@ await test('new Catalog PG composition boundaries (not prior intake/COMMIT suite
       await applyMigrations(pool, migrations)
       await query("INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES('synthetic-backend','synthetic-export')")
     } else {
-      // Reuse only this first-run setup after registration rolled back. No reset,
-      // repeated DDL or passing Catalog cases are hidden by this fixture boundary.
+      // Check the exact ledger before reuse; never reset or reinstall an existing dataset.
+      // Focused corrections use a new random repo/group/principal namespace below.
       assert.equal(process.env.ORCA_P116_SCHEMA_REUSE, process.env.PGDATABASE)
       const applied = await query('SELECT version,checksum FROM durable_runtime.schema_migrations ORDER BY version')
       assert.deepEqual(applied.rows, migrations.map(({ version, checksum }) => ({ version, checksum })))
-      const empty = await query(`SELECT (SELECT count(*)::integer FROM durable_runtime.workspaces) AS workspaces,
-        (SELECT count(*)::integer FROM durable_runtime.catalog_repositories) AS repositories`)
-      assert.deepEqual(empty.rows[0], { workspaces: 0, repositories: 0 })
+      if (!focusedFailedCasesOnly) {
+        const empty = await query(`SELECT (SELECT count(*)::integer FROM durable_runtime.workspaces) AS workspaces,
+          (SELECT count(*)::integer FROM durable_runtime.catalog_repositories) AS repositories`)
+        assert.deepEqual(empty.rows[0], { workspaces: 0, repositories: 0 })
+      } else {
+        const domain = await query(`SELECT backend_id,export_id FROM durable_runtime.storage_domains
+          WHERE backend_id='synthetic-backend' AND export_id='synthetic-export'`)
+        assert.equal(domain.rows.length, 1)
+      }
     }
     await registerCatalogProject(pool, authority, { mutationId: 'synthetic-registration',
       group: { id: groupId, name: 'Synthetic group', parentPath: null, parentGroupId: null, color: null,
@@ -107,9 +118,13 @@ await test('new Catalog PG composition boundaries (not prior intake/COMMIT suite
     await t.test('concurrent same-key create and caller retry retain one stable object and unverified storage', async () => {
       const call = createCall(first, 'synthetic-create')
       const results = await Promise.all([reserveCatalogWorkspace(pool, call, first, owners), reserveCatalogWorkspace(pool, call, first, owners)])
+      // Persisted name bookkeeping must not depend on later assertion success.
+      if (results.some(result => result.status === 'COMMITTED' || result.status === 'REPLAYED')) {
+        used.push(first.workspace.reservedName)
+      }
       assert.ok(results.every(result => result.status === 'COMMITTED' || result.status === 'REPLAYED'))
-      assert.deepEqual(results[0].status === 'UNCERTAIN' ? null : results[0].receipt.response,
-        results[1].status === 'UNCERTAIN' ? null : results[1].receipt.response)
+      assert.deepEqual(JSON.parse(JSON.stringify(results[0].status === 'UNCERTAIN' ? null : results[0].receipt.response)),
+        JSON.parse(JSON.stringify(results[1].status === 'UNCERTAIN' ? null : results[1].receipt.response)))
       const again = await reserveCatalogWorkspace(pool, call, first, owners) // Caller lost the response; same durable key.
       assert.equal(again.status, 'REPLAYED')
       const stored = await query(`SELECT w.public_id,u.phase,u.active_attempt_id,b.identity_verified_at,b.identity_proof_ref
@@ -122,27 +137,28 @@ await test('new Catalog PG composition boundaries (not prior intake/COMMIT suite
       const wrong = prepareCatalogCall('worktree.create', { repo: repoId, name: first.workspace.reservedName,
         displayName: 'different', clientMutationId: 'synthetic-create' }, context)
       await assert.rejects(reserveCatalogWorkspace(pool, wrong, first, owners), error => error instanceof Error && 'code' in error && error.code === 'RECEIPT_PAYLOAD_CONFLICT')
-      used.push(first.workspace.reservedName)
     })
 
-    await t.test('alias resolver uses the same object and read-only tab snapshots do not mark activity', async () => {
-      const found = await withCatalogReadSnapshot(pool, tx => resolveCatalogWorkspace(tx, first.workspace.aliases[0], authority))
-      assert.equal(found.workspace_id, first.workspace.id)
-      const before = await readCatalogSnapshot(pool, authority)
-      const all = await readAllCatalogTabs(pool, prepareCatalogCall('session.tabs.listAll', undefined, context))
-      const snapshot = all.snapshots.find(row => row.worktree === first.workspace.publicId)!
-      assert.equal(snapshot.tabs.length, 1); assert.equal(snapshot.tabs[0].type, 'terminal')
-      assert.deepEqual((await readCatalogSnapshot(pool, authority)).heads, before.heads)
-      assert.equal((await query('SELECT last_work_event_at FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0].last_work_event_at, null)
-    })
+    if (!focusedFailedCasesOnly) {
+      await t.test('alias resolver uses the same object and read-only tab snapshots do not mark activity', async () => {
+        const found = await withCatalogReadSnapshot(pool, tx => resolveCatalogWorkspace(tx, first.workspace.aliases[0], authority))
+        assert.equal(found.workspace_id, first.workspace.id)
+        const before = await readCatalogSnapshot(pool, authority)
+        const all = await readAllCatalogTabs(pool, prepareCatalogCall('session.tabs.listAll', undefined, context))
+        const snapshot = all.snapshots.find(row => row.worktree === first.workspace.publicId)!
+        assert.equal(snapshot.tabs.length, 1); assert.equal(snapshot.tabs[0].type, 'terminal')
+        assert.deepEqual((await readCatalogSnapshot(pool, authority)).heads, before.heads)
+        assert.equal((await query('SELECT last_work_event_at FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0].last_work_event_at, null)
+      })
+    }
 
     await t.test('nested launch request mutated after first await stays detached and create failure rolls back all aggregates', async () => {
       const next = fixture(), call = createCall(next, 'synthetic-nested-capture')
       const running = reserveCatalogWorkspace(pool, call, next, owners)
       ;(next.launchRequest.env as Record<string, string>).SYNTHETIC = 'after'
       await running
-      assert.equal((await query("SELECT launch_request->'env'->>'SYNTHETIC' AS value FROM durable_runtime.catalog_tab_metadata WHERE tab_id=$1", [next.tab.id])).rows[0].value, 'before')
       used.push(next.workspace.reservedName)
+      assert.equal((await query("SELECT launch_request->'env'->>'SYNTHETIC' AS value FROM durable_runtime.catalog_tab_metadata WHERE tab_id=$1", [next.tab.id])).rows[0].value, 'before')
       const rejected = fixture()
       const broken = { ...owners, recordUnitIntent: (async (...args: Parameters<typeof recordUnitIntent>) => {
         await recordUnitIntent(...args); throw new CatalogError('SYNTHETIC_AFTER_INTENT_ROLLBACK')
@@ -197,80 +213,86 @@ await test('new Catalog PG composition boundaries (not prior intake/COMMIT suite
       assert.equal((await query('SELECT desired_mode FROM durable_runtime.runtime_units WHERE id=$1', [launch.unit.id])).rows[0].desired_mode, 'RUNNING')
     })
 
-    await t.test('same-TX cancel plus tombstone rollback, one Session close in a shared Unit, and no fabricated physical stop', async () => {
-      const second = fixture()
-      const shared = { ...second, workspace: first.workspace, unit: { ...first.unit, create: false },
-        tab: { ...second.tab, uiOrder: 1, payload: { ...second.tab.payload, isActive: false } } } as PreparedCatalogLaunch
-      await createCatalogTerminal(pool, prepareCatalogCall('session.tabs.createTerminal', {
-        worktree: first.workspace.publicId, clientMutationId: 'synthetic-second-session', launchToken: 'synthetic-opaque-token'
-      }, context), shared, owners)
-      const message = randomUUID(), attempt = randomUUID(), delivery = randomUUID()
-      await query("INSERT INTO durable_runtime.messages(id,session_id,seq,body_or_blob_ref,intake_status) VALUES($1,$2,1,'{}','EFFECT_POSSIBLE')", [message, first.sessionId])
-      await query("INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,0,'{}',0)", [first.unit.id])
-      await query(`INSERT INTO durable_runtime.attempts(id,runtime_unit_id,execution_epoch,mode,resource_profile_revision,effective_resources,status)
-        VALUES($1,$2,1,'COLD',0,'{}','synthetic-fixture')`, [attempt, first.unit.id])
-      await query('UPDATE durable_runtime.runtime_units SET active_attempt_id=$2,execution_epoch=1,revision=revision+1 WHERE id=$1', [first.unit.id, attempt])
-      await query(`INSERT INTO durable_runtime.delivery_attempts(id,message_id,session_id,runtime_unit_id,attempt_id,execution_epoch,state,effect_possible_at)
-        VALUES($1,$2,$3,$4,$5,1,'EFFECT_POSSIBLE',clock_timestamp())`, [delivery, message, first.sessionId, first.unit.id, attempt])
-      const call = prepareCatalogCall('terminal.close', { terminal: first.tab.terminalHandle }, context)
-      const scope = { inputAuthorities: [closeAuthority(first)] }
-      const before = (await query('SELECT count(*)::text AS n FROM durable_runtime.outbox_events')).rows[0].n
-      const broken = { ...owners, recordInputCancel: (async (...args: Parameters<typeof recordInputCancel>) => {
-        await recordInputCancel(...args); throw new CatalogError('SYNTHETIC_AFTER_CANCEL_ROLLBACK')
-      }) as typeof recordInputCancel }
-      await assert.rejects(closeCatalogTab(pool, call, first.workspace.publicId, scope, broken))
-      assert.equal((await query('SELECT lifecycle FROM durable_runtime.tabs WHERE id=$1', [first.tab.id])).rows[0].lifecycle, 'OPEN')
-      assert.equal((await query('SELECT cancel_requested_at FROM durable_runtime.messages WHERE id=$1', [message])).rows[0].cancel_requested_at, null)
-      assert.equal((await query('SELECT count(*)::text AS n FROM durable_runtime.cancel_intents')).rows[0].n, '0')
-      assert.equal((await query('SELECT count(*)::text AS n FROM durable_runtime.outbox_events')).rows[0].n, before)
-      const closed = await closeCatalogTab(pool, call, first.workspace.publicId, scope, owners)
-      assert.notEqual(closed.status, 'UNCERTAIN')
-      if (closed.status !== 'UNCERTAIN') {assert.deepEqual((closed.receipt.response as { close: { ptyKilled: boolean } }).close.ptyKilled, false)}
-      assert.equal((await query('SELECT lifecycle FROM durable_runtime.sessions WHERE id=$1', [first.sessionId])).rows[0].lifecycle, 'CLOSING')
-      assert.equal((await query('SELECT lifecycle FROM durable_runtime.sessions WHERE id=$1', [shared.sessionId])).rows[0].lifecycle, 'OPEN')
-      assert.equal((await query('SELECT desired_mode FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0].desired_mode, 'RUNNING')
-      assert.equal((await query("SELECT count(*)::text AS n FROM durable_runtime.outbox_events WHERE event->>'kind'='INTERRUPT_FIXED_DELIVERY'")).rows[0].n, '1')
-      await assert.rejects(withDurableTransaction(pool, async tx => {
-        await lockAggregates(tx, { sessionIds: [first.sessionId], runtimeUnitIds: [first.unit.id] })
-        await assertNewInputState(tx, closeAuthority(first), '0', first.unit.id)
-      }))
-      assert.equal((await reserveCatalogWorkspace(pool, createCall(first, 'synthetic-create'), first, owners)).status, 'REPLAYED')
-    })
+    if (!focusedFailedCasesOnly) {
+      await t.test('same-TX cancel plus tombstone rollback, one Session close in a shared Unit, and no fabricated physical stop', async () => {
+        const second = fixture()
+        const shared = { ...second, workspace: first.workspace, unit: { ...first.unit, create: false },
+          tab: { ...second.tab, uiOrder: 1, payload: { ...second.tab.payload, isActive: false } } } as PreparedCatalogLaunch
+        await createCatalogTerminal(pool, prepareCatalogCall('session.tabs.createTerminal', {
+          worktree: first.workspace.publicId, clientMutationId: 'synthetic-second-session', launchToken: 'synthetic-opaque-token'
+        }, context), shared, owners)
+        const message = randomUUID(), attempt = randomUUID(), delivery = randomUUID()
+        await query("INSERT INTO durable_runtime.messages(id,session_id,seq,body_or_blob_ref,intake_status) VALUES($1,$2,1,'{}','EFFECT_POSSIBLE')", [message, first.sessionId])
+        await query("INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,0,'{}',0)", [first.unit.id])
+        await query(`INSERT INTO durable_runtime.attempts(id,runtime_unit_id,execution_epoch,mode,resource_profile_revision,effective_resources,status)
+          VALUES($1,$2,1,'COLD',0,'{}','synthetic-fixture')`, [attempt, first.unit.id])
+        await query('UPDATE durable_runtime.runtime_units SET active_attempt_id=$2,execution_epoch=1,revision=revision+1 WHERE id=$1', [first.unit.id, attempt])
+        await query(`INSERT INTO durable_runtime.delivery_attempts(id,message_id,session_id,runtime_unit_id,attempt_id,execution_epoch,state,effect_possible_at)
+          VALUES($1,$2,$3,$4,$5,1,'EFFECT_POSSIBLE',clock_timestamp())`, [delivery, message, first.sessionId, first.unit.id, attempt])
+        const call = prepareCatalogCall('terminal.close', { terminal: first.tab.terminalHandle }, context)
+        const scope = { inputAuthorities: [closeAuthority(first)] }
+        const before = (await query('SELECT count(*)::text AS n FROM durable_runtime.outbox_events')).rows[0].n
+        const broken = { ...owners, recordInputCancel: (async (...args: Parameters<typeof recordInputCancel>) => {
+          await recordInputCancel(...args); throw new CatalogError('SYNTHETIC_AFTER_CANCEL_ROLLBACK')
+        }) as typeof recordInputCancel }
+        await assert.rejects(closeCatalogTab(pool, call, first.workspace.publicId, scope, broken))
+        assert.equal((await query('SELECT lifecycle FROM durable_runtime.tabs WHERE id=$1', [first.tab.id])).rows[0].lifecycle, 'OPEN')
+        assert.equal((await query('SELECT cancel_requested_at FROM durable_runtime.messages WHERE id=$1', [message])).rows[0].cancel_requested_at, null)
+        assert.equal((await query('SELECT count(*)::text AS n FROM durable_runtime.cancel_intents')).rows[0].n, '0')
+        assert.equal((await query('SELECT count(*)::text AS n FROM durable_runtime.outbox_events')).rows[0].n, before)
+        const closed = await closeCatalogTab(pool, call, first.workspace.publicId, scope, owners)
+        assert.notEqual(closed.status, 'UNCERTAIN')
+        if (closed.status !== 'UNCERTAIN') {assert.deepEqual((closed.receipt.response as { close: { ptyKilled: boolean } }).close.ptyKilled, false)}
+        assert.equal((await query('SELECT lifecycle FROM durable_runtime.sessions WHERE id=$1', [first.sessionId])).rows[0].lifecycle, 'CLOSING')
+        assert.equal((await query('SELECT lifecycle FROM durable_runtime.sessions WHERE id=$1', [shared.sessionId])).rows[0].lifecycle, 'OPEN')
+        assert.equal((await query('SELECT desired_mode FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0].desired_mode, 'RUNNING')
+        assert.equal((await query("SELECT count(*)::text AS n FROM durable_runtime.outbox_events WHERE event->>'kind'='INTERRUPT_FIXED_DELIVERY'")).rows[0].n, '1')
+        await assert.rejects(withDurableTransaction(pool, async tx => {
+          await lockAggregates(tx, { sessionIds: [first.sessionId], runtimeUnitIds: [first.unit.id] })
+          await assertNewInputState(tx, closeAuthority(first), '0', first.unit.id)
+        }))
+        assert.equal((await reserveCatalogWorkspace(pool, createCall(first, 'synthetic-create'), first, owners)).status, 'REPLAYED')
+      })
+    }
 
-    await t.test('latest P113 CLOSING sleep is DEFERRED, not a fabricated successful stop', async () => {
-      const unit = (await query('SELECT revision,intent_revision FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0]
-      const members = (await query('SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1 ORDER BY session_id', [first.unit.id])).rows.map(row => logicalId('session', row.session_id))
-      const reservation = await reserveCatalogSleep(pool, prepareCatalogCall('worktree.sleep', { worktree: first.workspace.publicId }, context), {
-        preparedAttemptId: null, request: { unitId: first.unit.id, actorId: authority.principalId,
-          discoveredMembers: members, expectedRevision: unit.revision, expectedIntentRevision: unit.intent_revision,
-          policy: first.policy, activityFreshnessMs: 1000, activity: null }
-      }, owners)
-      assert.notEqual(reservation.status, 'UNCERTAIN')
-      if (reservation.status !== 'UNCERTAIN') {assert.deepEqual((reservation.receipt.response as { reservation: unknown }).reservation,
-        { status: 'DEFERRED', reason: 'SESSION_CLOSING' })}
-    })
+    if (!focusedFailedCasesOnly) {
+      await t.test('latest P113 CLOSING sleep is DEFERRED, not a fabricated successful stop', async () => {
+        const unit = (await query('SELECT revision,intent_revision FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0]
+        const members = (await query('SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1 ORDER BY session_id', [first.unit.id])).rows.map(row => logicalId('session', row.session_id))
+        const reservation = await reserveCatalogSleep(pool, prepareCatalogCall('worktree.sleep', { worktree: first.workspace.publicId }, context), {
+          preparedAttemptId: null, request: { unitId: first.unit.id, actorId: authority.principalId,
+            discoveredMembers: members, expectedRevision: unit.revision, expectedIntentRevision: unit.intent_revision,
+            policy: first.policy, activityFreshnessMs: 1000, activity: null }
+        }, owners)
+        assert.notEqual(reservation.status, 'UNCERTAIN')
+        if (reservation.status !== 'UNCERTAIN') {assert.deepEqual((reservation.receipt.response as { reservation: unknown }).reservation,
+          { status: 'DEFERRED', reason: 'SESSION_CLOSING' })}
+      })
+    }
 
-    await t.test('stale physical tuple fails; exact synthetic retirement never resurrects a CLOSED Tab', async () => {
-      // Synthetic persisted observations exercise the Catalog guard only. They do
-      // not qualify physical-proof issuance, a provider, Pod, PTY or live transport.
-      const attempt = (await query('SELECT active_attempt_id FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0].active_attempt_id
-      const publicationEpoch = (await query('SELECT publication_epoch FROM durable_runtime.catalog_heads WHERE scope=$1', [`workspace:${first.workspace.id}`])).rows[0].publication_epoch
-      await query('UPDATE durable_runtime.attempts SET pod_uid=$2 WHERE id=$1', [attempt, 'synthetic-pod'])
-      await query(`UPDATE durable_runtime.catalog_tab_metadata SET
-        payload=payload||$2::jsonb,binding_revision=binding_revision+1 WHERE tab_id=$1`, [first.tab.id,
-        JSON.stringify({ ptyId: 'synthetic-pty', incarnationId: 'synthetic-incarnation', status: 'ready', terminal: first.tab.terminalHandle })])
-      const observation = Object.freeze({ workspaceSelector: first.workspace.publicId, publicTabId: first.tab.publicId,
-        publicationEpoch, expectedBindingRevision: '1', runtimeUnitId: first.unit.id, attemptId: attempt,
-        executionEpoch: '1', podUid: 'synthetic-pod', terminalHandle: first.tab.terminalHandle,
-        ptyId: 'synthetic-pty', incarnationId: 'synthetic-incarnation', kind: 'STOPPED', evidenceRef: 'synthetic-evidence' }) as PreparedCatalogBindingObservation
-      const lifecycleCall = prepareCatalogCall('session.tabs.closeLifecycle', { worktree: first.workspace.publicId,
-        tabId: first.tab.parentTabId, leafId: first.tab.leafId, publicationEpoch, terminal: first.tab.terminalHandle, reason: 'pty-exit' }, context)
-      const stale = Object.freeze({ ...observation, incarnationId: 'synthetic-stale-incarnation' })
-      await assert.rejects(applyCatalogBindingObservation(pool, lifecycleCall, stale,
-        { isPinned: candidate => candidate === stale }))
-      await applyCatalogBindingObservation(pool, lifecycleCall, observation, { isPinned: candidate => candidate === observation })
-      assert.equal((await query('SELECT lifecycle FROM durable_runtime.tabs WHERE id=$1', [first.tab.id])).rows[0].lifecycle, 'CLOSED')
-      assert.equal((await query("SELECT payload->'ptyId' AS pty FROM durable_runtime.catalog_tab_metadata WHERE tab_id=$1", [first.tab.id])).rows[0].pty, null)
-    })
+    if (!focusedFailedCasesOnly) {
+      await t.test('stale physical tuple fails; exact synthetic retirement never resurrects a CLOSED Tab', async () => {
+        // Synthetic persisted observations exercise the Catalog guard only. They do
+        // not qualify physical-proof issuance, a provider, Pod, PTY or live transport.
+        const attempt = (await query('SELECT active_attempt_id FROM durable_runtime.runtime_units WHERE id=$1', [first.unit.id])).rows[0].active_attempt_id
+        const publicationEpoch = (await query('SELECT publication_epoch FROM durable_runtime.catalog_heads WHERE scope=$1', [`workspace:${first.workspace.id}`])).rows[0].publication_epoch
+        await query('UPDATE durable_runtime.attempts SET pod_uid=$2 WHERE id=$1', [attempt, 'synthetic-pod'])
+        await query(`UPDATE durable_runtime.catalog_tab_metadata SET
+          payload=payload||$2::jsonb,binding_revision=binding_revision+1 WHERE tab_id=$1`, [first.tab.id,
+          JSON.stringify({ ptyId: 'synthetic-pty', incarnationId: 'synthetic-incarnation', status: 'ready', terminal: first.tab.terminalHandle })])
+        const observation = Object.freeze({ workspaceSelector: first.workspace.publicId, publicTabId: first.tab.publicId,
+          publicationEpoch, expectedBindingRevision: '1', runtimeUnitId: first.unit.id, attemptId: attempt,
+          executionEpoch: '1', podUid: 'synthetic-pod', terminalHandle: first.tab.terminalHandle,
+          ptyId: 'synthetic-pty', incarnationId: 'synthetic-incarnation', kind: 'STOPPED', evidenceRef: 'synthetic-evidence' }) as PreparedCatalogBindingObservation
+        const lifecycleCall = prepareCatalogCall('session.tabs.closeLifecycle', { worktree: first.workspace.publicId,
+          tabId: first.tab.parentTabId, leafId: first.tab.leafId, publicationEpoch, terminal: first.tab.terminalHandle, reason: 'pty-exit' }, context)
+        const stale = Object.freeze({ ...observation, incarnationId: 'synthetic-stale-incarnation' })
+        await assert.rejects(applyCatalogBindingObservation(pool, lifecycleCall, stale,
+          { isPinned: candidate => candidate === stale }))
+        await applyCatalogBindingObservation(pool, lifecycleCall, observation, { isPinned: candidate => candidate === observation })
+        assert.equal((await query('SELECT lifecycle FROM durable_runtime.tabs WHERE id=$1', [first.tab.id])).rows[0].lifecycle, 'CLOSED')
+        assert.equal((await query("SELECT payload->'ptyId' AS pty FROM durable_runtime.catalog_tab_metadata WHERE tab_id=$1", [first.tab.id])).rows[0].pty, null)
+      })
+    }
   } finally { await pool.end() }
 })
