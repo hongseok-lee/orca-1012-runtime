@@ -7,6 +7,7 @@ import type { JsonValue } from "../db/atomic.ts";
 import { DurableDatabaseError, safeDatabaseError, withDurableTransaction } from "../db/connection.ts";
 import type { DurableTransaction } from "../db/connection.ts";
 import { lockAggregates } from "../db/locks.ts";
+import type { RuntimeEventProducerRow, RuntimeEventQueueRow } from "../db/rows.ts";
 import { appendAudit, appendSessionEvent, enqueueOutbox } from "../journal/store.ts";
 import {
   EVENT_RETRY_POLICY, type ClaimResult, type ConsumerAuthority, type ConsumerOptions,
@@ -15,17 +16,9 @@ import {
 } from "./types.ts";
 
 const d = "durable_runtime.";
-type ProducerRow = {
-  producer_id: string; incarnation: string; agent_id: string; runtime_unit_id: string;
-  attempt_id: string; pod_uid: string; execution_epoch: string;
-  committed_through: string; processed_through: string;
-};
-type QueueRow = {
-  event_id: string; producer_id: string; incarnation: string; producer_seq: string;
-  agent_id: string; payload: JsonValue; state: string; attempt_count: string;
-  claim_owner: string | null; claim_controller_term: string | null;
-  claim_token: string | null; claim_live: boolean; retry_due: boolean;
-  claim_expires_at: Date | null; last_error: string | null;
+type ProducerRow = RuntimeEventProducerRow;
+type QueueRow = Omit<RuntimeEventQueueRow, "payload"> & {
+  payload: JsonValue; claim_live: boolean; retry_due: boolean;
 };
 type Head = { producer: ProducerRow; queue: QueueRow | null; targets: SessionId[] };
 
@@ -421,6 +414,7 @@ export async function finalizeRuntimeEvent(pool: Pool, stream: ProducerStream, a
     if (q.state === "PROCESSING") {
       if (q.claim_live && q.claim_owner === authority.owner && q.claim_controller_term === authority.term) return { status: "WAITING", reason: "CLAIM" };
       await history(tx, head, { ...authority, term: counter("controller-term", q.claim_controller_term!) }, "UNCONFIRMED", "CLAIM_UNCONFIRMED");
+      q.last_error = "CLAIM_UNCONFIRMED";
     } else if (q.state !== "RETRY") reject("EVENT_HEAD_TERMINAL_DRIFT");
     await failureFinalizer(tx, head, authority, q.last_error ?? "CLAIM_UNCONFIRMED");
     return { status: "FAILED", eventId: logicalId("event", q.event_id) };
