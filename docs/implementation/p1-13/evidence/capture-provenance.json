@@ -1,0 +1,46 @@
+{
+  "capturedAt": "2026-10-13T11:30:29.186Z",
+  "completedAt": "2026-10-13T11:30:30.787Z",
+  "kind": "공개한 실제 검증 결과 문서를 별도 browser Context에서 최초로 캡처한 화면입니다.",
+  "targetPublicCommit": "2765e33083e58e6fe34ea40e4e62b0752c325050",
+  "targetURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/2765e33083e58e6fe34ea40e4e62b0752c325050/docs/implementation/p1-13/evidence/first-verification.md",
+  "actualURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/2765e33083e58e6fe34ea40e4e62b0752c325050/docs/implementation/p1-13/evidence/first-verification.md",
+  "heading": "P113 최초 검증 결과",
+  "viewport": {
+    "width": 1140,
+    "height": 1500
+  },
+  "deviceScaleFactor": 1,
+  "fullPage": true,
+  "pngDimensions": {
+    "width": 1140,
+    "height": 2469
+  },
+  "pngSha256": "17c71c77da7528e034d0d8ac7ddd5d9ca2ae8ec46808f4f676bf304f0e1da889",
+  "initialSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+  "focusedSource": "5964ee1846670f7554518f6a64d8db9771e72b29",
+  "rebasedSource": "92336d5fbbe3b30634023c1fa5c287f6ff7f8f64",
+  "verificationBase": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "initialRun": {
+    "pass": 20,
+    "fail": 2,
+    "skip": 0
+  },
+  "focusedRun": {
+    "pass": 2,
+    "fail": 0,
+    "skip": 0
+  },
+  "distinctPassed": {
+    "pg": 16,
+    "transport": 6
+  },
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "browserImage": "mcr.microsoft.com/playwright@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645",
+  "captureInputSha256": "2d4006eed0d004b724b5a13bf9d5936ed28898318f0f2068f8c952c22ecbdac2",
+  "captureCount": 1,
+  "testsRunForCapture": 0,
+  "contextScope": "새 독립 Context이며 기존 pairing·Metro Context와 storageState를 재사용하지 않았습니다.",
+  "limitation": "실제 검증 결과 문서이며 제품 UI·native iPhone·provider·fence·HA 합격 화면이 아닙니다."
+}

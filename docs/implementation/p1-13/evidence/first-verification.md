@@ -57,3 +57,9 @@ PG 2개 사례는 fixture의 principal 형식 때문에 `INVALID_PRINCIPAL`로 �
 Raw STOPPED는 원 이력에만 기록하며 UNKNOWN sleep 차단을 풀지 않았습니다. PRESENT는 기존 READY·관측 손실·binding·활동 사실을 보존했습니다. WATCH DELETE는 정확 UID만 현재 목록에서 제거하고 원 삭제 이력과 같은 이름의 다른 UID를 보존했습니다.
 
 이 문서는 실제 검증 결과 보고 화면입니다. 실제 provider 인증·readiness·물리 writer fencing·controller/actuator·공개 handler·HA·native iPhone 합격을 표시하지 않습니다. Source·시험·schema·원로그 SHA는 [선별 결과 JSON](first-results.json)에 있습니다. Raw 로그와 credential·private 운영 경로는 게시하지 않습니다.
+
+## 최초 실제 결과 문서 캡처
+
+![P113 최초 실제 검증 결과](p1-13-first-verification.png)
+
+고정 공개 commit `2765e33083e58e6fe34ea40e4e62b0752c325050`의 이 문서를 새 독립 browser Context에서 2026-10-13 11:30:29.186 UTC에 한 번 캡처했습니다. Viewport는 1140 × 1500, full-page PNG는 1140 × 2469입니다. 촬영을 위해 시험을 다시 실행하지 않았습니다. [실제 provenance](capture-provenance.json)에 URL·source 관계·browser image·PNG SHA를 기록했습니다.

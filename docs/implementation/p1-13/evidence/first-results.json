@@ -279,7 +279,24 @@
     "initial-lint-private.log": "8edde54193619c473f70180afd8d5a7af5f228f118d7243c130fef6ebd5e5b52",
     "corrected-lint-private.log": "c37512cd397eb1072ca92535dbac4b21833d2b3e0a1e3c8abd39e524dbbbf58d"
   },
-  "미검증 범위": "실제 provider 인증과 readiness, 물리 writer fencing, controller/actuator/public handler 활성화, HA 및 전체 P113 수용은 검증하지 않았습니다. 최초 결과 문서 PNG는 client의 별도 browser Context 인계를 기다립니다.",
+  "미검증 범위": "실제 provider 인증과 readiness, 물리 writer fencing, controller/actuator/public handler 활성화, HA 및 전체 P113 수용은 검증하지 않았습니다.",
   "rebasedSource": "92336d5fbbe3b30634023c1fa5c287f6ff7f8f64",
-  "rebaseEquivalence": "검증한 5964ee18 대비 기존 소유 파일 19개 Git blob이 모두 같습니다. 같은 main 위 검증 입력을 사용하므로 통과한 사례를 다시 실행하지 않았습니다."
+  "rebaseEquivalence": "검증한 5964ee18 대비 기존 소유 파일 19개 Git blob이 모두 같습니다. 같은 main 위 검증 입력을 사용하므로 통과한 사례를 다시 실행하지 않았습니다.",
+  "최초 결과 문서 캡처": {
+    "targetPublicCommit": "2765e33083e58e6fe34ea40e4e62b0752c325050",
+    "targetURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/2765e33083e58e6fe34ea40e4e62b0752c325050/docs/implementation/p1-13/evidence/first-verification.md",
+    "capturedAt": "2026-10-13T11:30:29.186Z",
+    "viewport": {
+      "width": 1140,
+      "height": 1500
+    },
+    "pngDimensions": {
+      "width": 1140,
+      "height": 2469
+    },
+    "pngSha256": "17c71c77da7528e034d0d8ac7ddd5d9ca2ae8ec46808f4f676bf304f0e1da889",
+    "captureCount": 1,
+    "testsRunForCapture": 0,
+    "설명": "실제 공개 결과 문서를 별도 Context에서 최초로 캡처했습니다. 제품 UI나 native iPhone 화면이 아닙니다."
+  }
 }
