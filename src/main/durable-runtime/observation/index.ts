@@ -8,3 +8,12 @@ export type {
 
 export { recordObservationLoss, requestObservationLoss } from './loss.ts'
 export type { RecordObservationLossRequest, RecordedObservationLoss } from './loss.ts'
+export { issueObservationChallenge } from './challenge.ts'
+export { acceptFreshObservation } from './recovery.ts'
+export { listDueObservationEpisodes } from './due.ts'
+export { reserveObservationFence } from './fence.ts'
+export { recordObservationFenceBlocked } from './blocked.ts'
+export type {
+  EpisodeMutationRequest, IssueObservationChallengeRequest, ReserveObservationFenceRequest,
+  ObservationFenceBlockedRequest
+} from './types.ts'

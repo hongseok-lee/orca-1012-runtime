@@ -88,3 +88,29 @@ export type PreparedRecoveryRequest = {
   // immediately before the accepting UPDATE. It is not a prepared proof factory.
   readonly assertCurrentPin: () => void
 }
+
+export type EpisodeMutationRequest = {
+  readonly authority: ObservationAuthority
+  readonly operationKey: string
+  readonly target: ObservationTarget
+  readonly episodeId: ObservationEpisodeId
+  readonly expectedEpisodeRevision: RowRevision<'observation-episode'>
+}
+export type IssueObservationChallengeRequest = EpisodeMutationRequest & {
+  readonly challengeId: string
+  readonly requestSourceRef: string
+  readonly expectedStream: ProducerStream | null
+  readonly expectedWatermark: Sequence<'observation'> | null
+  readonly supersedeChallengeId: string | null
+}
+export type ReserveObservationFenceRequest = EpisodeMutationRequest & {
+  readonly policy: {
+    readonly revisionRef: string
+    readonly operationDeadlineMs: number
+  }
+}
+export type ObservationFenceBlockedRequest = EpisodeMutationRequest & {
+  readonly fenceOperationId: import('../../../shared/durable-runtime/identity.ts').OperationId
+  readonly reason: string
+  readonly failureSourceRef: string
+}
