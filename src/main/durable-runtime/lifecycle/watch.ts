@@ -29,27 +29,38 @@ function mergeObjects(first: readonly ListedResource[], second: readonly ListedR
   }
   return [...inventory.values()]
 }
+function snapshotObjects(objects: readonly ListedResource[]): readonly ListedResource[] {
+  return Object.freeze(objects.map(object => Object.freeze({ ...object })))
+}
 
 /** A bounded recovery pass, not an activated controller loop. Its caller keeps
  * retries/deadlines in the existing operation. It never deletes unknown objects
  * or produces physical-stop proof from a successful empty LIST. */
 export async function recoverListWatch(transport: ListWatchTransport, sink?: ObservationSink): Promise<InventoryResult> {
   let listed
-  try { listed = await transport.list() } catch { return { status: 'UNVERIFIABLE', reason: 'LIST_FAILED' } }
+  try {
+    const received = await transport.list()
+    listed = Object.freeze({ resourceVersion: received.resourceVersion, objects: snapshotObjects(received.objects) })
+  } catch { return { status: 'UNVERIFIABLE', reason: 'LIST_FAILED' } }
   if (!listed.resourceVersion) { return { status: 'UNVERIFIABLE', reason: 'MISSING_RESOURCE_VERSION' } }
   try { await observeAll(listed.objects, 'LIST', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
   let watched
-  try { watched = await transport.watch(listed.resourceVersion) } catch { return { status: 'UNVERIFIABLE', reason: 'WATCH_FAILED' } }
+  try {
+    const received = await transport.watch(listed.resourceVersion)
+    watched = Object.freeze({ status: received.status, resourceVersion: received.resourceVersion, objects: snapshotObjects(received.objects) })
+  } catch { return { status: 'UNVERIFIABLE', reason: 'WATCH_FAILED' } }
   if (watched.status === 'EVENTS') {
     if (!watched.resourceVersion) { return { status: 'UNVERIFIABLE', reason: 'MISSING_RESOURCE_VERSION' } }
     try { await observeAll(watched.objects, 'WATCH', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
     return { status: 'OBSERVED', resourceVersion: watched.resourceVersion, objects: mergeObjects(listed.objects, watched.objects), relisted: false }
   }
   try {
-    const fresh = await transport.list()
+    const received = await transport.list()
+    const fresh = Object.freeze({ resourceVersion: received.resourceVersion, objects: snapshotObjects(received.objects) })
     if (!fresh.resourceVersion) { return { status: 'UNVERIFIABLE', reason: 'MISSING_RESOURCE_VERSION' } }
     try { await observeAll(fresh.objects, 'LIST', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
-    const recovery = await transport.watch(fresh.resourceVersion)
+    const response = await transport.watch(fresh.resourceVersion)
+    const recovery = Object.freeze({ status: response.status, resourceVersion: response.resourceVersion, objects: snapshotObjects(response.objects) })
     if (recovery.status !== 'EVENTS' || !recovery.resourceVersion) {
       return { status: 'UNVERIFIABLE', reason: 'WATCH_FAILED' }
     }
@@ -60,12 +71,16 @@ export async function recoverListWatch(transport: ListWatchTransport, sink?: Obs
 
 /** Uses the persisted original name after ACK loss; no CREATE/retry/new-name
  * call exists here. UID/name alone never authorizes adopting a conflicting spec. */
-export async function resolveCreateObservation(transport: ListWatchTransport, expected: ResourceIdentity): Promise<{
+export async function resolveCreateObservation(transport: ListWatchTransport, caller: ResourceIdentity): Promise<{
   readonly disposition: 'MATCHED_UNVERIFIED' | 'UNKNOWN' | 'ABSENT_UNVERIFIED' | 'CONFLICT_BLOCKED'
   readonly object: ListedResource | null
 }> {
+  const expected = Object.freeze({ ...caller })
   let object
-  try { object = await transport.get(expected.namespace, expected.name) } catch { return { disposition: 'UNKNOWN', object: null } }
+  try {
+    const received = await transport.get(expected.namespace, expected.name)
+    object = received === null ? null : Object.freeze({ ...received })
+  } catch { return { disposition: 'UNKNOWN', object: null } }
   if (object === null) { return { disposition: 'ABSENT_UNVERIFIED', object: null } }
   const same = object.namespace === expected.namespace && object.name === expected.name &&
     (expected.uid === null || object.uid === expected.uid) && object.operationId === expected.operationId &&

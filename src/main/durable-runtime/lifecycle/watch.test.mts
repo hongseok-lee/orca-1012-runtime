@@ -65,3 +65,17 @@ test('LIST failure and observation persistence failure stay unverifiable, not em
   assert.deepEqual(await recoverListWatch(readable, async () => { throw new Error('fixture persistence failure') }),
     { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' })
 })
+
+test('create result lookup keeps the original expected tuple despite caller mutation during GET', async () => {
+  const expected = { ...object }
+  const transport: ListWatchTransport = {
+    async list() { return { resourceVersion: 'rv', objects: [] } },
+    async watch() { return { status: 'EVENTS', resourceVersion: 'rv2', objects: [] } },
+    async get(namespace, name) {
+      assert.equal(namespace, object.namespace); assert.equal(name, object.name)
+      expected.name = 'changed-during-await'; expected.specHash = 'changed-spec'
+      return object
+    }
+  }
+  assert.equal((await resolveCreateObservation(transport, expected)).disposition, 'MATCHED_UNVERIFIED')
+})
