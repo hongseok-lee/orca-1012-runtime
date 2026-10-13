@@ -5,7 +5,7 @@ import { appendAudit, appendSessionEvent, enqueueOutbox } from '../journal/store
 import { counter, logicalId, type SessionId, type RuntimeUnitId, type AttemptId,
   type OperationId, type StorageBindingId, type ExecutionEpoch, type StorageEpoch,
   type RowRevision } from '../../../shared/durable-runtime/identity.ts';
-import { sameDirectory, StorageError, type CanonicalCandidate } from './canonical.ts';
+import { sameDirectory, type CanonicalCandidate } from './canonical.ts';
 import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence, ExecutionTarget } from './evidence.ts';
 
 type State = 'RESERVED' | 'ACTIVE' | 'REVOKING' | 'REVOKED';
@@ -57,9 +57,13 @@ export class StorageStore {
     bindingId: StorageBindingId; directoryEvidenceRef: string;
   }): Promise<Binding> {
     trustedReference(input.directoryEvidenceRef);
-    const evidence = await this.authority.directory(input.directoryEvidenceRef);
+    let evidence;
+    try { evidence = await this.authority.directory(input.directoryEvidenceRef); }
+    catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
     if (!evidence || evidence.evidenceRef !== input.directoryEvidenceRef) deny('STORAGE_DIRECTORY_UNVERIFIED');
-    const fresh = await this.authority.revalidateDirectory(evidence);
+    let fresh;
+    try { fresh = await this.authority.revalidateDirectory(evidence); }
+    catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
     if (!fresh || !sameDirectory(evidence.candidate, fresh.candidate)) deny('STORAGE_DIRECTORY_CHANGED');
     const c = fresh.candidate;
     await lockAggregates(tx, { sessionIds: [input.sessionId], runtimeUnitIds: [input.unitId] });
@@ -68,7 +72,9 @@ export class StorageStore {
     await lockAggregates(tx, { storageDomains: [{ backendId: c.domain.backendId, exportId: c.domain.exportId }] });
     // Revalidate after all locks too. The authority must hold a topology/path
     // immutability boundary until commit; this module cannot lock arbitrary NFS.
-    const held = await this.authority.revalidateDirectory(fresh);
+    let held;
+    try { held = await this.authority.revalidateDirectory(fresh); }
+    catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
     if (!held || !sameDirectory(c, held.candidate)) deny('STORAGE_DIRECTORY_CHANGED');
     const row = await tx.query<Binding>(`INSERT INTO durable_runtime.storage_bindings
       (id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
@@ -123,7 +129,7 @@ export class StorageStore {
     await this.event(tx, target, binding.rows[0], 'STORAGE_BLOCKED', { reason });
     return { status: 'BLOCKED', reason, bindingRevision: binding.rows[0].revision, unitRevision: unit.rows[0].revision };
   }
-  private async directory(tx: DurableTransaction, target: StorageTarget, b: Binding): Promise<VerifiedDirectoryEvidence | null> {
+  private async directory(b: Binding): Promise<VerifiedDirectoryEvidence | null> {
     if (!b.identity_proof_ref) return null;
     try {
       const held = await this.authority.directory(b.identity_proof_ref);
@@ -141,7 +147,7 @@ export class StorageStore {
   async reserveWriter(tx: DurableTransaction, target: StorageTarget & { grantId: string }): Promise<StorageResult<WriterGrant>> {
     const { binding: b } = await this.lock(tx, target);
     await this.currentExecution(tx, target, false);
-    if (!(await this.directory(tx, target, b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
+    if (!(await this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
     const conflict = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
       JOIN durable_runtime.storage_bindings b ON b.id=g.storage_binding_id
       WHERE g.state IN ('RESERVED','ACTIVE','REVOKING') AND b.backend_id=$1 AND b.export_id=$2
@@ -157,7 +163,7 @@ export class StorageStore {
   }
   async registerReadOnlyMount(tx: DurableTransaction, target: StorageTarget & { mountId: string }): Promise<StorageResult<string>> {
     const { binding: b } = await this.lock(tx, target);
-    if (!(await this.directory(tx, target, b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
+    if (!(await this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
     await tx.query(`INSERT INTO durable_runtime.storage_mounts(id,storage_binding_id,attempt_id,pod_uid,mode,desired_state,observed_state,grant_epoch)
       VALUES($1,$2,$3,$4,'RO','ACTIVE','RESERVED',$5)`, [target.mountId, b.id, target.attemptId, target.podUid, b.epoch]);
     const updated = await this.revise(tx, b, b.access_state, b.writer_attempt_id);
@@ -181,13 +187,18 @@ export class StorageStore {
   }): Promise<StorageResult<string>> {
     const { binding: b, incarnation } = await this.lock(tx, target);
     if (target.writer) await this.currentExecution(tx, target, true);
-    const directory = await this.directory(tx, target, b);
-    let observation;
-    try { observation = await this.authority.mount(target.mountEvidenceRef); } catch { observation = null; }
+    const directory = await this.directory(b);
+    let observation, expected;
+    try {
+      observation = await this.authority.mount(target.mountEvidenceRef);
+      expected = await this.authority.executionTarget(target.attemptId, target.podUid, incarnation, target.executionEpoch);
+    } catch { observation = null; expected = null; }
     const mode = target.writer ? 'RW' : 'RO';
-    if (!directory || !observation || observation.evidenceRef !== target.mountEvidenceRef ||
+    if (!directory || !observation || !expected || observation.evidenceRef !== target.mountEvidenceRef ||
         !sameDirectory(directory.candidate, observation.directory) || observation.mode !== mode ||
-        !this.targetMatches(observation.target, target, incarnation) || observation.actualReadOnly !== (mode === 'RO'))
+        !this.targetMatches(observation.target, target, incarnation) ||
+        observation.target.nodeUid !== expected.nodeUid || observation.target.computeIdentityRef !== expected.computeIdentityRef ||
+        observation.target.numericInstanceId !== expected.numericInstanceId || observation.actualReadOnly !== (mode === 'RO'))
       return this.blocked(tx, target, b, 'MOUNT_UNVERIFIED');
     if (target.writer) {
       await this.grant(tx, target, target.writer.grantId, target.writer.expectedRevision, 'RESERVED');
