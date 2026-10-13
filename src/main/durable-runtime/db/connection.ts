@@ -35,6 +35,12 @@ export function createDurablePool(
       },
     },
   });
+  // Active clients can emit a transport error while no query is in flight.
+  // Attach a sanitized listener before checkout; queries still reject and a
+  // failed rollback/uncertain COMMIT destroys the connection.
+  pool.on("connect", (client) =>
+    client.on("error", (error) => onError?.(safeDatabaseError(error))),
+  );
   pool.on("error", (error) => onError?.(safeDatabaseError(error)));
   return pool;
 }
@@ -44,6 +50,7 @@ export class DurableTransaction {
   private active = true;
   private lockRank = 0;
   private lastKey = "";
+  private readonly heldLocks = new Map<number, Set<string>>();
 
   constructor(client: PoolClient) {
     this.client = client;
@@ -63,7 +70,21 @@ export class DurableTransaction {
     }
   }
 
+  isLockHeld(rank: number, key: string): boolean {
+    if (!this.active) throw new DurableDatabaseError("TX_CLOSED");
+    return this.heldLocks.get(rank)?.has(key) ?? false;
+  }
+
+  // The lock helper calls this only after SQL succeeded and found its row.
+  markLockAcquired(rank: number, key: string): void {
+    if (!this.active) throw new DurableDatabaseError("TX_CLOSED");
+    const keys = this.heldLocks.get(rank) ?? new Set<string>();
+    keys.add(key);
+    this.heldLocks.set(rank, keys);
+  }
+
   advanceLock(rank: number, key: string): void {
+    if (this.isLockHeld(rank, key)) return;
     if (rank < this.lockRank || (rank === this.lockRank && key < this.lastKey)) {
       throw new DurableDatabaseError("LOCK_ORDER");
     }

@@ -1,5 +1,5 @@
 import { performance } from "node:perf_hooks";
-import type { Pool, PoolClient } from "pg";
+import type { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
 import { DurableTransaction, DurableDatabaseError, safeDatabaseError } from "./connection.ts";
 import { lockAggregates, type AggregateLocks } from "./locks.ts";
 
@@ -102,6 +102,75 @@ export async function resolveReceipt(
   }
 }
 
+// Business callbacks may issue SQL data operations, not hidden transaction
+// control or multi-statement batches. Existing DurableTransaction is unchanged.
+function guardBusinessSql(sql: string): void {
+  let clean = "",
+    index = 0;
+  while (index < sql.length) {
+    const tail = sql.slice(index);
+    if (tail.startsWith("--")) {
+      const end = sql.indexOf("\n", index + 2);
+      index = end < 0 ? sql.length : end + 1;
+    } else if (tail.startsWith("/*")) {
+      let depth = 1;
+      index += 2;
+      while (index < sql.length && depth) {
+        if (sql.startsWith("/*", index)) {
+          depth++;
+          index += 2;
+        } else if (sql.startsWith("*/", index)) {
+          depth--;
+          index += 2;
+        } else index++;
+      }
+      if (depth) throw new DurableDatabaseError("MUTATION_SQL_BOUNDARY");
+    } else if (sql[index] === "'" || sql[index] === '"') {
+      const quote = sql[index++];
+      clean += " x ";
+      while (index < sql.length) {
+        if (sql[index++] === quote) {
+          if (sql[index] === quote) index++;
+          else break;
+        }
+      }
+    } else {
+      const dollar = tail.match(/^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/)?.[0];
+      if (dollar) {
+        const end = sql.indexOf(dollar, index + dollar.length);
+        if (end < 0) throw new DurableDatabaseError("MUTATION_SQL_BOUNDARY");
+        clean += " x ";
+        index = end + dollar.length;
+      } else {
+        clean += sql[index++];
+      }
+    }
+  }
+  const statements = clean.split(";").filter((statement) => statement.trim());
+  if (
+    statements.length !== 1 ||
+    /^\s*(?:BEGIN|START|COMMIT|END|ROLLBACK|ABORT|PREPARE|SAVEPOINT|RELEASE|SET|RESET)\b/i.test(
+      statements[0],
+    )
+  ) {
+    throw new DurableDatabaseError("MUTATION_SQL_BOUNDARY");
+  }
+}
+class MutationTransaction extends DurableTransaction {
+  private readonly inBusiness: () => boolean;
+  constructor(client: PoolClient, inBusiness: () => boolean) {
+    super(client);
+    this.inBusiness = inBusiness;
+  }
+  override query<Row extends QueryResultRow = QueryResultRow>(
+    sql: string,
+    values: readonly unknown[] = [],
+  ): Promise<QueryResult<Row>> {
+    if (this.inBusiness()) guardBusinessSql(sql);
+    return super.query<Row>(sql, values);
+  }
+}
+
 export async function runDurableMutation(
   pool: Pool,
   request: ReceiptIdentity & { locks: AggregateLocks; intakeAt?: Date },
@@ -115,7 +184,8 @@ export async function runDurableMutation(
   } catch (error) {
     throw safeDatabaseError(error);
   }
-  const tx = new DurableTransaction(client);
+  let businessPhase = false;
+  const tx = new MutationTransaction(client, () => businessPhase);
   let committing = false,
     destroy = false,
     released = false;
@@ -128,7 +198,13 @@ export async function runDurableMutation(
     }
     const replayed = !!receipt;
     if (!receipt) {
-      const response = await body(tx);
+      let response: JsonValue;
+      businessPhase = true;
+      try {
+        response = await body(tx);
+      } finally {
+        businessPhase = false;
+      }
       const stored = await tx.query<{ committed_at: Date; intake_at: Date | null }>(
         "INSERT INTO durable_runtime.rpc_receipts(principal_id,session_scope,method,operation_key,payload_hash,response,intake_at) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING committed_at,intake_at",
         [
