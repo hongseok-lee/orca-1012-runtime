@@ -27,8 +27,13 @@ export async function claimInputEffectInTransaction(
 ) {
   scope = { ...scope, scope: { ...scope.scope } }
   context = { ...context, controller: { ...context.controller } }
-  original = Object.freeze({ ...original, originalEnvelope: snapshotInputEnvelope(original.originalEnvelope) })
-  if (!/^[a-f0-9]{64}$/.test(original.inputHash)) throw new InputStoreError('INPUT_COMMAND_PAYLOAD')
+  original = Object.freeze({
+    ...original,
+    originalEnvelope: snapshotInputEnvelope(original.originalEnvelope)
+  })
+  if (!/^[a-f0-9]{64}$/.test(original.inputHash)) {
+    throw new InputStoreError('INPUT_COMMAND_PAYLOAD')
+  }
   if (
     original.command !== 'dispatchInput' ||
     original.originalEnvelope.podTarget !== 'EXISTING_POD'
