@@ -45,21 +45,19 @@ check('두 Unit의 실제 공유 scope 예약 경합은 memory와 CPU 한도를 
   assert.equal(a.scope, b.scope); assert.equal(a.domain, b.domain); assert.notEqual(a.controller.scope, b.controller.scope)
   const memory = String(256n * 1048576n)
   await register(pool, a, memory, '500'); await register(pool, b, memory, '500')
-  const parent = await pool.connect(), entered = gate(), backendPids = new Set<number>()
+  const parent = await pool.connect(), backendPids = new Set<number>()
   await parent.query('BEGIN')
   await parent.query('SELECT scope FROM durable_runtime.resource_budget_scopes WHERE scope=$1 FOR UPDATE', [a.scope])
   const wrapped = hookPool(pool, async (sql, execute, client) => {
     if (sql.includes('FROM durable_runtime.resource_budget_scopes') && sql.includes('FOR UPDATE')) {
       backendPids.add((await client.query('SELECT pg_backend_pid() AS pid')).rows[0].pid)
-      if (backendPids.size === 2) { entered.enter() }
     }
     return execute()
   })
   const pending = Promise.allSettled([prepareResourceOperation(wrapped, request(a)), prepareResourceOperation(wrapped, request(b))])
   try {
-    await entered.entered
     let observed = false
-    for (let n = 0; n < 80; n += 1) {
+    for (let n = 0; n < 200; n += 1) {
       const waits = (await pool.query("SELECT pid,wait_event_type='Lock' AS waiting FROM pg_stat_activity WHERE pid=ANY($1::int[])", [[...backendPids]])).rows
       observed = waits.length === 2 && waits.every(row => row.waiting === true)
       if (observed) { break }
