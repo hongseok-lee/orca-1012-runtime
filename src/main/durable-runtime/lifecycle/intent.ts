@@ -3,11 +3,12 @@ import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { SessionId } from '../../../shared/durable-runtime/identity.ts'
 import { runDurableMutation } from '../db/atomic.ts'
-import { inputPayloadHash } from '../input/canonical.ts'
-import { snapshotIntentRequest } from './request.ts'
 import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts'
 import type { RuntimeUnitRow } from '../db/rows.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
+import { lockAggregates } from '../db/locks.ts'
+import { inputPayloadHash } from '../input/canonical.ts'
+import { snapshotIntentRequest } from './request.ts'
 import { discoverUnitMembers, lockUnitMembers } from './locks.ts'
 import type { IntentRecorded, IntentMutation, LifecycleOperation, UnitIntentRequest } from './types.ts'
 
@@ -34,16 +35,19 @@ export async function initializeLifecycleScope(tx: DurableTransaction): Promise<
     VALUES($1,'unowned',0,'epoch') ON CONFLICT(scope) DO NOTHING`, [LIFECYCLE_CONTROLLER_SCOPE])
 }
 
-async function chooseOperation(
-  tx: DurableTransaction, unit: RuntimeUnitRow, request: UnitIntentRequest
+export async function ensureIntentOperation(
+  tx: DurableTransaction, unit: RuntimeUnitRow, policy: UnitIntentRequest['policy']
 ): Promise<{ operation: LifecycleOperation; blocked: boolean }> {
+  if (!tx.isLockHeld(2, unit.id)) {
+    throw new DurableDatabaseError('LIFECYCLE_UNIT_LOCK_REQUIRED')
+  }
   const blocker = await tx.query<LifecycleOperation>(`SELECT o.* FROM durable_runtime.runtime_commands c
     JOIN durable_runtime.operations o ON o.id=c.operation_id AND o.runtime_unit_id=c.runtime_unit_id
     WHERE c.runtime_unit_id=$1 AND c.state IN ('ACCEPTED','EXECUTING','UNKNOWN')`, [unit.id])
   if (blocker.rows[0]) {
     return { operation: blocker.rows[0], blocked: true }
   }
-  const kind = request.desired === 'RUNNING' ? 'WAKE' : 'DELETE'
+  const kind = unit.desired_mode === 'RUNNING' ? 'WAKE' : unit.desired_mode === 'SUSPENDED' ? 'SLEEP' : 'DELETE'
   const existing = await tx.query<LifecycleOperation>(`SELECT * FROM durable_runtime.operations
     WHERE runtime_unit_id=$1 AND intent_revision=$2 AND kind=$3 AND result IS NULL ORDER BY id`,
     [unit.id, unit.intent_revision, kind])
@@ -69,7 +73,7 @@ async function chooseOperation(
     FROM durable_runtime.runtime_units u JOIN durable_runtime.controller_leases c ON c.scope=$6
     LEFT JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id
     WHERE u.id=$2 RETURNING *`,
-    [operationId, unit.id, kind, `orca-unit-${operationId}`, request.policy.operationDeadlineMs, LIFECYCLE_CONTROLLER_SCOPE])
+    [operationId, unit.id, kind, `orca-unit-${operationId}`, policy.operationDeadlineMs, LIFECYCLE_CONTROLLER_SCOPE])
   return { operation: inserted.rows[0], blocked: false }
 }
 
@@ -106,7 +110,15 @@ export async function recordUnitIntent(
     throw new DurableDatabaseError('LIFECYCLE_STALE_REVISION')
   }
   const unit = updated.rows[0]
-  const selected = await chooseOperation(tx, unit, request)
+  const obsolete = await tx.query<{ id: string }>(`SELECT o.id FROM durable_runtime.operations o
+    WHERE o.runtime_unit_id=$1 AND o.intent_revision<>$2 AND o.result IS NULL AND o.step='INTENT_QUEUED'
+    AND NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c WHERE c.operation_id=o.id) ORDER BY o.id`,
+    [unit.id, unit.intent_revision])
+  await lockAggregates(tx, { operationIds: obsolete.rows.map(row => logicalId('operation', row.id)) })
+  await tx.query(`UPDATE durable_runtime.operations SET step='CANCELLED',step_revision=step_revision+1,
+    revision=revision+1,result='{"state":"SUPERSEDED_BEFORE_ACCEPTANCE"}'::jsonb WHERE id=ANY($1::uuid[])`,
+    [obsolete.rows.map(row => row.id)])
+  const selected = await ensureIntentOperation(tx, unit, request.policy)
   const result: IntentRecorded = {
     runtimeUnitId: id, desired: unit.desired_mode, intentRevision: unit.intent_revision,
     revision: unit.revision, operationId: selected.operation.id, sharedIntent: shared,
