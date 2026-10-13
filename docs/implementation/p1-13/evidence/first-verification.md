@@ -62,6 +62,6 @@ Raw STOPPED는 원 이력에만 기록하며 UNKNOWN sleep 차단을 풀지 않�
 
 ![P113 최초 client 검증 결과 캡처](p1-13-first-verification.png)
 
-Root는 고정 공개 commit `2765e33083e58e6fe34ea40e4e62b0752c325050`의 이 문서를 client가 2026-10-13 11:30:09.377 UTC에 처음 캡처한 PNG를 정식 증거로 확정했습니다. Viewport는 1140 × 1500이며 PNG SHA-256은 `f3015696e04864f3fd92bd71b9359c31498eeacb786334d3e4a012c2fb0fdaf7`입니다. [원 client provenance](capture-provenance.json)를 같은 PNG와 함께 byte 변경 없이 연결했습니다.
+Root는 고정 공개 commit `2765e33083e58e6fe34ea40e4e62b0752c325050`의 이 문서를 client가 2026-10-13 11:30:09.377 UTC에 처음 캡처한 PNG를 정식 증거로 확정했습니다. 실제 PNG는 1140 × 1500 viewport capture입니다. 표의 아래 부분은 화면 아래로 잘려 있으며 full-page 캡처로 표시하지 않습니다. 전체 사례와 원 실패·교정 관계는 이 문서와 선별 JSON에서 읽습니다. PNG SHA-256은 `f3015696e04864f3fd92bd71b9359c31498eeacb786334d3e4a012c2fb0fdaf7`입니다. [원 client provenance](capture-provenance.json)를 같은 PNG와 함께 byte 변경 없이 연결했습니다.
 
 촬영은 총 2회 발생했으며 정식 증거는 1회입니다. Backend가 11:30:29.186 UTC에 추가 촬영한 `17c71c77da7528e034d0d8ac7ddd5d9ca2ae8ec46808f4f676bf304f0e1da889` 이미지와 그 provenance는 private 원본으로 보존합니다. 추가 촬영본을 게시했던 commit `4cbc76cd412e5a6b82bfa6632fd0f0e098d70a1f` 이력은 숨기거나 rewrite/delete하지 않습니다. 이후 asset 교체로 최초 client 묶음을 최종 정식 증거로 연결했습니다. 두 촬영은 같은 보고 문서 대상이며 추가 촬영은 새 검증이 아닙니다. 제품·시험·촬영은 더 수행하지 않았습니다.

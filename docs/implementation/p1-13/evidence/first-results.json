@@ -297,7 +297,10 @@
     "pngSha256": "f3015696e04864f3fd92bd71b9359c31498eeacb786334d3e4a012c2fb0fdaf7",
     "정식 증거 수": 1,
     "testsRunForCapture": 0,
-    "설명": "Root가 최초 client PNG와 원 provenance 동일 묶음을 정식 증거로 확정했습니다."
+    "설명": "Root가 최초 client PNG와 원 provenance 동일 묶음을 정식 증거로 확정했습니다.",
+    "captureType": "viewport capture",
+    "fullPage": false,
+    "화면 한계": "실제 파일은 1140 × 1500이며 표의 아래 부분은 화면 아래로 잘립니다. 전체 표를 촬영한 것으로 표시하지 않으며 재촬영하지 않았습니다."
   },
   "중복 촬영 처리": {
     "촬영 횟수": 2,
