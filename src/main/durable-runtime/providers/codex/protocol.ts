@@ -47,6 +47,11 @@ type RequestState = {
   notified: Promise<CodexNativeReceipt>
   baseline?: unknown
 }
+/** Exact params serialized by the existing app-server request transport. */
+export function codexTurnStartParams(threadId: string, input: RequestState['input']): Record<string, unknown> {
+  if (Object.keys(input.options).some((key) => !TURN_OPTIONS.has(key))) throw new Error('CODEX_UNSUPPORTED_OPTION')
+  return { threadId, clientUserMessageId: input.clientMessageId, input: input.input, ...input.options }
+}
 export type CodexProtocolResult =
   | Readonly<{ effect: 'ADMITTED'; receipt: CodexNativeReceipt }>
   | Readonly<{ effect: 'UNKNOWN'; reason: 'RESPONSE_LOST' | 'TURN_UNNAMED' | 'CONNECTION_CLOSED' }>
@@ -73,6 +78,8 @@ export class CodexProtocolSession {
   #byTurn = new Map<string, RequestState>()
   #terminals = new Map<string, CodexProtocolEvent>()
   #pending: string | null = null
+  #latestRequest: RequestState | null = null
+  #interrupting = false
 
   constructor(private readonly dependencies: CodexProtocolDependencies) {}
 
@@ -120,29 +127,27 @@ export class CodexProtocolSession {
   async dispatch(input: RequestState['input']): Promise<CodexProtocolResult> {
     if (!this.#connection || !this.#threadId || this.closed) return Object.freeze({ effect: 'UNKNOWN', reason: 'CONNECTION_CLOSED' })
     const snapshot = structuredClone(input)
-    if (Object.keys(snapshot.options).some((key) => !TURN_OPTIONS.has(key))) throw new Error('CODEX_UNSUPPORTED_OPTION')
-    const submission = JSON.stringify(snapshot)
+    const params = codexTurnStartParams(this.#threadId, snapshot)
+    const submission = JSON.stringify(params)
     const existing = this.#requests.get(input.clientMessageId)
     if (existing) {
       if (existing.submission !== submission) throw new Error('CODEX_SUBMISSION_ID_CONFLICT')
       return existing.receipt ? Object.freeze({ effect: 'ADMITTED', receipt: existing.receipt }) : Object.freeze({ effect: 'UNKNOWN', reason: 'RESPONSE_LOST' })
     }
-    if (this.#pending !== null) throw new Error('CODEX_DISPATCH_IN_FLIGHT')
+    if (this.#pending !== null || this.#interrupting) throw new Error('CODEX_DISPATCH_IN_FLIGHT')
     let notify!: RequestState['notify']
     const notified = new Promise<CodexNativeReceipt>((resolve) => { notify = resolve })
     const state: RequestState = { input: snapshot, submission, notify, notified }
     // Record the invocation before its first await. Reconciliation cannot issue another turn/start.
     this.#requests.set(input.clientMessageId, state)
+    this.#latestRequest = state
     this.#pending = input.clientMessageId
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
       if (this.#connection.pid !== undefined && this.dependencies.capture) {
         state.baseline = await this.dependencies.capture(this.#connection.pid)
       }
-      const reply = await this.#connection.request('turn/start', {
-        threadId: this.#threadId, clientUserMessageId: snapshot.clientMessageId,
-        input: snapshot.input, ...snapshot.options
-      }, { timeoutMs: this.dependencies.requestTimeoutMs })
+      const reply = await this.#connection.request('turn/start', params, { timeoutMs: this.dependencies.requestTimeoutMs })
       const reportedThread = threadIdOf(reply)
       const turnId = turnIdOf(reply)
       if (turnId && (reportedThread === null || reportedThread === this.#threadId)) {
@@ -169,17 +174,26 @@ export class CodexProtocolSession {
       return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
     }
     const state = this.#byTurn.get(receipt.turnId)
-    if (!state) return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
+    // A baseline cannot attribute later descendants to an older turn. Never use
+    // an older baseline after another dispatch, or while another effect runs.
+    if (!state || state !== this.#latestRequest || this.#pending !== null || this.#interrupting) {
+      return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
+    }
     const terminal = this.#terminals.get(receipt.turnId)
     if (terminal) return Object.freeze({ requested: false, terminal, descendantsStopped: false, acknowledged: false })
-    const acknowledged = this.#connection.request('turn/interrupt', {
-      threadId: receipt.threadId, turnId: receipt.turnId
-    }, { timeoutMs: this.dependencies.requestTimeoutMs }).then(() => true, () => false)
-    const stopped = this.#connection.pid !== undefined && state.baseline !== undefined && this.dependencies.terminate
-      ? this.dependencies.terminate(this.#connection.pid, state.baseline).catch(() => false)
-      : Promise.resolve(false)
-    const [ack, descendantsStopped] = await Promise.all([acknowledged, stopped])
-    return Object.freeze({ requested: true, terminal: this.#terminals.get(receipt.turnId) ?? null, descendantsStopped, acknowledged: ack })
+    this.#interrupting = true
+    try {
+      const acknowledged = this.#connection.request('turn/interrupt', {
+        threadId: receipt.threadId, turnId: receipt.turnId
+      }, { timeoutMs: this.dependencies.requestTimeoutMs }).then(() => true, () => false)
+      const stopped = this.#connection.pid !== undefined && state.baseline !== undefined && this.dependencies.terminate
+        ? this.dependencies.terminate(this.#connection.pid, state.baseline).catch(() => false)
+        : Promise.resolve(false)
+      const [ack, descendantsStopped] = await Promise.all([acknowledged, stopped])
+      return Object.freeze({ requested: true, terminal: this.#terminals.get(receipt.turnId) ?? null, descendantsStopped, acknowledged: ack })
+    } finally {
+      this.#interrupting = false
+    }
   }
 
   async close(): Promise<boolean> {
