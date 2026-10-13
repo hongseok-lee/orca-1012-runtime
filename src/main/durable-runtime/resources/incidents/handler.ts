@@ -24,7 +24,9 @@ function snapshotEvent(event: EventRecord): EventRecord {
     attemptId: logicalId('attempt', event.attemptId), podUid: event.podUid,
     executionEpoch: counter('execution-epoch', event.executionEpoch), payload,
     targetSessionIds: Object.freeze(event.targetSessionIds.map(id => logicalId('session', id))),
-    attemptCount: event.attemptCount })
+    // P112's original record converts the BIGINT driver string to Number.
+    // Use that same representation for the immutable PG re-read comparison.
+    attemptCount: Number(event.attemptCount) })
 }
 
 /** Adapter for P112's original PG EventRecord, not a caller's EventClaim.
