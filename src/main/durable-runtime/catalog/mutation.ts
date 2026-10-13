@@ -11,6 +11,7 @@ import { captureCatalogAuthority } from './authority.ts'
 import { discoverCatalogMembership, inspectCatalogMembership, lockCatalogMembership, type CatalogMembership } from './membership.ts'
 import { resolveCatalogWorkspace, withCatalogReadSnapshot, type CatalogWorkspace } from './read.ts'
 import { advanceCatalogProjection, lockCatalogMetadata } from './heads.ts'
+import { deriveCatalogAggregateAnchor } from './aggregate-anchor.ts'
 import { CatalogError } from './errors.ts'
 
 /** Resolver-owned internal scope, independent of selector spelling and lifecycle. */
@@ -73,6 +74,11 @@ export async function publishCatalogMutation(
   await appendAudit(tx, { actorId: call.context.authority.principalId, kind,
     previousState: null, nextState: detail, occurredAt: now, receivedAt: now,
     producerId: eventId, producerSeq: counter('sequence:producer', head.revision), evidenceRefs: [] })
-  await enqueueOutbox(tx, { eventId, aggregateId: workspaceId ?? head.dataset_id, aggregateKind: 'catalog',
-    revision: counter('row:catalog-head', head.revision), event: { kind, detail } })
+  const globalAnchor = workspaceId === null ? deriveCatalogAggregateAnchor(head) : null
+  const aggregateId = globalAnchor === null ? workspaceId! : globalAnchor.aggregateId
+  const event: JsonValue = globalAnchor === null ? { kind, detail } : {
+    kind, detail, metadata: { catalogAggregateSource: [...globalAnchor.sourceTuple] }
+  }
+  await enqueueOutbox(tx, { eventId, aggregateId, aggregateKind: 'catalog',
+    revision: counter('row:catalog-head', head.revision), event })
 }
