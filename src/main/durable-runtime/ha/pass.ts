@@ -12,7 +12,6 @@ import { listDueReconciliations } from '../lifecycle/due.ts'
 import { prepareReconcileStep, type ReconcileStepRequest } from '../lifecycle/controller.ts'
 import { recoverListWatch, type ListWatchTransport, type ObservationSink } from '../lifecycle/watch.ts'
 import { positiveInteger } from './instance.ts'
-import { assertLiveControllerLease, readControllerTakeoverSnapshot } from './takeover.ts'
 import type { TakeoverCommand, TakeoverOperation, TakeoverQueueHead, TakeoverUnit } from './takeover.ts'
 import type { ControllerLeaseSession } from './session.ts'
 
@@ -41,6 +40,16 @@ export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVEN
 export type ControllerPassResult = { readonly status: 'FINISHED' | 'STOPPED'; readonly reason: string;
   readonly items: readonly ControllerPassItem[] }
 
+function snapshotInventory(caller: ControllerPassRequest['inventory']): ControllerPassRequest['inventory'] {
+  if (!caller) return undefined
+  const transport = caller.transport
+  // Method references and their original receivers are fixed now. The actual
+  // AbortSignal is still supplied at invocation; transport state is not frozen.
+  return Object.freeze({ sink: caller.sink.bind(caller), transport: Object.freeze({
+    list: transport.list.bind(transport), watch: transport.watch.bind(transport), get: transport.get.bind(transport)
+  }) })
+}
+
 /** One finite invocation. Caller owns wakeups/renewals, connection/query
  * timeouts, authenticated controller identity and actual external transports.
  * This module creates none of those boundaries or a background loop. */
@@ -48,7 +57,10 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   caller: ControllerPassRequest): Promise<ControllerPassResult> {
   // Seal mutable caller policy and callbacks before the first await. Identity
   // keeps its existing private verification brand; we never fabricate it.
-  const request = Object.freeze({ ...caller, controller: Object.freeze({ ...caller.controller }) })
+  const request = Object.freeze({ controller: Object.freeze({ ...caller.controller }),
+    maximumWork: caller.maximumWork, externalBudgetMs: caller.externalBudgetMs, signal: caller.signal,
+    planStep: caller.planStep, eventWork: caller.eventWork, executeCommitted: caller.executeCommitted,
+    lookupOriginal: caller.lookupOriginal, inventory: snapshotInventory(caller.inventory) })
   positiveInteger(request.maximumWork)
   positiveInteger(request.externalBudgetMs)
   counter('controller-term', request.controller.term)
@@ -70,11 +82,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
 
   async function gate(): Promise<void> {
     if (local.signal.aborted) throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')
-    const lease = session.lease
-    if (!lease || lease.scope !== startingLease!.scope || lease.owner !== startingLease!.owner ||
-        lease.term !== startingLease!.term) throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')
-    await assertLiveControllerLease(pool, lease)
-    if (local.signal.aborted || !session.lease) throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')
+    await session.assertCurrent(pool, startingLease!, local.signal)
   }
 
   async function external<T>(invoke: (signal: AbortSignal) => Promise<T>): Promise<T> {
@@ -114,7 +122,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   function room(): boolean { return work < request.maximumWork && performance.now() < end }
   try {
     await gate()
-    const snapshot = await readControllerTakeoverSnapshot(pool, startingLease)
+    const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     // listDueReconciliations retains its original PG deadline predicate/order.
     const due = await listDueReconciliations(pool)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))

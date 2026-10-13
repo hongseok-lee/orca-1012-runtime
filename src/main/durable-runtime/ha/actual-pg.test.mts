@@ -17,7 +17,8 @@ import { CONTROLLER_SCOPE, ControllerInstance } from './instance.ts'
 import { tryAcquireControllerLease, renewControllerLease, releaseControllerLease } from './lease.ts'
 import { ControllerLeaseSession } from './session.ts'
 import { readControllerTakeoverSnapshot } from './takeover.ts'
-import { runControllerPass } from './pass.ts'
+import { runControllerPass, type AbortableInventoryTransport, type ControllerPassRequest } from './pass.ts'
+import type { ObservationSink } from '../lifecycle/watch.ts'
 
 // Hard failure rather than skip/PASS without a real owned verification DB.
 assert.match(process.env.PGDATABASE ?? '', /^orca_p114_[a-z0-9_]+$/)
@@ -44,7 +45,7 @@ after(async () => {
     if (process.env.P114_EVIDENCE) await writeFile(process.env.P114_EVIDENCE, JSON.stringify({
       recordedAt: new Date().toISOString(), scope: 'ACTUAL_PG_CONTROLLER_LEASE_AND_ORIGINAL_MODULE_FIXTURES',
       sourceRevision: process.env.P114_SOURCE_REVISION, mainRevision: '8edb42e16caf0ddaa840dc16e4e886e6acaca328',
-      lifecycleRevision: '4c516670a0fb8fc7204150a12863e15d758886d7', migrations, cases,
+      lifecycleRevision: '02bfba1aa971d9449cad41103211e8a3d3503451', migrations, cases,
       commitLossMode: 'driver hook rejects after the actual COMMIT reply',
       authenticationVerified: false, physicalFencingVerified: false, providerVerified: false,
       deployedHA: false, publicRpcIntegrated: false, nativeIphoneVerified: false
@@ -69,11 +70,16 @@ function controller(session: ControllerLeaseSession): VerifiedControllerIdentity
   return { scope: lease.scope, owner: lease.owner, term: lease.term } as VerifiedControllerIdentity
 }
 function queryHook(base: Pool, hook: (sql: string, actual: () => Promise<QueryResult>) => Promise<QueryResult>): Pool {
-  return { query: base.query.bind(base), async connect() {
+  return { query: (sql: string, values?: unknown[]) => hook(sql, () => base.query(sql, values)), async connect() {
     const client = await base.connect()
     return { query: (sql: string, values?: unknown[]) => hook(sql, () => client.query(sql, values)),
       release: client.release.bind(client) }
   } } as unknown as Pool
+}
+function barrier() {
+  let release!: () => void
+  const ready = new Promise<void>(resolve => { release = resolve })
+  return { ready, release }
 }
 
 check('simultaneous process owners elect exactly one winner; live duplicate does not change term or journal', async () => {
@@ -274,4 +280,116 @@ check('a hung external inventory is cancelled within caller budget without block
   const stopped = await pass
   assert.equal(stopped.status, 'STOPPED'); assert.equal(cancelled, true)
   assert.equal(current.session.lease, null)
+})
+
+check('a healthy renewal across a pass gate and its visible COMMIT revision window preserves one inventory effect', async () => {
+  // One focused case, two placements of the driver barrier: before COMMIT and
+  // after the actual PG COMMIT but before the confirmed reply reaches session.
+  for (const phase of ['BEFORE_COMMIT', 'AFTER_COMMIT'] as const) {
+    const gateEntered = barrier(), resumeGate = barrier(), gateRead = barrier()
+    const renewalEntered = barrier(), resumeRenewal = barrier()
+    let holdRenewal = false, firstGate = true, effects = 0
+    const renewalPool = queryHook(pool, async (sql, actual) => {
+      if (sql !== 'COMMIT' || !holdRenewal) return actual()
+      if (phase === 'BEFORE_COMMIT') { renewalEntered.release(); await resumeRenewal.ready }
+      const result = await actual()
+      if (phase === 'AFTER_COMMIT') { renewalEntered.release(); await resumeRenewal.ready }
+      return result
+    })
+    const session = new ControllerLeaseSession(renewalPool, new ControllerInstance(CONTROLLER_SCOPE), policy)
+    assert.equal((await session.acquire()).status, 'ACTIVE')
+    const original = session.lease!
+    const passPool = queryHook(pool, async (sql, actual) => {
+      if (firstGate && sql.includes('SELECT scope FROM durable_runtime.controller_leases')) {
+        firstGate = false; gateEntered.release(); await resumeGate.ready
+        const result = await actual()
+        assert.equal(result.rowCount, phase === 'BEFORE_COMMIT' ? 1 : 0)
+        gateRead.release()
+        return result
+      }
+      return actual()
+    })
+    const pass = runControllerPass(passPool, session, { controller: controller(session), maximumWork: 100, externalBudgetMs: 10000,
+      inventory: { transport: { list: async () => ({ resourceVersion: '1', objects: [] }),
+        watch: async () => ({ status: 'EVENTS', resourceVersion: '1', events: [{ type: 'BOOKMARK', resourceVersion: '1' }] }),
+        get: async () => null }, sink: async () => { effects++ } } })
+    let renewal: ReturnType<ControllerLeaseSession['renew']> | undefined
+    try {
+      await Promise.race([gateEntered.ready, pass.then(() => { throw new Error('First gate was not reached') })])
+      holdRenewal = true
+      renewal = session.renew()
+      await renewalEntered.ready
+      resumeGate.release()
+      await Promise.race([gateRead.ready, pass.then(() => { throw new Error('Gate did not read PG') })])
+      assert.equal(effects, 0)
+      assert.equal(session.signal.aborted, false)
+      assert.equal(session.lease!.revision, original.revision)
+      resumeRenewal.release()
+      assert.equal((await renewal).status, 'ACTIVE')
+      const result = await pass
+      assert.equal(result.status, 'FINISHED')
+      assert.equal(effects, 1)
+      assert.equal(session.signal.aborted, false)
+      assert.equal(session.lease!.owner, original.owner)
+      assert.equal(session.lease!.term, original.term)
+      assert.equal(BigInt(session.lease!.revision), BigInt(original.revision) + 1n)
+      holdRenewal = false
+      assert.equal((await session.release()).status, 'RELEASED')
+    } finally {
+      resumeGate.release(); resumeRenewal.release()
+      await Promise.allSettled([pass, ...(renewal ? [renewal] : [])])
+    }
+  }
+})
+
+check('nested inventory mutation after the first await cannot replace the captured methods, receiver or sink', async () => {
+  const current = await active(), gateEntered = barrier(), resumeGate = barrier()
+  let firstGate = true, replacements = 0, lists = 0, watches = 0, sinks = 0
+  let originalSignal: AbortSignal | undefined
+  class OriginalTransport implements AbortableInventoryTransport {
+    readonly receiver = 'original-transport'
+    async list(signal: AbortSignal): ReturnType<AbortableInventoryTransport['list']> {
+      assert.equal(this.receiver, 'original-transport'); assert.equal(signal.aborted, false)
+      originalSignal = signal; lists++
+      return { resourceVersion: '1', objects: [] }
+    }
+    async watch(version: string, signal: AbortSignal): ReturnType<AbortableInventoryTransport['watch']> {
+      assert.equal(this.receiver, 'original-transport'); assert.equal(version, '1')
+      assert.equal(signal, originalSignal); assert.equal(signal.aborted, false); watches++
+      return { status: 'EVENTS', resourceVersion: '2', events: [{ type: 'BOOKMARK', resourceVersion: '2' }] }
+    }
+    async get(): ReturnType<AbortableInventoryTransport['get']> { return null }
+  }
+  const transport = new OriginalTransport()
+  const inventory: { receiver: string; transport: AbortableInventoryTransport; sink: ObservationSink } = {
+    receiver: 'original-inventory', transport,
+    async sink(event, source) { assert.equal(this.receiver, 'original-inventory'); assert.equal(source, 'WATCH')
+      assert.equal(event.type, 'BOOKMARK'); sinks++ }
+  }
+  const replacement = { transport: { list: async () => { replacements++; return { resourceVersion: 'changed', objects: [] } },
+    watch: async () => { replacements++; return { status: 'EVENTS' as const, resourceVersion: 'changed', events: [] } },
+    get: async () => { replacements++; return null } }, sink: async () => { replacements++ } }
+  const request: Omit<ControllerPassRequest, 'inventory'> & { inventory: ControllerPassRequest['inventory'] } = {
+    controller: controller(current.session), maximumWork: 100, externalBudgetMs: 10000, inventory
+  }
+  const passPool = queryHook(pool, async (sql, actual) => {
+    if (firstGate && sql.includes('SELECT scope FROM durable_runtime.controller_leases')) {
+      firstGate = false; gateEntered.release(); await resumeGate.ready
+    }
+    return actual()
+  })
+  const pass = runControllerPass(passPool, current.session, request)
+  try {
+    await Promise.race([gateEntered.ready, pass.then(() => { throw new Error('First gate was not reached') })])
+    transport.list = replacement.transport.list
+    transport.watch = replacement.transport.watch
+    transport.get = replacement.transport.get
+    inventory.transport = replacement.transport
+    inventory.sink = replacement.sink
+    request.inventory = replacement
+    resumeGate.release()
+    assert.equal((await pass).status, 'FINISHED')
+    assert.deepEqual({ lists, watches, sinks, replacements }, { lists: 1, watches: 1, sinks: 1, replacements: 0 })
+    assert.equal(originalSignal!.aborted, true) // Pass cleanup still cancels the live signal.
+  } finally { resumeGate.release(); await Promise.allSettled([pass]) }
 })
