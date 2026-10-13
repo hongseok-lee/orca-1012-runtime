@@ -1,0 +1,144 @@
+{
+  "distinct_tests": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "migration_chain": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "applied_at": "2026-10-13T11:47:09.236Z"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "applied_at": "2026-10-13T11:47:09.311Z"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "applied_at": "2026-10-13T11:47:09.364Z"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "applied_at": "2026-10-13T11:47:09.437Z"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "applied_at": "2026-10-13T11:47:09.506Z"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "applied_at": "2026-10-13T11:47:09.534Z"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "applied_at": "2026-10-13T11:47:09.537Z"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "applied_at": "2026-10-13T11:47:09.569Z"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "applied_at": "2026-10-13T11:47:09.576Z"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "applied_at": "2026-10-13T11:47:09.598Z"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "applied_at": "2026-10-13T11:47:09.616Z"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "applied_at": "2026-10-13T11:47:09.622Z"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "applied_at": "2026-10-13T11:47:09.632Z"
+    },
+    {
+      "version": "014-durable-catalog.sql",
+      "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "applied_at": "2026-10-13T11:47:09.673Z"
+    },
+    {
+      "version": "015-failure-evidence.sql",
+      "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "applied_at": "2026-10-13T11:47:09.707Z"
+    }
+  ],
+  "evidence_api": "250bc7eafc93c92df1ed3771da7d63d9dc4922cf",
+  "synthetic_fixture": true,
+  "producer_authentication_verified": false,
+  "dev013015_applied": false,
+  "checks": [
+    "original observation retention",
+    "original timestamp precision",
+    "alias ownership conflict",
+    "original tuple FK",
+    "append-only guards",
+    "fixed deadline",
+    "revision nondecrease",
+    "atomic rollback",
+    "001-014 checksums unchanged"
+  ],
+  "결과": "015 최초 소유 PG 사례 1건과 scoped typecheck가 통과했습니다. Lint는 새 row 선언의 줄 수 서식 교정 뒤 통과했습니다.",
+  "source_before_validation": "c34d64e39a2eb25ab66f75e3aadc1ab816e91ced",
+  "fixture_sha256": "8d8c72422b667c42154ec9917bff1c83c8f54cf713203ebd1a462806f7b77d79",
+  "original001014_unchanged": true,
+  "typecheck": {
+    "exit": 0,
+    "typescript": "7.0.2",
+    "repeated_after_formatting": false
+  },
+  "lint": {
+    "initial_exit": 1,
+    "initial_boundary": "rows.ts:334 eslint(max-lines), 325 lines / limit 300",
+    "focused_correction_exit": 0,
+    "correction": "새 015 row 선언의 속성을 같은 줄에 배치했습니다. 타입 서명은 변경하지 않았습니다.",
+    "oxlint": "1.80.0"
+  },
+  "actual_runs": [
+    {
+      "operation": "015-first-validation",
+      "pid": 3888,
+      "started_at": "2026-10-13T11:47:07Z"
+    },
+    {
+      "operation": "015-first-validation",
+      "pid": 3888,
+      "ended_at": "2026-10-13T11:47:11Z",
+      "prepare_exit": 0,
+      "pg_exit": 0,
+      "type_exit": 0,
+      "lint_exit": 1
+    },
+    {
+      "operation": "015-lint-format-correction",
+      "pid": 3985,
+      "started_at": "2026-10-13T11:48:15Z"
+    },
+    {
+      "operation": "015-lint-format-correction",
+      "pid": 3985,
+      "ended_at": "2026-10-13T11:48:16Z",
+      "exit": 0
+    }
+  ],
+  "scope": "별도 소유 DB의 synthetic observation·alias·FK·불변 guard·rollback 사례입니다. 인증된 실 workload나 실제 OOM/fencing을 검증한 결과가 아닙니다.",
+  "capture": "소비 P121 모듈의 첫 실제 결과 이미지 연계를 기다립니다. 별도 schema PNG는 만들지 않았습니다.",
+  "dev_applied_chain": "001–012 only"
+}
