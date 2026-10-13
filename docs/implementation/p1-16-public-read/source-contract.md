@@ -39,4 +39,4 @@ Chat/provider/Browser의 나머지 방법은 임의 교체하지 않습니다. T
 
 `src/main/orcad/orcad-entry.ts`의 `new OrcaRuntimeRpcServer`와 `src/main/startup/main-process-runtime-launch.ts`의 `installRuntimeRpc`가 실제 상위 구성 접점입니다. 두 기존 호출은 아직 이 구성값을 전달하지 않습니다. 상위 서버가 borrowed Pool, dataset, 현재 앱 host를 읽는 owner callback, 확정된 허용 집합 및 poll 설정을 주입해야 합니다. 이 source는 환경변수/CLI flag/PG migration/bootstrap을 새로 발급하거나 live dev에 주입하지 않습니다.
 
-PG/type/lint/test와 실제 인증·Expo 클릭·보고 PNG는 아직 실행하지 않았습니다. 새 focused fixture만 작성하며 지정된 Ready/heavy 배분 뒤 최초 실행합니다. 기존 Catalog/P115/HA 시험·설치·빌드·재촬영·runtime 재시작은 반복하지 않습니다. Root의 source review와 후속 실제 개발환경 활성화는 별도입니다. 이 PR은 실제 provider/fence/RW/controller/HA 합격을 뜻하지 않습니다.
+새 PG fixture 11개와 값 fixture 6개를 작성했습니다. 모두 미실행이며 PG/type/lint/test와 실제 인증·Expo 클릭·보고 PNG의 성공을 주장하지 않습니다. 지정된 Ready/heavy 배분 뒤 최초 실행합니다. 기존 Catalog/P115/HA 시험·설치·빌드·재촬영·runtime 재시작은 반복하지 않습니다. Root의 source review와 후속 실제 개발환경 활성화는 별도입니다. 이 PR은 실제 provider/fence/RW/controller/HA 합격을 뜻하지 않습니다.

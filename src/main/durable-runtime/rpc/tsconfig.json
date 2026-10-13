@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "ESNext", "moduleResolution": "Bundler",
+    "strict": true, "noEmit": true, "allowImportingTsExtensions": true,
+    "skipLibCheck": true, "types": ["node"], "esModuleInterop": true
+  },
+  "include": ["*.ts", "*.mts",
+    "../../runtime/rpc/core.ts", "../../runtime/rpc/dispatcher.ts", "../../runtime/rpc/rpc-streaming-dispatcher.ts",
+    "../../runtime/runtime-rpc/runtime-rpc-pairing-types.ts", "../../runtime/runtime-rpc/runtime-rpc-request-admission.ts",
+    "../../runtime/runtime-rpc/runtime-rpc-state.ts", "../../runtime/runtime-rpc/runtime-rpc-shutdown.ts"]
+}

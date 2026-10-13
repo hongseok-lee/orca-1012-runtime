@@ -15,7 +15,7 @@ type Subscription = {
   readonly id: string; readonly connection: string; readonly request: string; readonly principal: string
   readonly all: boolean; readonly selector: string | null; readonly invocation: CatalogReadInvocation
   canonical: CatalogWorkspace | null; initialized: boolean; closed: boolean
-  readonly close: () => void; readonly fail: (error: unknown) => void
+  readonly close: () => void; readonly cancel: () => void; readonly fail: (error: unknown) => void
 }
 export class CatalogReadSubscriptions {
   private readonly records = new Map<string, Subscription>()
@@ -41,23 +41,23 @@ export class CatalogReadSubscriptions {
       if (record.closed) { return }
       record.closed = true
       detach?.(); detach = null
-      signal?.removeEventListener('abort', record.close)
+      signal?.removeEventListener('abort', record.cancel)
       if (this.records.get(id) === record) { this.records.delete(id) }
       unregister(id)
       if (end && record.initialized) { ownerEmit({ type: 'end' }) }
     }
     const record: Subscription = { id, connection, request, principal: invocation.context.authority.principalId,
       all, selector, invocation, canonical: null, initialized: false, closed: false,
-      close: () => cleanup(true), fail: error => {
+      close: () => cleanup(true), cancel: () => cleanup(false), fail: error => {
         if (record.closed) { return }
         // Error is an existing RPC failure, never an empty snapshot or deletion.
         try { reportError(catalogReadFailure(error)) } finally { cleanup(true) }
       } }
     this.records.set(id, record)
     // The authenticated request's cleanup registration precedes first await.
-    register(id, record.close, context.connectionId)
-    signal?.addEventListener('abort', record.close, { once: true })
-    if (signal?.aborted) { record.close() }
+    register(id, record.cancel, context.connectionId)
+    signal?.addEventListener('abort', record.cancel, { once: true })
+    if (signal?.aborted) { record.cancel() }
     if (record.closed) { return }
     try {
       const modules = await catalogModules()
@@ -144,13 +144,20 @@ export class CatalogReadSubscriptions {
     const invocation = captureReadInvocation(this.config, params, context)
     const input = invocation.params as { worktree?: string; subscriptionId?: string } | null
     const connection = context.connectionId ?? 'local'
-    for (const record of [...this.records.values()]) {
-      if (record.connection !== connection || record.principal !== invocation.context.authority.principalId) { continue }
-      if (input?.subscriptionId && input.subscriptionId !== record.request) { continue }
+    const selected = [...this.records.values()].filter(record => record.connection === connection &&
+      record.principal === invocation.context.authority.principalId &&
+      (!input?.subscriptionId || input.subscriptionId === record.request))
+    const matchesOriginal = (record: Subscription): boolean => input?.worktree === record.selector ||
+      input?.worktree === record.canonical?.public_id || input?.worktree === `id:${record.canonical?.public_id}`
+    // A different legacy alias must use the incumbent PG resolver as well.
+    const resolved = method === 'session.tabs.unsubscribe' && input?.worktree &&
+      selected.some(record => !record.all) && !selected.some(matchesOriginal)
+      ? await resolveReadWorkspace(this.config, invocation, input.worktree) : null
+    for (const record of selected) {
+      if (record.closed) { continue }
       if (method === 'session.tabs.unsubscribeAll' && !record.all) { continue }
       if (method === 'session.tabs.unsubscribe') {
-        const publicId = record.canonical?.public_id
-        if (record.all || !input?.worktree || (input.worktree !== record.selector && input.worktree !== publicId && input.worktree !== `id:${publicId}`)) { continue }
+        if (record.all || !input?.worktree || (!matchesOriginal(record) && resolved?.workspace_id !== record.canonical?.workspace_id)) { continue }
       }
       record.close()
     }
