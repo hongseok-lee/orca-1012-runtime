@@ -11,6 +11,21 @@ the root reports compatible API in `8064b0f2703c36df28a3d2735e0d6276d6f80ae1`.
 The attachment migration has not been delivered. Typecheck and PostgreSQL
 verification are pending; no validation success is claimed by this initial code.
 
+The canonical worker source directory is
+`/home/orca-dev/implementation/p1-04-store/source` in the existing backend dev
+Pod's NFS HOME. The disposable execution directory is
+`/tmp/orca-p104-execution`. Root corrected the original `/home/node` assignment
+after read-only mount metadata confirmed that it is ephemeral. Only these new
+owned directories are prepared; live watch and the DB owner's source are preserved.
+
+Dedicated verification source is included but has not run: ordered/replayed and
+conflicting chunks, incomplete commit recovery, owner isolation, transaction
+rollback, one owned child killed with an uncommitted chunk, commit/abort contention,
+input attachment FK retention, and safe filesystem materialization. It requires an
+already applied DB-owner schema and an `orca_p104_…` validation database; it does
+not apply migrations or target `orca_dev`. Byte comparisons use assertions that
+do not dump attachment bodies. No test is evidence until actually executed remotely.
+
 Store callers pass a verified paired-device UUID or authenticated credential
 fingerprint through the explicit principal namespace constructors. Neither takes
 the raw `RpcContext.clientId`. These constructors validate representation, not

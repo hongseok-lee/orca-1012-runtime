@@ -73,6 +73,11 @@ export async function materializeAttachment(
   attachment: CommittedAttachment,
   targetRoot: string
 ): Promise<{ path: string; contentHash: string; byteLength: number; reused: boolean }> {
+  // Keep caller mutations during asynchronous I/O from changing the published snapshot.
+  if (!Buffer.isBuffer(attachment.contentBytes)) {
+    throw new AttachmentMaterializationError('CORRUPT_BLOB')
+  }
+  attachment = { ...attachment, contentBytes: Buffer.from(attachment.contentBytes) }
   if (!Buffer.isBuffer(attachment.contentBytes) || attachment.contentBytes.length !== attachment.byteLength ||
       createHash('sha256').update(attachment.contentBytes).digest('hex') !== attachment.contentHash) {
     throw new AttachmentMaterializationError('CORRUPT_BLOB')
