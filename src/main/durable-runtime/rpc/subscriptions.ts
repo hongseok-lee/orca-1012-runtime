@@ -163,5 +163,5 @@ export class CatalogReadSubscriptions {
     }
     return { unsubscribed: true }
   }
-  dispose(): void { for (const record of [...this.records.values()]) { record.close() } }
+  dispose(): void { for (const record of Array.from(this.records.values())) { record.close() } }
 }

@@ -62,7 +62,7 @@ export async function readCatalogRpc(config: CapturedCatalogReadConfig, method: 
   const modules = await catalogModules()
   const call = modules.request.prepareCatalogCall(method, invocation.params, invocation.context)
   const canonical = method === 'worktree.show' || method === 'session.tabs.list'
-    ? await resolveReadWorkspace(config, invocation, (call.params as { worktree: string }).worktree) : null
+    ? await resolveReadWorkspace(config, invocation, (call.params as unknown as { worktree: string }).worktree) : null
   const snapshot = await modules.read.readCatalogSnapshot(config.pool, invocation.context.authority)
   validateCatalogSnapshot(config, snapshot)
   switch (method) {
