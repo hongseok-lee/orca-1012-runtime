@@ -14,7 +14,7 @@
     "executedFocusedCases": 3,
     "fixtureStatus": "PASS",
     "typecheckStatus": "PASS",
-    "captureStatus": "CLIENT_CONTEXT_READY_HANDOFF_PENDING",
+    "captureStatus": "PNG_PRESERVED_REQUESTED_HEADING_NOT_VISIBLE",
     "한계": "새 recovery 환경의 합성 연결에서만 통과했으며 timeout 또는 late open은 provider stopped proof가 아닙니다.",
     "driverSourceSha256": "c45a433fc4e1d7aa10030467df3c1ef6e2f33374e2688704354f330de861cdf6",
     "focusedFixtureSourceSha256": "93c3915632f6bd05b740c47d68f6a05a660f8e2aee0cca0b78ff29f29b079a44",
@@ -38,8 +38,27 @@
   "nativeBridgeSyntax": "PASS",
   "nativeBridgeWholeGraphTypecheck": "NOT_RUN",
   "actualProviderCalls": 0,
-  "actualReportCapture": false,
+  "actualReportCapture": true,
   "resumePodReadinessQuery": "KUBERNETES_API_CONNECTION_TIMEOUT",
   "한계": "실제 executor permit, PG 기록, writer gate 및 G-05가 미연결 또는 미검증이며 실제 provider 합격을 주장하지 않는다.",
-  "totalRecordedDistinctFixtureCases": 19
+  "totalRecordedDistinctFixtureCases": 19,
+  "requestedReportHeadingVisibleInPng": false,
+  "captureArtifactSha256": "ed6b6eb534bd03c80c495ebab68666a146ccf169a6d146339d96d185d9cbc50c",
+  "captureTargetSource": "68d6b974fed3ad6bd73c04a292b8b379eb979132",
+  "intermediateRebaseBase": "02bfba1aa971d9449cad41103211e8a3d3503451",
+  "intermediateRebaseHead": "a0495d0b73c9df3b2340e588bd57c2240f912223",
+  "typeOnlyContextDependency": {
+    "requiredPR": 24,
+    "mergedIntoCurrentMain": false,
+    "publicContextTypeCopy": false,
+    "publicContextStub": false,
+    "verificationPin": "6a61748f2de23db95d176acf0ecc728851988b66",
+    "mergeOrder": [
+      19,
+      24,
+      21,
+      22
+    ],
+    "finalRebase": "WAIT_ROOT_AFTER_PR24"
+  }
 }
