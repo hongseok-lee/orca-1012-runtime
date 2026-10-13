@@ -1,0 +1,20 @@
+{
+  "kind": "Actual remote-browser storage verification documentation; not product/HA/fencing qualification",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/898f3b75c94288798ec19253933ba949db14c2bc/docs/implementation/p1-10/README.md",
+  "capturedTargetSourceSHA": "898f3b75c94288798ec19253933ba949db14c2bc",
+  "capturedAtUTC": "2026-10-13T03:04:29.796Z",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "deviceScaleFactor": 1
+  },
+  "observedHeading": "Actual observations",
+  "headingY": 481.375,
+  "freshUnauthenticatedContext": true,
+  "remoteExecution": true,
+  "status": "CAPTURED",
+  "artifact": "p1-10-storage-documentation.png",
+  "pngSHA256": "9156bf8533e4cda5583dab20bb898d1f1f4970ea1033ad3a0b182e217133a72b",
+  "revisionNote": "Capture target is the documentation commit before this separate asset commit; the final asset head is recorded in the PR body."
+}
