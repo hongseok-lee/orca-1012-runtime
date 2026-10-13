@@ -51,3 +51,10 @@ context `6a61748f2de23db95d176acf0ecc728851988b66`, input `5ae4f671d0227abbc144f
 실제 executor의 COMMIT 확인·workload 인증·writer grant, 최신 context/cancel claim, event sink의 PG append/producer spool·중앙 ACK는 아직 연결하지 않았습니다. 새로운 영속 provider receipt 저장소는 만들지 않았습니다. 호출 뒤 UNKNOWN의 재조회는 원 identity 관측이며 새 호출 권한이 아닙니다.
 
 실제 계정 inference·cold/native resume·permission-skip 설정 실증, data URL 이미지 수락, 원 프로세스의 descendants 종료와 Spot/writer fencing은 미확인입니다. excludeTurns는 history 응답 옵션이며 과거 미완료 작업의 실행 억제 증거가 아닙니다. 버전별 resume fallback과 질문/승인/raw 채널의 실기능도 이번 합격 범위에 포함하지 않습니다. P1-11 전체 및 G-05 판정은 root가 후속 실제 환경 증거와 함께 결정합니다.
+
+
+## Root 지정 final base 합류
+
+`ebd86a1e48fe8209853a56e93c92b6a087f37a1a` 위로 final rebase를 한 번 완료했다. Rebase 직후 source head는 `f1358ca510cfd5b38ade3511c6726062b08e4f4e`이며 Codex 제품 / native hook / fixture와 기존 결과 JSON / PNG / provenance의 bytes가 원 e197 head와 같다. Main 선행 shared contracts의 optional providerRef / nativeEventId 두 필드만 별도 차이이며 shared는 final main bytes 그대로 소비했다. 상세 파일 hash는 `final-base-equivalence.json`과 비공개 원 비교 manifest에 기록했다.
+
+원 distinct 합성 성공은 protocol 9 + driver 11 + wire hash focused 1 + native wrapper 1 + 신규 ownership 3으로 25개다. 첫 recovered focused의 새 3 + 영향받은 옛 target 1은 4 PASS이며 옛 target은 기존 driver 11개 중 하나다. 이 네 개를 distinct 25개에 다시 더하지 않는다. 원 source / TAP / type / lint 실패와 교정 기록 / 최초 PNG는 각 original revision의 이력이며 이번 rebase 뒤 새 실행 결과로 바꾸지 않는다. 설치 / build / 시험 / 재촬영 / runtime sync나 restart는 하지 않았다.
