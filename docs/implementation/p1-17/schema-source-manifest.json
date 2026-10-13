@@ -72,7 +72,7 @@
     "src/main/durable-runtime/db/structured-session-rows.ts": "15bd86d1c65d6584228bdabdbd0aa90b4da64bbb95553dab49fb8ece5d351329",
     "src/main/durable-runtime/db/rows.ts": "e56bb1e07937b78fe8d7ada91840bbf8cd10c60b4cc3729e05176f3d25104a58"
   },
-  "actual_pg_type_lint": "NOT_RUN",
+  "actual_pg_type_lint": "PG distinct 1: initial FAIL 1 then fixture-only correction PASS 1/skip 0; type exit 0; initial/focused lint exit 0",
   "dev013017": "NOT_AUTHORIZED/NOT_APPLIED",
   "common_json_type": "resources/evidence/types.ts EvidenceJson을 그대로 import합니다. 복제/stub를 만들지 않았습니다."
 }

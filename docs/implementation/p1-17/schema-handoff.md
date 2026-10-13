@@ -18,6 +18,17 @@ Rows.ts에서 StructuredSessionAliasRow와 StructuredSubmissionRow를 type re-ex
 
 ## 실제 실행 상태와 남은 합류
 
-현재는 로컬 조기 DDL/row API 납품입니다. SQL·PG·type·lint는 미실행이며 016도 아직 미검증입니다. Dev 013–017은 미승인/미적용입니다. 이전 schema PASS나 Repository foundation CI를 017 검증 성공으로 표시하지 않습니다.
+현재는 로컬 조기 DDL/row API 납품입니다. 017은 최초 PG fixture 1건의 실패를 fixture만 교정해 통과했고 scoped type/lint도 통과했습니다. 016의 기존 최초 검증 증거는 반복하지 않았습니다. Dev 013–017은 미승인/미적용입니다. 이전 schema PASS나 Repository foundation CI를 017 검증 성공으로 표시하지 않습니다.
 
-첫 focused PG/type/lint는 Root와 bridge가 지정한 Catalog/P114 이후 가용 heavy 점유를 인계받은 뒤만 수행합니다. 기존 suite·설치·빌드·schema PNG를 반복하지 않았습니다. Alias resolve/send 원자 합류에는 이 정확 pin과 별도 acceptInputInTransaction API가 필요합니다. Create membership/Tab, P120, RPC registry나 public runtime 활성화는 이번 DB owner scope가 아닙니다.
+Root와 bridge가 배분한 최초 heavy 점유에서 017 focused PG/type/lint를 수행하고 반환했습니다. 기존 suite·설치·빌드·schema PNG를 반복하지 않았습니다. Alias resolve/send 원자 합류에는 이 정확 pin과 별도 acceptInputInTransaction API가 필요합니다. Create membership/Tab, P120, RPC registry나 public runtime 활성화는 이번 DB owner scope가 아닙니다.
+
+
+## 실제 017 최초 검증 결과
+
+수락된 source a24db99ed3184bb9cbd3b7fe70f8c85bfea8bf37의 정확한 001–017 chain을 새 소유 DB의 첫 설치 전제로 사용했습니다. Non-UUID public ID의 기존 grammar, alias의 원 Session/Workspace와 재할당·삭제·원 metadata 불변, 원 Input/Message/Session/event FK, Session/principal/client key UNIQUE와 다른 principal의 같은 key 분리, 원 metadata 재조회 및 실제 transaction 전체 rollback을 한 focused fixture에서 확인했습니다. 이전 schema/consumer 성공 suite는 실행하지 않았습니다.
+
+첫 PG run은 fixture 48줄의 배열 CHECK 음성 사례에서 실패했습니다. pg driver가 JS 배열 []를 PostgreSQL 배열 문자열 {}로 전달해 JSON object가 됐기 때문입니다. DDL을 바꾸지 않고 fixture의 JSON 배열 값만 JSON.stringify([])로 명시했습니다. 같은 distinct 사례 1건만 focused 재실행해 PASS 1건/FAIL 0건/SKIP 0건을 확인했습니다. 기존 소유 DB/원 실패 기록을 보존했고 source alias/input 데이터나 migration 이력을 삭제하지 않았습니다.
+
+최초 scoped TypeScript 7.0.2와 oxlint 1.80.0는 exit 0입니다. 교정 후 바뀐 fixture의 lint만 exit 0으로 확인했으며 typecheck와 다른 성공 suite를 반복하지 않았습니다. 총 distinct 시험은 1건이고 PG 실행은 initial 실패 1회+focused 성공 1회입니다. 실제 source/fixture/run/checksum 관계는 [schema-results.json](schema-results.json)에 기록했습니다. 소유 supervisor 7807/7907과 직접 자식의 잔존 0을 metadata로 확인하고 heavy 점유를 반환했습니다.
+
+원 017 DDL checksum과 row API는 같으며 dev 013–018은 미승인/미적용입니다. 실제 wire 인증·resolver·create/send·provider admission·public runtime 합격이 아닙니다. 소비 P117의 첫 실제 결과 이미지 연계를 기다리며 별도 schema PNG는 만들지 않았습니다.
