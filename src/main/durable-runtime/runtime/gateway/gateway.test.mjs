@@ -197,7 +197,8 @@ try {
       const duplicate=await inGateway(next,a=>claimCommand(a,original(r),'fixture-duplicate-executor'));assert.equal(duplicate.disposition,'NOT_CLAIMABLE');
       const unknown=await inGateway(next,a=>markCommandUnknown(a,claim));assert.equal(unknown.state,'UNKNOWN');
       await rejected(()=>inGateway(next,a=>settleOwnedExecution(a,claim,{state:'RESOLVED',result:{fixture:true},evidenceRefs:[]})),'COMMAND_RECONCILIATION_REQUIRED');
-      const blocked=await accept(next,request(next,'cancel'));assert.equal(blocked.disposition,'BLOCKED_BY_UNRESOLVED_COMMAND');
+      const opposite=request(next,'cancel');opposite.envelope.controllerTerm='2';
+      const blocked=await accept(next,opposite);assert.equal(blocked.disposition,'BLOCKED_BY_UNRESOLVED_COMMAND');
       return {ownedChildActuallyTerminated:true,terminationSignal:'SIGKILL',originalExecutionRetained:true,automaticReexecution:false,unknownBlocksOpposite:true};
     } finally {if(child.exitCode===null&&child.signalCode===null){child.kill('SIGTERM');await exit;}await log.close();}
   });
