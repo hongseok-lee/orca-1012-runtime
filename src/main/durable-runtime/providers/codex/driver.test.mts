@@ -196,6 +196,7 @@ test('old target baseline never terminates descendants belonging to a later turn
   const f = fixture(); await f.ready()
   const first = await f.driver.dispatch(request(), fixturePermit().permit)
   if (first.state !== 'ADMITTED') throw new Error('fixture missing')
+  f.notify('turn/completed', { threadId: 'fixture-thread', turn: { id: 'fixture-turn', status: 'completed' } })
   f.start(() => ({ turn: { id: 'new-turn' } }))
   const r = { ...request(), deliveryAttemptId: 'second-delivery' as ProviderDispatchRequest['deliveryAttemptId'] }
   await f.driver.dispatch(r, fixturePermit().permit)

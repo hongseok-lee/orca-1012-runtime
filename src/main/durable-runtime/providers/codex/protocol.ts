@@ -46,6 +46,27 @@ type RequestState = {
   notify: (receipt: CodexNativeReceipt) => void
   notified: Promise<CodexNativeReceipt>
   baseline?: unknown
+  stoppedFact?: Readonly<{
+    receipt: CodexNativeReceipt
+    baseline: unknown
+    connection: CodexAppServerConnection
+  }>
+  interruptAcknowledged?: boolean
+}
+export type CodexInterruptResult = Readonly<{
+  requested: boolean; terminal: CodexProtocolEvent | null; descendantsStopped: boolean; acknowledged: boolean
+}>
+/** This describes only this connection's effect scope, never durable intake policy. */
+export class CodexConnectionBusyError extends Error {
+  readonly code = 'CODEX_CONNECTION_BUSY'
+  constructor(
+    readonly reason: 'REQUEST_IN_FLIGHT' | 'TURN_ACTIVE' | 'TURN_UNVERIFIABLE',
+    readonly scope: Readonly<{ connectionId: string; threadId: string | null; clientMessageId: string | null; turnId: string | null }>
+  ) {
+    super(`Codex connection cannot dispatch (${reason})`)
+    this.name = 'CodexConnectionBusyError'
+    Object.freeze(scope)
+  }
 }
 /** Exact params serialized by the existing app-server request transport. */
 export function codexTurnStartParams(threadId: string, input: RequestState['input']): Record<string, unknown> {
@@ -73,12 +94,14 @@ export class CodexProtocolSession {
   #threadId: string | null = null
   #historyPath: string | null = null
   #closed = false
+  #opening = false
   #requests = new Map<string, RequestState>()
   #receipts = new WeakSet<object>()
   #byTurn = new Map<string, RequestState>()
   #terminals = new Map<string, CodexProtocolEvent>()
   #pending: string | null = null
   #latestRequest: RequestState | null = null
+  #activeRequest: RequestState | null = null
   #interrupting = false
 
   constructor(private readonly dependencies: CodexProtocolDependencies) {}
@@ -93,18 +116,20 @@ export class CodexProtocolSession {
     resumeThreadId: string | null; resumePath?: string | null
     env?: Readonly<Record<string, string>>
   }): Promise<Readonly<{ threadId: string; historyPath: string | null; connectionId: string }>> {
-    if (this.#connection || this.#closed) throw new Error('CODEX_CONNECTION_ALREADY_USED')
-    const connection = await this.dependencies.open({
-      command: input.command, args: [...input.args, 'app-server'], cwd: input.cwd,
-      env: { ...input.env, CODEX_HOME: input.codexHome }
-    }, {
-      onNotification: (method, params) => this.#observe(method, params),
-      onExit: () => { this.#closed = true },
-      // These unconnected channels must not block a native process silently.
-      onServerRequest: (request) => this.#connection?.respondWithError(request.id, -32000, 'Durable Codex driver does not support this reply channel')
-    })
-    this.#connection = connection
+    if (this.#connection || this.#opening || this.#closed) throw new Error('CODEX_CONNECTION_ALREADY_USED')
+    // Reserve before the opener's first await; a refused executor never enters open.
+    this.#opening = true
     try {
+      const connection = await this.dependencies.open({
+        command: input.command, args: [...input.args, 'app-server'], cwd: input.cwd,
+        env: { ...input.env, CODEX_HOME: input.codexHome }
+      }, {
+        onNotification: (method, params) => this.#observe(method, params),
+        onExit: () => { this.#closed = true },
+        // These unconnected channels must not block a native process silently.
+        onServerRequest: (request) => this.#connection?.respondWithError(request.id, -32000, 'Durable Codex driver does not support this reply channel')
+      })
+      this.#connection = connection
       const params = { threadId: input.resumeThreadId, cwd: input.cwd, ...(input.resumePath ? { path: input.resumePath } : {}) }
       const opened = input.resumeThreadId
         ? await connection.request('thread/resume', { ...params, excludeTurns: true }, { timeoutMs: this.dependencies.requestTimeoutMs })
@@ -119,8 +144,10 @@ export class CodexProtocolSession {
       return Object.freeze({ threadId, historyPath: this.#historyPath, connectionId: this.connectionId })
     } catch (error) {
       this.#closed = true
-      await connection.close()
+      await this.#connection?.close()
       throw error
+    } finally {
+      this.#opening = false
     }
   }
 
@@ -134,13 +161,22 @@ export class CodexProtocolSession {
       if (existing.submission !== submission) throw new Error('CODEX_SUBMISSION_ID_CONFLICT')
       return existing.receipt ? Object.freeze({ effect: 'ADMITTED', receipt: existing.receipt }) : Object.freeze({ effect: 'UNKNOWN', reason: 'RESPONSE_LOST' })
     }
-    if (this.#pending !== null || this.#interrupting) throw new Error('CODEX_DISPATCH_IN_FLIGHT')
+    if (this.#pending !== null || this.#interrupting || this.#activeRequest !== null) {
+      const original = this.#activeRequest ?? this.#latestRequest
+      throw new CodexConnectionBusyError(
+        this.#pending !== null || this.#interrupting ? 'REQUEST_IN_FLIGHT'
+          : original?.receipt ? 'TURN_ACTIVE' : 'TURN_UNVERIFIABLE',
+        { connectionId: this.connectionId, threadId: this.#threadId,
+          clientMessageId: original?.input.clientMessageId ?? null, turnId: original?.receipt?.turnId ?? null }
+      )
+    }
     let notify!: RequestState['notify']
     const notified = new Promise<CodexNativeReceipt>((resolve) => { notify = resolve })
     const state: RequestState = { input: snapshot, submission, notify, notified }
     // Record the invocation before its first await. Reconciliation cannot issue another turn/start.
     this.#requests.set(input.clientMessageId, state)
     this.#latestRequest = state
+    this.#activeRequest = state
     this.#pending = input.clientMessageId
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
@@ -167,27 +203,48 @@ export class CodexProtocolSession {
     }
   }
 
-  async interrupt(receipt: CodexNativeReceipt): Promise<Readonly<{
-    requested: boolean; terminal: CodexProtocolEvent | null; descendantsStopped: boolean; acknowledged: boolean
-  }>> {
-    if (!this.#connection || this.closed || !this.ownsReceipt(receipt) || receipt.threadId !== this.#threadId) {
+  /** A read of owned observations, not an interrupt or a new executor grant. */
+  observedStop(receipt: CodexNativeReceipt): CodexInterruptResult {
+    if (!this.#connection || !this.ownsReceipt(receipt) || receipt.connectionId !== this.connectionId || receipt.threadId !== this.#threadId) {
+      return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
+    }
+    const state = this.#byTurn.get(receipt.turnId)
+    if (!state || state.receipt !== receipt) {
+      return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
+    }
+    const fact = state.stoppedFact
+    const descendantsStopped = fact !== undefined && fact.receipt === receipt &&
+      fact.baseline === state.baseline && fact.connection === this.#connection
+    return Object.freeze({ requested: false, terminal: this.#terminals.get(receipt.turnId) ?? null,
+      descendantsStopped, acknowledged: state.interruptAcknowledged === true })
+  }
+
+  async interrupt(receipt: CodexNativeReceipt): Promise<CodexInterruptResult> {
+    const observed = this.observedStop(receipt)
+    if (observed.terminal || observed.descendantsStopped) return observed
+    if (!this.#connection || this.closed || !this.ownsReceipt(receipt) || receipt.connectionId !== this.connectionId || receipt.threadId !== this.#threadId) {
       return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
     }
     const state = this.#byTurn.get(receipt.turnId)
     // A baseline cannot attribute later descendants to an older turn. Never use
     // an older baseline after another dispatch, or while another effect runs.
-    if (!state || state !== this.#latestRequest || this.#pending !== null || this.#interrupting) {
+    if (!state || state.receipt !== receipt || state !== this.#latestRequest || this.#pending !== null || this.#interrupting) {
       return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
     }
-    const terminal = this.#terminals.get(receipt.turnId)
-    if (terminal) return Object.freeze({ requested: false, terminal, descendantsStopped: false, acknowledged: false })
     this.#interrupting = true
     try {
+      const connection = this.#connection
       const acknowledged = this.#connection.request('turn/interrupt', {
         threadId: receipt.threadId, turnId: receipt.turnId
-      }, { timeoutMs: this.dependencies.requestTimeoutMs }).then(() => true, () => false)
+      }, { timeoutMs: this.dependencies.requestTimeoutMs }).then(() => {
+        state.interruptAcknowledged = true
+        return true
+      }, () => false)
       const stopped = this.#connection.pid !== undefined && state.baseline !== undefined && this.dependencies.terminate
-        ? this.dependencies.terminate(this.#connection.pid, state.baseline).catch(() => false)
+        ? this.dependencies.terminate(this.#connection.pid, state.baseline).then((verified) => {
+          if (verified) state.stoppedFact = Object.freeze({ receipt, baseline: state.baseline, connection })
+          return verified
+        }).catch(() => false)
         : Promise.resolve(false)
       const [ack, descendantsStopped] = await Promise.all([acknowledged, stopped])
       return Object.freeze({ requested: true, terminal: this.#terminals.get(receipt.turnId) ?? null, descendantsStopped, acknowledged: ack })
@@ -233,6 +290,8 @@ export class CodexProtocolSession {
         if (state?.receipt && (status === 'completed' || status === 'interrupted' || status === 'failed')) {
           const event: CodexProtocolEvent = Object.freeze({ connectionId: this.connectionId, threadId, turnId, method, observedAt: this.#now(), terminalStatus: status, receipt: state.receipt })
           this.#terminals.set(turnId, event)
+          // Only the exact original terminal releases this connection's turn slot.
+          if (state === this.#activeRequest) this.#activeRequest = null
           this.dependencies.onEvent?.(event)
           return
         }
