@@ -106,7 +106,7 @@ await test('first structured same-TX composition boundaries with synthetic upper
       Object.assign(config.reservation.runtime.policy, { operationDeadlineMs: 0 })
       const again = await createDurableStructuredSession({ ...f.call, configuration: config })
       assert.equal(again.status, 'REPLAYED')
-      if (first.status !== 'UNCERTAIN' && again.status !== 'UNCERTAIN') { assert.deepEqual(again.receipt.response, first.receipt.response) }
+      if (first.status !== 'UNCERTAIN') { assert.deepEqual(again.receipt.response, first.receipt.response) }
       assert.deepEqual(await sessionState(pool, f), before)
       assert.equal((await sql(pool, 'SELECT count(*)::integer AS n FROM durable_runtime.sessions WHERE id=$1', [config.reservation.runtime.sessionId])).rows[0].n, 0)
     })
@@ -137,13 +137,11 @@ await test('first structured same-TX composition boundaries with synthetic upper
         assert.equal(row.wire_fence, '1')
       }
       assert.equal((await sessionState(pool, f)).receipts, 4)
-      if (a.status !== 'UNCERTAIN') {
-        assert.equal(a.wireResult.ok, true)
-        if (a.wireResult.ok) {
-          assert.equal(a.wireResult.value.submission.dispatchState, 'pending')
-          assert.equal(a.wireResult.value.submission.submittedAt, rows[0].submitted_at.getTime())
-          assert.equal(a.wireResult.cursor.sequence, Number(rows[0].seq))
-        }
+      assert.equal(a.wireResult.ok, true)
+      if (a.wireResult.ok) {
+        assert.equal(a.wireResult.value.submission.dispatchState, 'pending')
+        assert.equal(a.wireResult.value.submission.submittedAt, rows[0].submitted_at.getTime())
+        assert.equal(a.wireResult.cursor.sequence, Number(rows[0].seq))
       }
     })
 
@@ -158,7 +156,7 @@ await test('first structured same-TX composition boundaries with synthetic upper
       params.envelope.expectedRuntimeFence = 73; params.retryUnknown = true
       const replay = await sendDurableStructuredInput({ ...original, params })
       assert.equal(replay.status, 'REPLAYED')
-      if (first.status !== 'UNCERTAIN' && replay.status !== 'UNCERTAIN') {
+      if (first.status !== 'UNCERTAIN') {
         assert.deepEqual(replay.receipt.response, first.receipt.response)
         assert.deepEqual(replay.wireResult, { ...first.wireResult, replayed: true })
       }

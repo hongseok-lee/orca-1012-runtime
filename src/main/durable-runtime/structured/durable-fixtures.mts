@@ -77,6 +77,9 @@ export async function fixture(pool: Pool, publicId = `synthetic-public-${randomU
       (workspace_id,kind,project_group_id,reserved_path,payload,create_request)
       VALUES($1,'FOLDER_WORKSPACE',$2,$3,$4,'{}')`, [workspaceId, group, path, JSON.stringify(payload)])
     await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2)', [backend, exportId])
+    await tx.query("INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch) VALUES('catalog',$1) ON CONFLICT(scope) DO NOTHING", [randomUUID()])
+    await tx.query('INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch) VALUES($1,$2)',
+      [`workspace:${workspaceId}`, randomUUID()])
   })
   const membership = await withDurableTransaction(pool, tx => inspectCatalogMembership(tx, workspaceId))
   const sessionId = logicalId('session', randomUUID()), unitId = logicalId('runtime-unit', randomUUID())
