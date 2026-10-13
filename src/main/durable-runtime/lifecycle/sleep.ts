@@ -33,7 +33,7 @@ export interface LifecycleActivityAuthority {
 }
 export type SleepReservation =
   | { readonly status: 'RESERVED'; readonly intent: IntentRecorded }
-  | { readonly status: 'DEFERRED'; readonly reason: 'RUNNABLE_PENDING' | 'IN_FLIGHT_DISPATCH' | 'MEMBER_ACTIVE' | 'WRITER_UNVERIFIABLE' | 'SESSION_CLOSED' | 'UNRESOLVED_COMMAND' }
+  | { readonly status: 'DEFERRED'; readonly reason: 'RUNNABLE_PENDING' | 'IN_FLIGHT_DISPATCH' | 'MEMBER_ACTIVE' | 'WRITER_UNVERIFIABLE' | 'SESSION_CLOSING' | 'UNRESOLVED_COMMAND' }
 
 export type SleepReservationRequest = {
   readonly unitId: RuntimeUnitId
@@ -76,10 +76,13 @@ export async function reserveSleep(tx: DurableTransaction, request: SleepReserva
   if (unit.revision !== input.expectedRevision || unit.intent_revision !== input.expectedIntentRevision) {
     throw new DurableDatabaseError('LIFECYCLE_STALE_REVISION')
   }
-  const closed = await tx.query("SELECT id FROM durable_runtime.sessions WHERE id=ANY($1::uuid[]) AND lifecycle<>'OPEN'", [members])
-  if (closed.rowCount) { return { status: 'DEFERRED', reason: 'SESSION_CLOSED' } }
-  const pending = await tx.query(`SELECT id FROM durable_runtime.messages WHERE session_id=ANY($1::uuid[])
-    AND intake_status IN ('DURABLE','DISPATCH_INTENT','STAGED') AND cancel_requested_at IS NULL`, [members])
+  // CLOSED memberships remain in every lock and current writer/dispatch check.
+  // CLOSED alone is not permanent busy; CLOSING still means unfinished cleanup.
+  const closing = await tx.query("SELECT id FROM durable_runtime.sessions WHERE id=ANY($1::uuid[]) AND lifecycle='CLOSING'", [members])
+  if (closing.rowCount) { return { status: 'DEFERRED', reason: 'SESSION_CLOSING' } }
+  const pending = await tx.query(`SELECT x.id FROM durable_runtime.messages x JOIN durable_runtime.sessions s ON s.id=x.session_id
+    WHERE x.session_id=ANY($1::uuid[]) AND s.lifecycle='OPEN'
+    AND x.intake_status IN ('DURABLE','DISPATCH_INTENT','STAGED') AND x.cancel_requested_at IS NULL`, [members])
   if (pending.rowCount) { return { status: 'DEFERRED', reason: 'RUNNABLE_PENDING' } }
   const inFlight = await tx.query(`SELECT d.id FROM durable_runtime.delivery_attempts d JOIN durable_runtime.attempts a ON a.id=d.attempt_id
     WHERE d.session_id=ANY($1::uuid[]) AND (d.state IN ('DISPATCH_INTENT','STAGED','EFFECT_POSSIBLE','ADMITTED')
