@@ -5,3 +5,6 @@ export type {
   ObservationLossRequest, PreparedFreshObservation, CurrentObservationPin,
   ObservationRecoveryRequest, RecoverySnapshot, PreparedRecoveryRequest
 } from './types.ts'
+
+export { recordObservationLoss, requestObservationLoss } from './loss.ts'
+export type { RecordObservationLossRequest, RecordedObservationLoss } from './loss.ts'

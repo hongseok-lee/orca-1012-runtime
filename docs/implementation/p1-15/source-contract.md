@@ -13,7 +13,13 @@
 
 ## 아직 제공하지 않은 결과
 
-DB owner의 정확한 016 row/DDL commit은 아직 도착하지 않았습니다. Pod UID/state/revision/challenge 컬럼과 row signature를 추정하지 않았습니다. `recordObservationLoss`·challenge 저장·fresh SQL 수락·due 조회·fence 예약·blocked event 저장과 P113의 같은 transaction 연결은 그 계약을 실제로 소비한 뒤 제공할 대상입니다. 현재 저장 성공·type/lint·실제 PG·물리 fencing·provider·HA 합격은 주장하지 않습니다.
+DB owner의 교정된 016 pin `4f1ecdb62365e5400398fb9f2812c1569d0c9066`의 실제 row/DDL을 소비합니다. 시작 producer ID·incarnation·watermark를 모두 저장하며 세 값은 모두 null 또는 모두 유효해야 합니다. 001–015 migration과 공용 row 파일은 이 branch에서 수정하지 않습니다.
+
+`recordObservationLoss(tx, request: RecordObservationLossRequest): Promise<RecordedObservationLoss>`는 이미 전체 Session과 Unit을 잠근 같은 transaction에서 호출합니다. 요청 값은 첫 await 전에 고정합니다. 원 target이 현재 실행이면 DB 최초 시각과 정확히 6시간 뒤 deadline의 episode를 기록하고, 반복 관측 상실은 원 episode를 재사용합니다. 실제 원 attempt이지만 현재 실행이 아니면 이력만 저장합니다. Audit과 outbox는 같은 transaction에 기록합니다.
+
+`requestObservationLoss(pool, request: ObservationLossRequest): Promise<MutationOutcome>`는 P103 receipt-first API와 P113 전체 member 재확인/lock API를 사용합니다. 공용 uncertain COMMIT 처리나 lock 구현을 복제하지 않습니다. P113의 non-stale MISSING/READ_FAILED 경계만 같은 transaction의 위 API에 연결합니다. K8s 관측은 인증된 Agent producer로 승격하지 않고 원 audit reference와 null producer triple로 연결합니다.
+
+Challenge 저장·fresh SQL 수락·due 조회·fence 예약·blocked event 저장은 아직 구현 중입니다. 저장 성공·type/lint·실제 PG·물리 fencing·provider·HA 합격은 주장하지 않습니다. 교정된 016도 첫 PG 검증 전입니다.
 
 PR23 source·시험·asset·본문은 수정하지 않습니다. 원격 검증은 정확한 schema/API와 bridge의 heavy 인계를 받은 뒤 신규 의미 경계만 실행합니다. 최초 PNG는 client 한 owner가 맡으며 해당 고정 URL·commit·heading을 bridge에 먼저 전달합니다. 기존 P113 22개/P103/P112 suite 및 촬영을 반복하지 않습니다.
 

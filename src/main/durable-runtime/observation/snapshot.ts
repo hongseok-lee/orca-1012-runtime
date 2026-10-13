@@ -29,7 +29,7 @@ function stream(source: ProducerStream | null): ProducerStream | null {
   logicalId('producer', result.producerId); text(result.incarnation)
   return result
 }
-function sourceSnapshot(source: ObservationSource): ObservationSource {
+export function snapshotObservationSource(source: ObservationSource): ObservationSource {
   const result = Object.freeze({ kind: source.kind, reference: source.reference,
     stream: stream(source.stream), watermark: source.watermark })
   if (!['K8S_LIST', 'K8S_WATCH', 'TRUSTED_RUNTIME'].includes(result.kind)) {
@@ -37,6 +37,9 @@ function sourceSnapshot(source: ObservationSource): ObservationSource {
   }
   text(result.reference)
   if (result.watermark !== null) { counter('sequence:observation', result.watermark) }
+  if ((result.stream === null) !== (result.watermark === null)) {
+    throw new DurableDatabaseError('OBSERVATION_SOURCE_WATERMARK')
+  }
   return result
 }
 function immutableJson(value: JsonValue): JsonValue {
@@ -56,7 +59,7 @@ export function snapshotObservationLoss(source: ObservationLossRequest): {
 } {
   const actor = authority(source.authority)
   const input = Object.freeze({ operationKey: source.operationKey,
-    target: snapshotObservationTarget(source.target), source: sourceSnapshot(source.source) })
+    target: snapshotObservationTarget(source.target), source: snapshotObservationSource(source.source) })
   text(input.operationKey)
   return Object.freeze({ input, identity: Object.freeze({ key: Object.freeze({ principalId: actor.principalId,
     sessionScope: actor.scope, method: 'observation.record-loss', operationKey: input.operationKey }),
