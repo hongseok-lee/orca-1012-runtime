@@ -1,7 +1,7 @@
 {
   "parent_pr25": "e62bec8427136eae993ad663fee1b5cb6bce9620",
-  "shared_type_pin": "06b655895592f0eced1b66f2a9bf0ee8870b7a32",
-  "shared_types_sha256": "12600cd381d47bcb0e8da85a8000f75e1af70afd81746cd61b7659ea6935131a",
+  "shared_type_pin": "250bc7eafc93c92df1ed3771da7d63d9dc4922cf",
+  "shared_types_sha256": "d7567178bed4667f6aa3fed138f25d71b9bba08caf91796643503d4dc6865e52",
   "original_migrations": [
     {
       "version": "001-catalog.sql",
@@ -61,9 +61,9 @@
     }
   ],
   "015_checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
-  "scope": "로컬 source checksum 인계이며 SQL/PG 검증을 의미하지 않습니다.",
-  "actual_pg": "NOT_RUN",
-  "typecheck": "NOT_RUN",
-  "lint": "NOT_RUN",
+  "scope": "015 첫 소유 PG 사례와 좁은 type/lint의 실제 증거입니다. 이전 schema suite는 실행하지 않았습니다.",
+  "actual_pg": "PASS 1 / FAIL 0 / SKIP 0",
+  "typecheck": "PASS / exit 0",
+  "lint": "initial max-lines failure; declaration formatting correction PASS / exit 0",
   "dev013015": "NOT_AUTHORIZED/NOT_APPLIED"
 }
