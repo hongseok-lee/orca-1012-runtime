@@ -63,11 +63,12 @@ export function createInitialPolicy(revision: string): ResourcePolicy {
     replacementExtra: '3', rollingMs: 86400000, oomHoldMs: 86400000,
     episodeActiveMs: 1800000, downsizeActiveMs: 3600000, downsizeIntervalMs: 3600000,
     failureHoldMs: 86400000, sampleIntervalMs: 15000, maxGapMs: 60000,
-    coveragePercent: '95', rollbackPerOperation: '1'
+    coveragePercent: '95', rollbackPerOperation: '1', memoryMetric: 'WORKING_SET'
   })
 }
 export function validatePolicy(policy: ResourcePolicy): void {
   text(policy.revision)
+  if (!['WORKING_SET', 'RSS'].includes(policy.memoryMetric)) { throw new TypeError('Unknown memory metric') }
   positive(policy.capBytes)
   for (const ratio of [policy.growth, policy.growthPeak, policy.downsize,
     policy.downsizePeak, policy.lowWatermark]) {

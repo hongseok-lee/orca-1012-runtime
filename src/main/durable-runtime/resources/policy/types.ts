@@ -25,6 +25,7 @@ export type ResourcePolicy = {
   readonly maxGapMs: number
   readonly coveragePercent: Decimal
   readonly rollbackPerOperation: Decimal
+  readonly memoryMetric: 'WORKING_SET' | 'RSS'
 }
 export type ProfileEvidence = {
   readonly profileId: string

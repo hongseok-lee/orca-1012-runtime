@@ -26,16 +26,18 @@ export function evaluateRollback(input: RollbackInput): RollbackResult {
   const until = time(input.failedAtMs + policy.failureHoldMs)
   const wrap = (rollback: PolicyDecision, additionalGrowth: PolicyDecision | null = null): RollbackResult =>
     Object.freeze({ rollback, additionalGrowth, downsizeProtectedUntilMs: until, countersMutated: false })
-  if (!input.failedBeforeStable || !['OOM', 'MEMORY_EVICTION'].includes(input.failureClass)) {
+  if (!input.failedBeforeStable || input.failedAtMs > time(input.growthInput.budget.dbNowMs) ||
+    !['OOM', 'MEMORY_EVICTION'].includes(input.failureClass)) {
     return wrap(decision(policy, 'NOT_ELIGIBLE', ['NOT_PRE_STABILITY_MEMORY_FAILURE']))
   }
   if (integer(input.usedRollbacks) >= integer(policy.rollbackPerOperation)) {
     return wrap(decision(policy, 'BLOCKED', ['OPERATION_ROLLBACK_ALREADY_USED']))
   }
   const old = input.previousNormal
-  if (!profileKnown(policy, target, profile, caps) || !profile || !caps || !old || !old.verified ||
+  if (!profileKnown(policy, target, profile, caps) || !profile || !caps || !old ||
+    !profileKnown(policy, old.target, old, caps) || !old.verified ||
     !old.sourceRef || !old.profileRevision || old.profileId !== profile.profileId ||
-    old.target.runtimeUnitId !== target.runtimeUnitId || !old.memoryLimitOmitted ||
+    old.target.runtimeUnitId !== target.runtimeUnitId || old.target.containerName !== target.containerName || !old.memoryLimitOmitted ||
     !old.cpuLimitOmitted || !old.spot || !old.isolated) {
     return wrap(decision(policy, 'NEEDS_ADMISSION_EVIDENCE', ['PREVIOUS_NORMAL_PROFILE_UNKNOWN']))
   }

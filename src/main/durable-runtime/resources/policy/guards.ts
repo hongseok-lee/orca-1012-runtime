@@ -30,8 +30,10 @@ export function profileKnown(policy: ResourcePolicy, target: FailureTarget,
   const minimum = positive(p.minimumMemoryBytes)
   const ratioMin = integer(p.ratio.minBytesPerMillicore)
   const ratioMax = positive(p.ratio.maxBytesPerMillicore)
+  const minimumCpu = positive(p.minimumCpuMillicores)
   if (ratioMin > ratioMax || memory < minimum || cpu < positive(p.minimumCpuMillicores) ||
     memory < cpu * ratioMin || memory > cpu * ratioMax ||
+    minimum < minimumCpu * ratioMin || minimum > minimumCpu * ratioMax ||
     !p.memoryLimitOmitted || !p.cpuLimitOmitted || !p.spot || !p.isolated) { return false }
   positive(p.coldStartMemoryBytes)
   for (const cap of [caps.policyBytes, caps.unitBudgetBytes, caps.quotaBytes,
@@ -55,7 +57,7 @@ export function usablePeak(peak: PeakEvidence, target: FailureTarget, revision: 
   integer(peak.bytes); time(peak.startMs); time(peak.endMs); time(now)
   return sameTarget(peak.target, target) && peak.verified && !peak.cumulative &&
     peak.profileRevision === revision && !!peak.sourceRef && !!peak.windowId &&
-    ['WORKING_SET', 'RSS'].includes(peak.metric) && peak.endMs > peak.startMs &&
+    peak.metric === policy.memoryMetric && peak.endMs > peak.startMs &&
     peak.endMs <= now && peak.startMs >= now - policy.rollingMs
 }
 export function capacityDecision(policy: ResourcePolicy, caps: CapEvidence): PolicyDecision | null {
