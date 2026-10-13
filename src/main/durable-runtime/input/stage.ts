@@ -25,6 +25,8 @@ export async function stageInputInTransaction(
   request: SubmitCommand,
   executorId: ExecutorId
 ) {
+  scope = { ...scope, scope: { ...scope.scope } }
+  context = { ...context, controller: { ...context.controller } }
   requireInputSessionLock(tx, scope.sessionId)
   await assertInputScope(tx, scope)
   request = {

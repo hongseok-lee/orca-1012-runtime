@@ -24,6 +24,8 @@ export async function claimInputEffectInTransaction(
   original: ExternalCommandIdentity,
   executorId: ExecutorId
 ) {
+  scope = { ...scope, scope: { ...scope.scope } }
+  context = { ...context, controller: { ...context.controller } }
   requireInputSessionLock(tx, scope.sessionId)
   await assertInputScope(tx, scope)
   original = { ...original, originalEnvelope: { ...original.originalEnvelope } }

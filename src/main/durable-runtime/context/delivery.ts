@@ -16,6 +16,8 @@ export async function recordContextDeliveryInTransaction(
   frame: RecoveryContextFrame,
   proof: VerifiedContextDeliveryProof
 ) {
+  scope = { ...scope, scope: { ...scope.scope } }
+  proof = { ...proof, providerRef: { ...proof.providerRef } }
   requireInputSessionLock(tx, scope.sessionId)
   await assertInputScope(tx, scope)
   if (
