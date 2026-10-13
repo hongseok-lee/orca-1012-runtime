@@ -1,0 +1,23 @@
+{
+  "capturedAt": "2026-10-13T11:27:51.102Z",
+  "kind": "저장한 최초 실제 PG 결과의 browser 보고 화면입니다. 제품 UI나 native iPhone 화면이 아닙니다.",
+  "targetSourceRevision": "0a5549fda113d5d77db0160d03b3abc222a2c106",
+  "productSourceRevision": "f9133468c8ab07f4595b0502b9f4eb52efc715db",
+  "verificationBaseRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "browserImage": "mcr.microsoft.com/playwright@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645",
+  "viewport": {
+    "width": 1280,
+    "height": 1400
+  },
+  "deviceScaleFactor": 1,
+  "inputSha256": "9885aa6295cf5000d180e2f4b290b734d69dc2c462e01109c99b9a4f2ee0f4c9",
+  "htmlSha256": "6f96f8c2148219f4d7cfa0cec97d99c8c335973b87b16f3f0caba008e96834d5",
+  "pngSha256": "b45c0ceaa744ef9b708fd7791cc37921db1f7ece9a23da1788898a115c6e306c",
+  "savedPgResultsSha256": "7a615f12c54d862a64906fadb3590392981af90522964ef6ba1a350e09b65ba9",
+  "rawNodeTestLogSha256": "8f0120052e92c2294f49aa8e809d98f080d65ea3d2de49719528b4f145921ff0",
+  "actualUrl": "about:blank (setContent from saved actual PG report)",
+  "captureCount": 1,
+  "contextScope": "새 독립 Context이며 기존 pairing/Metro context를 사용하지 않습니다."
+}
