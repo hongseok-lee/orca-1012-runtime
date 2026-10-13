@@ -253,7 +253,7 @@ export async function recordInputCancel(
       aggregateId: request.authority.sessionId,
       aggregateKind: 'session',
       revision: counter('row:session-context', contextRevision),
-      event: { kind: 'INTERRUPT_FIXED_DELIVERY', ...facts }
+      event: { ...facts, kind: 'INTERRUPT_FIXED_DELIVERY' }
     })
   }
   // No desired mode/intent revision/activity update or provider I/O.

@@ -244,6 +244,7 @@ caseTest('Catalog outer receipt and Tab tombstone compose cancel core once; roll
   const revision=await pool.query('SELECT context_revision FROM durable_runtime.sessions WHERE id=$1',[f.authority.sessionId]);assert.deepEqual(revision.rows,before.rows)
   const accepted=await runDurableMutation(pool,outer,callback);assert.equal(accepted.status,'COMMITTED')
   assert.equal(field(response(accepted),'interruptStatus'),'REQUESTED')
+  const hint=await pool.query('SELECT event FROM durable_runtime.outbox_events WHERE aggregate_id=$1',[f.authority.sessionId]);assert.ok(hint.rows.some(row=>row.event.kind==='INTERRUPT_FIXED_DELIVERY'&&row.event.targetMessageId===f.messageId))
   const replay=await runDurableMutation(pool,outer,async()=>{throw new Error('OUTER_REPLAY_MUST_NOT_RUN_CORE')});assert.equal(replay.status,'REPLAYED')
   const intents=await pool.query('SELECT count(*)::text AS n FROM durable_runtime.cancel_intents WHERE target_message_id=$1',[f.messageId]);assert.equal(intents.rows[0].n,'1')
   await assert.rejects(withDurableTransaction(pool,tx=>recordInputCancel(tx,request,f.context.runtimeUnitId)),{code:'INPUT_SESSION_LOCK_REQUIRED'})
