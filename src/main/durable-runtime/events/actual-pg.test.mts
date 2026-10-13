@@ -82,7 +82,7 @@ async function fixture(): Promise<Fixture> {
   await registerEventProducer(pool, producer);
   return { producer, stream: { producerId, incarnation: workload.incarnation }, authority, sessions };
 }
-function event(f: Fixture, n: number, id = randomUUID(), targets = f.sessions) {
+function event(f: Fixture, n: number, id: string = randomUUID(), targets = f.sessions) {
   return { eventId: logicalId("event", id), sequence: counter("sequence:producer", String(n)), payload: { kind: "DB_MODULE_FIXTURE", n }, targetSessionIds: targets };
 }
 async function claim(f: Fixture, via: Pool = pool): Promise<EventClaim> {
