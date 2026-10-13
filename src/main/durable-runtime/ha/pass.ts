@@ -41,7 +41,7 @@ export type ControllerPassResult = { readonly status: 'FINISHED' | 'STOPPED'; re
   readonly items: readonly ControllerPassItem[] }
 
 function snapshotInventory(caller: ControllerPassRequest['inventory']): ControllerPassRequest['inventory'] {
-  if (!caller) return undefined
+  if (!caller) {return undefined}
   const transport = caller.transport
   // Method references and their original receivers are fixed now. The actual
   // AbortSignal is still supplied at invocation; transport state is not frozen.
@@ -65,9 +65,9 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   positiveInteger(request.externalBudgetMs)
   counter('controller-term', request.controller.term)
   const startingLease = session.lease
-  if (!startingLease || session.signal.aborted) return { status: 'STOPPED', reason: 'NO_CONFIRMED_LEASE', items: [] }
+  if (!startingLease || session.signal.aborted) {return { status: 'STOPPED', reason: 'NO_CONFIRMED_LEASE', items: [] }}
   if (request.controller.scope !== startingLease.scope || request.controller.owner !== startingLease.owner ||
-      request.controller.term !== startingLease.term) throw new DurableDatabaseError('CONTROLLER_PASS_IDENTITY')
+      request.controller.term !== startingLease.term) {throw new DurableDatabaseError('CONTROLLER_PASS_IDENTITY')}
   // This monotonic timer bounds external I/O only. It never decides a PG
   // operation deadline/retry or lease expiry.
   const end = performance.now() + request.externalBudgetMs
@@ -76,19 +76,19 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   const sessionSignal = session.signal
   sessionSignal.addEventListener('abort', abort, { once: true })
   request.signal?.addEventListener('abort', abort, { once: true })
-  if (sessionSignal.aborted || request.signal?.aborted) abort()
+  if (sessionSignal.aborted || request.signal?.aborted) {abort()}
   const items: ControllerPassItem[] = []
   let work = 0
 
   async function gate(): Promise<void> {
-    if (local.signal.aborted) throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')
+    if (local.signal.aborted) {throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')}
     await session.assertCurrent(pool, startingLease!, local.signal)
   }
 
   async function external<T>(invoke: (signal: AbortSignal) => Promise<T>): Promise<T> {
     await gate()
     const remaining = end - performance.now()
-    if (remaining <= 0) throw new DurableDatabaseError('CONTROLLER_EXTERNAL_BUDGET')
+    if (remaining <= 0) {throw new DurableDatabaseError('CONTROLLER_EXTERNAL_BUDGET')}
     let timer: ReturnType<typeof setTimeout> | undefined
     let cancelled: (() => void) | undefined
     const timeout = new Promise<never>((_, reject) => {
@@ -100,7 +100,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
         if (left <= 0) {
           reject(new DurableDatabaseError('CONTROLLER_EXTERNAL_TIMEOUT'))
           local.abort()
-        } else timer = setTimeout(tick, Math.min(left, 2_147_483_647))
+        } else {timer = setTimeout(tick, Math.min(left, 2_147_483_647))}
       }
       timer = setTimeout(tick, Math.min(remaining, 2_147_483_647))
     })
@@ -108,14 +108,14 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
       // Late transport resolution is observed by Promise.race but discarded;
       // it cannot schedule another effect or feed a late watch event.
       const result = await Promise.race([Promise.resolve().then(() => {
-        if (local.signal.aborted) throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')
+        if (local.signal.aborted) {throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')}
         return invoke(local.signal)
       }), timeout])
       await gate()
       return result
     } finally {
-      if (timer) clearTimeout(timer)
-      if (cancelled) local.signal.removeEventListener('abort', cancelled)
+      if (timer) {clearTimeout(timer)}
+      if (cancelled) {local.signal.removeEventListener('abort', cancelled)}
     }
   }
 
@@ -131,9 +131,9 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     // Unit projection does not currently appear in the due list.
     const candidates: RuntimeUnitId[] = [...new Set([...due, ...snapshot.commands.map(c => c.runtime_unit_id)])]
     for (const unitId of candidates) {
-      if (!room()) break
+      if (!room()) {break}
       const unit = units.get(unitId)
-      if (!unit) continue // Never use a global due result to adopt another scope.
+      if (!unit) {continue} // Never use a global due result to adopt another scope.
       await gate()
       const command = pending.get(unitId)
       const operation = command
@@ -178,14 +178,14 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
         // no ACCEPTED/EXECUTING/UNKNOWN command is executed a second time here.
         await external(signal => request.lookupOriginal!(command, signal))
         items.push({ kind: 'RECONCILE', identity: command.id, disposition: 'LOOKUP_ORIGINAL' })
-      } else items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })
+      } else {items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })}
     }
     for (const head of snapshot.queueHeads) {
-      if (!room()) break
-      if (head.state === 'RETRY' && !head.retry_due) continue
+      if (!room()) {break}
+      if (head.state === 'RETRY' && !head.retry_due) {continue}
       const selected = request.eventWork?.(head)
       // No handler means no claim/attempt charge and certainly no DONE.
-      if (!selected || typeof selected.handler !== 'function') continue
+      if (!selected || typeof selected.handler !== 'function') {continue}
       const options: ConsumerOptions = Object.freeze({ claimDurationMs: positiveInteger(selected.options.claimDurationMs),
         operationIds: selected.options.operationIds === undefined ? undefined
           : Object.freeze(selected.options.operationIds.map(id => logicalId('operation', id))) })

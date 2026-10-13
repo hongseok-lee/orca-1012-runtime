@@ -12,7 +12,7 @@ export class ControllerInstance {
   readonly owner: string
 
   constructor(scope: typeof CONTROLLER_SCOPE) {
-    if (scope !== CONTROLLER_SCOPE) throw new DurableDatabaseError('CONTROLLER_SCOPE')
+    if (scope !== CONTROLLER_SCOPE) {throw new DurableDatabaseError('CONTROLLER_SCOPE')}
     this.scope = scope
     this.processId = randomUUID()
     this.owner = `${scope}:${this.processId}`
@@ -26,7 +26,7 @@ export type LeaseIdentity = ExpectedLease & { readonly scope: string; readonly o
 export type LeaseRecord = LeaseIdentity & { readonly expiresAt: string }
 
 export function positiveInteger(value: number): number {
-  if (!Number.isSafeInteger(value) || value <= 0) throw new DurableDatabaseError('CONTROLLER_BUDGET')
+  if (!Number.isSafeInteger(value) || value <= 0) {throw new DurableDatabaseError('CONTROLLER_BUDGET')}
   return value
 }
 

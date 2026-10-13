@@ -33,17 +33,17 @@ export class ControllerLeaseSession {
   }
 
   private begin(kind: 'ACQUIRE' | 'RENEW' | 'RELEASE'): number {
-    if (this.changing) throw new DurableDatabaseError('CONTROLLER_LEASE_BUSY')
+    if (this.changing) {throw new DurableDatabaseError('CONTROLLER_LEASE_BUSY')}
     this.changing = kind
     return this.generation
   }
 
   private accept(result: AcquireLeaseResult | RenewLeaseResult | ReleaseLeaseResult, generation: number): void {
     // A concurrent pass failure/manual stop cannot be undone by a late reply.
-    if (generation !== this.generation) return
+    if (generation !== this.generation) {return}
     if (result.status !== 'ACTIVE') { this.stop(); return }
     // Only the current API invocation's confirmed transaction may reach here.
-    if (this.cancellation.signal.aborted) this.cancellation = new AbortController()
+    if (this.cancellation.signal.aborted) {this.cancellation = new AbortController()}
     this.active = result.lease
   }
 
@@ -58,9 +58,9 @@ export class ControllerLeaseSession {
   }
 
   async renew(): Promise<RenewLeaseResult> {
-    if (this.changing) throw new DurableDatabaseError('CONTROLLER_LEASE_BUSY')
+    if (this.changing) {throw new DurableDatabaseError('CONTROLLER_LEASE_BUSY')}
     const expected = this.lease
-    if (!expected) { this.stop(); return Promise.resolve({ status: 'LOST', reason: 'MISSING' }) }
+    if (!expected) { this.stop(); return ({ status: 'LOST', reason: 'MISSING' }) }
     const generation = this.begin('RENEW')
     // Publish the completion barrier synchronously, before another pass gate
     // can run. It includes accepting the confirmed record and clearing state.
@@ -87,13 +87,13 @@ export class ControllerLeaseSession {
 
   private async waitForRenewal(signal: AbortSignal, cancellation: AbortSignal): Promise<void> {
     const pending = this.renewal
-    if (!pending) return
+    if (!pending) {return}
     let aborted: (() => void) | undefined
     const stopped = new Promise<never>((_, reject) => {
       aborted = () => reject(new DurableDatabaseError('CONTROLLER_PASS_CANCELLED'))
       signal.addEventListener('abort', aborted, { once: true })
       cancellation.addEventListener('abort', aborted, { once: true })
-      if (signal.aborted || cancellation.aborted) aborted()
+      if (signal.aborted || cancellation.aborted) {aborted()}
     })
     try { await Promise.race([pending, stopped]) }
     finally {
@@ -108,7 +108,7 @@ export class ControllerLeaseSession {
     signal: AbortSignal, read: (lease: LeaseRecord) => Promise<T>): Promise<T> {
     const cancellation = this.signal
     const current = (): LeaseRecord => {
-      if (signal.aborted || cancellation.aborted) throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')
+      if (signal.aborted || cancellation.aborted) {throw new DurableDatabaseError('CONTROLLER_PASS_CANCELLED')}
       const lease = this.lease
       if (!lease || lease.scope !== expected.scope || lease.owner !== expected.owner || lease.term !== expected.term) {
         throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')
@@ -125,7 +125,7 @@ export class ControllerLeaseSession {
       catch (error) {
         const safe = safeDatabaseError(error)
         // A concurrent healthy renewal must not hide a real database failure.
-        if (safe.code !== 'CONTROLLER_LEASE_STALE') throw safe
+        if (safe.code !== 'CONTROLLER_LEASE_STALE') {throw safe}
         stale = safe
       }
       current()
@@ -134,10 +134,10 @@ export class ControllerLeaseSession {
       await this.waitForRenewal(signal, cancellation)
       const refreshed = current()
       if (refreshed.revision !== lease.revision) {
-        if (BigInt(refreshed.revision) <= BigInt(lease.revision)) throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')
+        if (BigInt(refreshed.revision) <= BigInt(lease.revision)) {throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')}
         continue // Read-only revalidation, never replay a mutation or effect.
       }
-      if (stale) throw stale
+      if (stale) {throw stale}
       return result!.value
     }
   }
