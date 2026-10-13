@@ -1,5 +1,5 @@
 export * from './types.ts'
-export { prepareFailureObservation, evidenceTime, evidenceDigest, targetKey, resolveEvidenceAliases } from './normalize.ts'
+export { prepareFailureObservation, evidenceTime, evidenceDigest, targetKey, resolveEvidenceAliases, originalEvidenceMatches } from './normalize.ts'
 export { classifyFailureEvidence } from './classify.ts'
 export { collectKubernetesEvidence, collectUnboundPodSample } from './kubernetes.ts'
 export type { KubernetesCollectionRequest, KubernetesReadBatch, ReadonlyKubernetesTransport, PlatformPodOrigin, PodSampleRequest, ReadonlyPodSampleTransport } from './kubernetes.ts'

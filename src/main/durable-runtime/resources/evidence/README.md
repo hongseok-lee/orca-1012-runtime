@@ -2,7 +2,13 @@
 
 원 Unit, attempt, Pod UID, execution epoch, container ID 및 incarnation을 보존합니다. `prepareFailureObservation()`은 입력을 동기적으로 검증·복사하고 immutable observation과 정밀한 종료 시각 또는 counter transition의 alias를 반환합니다. `resolveEvidenceAliases()`는 호출자가 PG에서 읽은 alias 소유권의 충돌을 반환하며 메모리 Map을 사건의 정본으로 사용하지 않습니다. Incident owner가 PG의 원문·alias 불변성과 UNIQUE 경계를 적용합니다.
 
-`collectKubernetesEvidence()`는 주입된 read-only transport를 사용합니다. 원 요청을 첫 await 전에 복사하고 원 Pod UID와 namespace/name을 대조합니다. 현재 container ID와 과거 lastState 종료 ID를 분리하며 resourceVersion을 숫자로 해석하지 않습니다. 실제 admitted requests/limits와 desired 값을 각각 보존합니다. 같은 배치와 Node UID의 완전한 목록 및 검증된 플랫폼 출처가 없으면 격리를 확정하지 않습니다. Pod 이름이나 namespace만으로 플랫폼 workload를 제외하지 않습니다.
+`collectKubernetesEvidence()`는 주입된 read-only transport를 사용합니다. 원 요청을 첫 await 전에 복사하고 원 Pod UID와 namespace/name을 대조합니다. 현재 container ID와 과거 lastState 종료 ID를 분리하며 resourceVersion을 숫자로 해석하지 않습니다. Caller desired, 현재 spec과 status의 표본, 원 admitted/applied를 각각 보존합니다. 현재 status의 resources도 새로운 container의 값이면 과거 lastState 자원으로 사용하지 않습니다. 같은 배치와 Node UID의 완전한 목록 및 검증된 플랫폼 출처가 없으면 격리를 확정하지 않습니다. Pod 이름이나 namespace만으로 플랫폼 workload를 제외하지 않습니다.
+
+`ResourceObservation`의 `desired`, `observedSpec`, `observedStatus`는 현재 관측 plane입니다. `admitted`와 `applied`는 각각 `values`와 `OriginalObservationProvenance`를 가진 별도 원 관측 plane이며, 없으면 null로 둡니다. Provenance는 원 target 전체, 정확한 종료/counter alias인 `eventKey`, immutable source ref 및 관측 시각을 보존합니다. `PlacementObservation.provenance`도 같은 원 target/event 연결을 사용합니다. 분류기는 `originalEvidenceMatches()`로 원 tuple과 alias를 대조한 applied/placement만 증설 후보의 근거로 사용합니다. 현재 spec의 limit 필드가 없다는 사실이나 현재 LIST의 1개 사용자 Pod만으로 과거 limitless/isolated를 확정하지 않습니다.
+
+Transport의 선택적 `originalResources`와 `originalPlacement`는 인증된 원 증거 수집 경계가 실제로 연결한 보존 자료만 제공합니다. 이 모듈은 현재 표본을 원 증거로 승격하는 성공 factory를 제공하지 않습니다. 그 실제 원 증거 연결은 아직 미연결입니다. 연결 자료가 없으면 원 자원·배치 미확인을 남기며 자동 증설 후보는 false입니다. 이미 입증된 원 limitless/isolated OOM 또는 memory eviction은 gVisor counter 미노출이나 낮은 마지막 사용 표본만으로 부정하지 않습니다.
+
+Child OOM에서 process identity가 null이면 parent/time의 TERMINATION alias를 만들지 않습니다. 원 child cgroup/process counter identity가 독립적으로 확인됐으면 그 COUNTER_TRANSITION alias만 보존하며 불명 종료시각 alias와 결합하지 않습니다.
 
 `collectCgroupSample()`은 지정된 원 cgroup identity의 `memory.events.local`, `memory.peak`, `memory.max`만 읽습니다. 미노출, 권한 실패, 읽기 실패 및 잘못된 형식을 구분합니다. `cgroupCounterTransition()`은 같은 target/cgroup/process/incarnation의 시간 순서가 있는 서로 다른 표본에서만 증가·동일·reset을 구분하며 누락값을 0으로 대체하지 않습니다.
 
@@ -16,6 +22,6 @@ dev Pod에는 제품 Unit/attempt binding이 없으므로 `collectUnboundPodSamp
 
 Root/bridge의 heavy 실행 자리 인계 뒤 승인된 backend에서만 최초 fixture를 실행합니다. 공유 cache는 DB owner가 준비한 읽기 전용 cache를 재사용하며 이 모듈은 설치를 수행하지 않습니다. 소유 NFS source의 승인 포인터를 execution mirror `/tmp/orca-p121-evidence-execution`에 합성하고 main 파일과 소유 변경 digest를 기록합니다. live source나 runtime을 자동 sync/restart하지 않습니다.
 
-전용 TypeScript 입력은 `tsconfig.verification.json`입니다. 실행할 때 DB tools cache의 `@types/node` 경로를 `--typeRoots`로 지정합니다. `prepare-verification.mjs`는 기존 tools cache의 esbuild를 사용해 두 test entry만 Node 24용 `.mjs`로 변환합니다. 이후 `node --test --test-concurrency=1 verification/*.test.mjs`를 실행합니다. scoped lint도 같은 소유 디렉터리만 확인합니다. 이미 통과한 다른 모듈 suite는 반복하지 않습니다.
+전용 TypeScript 입력은 `tsconfig.verification.json`입니다. 실행할 때 DB tools cache의 `@types/node` 경로를 `--typeRoots`로 지정합니다. `prepare-verification.mjs`는 기존 tools cache의 esbuild를 사용해 세 test entry만 Node 24용 `.mjs`로 변환합니다. 이후 `node --test --test-concurrency=1 verification/*.test.mjs`를 실행합니다. 최초 미실행 묶음에 spec/status 불일치, old lastState와 새 container 자원 혼합, 원 종료 배치 미확인 및 child process 누락의 신규 4경계를 포함했습니다. scoped lint도 같은 소유 디렉터리만 확인합니다. 이미 통과한 다른 모듈 suite는 반복하지 않습니다.
 
 현재 fixture/typecheck/lint와 실제 read-only 표본은 아직 미실행입니다. 원격 실행 점유를 인계받으면 실패 원문과 focused 교정을 구분해 기록합니다. 실제 결과 화면은 아직 없으며 최초 실제 검증 후 기존 Expo browser 경로로 한 번 캡처합니다. 실제 Agent OOM·격리·물리 fencing·자원 정책 활성화는 이 작업에서 실행하지 않습니다.

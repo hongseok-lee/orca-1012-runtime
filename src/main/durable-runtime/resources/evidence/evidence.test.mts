@@ -15,7 +15,7 @@ const transition: CounterTransition = { cgroupIdentity: 'child-cgroup', processI
   counter: 'oom_kill', previous: '0', current: '1', previousSampleId: 'before', currentSampleId: 'after' }
 const cases: [string, Partial<FailureObservationInput>][] = [
   ['ISOLATED_NODE_MEMORY_EXHAUSTION', {}],
-  ['CONTAINER_LIMIT_OOM', { resources: { ...observation().resources!, admittedMemoryLimit: '512Mi' }, signals: { ...signals, oomKilled: true, limitOom: true } }],
+  ['CONTAINER_LIMIT_OOM', { resources: { ...observation().resources!, applied: { ...observation().resources!.applied!, values: { ...observation().resources!.applied!.values, memoryLimit: '512Mi' } } }, signals: { ...signals, oomKilled: true, limitOom: true } }],
   ['SHARED_NODE_MEMORY_PRESSURE', { signals: { ...signals, memoryEviction: true }, placement: { ...observation().placement!, otherUserPodUids: ['user-2'] } }],
   ['PROCESS_HEAP_LIMIT', { sourceKind: 'SUPERVISOR', signals: { ...signals, heapLimit: true } }],
   ['CHILD_CGROUP_OOM', { sourceKind: 'CGROUP', termination: null, counterTransition: transition,
@@ -33,7 +33,7 @@ test('missing gVisor cgroup and low periodic usage do not negate explicit memory
   assert.equal(result.classification, 'ISOLATED_NODE_MEMORY_EXHAUSTION'); assert.ok(result.missing.includes('CGROUP_NOT_EXPOSED'))
 })
 test('OOMKilled plus a finite limit is insufficient to exclude global OOM', () => {
-  const result = classify({ resources: { ...observation().resources!, admittedMemoryLimit: '512Mi' } })
+  const result = classify({ resources: { ...observation().resources!, applied: { ...observation().resources!.applied!, values: { ...observation().resources!.applied!.values, memoryLimit: '512Mi' } } } })
   assert.equal(result.classification, 'UNKNOWN_MEMORY_FAILURE'); assert.equal(result.automaticGrowthCandidate, false)
 })
 test('arbitrary stderr, unverified source, non-Agent and absent placement cannot authorize growth', () => {
@@ -105,7 +105,7 @@ test('collector snapshots target, Date and desired resources before await; opaqu
     ;(r.desired as { memoryRequest: string }).memoryRequest = '9Gi'
     assert.equal(captured.target.runtimeContainerId, 'containerd://old'); return batch()
   } }, r)
-  assert.equal(o.input.observedAt, '2026-10-13T11:00:00.000Z'); assert.equal(o.input.resources!.desiredMemoryRequest, '512Mi')
+  assert.equal(o.input.observedAt, '2026-10-13T11:00:00.000Z'); assert.equal(o.input.resources!.desired.memoryRequest, '512Mi')
 })
 test('duplicates, Pod replacement, placement gap and read failures preserve UNKNOWN', async () => {
   const bad = batch(); const p = bad.pod as ReturnType<typeof pod>; p.status.containerStatuses.push(p.status.containerStatuses[0])

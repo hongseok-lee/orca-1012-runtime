@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "files": ["index.ts", "evidence.test.mts", "normalize.test.mts"]
+  "files": ["index.ts", "evidence.test.mts", "normalize.test.mts", "original-provenance.test.mts"]
 }

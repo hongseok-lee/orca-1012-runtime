@@ -1,5 +1,5 @@
 import type { ClassificationResult, FailureClass, PreparedFailureObservation } from './types.ts'
-import { targetKey } from './normalize.ts'
+import { targetKey, originalEvidenceMatches } from './normalize.ts'
 
 export function classifyFailureEvidence(observations: readonly PreparedFailureObservation[]): ClassificationResult {
   const reasons = new Set<string>(), missing = new Set<string>(), conflicts = new Set<string>()
@@ -30,12 +30,14 @@ export function classifyFailureEvidence(observations: readonly PreparedFailureOb
   }
   const termKeys = new Set(trusted.flatMap(o => o.aliases.filter(a => a.kind === 'TERMINATION').map(a => a.key)))
   if (termKeys.size > 1) conflicts.add('DIFFERENT_TERMINATIONS')
-  const placements = trusted.flatMap(o => o.input.placement ? [o.input.placement] : [])
+  const placements = trusted.flatMap(o => o.input.placement && originalEvidenceMatches(o, o.input.placement.provenance) ? [o.input.placement] : [])
+  if (trusted.some(o => !o.input.placement || !originalEvidenceMatches(o, o.input.placement.provenance))) missing.add('ORIGINAL_PLACEMENT_UNPROVEN')
   const complete = placements.filter(p => p.complete && !p.unknownPodUids.length)
   if (new Set(complete.map(p => p.nodeUid)).size > 1) conflicts.add('PLACEMENT_NODE_CHANGED')
   if (complete.some(p => p.otherUserPodUids.length) && complete.some(p => !p.otherUserPodUids.length)) conflicts.add('PLACEMENT_DISAGREEMENT')
-  const resourceSamples = trusted.flatMap(o => o.input.resources ? [o.input.resources] : [])
-  if (new Set(resourceSamples.map(r => r.admittedMemoryLimit)).size > 1) conflicts.add('ADMITTED_LIMIT_CHANGED')
+  const resourceSamples = trusted.flatMap(o => o.input.resources?.applied && originalEvidenceMatches(o, o.input.resources.applied.provenance) ? [o.input.resources.applied.values] : [])
+  if (trusted.some(o => !o.input.resources?.applied || !originalEvidenceMatches(o, o.input.resources.applied.provenance))) missing.add('ORIGINAL_APPLIED_RESOURCES_UNPROVEN')
+  if (new Set(resourceSamples.map(r => r.memoryLimit)).size > 1) conflicts.add('ORIGINAL_APPLIED_LIMIT_DISAGREEMENT')
   if (!trusted.length) missing.add('NO_AUTHENTICATED_RESOLVED_EVIDENCE')
   const finish = (classification: FailureClass, candidate = false): ClassificationResult => Object.freeze({
     classification, reasons: Object.freeze([...reasons]), missing: Object.freeze([...missing]),
@@ -62,7 +64,7 @@ export function classifyFailureEvidence(observations: readonly PreparedFailureOb
   if (nodeFailure && complete.some(p => p.otherUserPodUids.length > 0)) {
     reasons.add('NODE_MEMORY_FAILURE_AND_USER_COLOCATION'); return finish('SHARED_NODE_MEMORY_PRESSURE')
   }
-  const finiteLimit = resourceSamples.some(r => r.admittedMemoryLimit !== null && r.admittedMemoryLimit !== 'max')
+  const finiteLimit = resourceSamples.some(r => r.memoryLimit !== null && r.memoryLimit !== 'max')
   if (any('limitOom') && finiteLimit && !nodeFailure) {
     reasons.add('EXPLICIT_CONTAINER_LIMIT_OOM')
     if (trusted.some(o => o.input.defaultLimitlessProfile)) reasons.add('MEMORY_LIMIT_PROFILE_DRIFT')
@@ -72,7 +74,7 @@ export function classifyFailureEvidence(observations: readonly PreparedFailureOb
     missing.add('OOMKILLED_WITH_LIMIT_DOES_NOT_EXCLUDE_GLOBAL_OOM'); return finish('UNKNOWN_MEMORY_FAILURE')
   }
   const isolated = complete.some(p => p.targetPodUid === trusted[0].input.target.podUid && p.otherUserPodUids.length === 0)
-  const limitless = resourceSamples.length > 0 && resourceSamples.every(r => r.admittedMemoryLimit === null || r.admittedMemoryLimit === 'max')
+  const limitless = resourceSamples.length > 0 && resourceSamples.every(r => r.memoryLimit === null || r.memoryLimit === 'max')
   const eligible = trusted.every(o => o.input.workloadKind === 'AGENT' && o.input.profileVerified && o.input.defaultLimitlessProfile)
   if (isolated && limitless && eligible && (any('oomKilled') || nodeFailure)) {
     reasons.add('ISOLATED_AGENT_LIMITLESS_MEMORY_FAILURE')

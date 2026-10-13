@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
 import { counter, logicalId } from '../../../../shared/durable-runtime/identity.ts'
 import type { EvidenceAlias, EvidenceJson, EvidenceTime, FailureObservationInput,
-  FailureTarget, PreparedFailureObservation, ExistingAliasBinding, AliasResolution } from './types.ts'
+  FailureTarget, PreparedFailureObservation, ExistingAliasBinding, AliasResolution,
+  OriginalObservationProvenance, ResourceValues, BoundResourceObservation } from './types.ts'
 
 export function text(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value || value.includes('\u0000')) throw new Error('EVIDENCE_INPUT:' + name)
@@ -67,6 +68,21 @@ function integer(value: number | null): number | null {
   if (value !== null && (!Number.isSafeInteger(value) || value < 0)) throw new Error('EVIDENCE_INPUT:integer')
   return value
 }
+function provenanceSnapshot(raw: OriginalObservationProvenance): OriginalObservationProvenance {
+  return Object.freeze({ target: snapshotTarget(raw.target), eventKey: text(raw.eventKey, 'original event key'),
+    sourceRef: text(raw.sourceRef, 'original evidence ref'), observedAt: evidenceTime(raw.observedAt).original })
+}
+function resourceValues(raw: ResourceValues): ResourceValues {
+  return Object.freeze({ memoryRequest: nullableText(raw.memoryRequest), memoryLimit: nullableText(raw.memoryLimit),
+    cpuRequest: nullableText(raw.cpuRequest), cpuLimit: nullableText(raw.cpuLimit) })
+}
+function boundResources(raw: BoundResourceObservation | null): BoundResourceObservation | null {
+  return raw === null ? null : Object.freeze({ values: resourceValues(raw.values), provenance: provenanceSnapshot(raw.provenance) })
+}
+export function originalEvidenceMatches(observation: PreparedFailureObservation, provenance: OriginalObservationProvenance | null): boolean {
+  return provenance !== null && targetKey(observation.input.target) === targetKey(provenance.target) &&
+    observation.aliases.some(alias => alias.key === provenance.eventKey)
+}
 export function prepareFailureObservation(raw: FailureObservationInput): PreparedFailureObservation {
   const target = snapshotTarget(raw.target)
   const observedTime = evidenceTime(raw.observedAt)
@@ -98,14 +114,15 @@ export function prepareFailureObservation(raw: FailureObservationInput): Prepare
     childOom: bool(s.childOom), parentAlive: s.parentAlive === null ? null : bool(s.parentAlive),
     otherTermination: bool(s.otherTermination) })
   const resources = raw.resources ? Object.freeze({
-    desiredMemoryRequest: nullableText(raw.resources.desiredMemoryRequest), desiredMemoryLimit: nullableText(raw.resources.desiredMemoryLimit),
-    admittedMemoryRequest: nullableText(raw.resources.admittedMemoryRequest), admittedMemoryLimit: nullableText(raw.resources.admittedMemoryLimit),
-    admittedCpuRequest: nullableText(raw.resources.admittedCpuRequest), admittedCpuLimit: nullableText(raw.resources.admittedCpuLimit)
+    desired: resourceValues(raw.resources.desired), observedSpec: raw.resources.observedSpec === null ? null : resourceValues(raw.resources.observedSpec),
+    observedStatus: raw.resources.observedStatus === null ? null : Object.freeze({ containerId: nullableText(raw.resources.observedStatus.containerId), values: resourceValues(raw.resources.observedStatus.values) }),
+    admitted: boundResources(raw.resources.admitted), applied: boundResources(raw.resources.applied)
   }) : null
   const placement = raw.placement ? Object.freeze({ batchId: text(raw.placement.batchId, 'batch'),
     nodeUid: text(raw.placement.nodeUid, 'node'), targetPodUid: text(raw.placement.targetPodUid, 'placement target'),
     complete: bool(raw.placement.complete), otherUserPodUids: strings(raw.placement.otherUserPodUids),
-    platformPodUids: strings(raw.placement.platformPodUids), unknownPodUids: strings(raw.placement.unknownPodUids) }) : null
+    platformPodUids: strings(raw.placement.platformPodUids), unknownPodUids: strings(raw.placement.unknownPodUids),
+    provenance: raw.placement.provenance === null ? null : provenanceSnapshot(raw.placement.provenance) }) : null
   const input = Object.freeze({ observationId: text(raw.observationId, 'observationId'),
     sourceDedupKey: text(raw.sourceDedupKey, 'sourceDedupKey'), sourceKind: raw.sourceKind,
     sourceRef: text(raw.sourceRef, 'sourceRef'), target, observedAt: observedTime.original,
@@ -124,6 +141,7 @@ export function prepareFailureObservation(raw: FailureObservationInput): Prepare
   const key = targetKey(target)
   if (termination) {
     if (termination.containerId !== target.runtimeContainerId || termination.incarnation !== target.incarnation) issues.push('TERMINATION_IDENTITY_MISMATCH')
+    else if (signals.childOom && termination.processIdentity === null) issues.push('CHILD_PROCESS_IDENTITY_MISSING')
     else if (canAlias) {
       const value = snapshotJson({ target: key, process: signals.childOom ? termination.processIdentity : null, finishedAt: finishedTime!.epochNanoseconds })
       aliases.push(Object.freeze({ kind: 'TERMINATION', key: 'termination:' + evidenceDigest(value), value }))
@@ -133,7 +151,8 @@ export function prepareFailureObservation(raw: FailureObservationInput): Prepare
     if (transition.incarnation !== target.incarnation) issues.push('COUNTER_IDENTITY_MISMATCH')
     else if (BigInt(transition.current) < BigInt(transition.previous)) issues.push('COUNTER_RESET')
     else if (transition.current === transition.previous || transition.currentSampleId === transition.previousSampleId) issues.push('COUNTER_NO_TRANSITION')
-    else if (termination && (termination.processIdentity === null || termination.processIdentity !== transition.processIdentity)) issues.push('ALIAS_LINK_UNPROVEN')
+    else if (termination && !(signals.childOom && termination.processIdentity === null) &&
+      (termination.processIdentity === null || termination.processIdentity !== transition.processIdentity)) issues.push('ALIAS_LINK_UNPROVEN')
     else if (canAlias) {
       const value = snapshotJson({ target: key, cgroup: transition.cgroupIdentity, process: transition.processIdentity,
         counter: transition.counter, previous: transition.previous, current: transition.current })

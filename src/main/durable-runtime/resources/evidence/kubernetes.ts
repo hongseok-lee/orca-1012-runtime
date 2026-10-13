@@ -1,5 +1,5 @@
 import type { FailureObservationInput, FailureTarget, PreparedFailureObservation, PlacementObservation,
-  ResourceObservation, TerminationObservation, MemorySignals } from './types.ts'
+  ResourceObservation, ResourceValues, TerminationObservation, MemorySignals } from './types.ts'
 import { evidenceTime, prepareFailureObservation, snapshotTarget, text } from './normalize.ts'
 
 type ObjectValue = Record<string, unknown>
@@ -13,11 +13,22 @@ function stringOrNull(value: unknown): string | null {
   if (value === undefined || value === null) return null
   return text(value, 'Kubernetes field')
 }
-function resourceSnapshot(container: ObjectValue, desired: KubernetesCollectionRequest['desired']): ResourceObservation {
-  const resources = optional(container.resources), requests = optional(resources.requests), limits = optional(resources.limits)
-  return Object.freeze({ desiredMemoryRequest: desired.memoryRequest, desiredMemoryLimit: desired.memoryLimit,
-    admittedMemoryRequest: stringOrNull(requests.memory), admittedMemoryLimit: stringOrNull(limits.memory),
-    admittedCpuRequest: stringOrNull(requests.cpu), admittedCpuLimit: stringOrNull(limits.cpu) })
+function resourceValues(raw: unknown): ResourceValues {
+  const resources = optional(raw), requests = optional(resources.requests), limits = optional(resources.limits)
+  return Object.freeze({ memoryRequest: stringOrNull(requests.memory), memoryLimit: stringOrNull(limits.memory),
+    cpuRequest: stringOrNull(requests.cpu), cpuLimit: stringOrNull(limits.cpu) })
+}
+function resourceSnapshot(container: ObjectValue, status: ObjectValue, desired: KubernetesCollectionRequest['desired'],
+  original: KubernetesReadBatch['originalResources']): ResourceObservation {
+  return Object.freeze({
+    desired: Object.freeze({ memoryRequest: desired.memoryRequest, memoryLimit: desired.memoryLimit, cpuRequest: null, cpuLimit: null }),
+    observedSpec: resourceValues(container.resources),
+    observedStatus: status.resources === undefined || status.resources === null ? null : Object.freeze({
+      containerId: stringOrNull(status.containerID), values: resourceValues(status.resources) }),
+    // Spec and current status are diagnostic snapshots. Neither proves the
+    // admission/applied plane of the original termination, especially lastState.
+    admitted: original?.admitted ?? null, applied: original?.applied ?? null
+  })
 }
 export interface KubernetesCollectionRequest {
   readonly target: FailureTarget
@@ -48,6 +59,8 @@ export interface KubernetesReadBatch {
   readonly placementComplete: boolean
   readonly placementNodeUid: string
   readonly platformOrigins: readonly PlatformPodOrigin[]
+  readonly originalResources?: Pick<ResourceObservation, 'admitted' | 'applied'> | null
+  readonly originalPlacement?: PlacementObservation | null
 }
 // Only the authenticated workload/control-plane boundary may supply this
 // transport. No kubectl shell, credential setup, mutable client singleton or
@@ -96,8 +109,8 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
     let restartCount: number | null = null, currentContainerId: string | null = null
     if (target.containerName === null || specs.length !== 1 || statuses.length !== 1) gaps.push('CONTAINER_STATUS_INCOMPLETE_OR_DUPLICATE')
     else {
-      resources = resourceSnapshot(specs[0], request.desired)
       const c = statuses[0], state = optional(c.state), last = optional(c.lastState)
+      resources = resourceSnapshot(specs[0], c, request.desired, batch.originalResources)
       restartCount = Number.isSafeInteger(c.restartCount) && Number(c.restartCount) >= 0 ? Number(c.restartCount) : null
       if (restartCount === null) gaps.push('RESTART_STATUS_INCOMPLETE')
       currentContainerId = stringOrNull(c.containerID)
@@ -139,7 +152,7 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
       }
       if (!hasTarget) { complete = false; gaps.push('PLACEMENT_TARGET_MISSING') }
       placement = Object.freeze({ batchId, nodeUid, targetPodUid: target.podUid, complete,
-        otherUserPodUids: Object.freeze(otherUsers), platformPodUids: Object.freeze(platform), unknownPodUids: Object.freeze(unknown) })
+        otherUserPodUids: Object.freeze(otherUsers), platformPodUids: Object.freeze(platform), unknownPodUids: Object.freeze(unknown), provenance: null })
       if (!complete) gaps.push('PLACEMENT_GAP')
     }
     const evicted = status.reason === 'Evicted'
@@ -149,13 +162,19 @@ export async function collectKubernetesEvidence(transport: ReadonlyKubernetesTra
     if (evicted && !memoryEviction && !otherEviction) gaps.push('EVICTION_RESOURCE_UNKNOWN')
     // Preserve allowlisted status identity, never env, credentials, full Pod,
     // arbitrary message/termination stderr or exception contents.
-    return prepareFailureObservation({ ...base, termination, resources, placement, gaps,
+    if (!batch.originalResources?.applied) gaps.push('ORIGINAL_APPLIED_RESOURCES_UNPROVEN')
+    if (!batch.originalPlacement) gaps.push('ORIGINAL_PLACEMENT_UNPROVEN')
+    const currentPlacement = placement
+    return prepareFailureObservation({ ...base, termination, resources, placement: batch.originalPlacement ?? placement, gaps,
       signals: { ...emptySignals, oomKilled: termination?.reason === 'OOMKilled', memoryEviction, otherTermination: otherEviction },
       evidence: { batchId, podUid, resourceVersion, nodeUid, currentContainerId, restartCount,
         podPhase: typeof status.phase === 'string' ? status.phase : null,
         podReason: evicted ? 'Evicted' : null, evictionResource: memoryEviction ? 'memory' : otherEviction ? 'non-memory' : null,
         terminationState: termination?.state ?? null, originalContainerId: termination?.containerId ?? null,
-        originalFinishedAt: termination?.finishedAt ?? null } })
+        originalFinishedAt: termination?.finishedAt ?? null,
+        currentPlacement: currentPlacement ? { batchId: currentPlacement.batchId, nodeUid: currentPlacement.nodeUid,
+          complete: currentPlacement.complete, otherUserPodUids: currentPlacement.otherUserPodUids,
+          platformPodUids: currentPlacement.platformPodUids, unknownPodUids: currentPlacement.unknownPodUids } : null } })
   } catch {
     return prepareFailureObservation({ ...base, gaps: ['KUBERNETES_RESPONSE_INCOMPLETE'], evidence: { readStatus: 'INVALID' } })
   }
@@ -198,7 +217,9 @@ export async function collectUnboundPodSample(transport: ReadonlyPodSampleTransp
       restartCount: c && Number.isSafeInteger(c.restartCount) ? Number(c.restartCount) : null,
       currentTermination: c ? terminated(optional(c.state).terminated) : null,
       lastTermination: c ? terminated(optional(c.lastState).terminated) : null,
-      admittedResources: specs.length === 1 ? resourceSnapshot(specs[0], { memoryRequest: null, memoryLimit: null }) : null,
+      desiredSpecResources: specs.length === 1 ? resourceValues(specs[0].resources) : null,
+      currentAppliedStatus: c?.resources === undefined || c?.resources === null ? null : Object.freeze({
+        containerId: stringOrNull(c.containerID), values: resourceValues(c.resources) }),
       logicalBinding: null, resolution: 'TARGET_UNRESOLVED' as const, automaticGrowthCandidate: false,
       exclusionReason: request.workloadKind !== 'AGENT' ? 'NON_AGENT_WORKLOAD' : 'UNIT_ATTEMPT_AUTHENTICATION_MISSING', authority: 'DATA_ONLY' as const })
   } catch {
