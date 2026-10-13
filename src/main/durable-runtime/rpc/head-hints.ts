@@ -55,12 +55,21 @@ export class SharedCatalogHeadHints {
       // must not be lost merely because the first poll adopted its newer head.
       if (signature !== this.last) {
         this.last = signature
-        for (const listener of [...this.listeners]) { if (this.listeners.has(listener)) { listener.changed() } }
+        for (const listener of [...this.listeners]) {
+          if (!this.listeners.has(listener)) { continue }
+          try { listener.changed() } catch (error) {
+            try { listener.failed(catalogReadFailure(error)) } catch { /* A closed transport must not strand sibling listeners. */ }
+          }
+        }
       }
     } catch (error) {
       if (generation === this.generation) {
         const failure = catalogReadFailure(error)
-        for (const listener of [...this.listeners]) { if (this.listeners.has(listener)) { listener.failed(failure) } }
+        for (const listener of [...this.listeners]) {
+          if (this.listeners.has(listener)) {
+            try { listener.failed(failure) } catch { /* The subscriber owns transport cleanup. */ }
+          }
+        }
       }
     } finally { this.running = false; this.schedule() }
   }
