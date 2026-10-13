@@ -55,7 +55,7 @@ export async function recordReconcileObservation(pool: Pool, caller: ReconcileOb
       WHERE a.id=$1 AND a.runtime_unit_id=$2 AND a.pod_uid=$3 AND a.execution_epoch=$4`,
       [input.attemptId, context.runtimeUnitId, input.podUid, input.executionEpoch])
     if (target.rowCount !== 1) { throw new DurableDatabaseError('LIFECYCLE_OBSERVATION_TARGET') }
-    const current = await tx.query(`SELECT u.id FROM durable_runtime.runtime_units u JOIN durable_runtime.operations o ON o.runtime_unit_id=u.id
+    const current = await tx.query<{ revision: string }>(`SELECT u.revision FROM durable_runtime.runtime_units u JOIN durable_runtime.operations o ON o.runtime_unit_id=u.id
       WHERE u.id=$1 AND o.id=$2 AND u.active_attempt_id=$3 AND u.execution_epoch=$4 AND u.intent_revision=$5
       AND o.intent_revision=$5 AND o.step_revision=$6 AND o.controller_term=$7 AND o.expected_pod_uid=$8
       AND o.controller_term=$9`,
@@ -75,18 +75,21 @@ export async function recordReconcileObservation(pool: Pool, caller: ReconcileOb
       operationId: context.operationId, attemptId: input.attemptId, podUid: input.podUid,
       kind: 'RECONCILE_OBSERVATION', nextState: event, occurredAt: now, receivedAt: now,
       producerId: input.producerId, producerSeq: input.sequence, evidenceRefs: [] })
-    // Late STOPPED belongs only to its original attempt history. It cannot
-    // overwrite current desired mode, active pointer, epoch or grants.
-    if (input.kind === 'STOPPED' && !watermark.rowCount) {
-      await tx.query(`UPDATE durable_runtime.attempts SET stopped_at=COALESCE(stopped_at,$2),
-        status='OBSERVED_STOPPED' WHERE id=$1`, [input.attemptId, now])
-    }
+    // Every raw STOPPED report remains audit history. In particular stopped_at
+    // is a verified-stop boundary consumed by UNKNOWN dispatch safety checks;
+    // neither K8s object presence nor container status may write it here.
     if (!stale) {
-      const updated = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units SET
-        observation_lost_at=CASE WHEN $2 IN ('READ_FAILED','MISSING') THEN COALESCE(observation_lost_at,$3) ELSE NULL END,
-        phase='BLOCKED',revision=revision+1 WHERE id=$1 RETURNING revision`, [context.runtimeUnitId, input.kind, now])
+      let revision = current.rows[0].revision
+      if (input.kind === 'READ_FAILED' || input.kind === 'MISSING') {
+        const updated = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units SET
+          observation_lost_at=COALESCE(observation_lost_at,$2),revision=revision+1
+          WHERE id=$1 RETURNING revision`, [context.runtimeUnitId, now])
+        revision = updated.rows[0].revision
+      }
+      // Presence/STOPPED does not renew Agent/provider/context/activity facts,
+      // clear an observation-loss episode or change an authoritative phase.
       await enqueueOutbox(tx, { eventId: logicalId('event', randomUUID()), aggregateId: context.runtimeUnitId,
-        aggregateKind: 'runtime-unit', revision: counter('row:runtime-unit', updated.rows[0].revision), event })
+        aggregateKind: 'runtime-unit', revision: counter('row:runtime-unit', revision), event })
     }
     return { disposition: stale ? 'STALE_HISTORY_ONLY' : 'RECORDED_UNVERIFIED', ...event }
   })

@@ -194,7 +194,8 @@ test('late stopped observation is original-attempt history only and cannot overw
     assert.equal(result.status, 'COMMITTED')
     if (result.status !== 'UNCERTAIN') { assert.equal((result.receipt.response as { disposition: string }).disposition, 'STALE_HISTORY_ONLY') }
     assert.deepEqual((await pool.query('SELECT desired_mode,intent_revision,active_attempt_id,phase FROM durable_runtime.runtime_units WHERE id=$1', [f.unit])).rows, before)
-    assert.equal((await pool.query('SELECT status FROM durable_runtime.attempts WHERE id=$1', [a.attempt])).rows[0].status, 'OBSERVED_STOPPED')
+    assert.deepEqual((await pool.query('SELECT status,stopped_at FROM durable_runtime.attempts WHERE id=$1', [a.attempt])).rows[0],
+      { status: 'RUNNING', stopped_at: null })
   } finally { await pool.end() }
 })
 
@@ -240,5 +241,66 @@ test('lifecycle outbox SQL failure rolls back Unit/operation/audit/receipt toget
     assert.equal((await pool.query('SELECT id FROM durable_runtime.runtime_audit_events WHERE runtime_unit_id=$1', [f.unit])).rowCount, 0)
     assert.equal((await pool.query('SELECT id FROM durable_runtime.outbox_events WHERE aggregate_id=$1', [f.unit])).rowCount, 0)
     assert.equal((await pool.query('SELECT operation_key FROM durable_runtime.rpc_receipts WHERE session_scope=$1', [request.authority.scope])).rowCount, 0)
+  } finally { await pool.end() }
+})
+
+
+test('unverified K8s STOPPED remains history and cannot clear the UNKNOWN delivery sleep barrier', { skip: !enabled }, async () => {
+  const pool = ownPool()
+  try {
+    const f = await fixture(pool), a = await stoppedMetadataAttempt(pool, f, true)
+    await requestUnitIntent(pool, await intent(pool, f))
+    const op = (await pool.query('SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1', [f.unit])).rows[0]
+    const current = await controller(pool, 'fixture-controller-stop-boundary', '1')
+    await pool.query('UPDATE durable_runtime.operations SET controller_term=1,expected_pod_uid=$2 WHERE id=$1', [op.id, a.podUid])
+    const messageId = randomUUID(), deliveryId = randomUUID()
+    await pool.query("INSERT INTO durable_runtime.messages(id,session_id,seq,body_or_blob_ref,intake_status) VALUES($1,$2,1,'{}','UNKNOWN')", [messageId, f.sessions[0]])
+    await pool.query(`INSERT INTO durable_runtime.delivery_attempts(id,message_id,session_id,runtime_unit_id,attempt_id,execution_epoch,state)
+      VALUES($1,$2,$3,$4,$5,0,'UNKNOWN')`, [deliveryId, messageId, f.sessions[0], f.unit, a.attempt])
+    const before = (await pool.query('SELECT to_jsonb(a) AS state FROM durable_runtime.attempts a WHERE id=$1', [a.attempt])).rows
+    const result = await recordReconcileObservation(pool, { context: { runtimeUnitId: f.unit, operationId: logicalId('operation', op.id), controller: current },
+      originalStepRevision: counter('step-revision', '0'), originalIntentRevision: counter('intent-revision', '0'), originalControllerTerm: counter('controller-term', '1'),
+      attemptId: a.attempt, podUid: a.podUid, executionEpoch: counter('execution-epoch', '0'), producerId: logicalId('producer', randomUUID()),
+      sequence: counter('sequence:producer', '1'), watermark: counter('sequence:observation', '1'), source: 'K8S_WATCH', resourceVersion: 'opaque-stop-rv', kind: 'STOPPED' })
+    assert.equal(result.status, 'COMMITTED')
+    if (result.status !== 'UNCERTAIN') {
+      assert.equal((result.receipt.response as { disposition: string }).disposition, 'RECORDED_UNVERIFIED')
+    }
+    assert.deepEqual((await pool.query('SELECT to_jsonb(a) AS state FROM durable_runtime.attempts a WHERE id=$1', [a.attempt])).rows, before)
+    const history = await pool.query("SELECT next_state FROM durable_runtime.runtime_audit_events WHERE attempt_id=$1 AND kind='RECONCILE_OBSERVATION'", [a.attempt])
+    assert.equal(history.rowCount, 1); assert.equal(history.rows[0].next_state.observationKind, 'STOPPED')
+    assert.equal(history.rows[0].next_state.physicalFenceVerified, false)
+    const unit = (await pool.query('SELECT revision,intent_revision FROM durable_runtime.runtime_units WHERE id=$1', [f.unit])).rows[0]
+    assert.deepEqual(await withDurableTransaction(pool, tx => reserveSleep(tx, { unitId: f.unit, actorId: 'fixture-catalog',
+      discoveredMembers: f.sessions, expectedRevision: counter('row:runtime-unit', unit.revision), expectedIntentRevision: counter('intent-revision', unit.intent_revision),
+      policy, activityFreshnessMs: 60000, activity: null })), { status: 'DEFERRED', reason: 'IN_FLIGHT_DISPATCH' })
+  } finally { await pool.end() }
+})
+
+test('routine PRESENT preserves existing READY, observation loss episode and binding/activity facts', { skip: !enabled }, async () => {
+  const pool = ownPool()
+  try {
+    const f = await fixture(pool), a = await stoppedMetadataAttempt(pool, f, true)
+    await requestUnitIntent(pool, await intent(pool, f))
+    const op = (await pool.query('SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1', [f.unit])).rows[0]
+    const current = await controller(pool, 'fixture-controller-presence-boundary', '1')
+    await pool.query('UPDATE durable_runtime.operations SET controller_term=1,expected_pod_uid=$2 WHERE id=$1', [op.id, a.podUid])
+    // Preexisting authoritative state is fixture data, not a readiness proof.
+    await pool.query(`UPDATE durable_runtime.runtime_units SET phase='READY',observation_lost_at=clock_timestamp()-interval '1 minute',
+      last_work_event_at=clock_timestamp()-interval '2 minutes',idle_due_at=clock_timestamp()+interval '1 minute' WHERE id=$1`, [f.unit])
+    const unitBefore = (await pool.query('SELECT to_jsonb(u) AS state FROM durable_runtime.runtime_units u WHERE id=$1', [f.unit])).rows
+    const bindingBefore = (await pool.query('SELECT to_jsonb(b) AS state FROM durable_runtime.storage_bindings b WHERE id=$1', [f.binding])).rows
+    const attemptBefore = (await pool.query('SELECT to_jsonb(a) AS state FROM durable_runtime.attempts a WHERE id=$1', [a.attempt])).rows
+    const result = await recordReconcileObservation(pool, { context: { runtimeUnitId: f.unit, operationId: logicalId('operation', op.id), controller: current },
+      originalStepRevision: counter('step-revision', '0'), originalIntentRevision: counter('intent-revision', '0'), originalControllerTerm: counter('controller-term', '1'),
+      attemptId: a.attempt, podUid: a.podUid, executionEpoch: counter('execution-epoch', '0'), producerId: logicalId('producer', randomUUID()),
+      sequence: counter('sequence:producer', '1'), watermark: counter('sequence:observation', '1'), source: 'K8S_LIST', resourceVersion: 'opaque-present-rv', kind: 'PRESENT' })
+    assert.equal(result.status, 'COMMITTED')
+    if (result.status !== 'UNCERTAIN') {
+      assert.equal((result.receipt.response as { disposition: string }).disposition, 'RECORDED_UNVERIFIED')
+    }
+    assert.deepEqual((await pool.query('SELECT to_jsonb(u) AS state FROM durable_runtime.runtime_units u WHERE id=$1', [f.unit])).rows, unitBefore)
+    assert.deepEqual((await pool.query('SELECT to_jsonb(b) AS state FROM durable_runtime.storage_bindings b WHERE id=$1', [f.binding])).rows, bindingBefore)
+    assert.deepEqual((await pool.query('SELECT to_jsonb(a) AS state FROM durable_runtime.attempts a WHERE id=$1', [a.attempt])).rows, attemptBefore)
   } finally { await pool.end() }
 })

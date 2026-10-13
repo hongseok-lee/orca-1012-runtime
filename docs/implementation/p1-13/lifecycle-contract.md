@@ -33,11 +33,19 @@ the complete P1-13/V1-08/HA/G04 behavior remains with root.
   epoch and sequence/watermark. Stale observations remain original history, not
   active-pointer/intent/grant updates. Raw absence/STOPPED/PRESENT observations
   do not establish provider readiness, permanent compute stop or writer fencing.
+  Raw STOPPED writes audit history only, never attempts.status/stopped_at; UNKNOWN
+  deliveries retain their stop barrier. PRESENT/STOPPED preserve phase, activity,
+  binding facts and observation-loss timestamp. Only current missing/read-failed
+  observations start/preserve loss; they cannot claim recovery or a fresh phase.
 - `recoverListWatch` observes initial LIST and WATCH through the same sink and
   retries one LIST/WATCH recovery pass on disconnect/410. Persistence/read errors
   remain unverifiable. Resource versions are opaque. `resolveCreateObservation`
   queries the persisted original name and exact identity/spec; it never creates,
-  deletes, invents a new name or adopts a conflicting object.
+  deletes, invents a new name or adopts a conflicting object. It validates and
+  freezes the complete original identity before GET. WATCH now carries explicit
+  ADDED/MODIFIED/DELETED/BOOKMARK events; the sink receives event + LIST/WATCH
+  source. Returned history retains deletes, while current inventory removes only
+  the exact namespace/name/UID and preserves a same-name replacement.
 
 ## Source prerequisites
 
@@ -66,3 +74,15 @@ No fresh PASS or report image is claimed. Actual provider event-to-activity
 verification, context/cancel eligibility, permanent writer fencing, READY and
 actuator execution remain unqualified until the separately owned APIs and real
 evidence are supplied. No fake proof constructor/capability is added.
+
+
+## Root observation review correction
+
+PR23 review comment `6143507416` supplies four source findings, not runtime
+failures. The first permitted verification adds only the unverified STOPPED →
+UNKNOWN sleep barrier and PRESENT → retained READY/loss PG boundaries, extends
+original create-identity mutation/validation, and adds exact-UID WATCH deletion
+with name reuse/history. All new/extended fixtures remain unexecuted. The same-TX
+`reserveSleep` signature and earlier CLOSED/CLOSING correction remain unchanged.
+The transport event API changes only this owned driver/fixture boundary; there
+is no controller activation or new provider/fence verifier.
