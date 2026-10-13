@@ -1,10 +1,10 @@
 # P1-11 Codex 소유 구현 결과
 
-Codex driver가 shared 계약을 소비하도록 연결했습니다. 승인된 원격 결정적 protocol fixture의 결과이며 실제 Codex inference·native resume 또는 P1-11/G-05 합격을 선언하지 않습니다. 구현 revision과 단계별 원본 결과 hash는 [results.json](results.json)에 있습니다.
+Codex driver가 shared 계약을 소비하도록 연결했고 root 리뷰의 세 protocol 경계를 추가 교정했습니다. 추가 교정은 현재 미실행이며 아래 기존 통과 결과는 과거 revision의 증거입니다. 승인된 원격 결정적 protocol fixture의 결과이며 실제 Codex inference·native resume 또는 P1-11/G-05 합격을 선언하지 않습니다. 구현 revision과 단계별 원본 결과 hash는 [results.json](results.json)에 있습니다.
 
 ## 실제 변경
 
-`providers/codex/driver.ts`는 논리 Session/Tab/handle과 원 Unit/attempt/Pod/epoch/binding revision, 연결 instance, 실제 native thread를 함께 고정합니다. Cold·dispatch·cancel은 shared의 한 번만 사용하는 executor callback 뒤에서 호출합니다. 이 callback의 형태만으로 실제 소유권이나 COMMIT를 인증하지 않습니다. driver가 transport를 직접 공개하지 않으며 기존 공개 RPC에 연결하지 않았습니다.
+`providers/codex/driver.ts`는 논리 Session/Tab/handle과 원 Unit/attempt/Pod/epoch/binding revision, 연결 instance, 실제 native thread를 함께 고정합니다. Cold·dispatch와 새로운 cancel effect는 shared의 한 번만 사용하는 executor callback 뒤에서 호출합니다. 이미 확인한 원 stop 관측의 재조회는 callback이나 외부 I/O를 반복하지 않습니다. 이 callback의 형태만으로 실제 소유권이나 COMMIT를 인증하지 않습니다. driver가 transport를 직접 공개하지 않으며 기존 공개 RPC에 연결하지 않았습니다.
 
 `protocol.ts`는 기존 app-server transport의 thread/start·thread/resume 응답을 확인하고 turn/start 응답 또는 같은 primary thread의 정확한 client echo로 실제 turn을 연결합니다. 이름 없는 ACK나 응답 유실은 UNKNOWN이며 같은 request identity를 재호출하지 않습니다. exact receipt와 실제 turn/start params 전체 hash가 맞는 경우에만 immutable admission/context proof를 만듭니다. process/PID와 reverse RPC write는 이 proof를 만들지 않습니다.
 
@@ -14,6 +14,16 @@ Codex driver가 shared 계약을 소비하도록 연결했습니다. 승인된 �
 
 `native-transport.ts`는 기존 app-server connection과 turn process capture/terminate 함수를 지연 import합니다. 생성 시 provider를 실행하지 않고 자신이 capture한 object만 terminate 함수에 전달합니다. 실제 native transport 실행·프로세스 종료·그 전체 import graph의 타입 검사는 이번 검증에 포함하지 않았습니다.
 
+## root 리뷰의 세 경계 교정
+
+제품 교정 revision은 `bba7df814e7b51f050df8b7673c7b5d2bf5e393b`입니다. root 댓글 6143239997의 범위만 반영했습니다. `open()`은 opener를 await하기 전에 opening을 예약하며 실제 native identity 확인을 유지합니다. 거절된 executor permit은 이 예약에 들어가지 않습니다.
+
+요청 응답 대기와 native turn 미종료 상태를 별도로 보존합니다. turn/start 응답이나 ACK만으로 다음 delivery에 연결을 넘기지 않습니다. 원 thread/turn/submission의 정확한 terminal만 active scope를 해제합니다. 응답 유실은 UNKNOWN이며 원 조회는 재호출하지 않습니다. busy/unverifiable 오류는 원 connection/request/turn scope와 함께 상위에 전달합니다. effect 전에 거절된 새 delivery를 전송 결과 UNKNOWN으로 오기록하지 않습니다. 이 경계는 해당 연결의 실행 가능 여부이며 새 독립 입력의 durable 접수를 막는 quota나 정책이 아닙니다.
+
+확인한 descendants 종료 성공은 원 receipt·baseline·connection object에 묶어 보존합니다. 늦게 도착한 원 interrupted terminal과 이후 조회에서 결합하며 같은 permit을 다시 소비하거나 interrupt/process termination을 재실행하지 않습니다. 이미 확인한 옛 결과를 그 원 identity로 조회할 수 있지만 새 turn 또는 다른 connection의 proof로 전용하지 않습니다. ACK나 transport 종료를 terminal proof로 승격하지 않습니다.
+
+`ownership-boundaries.test.mts`의 새 fixture 3개는 지연 open, running/UNKNOWN turn 중복, descendants 종료 뒤 늦은 terminal과 새 turn·다른 connection의 negative scope를 다룹니다. 기존 `old target baseline never terminates descendants belonging to a later turn` case 1개는 첫 turn completed notification 뒤 새 turn을 시작하도록 교정했습니다. 네 case 모두 미실행이며 기존 전체 22개를 반복하지 않았습니다. root의 별도 실행 지시 전에는 type/lint/fixture·원격 접속·캡처를 수행하지 않습니다.
+
 ## 정확한 선행과 파일 소유권
 
 shared는 Claude 소유 commit `39e3e7ce1ed3a571d67094b298168934efb81aa1`을 merge로 그대로 소비했습니다. 세 파일의 변경 diff는 0이며 Codex가 shared를 수정하지 않았습니다. 공통 DB/rows는 root가 승인한 main `ad11b7fbe4016fe1aef0f916f2af7735e04f8af9`을 정확히 합류했습니다. DB/rows를 개별 제품 파일로 복제하거나 수정하지 않았습니다.
@@ -22,7 +32,7 @@ context `6a61748f2de23db95d176acf0ecc728851988b66`, input `5ae4f671d0227abbc144f
 
 ## 원격 관측과 재현 경계
 
-기존 Node 24.15.0, TypeScript 7.0.2, esbuild 0.25.12 및 pg cache를 사용했습니다. 새 설치나 이미지/전체 build를 수행하지 않았습니다. driver/protocol 전용 `tsc -p`는 통과했습니다. 전용 `.mts`만 `bundle:true`, `platform:node`, `target:node24`, `format:esm`, `packages:external`로 변환해 Node `--test`로 실행했습니다. ESM 실행 디렉터리는 기존 cache에 대한 소유 symlink를 사용하며 cache 대상은 변경하지 않았습니다.
+기존 Node 24.15.0, TypeScript 7.0.2, esbuild 0.25.12 및 pg cache를 사용했습니다. 새 설치나 이미지/전체 build를 수행하지 않았습니다. 리뷰 교정 전 driver/protocol 전용 `tsc -p`는 통과했습니다. 이번 교정 revision의 타입 검사·lint·fixture 실행은 하지 않았습니다. 전용 `.mts`만 `bundle:true`, `platform:node`, `target:node24`, `format:esm`, `packages:external`로 변환해 Node `--test`로 실행했습니다. ESM 실행 디렉터리는 기존 cache에 대한 소유 symlink를 사용하며 cache 대상은 변경하지 않았습니다.
 
 기존 protocol 9개는 최초 revision의 결과를 재사용했습니다. shared 연결 driver 11개와 native wrapper 1개가 추가로 통과했습니다. 실제 wire params hash 교정은 새 fixture 1개만 확인했습니다. 최종 revision에서 전체 22개를 재실행했다고 주장하지 않습니다. 첫 타입 오류와 ESM pg 해석 실패, 이후 교정 및 각 원본 결과 hash를 results.json에 구분했습니다. 최초 native wrapper 성공은 tool 출력으로 관찰했고 별도 원본 TAP를 보존하지 못했습니다.
 
