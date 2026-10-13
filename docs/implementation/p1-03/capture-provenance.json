@@ -1,0 +1,12 @@
+{
+  "captured_at": "2026-10-13T02:38:12.652Z",
+  "kind": "rendered saved actual SQL/test result report; not product UI",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "sources": {
+    "test-results.json": "027fe2aece9a7d6b98b39d6b61bef5073707ae913ed462b35f87ddb8f83b09a3",
+    "validation-inspect.json": "8a46f6c599c26ae039e9f49a1c66943691814809b261dc43074ad0c192ebad96"
+  },
+  "png_sha256": "edbea532acb0d6804ec580784f1bfcd4b588bc69c508982cef68ff22519d02cf",
+  "behavioral_revision": "cf0fbca42aaf79122ed1d5ac4caf32431628b75c"
+}
