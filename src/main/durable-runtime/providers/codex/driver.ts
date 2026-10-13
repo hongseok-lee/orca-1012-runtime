@@ -46,7 +46,7 @@ export class DurableCodexDriver {
       throw new Error('CODEX_COLD_BINDING_MISMATCH')
     }
     const native = original.request.native
-    if (native.kind === 'RESUME' && native.providerRef.provider !== 'codex') throw new Error('CODEX_RESUME_PROVIDER_MISMATCH')
+    if (native.kind === 'RESUME' && native.providerRef.provider !== 'codex') {throw new Error('CODEX_RESUME_PROVIDER_MISMATCH')}
     return invokeProviderEffect(permit, { kind: 'COLD', binding: original.request.binding, commandClaim: original.commandClaim }, async () => {
       const opened = await this.#protocol.open({
         command: original.request.launch.command, args: original.request.launch.args,
@@ -66,7 +66,7 @@ export class DurableCodexDriver {
   async dispatch(request: ProviderDispatchRequest, permit: ProviderEffectPermit): Promise<ProviderDispatchResult> {
     const binding = this.#requireBinding()
     const frozen = immutableSnapshot(request)
-    if (frozen.context.sessionId !== binding.sessionId) throw new Error('CODEX_CONTEXT_SESSION_MISMATCH')
+    if (frozen.context.sessionId !== binding.sessionId) {throw new Error('CODEX_CONTEXT_SESSION_MISMATCH')}
     let rendered: ReturnType<typeof renderRecoverySubmission>
     try { rendered = renderRecoverySubmission(frozen.context, frozen.sealed) } catch (error) {
       if (error instanceof ProviderInputError && (error.code === 'UNSUPPORTED_KIND' || error.code === 'NO_NORMAL_INPUT')) {
@@ -74,7 +74,7 @@ export class DurableCodexDriver {
       }
       throw error
     }
-    if (frozen.attachments.length !== rendered.attachmentOrder.length) throw new Error('CODEX_MATERIALIZED_ATTACHMENT_MISMATCH')
+    if (frozen.attachments.length !== rendered.attachmentOrder.length) {throw new Error('CODEX_MATERIALIZED_ATTACHMENT_MISMATCH')}
     // Inline immutable bytes; a later change to a materializer path cannot change the native submission.
     const input: CodexWireInput[] = [{ type: 'text', text: rendered.text }]
     for (const [index, expected] of rendered.attachmentOrder.entries()) {
@@ -84,9 +84,9 @@ export class DurableCodexDriver {
         throw new Error('CODEX_MATERIALIZED_ATTACHMENT_MISMATCH')
       }
       const bytes = await readFile(attachment.path)
-      if (sha256(bytes) !== expected.contentHash) throw new Error('CODEX_ATTACHMENT_HASH_MISMATCH')
+      if (sha256(bytes) !== expected.contentHash) {throw new Error('CODEX_ATTACHMENT_HASH_MISMATCH')}
       const mime = imageMime(bytes)
-      if (!mime) return Object.freeze({ state: 'UNSUPPORTED', reason: 'NATIVE_IMAGE_FORMAT_UNCONFIRMED' })
+      if (!mime) {return Object.freeze({ state: 'UNSUPPORTED', reason: 'NATIVE_IMAGE_FORMAT_UNCONFIRMED' })}
       input.push({ type: 'image', url: `data:${mime};base64,${bytes.toString('base64')}` })
     }
     const nativeRequestId = `codex:${binding.connectionInstanceId}:${frozen.deliveryAttemptId}`
@@ -100,7 +100,7 @@ export class DurableCodexDriver {
     })
     const prior = this.#submissions.get(nativeRequestId)
     if (prior) {
-      if (JSON.stringify(prior) !== JSON.stringify(identity)) throw new Error('CODEX_DELIVERY_IDENTITY_CONFLICT')
+      if (JSON.stringify(prior) !== JSON.stringify(identity)) {throw new Error('CODEX_DELIVERY_IDENTITY_CONFLICT')}
       // A lookup is not execution authority. In particular UNKNOWN never invokes another permit.
       return this.#proofs.get(nativeRequestId) ?? Object.freeze({ state: 'UNKNOWN', identity: prior })
     }
@@ -120,7 +120,7 @@ export class DurableCodexDriver {
       }
       throw error
     }
-    if (outcome.effect === 'ADMITTED') return this.#verifyAdmission(outcome.receipt, identity)
+    if (outcome.effect === 'ADMITTED') {return this.#verifyAdmission(outcome.receipt, identity)}
     this.sink(immutableSnapshot({ kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity,
       observedAt: new Date().toISOString(), reason: 'WRITE_OUTCOME_LOST' }))
     return immutableSnapshot({ state: 'UNKNOWN', identity })
@@ -159,9 +159,9 @@ export class DurableCodexDriver {
   #verifyAdmission(receipt: CodexNativeReceipt, identity: ProviderSubmissionIdentity): Extract<ProviderDispatchResult, { state: 'ADMITTED' }> {
     if (!this.#protocol.ownsReceipt(receipt) || receipt.connectionId !== identity.binding.connectionInstanceId ||
         receipt.threadId !== identity.binding.providerRef.nativeSessionRef || receipt.clientMessageId !== identity.nativeRequestId ||
-        sha256(receipt.submission) !== identity.submissionHash) throw new Error('CODEX_NATIVE_RECEIPT_MISMATCH')
+        sha256(receipt.submission) !== identity.submissionHash) {throw new Error('CODEX_NATIVE_RECEIPT_MISMATCH')}
     const prior = this.#proofs.get(identity.nativeRequestId)
-    if (prior) return prior
+    if (prior) {return prior}
     const providerRef = this.#nativeRef(receipt)
     const admission = immutableSnapshot({ kind: 'PROVIDER_ADMISSION', source: 'PROVIDER_PROTOCOL',
       evidenceRef: `codex:admission:${receipt.connectionId}:${receipt.turnId}`, observedAt: receipt.observedAt,
@@ -183,9 +183,9 @@ export class DurableCodexDriver {
   }
 
   #observe(event: CodexProtocolEvent): void {
-    if (!event.receipt) return
+    if (!event.receipt) {return}
     const identity = this.#submissions.get(event.receipt.clientMessageId)
-    if (!identity || !this.#binding || !sameBinding(identity.binding, this.#binding)) return
+    if (!identity || !this.#binding || !sameBinding(identity.binding, this.#binding)) {return}
     if (event.method === 'TURN_START_RESPONSE' || event.method === 'CORRELATED_TURN_STARTED') {
       this.#verifyAdmission(event.receipt, identity)
     }
@@ -200,7 +200,7 @@ export class DurableCodexDriver {
       nativeTurnId: receipt.turnId as RuntimeReference<'provider-turn-id'> })
   }
   #requireBinding(): ReadyProviderBinding {
-    if (!this.#binding || this.#protocol.closed) throw new Error('CODEX_BINDING_NOT_READY')
+    if (!this.#binding || this.#protocol.closed) {throw new Error('CODEX_BINDING_NOT_READY')}
     return this.#binding
   }
 }
@@ -213,9 +213,9 @@ function sameBinding(left: ProviderBinding, right: ProviderBinding): boolean {
 }
 function imageMime(bytes: Uint8Array): string | null {
   const b = Buffer.from(bytes)
-  if (b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png'
-  if (b[0] === 255 && b[1] === 216 && b[2] === 255) return 'image/jpeg'
-  if (b.subarray(0, 6).toString('ascii') === 'GIF87a' || b.subarray(0, 6).toString('ascii') === 'GIF89a') return 'image/gif'
-  if (b.subarray(0, 4).toString('ascii') === 'RIFF' && b.subarray(8, 12).toString('ascii') === 'WEBP') return 'image/webp'
+  if (b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {return 'image/png'}
+  if (b[0] === 255 && b[1] === 216 && b[2] === 255) {return 'image/jpeg'}
+  if (b.subarray(0, 6).toString('ascii') === 'GIF87a' || b.subarray(0, 6).toString('ascii') === 'GIF89a') {return 'image/gif'}
+  if (b.subarray(0, 4).toString('ascii') === 'RIFF' && b.subarray(8, 12).toString('ascii') === 'WEBP') {return 'image/webp'}
   return null
 }
