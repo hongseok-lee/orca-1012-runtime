@@ -349,5 +349,33 @@ check('caller mutation after first await cannot change observation/read/resolve 
     const published = await publication; assert.equal(published.status, 'PUBLISHED')
     assert.equal((await pool.query('SELECT count(*) AS n FROM durable_runtime.replay_events WHERE event_id=$1', [originalId])).rows[0].n, '1')
   } finally { publishing.release() }
+  const publishedRow = (await pool.query('SELECT "offset" FROM durable_runtime.replay_events WHERE event_id=$1', [originalId])).rows[0]
+  const readOptions = { streamId: OPS_REPLAY_STREAM, epoch: '0', afterOffset: (BigInt(publishedRow.offset)-1n).toString(), optionalUnitFilter: target.runtimeUnitId, limit: 1 }
+  const pageGate = gate()
+  const pagePromise = readReplayPage(hookPool(pool, async (sql, _client, execute) => {
+    const result = await execute()
+    if (sql.startsWith('SELECT epoch,published_offset')) { pageGate.signal(); await pageGate.wait }
+    return result
+  }), readOptions)
+  await pageGate.entered
+  try {
+    readOptions.epoch = '999'; readOptions.afterOffset = '999999'; readOptions.limit = 0
+    readOptions.optionalUnitFilter = logicalId('runtime-unit', randomUUID())
+    pageGate.release()
+    assert.equal(page(await pagePromise).events[0].sourceEventId, originalId)
+  } finally { pageGate.release() }
+  const listOptions = { optionalUnitFilter: target.runtimeUnitId, state: 'RESOLVED' as const, limit: 1000 }
+  const listGate = gate()
+  const listPromise = listNotifications(hookPool(pool, async (sql, _client, execute) => {
+    const result = await execute()
+    if (sql === 'SET TRANSACTION READ ONLY') { listGate.signal(); await listGate.wait }
+    return result
+  }), listOptions)
+  await listGate.entered
+  try {
+    Object.assign(listOptions, { state: 'OPEN', limit: 0, optionalUnitFilter: randomUUID() })
+    listGate.release()
+    assert.equal((await listPromise).notifications.some(n => n.id === row.id), true)
+  } finally { listGate.release() }
   observations.mutableInputSnapshotBoundary = 'Caller-owned Date/authority/target/key/claim mutations after actual SQL await do not change the frozen validated request; first execution only, no auth/provider proof'
 })
