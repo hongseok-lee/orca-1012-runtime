@@ -13,9 +13,9 @@ function fixture() {
     pid: 12, closed: false,
     request: async (method, params) => {
       calls.push({ method, params })
-      if (method === 'thread/start' || method === 'thread/resume') return opened ?? { thread: { id: 'native-thread', path: '/fixture/rollout.jsonl' } }
-      if (method === 'turn/start') return start(params)
-      if (method === 'turn/interrupt') return interrupt()
+      if (method === 'thread/start' || method === 'thread/resume') {return opened ?? { thread: { id: 'native-thread', path: '/fixture/rollout.jsonl' } }}
+      if (method === 'turn/start') {return start(params)}
+      if (method === 'turn/interrupt') {return interrupt()}
       return {}
     },
     notify() {}, respond() {}, respondWithError() {}, close: async () => true
@@ -74,7 +74,7 @@ test('native response owns exact immutable request tuple', async () => {
   await f.session.open(cold)
   const result = await f.session.dispatch(submission)
   assert.equal(result.effect, 'ADMITTED')
-  if (result.effect !== 'ADMITTED') return
+  if (result.effect !== 'ADMITTED') {return}
   assert.equal(result.receipt.clientMessageId, submission.clientMessageId)
   assert.equal(result.receipt.threadId, 'native-thread')
   assert.equal(result.receipt.turnId, 'native-turn-1')
@@ -93,14 +93,14 @@ test('only exact primary thread and client echo admits notification-before-respo
   })
   const result = await f.session.dispatch(submission)
   assert.equal(result.effect, 'ADMITTED')
-  if (result.effect === 'ADMITTED') assert.equal(result.receipt.turnId, 'actual-turn')
+  if (result.effect === 'ADMITTED') {assert.equal(result.receipt.turnId, 'actual-turn')}
 })
 test('interrupt ACK alone is not terminal proof and forged receipt cannot cancel', async () => {
   const f = fixture()
   await f.session.open(cold)
   const sent = await f.session.dispatch(submission)
   assert.equal(sent.effect, 'ADMITTED')
-  if (sent.effect !== 'ADMITTED') return
+  if (sent.effect !== 'ADMITTED') {return}
   const stopped = await f.session.interrupt(sent.receipt)
   assert.equal(stopped.acknowledged, true)
   assert.equal(stopped.terminal, null)
@@ -112,7 +112,7 @@ test('terminal observation and descendants scope refer only to the original turn
   const f = fixture()
   await f.session.open(cold)
   const sent = await f.session.dispatch(submission)
-  if (sent.effect !== 'ADMITTED') throw new Error('fixture admission missing')
+  if (sent.effect !== 'ADMITTED') {throw new Error('fixture admission missing')}
   f.interrupt(() => {
     f.notify('turn/completed', { threadId: 'native-thread', turn: { id: 'wrong-turn', status: 'interrupted' } })
     f.notify('turn/completed', { threadId: 'native-thread', turn: { id: sent.receipt.turnId, status: 'interrupted' } })

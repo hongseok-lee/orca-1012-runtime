@@ -70,7 +70,7 @@ export class CodexConnectionBusyError extends Error {
 }
 /** Exact params serialized by the existing app-server request transport. */
 export function codexTurnStartParams(threadId: string, input: RequestState['input']): Record<string, unknown> {
-  if (Object.keys(input.options).some((key) => !TURN_OPTIONS.has(key))) throw new Error('CODEX_UNSUPPORTED_OPTION')
+  if (Object.keys(input.options).some((key) => !TURN_OPTIONS.has(key))) {throw new Error('CODEX_UNSUPPORTED_OPTION')}
   return { threadId, clientUserMessageId: input.clientMessageId, input: input.input, ...input.options }
 }
 export type CodexProtocolResult =
@@ -116,7 +116,7 @@ export class CodexProtocolSession {
     resumeThreadId: string | null; resumePath?: string | null
     env?: Readonly<Record<string, string>>
   }): Promise<Readonly<{ threadId: string; historyPath: string | null; connectionId: string }>> {
-    if (this.#connection || this.#opening || this.#closed) throw new Error('CODEX_CONNECTION_ALREADY_USED')
+    if (this.#connection || this.#opening || this.#closed) {throw new Error('CODEX_CONNECTION_ALREADY_USED')}
     // Reserve before the opener's first await; a refused executor never enters open.
     this.#opening = true
     try {
@@ -138,7 +138,7 @@ export class CodexProtocolSession {
       if (!threadId || (input.resumeThreadId !== null && input.resumeThreadId !== threadId)) {
         throw new Error('CODEX_NATIVE_THREAD_MISMATCH')
       }
-      if (connection.closed || this.#closed) throw new Error('CODEX_CONNECTION_CLOSED')
+      if (connection.closed || this.#closed) {throw new Error('CODEX_CONNECTION_CLOSED')}
       this.#threadId = threadId
       this.#historyPath = text(record(record(opened)?.thread)?.path)
       return Object.freeze({ threadId, historyPath: this.#historyPath, connectionId: this.connectionId })
@@ -152,13 +152,13 @@ export class CodexProtocolSession {
   }
 
   async dispatch(input: RequestState['input']): Promise<CodexProtocolResult> {
-    if (!this.#connection || !this.#threadId || this.closed) return Object.freeze({ effect: 'UNKNOWN', reason: 'CONNECTION_CLOSED' })
+    if (!this.#connection || !this.#threadId || this.closed) {return Object.freeze({ effect: 'UNKNOWN', reason: 'CONNECTION_CLOSED' })}
     const snapshot = structuredClone(input)
     const params = codexTurnStartParams(this.#threadId, snapshot)
     const submission = JSON.stringify(params)
     const existing = this.#requests.get(input.clientMessageId)
     if (existing) {
-      if (existing.submission !== submission) throw new Error('CODEX_SUBMISSION_ID_CONFLICT')
+      if (existing.submission !== submission) {throw new Error('CODEX_SUBMISSION_ID_CONFLICT')}
       return existing.receipt ? Object.freeze({ effect: 'ADMITTED', receipt: existing.receipt }) : Object.freeze({ effect: 'UNKNOWN', reason: 'RESPONSE_LOST' })
     }
     if (this.#pending !== null || this.#interrupting || this.#activeRequest !== null) {
@@ -189,7 +189,7 @@ export class CodexProtocolSession {
       if (turnId && (reportedThread === null || reportedThread === this.#threadId)) {
         this.#admit(state, turnId, 'TURN_START_RESPONSE')
       }
-      if (state.receipt) return Object.freeze({ effect: 'ADMITTED', receipt: state.receipt })
+      if (state.receipt) {return Object.freeze({ effect: 'ADMITTED', receipt: state.receipt })}
       const receipt = await Promise.race([
         notified,
         new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), this.dependencies.receiptWaitMs ?? 10_000) })
@@ -198,7 +198,7 @@ export class CodexProtocolSession {
     } catch {
       return state.receipt ? Object.freeze({ effect: 'ADMITTED', receipt: state.receipt }) : Object.freeze({ effect: 'UNKNOWN', reason: 'RESPONSE_LOST' })
     } finally {
-      if (timer) clearTimeout(timer)
+      if (timer) {clearTimeout(timer)}
       this.#pending = null
     }
   }
@@ -221,7 +221,7 @@ export class CodexProtocolSession {
 
   async interrupt(receipt: CodexNativeReceipt): Promise<CodexInterruptResult> {
     const observed = this.observedStop(receipt)
-    if (observed.terminal || observed.descendantsStopped) return observed
+    if (observed.terminal || observed.descendantsStopped) {return observed}
     if (!this.#connection || this.closed || !this.ownsReceipt(receipt) || receipt.connectionId !== this.connectionId || receipt.threadId !== this.#threadId) {
       return Object.freeze({ requested: false, terminal: null, descendantsStopped: false, acknowledged: false })
     }
@@ -242,7 +242,7 @@ export class CodexProtocolSession {
       }, () => false)
       const stopped = this.#connection.pid !== undefined && state.baseline !== undefined && this.dependencies.terminate
         ? this.dependencies.terminate(this.#connection.pid, state.baseline).then((verified) => {
-          if (verified) state.stoppedFact = Object.freeze({ receipt, baseline: state.baseline, connection })
+          if (verified) {state.stoppedFact = Object.freeze({ receipt, baseline: state.baseline, connection })}
           return verified
         }).catch(() => false)
         : Promise.resolve(false)
@@ -259,8 +259,8 @@ export class CodexProtocolSession {
   }
 
   #admit(state: RequestState, turnId: string, source: CodexNativeReceipt['source']): void {
-    if (state.receipt || !this.#threadId) return
-    if (this.#byTurn.has(turnId) && this.#byTurn.get(turnId) !== state) return
+    if (state.receipt || !this.#threadId) {return}
+    if (this.#byTurn.has(turnId) && this.#byTurn.get(turnId) !== state) {return}
     const receipt: CodexNativeReceipt = Object.freeze({
       connectionId: this.connectionId, threadId: this.#threadId, turnId,
       clientMessageId: state.input.clientMessageId, submission: state.submission,
@@ -282,7 +282,7 @@ export class CodexProtocolSession {
         // A primary-thread notification without a caller identity may be an old turn.
         const clientId = text(root?.clientUserMessageId) ?? text(record(root?.turn)?.clientUserMessageId)
         const state = clientId ? this.#requests.get(clientId) : undefined
-        if (state) this.#admit(state, turnId, 'CORRELATED_TURN_STARTED')
+        if (state) {this.#admit(state, turnId, 'CORRELATED_TURN_STARTED')}
       }
       if (method === 'turn/completed') {
         const status = text(record(root?.turn)?.status) ?? text(root?.status)
@@ -291,7 +291,7 @@ export class CodexProtocolSession {
           const event: CodexProtocolEvent = Object.freeze({ connectionId: this.connectionId, threadId, turnId, method, observedAt: this.#now(), terminalStatus: status, receipt: state.receipt })
           this.#terminals.set(turnId, event)
           // Only the exact original terminal releases this connection's turn slot.
-          if (state === this.#activeRequest) this.#activeRequest = null
+          if (state === this.#activeRequest) {this.#activeRequest = null}
           this.dependencies.onEvent?.(event)
           return
         }

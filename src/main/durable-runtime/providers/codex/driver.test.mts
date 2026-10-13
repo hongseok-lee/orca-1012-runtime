@@ -31,9 +31,9 @@ function fixture() {
     pid: 123, closed: false,
     request: async (method, params) => {
       calls.push({ method, params })
-      if (method === 'thread/start' || method === 'thread/resume') return { thread: { id: nativeThread, path: '/synthetic/rollout' } }
-      if (method === 'turn/start') return start(params)
-      if (method === 'turn/interrupt') return interrupt()
+      if (method === 'thread/start' || method === 'thread/resume') {return { thread: { id: nativeThread, path: '/synthetic/rollout' } }}
+      if (method === 'turn/start') {return start(params)}
+      if (method === 'turn/interrupt') {return interrupt()}
       return {}
     }, notify() {}, respond() {}, respondWithError() {}, close: async () => true
   }
@@ -96,7 +96,7 @@ test('exact native receipt binds immutable admission and context proof to origin
   const r = request(), permit = fixturePermit()
   const result = await f.driver.dispatch(r, permit.permit)
   assert.equal(result.state, 'ADMITTED')
-  if (result.state !== 'ADMITTED') return
+  if (result.state !== 'ADMITTED') {return}
   assert.equal(result.admission.messageId, r.sealed.messageId)
   assert.equal(result.admission.deliveryAttemptId, r.deliveryAttemptId)
   assert.equal(result.admission.providerRef.nativeTurnId, 'fixture-turn')
@@ -105,8 +105,9 @@ test('exact native receipt binds immutable admission and context proof to origin
   assert.equal(result.contextDelivery.providerBindingRevision, f.binding.providerBindingRevision)
   assert.ok(Object.isFrozen(result.identity.binding) && Object.isFrozen(result.contextDelivery))
   const wire = f.calls.find(c => c.method === 'turn/start')?.params
+  assert.ok(wire)
   assert.equal(wire?.model, '')
-  const text = (wire?.input as { text: string }[])[0].text
+  const text = (wire.input as { text: string }[])[0].text
   assert.ok(text.indexOf(canonicalInputJson(r.context as never)) < text.indexOf(canonicalInputJson(r.sealed.payload)))
   assert.match(text, /do not automatically continue/)
   assert.match(text, /Do not repeat uncertain external effects/)
@@ -128,7 +129,7 @@ test('write ACK and response loss remain UNKNOWN without admission/context proof
 test('late exact echo reconciles original UNKNOWN without a new provider call; foreign echoes do not', async () => {
   const f = fixture(); await f.ready(); f.start(() => ({}))
   const sent = await f.driver.dispatch(request(), fixturePermit().permit)
-  if (sent.state !== 'UNKNOWN') throw new Error('synthetic UNKNOWN missing')
+  if (sent.state !== 'UNKNOWN') {throw new Error('synthetic UNKNOWN missing')}
   f.notify('turn/started', { threadId: 'foreign-thread', turn: { id: 'foreign-turn' }, clientUserMessageId: sent.identity.nativeRequestId })
   f.notify('turn/started', { threadId: 'fixture-thread', turn: { id: 'unidentified-turn' } })
   assert.equal(f.events.filter(e => e.kind === 'ADMITTED').length, 0)
@@ -175,7 +176,7 @@ test('materialized attachment bytes/hash and component order are preserved in on
 test('cancel ACK alone is unconfirmed; forged turn and connection cannot invoke interrupt', async () => {
   const f = fixture(); await f.ready()
   const result = await f.driver.dispatch(request(), fixturePermit().permit)
-  if (result.state !== 'ADMITTED') throw new Error('fixture missing')
+  if (result.state !== 'ADMITTED') {throw new Error('fixture missing')}
   const target: ProviderCancelTarget = { identity: result.identity, providerRef: result.admission.providerRef }
   assert.equal((await f.driver.cancel(target, claim, fixturePermit().permit)).state, 'UNCONFIRMED')
   const wrong = { ...target, providerRef: { ...target.providerRef, nativeTurnId: 'new-foreign-turn' } } as ProviderCancelTarget
@@ -185,17 +186,17 @@ test('cancel ACK alone is unconfirmed; forged turn and connection cannot invoke 
 test('exact interrupted terminal plus verified descendants is required for stopped proof', async () => {
   const f = fixture(); await f.ready()
   const result = await f.driver.dispatch(request(), fixturePermit().permit)
-  if (result.state !== 'ADMITTED') throw new Error('fixture missing')
+  if (result.state !== 'ADMITTED') {throw new Error('fixture missing')}
   f.interrupt(() => { f.notify('turn/completed', { threadId: 'fixture-thread', turn: { id: 'fixture-turn', status: 'interrupted' } }); return {} })
   const stopped = await f.driver.cancel({ identity: result.identity, providerRef: result.admission.providerRef }, claim, fixturePermit().permit)
   assert.equal(stopped.state, 'OBSERVED')
-  if (stopped.state === 'OBSERVED') assert.equal(stopped.stopped.targetMessageId, result.identity.messageId)
+  if (stopped.state === 'OBSERVED') {assert.equal(stopped.stopped.targetMessageId, result.identity.messageId)}
   assert.equal(f.terminateCalls, 1)
 })
 test('old target baseline never terminates descendants belonging to a later turn', async () => {
   const f = fixture(); await f.ready()
   const first = await f.driver.dispatch(request(), fixturePermit().permit)
-  if (first.state !== 'ADMITTED') throw new Error('fixture missing')
+  if (first.state !== 'ADMITTED') {throw new Error('fixture missing')}
   f.notify('turn/completed', { threadId: 'fixture-thread', turn: { id: 'fixture-turn', status: 'completed' } })
   f.start(() => ({ turn: { id: 'new-turn' } }))
   const r = { ...request(), deliveryAttemptId: 'second-delivery' as ProviderDispatchRequest['deliveryAttemptId'] }
@@ -207,7 +208,7 @@ test('old target baseline never terminates descendants belonging to a later turn
 test('native wire bytes hash includes the exact primary thread and request fields', async () => {
   const f = fixture(); await f.ready()
   const result = await f.driver.dispatch(request(), fixturePermit().permit)
-  if (result.state !== 'ADMITTED') throw new Error('fixture admission missing')
+  if (result.state !== 'ADMITTED') {throw new Error('fixture admission missing')}
   const actual = f.calls.find(c => c.method === 'turn/start')!.params!
   assert.equal(result.identity.submissionHash, createHash('sha256').update(JSON.stringify(actual)).digest('hex'))
   assert.equal(actual.threadId, result.admission.providerRef.nativeSessionRef)

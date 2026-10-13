@@ -12,13 +12,13 @@ export function codexNativeTransport(): Pick<CodexProtocolDependencies, 'open' |
     capture: async (pid) => {
       const { captureCodexTurnProcesses } = await import('../../../codex/codex-structured-turn-processes')
       const snapshot = await captureCodexTurnProcesses(pid)
-      if (snapshot) captured.set(snapshot, snapshot)
+      if (snapshot) {captured.set(snapshot, snapshot)}
       return snapshot
     },
     terminate: async (pid, candidate) => {
-      if (typeof candidate !== 'object' || candidate === null) return false
+      if (typeof candidate !== 'object' || candidate === null) {return false}
       const snapshot = captured.get(candidate)
-      if (!snapshot) return false
+      if (!snapshot) {return false}
       const { terminateCodexTurnProcesses } = await import('../../../codex/codex-structured-turn-processes')
       const stopped = await terminateCodexTurnProcesses(pid, snapshot)
       captured.delete(candidate)
