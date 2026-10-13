@@ -1,3 +1,5 @@
+import { counter } from '../../../shared/durable-runtime/identity.ts'
+
 export type ResourceIdentity = {
   readonly namespace: string
   readonly name: string
@@ -7,30 +9,67 @@ export type ResourceIdentity = {
   readonly executionEpoch: string
   readonly specHash: string
 }
-export type ListedResource = ResourceIdentity & { readonly resourceVersion: string }
+export type ListedResource = ResourceIdentity & { readonly uid: string; readonly resourceVersion: string }
+export type ResourceWatchEvent =
+  | { readonly type: 'ADDED' | 'MODIFIED' | 'DELETED'; readonly object: ListedResource }
+  | { readonly type: 'BOOKMARK'; readonly resourceVersion: string }
 export interface ListWatchTransport {
   list(): Promise<{ resourceVersion: string; objects: readonly ListedResource[] }>
-  watch(resourceVersion: string): Promise<{ status: 'EVENTS' | 'DISCONNECTED' | 'EXPIRED_410'; resourceVersion: string; objects: readonly ListedResource[] }>
+  watch(resourceVersion: string): Promise<{ status: 'EVENTS' | 'DISCONNECTED' | 'EXPIRED_410'; resourceVersion: string; events: readonly ResourceWatchEvent[] }>
   get(namespace: string, name: string): Promise<ListedResource | null>
 }
 export type InventoryResult =
-  | { readonly status: 'OBSERVED'; readonly resourceVersion: string; readonly objects: readonly ListedResource[]; readonly relisted: boolean }
+  | { readonly status: 'OBSERVED'; readonly resourceVersion: string; readonly objects: readonly ListedResource[];
+      readonly history: readonly ResourceWatchEvent[]; readonly relisted: boolean }
   | { readonly status: 'UNVERIFIABLE'; readonly reason: 'LIST_FAILED' | 'WATCH_FAILED' | 'RELIST_FAILED' | 'MISSING_RESOURCE_VERSION' | 'PERSISTENCE_FAILED' }
 
-type ObservationSink = (object: ListedResource, source: 'LIST' | 'WATCH') => Promise<void>
-async function observeAll(objects: readonly ListedResource[], source: 'LIST' | 'WATCH', sink?: ObservationSink) {
-  for (const object of objects) { await sink?.(object, source) }
+export type ObservationSink = (event: ResourceWatchEvent, source: 'LIST' | 'WATCH') => Promise<void>
+async function observeAll(events: readonly ResourceWatchEvent[], source: 'LIST' | 'WATCH', sink?: ObservationSink) {
+  for (const event of events) { await sink?.(event, source) }
 }
-function mergeObjects(first: readonly ListedResource[], second: readonly ListedResource[]): ListedResource[] {
+function applyEvents(first: readonly ListedResource[], events: readonly ResourceWatchEvent[]): ListedResource[] {
   const inventory = new Map<string, ListedResource>()
-  for (const item of [...first, ...second]) {
-    // Preserve different UIDs sharing a name for conflict comparison/history.
-    inventory.set(JSON.stringify([item.namespace, item.name, item.uid]), item)
+  const key = (item: ListedResource) => JSON.stringify([item.namespace, item.name, item.uid])
+  for (const item of first) { inventory.set(key(item), item) }
+  for (const event of events) {
+    if (event.type === 'BOOKMARK') { continue }
+    // DELETE removes only this UID, never a same-name replacement. Every event
+    // remains in history/sink and cannot qualify stop or physical fencing.
+    if (event.type === 'DELETED') { inventory.delete(key(event.object)) }
+    else { inventory.set(key(event.object), event.object) }
   }
   return [...inventory.values()]
 }
-function snapshotObjects(objects: readonly ListedResource[]): readonly ListedResource[] {
-  return Object.freeze(objects.map(object => Object.freeze({ ...object })))
+function snapshotIdentity(caller: ResourceIdentity): ResourceIdentity {
+  const expected = Object.freeze({ namespace: caller.namespace, name: caller.name, uid: caller.uid,
+    operationId: caller.operationId, unitId: caller.unitId, executionEpoch: caller.executionEpoch, specHash: caller.specHash })
+  for (const value of [expected.namespace, expected.name, expected.operationId, expected.unitId, expected.specHash]) {
+    if (typeof value !== 'string' || value.length === 0) { throw new Error('Invalid original resource identity') }
+  }
+  if (expected.uid !== null && (typeof expected.uid !== 'string' || expected.uid.length === 0)) {
+    throw new Error('Invalid original resource UID')
+  }
+  counter('execution-epoch', expected.executionEpoch)
+  return expected
+}
+function snapshotObject(caller: ListedResource): ListedResource {
+  const identity = snapshotIdentity(caller)
+  const uid = identity.uid, resourceVersion = caller.resourceVersion
+  if (uid === null || typeof resourceVersion !== 'string' || !resourceVersion) { throw new Error('Invalid observed resource identity') }
+  return Object.freeze({ ...identity, uid, resourceVersion })
+}
+function snapshotEvents(events: readonly ResourceWatchEvent[]): readonly ResourceWatchEvent[] {
+  return Object.freeze(events.map((event): ResourceWatchEvent => {
+    if (event.type === 'BOOKMARK') {
+      if (typeof event.resourceVersion !== 'string' || !event.resourceVersion) { throw new Error('Invalid watch bookmark') }
+      return Object.freeze({ type: 'BOOKMARK', resourceVersion: event.resourceVersion })
+    }
+    if (!['ADDED', 'MODIFIED', 'DELETED'].includes(event.type)) { throw new Error('Invalid watch event') }
+    return Object.freeze({ type: event.type, object: snapshotObject(event.object) })
+  }))
+}
+function listEvents(objects: readonly ListedResource[]): readonly ResourceWatchEvent[] {
+  return Object.freeze(objects.map(object => Object.freeze({ type: 'ADDED' as const, object })))
 }
 
 /** A bounded recovery pass, not an activated controller loop. Its caller keeps
@@ -40,32 +79,36 @@ export async function recoverListWatch(transport: ListWatchTransport, sink?: Obs
   let listed
   try {
     const received = await transport.list()
-    listed = Object.freeze({ resourceVersion: received.resourceVersion, objects: snapshotObjects(received.objects) })
+    listed = Object.freeze({ resourceVersion: received.resourceVersion, objects: Object.freeze(received.objects.map(snapshotObject)) })
   } catch { return { status: 'UNVERIFIABLE', reason: 'LIST_FAILED' } }
   if (!listed.resourceVersion) { return { status: 'UNVERIFIABLE', reason: 'MISSING_RESOURCE_VERSION' } }
-  try { await observeAll(listed.objects, 'LIST', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
+  const initialHistory = listEvents(listed.objects)
+  try { await observeAll(initialHistory, 'LIST', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
   let watched
   try {
     const received = await transport.watch(listed.resourceVersion)
-    watched = Object.freeze({ status: received.status, resourceVersion: received.resourceVersion, objects: snapshotObjects(received.objects) })
+    watched = Object.freeze({ status: received.status, resourceVersion: received.resourceVersion, events: snapshotEvents(received.events) })
   } catch { return { status: 'UNVERIFIABLE', reason: 'WATCH_FAILED' } }
+  // A disconnect may accompany a final observed event batch. Preserve its
+  // original history before replacing current inventory with a fresh LIST.
+  try { await observeAll(watched.events, 'WATCH', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
   if (watched.status === 'EVENTS') {
     if (!watched.resourceVersion) { return { status: 'UNVERIFIABLE', reason: 'MISSING_RESOURCE_VERSION' } }
-    try { await observeAll(watched.objects, 'WATCH', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
-    return { status: 'OBSERVED', resourceVersion: watched.resourceVersion, objects: mergeObjects(listed.objects, watched.objects), relisted: false }
+    return { status: 'OBSERVED', resourceVersion: watched.resourceVersion, objects: applyEvents(listed.objects, watched.events), history: Object.freeze([...initialHistory, ...watched.events]), relisted: false }
   }
   try {
     const received = await transport.list()
-    const fresh = Object.freeze({ resourceVersion: received.resourceVersion, objects: snapshotObjects(received.objects) })
+    const fresh = Object.freeze({ resourceVersion: received.resourceVersion, objects: Object.freeze(received.objects.map(snapshotObject)) })
     if (!fresh.resourceVersion) { return { status: 'UNVERIFIABLE', reason: 'MISSING_RESOURCE_VERSION' } }
-    try { await observeAll(fresh.objects, 'LIST', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
+    const freshHistory = listEvents(fresh.objects)
+    try { await observeAll(freshHistory, 'LIST', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
     const response = await transport.watch(fresh.resourceVersion)
-    const recovery = Object.freeze({ status: response.status, resourceVersion: response.resourceVersion, objects: snapshotObjects(response.objects) })
+    const recovery = Object.freeze({ status: response.status, resourceVersion: response.resourceVersion, events: snapshotEvents(response.events) })
     if (recovery.status !== 'EVENTS' || !recovery.resourceVersion) {
       return { status: 'UNVERIFIABLE', reason: 'WATCH_FAILED' }
     }
-    try { await observeAll(recovery.objects, 'WATCH', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
-    return { status: 'OBSERVED', resourceVersion: recovery.resourceVersion, objects: mergeObjects(fresh.objects, recovery.objects), relisted: true }
+    try { await observeAll(recovery.events, 'WATCH', sink) } catch { return { status: 'UNVERIFIABLE', reason: 'PERSISTENCE_FAILED' } }
+    return { status: 'OBSERVED', resourceVersion: recovery.resourceVersion, objects: applyEvents(fresh.objects, recovery.events), history: Object.freeze([...initialHistory, ...watched.events, ...freshHistory, ...recovery.events]), relisted: true }
   } catch { return { status: 'UNVERIFIABLE', reason: 'RELIST_FAILED' } }
 }
 
@@ -75,11 +118,11 @@ export async function resolveCreateObservation(transport: ListWatchTransport, ca
   readonly disposition: 'MATCHED_UNVERIFIED' | 'UNKNOWN' | 'ABSENT_UNVERIFIED' | 'CONFLICT_BLOCKED'
   readonly object: ListedResource | null
 }> {
-  const expected = Object.freeze({ ...caller })
+  const expected = snapshotIdentity(caller)
   let object
   try {
     const received = await transport.get(expected.namespace, expected.name)
-    object = received === null ? null : Object.freeze({ ...received })
+    object = received === null ? null : snapshotObject(received)
   } catch { return { disposition: 'UNKNOWN', object: null } }
   if (object === null) { return { disposition: 'ABSENT_UNVERIFIED', object: null } }
   const same = object.namespace === expected.namespace && object.name === expected.name &&
