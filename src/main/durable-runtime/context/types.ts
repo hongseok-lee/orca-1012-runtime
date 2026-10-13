@@ -1,5 +1,12 @@
 import type { JsonValue } from '../db/atomic.ts'
-import type { SessionId, ContextRevision, RowRevision, RuntimeUnitId, AttemptId, ExecutionEpoch } from '../../../shared/durable-runtime/identity.ts'
+import type {
+  SessionId,
+  ContextRevision,
+  RowRevision,
+  RuntimeUnitId,
+  AttemptId,
+  ExecutionEpoch
+} from '../../../shared/durable-runtime/identity.ts'
 import type { VerifiedEvidence, PodUid, ProviderRef } from '../runtime/runtime-evidence.ts'
 
 /** Immutable facts, not a replay command or provider prompt/continuation policy. */

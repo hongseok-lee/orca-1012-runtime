@@ -1,5 +1,11 @@
 import type { JsonValue } from '../db/atomic.ts'
-import type { MessageId, DeliveryAttemptId, RuntimeUnitId, AttemptId, ExecutionEpoch } from '../../../shared/durable-runtime/identity.ts'
+import type {
+  MessageId,
+  DeliveryAttemptId,
+  RuntimeUnitId,
+  AttemptId,
+  ExecutionEpoch
+} from '../../../shared/durable-runtime/identity.ts'
 import type { InputAuthority } from './types.ts'
 
 export type CancelInputRequest = {
@@ -16,4 +22,9 @@ export type FixedDeliveryTarget = {
   readonly executionEpoch: ExecutionEpoch
   readonly providerTurnRef: string | null
 }
-export type CancelInterruptStatus = 'NOT_REQUIRED' | 'REQUESTED' | 'CONFIRMED' | 'UNKNOWN' | 'ALREADY_SETTLED'
+export type CancelInterruptStatus =
+  | 'NOT_REQUIRED'
+  | 'REQUESTED'
+  | 'CONFIRMED'
+  | 'UNKNOWN'
+  | 'ALREADY_SETTLED'
