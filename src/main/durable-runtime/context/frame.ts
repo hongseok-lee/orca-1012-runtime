@@ -105,19 +105,40 @@ export async function readRecoveryContextFrame(
       }))
     })
   }
-  const eventIds = [...new Set(records.rows.map(r => r.target_event_id).filter((id): id is string => id !== null))].sort()
+  const eventIds = [
+    ...new Set(records.rows.map((r) => r.target_event_id).filter((id): id is string => id !== null))
+  ].sort()
   const originalEvents: JsonValue[] = []
   for (const id of eventIds) {
-    const event = await tx.query<{event_id:string;producer_id:string;incarnation:string;producer_seq:string;agent_id:string;payload:JsonValue;committed_at:Date}>(
+    const event = await tx.query<{
+      event_id: string
+      producer_id: string
+      incarnation: string
+      producer_seq: string
+      agent_id: string
+      payload: JsonValue
+      committed_at: Date
+    }>(
       `SELECT q.event_id,q.producer_id,q.incarnation,q.producer_seq,q.agent_id,q.payload,q.committed_at
        FROM durable_runtime.runtime_event_queue q JOIN durable_runtime.runtime_event_targets t ON t.event_id=q.event_id
-       WHERE q.event_id=$1 AND t.session_id=$2`, [id, authority.sessionId])
+       WHERE q.event_id=$1 AND t.session_id=$2`,
+      [id, authority.sessionId]
+    )
     const row = event.rows[0]
-    if (!row) throw new InputStoreError('CONTEXT_EVENT_TARGET_MISSING')
+    if (!row) {
+      throw new InputStoreError('CONTEXT_EVENT_TARGET_MISSING')
+    }
     // Immutable original only. Mutable claim/retry state is quoted in the
     // source owner's immutable failure record, never silently re-read as a new directive.
-    originalEvents.push({eventId:row.event_id,producerId:row.producer_id,incarnation:row.incarnation,
-      sequence:row.producer_seq,agentId:row.agent_id,originalPayload:row.payload,committedAt:row.committed_at.toISOString()})
+    originalEvents.push({
+      eventId: row.event_id,
+      producerId: row.producer_id,
+      incarnation: row.incarnation,
+      sequence: row.producer_seq,
+      agentId: row.agent_id,
+      originalPayload: row.payload,
+      committedAt: row.committed_at.toISOString()
+    })
   }
   const revision = counter('context-revision', session.rows[0].context_revision)
   const payload: JsonValue = {

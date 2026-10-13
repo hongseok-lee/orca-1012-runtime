@@ -19,17 +19,39 @@ import {
   snapshotInputEnvelope
 } from './stage-binding.ts'
 
-function snapshotStagePredecessor(value: SubmitCommand['predecessor']): SubmitCommand['predecessor'] {
-  if (value.kind === 'NONE') return Object.freeze({ kind: 'NONE' as const })
-  if (value.kind !== 'RECONCILED') throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
+function snapshotStagePredecessor(
+  value: SubmitCommand['predecessor']
+): SubmitCommand['predecessor'] {
+  if (value.kind === 'NONE') {
+    return Object.freeze({ kind: 'NONE' as const })
+  }
+  if (value.kind !== 'RECONCILED') {
+    throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
+  }
   const receipt = value.receipt
-  const identity = Object.freeze({ ...receipt.identity,
-    originalEnvelope: snapshotInputEnvelope(receipt.identity.originalEnvelope) })
-  if (!/^[a-f0-9]{64}$/.test(identity.inputHash)) throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
-  if (receipt.state === 'RESOLVED') return Object.freeze({ kind: 'RECONCILED' as const,
-    receipt: Object.freeze({ identity, state: 'RESOLVED' as const, result: ownedInputJson(receipt.result) }) })
-  if (receipt.state === 'REFUSED' && typeof receipt.reason === 'string') return Object.freeze({ kind: 'RECONCILED' as const,
-    receipt: Object.freeze({ identity, state: 'REFUSED' as const, reason: receipt.reason }) })
+  const identity = Object.freeze({
+    ...receipt.identity,
+    originalEnvelope: snapshotInputEnvelope(receipt.identity.originalEnvelope)
+  })
+  if (!/^[a-f0-9]{64}$/.test(identity.inputHash)) {
+    throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
+  }
+  if (receipt.state === 'RESOLVED') {
+    return Object.freeze({
+      kind: 'RECONCILED' as const,
+      receipt: Object.freeze({
+        identity,
+        state: 'RESOLVED' as const,
+        result: ownedInputJson(receipt.result)
+      })
+    })
+  }
+  if (receipt.state === 'REFUSED' && typeof receipt.reason === 'string') {
+    return Object.freeze({
+      kind: 'RECONCILED' as const,
+      receipt: Object.freeze({ identity, state: 'REFUSED' as const, reason: receipt.reason })
+    })
+  }
   throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
 }
 
@@ -52,7 +74,9 @@ export async function stageInputInTransaction(
   if (request.command !== 'stageInput' || request.envelope.podTarget !== 'EXISTING_POD') {
     throw new InputStoreError('INPUT_STAGE_COMMAND')
   }
-  if (inputDigest(request.input) !== request.inputHash) throw new InputStoreError('COMMAND_INPUT_HASH')
+  if (inputDigest(request.input) !== request.inputHash) {
+    throw new InputStoreError('COMMAND_INPUT_HASH')
+  }
   const binding = stageBinding(request.input)
   requireInputSessionLock(tx, scope.sessionId)
   await assertInputScope(tx, scope)

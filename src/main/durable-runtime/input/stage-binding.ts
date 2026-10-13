@@ -98,7 +98,9 @@ export function ownedInputJson(value: JsonValue): JsonValue {
   const snapshot: JsonValue = JSON.parse(canonicalInput(value))
   function freeze(item: JsonValue): void {
     if (item !== null && typeof item === 'object') {
-      for (const child of Object.values(item)) freeze(child)
+      for (const child of Object.values(item)) {
+        freeze(child)
+      }
       Object.freeze(item)
     }
   }
@@ -113,7 +115,11 @@ export function snapshotInputEnvelope(envelope: CommandEnvelope): CommandEnvelop
   counter('step-revision', snapshot.stepRevision)
   counter('execution-epoch', snapshot.executionEpoch)
   counter('intent-revision', snapshot.intentRevision)
-  if ((snapshot.podTarget === 'EXISTING_POD' && !!snapshot.expectedPodUid) ||
-      (snapshot.podTarget === 'CREATE_WITHOUT_POD' && snapshot.expectedPodUid === null)) return snapshot
+  if (
+    (snapshot.podTarget === 'EXISTING_POD' && !!snapshot.expectedPodUid) ||
+    (snapshot.podTarget === 'CREATE_WITHOUT_POD' && snapshot.expectedPodUid === null)
+  ) {
+    return snapshot
+  }
   throw new InputStoreError('INPUT_COMMAND_TARGET')
 }
