@@ -1,0 +1,16 @@
+{
+  "migration": {
+    "version": "010-runtime-command-ledger.sql",
+    "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+    "applied_at": "2026-10-13T02:34:47.731Z"
+  },
+  "result": "PASS: one focused actualPG schema boundary test",
+  "checks": {
+    "typecheck": "PASS",
+    "configured_lint": "PASS",
+    "format": "PASS"
+  },
+  "scope": "010 DDL/index/FK/immutable/terminal/append-only constraints only, not gateway authority/claim execution or physical fencing",
+  "private_log_sha256": "1cae6899618e34b22d24a8d163193811ad5eb7b4139421eacfbe7ad5d8d12794",
+  "applied_scope": "only own orca_p109 validation DB; no production010 apply"
+}
