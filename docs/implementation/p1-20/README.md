@@ -13,3 +13,5 @@ Session의 epoch와 `next_event_seq - 1`을 snapshot head로 읽고, 모든 사�
 조기 API commit은 `2934a529ab1120c1da6b9a2922344b30966f224e`입니다. 순수 fixture 5개와 별도 PG fixture 6개 및 scoped type 설정을 작성했습니다. 모두 미실행이며 source 작성은 검증 통과가 아닙니다. Pure/PG/type/lint는 Ready와 bridge의 배분 신호 뒤 최초 실행합니다. PG fixture는 `orca_p120_` 소유 DB 및 schema 001–012와 exact 017 handoff를 요구하고 DDL·dev migration을 적용하지 않습니다. Fixture의 nominal 타입 단언은 실제 인증 증거가 아닙니다. Attempt metadata 및 retention 모양의 fixture는 실제 Pod/Cloud fault나 retention 정책 구현이 아닙니다.
 
 PR #30의 source·PG 9개·type/lint·첫 결과 PNG 및 원 증거는 그대로 보존했습니다. Live runtime `8edb42e1`, shared cache, PG 개발 데이터와 다른 owner source를 변경하지 않았습니다. Native parser의 실제 signature와 제약은 [좁은 source 사실](native-source-facts.md)에 있습니다.
+
+최초 검증 결과는 [실제 결과 문서](evidence/first-verification.md)에 기록했습니다. 순수 5개·PG distinct 6개와 최종 scoped type/lint가 통과했으며 원 type 4건·lint 2건·PG 23503 실패 및 한정 교정을 보존했습니다. 위 미실행 설명은 조기 source 제출 당시의 이력입니다. Public handler와 실제 인증 및 provider 통합은 여전히 미완료입니다.
