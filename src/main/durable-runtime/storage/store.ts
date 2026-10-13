@@ -112,10 +112,12 @@ export class StorageStore {
     return { binding, incarnation: member.rows[0].incarnation };
   }
   private async currentExecution(tx: DurableTransaction, target: StorageTarget, active: boolean): Promise<void> {
+    const session = await tx.query("SELECT id FROM durable_runtime.sessions WHERE id=$1 AND lifecycle='OPEN'", [target.sessionId]);
+    if (session.rowCount !== 1) deny('STORAGE_SESSION_CLOSED');
     const result = await tx.query(`SELECT g.id FROM durable_runtime.execution_grants g
       JOIN durable_runtime.runtime_units u ON u.id=g.runtime_unit_id WHERE g.runtime_unit_id=$1
       AND g.attempt_id=$2 AND g.execution_epoch=$3 AND u.active_attempt_id=$2 AND u.execution_epoch=$3
-      AND g.state=ANY($4::text[])`, [target.unitId, target.attemptId, target.executionEpoch, active ? ['ACTIVE'] : ['RESERVED','ACTIVE']]);
+      AND u.desired_mode='RUNNING' AND g.state=ANY($4::text[])`, [target.unitId, target.attemptId, target.executionEpoch, active ? ['ACTIVE'] : ['RESERVED','ACTIVE']]);
     if (result.rowCount !== 1) deny('STORAGE_EXECUTION_NOT_CURRENT');
   }
   private async blocked(tx: DurableTransaction, target: StorageTarget, b: Binding, reason: string): Promise<StorageResult<never>> {
@@ -179,7 +181,7 @@ export class StorageStore {
   }
   private targetMatches(a: ExecutionTarget, target: StorageTarget, incarnation: string): boolean {
     return a.attemptId === target.attemptId && a.podUid === target.podUid &&
-      a.executionEpoch === target.executionEpoch && a.incarnation === incarnation && /^\d+$/.test(a.numericInstanceId);
+      a.executionEpoch === target.executionEpoch && a.incarnation === incarnation && /^[1-9]\d*$/.test(a.numericInstanceId);
   }
   async observeMount(tx: DurableTransaction, target: StorageTarget & {
     mountId: string; mountEvidenceRef: string;
