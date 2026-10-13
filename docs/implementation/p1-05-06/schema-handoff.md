@@ -1,0 +1,9 @@
+# Root012 input merge boundary schema handoff
+
+Separate implementation/p1-05-06-input-schema branch, new012-input-merge-boundary.sql, MessageInputKind union and MessageRow.input_kind/merge_closed. Applied001–011 bytes unchanged. Prefix includes reviewed P1-03 API and separate010/011 schema predecessors; this branch adds only012 boundary/projection and its actual evidence.
+
+Messages.input_kind is GENERAL/COMMAND/QUESTION_RESPONSE/APPROVAL_RESPONSE, NOT NULL DEFAULT GENERAL, immutable after insert. This is internal SQL/type classification, not a new public wire enum. merge_closed defaults false for GENERAL; non-GENERAL or already sealed insertion is closed by the trigger. Existing sealed rows are backfilled true. Closed cannot reopen, sealed implies closed, revision cannot decrease. Existing message identity/sealed body/hash/cancel guards remain unchanged.
+
+The input owner implements authenticated replay/scope checks; sorted unique alias rank6 locks with successful held tracking while preserving position duplicates; Session→Unit lock order and membership recheck; wake only on actual desired transition and reconcile_due_at DB-clock hint; canonical original/component payload and immutable full dispatch seal. These are fixed root module contracts, not new schema-owner algorithms. Alias/principal/blob and input attachment FKs from008 remain; no quota/split/summary/delete, operation/controller fabrication, wire/provider/lifecycle change.
+
+New schema handed off before actual012 PG validation; no intake/merge/API acceptance is claimed by this early commit. Consumers require full predecessor migration set. No production schema, live watch/HOME/runtime, infrastructure fault or installation changes.
