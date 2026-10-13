@@ -5,6 +5,7 @@ import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { withDurableTransaction, DurableDatabaseError } from '../db/connection.ts'
 import { acceptInput } from '../input/intake.ts'
+import { pairedDeviceAttachmentPrincipal } from '../attachments/types.ts'
 import type { InputRequest } from '../input/types.ts'
 import { requestUnitIntent } from './intent.ts'
 import { reserveSleep } from './sleep.ts'
@@ -20,7 +21,7 @@ function failure(code: string) {
   return (error: unknown) => error instanceof DurableDatabaseError && error.code === code
 }
 function input(f: Awaited<ReturnType<typeof fixture>>, member = 0): InputRequest {
-  return { authority: { principal: 'lifecycle-fixture-input' as InputRequest['authority']['principal'],
+  return { authority: { principal: pairedDeviceAttachmentPrincipal(randomUUID()),
     sessionId: f.sessions[member], scope: { kind: 'SESSION' } }, method: 'fixture.accept-input',
     operationKey: randomUUID(), inputKind: 'GENERAL', sessionFence: counter('session-fence', '0'),
     payload: { text: 'independent lifecycle fixture input' }, attachments: [] }
@@ -54,7 +55,7 @@ test('receipt-first lifecycle replay after deletion cannot resurrect Unit or rew
     await requestUnitIntent(pool, await intent(pool, f, 'DELETED'))
     const replay = await requestUnitIntent(pool, running)
     assert.equal(replay.status, 'REPLAYED')
-    if (first.status !== 'UNCERTAIN' && replay.status !== 'UNCERTAIN') { assert.deepEqual(replay.receipt.response, first.receipt.response) }
+    if (first.status !== 'UNCERTAIN') { assert.deepEqual(replay.receipt.response, first.receipt.response) }
     assert.equal((await pool.query('SELECT desired_mode FROM durable_runtime.runtime_units WHERE id=$1', [f.unit])).rows[0].desired_mode, 'DELETED')
   } finally { await pool.end() }
 })
@@ -192,7 +193,7 @@ test('late stopped observation is original-attempt history only and cannot overw
       attemptId: a.attempt, podUid: a.podUid, executionEpoch: counter('execution-epoch', '0'), producerId: logicalId('producer', randomUUID()),
       sequence: counter('sequence:producer', '1'), watermark: counter('sequence:observation', '1'), source: 'K8S_WATCH', resourceVersion: 'opaque-fixture-rv', kind: 'STOPPED' })
     assert.equal(result.status, 'COMMITTED')
-    if (result.status !== 'UNCERTAIN') { assert.equal((result.receipt.response as { disposition: string }).disposition, 'STALE_HISTORY_ONLY') }
+    assert.equal((result.receipt.response as { disposition: string }).disposition, 'STALE_HISTORY_ONLY')
     assert.deepEqual((await pool.query('SELECT desired_mode,intent_revision,active_attempt_id,phase FROM durable_runtime.runtime_units WHERE id=$1', [f.unit])).rows, before)
     assert.deepEqual((await pool.query('SELECT status,stopped_at FROM durable_runtime.attempts WHERE id=$1', [a.attempt])).rows[0],
       { status: 'RUNNING', stopped_at: null })
@@ -263,9 +264,7 @@ test('unverified K8s STOPPED remains history and cannot clear the UNKNOWN delive
       attemptId: a.attempt, podUid: a.podUid, executionEpoch: counter('execution-epoch', '0'), producerId: logicalId('producer', randomUUID()),
       sequence: counter('sequence:producer', '1'), watermark: counter('sequence:observation', '1'), source: 'K8S_WATCH', resourceVersion: 'opaque-stop-rv', kind: 'STOPPED' })
     assert.equal(result.status, 'COMMITTED')
-    if (result.status !== 'UNCERTAIN') {
-      assert.equal((result.receipt.response as { disposition: string }).disposition, 'RECORDED_UNVERIFIED')
-    }
+    assert.equal((result.receipt.response as { disposition: string }).disposition, 'RECORDED_UNVERIFIED')
     assert.deepEqual((await pool.query('SELECT to_jsonb(a) AS state FROM durable_runtime.attempts a WHERE id=$1', [a.attempt])).rows, before)
     const history = await pool.query("SELECT next_state FROM durable_runtime.runtime_audit_events WHERE attempt_id=$1 AND kind='RECONCILE_OBSERVATION'", [a.attempt])
     assert.equal(history.rowCount, 1); assert.equal(history.rows[0].next_state.observationKind, 'STOPPED')
@@ -296,9 +295,7 @@ test('routine PRESENT preserves existing READY, observation loss episode and bin
       attemptId: a.attempt, podUid: a.podUid, executionEpoch: counter('execution-epoch', '0'), producerId: logicalId('producer', randomUUID()),
       sequence: counter('sequence:producer', '1'), watermark: counter('sequence:observation', '1'), source: 'K8S_LIST', resourceVersion: 'opaque-present-rv', kind: 'PRESENT' })
     assert.equal(result.status, 'COMMITTED')
-    if (result.status !== 'UNCERTAIN') {
-      assert.equal((result.receipt.response as { disposition: string }).disposition, 'RECORDED_UNVERIFIED')
-    }
+    assert.equal((result.receipt.response as { disposition: string }).disposition, 'RECORDED_UNVERIFIED')
     assert.deepEqual((await pool.query('SELECT to_jsonb(u) AS state FROM durable_runtime.runtime_units u WHERE id=$1', [f.unit])).rows, unitBefore)
     assert.deepEqual((await pool.query('SELECT to_jsonb(b) AS state FROM durable_runtime.storage_bindings b WHERE id=$1', [f.binding])).rows, bindingBefore)
     assert.deepEqual((await pool.query('SELECT to_jsonb(a) AS state FROM durable_runtime.attempts a WHERE id=$1', [a.attempt])).rows, attemptBefore)

@@ -11,7 +11,7 @@ import { claimCommand } from '../runtime/gateway/claim.ts'
 import { inputDigest } from '../runtime/gateway/input.ts'
 import type { CommandClaim, ExecutorId, GatewayContext, CommandRow } from '../runtime/gateway/types.ts'
 import type { CommandEnvelope } from '../runtime/command-types.ts'
-import type { PodUid } from '../runtime/runtime-evidence.ts'
+import type { PodUid, PayloadHash } from '../runtime/runtime-evidence.ts'
 import { discoverUnitMembers, lockUnitMembers } from './locks.ts'
 import type { LifecycleOperation } from './types.ts'
 import { snapshotCommandInput, snapshotGatewayContext } from './reconcile-request.ts'
@@ -56,7 +56,7 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
     key: { principalId: context.controller.owner, sessionScope: `runtime-unit:${context.runtimeUnitId}`,
       method: 'lifecycle.prepare-reconcile-step', operationKey: request.mutationKey }, payloadHash: bodyHash,
     locks: { sessionIds: members, runtimeUnitIds: [context.runtimeUnitId], operationIds: [context.operationId] }
-  }, async tx => {
+  }, async (tx): Promise<JsonValue> => {
     await lockUnitMembers(tx, context.runtimeUnitId, members)
     const authority = await LockedGatewayAuthority.acquire(tx, context)
     const unit = (await tx.query<{ revision: string; intent_revision: string; execution_epoch: string;
@@ -141,7 +141,9 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
           executionEpoch: after.execution_epoch, intentRevision: after.intent_revision, podTarget: 'EXISTING_POD', expectedPodUid: after.expected_pod_uid as PodUid }
     const input: JsonValue = { resourceName: after.external_resource_name, body: request.input }
     const submitted = await submitCommand(authority, { command: request.step === 'ENSURE_ATTEMPT' ? 'ensureAttempt' : 'fenceAttempt',
-      envelope, input, inputHash: inputDigest(input), predecessor: { kind: 'NONE' } })
+      // inputDigest computes the canonical SHA-256 bytes; this nominal type
+      // marks that computed hash, never a provider/fence evidence claim.
+      envelope, input, inputHash: inputDigest(input) as PayloadHash, predecessor: { kind: 'NONE' } })
     if (submitted.disposition === 'BLOCKED_BY_UNRESOLVED_COMMAND') {
       return { disposition: submitted.disposition, commandId: submitted.command.id }
     }
