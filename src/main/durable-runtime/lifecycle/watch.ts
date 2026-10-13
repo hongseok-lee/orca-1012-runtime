@@ -13,7 +13,7 @@ export type ListedResource = ResourceIdentity & { readonly uid: string; readonly
 export type ResourceWatchEvent =
   | { readonly type: 'ADDED' | 'MODIFIED' | 'DELETED'; readonly object: ListedResource }
   | { readonly type: 'BOOKMARK'; readonly resourceVersion: string }
-export interface ListWatchTransport {
+export type ListWatchTransport = {
   list(): Promise<{ resourceVersion: string; objects: readonly ListedResource[] }>
   watch(resourceVersion: string): Promise<{ status: 'EVENTS' | 'DISCONNECTED' | 'EXPIRED_410'; resourceVersion: string; events: readonly ResourceWatchEvent[] }>
   get(namespace: string, name: string): Promise<ListedResource | null>

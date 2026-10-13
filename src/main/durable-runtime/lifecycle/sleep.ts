@@ -26,7 +26,7 @@ export type PreparedMemberActivity = {
   readonly backgroundWriter: boolean
   readonly inFlightDispatch: boolean
 }
-export interface LifecycleActivityAuthority {
+export type LifecycleActivityAuthority = {
   // Only immutable prepared local data; no Promise or provider/filesystem I/O.
   member(sessionId: SessionId, attemptId: AttemptId): PreparedMemberActivity | null
   pinValid(evidence: PreparedMemberActivity): boolean
