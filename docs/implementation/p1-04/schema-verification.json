@@ -1,0 +1,46 @@
+{
+  "schema_revision": "60c387eb614fee99b52228d9f5aefa48e354b3ca",
+  "base_pr": 8,
+  "migration": {
+    "version": "008-attachment-store.sql",
+    "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+    "applied_at": "2026-10-13T01:56:03.010Z"
+  },
+  "cases": [
+    {
+      "name": "blob decoded hash and byte length including empty bytes are immutable",
+      "result": "PASS"
+    },
+    {
+      "name": "upload identity bounds and terminal state plus append-only chunk constraints",
+      "result": "PASS"
+    },
+    {
+      "name": "alias owner blob and deferred committed relationship reject partial success",
+      "result": "PASS"
+    },
+    {
+      "name": "accepted original input attachment requires exact committed alias hash pair",
+      "result": "PASS"
+    },
+    {
+      "name": "concurrent commit and abort serialize with one terminal winner",
+      "result": "PASS"
+    }
+  ],
+  "runtime": "existing backend Node24.15.0, PG16.15, isolated execution mirror",
+  "checks": {
+    "typecheck": "PASS",
+    "repository_configured_oxlint": "PASS",
+    "oxfmt": "PASS"
+  },
+  "private_test_log_sha256": "8414e8224d380d6fd38e4ebdd27691039c271184800995fef88741c9160e3194",
+  "applied_001_007_checksum_equivalence": "PASS",
+  "source_sha256": {
+    "src/main/durable-runtime/db/migrations/008-attachment-store.sql": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+    "src/main/durable-runtime/db/rows.ts": "4d371f16b159c8ca62d955eb91d1de7dfc490c73d93f611c0710d6beb08f7a7d",
+    "src/main/durable-runtime/db/attachment-schema.test.mts": "64da2582564c818e0f118fa5495f5bde9fcd078700756eca664fea03970aad2c"
+  },
+  "scope": "schema predecessor only; no store/materializer/RPC/provider or P1-03 implementation",
+  "capture": "No additional capture; P1-02 predecessor capture reused only for predecessor scope. New schema evidence is actual SQL JSON and focused PG test output."
+}
