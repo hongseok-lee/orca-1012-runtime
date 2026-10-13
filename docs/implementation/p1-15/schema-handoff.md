@@ -1,6 +1,6 @@
 # 016  영속 관측 episode와 challenge schema 인계
 
-이 별도 branch는 PR29의 9eaae10abd99f518737b518f09b633b955eae731 위에 쌓았습니다. 미합류 013–015 선행은 stack으로 보존하며 원 001–015 migration bytes를 바꾸지 않았습니다. Root의 P115 계약에 지정된 기존 observation_episodes 확장과 observation_challenges, 공용 row projection만 작성했습니다. SQL·type·lint·PG 검증은 아직 실행하지 않았습니다. 013–016 dev 적용도 미승인입니다.
+이 별도 branch는 PR29의 9eaae10abd99f518737b518f09b633b955eae731 위에 쌓았습니다. 미합류 013–015 선행은 stack으로 보존하며 원 001–015 migration bytes를 바꾸지 않았습니다. Root의 P115 계약에 지정된 기존 observation_episodes 확장과 observation_challenges, 공용 row projection만 작성했습니다. 첫 소유 PG fixture 1건과 scoped typecheck 및 focused lint 교정 확인을 완료했습니다. 013–016 dev 적용도 미승인입니다.
 
 기존 observation_episodes에 pod_uid, state, revision, start_source_ref, nullable start_producer_id/start_producer_incarnation, nullable fence_operation_id, nullable reason을 추가합니다. 기존 start_watermark는 nullable로 바꾸며 start_producer_id/start_producer_incarnation/start_watermark의 세 값은 모두 null이거나 모두 유효해야 합니다. Producer가 없는 source에 가짜 pair나 sequence 0을 넣지 않습니다. 실제 producer UUID+incarnation pair는 기존 011 runtime_event_producers의 composite FK를 참조합니다. 인증과 원 Unit/attempt/UID/epoch binding 검사는 소비 모듈의 원 source/pin 계약이며 이 schema가 검증된 source를 발급하지 않습니다.
 
@@ -16,6 +16,17 @@ Observation_challenges의 opaque text id는 원 episode/Unit/attempt/Pod UID/epo
 
 공개 타입은 rows.ts에서 ObservationEpisodeRow와 ObservationChallengeRow를 export합니다. 선언은 observation-rows.ts에 두어 이미 도달한 rows.ts의 300줄 lint 제한을 다시 넘기지 않게 했습니다. 기존 row 타입 서명은 유지했습니다. ID/epoch/revision/producer/watermark는 기존 공통 branded 타입을 소비하며 opaque challenge ID는 string입니다.
 
-현재 납품은 로컬 DDL과 row API의 조기 인계입니다. 원 tuple/deadline 불변·동시 open uniqueness·잘못된 UID/attempt FK·challenge correlation·rollback의 최초 소유 PG 검증은 bridge가 별도 heavy 점유를 전달한 뒤 수행합니다. 기존 schema suite나 성공 캡처를 반복하지 않습니다. 실제 transport 인증·fresh 회복·fence 수행·새 RW 활성화와 P115 전체 기능 합격은 이번 schema 코드의 결과가 아닙니다.
+현재 납품은 016 DDL/row API와 첫 소유 PG 검증의 실제 결과 인계입니다. 원 tuple/deadline 불변·동시 open uniqueness·잘못된 UID/attempt FK·challenge correlation·rollback의 최초 소유 PG fixture 1건이 통과했습니다. 기존 schema suite나 성공 캡처를 반복하지 않습니다. 실제 transport 인증·fresh 회복·fence 수행·새 RW 활성화와 P115 전체 기능 합격은 이번 schema 코드의 결과가 아닙니다.
 
-Root 조기 리뷰의 producer incarnation 보완만 016에 적용했습니다. 아직 적용되지 않은 016 DDL의 교정이며 001–015 원 bytes는 보존했습니다. 소비 최신 초기 source는 b1f6d634353bc53c73cf45a51c48f6592887e834입니다. 새 SQL/type/lint/PG 시험은 실행하지 않았습니다.
+Root 조기 리뷰의 producer incarnation 보완만 016에 적용했습니다. 아직 적용되지 않은 016 DDL의 교정이며 001–015 원 bytes는 보존했습니다. 소비 최신 초기 source는 b1f6d634353bc53c73cf45a51c48f6592887e834입니다. 이 교정된 원 SQL과 row API를 최초 검증에 사용했습니다.
+
+
+## 016 최초 실제 검증 결과
+
+수락된 source 4f1ecdb62365e5400398fb9f2812c1569d0c9066의 정확한 001–016 chain을 새 소유 DB의 최초 설치 전제로 사용했습니다. 기존 schema suite를 실행하지 않았습니다. Producer UUID+incarnation+watermark의 모두-null/모두-valid 경계와 원 011 registry FK, pair/watermark 불변을 확인했습니다. 실제 registry에는 같은 UUID의 서로 다른 incarnation을 등록했으며 높은 sequence로 원 episode/challenge의 pair를 바꾸려는 SQL도 거절됐습니다. 상위 fresh 회복 verifier의 다른 incarnation 거절은 소비 모듈의 별도 검증입니다.
+
+두 실제 PG transaction을 겹치게 하고 pg_blocking_pids에서 두 번째 INSERT가 첫 transaction을 기다림을 관찰했습니다. 첫 COMMIT 뒤 두 번째 INSERT는 open tuple UNIQUE로 거절됐고 행은 하나였습니다. 정확한 시작+6시간, 원 tuple/deadline/source 불변, resolution 재개방/삭제 및 revision 감소 거절, same-Unit fence FK/원 operation 유지, pending challenge uniqueness·deferred supersession·소비 사실 불변, 실제 의도된 barrier 뒤 episode/challenge 전체 rollback을 한 fixture에서 확인했습니다.
+
+결과는 PASS 1건, FAIL 0건, SKIP 0건이며 체크 항목을 별도 시험 수로 세지 않습니다. Scoped TypeScript 7.0.2는 exit 0입니다. 첫 oxlint는 새 fixture 78줄의 if 중괄호 누락 1건으로 exit 1이었고 중괄호 서식만 교정하여 그 파일의 lint만 exit 0으로 확인했습니다. SQL과 PG/typecheck를 다시 실행하지 않았습니다. 실제 run별 시각·source/fixture/checksum은 [schema-results.json](schema-results.json)에 기록했습니다.
+
+Dev 013–017은 계속 미승인/미적용입니다. 017 branch와 이전 검증 증거는 보존했으며 공유 runtime/cache를 변경하거나 새 설치·이미지 build·schema 캡처를 수행하지 않았습니다. 소비 P115의 실제 결과 PNG 연계는 대기입니다.
