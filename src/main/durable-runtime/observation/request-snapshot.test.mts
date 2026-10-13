@@ -28,7 +28,7 @@ function response(f: ReturnType<typeof fixture>, state: PreparedFreshObservation
     episodeId: logicalId('observation-episode', randomUUID()), expectedEpisodeRevision: counter('row:observation-episode', '0'),
     challengeId: 'fixture-current-challenge', requestSourceRef: 'fixture-request-ref', responseSourceRef: 'fixture-response-ref',
     state, observedAt: new Date('2026-10-13T00:00:00Z'), stream: { producerId: f.workload.producerId, incarnation: f.workload.incarnation },
-    watermark: counter('sequence:observation', '4'), body: { source: 'fixture', values: ['original'] } }) as PreparedFreshObservation
+    watermark: counter('sequence:observation', '4'), body: { source: 'fixture', values: ['original'] } }) as unknown as PreparedFreshObservation
 }
 function pin(isCurrent: CurrentObservationPin['isCurrent']): CurrentObservationPin {
   return { isCurrent } as CurrentObservationPin

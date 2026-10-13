@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { ObservationEpisodeRow, RuntimeUnitRow } from '../db/rows.ts'
-import type { MutationOutcome } from '../db/atomic.ts'
+import type { JsonValue, MutationOutcome } from '../db/atomic.ts'
 import { DurableDatabaseError } from '../db/connection.ts'
 import { initializeLifecycleScope, LIFECYCLE_CONTROLLER_SCOPE } from '../lifecycle/intent.ts'
 import type { LifecycleOperation } from '../lifecycle/types.ts'
@@ -20,7 +20,7 @@ export async function reserveObservationFence(pool: Pool, caller: ReserveObserva
   const request = Object.freeze({ ...values, policy })
   const identity = episodeReceipt(request, 'observation.reserve-fence', { target: request.target,
     episodeId: request.episodeId, expectedEpisodeRevision: request.expectedEpisodeRevision, policy })
-  return mutateEpisode(pool, request.target.runtimeUnitId, identity, async tx => {
+  return mutateEpisode(pool, request.target.runtimeUnitId, identity, async (tx): Promise<JsonValue> => {
     let episode = await readOriginalEpisode(tx, request.episodeId, request.target)
     if (episode.state === 'RESOLVED') { return { disposition: 'NO_RESERVATION', reason: 'RESOLVED', episode: episodeResponse(episode) } }
     if (episode.fence_operation_id !== null) {

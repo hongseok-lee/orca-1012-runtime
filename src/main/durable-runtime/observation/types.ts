@@ -1,5 +1,5 @@
 import type {
-  AttemptId, ExecutionEpoch, LogicalId, RowRevision, RuntimeUnitId, Sequence
+  AttemptId, ExecutionEpoch, LogicalId, OperationId, RowRevision, RuntimeUnitId, Sequence
 } from '../../../shared/durable-runtime/identity.ts'
 import type { JsonValue, ReceiptIdentity } from '../db/atomic.ts'
 import type { ProducerStream } from '../events/types.ts'
@@ -110,7 +110,7 @@ export type ReserveObservationFenceRequest = EpisodeMutationRequest & {
   }
 }
 export type ObservationFenceBlockedRequest = EpisodeMutationRequest & {
-  readonly fenceOperationId: import('../../../shared/durable-runtime/identity.ts').OperationId
+  readonly fenceOperationId: OperationId
   readonly reason: string
   readonly failureSourceRef: string
 }

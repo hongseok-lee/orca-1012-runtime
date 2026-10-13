@@ -1,6 +1,6 @@
 import type { Pool } from 'pg'
 import type { ObservationChallengeRow, ObservationEpisodeRow, RuntimeUnitRow } from '../db/rows.ts'
-import type { MutationOutcome } from '../db/atomic.ts'
+import type { JsonValue, MutationOutcome } from '../db/atomic.ts'
 import { DurableDatabaseError } from '../db/connection.ts'
 import { snapshotObservationRecovery } from './snapshot.ts'
 import { assertCurrentObservationTarget, assertObservationProducerBinding } from './target.ts'
@@ -18,7 +18,7 @@ function checkWatermark(value: RecoverySnapshot, id: string | null, incarnation:
 export async function acceptFreshObservation(pool: Pool, caller: ObservationRecoveryRequest): Promise<MutationOutcome> {
   const prepared = snapshotObservationRecovery(caller)
   const { value, identity } = prepared
-  return mutateEpisode(pool, value.target.runtimeUnitId, identity, async tx => {
+  return mutateEpisode(pool, value.target.runtimeUnitId, identity, async (tx): Promise<JsonValue> => {
     const unit = await assertCurrentObservationTarget(tx, value.target)
     const episode = await readOriginalEpisode(tx, value.episodeId, value.target)
     const challenge = (await tx.query<ObservationChallengeRow>(`SELECT * FROM durable_runtime.observation_challenges

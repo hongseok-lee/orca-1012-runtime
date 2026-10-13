@@ -31,7 +31,7 @@ export async function issueObservationChallenge(pool: Pool, caller: IssueObserva
     challengeId: request.challengeId, requestSourceRef: request.requestSourceRef,
     expectedStream: request.expectedStream, expectedWatermark: request.expectedWatermark,
     supersedeChallengeId: request.supersedeChallengeId })
-  return mutateEpisode(pool, request.target.runtimeUnitId, identity, async tx => {
+  return mutateEpisode(pool, request.target.runtimeUnitId, identity, async (tx): Promise<JsonValue> => {
     const unit = await assertCurrentObservationTarget(tx, request.target)
     let episode = await readOriginalEpisode(tx, request.episodeId, request.target)
     if (episode.state !== 'OPEN') { return { disposition: 'HISTORY_ONLY', episode: episodeResponse(episode) } }

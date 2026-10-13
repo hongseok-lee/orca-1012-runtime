@@ -106,7 +106,7 @@ test('pin invalidated during real Unit lock wait is rejected at accepting SQL wi
   try {
     const f = await fixture(pool), initial = await episode(pool, f, '5 hours 59 minutes'), c = await challenge(pool, f, initial)
     let current = true
-    const request = { ...await response(pool, f, c), pin: { isCurrent: () => current } as CurrentObservationPin }
+    const request = { ...await response(pool, f, c), pin: { isCurrent: () => current } as unknown as CurrentObservationPin }
     let release!: () => void, locked!: () => void
     const ready = new Promise<void>(resolve => { locked = resolve }), gate = new Promise<void>(resolve => { release = resolve })
     const holding = withDurableTransaction(pool, async tx => { await lockUnitMembers(tx, f.unit, f.sessions); locked(); await gate })

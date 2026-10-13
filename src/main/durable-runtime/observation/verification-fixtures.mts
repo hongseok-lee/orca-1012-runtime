@@ -67,9 +67,9 @@ export async function response(pool: Pool, f: Fixture, c: Awaited<ReturnType<typ
   const prepared = Object.freeze({ target: Object.freeze({ ...f.target }), workload: Object.freeze({ ...f.workload }),
     episodeId: c.episode.id, expectedEpisodeRevision: c.episode.revision, challengeId: c.row.id,
     requestSourceRef: c.row.request_source_ref, responseSourceRef: `fixture-response:${randomUUID()}`, state, observedAt: now,
-    stream: Object.freeze({ ...f.stream }), watermark: counter('sequence:observation', '5'), body: { fixture: 'current-request-response' } }) as PreparedFreshObservation
+    stream: Object.freeze({ ...f.stream }), watermark: counter('sequence:observation', '5'), body: { fixture: 'current-request-response' } }) as unknown as PreparedFreshObservation
   return { authority: f.authority, operationKey: randomUUID(), prepared,
-    pin: { isCurrent: () => true } as CurrentObservationPin }
+    pin: { isCurrent: () => true } as unknown as CurrentObservationPin }
 }
 export function fenceRequest(f: Fixture, row: ObservationEpisodeRow) {
   return { authority: f.authority, operationKey: randomUUID(), target: f.target, episodeId: row.id,
