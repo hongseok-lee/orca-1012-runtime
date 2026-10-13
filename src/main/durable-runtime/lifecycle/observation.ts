@@ -10,6 +10,8 @@ import { inputDigest } from '../runtime/gateway/input.ts'
 import type { GatewayContext } from '../runtime/gateway/types.ts'
 import { discoverUnitMembers, lockUnitMembers } from './locks.ts'
 import { snapshotGatewayContext } from './reconcile-request.ts'
+import { recordObservationLoss } from '../observation/loss.ts'
+import type { PodUid } from '../runtime/runtime-evidence.ts'
 
 export type ReconcileObservation = {
   readonly context: GatewayContext
@@ -71,7 +73,7 @@ export async function recordReconcileObservation(pool: Pool, caller: ReconcileOb
       resourceVersion: input.resourceVersion, watermark: input.watermark, stale,
       originalIntentRevision: input.originalIntentRevision, originalStepRevision: input.originalStepRevision,
       originalControllerTerm: input.originalControllerTerm, physicalFenceVerified: false }
-    await appendAudit(tx, { actorId: context.controller.owner, runtimeUnitId: context.runtimeUnitId,
+    const observationAuditId = await appendAudit(tx, { actorId: context.controller.owner, runtimeUnitId: context.runtimeUnitId,
       operationId: context.operationId, attemptId: input.attemptId, podUid: input.podUid,
       kind: 'RECONCILE_OBSERVATION', nextState: event, occurredAt: now, receivedAt: now,
       producerId: input.producerId, producerSeq: input.sequence, evidenceRefs: [] })
@@ -81,10 +83,14 @@ export async function recordReconcileObservation(pool: Pool, caller: ReconcileOb
     if (!stale) {
       let revision = current.rows[0].revision
       if (input.kind === 'READ_FAILED' || input.kind === 'MISSING') {
-        const updated = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units SET
-          observation_lost_at=COALESCE(observation_lost_at,$2),revision=revision+1
-          WHERE id=$1 RETURNING revision`, [context.runtimeUnitId, now])
-        revision = updated.rows[0].revision
+        const loss = await recordObservationLoss(tx, { actorId: context.controller.owner,
+          operationId: context.operationId,
+          target: { runtimeUnitId: context.runtimeUnitId, attemptId: input.attemptId,
+            podUid: input.podUid as PodUid, executionEpoch: input.executionEpoch },
+          // K8s observer sequence is not an authenticated Agent producer stream.
+          // Its exact original source remains in the audit event referenced here.
+          source: { kind: input.source, reference: `audit-event:${observationAuditId}`, stream: null, watermark: null } })
+        revision = loss.unitRevision
       }
       // Presence/STOPPED does not renew Agent/provider/context/activity facts,
       // clear an observation-loss episode or change an authoritative phase.
