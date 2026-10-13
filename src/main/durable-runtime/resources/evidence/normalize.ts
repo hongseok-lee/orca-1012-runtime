@@ -125,7 +125,7 @@ export function prepareFailureObservation(raw: FailureObservationInput): Prepare
   if (termination) {
     if (termination.containerId !== target.runtimeContainerId || termination.incarnation !== target.incarnation) issues.push('TERMINATION_IDENTITY_MISMATCH')
     else if (canAlias) {
-      const value = snapshotJson({ target: key, process: termination.processIdentity, finishedAt: finishedTime!.epochNanoseconds })
+      const value = snapshotJson({ target: key, process: signals.childOom ? termination.processIdentity : null, finishedAt: finishedTime!.epochNanoseconds })
       aliases.push(Object.freeze({ kind: 'TERMINATION', key: 'termination:' + evidenceDigest(value), value }))
     }
   }
@@ -140,11 +140,12 @@ export function prepareFailureObservation(raw: FailureObservationInput): Prepare
       aliases.push(Object.freeze({ kind: 'COUNTER_TRANSITION', key: 'counter:' + evidenceDigest(value), value }))
     }
   }
+  if (resolved && aliases.length === 0) issues.push('TERMINATION_OR_COUNTER_IDENTITY_MISSING')
   // A single authenticated observation correlating the SAME process links aliases.
   // Separate observations are never joined merely by close timestamps/Pod name.
   return Object.freeze({ schemaVersion: 1, input, observedTime, finishedTime,
     payloadDigest: evidenceDigest(input), canonicalKey: aliases[0]?.key ?? null,
-    aliases: Object.freeze(aliases), resolution: resolved ? 'RESOLVED' : 'TARGET_UNRESOLVED',
+    aliases: Object.freeze(aliases), resolution: resolved && aliases.length > 0 ? 'RESOLVED' : 'TARGET_UNRESOLVED',
     issues: Object.freeze([...new Set(issues)]) })
 }
 export function resolveEvidenceAliases(observation: PreparedFailureObservation,
