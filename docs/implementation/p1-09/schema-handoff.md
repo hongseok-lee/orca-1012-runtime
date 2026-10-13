@@ -1,0 +1,11 @@
+# Root command ledger schema handoff
+
+Separate `implementation/p1-09-command-schema` branch follows the early P1-03 actual API commit d3771d1ebe06799d9a9ee6bc8cd3a4f6c3b929e0. New migration010-runtime-command-ledger.sql and additive RuntimeCommandRow/RuntimeCommandHistoryRow projections are this DB-owner predecessor. Migration008 lives in the separate P1-04 branch;009 belongs to P1-03. Applied migrations are unchanged. No gateway implementation or new identity/package changes.
+
+runtime_commands stores original UUID/operation+unit/name/term/step/Pod-target+UID/epoch/intent/hash/input and accepted timestamp immutably. The unique key is operation+step+command; a partial unique index permits one ACCEPTED/EXECUTING/UNKNOWN row per unit. Ownership term can advance independently; original term/target/input cannot change. Existing/create Pod shape, token/executor/time triplet, terminal result/refusal/time and nonnegative independent counters are CHECK-protected. Claimed token/executor/time cannot reset or change; EXECUTING/UNKNOWN cannot revert to ACCEPTED, UNKNOWN cannot reopen EXECUTING. Terminal rows cannot change or delete.
+
+runtime_command_history has command FK and append-only UUID/stage/controller term/executor+token/time/evidence refs. DB refs are not authentic external proof. The gateway owns actual authenticated authority validation, input hashing against canonical preserved request, current operation/lease checks, claim/result/history composition and external-effects restrictions. No physical fencing claim is made by this schema.
+
+SQL executor column name in both relations is executor_id. BIGINTs are decimal strings in projections. JSONB input/result carry domain values; no request/credential body is copied into ordinary logs. Exact root command names and CREATE_WITHOUT_POD/EXISTING_POD values match the merged Port declaration.
+
+Early schema commit is provided before its focused PG check; no migration apply/constraint validation success is implied by this handoff. Shared PG fault and production runtime remain untouched. Consumers must include the migration sets of the branches they integrate; migration checksum history rejects omitting already-applied008 when applying a set to the target DB.

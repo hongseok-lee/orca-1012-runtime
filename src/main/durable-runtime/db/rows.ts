@@ -110,3 +110,39 @@ export type AttachmentAliasRow = {
   content_hash: string;
   created_at: Date;
 };
+
+export type RuntimeCommandRow = {
+  id: string;
+  operation_id: OperationId;
+  runtime_unit_id: RuntimeUnitId;
+  command_name: string;
+  original_controller_term: ControllerTerm;
+  step_revision: StepRevision;
+  pod_target: "CREATE_WITHOUT_POD" | "EXISTING_POD";
+  expected_pod_uid: string | null;
+  execution_epoch: ExecutionEpoch;
+  intent_revision: IntentRevision;
+  input_hash: string;
+  input: unknown;
+  state: "ACCEPTED" | "EXECUTING" | "UNKNOWN" | "RESOLVED" | "REFUSED";
+  owner_controller_term: ControllerTerm;
+  executor_id: string | null;
+  execution_token: string | null;
+  revision: RowRevision<"runtime-command">;
+  accepted_at: Date;
+  claimed_at: Date | null;
+  settled_at: Date | null;
+  result: unknown | null;
+  refusal_code: string | null;
+  evidence_refs: readonly string[];
+};
+export type RuntimeCommandHistoryRow = {
+  id: string;
+  command_id: string;
+  stage: string;
+  controller_term: ControllerTerm;
+  executor_id: string | null;
+  execution_token: string | null;
+  occurred_at: Date;
+  evidence_refs: readonly string[];
+};
