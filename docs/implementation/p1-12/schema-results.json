@@ -1,0 +1,16 @@
+{
+  "migration": {
+    "version": "011-runtime-event-producers.sql",
+    "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+    "applied_at": "2026-10-13T02:39:43.497Z"
+  },
+  "result": "PASS: one focused actualPG producer schema boundary test",
+  "checks": {
+    "typecheck": "PASS",
+    "configured_lint": "PASS",
+    "format": "PASS"
+  },
+  "scope": "011 producer binding/pair+agent FK/claim shape/budget/target registration only; not enqueue contiguous ACK/consumer controller/finalization/spool algorithms",
+  "private_log_sha256": "acc10760bc97216d3a305af26433995d6e0cf12f35613791ae731e064845d491",
+  "applied_scope": "only own orca_p112 validation DB; no production011 apply"
+}
