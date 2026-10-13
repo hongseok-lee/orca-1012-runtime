@@ -9,7 +9,7 @@
   "typecheck": {
     "typescript": "7.0.2",
     "passed": true,
-    "revision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4"
+    "revision": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4"
   },
   "runs": [
     {
@@ -95,6 +95,20 @@
           "passed": true
         }
       ]
+    },
+    {
+      "file": "actual-pg-registration-correction.json",
+      "recordedAt": "2026-10-13T03:32:25.271Z",
+      "executedRevision": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4",
+      "originalExecutionLabel": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4",
+      "cases": [
+        {
+          "name": "stored replay survives removed membership and handler receives original PG binding",
+          "passed": true
+        }
+      ],
+      "relationship": "Extends the existing root membership-change case with same-producer registration replay / conflicting binding / new registration assertions; not a fourteenth distinct case",
+      "exitCode": 0
     }
   ],
   "correctedFailures": [
@@ -138,14 +152,14 @@
   "sharedPodOrNodeFault": false,
   "preReviewDistinctPassingCases": 12,
   "rootCorrectionRevision": "aa314d27fb051ec1979123f674bbd26ff1568b38",
-  "finalSourceRevision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4",
-  "finalSourceChange": "mechanical module split and repository style/lint alignment; no behavioral rerun; actual PG evidence remains pinned to each executed revision",
+  "finalSourceRevision": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4",
+  "finalSourceChange": "Existing authenticated immutable producer registration replay now precedes current attempt/membership admission; latter remains required for a new producer. No schema/common/package changes.",
   "lint": {
     "passed": true,
     "errors": 0,
     "warnings": 0,
-    "revision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4",
-    "scope": "eleven queue-owned source/test files"
+    "revision": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4",
+    "scope": "affected producer.ts and actual-pg.test.mts; existing full-module lint retained at 5d0595e5"
   },
   "takeoverEvidence": "third and sixth STARTED takeover uses actual PG lease row replacement, not termination of a child worker or Active",
   "actualWorkerOrActiveFaultVerified": false,
@@ -158,16 +172,40 @@
     "focusedResult": "membership removed: identical replay ACK; payload conflict rejected; new event rejected; handler original binding retained across current Unit epoch change; forged claim epoch rejected"
   },
   "sourceHashes": {
-    "src/main/durable-runtime/events/actual-pg.test.mts": "aa331615cbce365569d086c98d7992f258c06b1ccce6e64945092f2a74f7f4cf",
+    "src/main/durable-runtime/events/actual-pg.test.mts": "b7655fb4f9e690d211ab4b6c62189a9997c9efdeb332a5f84bc1576f12ff63d1",
     "src/main/durable-runtime/events/claim.ts": "edd0af494c86bc28b3571835e90164e13ccb8b1ef2e0a22de053f91c125d30f8",
     "src/main/durable-runtime/events/enqueue.ts": "c00f8c0c6dfa99908c3f47eb2b535935e17919f203dcc83bccec879bee2717e9",
     "src/main/durable-runtime/events/head.ts": "b558f859ea96281d2127287bd7b04f8d969ca7aa584bc2c16b63b2b7926e2f0b",
     "src/main/durable-runtime/events/internal.ts": "a21459b893a771314da3961ffe4975bf65cb3152478b89410e4349ee81c4890a",
     "src/main/durable-runtime/events/model.ts": "e302c10cf8cdd1727a06d0d2a3258535683a83d50763603baae99526b03d6be9",
     "src/main/durable-runtime/events/process.ts": "3ce4f24d1e8c4b382d9e86e944adfaab609008c66e946c5d56b9ed2396700e9f",
-    "src/main/durable-runtime/events/producer.ts": "e22e109e7b292b6e6c7e8a91af13a533905f0a6844cf257a6ffe50433c8ba049",
+    "src/main/durable-runtime/events/producer.ts": "9058b45460967f294fb895848e731a8c08f03a6b8446c0ecfe301c06a63b481c",
     "src/main/durable-runtime/events/store.ts": "a0556849eb1f3e764da02c1ef95b66238462d0cc479228f112a64ec1553f6850",
     "src/main/durable-runtime/events/terminal.ts": "ca27fdf45851b45cf52ddcdc81ee75a65f0fa9f133d5df9ffe07c10b0beed744",
     "src/main/durable-runtime/events/types.ts": "8751791c6a3f1592818984770189e75a72d746bc6fbebe0e4ac1df4de12504fd"
+  },
+  "registrationCorrectionRevision": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4",
+  "recordedPassingCaseExecutions": 14,
+  "registrationCorrection": {
+    "rootReview": "https://github.com/hongseok-lee/orca-1012-runtime/pull/12#issuecomment-6137555040",
+    "baseHead": "41009d4dc77f000eefb31efdd083a46420624bcd",
+    "sourceRevision": "98d995ed2b2a493de0cf73f970bbd991c93f9dc4",
+    "previousBoundary": "aa314d27 enqueue replay and original PG EventRecord",
+    "focusedEvidence": "actual-pg-registration-correction.json",
+    "assertions": [
+      "Same immutable authenticated producer registers after current membership removal",
+      "Changed existing binding is EVENT_PRODUCER_CONFLICT",
+      "New producer without membership is EVENT_BINDING"
+    ],
+    "priorSuiteRepeated": false,
+    "screenshotRepeated": false,
+    "baseRebase": "Pending schema predecessor PR16 merge; root requested rebase after that predecessor is merged"
+  },
+  "retainedCapture": {
+    "provenance": "capture-provenance.json",
+    "resultArtifact": "verification-before-registration-correction.json",
+    "targetSourceRevision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4",
+    "representsNewRegistrationCorrection": false,
+    "note": "Retained pre-registration-correction report and PNG; not recaptured for 98d995ed. New behavior evidence is the separate focused JSON."
   }
 }

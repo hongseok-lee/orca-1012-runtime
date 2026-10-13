@@ -1,0 +1,173 @@
+{
+  "scope": "Actual PostgreSQL queue module with fixture events; not workload/provider/UI acceptance",
+  "distinctPassingCases": 13,
+  "singleAllGreenRun": false,
+  "commonApiRevision": "cf0fbca42aaf79122ed1d5ac4caf32431628b75c",
+  "schemaRevision": "3d0b2baee962ccea74d0960e00ea0568e868382d",
+  "moduleRevision": "31426304c3ac8c93458bcf8525d2b0339b791797",
+  "finalTestRevision": "bc014c5e727ff2294d105844269cb29c895e1081",
+  "typecheck": {
+    "typescript": "7.0.2",
+    "passed": true,
+    "revision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4"
+  },
+  "runs": [
+    {
+      "file": "actual-pg-initial.json",
+      "recordedAt": "2026-10-13T02:44:59.904Z",
+      "executedRevision": "31426304c3ac8c93458bcf8525d2b0339b791797",
+      "originalExecutionLabel": "31426304c3ac8c93458bcf8525d2b0339b791797",
+      "cases": [
+        {
+          "name": "11 before 10 produces contiguous ACK 9 then 11; replay and target/payload conflicts",
+          "passed": true
+        },
+        {
+          "name": "concurrent enqueue deduplicates; concurrent claim charges one STARTED",
+          "passed": true
+        },
+        {
+          "name": "ACK persists before consumer completion; actual COMMIT reply hook returns no false ACK",
+          "passed": true
+        },
+        {
+          "name": "gap and stale controller do not skip; post-enqueue target append is rejected by 011",
+          "passed": true
+        },
+        {
+          "name": "projection rollback and DONE atomically include journal/outbox/history/receipt",
+          "passed": true
+        },
+        {
+          "name": "third started attempt takeover; sixth crash finalizes without seventh handler",
+          "passed": true
+        },
+        {
+          "name": "invalid deadline, invalid binding and database outage have no success ACK",
+          "passed": true
+        },
+        {
+          "name": "concurrent producer insert cannot invert consumer Session locks",
+          "passed": true
+        },
+        {
+          "name": "guarded queue handler cannot commit its own partial projection",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "file": "actual-pg-focused.json",
+      "recordedAt": "2026-10-13T02:46:34.727Z",
+      "executedRevision": "ae041814a17db276e3a2be6afbad4981ffed33a2",
+      "originalExecutionLabel": "test-literal-correction",
+      "cases": [
+        {
+          "name": "six handler attempts; failed-finalization connection loss rolls back before takeover and next head",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "file": "actual-pg-additional.json",
+      "recordedAt": "2026-10-13T02:49:04.189Z",
+      "executedRevision": "bc014c5e727ff2294d105844269cb29c895e1081",
+      "originalExecutionLabel": "expiry-uncertain-focused",
+      "cases": [
+        {
+          "name": "expired claim preserves attempt charge and rejects the old token",
+          "passed": true
+        },
+        {
+          "name": "processing COMMIT reply loss stays UNCERTAIN and replays its committed receipt",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "file": "actual-pg-root-correction.json",
+      "recordedAt": "2026-10-13T03:03:23.487Z",
+      "executedRevision": "aa314d27fb051ec1979123f674bbd26ff1568b38",
+      "originalExecutionLabel": "aa314d27fb051ec1979123f674bbd26ff1568b38",
+      "cases": [
+        {
+          "name": "stored replay survives removed membership and handler receives original PG binding",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "correctedFailures": [
+    {
+      "stage": "verifier configuration",
+      "code": "TS5102",
+      "correction": "removed deprecated baseUrl; absolute paths mapping retained"
+    },
+    {
+      "stage": "fixture type",
+      "code": "TS2345",
+      "correction": "explicit string type for canonical UUID fixture argument"
+    },
+    {
+      "stage": "initial actual PG fixture",
+      "code": "42P08",
+      "correction": "separate UUID and text bind parameters and rollback failed fixture; initial pass count 0",
+      "followup": "31426304 run: 9 PASS and finalizer assertion failure; no successful initial fixture results claimed"
+    },
+    {
+      "stage": "finalization disconnect assertion",
+      "actualSqlState": "57P01",
+      "expectedBeforeCorrection": "DB_FAILURE",
+      "correction": "focused rerun only; nine already-passed boundaries reused",
+      "followup": "ae041814 focused 1 PASS; bc014c5e disjoint additional 2 PASS; aa314d27 root correction focused 1 PASS"
+    }
+  ],
+  "replyLossEvidence": "driver reply hook after actual PG commit, not a network-loss claim",
+  "finalizationCrashEvidence": "actual termination of own verification DB connection before finalizer COMMIT",
+  "outstandingScopes": [
+    "workload authentication",
+    "physical fencing",
+    "provider completion",
+    "Agent durable spool",
+    "Runtime Port transport",
+    "provider context delivery",
+    "notification replay/read service",
+    "product UI"
+  ],
+  "liveProductUpdated": false,
+  "sharedPodOrNodeFault": false,
+  "preReviewDistinctPassingCases": 12,
+  "rootCorrectionRevision": "aa314d27fb051ec1979123f674bbd26ff1568b38",
+  "finalSourceRevision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4",
+  "finalSourceChange": "mechanical module split and repository style/lint alignment; no behavioral rerun; actual PG evidence remains pinned to each executed revision",
+  "lint": {
+    "passed": true,
+    "errors": 0,
+    "warnings": 0,
+    "revision": "5d0595e5cd62fa7d755299b5e5408c4ee5c554d4",
+    "scope": "eleven queue-owned source/test files"
+  },
+  "takeoverEvidence": "third and sixth STARTED takeover uses actual PG lease row replacement, not termination of a child worker or Active",
+  "actualWorkerOrActiveFaultVerified": false,
+  "rootReviewCorrection": {
+    "comment": "https://github.com/hongseok-lee/orca-1012-runtime/pull/12#issuecomment-6137205642",
+    "changes": [
+      "Stored immutable replay precedes current membership admission; membership check applies only to new events",
+      "EventRecord exposes original PG attemptId/PodUID/executionEpoch/incarnation; handler receives PG reconstructed record, not caller claim payload"
+    ],
+    "focusedResult": "membership removed: identical replay ACK; payload conflict rejected; new event rejected; handler original binding retained across current Unit epoch change; forged claim epoch rejected"
+  },
+  "sourceHashes": {
+    "src/main/durable-runtime/events/actual-pg.test.mts": "aa331615cbce365569d086c98d7992f258c06b1ccce6e64945092f2a74f7f4cf",
+    "src/main/durable-runtime/events/claim.ts": "edd0af494c86bc28b3571835e90164e13ccb8b1ef2e0a22de053f91c125d30f8",
+    "src/main/durable-runtime/events/enqueue.ts": "c00f8c0c6dfa99908c3f47eb2b535935e17919f203dcc83bccec879bee2717e9",
+    "src/main/durable-runtime/events/head.ts": "b558f859ea96281d2127287bd7b04f8d969ca7aa584bc2c16b63b2b7926e2f0b",
+    "src/main/durable-runtime/events/internal.ts": "a21459b893a771314da3961ffe4975bf65cb3152478b89410e4349ee81c4890a",
+    "src/main/durable-runtime/events/model.ts": "e302c10cf8cdd1727a06d0d2a3258535683a83d50763603baae99526b03d6be9",
+    "src/main/durable-runtime/events/process.ts": "3ce4f24d1e8c4b382d9e86e944adfaab609008c66e946c5d56b9ed2396700e9f",
+    "src/main/durable-runtime/events/producer.ts": "e22e109e7b292b6e6c7e8a91af13a533905f0a6844cf257a6ffe50433c8ba049",
+    "src/main/durable-runtime/events/store.ts": "a0556849eb1f3e764da02c1ef95b66238462d0cc479228f112a64ec1553f6850",
+    "src/main/durable-runtime/events/terminal.ts": "ca27fdf45851b45cf52ddcdc81ee75a65f0fa9f133d5df9ffe07c10b0beed744",
+    "src/main/durable-runtime/events/types.ts": "8751791c6a3f1592818984770189e75a72d746bc6fbebe0e4ac1df4de12504fd"
+  }
+}
