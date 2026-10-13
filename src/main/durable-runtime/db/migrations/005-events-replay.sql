@@ -63,6 +63,7 @@ BEGIN
   RETURN NULL;
 END $$;
 CREATE CONSTRAINT TRIGGER failed_event_context_guard AFTER INSERT OR UPDATE ON runtime_event_queue DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION require_failed_event_context();
+CREATE CONSTRAINT TRIGGER failed_target_context_guard AFTER INSERT ON runtime_event_targets DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION require_failed_event_context();
 CREATE TRIGGER keep_queue_attempt_history BEFORE UPDATE OR DELETE ON runtime_event_attempt_history FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
 CREATE TRIGGER keep_queue_event BEFORE DELETE ON runtime_event_queue FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
 CREATE TRIGGER keep_queue_target BEFORE UPDATE OR DELETE ON runtime_event_targets FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
@@ -83,10 +84,10 @@ CREATE TABLE replay_stream_heads (
   UNIQUE(stream_id,epoch)
 );
 CREATE TABLE replay_events (
-  stream_id text NOT NULL, epoch bigint NOT NULL, offset bigint NOT NULL CHECK(offset>0),
+  stream_id text NOT NULL, epoch bigint NOT NULL, "offset" bigint NOT NULL CHECK("offset">0),
   event_id uuid NOT NULL UNIQUE, occurred_at timestamptz NOT NULL,
   published_at timestamptz NOT NULL DEFAULT clock_timestamp(), payload jsonb NOT NULL,
-  PRIMARY KEY(stream_id,epoch,offset),
+  PRIMARY KEY(stream_id,epoch,"offset"),
   FOREIGN KEY(stream_id,epoch) REFERENCES replay_stream_heads(stream_id,epoch)
 );
 CREATE TABLE runtime_audit_events (
