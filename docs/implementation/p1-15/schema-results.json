@@ -1,0 +1,147 @@
+{
+  "distinct_tests": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "source": "4f1ecdb62365e5400398fb9f2812c1569d0c9066",
+  "migration_chain": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "applied_at": "2026-10-13T12:52:21.756Z"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "applied_at": "2026-10-13T12:52:21.840Z"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "applied_at": "2026-10-13T12:52:21.887Z"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "applied_at": "2026-10-13T12:52:21.943Z"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "applied_at": "2026-10-13T12:52:22.012Z"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "applied_at": "2026-10-13T12:52:22.042Z"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "applied_at": "2026-10-13T12:52:22.045Z"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "applied_at": "2026-10-13T12:52:22.074Z"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "applied_at": "2026-10-13T12:52:22.080Z"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "applied_at": "2026-10-13T12:52:22.112Z"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "applied_at": "2026-10-13T12:52:22.132Z"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "applied_at": "2026-10-13T12:52:22.135Z"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "applied_at": "2026-10-13T12:52:22.145Z"
+    },
+    {
+      "version": "014-durable-catalog.sql",
+      "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "applied_at": "2026-10-13T12:52:22.189Z"
+    },
+    {
+      "version": "015-failure-evidence.sql",
+      "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "applied_at": "2026-10-13T12:52:22.222Z"
+    },
+    {
+      "version": "016-observation-episodes.sql",
+      "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+      "applied_at": "2026-10-13T12:52:22.267Z"
+    }
+  ],
+  "pg_lock_overlap_observed": true,
+  "synthetic_owned_registry_fixture": true,
+  "scope": "원 producer registry triple/FK/불변, 실제 PG blocking overlap의 open uniqueness, 원 tuple/6시간 deadline/challenge/rollback schema 검증입니다. 실제 fresh verifier·회복·fencing·새 RW·HA 성공이 아닙니다.",
+  "dev013017_applied": false,
+  "checks": [
+    "producer nullable triple/FK/immutable incarnation",
+    "original tuple FK",
+    "fixed six-hour deadline",
+    "concurrent open uniqueness",
+    "challenge correlation/supersession",
+    "resolution/fence/revision history",
+    "atomic rollback",
+    "001-015 checksums unchanged"
+  ],
+  "결과": "016 최초 소유 PG fixture 1건과 scoped typecheck가 통과했습니다. 첫 lint는 fixture 중괄호 서식 오류였으며 그 파일만 교정 확인해 통과했습니다.",
+  "test_sha256_initial": "05295ee803d3ff3deabe4f450be035253b8254754a40cc49c503247f43cfbe92",
+  "test_sha256_final": "4ddc20020f7631cf1717442ea581e65282ef1aacf0f5c77db7dfea40b5d7e176",
+  "original001015_unchanged": true,
+  "typecheck": {
+    "exit": 0,
+    "typescript": "7.0.2"
+  },
+  "lint": {
+    "initial_exit": 1,
+    "initial_boundary": "observation-schema.test.mts:78 eslint(curly)",
+    "focused_exit": 0,
+    "scope": "fixture 1개 파일의 중괄호 서식만 교정했습니다.",
+    "oxlint": "1.80.0"
+  },
+  "actual_runs": [
+    {
+      "operation": "016-first-validation",
+      "pid": 6164,
+      "started_at": "2026-10-13T12:52:19Z"
+    },
+    {
+      "operation": "016-first-validation",
+      "pid": 6164,
+      "ended_at": "2026-10-13T12:52:24Z",
+      "prepare_exit": 0,
+      "pg_exit": 0,
+      "type_exit": 0,
+      "lint_exit": 1
+    },
+    {
+      "operation": "016-fixture-curly-lint-correction",
+      "pid": 6283,
+      "started_at": "2026-10-13T12:53:23Z"
+    },
+    {
+      "operation": "016-fixture-curly-lint-correction",
+      "pid": 6283,
+      "ended_at": "2026-10-13T12:53:23Z",
+      "exit": 0
+    }
+  ],
+  "repeated_pg_or_typecheck": false,
+  "capture": "소비 P115 모듈의 첫 실제 결과 이미지 연계 대기이며 별도 schema PNG를 만들지 않았습니다."
+}

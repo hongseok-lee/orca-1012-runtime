@@ -28,6 +28,7 @@ import type {
   StorageEpoch,
   WorkspaceId,
 } from "../../../shared/durable-runtime/identity.ts";
+export type { ObservationEpisodeRow, ObservationChallengeRow } from "./observation-rows.ts";
 
 export type SessionRow = {
   id: SessionId;
@@ -305,5 +306,4 @@ export type FailureIncidentStateRow = {
   revision: RowRevision<"failure-incident-state">; collection_started_at: Date;
   deadline_at: Date; state: "COLLECTING" | "CLASSIFIED" | "BLOCKED";
   reason: string | null; classification_revision: RowRevision<"failure-classification">;
-  evidence_ids: readonly FailureObservationInput["observationId"][];
-};
+  evidence_ids: readonly FailureObservationInput["observationId"][]; };
