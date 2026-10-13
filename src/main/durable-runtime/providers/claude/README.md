@@ -50,7 +50,7 @@ node --test "$ARTIFACT_ROOT/cold-focus.test.mjs"
 
 [첫 PNG 원본](evidence/first-report.png)과 [provenance](evidence/first-report-provenance.json)를 보존했다. 대상 source는 `68d6b974fed3ad6bd73c04a292b8b379eb979132`이며 PNG SHA256은 `ed6b6eb534bd03c80c495ebab68666a146ccf169a6d146339d96d185d9cbc50c`이다. 첫 navigation은 viewport 점검에서 실패해 PNG가 생성되지 않았고, 정렬을 교정한 다음 PNG 1 장을 생성했다. 생성 뒤에는 재촬영하지 않았다.
 
-DOM metadata에는 요청 heading이 기록되어 있지만 실제 PNG를 직접 열어보면 구현 설명과 과거 검증 부분만 보이며 `최초 cold 검증 결과` heading은 보이지 않는다. DOM 관측을 screenshot visibility proof로 승격하지 않는다. 이 PNG는 공개 README 보고 화면의 원본이며 요청한 신규 결과 heading 캡처의 수용 여부는 root가 판단한다.
+DOM metadata에는 요청 heading이 기록되어 있지만 실제 PNG를 직접 열어보면 구현 설명과 과거 검증 부분만 보이며 `최초 cold 검증 결과` heading은 보이지 않는다. DOM 관측을 screenshot visibility proof로 승격하지 않는다. Root가 이 PNG를 구현 설명과 과거 검증 화면을 담은 작업 설명 screenshot으로 수용했다. 신규 cold 결과 3 개의 근거는 원본 TAP와 JSON이며 해당 heading이나 결과 표가 이 PNG에 보인다고 기록하지 않는다.
 
 Root 지시로 main `02bfba1aa971d9449cad41103211e8a3d3503451`에 중간 rebase 1 회를 수행했고, 당시 head는 `a0495d0b73c9df3b2340e588bd57c2240f912223`이다. 캡처 source와 중간 rebase source 사이 소유 파일 15 개는 byte-identical이며 검증에 사용한 공통 의존 파일 39 개도 동일하다. 그 뒤에는 artifact·문서만 납품하며 fixture·typecheck·install·capture를 재실행하지 않는다.
 
@@ -62,6 +62,6 @@ Root 지시로 main `02bfba1aa971d9449cad41103211e8a3d3503451`에 중간 rebase 
 
 입력 owner의 최종 claim/permit 및 context 기록 API, P112 spool/PG append/중앙 ACK, physical writer gate, 실제 계정 cold/interrupt/inference·Spot 및 G-05는 아직 미연결 또는 미검증이다. 메모리 sink 반환을 PG commit으로 보고하지 않는다. 합성 fixture 통과는 P1-11 또는 G-05 전체 합격이 아니다.
 
-최초 PNG는 아래 원본으로 보존하며 요청 heading의 직접 확인은 미충족이다. PR은 draft로 유지한다. 제품 UI나 browser 동작 검증을 이 protocol 결과로 대신하지 않는다. 최종 base와 합류·수용 판단은 root가 담당한다.
+최초 PNG는 구현 설명과 과거 검증 화면을 담은 원본으로 보존한다. 신규 cold 결과는 원본 TAP와 JSON을 참조한다. PR은 draft로 유지한다. 제품 UI나 browser 동작 검증을 이 protocol 결과로 대신하지 않는다. 최종 base와 합류·수용 판단은 root가 담당한다.
 
 과거 환경에서 재개 뒤 최초 캡처를 준비하던 fresh Pod 조회는 Kubernetes API 연결 timeout으로 exit 1이었다. 이 실패는 과거 환경의 원 기록이며 새 recovery Ready 관측과 구분한다. 당시 browser 실행 또는 성공 검증의 반복은 하지 않았다. 기존 PR head와 디스크 증거를 대조해 보존했으며 원격 접근 경로의 조정은 root가 판단한다.
