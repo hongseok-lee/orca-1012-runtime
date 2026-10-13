@@ -21,13 +21,17 @@ export function pairedDeviceAttachmentPrincipal(deviceId: string): AttachmentPri
 
 /** Takes the authenticated context's SHA-256 fingerprint, not a token or client assertion. */
 export function fingerprintAttachmentPrincipal(fingerprint: string): AttachmentPrincipal {
-  if (!/^[a-f0-9]{64}$/.test(fingerprint)) throw new AttachmentStoreError('INVALID_PRINCIPAL')
+  if (!/^[a-f0-9]{64}$/.test(fingerprint)) {
+    throw new AttachmentStoreError('INVALID_PRINCIPAL')
+  }
   return `pairing-sha256:${fingerprint}` as AttachmentPrincipal
 }
 
 export function assertAttachmentPrincipal(value: AttachmentPrincipal): void {
-  if (!/^paired-device:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value) &&
-      !/^pairing-sha256:[a-f0-9]{64}$/.test(value)) {
+  if (
+    !/^paired-device:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value) &&
+    !/^pairing-sha256:[a-f0-9]{64}$/.test(value)
+  ) {
     throw new AttachmentStoreError('INVALID_PRINCIPAL')
   }
 }
@@ -39,7 +43,7 @@ export class AttachmentStoreError extends DurableDatabaseError {
   }
 }
 
-export interface AttachmentUpload {
+export type AttachmentUpload = {
   id: AttachmentUploadId
   principal: AttachmentPrincipal
   targetConnectionId: string | null
@@ -49,7 +53,7 @@ export interface AttachmentUpload {
   revision: RowRevision<'attachment-upload'>
 }
 
-export interface AttachmentAlias {
+export type AttachmentAlias = {
   aliasPath: string
   uploadId: AttachmentUploadId
   principal: AttachmentPrincipal
@@ -60,9 +64,9 @@ export interface AttachmentAlias {
 }
 
 /** A snapshot to materialize only after the owning transaction has committed. */
-export interface CommittedAttachment extends AttachmentAlias {
+export type CommittedAttachment = {
   contentBytes: Buffer
-}
+} & AttachmentAlias
 
 export type AttachmentAbortResult =
   | { kind: 'missing' }
