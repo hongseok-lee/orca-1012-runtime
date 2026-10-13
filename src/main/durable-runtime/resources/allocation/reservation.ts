@@ -37,7 +37,7 @@ export async function advancePlan(tx: DurableTransaction, plan: PlanProjection, 
     [plan.runtime_unit_id, plan.intent_revision])
   if (unit.rowCount !== 1) { throw new DurableDatabaseError('RESOURCE_STALE_INTENT_OR_LEASE') }
   const result = { ...planResult({ ...plan, step: status }, reasons), status }
-  await writeArtifacts(tx, { actor: authority.principalId, unitId: logicalId('runtime-unit', plan.runtime_unit_id),
+  await writeArtifacts(tx, { controller, actor: authority.principalId, unitId: logicalId('runtime-unit', plan.runtime_unit_id),
     operationId: logicalId('operation', plan.operation_id), revision: decimal(unit.rows[0].revision),
     kind: `RESOURCE_PLAN_${status}`, body: resultJson(result) })
   return result

@@ -2,6 +2,7 @@ import { logicalId, counter } from '../../../../shared/durable-runtime/identity.
 import { DurableDatabaseError } from '../../db/connection.ts'
 import { snapshotJson, evidenceDigest, text } from '../evidence/normalize.ts'
 import type { JsonValue } from '../../db/atomic.ts'
+import type { VerifiedEvidence } from '../../runtime/runtime-evidence.ts'
 import type { Envelope, ResourceFacts, PrepareResourceRequest, ReserveResourceRequest } from './types.ts'
 
 export function decimal(value: string): string {
@@ -22,14 +23,27 @@ export function json(value: unknown): JsonValue {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Validated immutable JSON projection passed to the existing mutable SQL JSON type; never mutated.
   return snapshotJson(value) as unknown as JsonValue
 }
+function copiedEvidence(input: VerifiedEvidence): VerifiedEvidence {
+  const evidenceRef = input.evidenceRef, observedAt = input.observedAt
+  text(evidenceRef, 'evidence ref'); text(observedAt, 'evidence observation time')
+  const copy = { ...input, evidenceRef, observedAt }
+  // Keep only allowlisted evidence metadata plus the supplied opaque brand.
+  // Extra nested caller fields must not enter facts JSON after an await.
+  for (const key of Object.keys(copy)) {
+    if (key !== 'evidenceRef' && key !== 'observedAt') { Reflect.deleteProperty(copy, key) }
+  }
+  return Object.freeze(copy)
+}
 export function scopeSnapshot(input: Pick<Envelope, 'authority' | 'authorizer'>) {
   const a = input.authority
-  const evidence = Object.freeze({ ...a.evidence, evidenceRef: text(a.evidence.evidenceRef, 'scope evidence'),
-    observedAt: text(a.evidence.observedAt, 'scope observation time') })
-  const authority = Object.freeze({ ...a, principalId: text(a.principalId, 'principal'),
+  const evidence = copiedEvidence(a.evidence)
+  const authorityCopy = { ...a, principalId: text(a.principalId, 'principal'),
     datasetName: text(a.datasetName, 'dataset'), domainIdentity: text(a.domainIdentity, 'domain'),
     budgetScope: text(a.budgetScope, 'budget scope'), runtimeUnitId: a.runtimeUnitId === null ? null :
-      logicalId('runtime-unit', a.runtimeUnitId), evidence })
+      logicalId('runtime-unit', a.runtimeUnitId), evidence }
+  const allowed = new Set(['principalId', 'datasetName', 'domainIdentity', 'budgetScope', 'runtimeUnitId', 'evidence'])
+  for (const key of Object.keys(authorityCopy)) { if (!allowed.has(key)) { Reflect.deleteProperty(authorityCopy, key) } }
+  const authority = Object.freeze(authorityCopy)
   const receiver = input.authorizer, method = receiver.authorize
   if (typeof method !== 'function') { throw new DurableDatabaseError('RESOURCE_SCOPE_AUTHORIZER') }
   // Capture both the original function and its receiver before any await.
@@ -48,13 +62,8 @@ export function facts(input: ResourceFacts): ResourceFacts {
   for (const demand of [data.protectedDemand, data.profile]) {
     decimal(demand.memoryBytes); decimal(demand.cpuMillicores)
   }
-  return Object.freeze({ ...data,
-    verification: Object.freeze({ ...input.verification,
-      evidenceRef: text(input.verification.evidenceRef, 'facts evidence'),
-      observedAt: text(input.verification.observedAt, 'facts observation time') }),
-    completeAccountingEvidence: Object.freeze({ ...input.completeAccountingEvidence,
-      evidenceRef: text(input.completeAccountingEvidence.evidenceRef, 'complete accounting evidence'),
-      observedAt: text(input.completeAccountingEvidence.observedAt, 'accounting observation time') }) })
+  return Object.freeze({ ...data, verification: copiedEvidence(input.verification),
+    completeAccountingEvidence: copiedEvidence(input.completeAccountingEvidence) })
 }
 export function prepareSnapshot(input: PrepareResourceRequest) {
   const common = envelope(input)

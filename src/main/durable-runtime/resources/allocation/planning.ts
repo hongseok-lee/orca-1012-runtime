@@ -55,7 +55,7 @@ async function rejectedOperation(tx: DurableTransaction, request: Prepared, oper
     SET revision=revision+1 WHERE id=$1 AND intent_revision=$2 AND desired_mode='RUNNING' AND @lease RETURNING revision`,
     [request.authority.runtimeUnitId, request.expectedIntentRevision])
   if (unit.rowCount !== 1) { throw new DurableDatabaseError('RESOURCE_STALE_INTENT_OR_LEASE') }
-  await writeArtifacts(tx, { actor: request.authority.principalId, unitId: request.authority.runtimeUnitId!,
+  await writeArtifacts(tx, { controller: request.controller, actor: request.authority.principalId, unitId: request.authority.runtimeUnitId!,
     operationId: logicalId('operation', operationId), revision: unit.rows[0].revision,
     kind: 'RESOURCE_PLAN_REJECTED', body: json({ ...response, operationId, incidentId: request.incidentId }) })
   return { ...response, operationId, incidentId: request.incidentId }
