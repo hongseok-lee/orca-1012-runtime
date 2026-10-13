@@ -24,6 +24,14 @@ Due 조회는 실제 read-only transaction에서 원 operation/shape/facts/expir
 
 ## 실제 실행 상태
 
-이 단계는 로컬 source 작성과 조기 API 납품이다. Allocation의 소유 fixture는 아직 작성 전이며 PG/type/lint/최초 결과 PNG는 미실행이다. 현재 heavy 2 배분을 기다리며 원격 source 전송·설치·build·runtime 활성화·dev 019 적용을 하지 않았다. Policy의 별도 verified focused 결과나 Foundation CI를 allocation 모듈의 PASS로 바꾸어 기록하지 않는다.
+이 단계는 로컬 source 작성과 조기 API 납품이다. 조기 API 단계에서는 소유 fixture가 작성 전이었다. 이후 최초 7개 fixture를 작성했으며 PG/type/lint/최초 결과 PNG는 계속 미실행이다. 현재 heavy 2 배분을 기다리며 원격 source 전송·설치·build·runtime 활성화·dev 019 적용을 하지 않았다. Policy의 별도 verified focused 결과나 Foundation CI를 allocation 모듈의 PASS로 바꾸어 기록하지 않는다.
 
 Production issuer·admission wiring, 정확한 선행 파일의 검증용 합성, 최초 소유 fixture와 scoped type/lint/PG, 첫 결과 화면, 최종 dependency/base와 root 수락이 남았다. Root만 계획·범위·수용·merge를 결정한다. 기존 PR 27의 원 source·distinct PG 7개·원 실패/교정 로그·PNG `bda2f83a`·asset head `d00a4eb6`는 보존했고 다시 실행하거나 촬영하지 않았다.
+
+## 최초 소유 fixture의 작성 상태
+
+조기 API 납품 뒤 `actual-pg.test.mts`와 `test-support.mts`에 지정된 최초 PG 묶음 7개를 작성했다. 두 Unit의 실제 같은 scope 경합과 memory/CPU 합계, 원 capacity WAIT의 목표/provenance 및 동일 incident/operation 중복 charge 방지, REPLACE의 replacement-only charge, 실제 lease row-lock 대기 관찰 후 만료 판정, 첫 await body/callback 변이와 receipt replay·stale intent/attempt, 실제 ledger INSERT 직전 실패의 전체 rollback, expiry 뒤 점유 유지와 episode/rolling 예산·승인 profile 보존을 포함한다.
+
+이 fixture는 별도 `orca_p122_*` DB의 exact 001–019 chain을 요구한다. 정책 계산 helper를 그대로 호출하며 기존 정책 21개·incident 7개·HA/P103/schema suite를 import하거나 반복 실행하지 않는다. Source·schema pin과 실제 사례의 pass/fail은 첫 실행 뒤에만 결과 JSON으로 기록한다. 현재는 fixture 작성 상태이며 type/lint/PG/PNG는 모두 미실행이다.
+
+상위 권한·분류·admission·capacity는 명시적인 합성 fixture 입력이며 production issuer나 실제 cloud capacity의 증거가 아니다. Consumer에서 거짓 capacity를 주입하지 않고 최초 false 관측과 후속 별도 합성 available 관측을 구분한다. Lease 사례는 실제 소유 PG row-lock wait를 확인해야 통과하고, rollback 사례는 실제 ledger write 경계에 도달해야 통과한다. Logical sleep/wake와 operation 정리는 fixture의 PG 상태 전이이며 실제 lifecycle controller·resize/fence/Pod/provider/Agent OOM을 활성화하지 않는다. Fixture 작성이 검증 통과를 뜻하지 않는다.
