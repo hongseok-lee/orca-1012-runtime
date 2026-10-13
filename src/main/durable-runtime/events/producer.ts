@@ -7,7 +7,7 @@ import { lockAggregates } from '../db/locks.ts'
 
 import type { EventProducer } from './types.ts'
 
-import { d } from './model.ts'
+import { d, type ProducerRow } from './model.ts'
 import { reject, streamValues, producer } from './internal.ts'
 
 export async function registerEventProducer(pool: Pool, input: EventProducer): Promise<void> {
@@ -23,6 +23,16 @@ export async function registerEventProducer(pool: Pool, input: EventProducer): P
   }
   await withDurableTransaction(pool, async (tx) => {
     await lockAggregates(tx, { runtimeUnitIds: [input.runtimeUnitId] })
+    const existing = await tx.query<ProducerRow>(
+      `SELECT * FROM ${d}runtime_event_producers WHERE producer_id=$1 AND incarnation=$2`,
+      streamValues(stream)
+    )
+    if (existing.rows[0]) {
+      // A reconnect reuses the authenticated immutable original registration,
+      // even after current attempt or Agent-to-Unit membership changes.
+      assertOriginalBinding(await producer(tx, stream, true), input)
+      return
+    }
     const binding = await tx.query(
       `SELECT a.id FROM ${d}attempts a WHERE a.id=$1 AND a.runtime_unit_id=$2 AND a.execution_epoch=$3 AND a.pod_uid=$4 AND a.incarnation=$5
        AND EXISTS(SELECT 1 FROM ${d}runtime_members m JOIN ${d}sessions s ON s.id=m.session_id WHERE m.runtime_unit_id=a.runtime_unit_id AND s.agent_id=$6)`,
@@ -44,17 +54,21 @@ export async function registerEventProducer(pool: Pool, input: EventProducer): P
         w.executionEpoch
       ]
     )
-    const row = await producer(tx, stream, true)
-    if (
-      row.agent_id !== input.agentId ||
-      row.runtime_unit_id !== input.runtimeUnitId ||
-      row.attempt_id !== w.attemptId ||
-      row.pod_uid !== w.podUid ||
-      row.execution_epoch !== w.executionEpoch
-    ) {
-      reject('EVENT_PRODUCER_CONFLICT')
-    }
+    assertOriginalBinding(await producer(tx, stream, true), input)
   })
+}
+
+function assertOriginalBinding(row: ProducerRow, input: EventProducer): void {
+  const w = input.workload
+  if (
+    row.agent_id !== input.agentId ||
+    row.runtime_unit_id !== input.runtimeUnitId ||
+    row.attempt_id !== w.attemptId ||
+    row.pod_uid !== w.podUid ||
+    row.execution_epoch !== w.executionEpoch
+  ) {
+    reject('EVENT_PRODUCER_CONFLICT')
+  }
 }
 
 /** Returns only after the PG COMMIT reply. A lost reply throws; retransmit the

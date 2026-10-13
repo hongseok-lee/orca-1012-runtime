@@ -464,6 +464,23 @@ check(
     await pool.query('DELETE FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1', [
       f.producer.runtimeUnitId
     ])
+    await registerEventProducer(pool, f.producer)
+    await errorCode(
+      () =>
+        registerEventProducer(pool, {
+          ...f.producer,
+          workload: { ...f.producer.workload, executionEpoch: counter('execution-epoch', '2') }
+        }),
+      'EVENT_PRODUCER_CONFLICT'
+    )
+    await errorCode(
+      () =>
+        registerEventProducer(pool, {
+          ...f.producer,
+          workload: { ...f.producer.workload, producerId: logicalId('producer', randomUUID()) }
+        }),
+      'EVENT_BINDING'
+    )
     assert.equal((await enqueueRuntimeEvent(pool, f.producer, e)).status, 'REPLAYED')
     await errorCode(
       () => enqueueRuntimeEvent(pool, f.producer, { ...e, payload: { conflict: true } }),
