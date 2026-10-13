@@ -37,7 +37,7 @@ async function fixture(session = false) {
     if (sessionId) {
       const agent = randomUUID(), workspace = randomUUID(), storage = randomUUID();
       await tx.query("INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'fixture')", [agent]);
-      await tx.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$1,'fixture','READY')", [workspace]);
+      await tx.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1::uuid,$1::text,'fixture','READY')", [workspace]);
       await tx.query('INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id) VALUES($1,$2,$3)', [sessionId,agent,workspace]);
       await tx.query("INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,'fixture')", [id]);
       await tx.query("INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$2,'fixture',$3,'RO')", [storage,id,`/fixture/${id}`]);
