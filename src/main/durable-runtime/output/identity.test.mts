@@ -25,7 +25,8 @@ function page(entries: readonly { id: string; principal: string; key: string; st
       body: freezeJournalJson({ kind: 'INPUT_SUBMISSION', inputId: entry.id }), committedAt: '2026-10-13T00:00:00Z' })),
     inputs: entries.map((entry, index) => ({ inputId: entry.id, messageId: sessionId, sessionId, inputSequence: String(index + 1),
       principal: entry.principal, operationKey: entry.key, originalPayloadHash: 'c'.repeat(64),
-      original: freezeJournalJson({ version: 1, payload: { body } }), attachments: [],
+      original: freezeJournalJson({ version: 1, sessionId, method: 'agentSession.send', inputKind: 'GENERAL',
+        operationKey: entry.key, scope: ['session', sessionId], payload: { body }, attachments: [] }), attachments: [],
       submission: entry.structured === false ? null : { principal: entry.principal, clientMessageId: entry.key,
         wirePayloadFingerprint: 'd'.repeat(64), wireFence: '1', journalEpoch: '0', journalSequence: String(index + 1),
         submittedAt: '2026-10-13T00:00:00Z' } }))

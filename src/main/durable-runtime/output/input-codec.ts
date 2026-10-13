@@ -42,7 +42,7 @@ export function decodeCommittedInputBody(input: OriginalInputComponent): Readonl
   }
   if (envelope.method !== 'terminal.send' || envelope.scope[0] !== 'terminal' ||
     !nonempty(envelope.scope[1]) || input.submission !== null ||
-    payload.version !== 1 || typeof payload.text !== 'string' || !Array.isArray(payload.chunks) ||
+    payload.version !== 1 || typeof payload.text !== 'string' || !Array.isArray(payload.chunks) || payload.chunks.length === 0 ||
     !nonempty(payload.originalIngressId) ||
     Object.keys(payload).some((key) => !['version', 'text', 'chunks', 'wire', 'originalIngressId'].includes(key))) {
     unreadable()
