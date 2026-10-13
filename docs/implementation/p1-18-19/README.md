@@ -1,6 +1,6 @@
 # P1-18 / P1-19 조기 ingress API
 
-이 변경은 `02bfba1aa971d9449cad41103211e8a3d3503451` 위의 독립 소스 작성이다. 기존 PR22와 provider 코드 및 증거는 변경하지 않았다. 첫 납품은 검증된 서버 scope를 받는 snapshot / classifier, 순수 draft reducer, 기존 binary decoder를 사용하는 utility다. 현재 heavy 슬롯 배분에 따라 fixture, type, lint와 캡처는 실행하지 않았다.
+이 변경은 `02bfba1aa971d9449cad41103211e8a3d3503451` 위의 독립 소스 작성이다. 기존 PR22와 provider 코드 및 증거는 변경하지 않았다. 첫 납품은 검증된 서버 scope를 받는 snapshot / classifier, 순수 draft reducer, 기존 binary decoder를 사용하는 utility다. 초기 API 작성 뒤 배분된 슬롯에서 소스 `d53227d6`의 첫 fixture 7개와 scoped type / lint를 통과했다. 실제 결과 캡처는 아직 없다.
 
 ## Export와 호출 경계
 
@@ -53,4 +53,4 @@ Binary utility는 실제 `decodeTerminalStreamFrame`과 기존 strict ACK schema
 
 Root가 전달한 같은 transaction API의 조기 선행은 PR36 소스 `4d1cabbc93ea33289a708196951b8d2a92a1bfdf`다. Signature는 `acceptInputInTransaction(tx: DurableTransaction, snapshotRequest: InputRequest, expectedUnitId: RuntimeUnitId | null)`이며 해당 선행의 type / lint / focused PG는 아직 미실행이다. 이번 부분 paste 교정에는 Input 모듈을 합류하지 않고 전달된 선행 사실로만 기록했다. Input callback, held lock marker, 공용 receipt / rows 또는 DDL을 복제하지 않았다. PG floor / draft / 입력 / receipt 원자 저장 계약도 root 후속이며 현재 코드는 저장하거나 COMMIT하지 않는다. 결과에서 `{send:{accepted:true}}`, durable ACK, native turn 또는 준비된 앱 capability를 생성하지 않는다.
 
-지정된 최초 경계의 pure fixture는 `ingress-fragments.test.mts`에 준비했다. 부분 paste 중 clear / protocol reply / Stop 분류 금지와 ESC → `[200~` continuation을 포함한다. Fixture, scoped type / lint와 최초 실제 캡처는 아직 미실행이다. 실제 앱, PG, provider, PTY, Cloud 및 runtime activation 합격을 주장하지 않는다. 다음 검증은 bridge의 구체 슬롯 배분 뒤 지정된 신규 경계만 수행한다.
+지정된 최초 경계의 `ingress-fragments.test.mts` 7개는 소스 `d53227d6802808572219b09906c038add6481f8f`에서 첫 실행으로 모두 통과했다. 실패 / skip은 0이며 scoped type과 configured lint도 통과했다. 부분 paste 중 clear / protocol reply / Stop 분류 금지와 ESC → `[200~` continuation을 포함한다. 해당 검증 PID는 종료됐고 heavy 1 슬롯을 반환했다. 결과는 `first-fragment-results.json`에 기록했다. 최초 실제 캡처는 아직 없다. 실제 앱, PG, provider, PTY, Cloud 및 runtime activation 합격을 주장하지 않는다.
