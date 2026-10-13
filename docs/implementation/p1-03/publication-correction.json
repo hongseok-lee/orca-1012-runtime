@@ -1,0 +1,26 @@
+{
+  "root_review": "https://github.com/hongseok-lee/orca-1012-runtime/pull/13#issuecomment-6137033968",
+  "test_revision": "d5387ab0771c0ef917b31369df55d4d7645b1d12",
+  "result": "PASS focused1; other10 skipped",
+  "actual_sink_counts": [
+    0,
+    1,
+    2
+  ],
+  "canonical_id_relation": "second and third append the same event ID; final state PUBLISHED",
+  "mechanism": "actual publishOutboxClaim callback appends event ID to separate owned synthetic file sink and fsyncs; BEFORE actual child SIGKILL before callback, AFTER actual child SIGKILL after fsync while callback awaits barrier and before mark, restart callback appends same ID then marks",
+  "scope": "actual owned child-process crash on ephemeral-Pod fsynced test file sink; not network/provider/PV/Spot-loss delivery acceptance",
+  "checks": {
+    "changed_file_lint": "PASS",
+    "typecheck": "PASS",
+    "format": "PASS"
+  },
+  "test_log_sha256": "0f6ab01948dd4842ba58c31ba7fa58948609a7b3c0beb11e46d461ef1508ebfc",
+  "code_sha256": {
+    "src/main/durable-runtime/db/atomic.test.mts": "4bdfe8d050dab17a5712d666e7b79efbf4938ea7c881a360a559180b81e331fb",
+    "src/main/durable-runtime/journal/outbox-crash-worker.mts": "75e69a01066f54429cf77c3c056e860994b9585257f45961867c39a129647694"
+  },
+  "api_change": "none",
+  "previous_case_scope": "Prior BEFORE/AFTER report-only worker proved claim recovery and stable ID only, not callback publication; this correction supersedes that case claim.",
+  "capture": "No recapture. Existing PNG/provenance at e696b9a8 is historical pre-correction report and cannot prove corrected publication boundary."
+}
