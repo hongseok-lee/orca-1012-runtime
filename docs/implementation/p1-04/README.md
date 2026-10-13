@@ -11,6 +11,9 @@ the root reports compatible API in `8064b0f2703c36df28a3d2735e0d6276d6f80ae1`.
 Consumed schema predecessor: `34498b46c562a7a625d8dda3683f6ee56ecfdd8f`
 (PR10). Migration 008 and the common API are supplied by the DB owner, unchanged.
 Root subsequently merged those same schema bytes into main.
+See [actual module report capture](store-evidence/results.png) and
+[immutable capture provenance](store-evidence/capture-provenance.json). This is a
+browser-rendered saved verification report, not native/RPC/product UI evidence.
 See [store-verification.json](store-verification.json) for actual source hashes,
 remote Node 24.15.0 checks and the distinction from the schema owner's five cases.
 
