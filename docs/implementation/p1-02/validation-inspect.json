@@ -1,0 +1,113 @@
+{
+  "captured_at": "2026-10-13T01:41:40.630Z",
+  "schema": "durable_runtime",
+  "dataset": "orca-1012-dev-v1",
+  "driver_version": "8.23.1",
+  "postgres_version": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "search_path": "\"$user\", public",
+  "tables": [
+    "agents",
+    "attempts",
+    "cancel_intents",
+    "controller_leases",
+    "dataset_metadata",
+    "delivery_attempts",
+    "execution_grants",
+    "failure_incidents",
+    "input_attachments",
+    "input_components",
+    "legacy_drafts",
+    "memory_rightsizing_state",
+    "messages",
+    "notifications",
+    "observation_episodes",
+    "operations",
+    "outbox_events",
+    "recovery_episodes",
+    "replay_events",
+    "replay_stream_heads",
+    "resource_profiles",
+    "resource_reservations",
+    "rpc_receipts",
+    "runtime_audit_events",
+    "runtime_event_attempt_history",
+    "runtime_event_failure_contexts",
+    "runtime_event_queue",
+    "runtime_event_targets",
+    "runtime_members",
+    "runtime_units",
+    "schema_migrations",
+    "session_context_records",
+    "session_events",
+    "sessions",
+    "snapshot_manifests",
+    "snapshot_session_watermarks",
+    "storage_bindings",
+    "storage_domains",
+    "storage_mounts",
+    "storage_seals",
+    "storage_write_grants",
+    "tabs",
+    "workspace_aliases",
+    "workspaces"
+  ],
+  "constraints": [
+    {
+      "contype": "c",
+      "count": "134"
+    },
+    {
+      "contype": "f",
+      "count": "73"
+    },
+    {
+      "contype": "p",
+      "count": "44"
+    },
+    {
+      "contype": "t",
+      "count": "2"
+    },
+    {
+      "contype": "u",
+      "count": "36"
+    }
+  ],
+  "applied": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "applied_at": "2026-10-13T01:25:27.103Z"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "applied_at": "2026-10-13T01:25:27.164Z"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "applied_at": "2026-10-13T01:25:27.212Z"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "applied_at": "2026-10-13T01:25:27.276Z"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "applied_at": "2026-10-13T01:25:27.340Z"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "applied_at": "2026-10-13T01:25:27.365Z"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "applied_at": "2026-10-13T01:31:48.366Z"
+    }
+  ]
+}

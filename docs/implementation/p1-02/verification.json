@@ -1,0 +1,127 @@
+{
+  "code_revision": "8064b0f2703c36df28a3d2735e0d6276d6f80ae1",
+  "early_api_revision": "778aa223d76a5f2d6188c6e8aab025e7f505006c",
+  "evidence_basis": "17 distinct real-PG cases across initial, focused and CAS-only runs; not a single all-green suite. Final formatting and lint-only edits followed the behavioral runs.",
+  "checks": {
+    "remote_typecheck": "PASS",
+    "repository_configured_oxlint": "PASS",
+    "oxfmt": "PASS"
+  },
+  "cases": [
+    {
+      "name": "explicit migration apply/reapply and changed applied checksum rejection",
+      "result": "PASS",
+      "private_evidence": "tests-private.log"
+    },
+    {
+      "name": "migration error rolls back both DDL and version ledger",
+      "result": "PASS",
+      "private_evidence": "tests-private.log"
+    },
+    {
+      "name": "receipt concurrent key conflict, nonnullable scope and immutable result",
+      "result": "PASS",
+      "private_evidence": "tests-private.log"
+    },
+    {
+      "name": "precision-safe BIGINT and redacted database errors",
+      "result": "PASS",
+      "private_evidence": "tests-private.log"
+    },
+    {
+      "name": "default search_path and temporary shadow relations cannot redirect storage triggers",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "message/session sequence and original component sequence races",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "canonical event and producer sequence identity races",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "full transaction rollback leaves no message receipt or journal",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "cross-Session message/context/cancel and unrelated runtime attempt rejected by FK",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "execution grant race, stale attempt and no proof-free revoke",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "RW same-domain race, overlapping ancestor race, /a versus /ab and multiple RO",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "stable lock ordering rejects reverse resource traversal",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "FAILED timestamp/context and append-only SQL history",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "proof-bearing execution revoke cannot resurrect",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "direct SQL grant-versus-epoch transactions serialize in both commit orders",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "cancel target provider ref cannot be retargeted erased or implicitly attached",
+      "result": "PASS",
+      "private_evidence": "tests-focused-private.log"
+    },
+    {
+      "name": "independent epoch/fence/term CAS and stable logical identity",
+      "result": "PASS",
+      "private_evidence": "tests-cas-private.log"
+    }
+  ],
+  "private_log_sha256": {
+    "tests-private.log": "da605648ed0b274964f82fee09387a540b0418ff5b43e0e707407e0c9c6d86ba",
+    "tests-focused-private.log": "7912fae1dfdd09a2b05f4ec44a12d8778fd4de9b1319b401da6b2a6ba14d1610",
+    "tests-cas-private.log": "3efb562b58187e72e6699048f815e76bd03a6a3500e8c3c5e8ba44743257d38e"
+  },
+  "first_migration_failure": {
+    "file": "005-events-replay.sql",
+    "line": 87,
+    "position": 5998,
+    "sqlstate": "42601",
+    "cause": "unquoted reserved offset",
+    "resolution": "quoted column and PK reference before first successful apply"
+  },
+  "subsequent_corrections": [
+    "Fixture READY status required by attempts NOT NULL",
+    "CAS fixture separated UUID and text parameter to resolve 42P08"
+  ],
+  "transport_note": "CAS-only kubectl stream ended EOF after persisted TAP had completed with zero failures; no repeat test was run.",
+  "runtime": "Existing backend dev Pod, Node v24.15.0; isolated source/dependencies and ephemeral execution mirror",
+  "driver": {
+    "pg": "8.23.1",
+    "@types/pg": "8.23.1"
+  },
+  "scope_limits": [
+    "No product RPC/intake/provider wiring",
+    "No P1-03 atomic business receipt or uncertain COMMIT algorithm",
+    "No physical writer fencing, HA, Spot loss, or native/UI acceptance",
+    "Snapshot schema only; Phase 2 not activated",
+    "Cancel NULL-to-provider-ref remains protected until P1-07 contract"
+  ]
+}
