@@ -161,7 +161,7 @@ async function commitLossProxy() {
     },
   };
 }
-async function ownedCrash(stage: string) {
+async function ownedCrash(stage: string, sinkPath: string) {
   await mkdir("/tmp/orca-p103-owned-evidence", { recursive: true, mode: 0o700 });
   const report = `/tmp/orca-p103-owned-evidence/${randomUUID()}.json`;
   const log = await open(`${report}.private.log`, "w", 0o600);
@@ -169,7 +169,12 @@ async function ownedCrash(stage: string) {
     process.execPath,
     [fileURLToPath(new URL("../journal/outbox-crash-worker.mts", import.meta.url))],
     {
-      env: { ...process.env, CRASH_STAGE: stage, CRASH_REPORT_PATH: report },
+      env: {
+        ...process.env,
+        CRASH_STAGE: stage,
+        CRASH_REPORT_PATH: report,
+        CRASH_SINK_PATH: sinkPath,
+      },
       stdio: ["ignore", log.fd, log.fd],
     },
   );
@@ -475,11 +480,19 @@ await test("P1-03 actual PG atomic and publication boundaries", async (t) => {
           (tx) => business(tx, session, randomUUID()),
         );
         assert.ok(result.status !== "UNCERTAIN");
-        const first = await ownedCrash("BEFORE_PUBLISH");
+        await mkdir("/tmp/orca-p103-owned-evidence", { recursive: true, mode: 0o700 });
+        const sink = `/tmp/orca-p103-owned-evidence/${randomUUID()}.sink`;
+        const sinkFile = await open(sink, "wx", 0o600);
+        await sinkFile.close();
+        const publications = async () => (await readFile(sink, "utf8")).split("\n").filter(Boolean);
+        const first = await ownedCrash("BEFORE_PUBLISH", sink);
+        assert.deepEqual(await publications(), []);
         await delay(110);
-        const second = await ownedCrash("AFTER_PUBLISH_BEFORE_MARK");
+        const second = await ownedCrash("AFTER_PUBLISH_BEFORE_MARK", sink);
+        assert.deepEqual(await publications(), [first]);
         await delay(110);
-        const third = await ownedCrash("PUBLISH_AND_MARK");
+        const third = await ownedCrash("PUBLISH_AND_MARK", sink);
+        assert.deepEqual(await publications(), [first, first]);
         assert.equal(first, second);
         assert.equal(second, third);
         assert.equal(
