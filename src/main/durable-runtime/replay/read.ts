@@ -7,6 +7,8 @@ import { stream, decimal, pageLimit, uuid, reject } from './validation.ts'
 // One MVCC snapshot for head and bounded global scan; filtering follows scanning.
 // Page and a future HTTP/SSE tail consume this exact cursor contract.
 export async function readReplayPage(pool: Pool, input: ReplayRead): Promise<ReplayPage> {
+  const input = Object.freeze({ streamId: request.streamId, epoch: request.epoch, afterOffset: request.afterOffset,
+    optionalUnitFilter: request.optionalUnitFilter, limit: request.limit })
   stream(input.streamId)
   decimal(input.epoch)
   decimal(input.afterOffset)

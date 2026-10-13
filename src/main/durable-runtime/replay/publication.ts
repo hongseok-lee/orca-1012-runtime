@@ -10,7 +10,7 @@ export async function publishClaimToReplay(
   input: PublicationInput
 ): Promise<PublicationResult> {
   const streamId = stream(input.streamId ?? OPS_REPLAY_STREAM)
-  const { claim } = input
+  const claim = Object.freeze({ id: input.claim.id, owner: input.claim.owner, token: input.claim.token })
   uuid(claim.id)
   uuid(claim.token)
   if (!claim.owner) {
