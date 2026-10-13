@@ -65,8 +65,8 @@ export async function mapSource(
     return { payload, occurredAt }
   }
   const failureNotification = source.kind === 'RUNTIME_EVENT_FAILED'
-  const failureOutcome = source.kind === 'RUNTIME_EVENT_OUTCOME' && source.outcome === 'FAILED'
-  if (!failureNotification && !failureOutcome) {
+  const terminalOutcome = source.kind === 'RUNTIME_EVENT_OUTCOME' && (source.outcome === 'FAILED' || source.outcome === 'DONE')
+  if (!failureNotification && !terminalOutcome) {
     return null
   }
   const eventId = uuid(text(source.eventId))
@@ -76,17 +76,18 @@ export async function mapSource(
     runtime_unit_id: string
     retry_count: string
     terminal_at: Date
-    last_error: string
+    last_error: string | null
+    state: string
     sessions: string[]
   }>(
-    `SELECT q.event_id,q.agent_id,p.runtime_unit_id,q.retry_count,q.terminal_at,q.last_error,
+    `SELECT q.event_id,q.agent_id,p.runtime_unit_id,q.retry_count,q.terminal_at,q.last_error,q.state,
       ARRAY(SELECT session_id::text FROM durable_runtime.runtime_event_targets WHERE event_id=q.event_id ORDER BY session_id) AS sessions
       FROM durable_runtime.runtime_event_queue q JOIN durable_runtime.runtime_event_producers p USING(producer_id,incarnation)
-      WHERE q.event_id=$1 AND q.state='FAILED'`,
+      WHERE q.event_id=$1 AND q.state IN ('DONE','FAILED')`,
     [eventId]
   )
   const original = result.rows[0]
-  if (!original) {
+  if (!original || (failureNotification ? original.state !== 'FAILED' : original.state !== source.outcome)) {
     reject('REPLAY_SOURCE_METADATA')
   }
   const occurredAt = date(original.terminal_at)
@@ -101,8 +102,8 @@ export async function mapSource(
       sessionIds: original.sessions
     },
     revision: decimal(row.revision),
-    state: 'FAILED',
-    reasonCode: reason(original.last_error),
+    state: original.state,
+    ...(original.state === 'FAILED' ? { reasonCode: reason(original.last_error ?? undefined) } : {}),
     retryCount: decimal(original.retry_count),
     occurredAt: occurredAt.toISOString()
   }
@@ -119,7 +120,7 @@ export async function mapSource(
     }
     payload.notificationId = row.aggregate_id
     payload.incidentKey = text(source.incidentKey)
-  } else if (row.aggregate_kind === 'session' && !original.sessions.includes(row.aggregate_id)) {
+  } else if (row.aggregate_kind !== 'session' || !original.sessions.includes(row.aggregate_id)) {
     reject('REPLAY_SOURCE_METADATA')
   }
   return { payload, occurredAt }
