@@ -58,3 +58,5 @@ Subscriptions are internal PG readers with local commit hints, not public stream
 or tested HA reconnect.
 
 최초 실행 결과와 실패 이력은 [검증 결과](verification-report.md)에 기록했습니다. Node 사례 11개는 서로 다른 입력에서 통과했지만, PG 하위 사례 8개는 등록 오류 때문에 미실행입니다. 전용 타입 검증은 현재 오류 1개가 남았고 configured lint는 교정 소스에서 통과했습니다. 이후 synthetic profile fixture 변경은 아직 실행하지 않았습니다. 실제 화면 캡처와 Expo/native iPhone 결과는 없습니다. 이 결과는 P1-16 완료나 provider·물리 종료·storage fencing·provisioning·HA 합격이 아닙니다.
+
+Root가 확정한 전역 outbox anchor의 [로컬 source 교정 인계](anchor-source-handoff.md)를 추가했습니다. Source 90eb71b6에서 dataset_id 참조를 제거했으며 안정성과 epoch 분리 fixture 2개는 작성만 했습니다. Scoped typecheck와 새 fixture 및 PG 사례 8개는 다음 heavy 자리 배분까지 미실행입니다. 위 원 검증 결과는 해당 source와 시각의 이력으로 보존합니다.
