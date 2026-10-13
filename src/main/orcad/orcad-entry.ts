@@ -26,6 +26,13 @@ import {
 } from './orcad-bind-address'
 import { acquireOrcadInstanceLock, OrcadInstanceLockError } from './orcad-instance-lock'
 import { startOrcadWithLifecycle } from './orcad-lifecycle'
+import {
+  readOrcadDurableCatalogConfig,
+  prepareOrcadDurableCatalog,
+  OrcadDurableCatalogConfigurationError,
+  type OrcadDurableCatalogConfig,
+  type OrcadDurableCatalog
+} from './orcad-durable-catalog'
 
 let runOrcadQuitHandlers = (): void => {}
 
@@ -107,6 +114,7 @@ export type OrcadHandle = {
  * for byte so the same harnesses can drive either host.
  */
 export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandle> {
+  const durableCatalogConfig = readOrcadDurableCatalogConfig()
   installOrcadHostAdapters()
   const userDataPath = resolveUserDataPath()
   // Why before anything else touches the root: the profile index, the store and the daemon
@@ -119,7 +127,7 @@ export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandl
     ...(browserProvider ? { isAvailable: () => browserProvider.isAvailable() } : {})
   })
   return startOrcadWithLifecycle(
-    (registerCleanup) => startOrcadRuntime(options, registerCleanup),
+    (registerCleanup) => startOrcadRuntime(options, registerCleanup, durableCatalogConfig),
     async () => {
       try {
         await browserProvider?.stop()
@@ -134,7 +142,8 @@ export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandl
 
 async function startOrcadRuntime(
   options: OrcadOptions,
-  registerCleanup: (cleanup: () => Promise<void>) => void
+  registerCleanup: (cleanup: () => Promise<void>) => void,
+  durableCatalogConfig: OrcadDurableCatalogConfig | null
 ): Promise<Pick<OrcadHandle, 'readiness'>> {
   const { OrcaRuntimeService } = await import('../runtime/orca-runtime')
   const { OrcaRuntimeRpcServer } = await import('../runtime/runtime-rpc')
@@ -163,24 +172,31 @@ async function startOrcadRuntime(
     await import('../runtime/agent-control-adapter')
 
   let rpc: InstanceType<typeof OrcaRuntimeRpcServer> | null = null
+  let durableCatalog: OrcadDurableCatalog | null = null
   let uninstallHookStatusRepublish = (): void => {}
   let uninstallObservedStatusIdentity = (): void => {}
   registerCleanup(async () => {
     try {
-      await rpc?.stop()
-    } finally {
       try {
-        stopAgentControlAdapter()
-        // Why disconnect and not shut down: the daemon must outlive this process, or an
-        // orcad restart goes back to killing every running terminal.
-        await stopOrcadDaemon()
+        await rpc?.stop()
       } finally {
-        uninstallObservedStatusIdentity()
-        uninstallHookStatusRepublish()
-        agentHookServer.stop()
+        try {
+          stopAgentControlAdapter()
+          // Why disconnect and not shut down: the daemon must outlive this process, or an
+          // orcad restart goes back to killing every running terminal.
+          await stopOrcadDaemon()
+        } finally {
+          uninstallObservedStatusIdentity()
+          uninstallHookStatusRepublish()
+          agentHookServer.stop()
+        }
       }
+    } finally {
+      // The RPC shutdown disposes its subscriptions before the startup-owned Pool closes.
+      await durableCatalog?.stop()
     }
   })
+  durableCatalog = await prepareOrcadDurableCatalog(durableCatalogConfig)
   const { DesktopPushService } = await import('../runtime/push/desktop-push-service')
   const { resolvePushGatewayOrigin } = await import('../runtime/push/push-gateway-origin')
 
@@ -281,6 +297,7 @@ async function startOrcadRuntime(
   const bindHost = resolveOrcadBindHost(options.bind)
   rpc = new OrcaRuntimeRpcServer({
     runtime,
+    ...(durableCatalog ? { durableCatalogRead: durableCatalog.readConfig } : {}),
     userDataPath: runtimeUserDataPath,
     enableWebSocket: true,
     // Why pinned and not `exposeNetworkByDefault`: an unattended host's exposure must be
@@ -400,7 +417,8 @@ export const ORCAD_EXIT_CONFIGURATION = 78
 export const ORCAD_SHUTDOWN_DEADLINE_MS = 15_000
 
 export function resolveOrcadExitCode(error: unknown): number {
-  return error instanceof OrcadInstanceLockError || error instanceof OrcadBindAddressError
+  return error instanceof OrcadInstanceLockError || error instanceof OrcadBindAddressError ||
+    error instanceof OrcadDurableCatalogConfigurationError
     ? ORCAD_EXIT_CONFIGURATION
     : ORCAD_EXIT_FAILED
 }
