@@ -21,6 +21,7 @@ import { selectSuggestedCreatureName } from '../../../shared/worktree-name-sugge
 import { CatalogError } from './errors.ts'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { assertNewInputState } from '../input/authority.ts'
+import { pairedDeviceAttachmentPrincipal } from '../attachments/types.ts'
 import { lockAggregates } from '../db/locks.ts'
 import { applyCatalogBindingObservation, type PreparedCatalogBindingObservation } from './binding.ts'
 import type { PreparedMemberActivity } from '../lifecycle/sleep.ts'
@@ -35,7 +36,8 @@ const owners = { recordUnitIntent, reserveSleep, recordInputCancel }
 const query = (sql: string, values: readonly unknown[] = []) => withDurableTransaction(pool, tx => tx.query(sql, values))
 const repoId = `synthetic-repo:${randomUUID()}`, groupId = `synthetic-group:${randomUUID()}`
 // Synthetic fixture authorities only. No production issuer exists in Catalog.
-const authority = { principalId: 'synthetic-principal', repositoryIds: [repoId], projectGroupIds: [groupId], workspacePublicIds: [] } as unknown as CatalogAuthority
+const principal = pairedDeviceAttachmentPrincipal(randomUUID())
+const authority = { principalId: principal, repositoryIds: [repoId], projectGroupIds: [groupId], workspacePublicIds: [] } as unknown as CatalogAuthority
 const context = { authority, capabilities: [] }
 const used: string[] = []
 
@@ -64,7 +66,7 @@ function fixture(): PreparedCatalogLaunch {
   } as unknown as PreparedCatalogLaunch
 }
 function closeAuthority(launch: PreparedCatalogLaunch): InputAuthority {
-  return { principal: authority.principalId, sessionId: launch.sessionId, scope: { kind: 'SESSION' } } as unknown as InputAuthority
+  return { principal, sessionId: launch.sessionId, scope: { kind: 'SESSION' } }
 }
 function createCall(launch: PreparedCatalogLaunch, key: string) {
   return prepareCatalogCall('worktree.create', { repo: repoId, name: launch.workspace.reservedName,
