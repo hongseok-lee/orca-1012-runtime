@@ -14,6 +14,7 @@ export async function observeInputDeliveryInTransaction(
   fixed: FixedInputDelivery,
   observation: InputDeliveryObservation
 ) {
+  scope = { ...scope, scope: { ...scope.scope } }
   fixed = { ...fixed }
   observation =
     observation.kind === 'UNKNOWN'

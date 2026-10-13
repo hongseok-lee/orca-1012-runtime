@@ -149,6 +149,7 @@ export async function getRecoveryContextFrame(
   pool: Pool,
   authority: InputAuthority
 ): Promise<RecoveryContextFrame> {
+  authority = { ...authority, scope: { ...authority.scope } }
   return withDurableTransaction(pool, async (tx) => {
     await assertInputScope(tx, authority)
     await lockAggregates(tx, { sessionIds: [authority.sessionId] })
