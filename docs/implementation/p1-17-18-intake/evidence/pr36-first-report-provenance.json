@@ -1,0 +1,43 @@
+{
+  "PR": 36,
+  "capturedAt": "2026-10-13T14:37:13.302Z",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/ec21310983ecc3b09254e0ce1b421ec8578eb774/docs/implementation/p1-17-18-intake/README.md",
+  "targetSHA": "ec21310983ecc3b09254e0ce1b421ec8578eb774",
+  "sourceSHA": "4d1cabbc93ea33289a708196951b8d2a92a1bfdf",
+  "initialFixtureSHA": "0c9e03467ff2c8da114a0151581df7f807cd85bd",
+  "executedFixtureSHA": "85cb268fd936730f41de332fd1eabfa2e13fefea",
+  "reportDocumentSHA256": "ca80885b75ef198f595279d17fddaa465b74977c4da305629863c45e51393c3a",
+  "resultDocumentSHA256": "c91c05ef29c01f519ecdeaa379bf76afaa192d272ef2fca683bfcf5bc9557db4",
+  "actualHeading": "기존 Input 접수의 동일 transaction entry",
+  "actualResultParagraph": "2026-10-13 14:30:03 UTC에 신규 PG 1건이 최초 PASS했고 실패·skip은 0입니다. 최초 fixture 0c9e0346의 scoped type 1건 실패(readonly 첨부 배열 reverse)와 lint 1건 실패(for 중괄호)를 원 로그로 보존했습니다. 제품 4d1cabbc를 바꾸지 않고 fixture의 mutable caller 배열과 중괄호만 85cb268f에서 교정한 뒤 type·configured lint exit 0을 확인했습니다. PG는 타입 교정 뒤 처음 실행했으며 기존 성공 사례를 다시 수행하지 않았습니다.",
+  "headingRect": {
+    "x": 370,
+    "y": 376,
+    "width": 721,
+    "height": 50.59375
+  },
+  "resultParagraphRect": {
+    "x": 370,
+    "y": 1288.453125,
+    "width": 721,
+    "height": 120.78125
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 2600
+  },
+  "DPR": 1,
+  "playwright": "1.59.1",
+  "browser": "147.0.7727.15",
+  "artifactSHA256": "44c9b23a1219f1888e12685eb5cefb84825ee5e1a7163324e3d36b387e49b28a",
+  "artifactBytes": 594827,
+  "screenshotExecutions": 1,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false,
+  "productUI": false,
+  "nativeIPhone": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "kind": "실제 소유 PG의 same-TX intake 최초 1건 및 type/lint 한정 교정 결과 보고 문서",
+  "rootQualification": "실제 provider·인증·public RPC·native·HA·전체 P117/P118 합격 화면이 아닙니다."
+}
