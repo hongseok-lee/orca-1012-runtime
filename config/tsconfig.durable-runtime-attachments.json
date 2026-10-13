@@ -9,5 +9,8 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["../src/main/durable-runtime/attachments/**/*.ts", "../src/main/durable-runtime/attachments/**/*.mts"]
+  "include": [
+    "../src/main/durable-runtime/attachments/**/*.ts",
+    "../src/main/durable-runtime/attachments/**/*.mts"
+  ]
 }

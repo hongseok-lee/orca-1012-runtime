@@ -5,22 +5,36 @@ import path from 'node:path'
 import { after, before, test } from 'node:test'
 import { materializeAttachment } from './materializer.ts'
 import { reserveAttachmentAlias, attachmentFilename } from './store.ts'
-import { attachmentUploadId, pairedDeviceAttachmentPrincipal, type CommittedAttachment } from './types.ts'
+import {
+  attachmentUploadId,
+  pairedDeviceAttachmentPrincipal,
+  type CommittedAttachment
+} from './types.ts'
 
 let root: string
 before(async () => {
-  assert.ok(process.cwd().startsWith('/tmp/orca-p104-execution'), 'Remote isolated execution directory is required')
+  assert.ok(
+    process.cwd().startsWith('/tmp/orca-p104-execution'),
+    'Remote isolated execution directory is required'
+  )
   root = await mkdtemp('/tmp/orca-p104-execution/materializer-')
 })
-after(async () => { if (root) await rm(root, { recursive: true, force: true }) })
+after(async () => {
+  if (root) {
+    await rm(root, { recursive: true, force: true })
+  }
+})
 
 function snapshot(bytes: Buffer): CommittedAttachment {
   const id = attachmentUploadId(randomUUID())
   return {
-    uploadId: id, principal: pairedDeviceAttachmentPrincipal(randomUUID()),
+    uploadId: id,
+    principal: pairedDeviceAttachmentPrincipal(randomUUID()),
     aliasPath: reserveAttachmentAlias('/persistent-test-aliases', id),
     contentHash: createHash('sha256').update(bytes).digest('hex'),
-    byteLength: bytes.length, mediaType: 'image/png', targetConnectionId: null,
+    byteLength: bytes.length,
+    mediaType: 'image/png',
+    targetConnectionId: null,
     contentBytes: bytes
   }
 }
@@ -50,7 +64,9 @@ test('conflicting target is not overwritten; target and directory symlinks are r
   await symlink(path.join(target, filename), path.join(linked, filename))
   await assert.rejects(materializeAttachment(record, linked), { code: 'UNSAFE_TARGET' })
   await symlink(target, path.join(root, 'linked-root'))
-  await assert.rejects(materializeAttachment(record, path.join(root, 'linked-root', 'child')), { code: 'UNSAFE_TARGET' })
+  await assert.rejects(materializeAttachment(record, path.join(root, 'linked-root', 'child')), {
+    code: 'UNSAFE_TARGET'
+  })
   assert.ok((await readFile(path.join(target, filename))).equals(original))
 })
 
@@ -67,7 +83,9 @@ test('concurrent publication uses one complete file without partial overwrite', 
 test('corrupt snapshot fails before file creation and empty wire bytes remain supported', async () => {
   const corrupt = snapshot(Buffer.from('synthetic content'))
   corrupt.contentHash = '0'.repeat(64)
-  await assert.rejects(materializeAttachment(corrupt, path.join(root, 'not-created')), { code: 'CORRUPT_BLOB' })
+  await assert.rejects(materializeAttachment(corrupt, path.join(root, 'not-created')), {
+    code: 'CORRUPT_BLOB'
+  })
   const empty = snapshot(Buffer.alloc(0))
   const result = await materializeAttachment(empty, path.join(root, 'empty'))
   assert.equal((await readFile(result.path)).length, 0)
