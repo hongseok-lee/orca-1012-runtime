@@ -11,7 +11,7 @@
 
 위 타입은 내부 요청·transport 계약이며 DB row/DDL의 복제본이 아닙니다. P112 producer는 `producer_id + incarnation` 쌍이 정본입니다. 다른 producer/다른 incarnation의 sequence를 fresh 증거로 비교하지 않습니다. 실제 prepared response issuer·pin registry 연결은 별도 owner가 제공해야 하며 이 module에는 production proof 생성기가 없습니다.
 
-## 아직 제공하지 않은 결과
+## 실제 저장 API와 검증 범위
 
 DB owner의 교정된 016 pin `4f1ecdb62365e5400398fb9f2812c1569d0c9066`의 실제 row/DDL을 소비합니다. 시작 producer ID·incarnation·watermark를 모두 저장하며 세 값은 모두 null 또는 모두 유효해야 합니다. 001–015 migration과 공용 row 파일은 이 branch에서 수정하지 않습니다.
 
@@ -29,6 +29,6 @@ DB owner의 교정된 016 pin `4f1ecdb62365e5400398fb9f2812c1569d0c9066`의 실�
 
 PR23 source·시험·asset·본문은 수정하지 않습니다. 원격 검증은 정확한 schema/API와 bridge의 heavy 인계를 받은 뒤 신규 의미 경계만 실행합니다. 최초 PNG는 client 한 owner가 맡으며 해당 고정 URL·commit·heading을 bridge에 먼저 전달합니다. 기존 P113 22개/P103/P112 suite 및 촬영을 반복하지 않습니다.
 
-원 요청의 불변 값·await 중 pin 무효·producer/incarnation 불일치·IDLE/WAITING_INPUT과 raw observation 구분을 확인하는 신규 fixture 4개를 작성했습니다. 아직 실행하지 않았으며 SQL 수락·PG 검증 결과가 아닙니다.
+원 요청의 불변 값·await 중 pin 무효·producer/incarnation 불일치·IDLE/WAITING_INPUT과 raw observation 구분을 확인하는 값 계약 fixture 4개도 최초 실행에서 통과했습니다. 이 4개는 값 snapshot의 확인이며 SQL 수락·PG 검증 14개와 구분합니다.
 
 새 PG fixture 14개와 값 계약 fixture 4개를 작성했습니다. 같은 UUID의 다른 incarnation·높은 watermark, 과거 응답과 supersede, 실제 Unit lock 대기 중 pin 무효, fresh/만료의 양순서와 동시 경합, 새 Active의 원 operation 보존, 옛 timer와 새 attempt 분리, SQL rollback 및 canonical blocked source를 포함합니다. 최초 source `a7abf3af`에서 PG 14개와 값 계약 4개가 모두 통과했습니다. 최초 type/lint 실패는 타입 표기만 `dded2443`에서 교정했고 focused type/lint는 exit 0입니다. 통과한 PG/값 계약은 반복하지 않았습니다. [최초 결과와 미확인 경계](first-verification-report.md)에 원 실행과 교정 관계를 구분합니다.
