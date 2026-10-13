@@ -79,6 +79,19 @@ test('superseded challenge and past response remain history and cannot resolve t
   try {
     const f = await fixture(pool), initial = await episode(pool, f, '5 hours 59 minutes'), first = await challenge(pool, f, initial)
     const request = await response(pool, f, first), next = await challenge(pool, f, first.episode, first.row.id)
+    // Both challenge events leave the Unit at revision 0. Their canonical
+    // event identities must coexist under the real audit UNIQUE/positive guard.
+    const records = await pool.query(`SELECT a.producer_id,a.producer_seq,o.id AS event_id,o.revision
+      FROM durable_runtime.runtime_audit_events a JOIN durable_runtime.outbox_events o
+      ON o.id::text=a.next_state->>'eventId'
+      WHERE a.runtime_unit_id=$1 AND a.kind='OBSERVATION_CHALLENGE_ISSUED'`, [f.unit])
+    assert.equal(records.rowCount, 2)
+    assert.equal(new Set(records.rows.map(row => row.producer_id)).size, 2)
+    for (const record of records.rows) {
+      assert.equal(record.producer_id, record.event_id)
+      assert.equal(record.producer_seq, '1'); assert.equal(record.revision, '0')
+    }
+    assert.equal((await pool.query('SELECT revision FROM durable_runtime.runtime_units WHERE id=$1', [f.unit])).rows[0].revision, '0')
     assert.equal(committed(await acceptFreshObservation(pool, request)).disposition, 'HISTORY_ONLY')
     const current = await response(pool, f, next)
     await assert.rejects(acceptFreshObservation(pool, { ...current, prepared: Object.freeze({ ...current.prepared,

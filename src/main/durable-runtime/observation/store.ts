@@ -42,7 +42,9 @@ export async function recordObservationEvent(tx: DurableTransaction, input: {
   await appendAudit(tx, { actorId: input.actorId, runtimeUnitId: input.target.runtimeUnitId,
     operationId: input.operationId, attemptId: input.target.attemptId, podUid: input.target.podUid,
     kind: input.kind, nextState: event, occurredAt: now, receivedAt: now,
-    producerId: input.target.runtimeUnitId, producerSeq: counter('sequence:producer', input.unitRevision),
+    // Each canonical event is its own one-entry audit stream; Unit revisions
+    // may stay unchanged across challenges and history-only observations.
+    producerId: eventId, producerSeq: counter('sequence:producer', '1'),
     evidenceRefs: [...input.sourceRefs] })
   await enqueueOutbox(tx, { eventId, aggregateId: input.target.runtimeUnitId,
     aggregateKind: 'runtime-unit', revision: input.unitRevision, event })
