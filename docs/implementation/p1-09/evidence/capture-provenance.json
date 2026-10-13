@@ -1,0 +1,89 @@
+{
+  "kind": "browser-rendered saved source and actual PostgreSQL evidence report; not product UI or a new test run",
+  "capturedAt": "2026-10-13T03:27:17.136Z",
+  "capturedCompletedAt": "2026-10-13T03:27:17.654Z",
+  "targetSHA": "73e6ef038cbf6394fe36ff89955c36a302939d17",
+  "behaviorCommit": "9052837192bba831a4f0b444e02e51da57c13709",
+  "schemaPrerequisite": "750c6ea03017a2f24a61afb186f1e14e961c07d5",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "viewport": {
+    "width": 1140,
+    "height": 1500
+  },
+  "deviceScaleFactor": 1,
+  "fullPage": true,
+  "pngDimensions": {
+    "width": 1140,
+    "height": 1871
+  },
+  "pngSha256": "4cc03951d1b589ad8026bb1907d1566a67be49ba626488a7e0f41f0492826c0b",
+  "captureInputSha256": "a7a8e766e90ff6a31c8ac8cec009ed87a1fc5adff652067f30c9717d6e265ca6",
+  "standalonePassedCount": 13,
+  "ownedWorkerFullCaseAllGreen": false,
+  "singleCleanFinalRevisionSuite": false,
+  "testsRunForCapture": 0,
+  "captureCount": 1,
+  "png": "p1-09-gateway-report.png",
+  "validationSummary": "validation-summary.json",
+  "validationSummarySha256": "2c96ce7196ff6126232396f5a1c8e9d453ddf3ac5ba2da06f3570490c57b0854",
+  "sourceReportSha256": "14e16bb4391e5ca5099c3c1b1478edffbb91ecd51ad9533f675081ce9c1709f5",
+  "sourceReportBytes": 8497,
+  "executionRevisionCases": [
+    {
+      "name": "concurrent-original-accept-and-claim",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "original-payload-and-authority-target-mismatches",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "unresolved-blocker-and-forged-predecessor",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "terminal-old-pod-predecessor-to-no-pod-create",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "lease-replacement-overlap-rejects-old-acceptance",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "accepted-adoption-preserves-original-and-blocks-old-owner",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "claim-rollback-preserves-accepted-and-history",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1"
+    },
+    {
+      "name": "atomic-prelocks-journal-and-outbox-composition",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8"
+    },
+    {
+      "name": "outbox-sql-failure-rolls-back-all-gateway-artifacts",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8"
+    },
+    {
+      "name": "claim-commit-not-sent-remains-unconfirmed",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8"
+    },
+    {
+      "name": "claim-commit-reply-lost-reuses-original-receipt",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8"
+    },
+    {
+      "name": "adoption-rejects-original-target-swap-and-late-settlement",
+      "sourceRevision": "55fd3a778e7a10478d198e815bfedb32b0364137"
+    },
+    {
+      "name": "sealed-json-input-rejects-accessors-without-command",
+      "sourceRevision": "9052837192bba831a4f0b444e02e51da57c13709"
+    }
+  ],
+  "operationalMetadataPolicy": "Selected report provenance only; private absolute paths, database/runtime identifiers and raw logs are excluded. Source report/input digests refer to retained private originals, which are not exported.",
+  "visuallyInspectedCredentialFree": true,
+  "schemaPR15MayReuseExactImage": true
+}

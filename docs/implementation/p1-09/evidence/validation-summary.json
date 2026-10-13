@@ -1,0 +1,261 @@
+{
+  "scope": "SQL-only gateway command ledger, authority, claim and P1-03 atomic mutation integration on an isolated validation database; saved evidence, no new run",
+  "reportTargetSHA": "73e6ef038cbf6394fe36ff89955c36a302939d17",
+  "consumedSchemaApiPrefix": "750c6ea03017a2f24a61afb186f1e14e961c07d5",
+  "canonicalBehaviorCommit": "9052837192bba831a4f0b444e02e51da57c13709",
+  "sourceSha256AtBehaviorCommit": {
+    "src/main/durable-runtime/runtime/gateway/types.ts": "383e7f09f7d70e097c81c0f69155745274ca8ff76c6765419376ff4c1c7399b3",
+    "src/main/durable-runtime/runtime/gateway/mutation.ts": "43368dcc4e34b0b6fff5370995f267e7a509afbb6f0d2aae7b53a87d13f8d00f",
+    "src/main/durable-runtime/runtime/gateway/gateway.test.mjs": "10f096786fe8f121bfc497256a2878e8a23ff647559f26c0416e6be7e1a39460",
+    "src/main/durable-runtime/runtime/gateway/store.ts": "778330564d02ec4835fcd7734f0116ddce748afd10490b2c494857d82b19b623",
+    "src/main/durable-runtime/runtime/gateway/input.ts": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+    "src/main/durable-runtime/runtime/gateway/gateway-commit-tests.mjs": "db2b69d0dea211f3f387e445e0f750d0eb6781d786d5335a73076fcd413d02e3",
+    "src/main/durable-runtime/runtime/gateway/gateway-test-fixtures.mjs": "f41d6ecd515d16a42fc21d6100b2624c398c6eb34abbb0deda44336fd8f59855",
+    "src/main/durable-runtime/runtime/gateway/claim.ts": "3c6c91d7ec48131c698c0f1df8fceb7b481219f75ea9b0123a038766c14ad7d4",
+    "src/main/durable-runtime/runtime/gateway/authority.ts": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+    "src/main/durable-runtime/runtime/gateway/claim-worker.mjs": "a4d113fc06f9b6f49657dfc50769eb51644b890061b63de9455542454fd693ec"
+  },
+  "sameSourceBytesAtReportTarget": true,
+  "standalonePassedCount": 13,
+  "cases": [
+    {
+      "name": "concurrent-original-accept-and-claim",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "actualLockWait": true,
+        "storedIdentityCount": 1,
+        "claimedExecutorCount": 1
+      }
+    },
+    {
+      "name": "original-payload-and-authority-target-mismatches",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "sameKeyConflicts": 4,
+        "newTargetRejections": 4,
+        "staleControllerRejected": true,
+        "foreignUnitRejected": true
+      }
+    },
+    {
+      "name": "unresolved-blocker-and-forged-predecessor",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "blockedWithoutNewRow": true,
+        "unresolvedFakeRejected": true,
+        "wrongOriginalTargetRejected": true,
+        "foreignUnitReceiptRejected": true
+      }
+    },
+    {
+      "name": "terminal-old-pod-predecessor-to-no-pod-create",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "distinctNewTargetAccepted": true,
+        "originalTerminalTargetPreserved": true,
+        "physicalFencingTested": false
+      }
+    },
+    {
+      "name": "lease-replacement-overlap-rejects-old-acceptance",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "actualLeaseRowWait": true,
+        "postWaitAuthorityRejected": true,
+        "createdCommands": 0
+      }
+    },
+    {
+      "name": "accepted-adoption-preserves-original-and-blocks-old-owner",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "originalTermPreserved": true,
+        "currentOwnerTermAdvanced": true,
+        "oldOwnerRejected": true,
+        "newClaimCount": 1
+      }
+    },
+    {
+      "name": "claim-rollback-preserves-accepted-and-history",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": true,
+      "observed": {
+        "acceptedPreserved": true,
+        "claimTokenAbsent": true,
+        "claimedHistoryRolledBack": true
+      }
+    },
+    {
+      "name": "atomic-prelocks-journal-and-outbox-composition",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8",
+      "passed": true,
+      "observed": {
+        "unitOperationPrelocksReentered": true,
+        "sessionLockReused": true,
+        "atomicCommittedRows": {
+          "commands": 1,
+          "history": 1,
+          "audit": 1,
+          "outbox": 1,
+          "journal": 1,
+          "receipts": 1
+        }
+      }
+    },
+    {
+      "name": "outbox-sql-failure-rolls-back-all-gateway-artifacts",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8",
+      "passed": true,
+      "observed": {
+        "actualSqlError": "22012",
+        "allGatewayArtifactsRolledBack": true
+      }
+    },
+    {
+      "name": "claim-commit-not-sent-remains-unconfirmed",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8",
+      "passed": true,
+      "observed": {
+        "commitSent": false,
+        "receiptResolution": "NOT_FOUND",
+        "ledgerState": "ACCEPTED",
+        "automaticExternalExecutions": 0,
+        "claimNotAutomaticallyRetried": true
+      }
+    },
+    {
+      "name": "claim-commit-reply-lost-reuses-original-receipt",
+      "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8",
+      "passed": true,
+      "observed": {
+        "commitSent": true,
+        "receiptResolution": "FOUND",
+        "ledgerState": "EXECUTING",
+        "automaticExternalExecutions": 0,
+        "claimNotAutomaticallyRetried": true
+      }
+    },
+    {
+      "name": "adoption-rejects-original-target-swap-and-late-settlement",
+      "sourceRevision": "55fd3a778e7a10478d198e815bfedb32b0364137",
+      "passed": true,
+      "observed": {
+        "originalTargetSwapRejected": true,
+        "lateOldOwnerRejected": true,
+        "wrongTokenRejected": true,
+        "adoptionCannotReexecute": true
+      }
+    },
+    {
+      "name": "sealed-json-input-rejects-accessors-without-command",
+      "sourceRevision": "9052837192bba831a4f0b444e02e51da57c13709",
+      "passed": true,
+      "observed": {
+        "accessorRejected": true,
+        "invalidCommandRows": 0,
+        "protectedPlainJsonPreserved": true
+      }
+    }
+  ],
+  "ownedWorkerFailuresPreserved": [
+    {
+      "name": "claimed-owned-worker-exit-keeps-unknown-non-reexecutable",
+      "sourceRevision": "13ff39dbc00feb74dc4452013ced389c77d9e4c1",
+      "passed": false,
+      "errorCode": "42P08"
+    },
+    {
+      "name": "claimed-owned-worker-exit-keeps-unknown-non-reexecutable",
+      "sourceRevision": "1713a9cee01c2f3abc7f23720a815048763ebdd2",
+      "passed": false,
+      "errorCode": "23502"
+    },
+    {
+      "name": "claimed-owned-worker-exit-keeps-unknown-non-reexecutable",
+      "sourceRevision": "c3c1c113e765b1f4a2755f9bb5483004f9d9eb04",
+      "passed": false,
+      "errorCode": "COMMAND_AUTHORITY_STALE"
+    }
+  ],
+  "retainedUnknownFinalCondition": {
+    "sourceRevision": "3f5f3f5bc5ca0783aad32397c38690f0ebede3e8",
+    "scope": "retained UNKNOWN fixture final-condition check; prior owned-process exit asserts retained as code-order evidence",
+    "passed": true,
+    "observed": {
+      "existingOriginalUnknown": true,
+      "currentTermOppositeBlocked": true,
+      "newCommandAccepted": false,
+      "ownedWorkerNotRepeated": true
+    }
+  },
+  "ownedWorkerFullCaseAllGreen": false,
+  "singleCleanFinalRevisionSuite": false,
+  "canonicalInputFocusedCase": {
+    "sourceRevision": "9052837192bba831a4f0b444e02e51da57c13709",
+    "name": "sealed-json-input-rejects-accessors-without-command",
+    "exit": 0,
+    "observed": {
+      "accessorRejected": true,
+      "invalidCommandRows": 0,
+      "protectedPlainJsonPreserved": true
+    },
+    "behaviorFiles": [
+      "src/main/durable-runtime/runtime/gateway/store.ts",
+      "src/main/durable-runtime/runtime/gateway/input.ts"
+    ]
+  },
+  "sourceChecks": {
+    "publication-lint": {
+      "exit": 0,
+      "diagnosticCount": 0
+    },
+    "publication-format-check": {
+      "exit": 0
+    },
+    "publication-typecheck": {
+      "exit": 0
+    }
+  },
+  "acceptedP103Comparison": {
+    "consumedPrefix": "750c6ea03017a2f24a61afb186f1e14e961c07d5",
+    "acceptedP103": "37d03be5",
+    "fileSha256": {
+      "src/main/durable-runtime/db/atomic.ts": {
+        "prefix": "0a2fd1e70ae0db17dc590251f865ceb510aa0530c366a21b9c46db621e170033",
+        "acceptedP103": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+        "currentGatewayHead": "0a2fd1e70ae0db17dc590251f865ceb510aa0530c366a21b9c46db621e170033"
+      },
+      "src/main/durable-runtime/db/connection.ts": {
+        "prefix": "749e9f8671ef906c706256546945a532c8704f8e04195cd5baccff105947c219",
+        "acceptedP103": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+        "currentGatewayHead": "749e9f8671ef906c706256546945a532c8704f8e04195cd5baccff105947c219"
+      },
+      "src/main/durable-runtime/db/locks.ts": {
+        "prefix": "40e564f6e70dd73979eb2e527194480bbf71780f0ea1e76c41d72ea7e4535a16",
+        "acceptedP103": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+        "currentGatewayHead": "40e564f6e70dd73979eb2e527194480bbf71780f0ea1e76c41d72ea7e4535a16"
+      },
+      "src/main/durable-runtime/journal/store.ts": {
+        "prefix": "bda7d974ab4878617cc55b364f9773aa80d655e845e91e1a3a229bf46e3c5d75",
+        "acceptedP103": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+        "currentGatewayHead": "bda7d974ab4878617cc55b364f9773aa80d655e845e91e1a3a229bf46e3c5d75"
+      }
+    },
+    "byteEquality": false,
+    "reviewedDifferenceClassification": "braces/formatting and indexOf -1 comparison (<0 vs ===-1); indexOf returns -1 or a nonnegative index, so the compared branches are equivalent",
+    "exportedSignaturesChanged": false,
+    "databaseSqlStringsChanged": false,
+    "testsRepeated": false
+  },
+  "fullP109Passed": false,
+  "realWorkloadAuthenticationTested": false,
+  "externalProviderK8sFencingTested": false,
+  "sharedRuntimeChanged": false,
+  "newTestsRunForPublication": 0
+}
