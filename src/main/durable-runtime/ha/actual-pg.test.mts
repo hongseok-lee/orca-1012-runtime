@@ -42,14 +42,14 @@ beforeEach(async () => {
 })
 after(async () => {
   try {
-    if (process.env.P114_EVIDENCE) await writeFile(process.env.P114_EVIDENCE, JSON.stringify({
+    if (process.env.P114_EVIDENCE) {await writeFile(process.env.P114_EVIDENCE, JSON.stringify({
       recordedAt: new Date().toISOString(), scope: 'ACTUAL_PG_CONTROLLER_LEASE_AND_ORIGINAL_MODULE_FIXTURES',
       sourceRevision: process.env.P114_SOURCE_REVISION, mainRevision: '8edb42e16caf0ddaa840dc16e4e886e6acaca328',
       lifecycleRevision: '02bfba1aa971d9449cad41103211e8a3d3503451', migrations, cases,
       commitLossMode: 'driver hook rejects after the actual COMMIT reply',
       authenticationVerified: false, physicalFencingVerified: false, providerVerified: false,
       deployedHA: false, publicRpcIntegrated: false, nativeIphoneVerified: false
-    }, null, 2), { mode: 0o600 })
+    }, null, 2), { mode: 0o600 })}
   } finally { await pool.end() }
 })
 function check(name: string, body: () => Promise<void>): void {
@@ -91,7 +91,7 @@ check('simultaneous process owners elect exactly one winner; live duplicate does
   const index = results.findIndex(r => r.status === 'ACTIVE')
   const result = results[index]
   assert.equal(result.status, 'ACTIVE')
-  if (result.status !== 'ACTIVE') throw new Error('Winner missing')
+  if (result.status !== 'ACTIVE') {throw new Error('Winner missing')}
   const before = await pool.query('SELECT count(*)::text AS n FROM durable_runtime.runtime_audit_events')
   const duplicate = await tryAcquireControllerLease(pool, [a, b][index], policy)
   assert.deepEqual(duplicate, { ...result, transition: 'ALREADY_OWNED' })
@@ -102,7 +102,7 @@ check('post-lock DB clock admits expired takeover with term plus one; applicatio
   const a = new ControllerInstance(CONTROLLER_SCOPE), b = new ControllerInstance(CONTROLLER_SCOPE)
   const first = await tryAcquireControllerLease(pool, a, { ...policy, durationMs: 400 })
   assert.equal(first.status, 'ACTIVE')
-  if (first.status !== 'ACTIVE') throw new Error('Active missing')
+  if (first.status !== 'ACTIVE') {throw new Error('Active missing')}
   const lock = await pool.connect()
   await lock.query('BEGIN')
   await lock.query('SELECT scope FROM durable_runtime.controller_leases WHERE scope=$1 FOR UPDATE', [CONTROLLER_SCOPE])
@@ -115,7 +115,7 @@ check('post-lock DB clock admits expired takeover with term plus one; applicatio
   } finally { lock.release() }
   const next = await competing
   assert.equal(next.status, 'ACTIVE')
-  if (next.status !== 'ACTIVE') throw new Error('Takeover missing')
+  if (next.status !== 'ACTIVE') {throw new Error('Takeover missing')}
   assert.equal(BigInt(next.lease.term), BigInt(first.lease.term) + 1n)
   const now = Date.now
   Date.now = () => 1
@@ -135,7 +135,7 @@ check('stale revision, expired renewal and late old-owner release cannot alter t
   const renewed = await renewControllerLease(pool, a.instance, a.lease, policy)
   assert.equal(renewed.status, 'ACTIVE')
   assert.deepEqual(await renewControllerLease(pool, a.instance, a.lease, policy), { status: 'LOST', reason: 'REVISION_CHANGED' })
-  if (renewed.status !== 'ACTIVE') throw new Error('Renewal missing')
+  if (renewed.status !== 'ACTIVE') {throw new Error('Renewal missing')}
   await releaseControllerLease(pool, a.instance, renewed.lease)
   assert.deepEqual(await renewControllerLease(pool, a.instance, {
     ...renewed.lease, revision: counter('row:controller', BigInt(renewed.lease.revision) + 1n)
@@ -176,7 +176,7 @@ check('DB renewal failure revokes local scheduling; a concurrent stop cannot be 
   const waiting = new Promise<void>(resolve => { wait = resolve })
   let holdCommit = false
   const hooked = queryHook(pool, async (sql, actual) => {
-    if (unavailable) throw new DurableDatabaseError('FIXTURE_DB_UNAVAILABLE')
+    if (unavailable) {throw new DurableDatabaseError('FIXTURE_DB_UNAVAILABLE')}
     const result = await actual()
     if (sql === 'COMMIT' && holdCommit) { wait!(); await suspended }
     return result
@@ -225,7 +225,7 @@ check('real lease takeover preserves original operation, executing command, queu
   for (let n = 1; n <= 3; n++) {
     const claim = await claimRuntimeEvent(pool, stream, controller(first.session), { claimDurationMs: 60000 })
     assert.equal(claim.status, 'CLAIMED')
-    if (claim.status !== 'CLAIMED') throw new Error('Claim missing')
+    if (claim.status !== 'CLAIMED') {throw new Error('Claim missing')}
     assert.equal(claim.claim.attemptCount, n)
     if (n < 3) {
       assert.equal((await processRuntimeEvent(pool, claim.claim, async () => { throw new DurableDatabaseError('FIXTURE_RETRY') })).status, 'RETRY')
@@ -254,7 +254,7 @@ check('real lease takeover preserves original operation, executing command, queu
   assert.deepEqual(unchanged, after.queueHeads) // No handler: no claim or DONE.
   const claim = await claimRuntimeEvent(pool, stream, controller(next.session), { claimDurationMs: 60000 })
   assert.equal(claim.status, 'CLAIMED')
-  if (claim.status !== 'CLAIMED') throw new Error('Takeover claim missing')
+  if (claim.status !== 'CLAIMED') {throw new Error('Takeover claim missing')}
   assert.equal(claim.claim.attemptCount, 4)
   const done = await processRuntimeEvent(pool, claim.claim, async (tx, event) => {
     await tx.query('INSERT INTO public.p114_effects(event_id) VALUES($1)', [event.eventId])
@@ -290,7 +290,7 @@ check('a healthy renewal across a pass gate and its visible COMMIT revision wind
     const renewalEntered = barrier(), resumeRenewal = barrier()
     let holdRenewal = false, firstGate = true, effects = 0
     const renewalPool = queryHook(pool, async (sql, actual) => {
-      if (sql !== 'COMMIT' || !holdRenewal) return actual()
+      if (sql !== 'COMMIT' || !holdRenewal) {return actual()}
       if (phase === 'BEFORE_COMMIT') { renewalEntered.release(); await resumeRenewal.ready }
       const result = await actual()
       if (phase === 'AFTER_COMMIT') { renewalEntered.release(); await resumeRenewal.ready }

@@ -60,7 +60,7 @@ async function leaseTransaction<T>(pool: Pool, body: (tx: DurableTransaction) =>
     const result = await body(tx)
     committing = true
     const committed = await tx.query('COMMIT')
-    if (committed.command !== 'COMMIT') throw new DurableDatabaseError('TX_NOT_COMMITTED')
+    if (committed.command !== 'COMMIT') {throw new DurableDatabaseError('TX_NOT_COMMITTED')}
     return result
   } catch (error) {
     const code = safeDatabaseError(error).code
@@ -80,7 +80,7 @@ async function lockedLease(tx: DurableTransaction, scope: string): Promise<Lease
   tx.advanceLock(5, scope)
   const result = await tx.query<LeaseRow>(
     'SELECT scope,owner,term,revision,expires_at FROM durable_runtime.controller_leases WHERE scope=$1 FOR UPDATE', [scope])
-  if (result.rows[0]) tx.markLockAcquired(5, scope)
+  if (result.rows[0]) {tx.markLockAcquired(5, scope)}
   return result.rows[0] ?? null
 }
 
@@ -100,7 +100,7 @@ export async function tryAcquireControllerLease(pool: Pool, caller: ControllerIn
       VALUES($1,'',0,0,clock_timestamp()-interval '1 millisecond') ON CONFLICT(scope) DO NOTHING`, [instance.scope])
     const before = (await lockedLease(tx, instance.scope))!
     if (await liveAfterLock(tx, instance.scope)) {
-      if (before.term === '0' && before.owner === instance.owner) throw new DurableDatabaseError('CONTROLLER_LEASE_STATE')
+      if (before.term === '0' && before.owner === instance.owner) {throw new DurableDatabaseError('CONTROLLER_LEASE_STATE')}
       return before.owner === instance.owner
         ? { status: 'ACTIVE' as const, lease: record(before), transition: 'ALREADY_OWNED' as const }
         : { status: 'STANDBY' as const }
@@ -110,17 +110,17 @@ export async function tryAcquireControllerLease(pool: Pool, caller: ControllerIn
       WHERE scope=$1 AND term=$4 AND revision=$5 AND expires_at<=clock_timestamp() RETURNING *`,
       [instance.scope, instance.owner, policy.durationMs, before.term, before.revision])
     const after = changed.rows[0]
-    if (!after) throw new DurableDatabaseError('CONTROLLER_ACQUIRE_CAS')
+    if (!after) {throw new DurableDatabaseError('CONTROLLER_ACQUIRE_CAS')}
     await transition(tx, before, after, 'ACQUIRED', policy.revision)
     return { status: 'ACTIVE' as const, lease: record(after), transition: 'ACQUIRED' as const }
   })
 }
 
 function stale(row: LeaseRow | null, expected: LeaseIdentity): LostLeaseReason | null {
-  if (!row) return 'MISSING'
-  if (row.owner !== expected.owner) return 'OWNER_CHANGED'
-  if (row.term !== expected.term) return 'TERM_CHANGED'
-  if (row.revision !== expected.revision) return 'REVISION_CHANGED'
+  if (!row) {return 'MISSING'}
+  if (row.owner !== expected.owner) {return 'OWNER_CHANGED'}
+  if (row.term !== expected.term) {return 'TERM_CHANGED'}
+  if (row.revision !== expected.revision) {return 'REVISION_CHANGED'}
   return null
 }
 
@@ -129,14 +129,14 @@ async function mutateOwnedLease(pool: Pool, expected: LeaseIdentity,
   return leaseTransaction(pool, async tx => {
     const before = await lockedLease(tx, expected.scope)
     const reason = stale(before, expected)
-    if (reason) return { status: 'LOST' as const, reason }
-    if (!await liveAfterLock(tx, expected.scope)) return { status: 'LOST' as const, reason: 'EXPIRED' as const }
+    if (reason) {return { status: 'LOST' as const, reason }}
+    if (!await liveAfterLock(tx, expected.scope)) {return { status: 'LOST' as const, reason: 'EXPIRED' as const }}
     const changed = await tx.query<LeaseRow>(`UPDATE durable_runtime.controller_leases SET revision=revision+1,
       expires_at=clock_timestamp()+$5::bigint*interval '1 millisecond'
       WHERE scope=$1 AND owner=$2 AND term=$3 AND revision=$4 AND expires_at>clock_timestamp() RETURNING *`,
       [expected.scope, expected.owner, expected.term, expected.revision, policy?.durationMs ?? 0])
     const after = changed.rows[0]
-    if (!after) return { status: 'LOST' as const, reason: 'EXPIRED' as const }
+    if (!after) {return { status: 'LOST' as const, reason: 'EXPIRED' as const }}
     await transition(tx, before!, after, policy ? 'RENEWED' : 'RELEASED', policy?.revision ?? null)
     return policy
       ? { status: 'ACTIVE' as const, lease: record(after), transition: 'RENEWED' as const }
@@ -149,7 +149,7 @@ export async function renewControllerLease(pool: Pool, caller: ControllerInstanc
   const expected = Object.freeze({ ...snapshotInstance(caller), ...snapshotExpected(callerExpected) })
   const policy = snapshotPolicy(callerPolicy)
   const result = await mutateOwnedLease(pool, expected, policy)
-  if (result.status === 'RELEASED') throw new DurableDatabaseError('CONTROLLER_RESULT')
+  if (result.status === 'RELEASED') {throw new DurableDatabaseError('CONTROLLER_RESULT')}
   return result
 }
 
@@ -157,6 +157,6 @@ export async function releaseControllerLease(pool: Pool, caller: ControllerInsta
   callerExpected: ExpectedLease): Promise<ReleaseLeaseResult> {
   const expected = Object.freeze({ ...snapshotInstance(caller), ...snapshotExpected(callerExpected) })
   const result = await mutateOwnedLease(pool, expected, null)
-  if (result.status === 'ACTIVE') throw new DurableDatabaseError('CONTROLLER_RESULT')
+  if (result.status === 'ACTIVE') {throw new DurableDatabaseError('CONTROLLER_RESULT')}
   return result
 }

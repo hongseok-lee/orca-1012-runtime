@@ -39,7 +39,7 @@ export async function readControllerTakeoverSnapshot(pool: Pool,
     const clock = await tx.query<{ now: Date }>(`SELECT clock_timestamp() AS now
       FROM durable_runtime.controller_leases WHERE scope=$1 AND owner=$2 AND term=$3 AND revision=$4
       AND expires_at>clock_timestamp()`, [identity.scope, identity.owner, identity.term, identity.revision])
-    if (clock.rowCount !== 1) throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')
+    if (clock.rowCount !== 1) {throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')}
     const operations = await tx.query<TakeoverOperation>(`SELECT o.id,o.runtime_unit_id,o.kind,o.intent_revision,
       o.controller_scope,o.controller_term,o.step,o.step_revision,o.expected_pod_uid,o.execution_epoch,
       o.external_resource_name,o.deadline_at,o.retry_at,o.revision,(o.result IS NOT NULL) AS terminal,
@@ -82,7 +82,7 @@ export async function readControllerTakeoverSnapshot(pool: Pool,
       throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')
     }
     const committed = await tx.query('COMMIT')
-    if (committed.command !== 'COMMIT') throw new DurableDatabaseError('TX_NOT_COMMITTED')
+    if (committed.command !== 'COMMIT') {throw new DurableDatabaseError('TX_NOT_COMMITTED')}
     return { lease: identity, readAt: clock.rows[0].now.toISOString(),
       operations: Object.freeze(operations.rows.map(row => Object.freeze(row))),
       units: Object.freeze(units.rows.map(row => Object.freeze(row))),
@@ -102,6 +102,6 @@ export async function assertLiveControllerLease(pool: Pool, caller: LeaseIdentit
     const result = await pool.query(`SELECT scope FROM durable_runtime.controller_leases
       WHERE scope=$1 AND owner=$2 AND term=$3 AND revision=$4 AND expires_at>clock_timestamp()`,
       [identity.scope, identity.owner, identity.term, identity.revision])
-    if (result.rowCount !== 1) throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')
+    if (result.rowCount !== 1) {throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')}
   } catch (error) { throw safeDatabaseError(error) }
 }
