@@ -8,6 +8,10 @@ Entry는 첫 await 전에 `prepareInputRequest`로 authority·payload·attachmen
 
 원 `INPUT_SUBMISSION` event identity·seq, 최초 payload hash, 원 receipt 형식과 outbox·desired mode·reconcile_due 의도를 유지했습니다. 새 wire metadata·draft는 상위 adapter가 자신의 transaction에 저장하며 이 module은 공개 RPC 예외나 Catalog entry를 복제하지 않습니다.
 
-현재는 로컬 source 추출만 작성했습니다. Typecheck·lint·focused PG 1개는 아직 실행하지 않았으며 성공으로 표시하지 않습니다. 기존 Input·cancel·dispatch 성공 suite와 PR 24 PG 11개를 반복하지 않습니다. PR 24 source/assets/head `380accc6`은 그대로 보존했습니다. 기존 Expo Pod 부재 때문에 PR 24·26 최초 보고 캡처도 아직 0회입니다.
+조기 제품 source는 `4d1cabbc93ea33289a708196951b8d2a92a1bfdf` 그대로입니다. 신규 `intake-composition.test.mts`는 하나의 PG 사례에서 실제 held Session 1 / Unit 2와 잘못된 membership 거절, 기존 정렬 alias 6, 첫 실제 scope SQL await 뒤 caller mutation 격리, 원 payload/hash·중복 첨부 순서·event identity·wake 의미를 확인하도록 작성했습니다. 기존 `legacy_drafts` 행과 Tab의 `pane_key` metadata를 외부 transaction이 먼저 저장하고, 접수의 Message/Input/event/outbox/wake를 같은 transaction 안에서 관측한 뒤 의도적으로 실패합니다. Rollback 뒤 원 Session counter·Unit 상태와 외부 draft/metadata까지 함께 복원되는지 비교합니다. 이 외부 저장은 테스트의 합성 입력이며 P117/P118 adapter 구현·인증 증거가 아닙니다.
+
+기존 성공한 소유 fixture의 agent/workspace/session/unit/storage/member/tab seed SQL을 읽기 재사용하고 원 resource profile 0 관계를 추가했습니다. 새 DB의 준비 verifier는 기존 고정 migration 001–012만 소유 `orca_p117_intake_*` DB에 적용하도록 제한했습니다. 공용 schema나 다른 owner의 DB에는 쓰지 않습니다. 기존 P103의 outer receipt 재생·실제 COMMIT 증거를 재사용하며 이 시험에서 receipt replay suite를 다시 실행하지 않습니다.
+
+현재 fixture와 실행 입력만 준비했습니다. Scoped type·lint와 신규 PG 1건은 heavy 슬롯 인계 전이므로 아직 실행하지 않았습니다. 미실행을 PASS로 표시하지 않으며 기존 Input 11건·P103 suite·Expo UI·서버 build/install/runtime sync·PNG를 반복하지 않습니다. PR24는 root가 최종 `50eca890`를 merge한 상태이며 원 source와 증거를 보존합니다. 이 PR의 최초 결과 캡처는 아직 없습니다.
 
 [Root 위임 전문](contract.md)에 따라 새 outer draft/metadata rollback 경계의 focused PG 검증은 root의 실행 자리 인계 뒤에만 수행합니다. 공용 schema·identity·package·Catalog·provider 파일과 실제 runtime을 변경하지 않았습니다. Root만 최종 base·리뷰·수용·merge를 결정합니다.
