@@ -17,3 +17,5 @@ PR #30의 source·PG 9개·type/lint·첫 결과 PNG 및 원 증거는 그대로
 최초 검증 결과는 [실제 결과 문서](evidence/first-verification.md)에 기록했습니다. 순수 5개·PG distinct 6개와 최종 scoped type/lint가 통과했으며 원 type 4건·lint 2건·PG 23503 실패 및 한정 교정을 보존했습니다. 위 미실행 설명은 조기 source 제출 당시의 이력입니다. Public handler와 실제 인증 및 provider 통합은 여전히 미완료입니다.
 
 원 Terminal codec source 합류는 [별도 source 기록](terminal-codec.md)에 있습니다. 조기 codec pin과 원 writer shape, 읽기 전용 008 media join 및 신규 focused 2개·PG 1개 준비를 기록했습니다. 새 codec의 type/lint와 fixture는 별도 배분 전 미실행이며 기존 첫 검증 결과를 새 source의 성공으로 바꾸지 않습니다.
+
+원 Terminal codec의 별도 최초 검증은 [통합 보고 문서](evidence/verification-report.md)에 기록했습니다. 실제 source `d6aeb9c1`에서 새 순수 2개·PG media 1개와 새 scoped type/lint가 통과했습니다. 기존 5개·6개는 원 source 이력이며 반복하지 않았습니다. Source 준비 문서의 미실행 표현은 당시 이력입니다. 공개/native/provider 합격은 미확인입니다.
