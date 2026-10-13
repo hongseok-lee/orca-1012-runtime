@@ -1,0 +1,285 @@
+{
+  "설명": "P113의 최초 실행과 필요한 교정만 누적한 결과입니다. 단일 최종 head의 전체 재실행 결과로 표시하지 않습니다.",
+  "initialSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+  "correctedSource": "5964ee1846670f7554518f6a64d8db9771e72b29",
+  "verificationBase": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "실행 집계": {
+    "최초 사례": 22,
+    "최초 PASS": 20,
+    "최초 FAIL": 2,
+    "최초 skip": 0,
+    "한정 재실행 사례": 2,
+    "한정 PASS": 2,
+    "한정 FAIL": 0,
+    "한정 skip": 0,
+    "서로 다른 PG 통과 사례": 16,
+    "서로 다른 transport 통과 사례": 6,
+    "기존 PASS 반복 실행": 0
+  },
+  "준비 실패": "검증 사본에서 main의 clipboard shared 선행이 빠져 최초 esbuild 준비가 실패했습니다. PG 시험 전의 준비 실패입니다. 원 main archive의 src/shared 전체를 한 번 보충했고 기존 pin을 보존했습니다. 대체 구현이나 dependency 설치는 없습니다.",
+  "fixture 교정": "기존 Input이 검사하는 principal 형식을 문자열 cast로 우회한 fixture 2개가 INVALID_PRINCIPAL로 실패했습니다. 기존 pairedDeviceAttachmentPrincipal을 fixture에 사용한 뒤 해당 2개만 다시 실행했습니다.",
+  "전용 검사": {
+    "최초 typecheck exit": 1,
+    "최초 typecheck 오류": 6,
+    "교정 typecheck exit": 0,
+    "최초 lint exit": 1,
+    "최초 lint 오류": 2,
+    "교정 lint exit": 0,
+    "lint 대상 파일": 17
+  },
+  "타입 교정": "JSON callback 반환 타입과 계산한 SHA-256의 nominal 타입, assertion 뒤 불필요한 narrowing 비교 및 interface 대신 type 선언을 교정했습니다. 공용 API나 runtime 실행 의미를 변경하지 않았습니다.",
+  "실행 도구": {
+    "Node": "24.15.0",
+    "TypeScript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "@types/node": "25.9.5",
+    "pg": "8.23.1",
+    "zod 읽기 재사용": "4.5.4",
+    "파일 병렬도": 1
+  },
+  "cases": [
+    {
+      "case": 1,
+      "name": "concurrent compatible wake contenders and a revision-refresh share one original operation/name/deadline",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 2,
+      "name": "receipt-first lifecycle replay after deletion cannot resurrect Unit or rewrite the stored response",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 3,
+      "name": "sleep then real P1-05 input invalidates the old barrier once and later inputs share current wake",
+      "firstStatus": "FAIL",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG",
+      "firstError": "INVALID_PRINCIPAL",
+      "correctionStatus": "PASS",
+      "correctionSource": "5964ee1846670f7554518f6a64d8db9771e72b29"
+    },
+    {
+      "case": 4,
+      "name": "real input before sleep and either close order preserve accepted input without reopening a closed member",
+      "firstStatus": "FAIL",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG",
+      "firstError": "INVALID_PRINCIPAL",
+      "correctionStatus": "PASS",
+      "correctionSource": "5964ee1846670f7554518f6a64d8db9771e72b29"
+    },
+    {
+      "case": 5,
+      "name": "all members participate: one active member or missing current writer evidence prevents reservation",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 6,
+      "name": "read/due projection does not update activity, idle deadline, wake, receipt or operation",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 7,
+      "name": "controller takeover preserves durable command/name/deadline and returns original lookup without another execution",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 8,
+      "name": "historical stopped metadata cannot authorize replacement writer or erase the retained attempt",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 9,
+      "name": "late stopped observation is original-attempt history only and cannot overwrite newer RUNNING intent",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 10,
+      "name": "membership discovery mismatch rolls back the whole lifecycle mutation without late Session locks",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 11,
+      "name": "lifecycle outbox SQL failure rolls back Unit/operation/audit/receipt together",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 12,
+      "name": "unverified K8s STOPPED remains history and cannot clear the UNKNOWN delivery sleep barrier",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 13,
+      "name": "routine PRESENT preserves existing READY, observation loss episode and binding/activity facts",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 14,
+      "name": "caller mutation while awaiting PG cannot diverge lifecycle receipt/effect or Catalog transaction input",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 15,
+      "name": "closed cleaned member remains locked but does not block idle sibling sleep",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 16,
+      "name": "closing member with incomplete cleanup conservatively defers sleep despite idle sibling",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "PG"
+    },
+    {
+      "case": 17,
+      "name": "initial LIST and WATCH use the same observer and preserve initial inventory",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "TRANSPORT_FIXTURE"
+    },
+    {
+      "case": 18,
+      "name": "WATCH 410 and disconnect recover once from a fresh LIST resourceVersion",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "TRANSPORT_FIXTURE"
+    },
+    {
+      "case": 19,
+      "name": "create ACK loss queries the same name and rejects a name-reused conflicting identity",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "TRANSPORT_FIXTURE"
+    },
+    {
+      "case": 20,
+      "name": "LIST failure and observation persistence failure stay unverifiable, not empty success",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "TRANSPORT_FIXTURE"
+    },
+    {
+      "case": 21,
+      "name": "create result lookup keeps the original expected tuple despite caller mutation during GET",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "TRANSPORT_FIXTURE"
+    },
+    {
+      "case": 22,
+      "name": "WATCH exact UID DELETE preserves same-name replacement and original event history",
+      "firstStatus": "PASS",
+      "firstSource": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "category": "TRANSPORT_FIXTURE"
+    }
+  ],
+  "ownedSourceSHA256": {
+    "src/main/durable-runtime/lifecycle/controller.ts": "782b30cc88af8b95662c3c1ff8d0175e74fa5acccf89cee8833539f2097050c0",
+    "src/main/durable-runtime/lifecycle/core.test.mts": "dffddc2b38ff5a3e2747dbb2fc8c31b76136c74c2cb5063b2acc874a9eac0c49",
+    "src/main/durable-runtime/lifecycle/due.ts": "0c949a936a4596fe5b4e1a91d2ad7cb1c16e83ec2840b2b07f68b8efcedaccd4",
+    "src/main/durable-runtime/lifecycle/intent.ts": "e77c340841fee1b76696361a42e8811ea1dc81e39a6c3ab6674b0cd416d8d989",
+    "src/main/durable-runtime/lifecycle/locks.ts": "81fe5f65f8a4d14af3fb41b08f7d955f421bfe94c521b6dc12f21abe52a9d506",
+    "src/main/durable-runtime/lifecycle/observation.ts": "be24ae76c0b9ecf1828fdb43546e6553b0a48681ee3f39c687f3c7bdba1c9d37",
+    "src/main/durable-runtime/lifecycle/pending.ts": "de255dda9d6cfd2673456f14daaf234d50cfb73658ca148e57d9aaf3a9ccb7fa",
+    "src/main/durable-runtime/lifecycle/projection.ts": "8e75a13966bb72afaa3c9f7f3b3b3cacbca1107d3fa6a1f60ab486cedf4460f3",
+    "src/main/durable-runtime/lifecycle/reconcile-request.ts": "37ec13377cd193c6cfd1a5d24a0ccf0e42b7534a560b7d203a581ffff4f3a40f",
+    "src/main/durable-runtime/lifecycle/request-snapshot.test.mts": "1b39b0e12429a6b49aa7da3add492539ec604791ad39a676bc677f5a126ee345",
+    "src/main/durable-runtime/lifecycle/request.ts": "5797065225668c0079dfb0bf3f93f8d19cd4f233c9e9bc0e8a7c5c8cdb9fd2f0",
+    "src/main/durable-runtime/lifecycle/sleep-member-cleanup.test.mts": "2f853e0054c6770f245acec950588e82fead0dc8a67d1681adedc1be301410b5",
+    "src/main/durable-runtime/lifecycle/sleep.ts": "de957e7c9c81827c2f2bcd832dccb28741ad2b87c1b93de1de96a7c3e9db5a50",
+    "src/main/durable-runtime/lifecycle/tsconfig.json": "563703de075750c6adfbf769225f23ea5328484db7403daca4355f4b9ffb7c85",
+    "src/main/durable-runtime/lifecycle/types.ts": "5f785c32973be2ae3ff9971494e7d0537fbbf26bb85989631e42ad1fdaebb761",
+    "src/main/durable-runtime/lifecycle/verification-fixtures.mts": "8c7203d09b9cad03147d257482f5218c3fba4e7d391ea428f9861d289ad9e7a4",
+    "src/main/durable-runtime/lifecycle/watch.test.mts": "b35190555f64cc1e4cc6541bc40101a28522091855280a9f3cb9dc28cba5c521",
+    "src/main/durable-runtime/lifecycle/watch.ts": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5"
+  },
+  "schema": [
+    {
+      "version": "001-catalog.sql",
+      "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "version": "004-input-context.sql",
+      "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "sha256": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "sha256": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "sha256": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    }
+  ],
+  "원로그 SHA256": {
+    "prepare-initial-private.log": "0e3a94d44b79ef48d8f11fe9e9783ade9f0ecbc8e511f7b524700e707167c341",
+    "initial-tests-private.log": "41d1d0c461468e9cdbb95196062dc1f5d5e206f72a8600e25cc6e430bb2dc0f0",
+    "focused-fixture-private.log": "2829c83a55d0f06bb2f2ff5b332a8a423eb183dde111f6ef0d46bbe574d07f83",
+    "initial-typecheck-private.log": "5ae28acf3094d7c2d6e23587674ea1550763a3f6e1e4b43e474ead6c9cc8975c",
+    "corrected-typecheck-private.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "initial-lint-private.log": "8edde54193619c473f70180afd8d5a7af5f228f118d7243c130fef6ebd5e5b52",
+    "corrected-lint-private.log": "c37512cd397eb1072ca92535dbac4b21833d2b3e0a1e3c8abd39e524dbbbf58d"
+  },
+  "미검증 범위": "실제 provider 인증과 readiness, 물리 writer fencing, controller/actuator/public handler 활성화, HA 및 전체 P113 수용은 검증하지 않았습니다. 최초 결과 문서 PNG는 client의 별도 browser Context 인계를 기다립니다.",
+  "rebasedSource": "92336d5fbbe3b30634023c1fa5c287f6ff7f8f64",
+  "rebaseEquivalence": "검증한 5964ee18 대비 기존 소유 파일 19개 Git blob이 모두 같습니다. 같은 main 위 검증 입력을 사용하므로 통과한 사례를 다시 실행하지 않았습니다."
+}
