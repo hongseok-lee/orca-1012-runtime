@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
+import { performance } from 'node:perf_hooks'
 import { readClaudeInit, readClaudeFrameString } from '../../../claude/claude-init-observation.ts'
 import { CLAUDE_STREAM_JSON_FRAME_KINDS } from '../../../native-chat/agent-session-wire/claude-stream-json-frame-schema.ts'
 import type { CommandClaim } from '../../runtime/gateway/types.ts'
@@ -39,7 +40,7 @@ export class ClaudeDurableProvider {
 
   async cold(request: ClaudeColdRequest, commandClaim: CommandClaim,
     permit: ProviderEffectPermit, readinessTimeoutMs = 10_000): Promise<ReadyProviderBinding> {
-    if (this.#starting || this.#connection) throw new Error('CLAUDE_CONNECTION_ALREADY_ACQUIRED')
+    if (this.#starting || this.#connection || this.#faulted) throw new Error('CLAUDE_CONNECTION_ALREADY_ACQUIRED')
     request = immutableSnapshot(request)
     if (request.mode !== 'COLD' || !request.binding.connectionInstanceId || !request.binding.terminalHandle ||
         !request.persistentHome || !request.checkout || request.launch.env.HOME !== request.persistentHome ||
@@ -47,57 +48,73 @@ export class ClaudeDurableProvider {
       throw new Error('CLAUDE_COLD_IDENTITY_INVALID')
     }
     this.#starting = true
-    return invokeProviderEffect(permit, { kind: 'COLD', binding: request.binding, commandClaim }, async () => {
-      let resolveInit!: (value: ReadyProviderBinding) => void
-      let rejectInit!: (reason: Error) => void
-      let initial: ReadyProviderBinding | undefined
-      const initialized = new Promise<ReadyProviderBinding>((resolve, reject) => {
-        resolveInit = resolve; rejectInit = reject
-      })
-      const timer = setTimeout(() => rejectInit(new Error('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED')), readinessTimeoutMs)
-      const fail = (): void => {
-        this.#faulted = true
-        rejectInit(new Error('CLAUDE_CONNECTION_LOST'))
-        this.#connectionLost()
-      }
-      try {
-        this.#connection = await this.openTransport(request, {
-          onMessage: (message) => {
-            const init = readClaudeInit(message)
-            if (init) {
-              if ((request.native.kind === 'RESUME' &&
-                  request.native.providerRef.nativeSessionRef !== init.providerSessionId) ||
-                  (initial && initial.providerRef.nativeSessionRef !== init.providerSessionId)) {
-                this.#faulted = true
-                rejectInit(new Error('CLAUDE_RESUME_IDENTITY_MISMATCH'))
-                this.#connectionLost()
-                return
-              }
-              // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Actual init/SessionStart response supplies this native identity, never a logical UUID.
-              const providerRef = { provider: 'claude', nativeSessionRef: init.providerSessionId } as ProviderRef
-              initial = immutableSnapshot({ ...request.binding, providerRef })
-              resolveInit(initial)
-            } else if (initial) {
-              this.#observe(message, initial)
-            }
-          }, onFault: fail, onExit: fail
+    try {
+      return await invokeProviderEffect(permit, { kind: 'COLD', binding: request.binding, commandClaim }, async () => {
+        let resolveInit!: (value: ReadyProviderBinding) => void
+        let rejectInit!: (reason: Error) => void
+        let initial: ReadyProviderBinding | undefined
+        let abandoned = false
+        const initialized = new Promise<ReadyProviderBinding>((resolve, reject) => {
+          resolveInit = resolve; rejectInit = reject
         })
-        const ready = await initialized
-        if (this.#faulted || this.#connection.closed) throw new Error('CLAUDE_CONNECTION_UNAVAILABLE')
-        this.#ready = ready
-        return ready
-      } catch (error) {
-        this.#faulted = true
-        // Account diagnostics/logs are not propagated through this new boundary.
-        throw new Error(error instanceof Error && error.message === 'CLAUDE_RESUME_IDENTITY_MISMATCH'
-          ? 'CLAUDE_RESUME_IDENTITY_MISMATCH' : 'CLAUDE_NATIVE_IDENTITY_UNCONFIRMED')
-      } finally {
-        clearTimeout(timer)
-        this.#starting = false
-        // An open failure can reject initialization before it is awaited.
+        let rejectCold!: (reason: Error) => void
+        const failed = new Promise<never>((_resolve, reject) => { rejectCold = reject })
+        // Observe rejection before opening can synchronously fault or stall.
         void initialized.catch(() => {})
-      }
-    })
+        void failed.catch(() => {})
+        const expiresAt = performance.now() + readinessTimeoutMs
+        const fail = (reason: string): void => {
+          if (!this.#ready) abandoned = true
+          this.#faulted = true
+          const error = new Error(reason)
+          rejectInit(error)
+          rejectCold(error)
+          this.#connectionLost()
+        }
+        const timer = setTimeout(() => fail('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED'), readinessTimeoutMs)
+        try {
+          const opening = Promise.resolve().then(() => this.openTransport(request, {
+            onMessage: (message) => {
+              if (abandoned) return
+              const init = readClaudeInit(message)
+              if (init) {
+                if ((request.native.kind === 'RESUME' &&
+                    request.native.providerRef.nativeSessionRef !== init.providerSessionId) ||
+                    (initial && initial.providerRef.nativeSessionRef !== init.providerSessionId)) {
+                  fail('CLAUDE_RESUME_IDENTITY_MISMATCH')
+                  return
+                }
+                // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Actual init/SessionStart response supplies this native identity, never a logical UUID.
+                const providerRef = { provider: 'claude', nativeSessionRef: init.providerSessionId } as ProviderRef
+                initial = immutableSnapshot({ ...request.binding, providerRef })
+                resolveInit(initial)
+              } else if (initial) {
+                this.#observe(message, initial)
+              }
+            }, onFault: () => fail('CLAUDE_CONNECTION_LOST'), onExit: () => fail('CLAUDE_CONNECTION_LOST')
+          })).then((connection) => {
+            // Retain late ownership; opening/timeout is not provider stop evidence.
+            this.#connection = connection
+            return connection
+          })
+          const [connection, ready] = await Promise.race([Promise.all([opening, initialized]), failed])
+          if (performance.now() >= expiresAt) fail('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED')
+          if (abandoned || this.#faulted || connection.closed) throw new Error('CLAUDE_CONNECTION_UNAVAILABLE')
+          this.#ready = ready
+          return ready
+        } catch (error) {
+          abandoned = true
+          this.#faulted = true
+          // Account diagnostics/logs are not propagated through this new boundary.
+          throw new Error(error instanceof Error && error.message === 'CLAUDE_RESUME_IDENTITY_MISMATCH'
+            ? 'CLAUDE_RESUME_IDENTITY_MISMATCH' : 'CLAUDE_NATIVE_IDENTITY_UNCONFIRMED')
+        } finally {
+          clearTimeout(timer)
+        }
+      })
+    } finally {
+      this.#starting = false
+    }
   }
 
   async dispatch(request: ProviderDispatchRequest, permit: ProviderEffectPermit): Promise<ProviderDispatchResult> {

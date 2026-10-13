@@ -4,5 +4,5 @@
     "strict": true, "noEmit": true, "allowImportingTsExtensions": true,
     "skipLibCheck": true, "types": ["node"]
   },
-  "files": ["driver.test.mts"]
+  "files": ["driver.test.mts", "cold-focus.test.mts"]
 }
