@@ -34,6 +34,17 @@ for the repository's file-length limit. This is not evidence of one all-green
 repeat suite. The source hash record distinguishes the behavioral runs and final
 scoped typecheck/accepted-reference run.
 
+Root's final source review identified a FIFO open that could block before fstat.
+Correction `5a54339b32eb11707883cf118e8a6fcec876d33b` adds `O_NONBLOCK` to
+`verifyTarget`'s existing read-only/no-follow open, preserving its non-regular
+file rejection. One new owned temporary FIFO case passed without a writer
+(21.88 ms total test time), followed by no repetition of the original PG7 or
+materializer4 cases. Latest dedicated typecheck and modified-file lint passed.
+The existing PNG/provenance deliberately retains baseline `1d368031` and its
+original four materializer cases. [Correction relation](store-evidence/fifo-correction-relation.json)
+and the separate `fifoCorrection` JSON record connect the later verified source;
+the old capture is not relabelled as corrected/final-head execution.
+
 The process-death injection killed only the verifier's forked child while its
 second chunk was uncommitted. The committed prefix survived independent DB
 requery and completed normally. No PG, Pod, backend or Metro was restarted.
