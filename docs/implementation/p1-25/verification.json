@@ -1,0 +1,166 @@
+{
+  "상태": "최초 실제 PG 12개 사례가 모두 통과했으며 skip은 0개입니다.",
+  "productSourceRevision": "f9133468c8ab07f4595b0502b9f4eb52efc715db",
+  "testSourceRevision": "0a5549fda113d5d77db0160d03b3abc222a2c106",
+  "verificationBaseRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "firstPgRun": {
+    "tests": 12,
+    "pass": 12,
+    "fail": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "durationMs": 3695.963883
+  },
+  "검증 관계": "초기 typecheck는 통과했고 lint 1건을 검증 파일에서 교정했습니다. PG 실행 전 실제 DDL의 필수 storage binding을 fixture에 보완했습니다. PG 재실행은 없었습니다.",
+  "typecheck": {
+    "initialExitCode": 0,
+    "correctionExitCode": 0,
+    "version": "7.0.2"
+  },
+  "lint": {
+    "initialExitCode": 1,
+    "correctionExitCode": 0,
+    "initialErrors": 1,
+    "correctionErrors": 0,
+    "version": "1.80.0"
+  },
+  "rawNodeTestLogSha256": "8f0120052e92c2294f49aa8e809d98f080d65ea3d2de49719528b4f145921ff0",
+  "savedPgResultsSha256": "7a615f12c54d862a64906fadb3590392981af90522964ef6ba1a350e09b65ba9",
+  "sourceManifestSha256": "02bc842586a4a5a4911e03f990424d5b64550d5627a27efd8d0b7ec24b86be94",
+  "caseDescriptions": [
+    "동시 publication의 실제 PG 잠금 경합과 commit 가시성 순서",
+    "cursor 100 이후 늦은 과거 사건을 offset 101에서 조회",
+    "PG 원 payload 재조회와 실제 COMMIT 뒤 driver 응답 유실 재생",
+    "publication rollback과 stale·만료 claim 거절",
+    "미지원·타 publisher 처리·원 사건 충돌을 명시",
+    "전역 필터 scan과 page·tail·reset·오류의 읽기 전용 경계",
+    "동일 incident 중복 제거, 읽음과 해결 분리, 과거 실패 재개방 방지",
+    "Agent 대상만 있는 동시 receipt·incident 생성 경합",
+    "expectedRevision·payload 경합과 receipt 직전 실패의 전체 rollback",
+    "소유 client 연결 실패에서 빈 조회나 영속 ACK를 반환하지 않음",
+    "실제 P112 canonical 원본 행의 identity·metadata 유지",
+    "첫 await 뒤 request·Date·authority·claim·조회 옵션 변이 차단"
+  ],
+  "savedActualPgResults": {
+    "scope": "ACTUAL_PG_REPLAY_NOTIFICATION_MODULE_WITH_FIXTURE_SOURCES",
+    "recordedAt": "2026-10-13T11:25:07.018Z",
+    "sourceRevision": "0a5549fda113d5d77db0160d03b3abc222a2c106",
+    "baseRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "migrations": [
+      {
+        "version": "001-catalog.sql",
+        "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+      },
+      {
+        "version": "002-execution-storage.sql",
+        "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+      },
+      {
+        "version": "003-operations-resources.sql",
+        "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+      },
+      {
+        "version": "004-input-context.sql",
+        "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+      },
+      {
+        "version": "005-events-replay.sql",
+        "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+      },
+      {
+        "version": "006-snapshot-seals.sql",
+        "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+      },
+      {
+        "version": "007-storage-epoch-cancel-guards.sql",
+        "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+      },
+      {
+        "version": "008-attachment-store.sql",
+        "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+      },
+      {
+        "version": "009-atomic-journal-outbox.sql",
+        "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+      },
+      {
+        "version": "010-runtime-command-ledger.sql",
+        "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+      },
+      {
+        "version": "011-runtime-event-producers.sql",
+        "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+      },
+      {
+        "version": "012-input-merge-boundary.sql",
+        "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+      }
+    ],
+    "cases": [
+      {
+        "name": "overlapping PG publisher transactions cannot expose later offset before earlier commit",
+        "passed": true
+      },
+      {
+        "name": "source occurred in the past is published after previously read cursor100",
+        "passed": true
+      },
+      {
+        "name": "PG original payload wins; after-real-COMMIT reply loss replays the same cursor",
+        "passed": true
+      },
+      {
+        "name": "publication rollback restores head/replay/outbox and stale claims cannot publish",
+        "passed": true
+      },
+      {
+        "name": "unsupported and foreign publication are explicit; mismatched canonical replay conflicts",
+        "passed": true
+      },
+      {
+        "name": "bounded global filter scan advances excluded offsets; page/tail/reset/errors do not mutate state",
+        "passed": true
+      },
+      {
+        "name": "notification incident dedup, monotone seen/retry, read is not resolution, verified-source resolve does not reopen",
+        "passed": true
+      },
+      {
+        "name": "Agent-only simultaneous same receipt and incident creation dedup after rank6 key lock",
+        "passed": true
+      },
+      {
+        "name": "notification expectedRevision/payload races and pre-receipt rollback leave no partial audit/outbox/state",
+        "passed": true
+      },
+      {
+        "name": "unavailable own client cannot produce empty-page or durable notification success",
+        "passed": true
+      },
+      {
+        "name": "actual P112 canonical FAILED sources keep original identity and metadata without raw payload",
+        "passed": true
+      },
+      {
+        "name": "caller mutation after first await cannot change observation/read/resolve hashes, locks, SQL or publication source",
+        "passed": true
+      }
+    ],
+    "observations": {
+      "publicationOverlap": {
+        "waitEventType": "Lock",
+        "blocked": true
+      },
+      "earlierCommitVisibleBeforeSecond": true,
+      "p112SourceScope": "Actual PG rows constrained by owner 001–012 with canonical P112 outbox shapes; no P112 suite/handler/auth/provider acceptance repeated",
+      "mutableInputSnapshotBoundary": "Caller-owned Date/authority/target/key/claim mutations after actual SQL await do not change the frozen validated request; first execution only, no auth/provider proof"
+    },
+    "authenticationVerified": false,
+    "providerRecoveryVerified": false,
+    "httpSseConnected": false,
+    "producerSpoolVerified": false,
+    "physicalHaFencingVerified": false,
+    "replyLossMode": "driver hook discards reply after real PG COMMIT; not actual network loss",
+    "rollbackFaultMode": "statement hook rejects before COMMIT; no shared PG/Pod/Node fault"
+  }
+}
