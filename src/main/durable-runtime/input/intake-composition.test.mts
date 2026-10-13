@@ -124,10 +124,11 @@ test('same-TX intake requires actual locks/membership and rolls original snapsho
   }
   aliases.sort((a, b) => a.aliasPath < b.aliasPath ? 1 : -1)
   const payload = { text: 'synthetic original draft', nested: { order: ['first', 'second'] } }
+  const callerAttachments = [aliases[0], aliases[1], aliases[0]].map(({ aliasPath, contentHash }) => ({ aliasPath, contentHash }))
   const request: InputRequest = {
     ...f.request,
     payload,
-    attachments: [aliases[0], aliases[1], aliases[0]].map(({ aliasPath, contentHash }) => ({ aliasPath, contentHash }))
+    attachments: callerAttachments
   }
   const fixed = prepareInputRequest(request)
   const attachments = structuredClone(request.attachments)
@@ -157,7 +158,9 @@ test('same-TX intake requires actual locks/membership and rolls original snapsho
     assert.equal(accepted.messageRevision, counter('message-revision', '1'))
     assert.equal(accepted.journalSequence, counter('sequence:journal', '1'))
     assert.equal(accepted.intentRevision, '1')
-    for (const alias of aliases) assert.ok(tx.isLockHeld(6, alias.aliasPath))
+    for (const alias of aliases) {
+      assert.ok(tx.isLockHeld(6, alias.aliasPath))
+    }
     const input = await tx.query('SELECT original_payload_hash,body_or_blob_ref,client_operation_id FROM durable_runtime.input_components WHERE id=$1', [accepted.inputId])
     assert.equal(input.rows[0].original_payload_hash, fixed.identity.payloadHash)
     assert.deepEqual(input.rows[0].body_or_blob_ref, fixed.original)
@@ -201,7 +204,7 @@ test('same-TX intake requires actual locks/membership and rolls original snapsho
     request.operationKey = randomUUID()
     request.method = 'mutated.method'
     request.attachments[0].contentHash = '0'.repeat(64)
-    request.attachments.reverse()
+    callerAttachments.reverse()
   } finally {
     released.release()
   }
