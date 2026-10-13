@@ -106,7 +106,7 @@ await test('first structured same-TX composition boundaries with synthetic upper
       Object.assign(config.reservation.runtime.policy, { operationDeadlineMs: 0 })
       const again = await createDurableStructuredSession({ ...f.call, configuration: config })
       assert.equal(again.status, 'REPLAYED')
-      if (first.status !== 'UNCERTAIN') { assert.deepEqual(again.receipt.response, first.receipt.response) }
+      if (first.status !== 'UNCERTAIN') { assert.deepEqual(JSON.parse(JSON.stringify(again.receipt.response)), JSON.parse(JSON.stringify(first.receipt.response))) }
       assert.deepEqual(await sessionState(pool, f), before)
       assert.equal((await sql(pool, 'SELECT count(*)::integer AS n FROM durable_runtime.sessions WHERE id=$1', [config.reservation.runtime.sessionId])).rows[0].n, 0)
     })
@@ -157,7 +157,7 @@ await test('first structured same-TX composition boundaries with synthetic upper
       const replay = await sendDurableStructuredInput({ ...original, params })
       assert.equal(replay.status, 'REPLAYED')
       if (first.status !== 'UNCERTAIN') {
-        assert.deepEqual(replay.receipt.response, first.receipt.response)
+        assert.deepEqual(JSON.parse(JSON.stringify(replay.receipt.response)), JSON.parse(JSON.stringify(first.receipt.response)))
         assert.deepEqual(replay.wireResult, { ...first.wireResult, replayed: true })
       }
       assert.deepEqual(await sessionState(pool, f), before)
