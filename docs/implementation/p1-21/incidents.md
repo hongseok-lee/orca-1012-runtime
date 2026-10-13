@@ -16,7 +16,7 @@ Stale attempt/epoch는 원 이력과 분류만 저장하며 Unit의 phase·activ
 
 Observation·incident·state·audit·outbox와 외부 wrapper의 receipt는 같은 transaction에 속한다. Recovery episode counter·operation·reservation·증량·교체·provider·RW grant를 만들거나 변경하지 않는다. 새로운 resource outbox kind와 후속 소비자의 합류는 아직 runtime에 연결하지 않았다. 이 API는 DATA_ONLY이며 물리 종료·fencing·provider stop 또는 새 RW 권한을 반환하지 않는다.
 
-현재는 로컬 source 작성과 조기 API 납품이다. P121 scoped typecheck·lint·실제 PG 검증·결과 PNG는 실행하지 않았으며 PASS를 주장하지 않는다. DB 015도 이 작업에서 적용하지 않았다. 검증 slot은 bridge 인계 전 점유하지 않는다. Root만 기획·수용·리뷰·merge를 담당한다. P125의 수락된 PG 12 PASS·type/lint·PNG 1장과 PR20 source는 반복 실행하거나 수정하지 않았다.
+Root의 heavy 1 배분 뒤 별도 소유 검증 DB에 exact 001–015를 적용해 최초 검증을 실행했다. Dev DB에 015를 적용하지 않았다. scoped typecheck·lint와 첫 PG 결과는 아래에 기록하며 검증 점유는 실행 종료 뒤 반환했다. 최초 결과 PNG는 client owner의 별도 배분 전이다. Root만 기획·수용·리뷰·merge를 담당한다. P125의 수락된 PG 12 PASS·type/lint·PNG 1장과 PR20 source는 반복 실행하거나 수정하지 않았다.
 
 
 ## 최초 PG fixture의 작성 상태
@@ -25,6 +25,17 @@ Observation·incident·state·audit·outbox와 외부 wrapper의 receipt는 같�
 
 기존 collector 27개·P112·P125·DB 성공 suite를 import하거나 실행하지 않는다. 실제 동일 TX 사례는 수락된 P112 claim/process API를 사용하는 새 incident 합성 fixture이며 기존 P112 suite의 반복이 아니다. Handler 실패 사례는 실제 기록 뒤 예외를 던지고 원 queue의 `last_error`까지 확인해 다른 선행 오류를 rollback 성공으로 바꾸어 표시하지 않는다. Shared PG/Pod/Node fault나 actual Agent OOM을 주입하지 않는다.
 
-Fixture 실행은 `orca_p121_*` 소유 DB와 exact 001–015 migration chain을 요구한다. 최초 source·main·evidence·DB pin과 실제 성공/실패를 실행 후에만 JSON으로 기록한다. 명목상 verified source는 fixture assertion일 뿐 실제 인증이나 물리 권한의 증거가 아니다. 현재 fixture 파일 작성은 완료했지만 type/lint/PG는 모두 미실행이며 검증 점유를 받지 않았다.
+Fixture 실행은 `orca_p121_*` 소유 DB와 exact 001–015 migration chain을 요구한다. 최초 source·main·evidence·DB pin과 실제 성공/실패를 실행 후에만 JSON으로 기록한다. 명목상 verified source는 fixture assertion일 뿐 실제 인증이나 물리 권한의 증거가 아니다. Fixture 최초 source는 `32ea8374bc55e52515de33871349d89eae4b6099`이며 최초 실행과 한정 교정 source를 구분해 기록했다.
 
-정적 대조에서 handler의 PG `attempt_count` BIGINT 재조회와 P112 `EventRecord.attemptCount`의 Number 변환 사이 digest 차이 가능성을 root에 보고했다. Product core는 `dffb4aa4` 그대로 보존했고 해당 실제 P112 경계가 fixture에 포함돼 있다. 실제 실행 결과나 교정 PASS로 기록하지 않는다.
+BIGINT/Number digest 우려는 queue worker가 fixture 준비 중 최초 보고하고 bridge가 root에 전달했다. Root의 새 발견이나 제품 교정 지시는 아니었다. 최초 fixture source는 리뷰된 제품 core `dffb4aa4`와 같았으며 첫 실제 P112 경계에서 원 실패를 관찰했다.
+
+
+## 최초 실제 검증과 한정 교정
+
+원 source `32ea8374bc55e52515de33871349d89eae4b6099`의 첫 PG는 7개 중 6 PASS, 1 FAIL, 0 SKIP였다. 실패한 P112 사례는 DONE 대신 RETRY를 반환했고 실제 queue의 원 오류는 `INCIDENT_EVENT_RECORD_CONFLICT`였다. `attempt_count` SQL 타입은 BIGINT이며 PG driver는 문자열 `"1"`, 기존 P112 `head.record()`는 숫자 `1`을 사용했다. 동일 원 행의 digest가 표현 차이로 달라졌다. 최초 TAP과 결과 JSON을 수정하지 않고 보존했다.
+
+교정 source `31bcb302550c75385e623925ed8a00e8e8452135`는 incident handler의 snapshot 값을 기존 P112와 같은 Number 표현으로 맞춘다. 공용 queue source와 DB schema는 변경하지 않았다. 실패한 동일 P112 사례 1개만 다시 실행해 1 PASS, 0 FAIL, 0 SKIP를 확인했다. 같은 TX 성공과 기록 뒤 handler 예외의 전체 rollback, 원 `P121_HANDLER_FAULT`, 낮은 rank 추가 획득 0을 확인했다. 앞서 통과한 6개는 반복하지 않았다. Distinct 확인 사례는 7개이며 누적 실행은 성공 7회와 원 실패 1회다.
+
+Scoped typecheck는 fixture의 assert 이후 이미 좁혀진 UNCERTAIN 비교에서 TS2367 2개로 처음 실패했다. 중복 비교 한 줄을 제거한 뒤 종료 코드 0이었다. Configured lint는 store의 if/else 표현에서 prefer-ternary 1개로 처음 실패했다. 동일 SQL 분기의 표현만 바꾼 뒤 종료 코드 0이었다. 필요한 검증 entry만 기존 esbuild로 Node 24 ESM에 변환했고 PG와 installed package는 external로 사용했다. 설치·전체 build·기존 성공 suite·runtime 재시작을 하지 않았다.
+
+[Safe 결과와 source/schema/log digest](incidents-verification.json)에 원 실패와 focused 교정 관계를 기록했다. 원 TAP·type/lint·source manifest는 private 증거로 보존한다. 결과 PNG는 client owner의 별도 배분 전이며 이 worker는 촬영하지 않았다. 실제 인증, Agent OOM·물리 격리, 자원 행동, provider, HA/fencing과 최종 dependency/base 대조·root 수락은 미완료다.
