@@ -32,6 +32,12 @@ Root/bridge의 heavy 실행 자리 인계 뒤 승인된 backend에서만 최초 
 
 실제 dev Backend Pod **1개**의 allowlist projection을 collector가 처리하여 `OBSERVED`, 논리 binding `null`, 자동 증설 후보 `false`를 확인했습니다. dev role은 Agent 자원 정책 대상이 아닙니다. Unit/attempt를 가짜로 채우지 않았고 production incident를 저장하지 않았습니다. 실제 Backend cgroup 파일은 조회하지 않았습니다. Cgroup 미노출·권한 실패·reset 및 원 incarnation delta 경계는 합성 fixture 결과입니다.
 
-[선별 결과 JSON](verification-result.json)에 실제 개수와 실패→focused 교정 관계를 보존했습니다. 이 화면은 검증 결과 문서이며 제품 UI 또는 실제 OOM 화면이 아닙니다. 최초 문서 화면 PNG는 client owner에게 한 번 인계하고 아직 수령하지 않았습니다.
+[선별 결과 JSON](verification-result.json)에 실제 개수와 실패→focused 교정 관계를 보존했습니다. 최초 실제 browser 화면은 모듈 구현 설명을 보여 주며, 실제 관측 결과 heading과 27건 결과 표는 viewport 밖에 있습니다. Root는 원 PNG를 직접 열고 구현 설명 화면으로 수용했습니다. 원 qualification의 결과 화면 수용 0건과 실패 원문은 보존했으며 재촬영하지 않았습니다. 제품 UI 또는 실제 OOM 화면이 아닙니다.
+
+![evidence 모듈 구현 설명의 최초 실제 browser 화면; 결과 표는 viewport 밖](docs/evidence/p121-first-report.png)
+
+evidence 모듈 구현 설명의 최초 실제 browser 화면; 결과 표는 viewport 밖
+
+[최소 공개 provenance](docs/evidence/p121-first-report-provenance.json)와 [별도 Root 수용 기록](docs/evidence/p121-first-report-root-acceptance.json)에 실행 source `e1b578313e8ef3ed23141128c2ae8543fbfdf201`, 촬영 target `f07c504260cf3bd91071c8409b8c3b00c1ee990b`, 촬영 시각 `2026-10-13T13:04:36.444Z`, viewport 1140 × 1500 및 원 PNG SHA-256을 기록했습니다. 위 27건 결과는 원 검증 결과이며 화면의 표 가시성을 주장하지 않습니다.
 
 실제 Agent OOM·격리·물리 fencing·새 RW 허가·자원 정책 활성화는 검증하지 않았습니다. 신뢰 transport 인증 및 원 종료 자원·배치 보존 연결과 incident PG/P112 합류도 미연결입니다.
