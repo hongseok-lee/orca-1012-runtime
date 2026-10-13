@@ -48,7 +48,7 @@ async function seed(): Promise<VerifiedJournalReadScope> {
   const publicSessionId = `session_${randomUUID().replaceAll('-', '')}`
   await pool.query(`INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'codex')`, [agentId])
   await pool.query(`INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,'fixture','READY')`, [workspaceId, randomUUID()])
-  await pool.query(`INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle,session_fence) VALUES($1,$2,$3,'CLOSED',1)`, [sessionId, agentId, workspaceId])
+  await pool.query(`INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle,session_fence) VALUES($1,$2,$3,'OPEN',1)`, [sessionId, agentId, workspaceId])
   await pool.query(`INSERT INTO durable_runtime.structured_session_aliases(public_session_id,session_id,workspace_id,
     provider,execution_host_id,location,original_create,created_by) VALUES($1,$2,$3,'codex','fixture-host','{}','{}',$4)`,
     [publicSessionId, sessionId, workspaceId, other])
@@ -143,6 +143,7 @@ check('own receipt identity, other principal same key, legacy and same-body diff
 check('Pod-zero and actual attempt metadata replacement keep journal epoch and reads have no effects', async () => {
   const scope = await seed()
   await commitInput(scope)
+  await pool.query(`UPDATE durable_runtime.sessions SET lifecycle='CLOSED' WHERE id=$1`, [scope.sessionId])
   const unit = randomUUID(); const binding = randomUUID()
   await pool.query(`INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'SUSPENDED','ABSENT')`, [unit])
   await pool.query(`INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$1)`, [unit])
