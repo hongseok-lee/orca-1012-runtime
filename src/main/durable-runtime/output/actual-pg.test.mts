@@ -55,7 +55,7 @@ async function seed(): Promise<VerifiedJournalReadScope> {
   // Test-only brand. Alias created_by differs deliberately; upper authorization is a fixture premise.
   return { principal, publicSessionId, sessionId, workspaceId } as VerifiedJournalReadScope
 }
-async function input(client: PoolClient, scope: VerifiedJournalReadScope, sender = principal, key = randomUUID(), structured = true) {
+async function input(client: PoolClient, scope: VerifiedJournalReadScope, sender = principal, key: string = randomUUID(), structured = true) {
   const tx = new DurableTransaction(client)
   await lockAggregates(tx, { sessionIds: [scope.sessionId] })
   const body = { kind: 'message', role: 'user', blocks: [{ type: 'text', text: '  exact original\n' }] }
@@ -77,7 +77,7 @@ async function input(client: PoolClient, scope: VerifiedJournalReadScope, sender
   tx.close()
   return { ...appended, key }
 }
-async function commitInput(scope: VerifiedJournalReadScope, sender = principal, key = randomUUID(), structured = true) {
+async function commitInput(scope: VerifiedJournalReadScope, sender = principal, key: string = randomUUID(), structured = true) {
   const client = await pool.connect()
   try { await client.query('BEGIN'); const result = await input(client, scope, sender, key, structured); await client.query('COMMIT'); return result }
   catch (error) { await client.query('ROLLBACK'); throw error }
