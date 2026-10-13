@@ -1,0 +1,23 @@
+{
+  "capturedAt": "2026-10-13T03:14:43.613Z",
+  "kind": "browser-rendered saved actual PG input module report; not product/native/RPC UI",
+  "actualUrl": "about:blank (setContent from safe saved verification JSON)",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "browserImage": "mcr.microsoft.com/playwright@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645",
+  "viewport": {
+    "width": 1120,
+    "height": 1120
+  },
+  "deviceScaleFactor": 1,
+  "headings": [
+    "8 new real-PG cases passed · first actual run",
+    "Actual accumulated DB readback",
+    "Observed correction and verification limits"
+  ],
+  "inputSha256": "218d1f23e9a03bcfe37b114809b577cce2f30a024fb36b20fa3607da0cd8b13f",
+  "pngSha256": "3a93036fa0d2b249bc40789894f71d8bffb80070a2ed92d25d711d00926dff50",
+  "implementationRevision": "5ae4f671d0227abbc144f5ef6ba50a0346e59950",
+  "schemaSource": "5dc1f9bb1ad03fbff00f94652be17bc4f0dc255c",
+  "boundary": "first actual eight PG cases and accumulated readback; no repeated product test"
+}

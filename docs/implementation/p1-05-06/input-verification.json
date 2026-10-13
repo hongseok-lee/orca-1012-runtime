@@ -1,0 +1,193 @@
+{
+  "capturedAt": "2026-10-13T03:12:30.482Z",
+  "implementationRevision": "5ae4f671d0227abbc144f5ef6ba50a0346e59950",
+  "earlyCoreRevision": "db7b7406e3376763219db18a1fd95adad8b0839f",
+  "initialBase": "bf3704cd6ca3c679108e04e0a52d815336108c45",
+  "apiSource": "4557607b53d37df97dfbb8fa85e5b2f30037d53f",
+  "schemaSource": "5dc1f9bb1ad03fbff00f94652be17bc4f0dc255c",
+  "node": "v24.15.0",
+  "mode": "existing esbuild0.25.12 narrow Node24 ESM verifiers/packages external; existing dependency caches unchanged",
+  "canonicalEqual": true,
+  "sourceSha256": {
+    "src/main/durable-runtime/input/append.ts": "1731f0f1800f60e336e402785be2def7238ccc8ca6d454c6e678e37ea6cdd434",
+    "src/main/durable-runtime/input/attachments.test.mts": "93e5a0a5a705c75e703dbbb05ede2392b4bb4c03848187919524134dac9c2863",
+    "src/main/durable-runtime/input/authority.ts": "9ef387758c5264ba089a459e93e04676429afcec113fd43423af23ecd0138cf6",
+    "src/main/durable-runtime/input/canonical.ts": "1e96b9cae2404c2efb437b834c57924d2984d0aa54f96cd6d377a1b472e376b6",
+    "src/main/durable-runtime/input/composition.ts": "128a473ad4b172dd8eda82ff7188c605d0e35af532e2df968d516fceb01b2591",
+    "src/main/durable-runtime/input/index.ts": "a73686e8aed786ac65919123cba123d136ac35ee418834c921d3bd59e9f9cdc6",
+    "src/main/durable-runtime/input/intake.test.mts": "6d7c769f3cfd08df5424494085c8684a99a9b4f265cc539404f1e12e25ce2cf1",
+    "src/main/durable-runtime/input/intake.ts": "1f9533a59ce439271bef576960fc80df22cf298ab67ad5bf11dfebdcb7a047cc",
+    "src/main/durable-runtime/input/prepare-verification.mts": "b182994c1fb992ad4b29d8b018991f623fc96fe20a5d1f072b5b12cc7608c698",
+    "src/main/durable-runtime/input/seal.ts": "3775cb17f2e4dd2bcf62fca87a65d564e99a365b3faff9aaddd90123d9c646fc",
+    "src/main/durable-runtime/input/types.ts": "e88cd450ae308c6c116540e11784dd42bac15ba44e8794ca1dbf2a42c851403f",
+    "src/main/durable-runtime/input/verification-fixtures.mts": "5b1f65334e6efba3af8a82e42544b868124ff4a158e4768a160382e00ec9bf4b",
+    "config/tsconfig.durable-runtime-input.json": "8bd0853028e99c28e266ac985ba5b900fbe3bf9c103bfa07c1b75d79ff640e64",
+    "docs/implementation/p1-05-06/build-verifiers.mjs": "8c469d4e518acd4b8b8ce894b8e29f8ace8241a82ed5b320e595de8bf83871db"
+  },
+  "dependencySha256": {
+    "src/main/durable-runtime/db/atomic.ts": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+    "src/main/durable-runtime/db/connection.ts": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+    "src/main/durable-runtime/db/locks.ts": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+    "src/main/durable-runtime/db/rows.ts": "0c6e1018b680867e738d464d56fda1d472cc5474299b448d2934751e91e23120",
+    "src/main/durable-runtime/journal/store.ts": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+    "src/main/durable-runtime/attachments/store.ts": "8983231a3e8d9abef3de86dd3cf88cb484d32b540e2830068ca6c10d15314e71",
+    "src/main/durable-runtime/attachments/materializer.ts": "7670d1d06eb1666bbd78a637d537c922c434c6a2a53ee985894092b68dd8b598"
+  },
+  "migrations": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    }
+  ],
+  "readback": {
+    "original_components": "112",
+    "receipts": "112",
+    "messages": "12",
+    "submission_events": "112",
+    "outbox_hints": "112",
+    "accepted_without_row": "0"
+  },
+  "cases": [
+    {
+      "name": "new intake rejects incomplete or foreign attachments; sorted locks preserve duplicate positions and references after abort/materialization",
+      "result": "PASS",
+      "ids": [
+        "P1-05"
+      ]
+    },
+    {
+      "name": "same identity concurrent receipt, conflicting payload and identical-body different identities preserve originals",
+      "result": "PASS",
+      "ids": [
+        "P1-05",
+        "P1-06"
+      ]
+    },
+    {
+      "name": "ACK-loss replay survives fence/lifecycle/closed terminal and does not expose another principal receipt",
+      "result": "PASS",
+      "ids": [
+        "P1-05"
+      ]
+    },
+    {
+      "name": "100 GENERAL originals retain 100 receipts in one pending Message and a complete immutable seal",
+      "result": "PASS",
+      "ids": [
+        "P1-06"
+      ]
+    },
+    {
+      "name": "append versus seal serializes on Session and cannot revise a sealed payload",
+      "result": "PASS",
+      "ids": [
+        "P1-06"
+      ]
+    },
+    {
+      "name": "command and raw semantic boundaries persist through fresh DB connection; history/query does not wake",
+      "result": "PASS",
+      "ids": [
+        "P1-05",
+        "P1-06"
+      ]
+    },
+    {
+      "name": "failure after journal/outbox/wake writes rolls every intake effect back without a receipt",
+      "result": "PASS",
+      "ids": [
+        "P1-05"
+      ]
+    },
+    {
+      "name": "membership change after discovery is effect-free and never locks a different Unit out of order",
+      "result": "PASS",
+      "ids": [
+        "P1-05"
+      ]
+    }
+  ],
+  "checks": {
+    "firstActualPGRun": {
+      "pass": 8,
+      "fail": 0
+    },
+    "dedicatedTypecheck": "PASS exit0",
+    "repositoryConfiguredLint": "PASS 0 warnings/errors; newly typed verifier file focused rechecked",
+    "format": "completed"
+  },
+  "privateLogSha256": "4b81e8c09741bbbcd1864cbba784fa258a08ef2765aa785623ca4237bddf209f",
+  "observedPrePGVerifierCorrections": [
+    {
+      "codes": [
+        "TS7034",
+        "TS7005"
+      ],
+      "file": "attachments.test.mts",
+      "cause": "untyped alias fixture array",
+      "resolution": "explicit existing AttachmentAlias[] type before first PG run"
+    },
+    {
+      "code": "eslint(curly)",
+      "file": "verification-fixtures.mts",
+      "resolution": "test-owned Proxy query wrapper braces before first PG run"
+    }
+  ],
+  "idBoundaries": {
+    "P1-05": "receipt/auth-scope/state/Unit/attachment/journal/outbox/wake atomic boundaries only",
+    "P1-06": "original component preservation, latest GENERAL group/semantic boundary/exact revision seal/append race only"
+  },
+  "scopeLimits": [
+    "Upper adapter authentication/authorization and wire parsing/classification remain unconnected",
+    "No public RPC, real iPhone/Mac provider/PTY or live runtime activation",
+    "No P1-07 cancel/execution winner or provider ADMITTED claim",
+    "No P1-13 actual wake/controller/Pod work, no HA/Spot/fault test",
+    "No new P1-03 COMMIT uncertainty fault; prior owner evidence reused",
+    "Semantic boundary persistence observed with a fresh DB connection, not a product process restart",
+    "Schema001–012 applied only to guarded worker-owned validation DB; not dev/production"
+  ]
+}
