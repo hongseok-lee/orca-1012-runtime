@@ -40,10 +40,18 @@ not SQL/type/PG passes. The branch remains based on the root's
 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`; predecessor integration and final PR
 rebase remain root decisions. No other owner's files are copied or changed.
 
+Root source-review corrections retain the immutable activity observation while
+checking the trusted owner's current synchronous pin at SQL acceptance. A pin
+revoked during Pool/SQL wait remains invalid. Fresh PG reservations use the
+incumbent PS metadata summary and `hostScope.hostIds=[]`: physical census is
+unverified. The wire's nonnullable count/boolean defaults are placeholders;
+they do not establish observed physical count0, stopped/idle status or deletion.
+Known logical execution hosts remain in `omittedHostIds`; no host is fabricated
+or declared physically enumerated.
+
 Current source limitations: production launch/physical-proof issuers are absent;
 binding retirement validates a pinned current tuple but BOUND ingestion is not
-implemented; PS fails explicitly if trusted stored physical projection is absent;
-full group/layout projection is incomplete; shared-Unit Workspace removal refuses
+implemented; full group/layout projection is incomplete; shared-Unit Workspace removal refuses
 to delete another Workspace's Unit and awaits its scoped cleanup contract.
 Actual controller consumption of preserved removal options is not integrated.
 Subscriptions are internal PG readers with local commit hints, not public streams

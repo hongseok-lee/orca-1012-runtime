@@ -12,6 +12,8 @@ import { parseCatalogWorkspace, parseCatalogTab } from './payload.ts'
 import { catalogSnapshotId, catalogSnapshotVersion } from './revision.ts'
 import { captureCatalogJson } from './immutable.ts'
 import { CatalogError } from './errors.ts'
+import { DEFAULT_WORKSPACE_STATUS_ID } from '../../../shared/workspace-statuses.ts'
+import { normalizeExecutionHostId, type ExecutionHostId } from '../../../shared/execution-host.ts'
 
 function head(snapshot: CatalogSnapshot, scope: string): CatalogHeadRow {
   const found = snapshot.heads.find(row => row.scope === scope)
@@ -66,18 +68,45 @@ export function projectCatalogList(snapshot: CatalogSnapshot, call: PreparedCata
   return { worktrees: rows.slice(0, maximum).map(projectCatalogWorktree), totalCount: rows.length, truncated: rows.length > maximum }
 }
 
-/** Physical PS facts are accepted only from validated stored binding observations. */
+/** Incumbent metadata summary defaults, explicitly outside a physical host census. */
+function unverifiedCatalogPs(snapshot: CatalogSnapshot, workspace: CatalogWorkspace): RuntimeWorktreePsSummary {
+  const stored = projectCatalogWorktree(workspace)
+  const repo = snapshot.repositories.find(row => row.id === workspace.repo_id)
+  const group = snapshot.projectGroups.find(row => row.id === workspace.project_group_id)
+  const hostId = stored.hostId ?? repo?.executionHostId ?? undefined
+  return { workspaceKind: workspace.kind === 'FOLDER_WORKSPACE' ? 'folder-workspace' : 'git',
+    worktreeId: workspace.public_id, repoId: stored.repoId, ...(hostId ? { hostId } : {}),
+    repo: repo?.displayName ?? group?.name ?? stored.repoId, path: stored.path, branch: stored.branch,
+    isArchived: stored.isArchived, isMainWorktree: stored.isMainWorktree, hasHostSidebarActivity: false,
+    ...(stored.instanceId === undefined ? {} : { worktreeInstanceId: stored.instanceId }),
+    parentWorktreeId: stored.parentWorktreeId, childWorktreeIds: [...stored.childWorktreeIds],
+    displayName: stored.displayName, workspaceStatus: stored.workspaceStatus ?? DEFAULT_WORKSPACE_STATUS_ID,
+    sortOrder: stored.sortOrder, ...(stored.manualOrder === undefined ? {} : { manualOrder: stored.manualOrder }),
+    lastActivityAt: stored.lastActivityAt, ...(stored.createdAt === undefined ? {} : { createdAt: stored.createdAt }),
+    ...(stored.creatorProvenance === undefined ? {} : { creatorProvenance: stored.creatorProvenance }),
+    linkedIssue: stored.linkedIssue, linkedPR: stored.linkedPR === null ? null : { number: stored.linkedPR, state: 'unknown' },
+    linkedLinearIssue: stored.linkedLinearIssue, linkedGitLabMR: stored.linkedGitLabMR ?? null, linkedGitLabIssue: stored.linkedGitLabIssue ?? null,
+    comment: stored.comment, isPinned: stored.isPinned, isActive: snapshot.ui?.payload.lastActiveWorktreeId === workspace.public_id,
+    unread: stored.isUnread,
+    // Existing wire has nonnullable number/boolean here. These are incumbent
+    // placeholders; hostScope below discloses zero covered hosts. They are not
+    // observed physical zero counts, an idle verdict, or evidence of deletion.
+    liveTerminalCount: 0, hasAttachedPty: false, lastOutputAt: null, preview: '', status: 'inactive', agents: [] }
+}
+
+/** PG reservation/ABSENT rows remain visible, with an explicitly unverified census. */
 export function projectCatalogPs(snapshot: CatalogSnapshot, call: PreparedCatalogCall<'worktree.ps'>): RuntimeWorktreePsConditionalResult {
   const publication = head(snapshot, 'catalog')
   const maximum = limit(call.params.limit)
   const snapshotId = catalogSnapshotId(publication.publication_epoch, publication.revision,
     { params: { limit: maximum, supportsWorktreeVisibilitySourceDefaults: call.params.supportsWorktreeVisibilitySourceDefaults === true },
-      capabilities: [...call.context.capabilities].sort(),
+      capabilities: [...call.context.capabilities].sort(), physicalCoverage: 'unverified',
       scope: { repositories: [...call.context.authority.repositoryIds].sort(), groups: [...call.context.authority.projectGroupIds].sort(),
         workspaces: [...call.context.authority.workspacePublicIds].sort() } })
   const worktrees = snapshot.workspaces.slice(0, maximum).map(workspace => {
     const raw = workspace.payload.ps
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new CatalogError('CATALOG_PHYSICAL_PROJECTION_UNVERIFIABLE')
+    if (raw === undefined) return unverifiedCatalogPs(snapshot, workspace)
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new CatalogError('CATALOG_PAYLOAD')
     const projection = captureCatalogJson(raw) as Record<string, unknown>
     const stored = projectCatalogWorktree(workspace)
     if (projection.worktreeId !== workspace.public_id || projection.repoId !== stored.repoId ||
@@ -99,7 +128,10 @@ export function projectCatalogPs(snapshot: CatalogSnapshot, call: PreparedCatalo
       sortOrder: stored.sortOrder, comment: stored.comment } as RuntimeWorktreePsSummary
   })
   if (call.params.afterSnapshotId === snapshotId) return { unchanged: true, snapshotId }
-  return { worktrees, totalCount: snapshot.workspaces.length, truncated: snapshot.workspaces.length > maximum, snapshotId }
+  const omittedHostIds = [...new Set(worktrees.map(row => row.hostId)
+    .filter((value): value is ExecutionHostId => value !== undefined && normalizeExecutionHostId(value) !== null))].sort()
+  return { worktrees, totalCount: snapshot.workspaces.length, truncated: snapshot.workspaces.length > maximum, snapshotId,
+    hostScope: { hostIds: [], omittedHostIds } }
 }
 
 /** One RR snapshot for head/payload; callbacks do not touch a runtime or filesystem. */

@@ -19,19 +19,26 @@ export function captureCatalogSleep(input: PreparedCatalogSleep): PreparedCatalo
   const { activity, ...plain } = input.request
   const copied = captureCatalogParsed(plain) as Omit<SleepReservationRequest, 'activity'>
   const preparedAttemptId = input.preparedAttemptId
-  const prepared = new Map<string, { evidence: PreparedMemberActivity; valid: boolean }>()
+  const prepared = new Map<string, { evidence: PreparedMemberActivity; original: PreparedMemberActivity }>()
+  // Keep the trusted owner's method, not a one-time cached boolean. It checks
+  // current synchronous local pin validity again at P113's SQL acceptance point.
+  const currentPinValid = activity?.pinValid.bind(activity) ?? null
   if (activity && preparedAttemptId) {
     for (const sessionId of copied.discoveredMembers) {
       const observed = activity.member(sessionId, preparedAttemptId)
       if (!observed || !Object.isFrozen(observed)) continue
       const { observedAt, ...fields } = observed
       const evidence = Object.freeze({ ...captureCatalogParsed(fields), observedAt: new Date(captureCatalogInstant(observedAt)) }) as PreparedMemberActivity
-      prepared.set(sessionId, { evidence, valid: activity.pinValid(observed) === true })
+      prepared.set(sessionId, { evidence, original: observed })
     }
   }
   const capturedActivity = activity === null ? null : Object.freeze({
     member: (sessionId: string, attemptId: string) => attemptId === preparedAttemptId ? prepared.get(sessionId)?.evidence ?? null : null,
-    pinValid: (evidence: PreparedMemberActivity) => prepared.get(evidence.sessionId)?.evidence === evidence && prepared.get(evidence.sessionId)?.valid === true
+    pinValid: (evidence: PreparedMemberActivity) => {
+      const entry = prepared.get(evidence.sessionId)
+      if (!entry || entry.evidence !== evidence || !currentPinValid) return false
+      try { return currentPinValid(entry.original) === true } catch { return false }
+    }
   })
   return Object.freeze({ preparedAttemptId, request: Object.freeze({ ...copied, activity: capturedActivity }) })
 }
