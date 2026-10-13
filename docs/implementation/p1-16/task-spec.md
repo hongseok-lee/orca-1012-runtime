@@ -3,9 +3,17 @@
 Public rendering of the complete assigned root specification and execution contract. Local implementation is in progress. Remote PostgreSQL, type/test execution and actual capture are not claimed.
 
 
-Original root file `docs/plans/orca-1012-dispatch-p1-16-catalog.md`, source SHA-256 `2015e01b5eb29f49921ad03a7fcfa8f3ba5e596f3f8ba14658b723ce878a9fa1`. Only private-link routing is generalized below.
+Original root file `docs/plans/orca-1012-dispatch-p1-16-catalog.md`, current source SHA-256 `97e9cee5621fd4e3e185c39f67cb1433dad67251dbdac3dd9f66ac46f7a15bc2`. The Root anchor supplement is copied verbatim; only the existing private-link routing is generalized below.
 
 # P1-16 실행 위임 — 영속 Catalog와 기존 공개 projection
+
+## 첫 PG 실패에 대한 anchor 보완 — 2026-10-13
+
+Root가 실제014 `catalog_heads`와005/009 outbox, `publishCatalogMutation`·heads/register 및 원 실패를 대조했다. Head의 dataset 필드는 `dataset_name` text이며 `dataset_id`는 없다. Outbox `aggregate_id`는 UUID다. Workspace가 있는 사건에는 기존 Workspace UUID를 유지한다. Workspace 없는 전역 Catalog 사건에는 **DB에서 읽은 head의 dataset_name/scope/publication_epoch**를 원천으로 한 안정적인 내부 aggregate UUID를 사용한다.
+
+Canonical tuple은 `['orca-1012-catalog-aggregate-v1', dataset_name, scope, publication_epoch]`이며 JSON 문자열의 SHA-256 앞128bit를 UUID 모양으로 변환하고 version nibble8/variant bits를 고정한다. 새 helper는 Catalog 소유 디렉터리의 순수 함수로 둔다. 같은 head는 모든 process/retry에서 같은 UUID를 얻고 다른 publication epoch는 다른 anchor를 얻는다. 이것은 outbox 내부 식별자이며 공개 Workspace/Session/provider ID, 인증 또는 새로운 dataset 정본이 아니다. Text를 UUID로 cast하거나 매 호출 random UUID를 발급하지 않는다. Publication epoch 자체가 UUID라는 가정도 하지 않는다.
+
+기존 outbox event에는 원 dataset_name/scope/publication_epoch를 내부 metadata로 함께 남겨 anchor의 출처를 추적한다. 현재 event ID/receipt/audit/원자 commit 의미는 보존한다. 001–016 DDL과 공용 row type은 변경하지 않는다. 동일 입력의 anchor 안정성과 epoch 분리를 좁게 확인하고 scoped typecheck를 먼저 통과한 뒤, 등록 단계 실패로 아직 들어가지 못한8개 PG 사례를 처음 실행한다. 이전 성공 Node 사례 전체를 반복하지 않는다. 준비 실패·전역 등록 실패·미진입 PG 사례는 결과에서 각각 구분한다.
 
 Root 결정, 2026-10-13. 기존 repo worker를 재사용한다. 기준 main은 PR17 합류 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`이다. 실제 소스 사실은 P116 보고 (private source-fact evidence), 정본 §6, [P1-16 전체 명세](../../plans/orca-1012-specs/P1-16.md)를 대조했다. P113의 조기 intent API `15b73eaf`는 소비 가능하나 원격 검증·전체 lifecycle 수락으로 간주하지 않는다. Root가 지적한 immutable request 교정을 포함한 후속 bytes를 소비한다.
 
