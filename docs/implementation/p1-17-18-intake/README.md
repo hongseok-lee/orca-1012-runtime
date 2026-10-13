@@ -12,6 +12,10 @@ Entry는 첫 await 전에 `prepareInputRequest`로 authority·payload·attachmen
 
 기존 성공한 소유 fixture의 agent/workspace/session/unit/storage/member/tab seed SQL을 읽기 재사용하고 원 resource profile 0 관계를 추가했습니다. 새 DB의 준비 verifier는 기존 고정 migration 001–012만 소유 `orca_p117_intake_*` DB에 적용하도록 제한했습니다. 공용 schema나 다른 owner의 DB에는 쓰지 않습니다. 기존 P103의 outer receipt 재생·실제 COMMIT 증거를 재사용하며 이 시험에서 receipt replay suite를 다시 실행하지 않습니다.
 
-현재 fixture와 실행 입력만 준비했습니다. Scoped type·lint와 신규 PG 1건은 heavy 슬롯 인계 전이므로 아직 실행하지 않았습니다. 미실행을 PASS로 표시하지 않으며 기존 Input 11건·P103 suite·Expo UI·서버 build/install/runtime sync·PNG를 반복하지 않습니다. PR24는 root가 최종 `50eca890`를 merge한 상태이며 원 source와 증거를 보존합니다. 이 PR의 최초 결과 캡처는 아직 없습니다.
+2026-10-13 14:30:03 UTC에 신규 PG 1건이 최초 PASS했고 실패·skip은 0입니다. 최초 fixture `0c9e0346`의 scoped type 1건 실패(readonly 첨부 배열 reverse)와 lint 1건 실패(for 중괄호)를 원 로그로 보존했습니다. 제품 `4d1cabbc`를 바꾸지 않고 fixture의 mutable caller 배열과 중괄호만 `85cb268f`에서 교정한 뒤 type·configured lint exit 0을 확인했습니다. PG는 타입 교정 뒤 처음 실행했으며 기존 성공 사례를 다시 수행하지 않았습니다.
+
+[최초 결과 JSON](first-verification-result.json)에 정확한 제품·초기 fixture·실행 fixture·base·schema·원 TAP hash와 시간·합류 경계를 기록했습니다. 실제 callback 안의 원 event·wake와 전체 반환 필드를 확인한 뒤 의도적 실패로 기존 legacy_drafts·Tab metadata와 Input/Message/event/outbox·Session counter·Unit 의도가 함께 rollback됐습니다. 실제 held Session 1·Unit 2가 없는 호출과 다른 membership은 거절됐고 SQL 첫 await 뒤 변경한 caller의 payload·authority·첨부에 원 입력이 영향을 받지 않았습니다. Nested BEGIN/COMMIT·자체 receipt가 없음을 확인했습니다.
+
+Heavy 1 슬롯은 반환했습니다. 기존 Input 11건·P103 suite·Expo UI·서버 build/install/runtime sync·PNG를 반복하지 않았습니다. PR24는 root가 최종 `50eca890`를 merge한 상태이며 원 source와 증거를 보존합니다. 이 PR의 최초 결과 PNG와 상위 adapter 합류·root 최종 base/리뷰/수용은 아직 남았습니다. 실제 provider·인증·공개 RPC·P117/P118 전체 gate 완료로 표시하지 않습니다.
 
 [Root 위임 전문](contract.md)에 따라 새 outer draft/metadata rollback 경계의 focused PG 검증은 root의 실행 자리 인계 뒤에만 수행합니다. 공용 schema·identity·package·Catalog·provider 파일과 실제 runtime을 변경하지 않았습니다. Root만 최종 base·리뷰·수용·merge를 결정합니다.
