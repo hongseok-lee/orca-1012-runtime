@@ -57,9 +57,4 @@ Actual controller consumption of preserved removal options is not integrated.
 Subscriptions are internal PG readers with local commit hints, not public streams
 or tested HA reconnect.
 
-New request/PG boundary test source is written but unexecuted. No typecheck,
-installation, build, PostgreSQL execution, remote reconnect, source sync/watch,
-cloud/Pod operation or rendered screenshot has occurred. Root recovery notice is
-required before first new remote verification/capture. This source handoff does
-not complete P1-16 or qualify native iPhone, provider readiness, physical stop,
-storage fencing, provisioning or HA.
+최초 실행 결과와 실패 이력은 [검증 결과](verification-report.md)에 기록했습니다. Node 사례 11개는 서로 다른 입력에서 통과했지만, PG 하위 사례 8개는 등록 오류 때문에 미실행입니다. 전용 타입 검증은 현재 오류 1개가 남았고 configured lint는 교정 소스에서 통과했습니다. 이후 synthetic profile fixture 변경은 아직 실행하지 않았습니다. 실제 화면 캡처와 Expo/native iPhone 결과는 없습니다. 이 결과는 P1-16 완료나 provider·물리 종료·storage fencing·provisioning·HA 합격이 아닙니다.
