@@ -1,7 +1,9 @@
 import type {
-  ControllerTerm, ExecutionEpoch, IntentRevision, LogicalId, OperationId,
-  RowRevision, RuntimeUnitId, StepRevision,
+  ControllerTerm, LogicalId, OperationId,
+  RuntimeUnitId,
 } from '../../../../shared/durable-runtime/identity.ts';
+import type { JsonValue } from '../../db/atomic.ts';
+import type { RuntimeCommandRow } from '../../db/rows.ts';
 import type { CommandEnvelope, ExternalCommandIdentity, RuntimeCommandName, SettledCommandReceipt } from '../command-types.ts';
 import type { EvidenceRef, PayloadHash, PodUid, RuntimeReference } from '../runtime-evidence.ts';
 
@@ -19,10 +21,8 @@ export interface VerifiedControllerIdentity {
 export type CommandId = LogicalId<'runtime-command'>;
 export type ExecutionToken = LogicalId<'runtime-command-execution'>;
 export type ExecutorId = RuntimeReference<'gateway-executor'>;
-export type JsonValue = null | boolean | number | string | readonly JsonValue[] | {
-  readonly [key: string]: JsonValue;
-};
-export type CommandState = 'ACCEPTED' | 'EXECUTING' | 'UNKNOWN' | 'RESOLVED' | 'REFUSED';
+export type { JsonValue } from '../../db/atomic.ts';
+export type CommandState = RuntimeCommandRow['state'];
 
 export interface GatewayContext {
   readonly runtimeUnitId: RuntimeUnitId;
@@ -31,24 +31,17 @@ export interface GatewayContext {
 }
 // Read projection of the owner-provided SQL contract. Stored references are not
 // authenticated workload identity or provider/compute/storage proof objects.
-export interface CommandRow {
+export type CommandRow = Readonly<RuntimeCommandRow> & {
   readonly id: CommandId;
   readonly operation_id: OperationId;
   readonly runtime_unit_id: RuntimeUnitId;
   readonly command_name: RuntimeCommandName;
-  readonly original_controller_term: ControllerTerm;
-  readonly step_revision: StepRevision;
   readonly pod_target: CommandEnvelope['podTarget'];
   readonly expected_pod_uid: PodUid | null;
-  readonly execution_epoch: ExecutionEpoch;
-  readonly intent_revision: IntentRevision;
   readonly input_hash: PayloadHash;
   readonly input: JsonValue;
-  readonly state: CommandState;
-  readonly owner_controller_term: ControllerTerm;
   readonly executor_id: ExecutorId | null;
   readonly execution_token: ExecutionToken | null;
-  readonly revision: RowRevision<'runtime-command'>;
   readonly result: JsonValue | null;
   readonly refusal_code: string | null;
   readonly evidence_refs: readonly EvidenceRef[];

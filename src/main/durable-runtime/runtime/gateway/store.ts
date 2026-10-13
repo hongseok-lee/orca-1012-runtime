@@ -70,7 +70,7 @@ export async function lookupCommand(
 }
 
 async function assertPredecessor(
-  authority: LockedGatewayAuthority, receipt: SettledCommandReceipt<JsonValue>, target: CommandEnvelope,
+  authority: LockedGatewayAuthority, receipt: SettledCommandReceipt<JsonValue>,
 ): Promise<void> {
   const { identity } = receipt;
   const result = await authority.tx.query<CommandRow>(
@@ -81,8 +81,10 @@ async function assertPredecessor(
   const row = result.rows[0];
   if (!row) throw new DurableDatabaseError('COMMAND_PREDECESSOR_INVALID');
   assertOriginal(row, identity);
-  if (row.state !== receipt.state || row.pod_target !== target.podTarget || row.expected_pod_uid !== target.expectedPodUid ||
-    row.execution_epoch !== target.executionEpoch ||
+  // Validate the predecessor against its own exact original target, not the
+  // next target (e.g. old Pod fence -> create without a Pod). New execution
+  // authority/target are checked independently by assertExecutionTarget.
+  if (row.state !== receipt.state ||
     (receipt.state === 'RESOLVED' && canonicalInput(row.result) !== canonicalInput(receipt.result)) ||
     (receipt.state === 'REFUSED' && row.refusal_code !== receipt.reason)) {
     throw new DurableDatabaseError('COMMAND_PREDECESSOR_INVALID');
@@ -101,7 +103,7 @@ export async function submitCommand(authority: LockedGatewayAuthority, request: 
     return { disposition: 'REPLAYED', command: existing };
   }
   await authority.assertExecutionTarget(original.originalEnvelope, true);
-  if (request.predecessor.kind === 'RECONCILED') await assertPredecessor(authority, request.predecessor.receipt, original.originalEnvelope);
+  if (request.predecessor.kind === 'RECONCILED') await assertPredecessor(authority, request.predecessor.receipt);
   const unresolved = await authority.tx.query<CommandRow>(
     `SELECT * FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
      AND state IN ('ACCEPTED','EXECUTING','UNKNOWN')`, [authority.context.runtimeUnitId],
