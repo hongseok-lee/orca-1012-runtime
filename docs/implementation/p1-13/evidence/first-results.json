@@ -285,18 +285,28 @@
   "최초 결과 문서 캡처": {
     "targetPublicCommit": "2765e33083e58e6fe34ea40e4e62b0752c325050",
     "targetURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/2765e33083e58e6fe34ea40e4e62b0752c325050/docs/implementation/p1-13/evidence/first-verification.md",
-    "capturedAt": "2026-10-13T11:30:29.186Z",
+    "capturedAt": "2026-10-13T11:30:09.377Z",
     "viewport": {
       "width": 1140,
       "height": 1500
     },
     "pngDimensions": {
       "width": 1140,
-      "height": 2469
+      "height": 1500
     },
-    "pngSha256": "17c71c77da7528e034d0d8ac7ddd5d9ca2ae8ec46808f4f676bf304f0e1da889",
-    "captureCount": 1,
+    "pngSha256": "f3015696e04864f3fd92bd71b9359c31498eeacb786334d3e4a012c2fb0fdaf7",
+    "정식 증거 수": 1,
     "testsRunForCapture": 0,
-    "설명": "실제 공개 결과 문서를 별도 Context에서 최초로 캡처했습니다. 제품 UI나 native iPhone 화면이 아닙니다."
+    "설명": "Root가 최초 client PNG와 원 provenance 동일 묶음을 정식 증거로 확정했습니다."
+  },
+  "중복 촬영 처리": {
+    "촬영 횟수": 2,
+    "정식 증거 수": 1,
+    "정식 client SHA256": "f3015696e04864f3fd92bd71b9359c31498eeacb786334d3e4a012c2fb0fdaf7",
+    "정식 시각": "2026-10-13T11:30:09.377Z",
+    "추가 촬영 SHA256": "17c71c77da7528e034d0d8ac7ddd5d9ca2ae8ec46808f4f676bf304f0e1da889",
+    "추가 시각": "2026-10-13T11:30:29.186Z",
+    "추가 asset 게시 commit": "4cbc76cd412e5a6b82bfa6632fd0f0e098d70a1f",
+    "처리": "추가 촬영본은 private에 원본과 같은 provenance 묶음으로 보존합니다. 이미 push한 asset commit 이력은 유지하고 새 asset 교체 commit에서 최초 client PNG와 원 metadata를 정식으로 연결합니다. 추가 촬영은 새 검증이 아닙니다. 더 촬영하거나 제품 시험을 실행하지 않았습니다."
   }
 }
