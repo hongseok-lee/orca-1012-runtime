@@ -11,7 +11,7 @@ import type {
 } from '../shared/contracts.ts'
 import { invokeProviderEffect } from '../shared/effect-boundary.ts'
 import { immutableSnapshot, renderRecoverySubmission, ProviderInputError } from '../shared/recovery-renderer.ts'
-import { CodexProtocolSession, codexTurnStartParams, type CodexNativeReceipt, type CodexProtocolDependencies, type CodexProtocolEvent, type CodexWireInput } from './protocol.ts'
+import { CodexProtocolSession, CodexConnectionBusyError, codexTurnStartParams, type CodexNativeReceipt, type CodexProtocolDependencies, type CodexProtocolEvent, type CodexWireInput } from './protocol.ts'
 
 export type CodexColdLaunch = {
   readonly command: string
@@ -105,12 +105,21 @@ export class DurableCodexDriver {
       return this.#proofs.get(nativeRequestId) ?? Object.freeze({ state: 'UNKNOWN', identity: prior })
     }
     this.#submissions.set(nativeRequestId, identity)
-    const outcome = await invokeProviderEffect(permit, {
-      kind: 'DISPATCH', binding, commandClaim: frozen.commandClaim,
-      messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId,
-      sealedRevision: identity.sealedRevision, sealedPayloadHash: identity.sealedPayloadHash,
-      contextRevision: identity.contextRevision, contextHash: identity.contextHash
-    }, () => this.#protocol.dispatch(actual))
+    let outcome: Awaited<ReturnType<CodexProtocolSession['dispatch']>>
+    try {
+      outcome = await invokeProviderEffect(permit, {
+        kind: 'DISPATCH', binding, commandClaim: frozen.commandClaim,
+        messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId,
+        sealedRevision: identity.sealedRevision, sealedPayloadHash: identity.sealedPayloadHash,
+        contextRevision: identity.contextRevision, contextHash: identity.contextHash
+      }, () => this.#protocol.dispatch(actual))
+    } catch (error) {
+      // Busy is a known refusal before native I/O, not an UNKNOWN submission.
+      if (error instanceof CodexConnectionBusyError && this.#submissions.get(nativeRequestId) === identity) {
+        this.#submissions.delete(nativeRequestId)
+      }
+      throw error
+    }
     if (outcome.effect === 'ADMITTED') return this.#verifyAdmission(outcome.receipt, identity)
     this.sink(immutableSnapshot({ kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity,
       observedAt: new Date().toISOString(), reason: 'WRITE_OUTCOME_LOST' }))
@@ -128,7 +137,9 @@ export class DurableCodexDriver {
         fixed.target.providerRef.nativeTurnId !== receipt.turnId) {
       return Object.freeze({ state: 'UNCONFIRMED', requested: false })
     }
-    const result = await invokeProviderEffect(permit, { kind: 'CANCEL', binding, commandClaim: fixed.commandClaim,
+    const observed = this.#protocol.observedStop(receipt)
+    const result = observed.terminal || observed.descendantsStopped ? observed
+      : await invokeProviderEffect(permit, { kind: 'CANCEL', binding, commandClaim: fixed.commandClaim,
       messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId, nativeTurnId: receipt.turnId }, () => this.#protocol.interrupt(receipt))
     // Neither an ACK nor descendant termination alone confirms the native target ended.
     if (!result.terminal || result.terminal.terminalStatus !== 'interrupted' || !result.descendantsStopped) {

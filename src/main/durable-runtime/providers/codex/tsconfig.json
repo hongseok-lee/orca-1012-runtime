@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "files": ["./driver.ts", "./driver.test.mts", "./protocol.ts", "./protocol.test.mts"]
+  "files": ["./driver.ts", "./driver.test.mts", "./protocol.ts", "./protocol.test.mts", "./ownership-boundaries.test.mts"]
 }
