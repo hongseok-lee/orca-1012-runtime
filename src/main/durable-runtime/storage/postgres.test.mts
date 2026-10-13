@@ -44,7 +44,7 @@ class FixtureAuthority implements StorageEvidenceAuthority {
   stopFixture(ref: string, target: ExecutionTarget, numericId = target.numericInstanceId) {
     this.stops.set(ref, { proof: { ...target, kind: 'COMPUTE_STOPPED', observationSource: 'COMPUTE_CONTROL_PLANE',
       evidenceRef: ref, observedAt: new Date().toISOString() }, numericInstanceId: numericId,
-      disposition: 'DELETED_NO_REENTRY' } as VerifiedPermanentComputeStop);
+      disposition: 'DELETED_NO_REENTRY' } as unknown as VerifiedPermanentComputeStop);
   }
 }
 async function fixture(a: FixtureAuthority, domain = randomUUID(), directory = '/home') {
