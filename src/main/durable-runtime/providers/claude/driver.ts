@@ -40,7 +40,7 @@ export class ClaudeDurableProvider {
 
   async cold(request: ClaudeColdRequest, commandClaim: CommandClaim,
     permit: ProviderEffectPermit, readinessTimeoutMs = 10_000): Promise<ReadyProviderBinding> {
-    if (this.#starting || this.#connection || this.#faulted) throw new Error('CLAUDE_CONNECTION_ALREADY_ACQUIRED')
+    if (this.#starting || this.#connection || this.#faulted) { throw new Error('CLAUDE_CONNECTION_ALREADY_ACQUIRED') }
     request = immutableSnapshot(request)
     if (request.mode !== 'COLD' || !request.binding.connectionInstanceId || !request.binding.terminalHandle ||
         !request.persistentHome || !request.checkout || request.launch.env.HOME !== request.persistentHome ||
@@ -64,7 +64,7 @@ export class ClaudeDurableProvider {
         void failed.catch(() => {})
         const expiresAt = performance.now() + readinessTimeoutMs
         const fail = (reason: string): void => {
-          if (!this.#ready) abandoned = true
+          if (!this.#ready) { abandoned = true }
           this.#faulted = true
           const error = new Error(reason)
           rejectInit(error)
@@ -75,7 +75,7 @@ export class ClaudeDurableProvider {
         try {
           const opening = Promise.resolve().then(() => this.openTransport(request, {
             onMessage: (message) => {
-              if (abandoned) return
+              if (abandoned) { return }
               const init = readClaudeInit(message)
               if (init) {
                 if ((request.native.kind === 'RESUME' &&
@@ -98,8 +98,8 @@ export class ClaudeDurableProvider {
             return connection
           })
           const [connection, ready] = await Promise.race([Promise.all([opening, initialized]), failed])
-          if (performance.now() >= expiresAt) fail('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED')
-          if (abandoned || this.#faulted || connection.closed) throw new Error('CLAUDE_CONNECTION_UNAVAILABLE')
+          if (performance.now() >= expiresAt) { fail('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED') }
+          if (abandoned || this.#faulted || connection.closed) { throw new Error('CLAUDE_CONNECTION_UNAVAILABLE') }
           this.#ready = ready
           return ready
         } catch (error) {
@@ -126,11 +126,11 @@ export class ClaudeDurableProvider {
       throw error
     }
     const binding = this.#available()
-    if (request.context.sessionId !== binding.sessionId) throw new Error('CLAUDE_CONTEXT_SESSION_MISMATCH')
+    if (request.context.sessionId !== binding.sessionId) { throw new Error('CLAUDE_CONTEXT_SESSION_MISMATCH') }
     if ([...this.#pending.values()].some((item) => item.identity.deliveryAttemptId === request.deliveryAttemptId)) {
       throw new Error('CLAUDE_DELIVERY_ALREADY_SUBMITTED')
     }
-    if (this.#active && !this.#active.ended || this.#interrupting) throw new Error('CLAUDE_TURN_UNSETTLED')
+    if (this.#active && !this.#active.ended || this.#interrupting) { throw new Error('CLAUDE_TURN_UNSETTLED') }
     const nativeRequestId = randomUUID()
     // Reserve before attachment I/O; overlapping prepares cannot change the interrupt target.
     const reserved: Pending = { identity: undefined!, wire: {}, written: false, ended: false }
@@ -158,12 +158,12 @@ export class ClaudeDurableProvider {
           this.#emitUnknown(reserved, 'WRITE_OUTCOME_LOST')
           return { state: 'UNKNOWN', identity }
         }
-        if (reserved.admission && reserved.contextDelivery) return { state: 'ADMITTED', identity,
-          admission: reserved.admission, contextDelivery: reserved.contextDelivery }
+        if (reserved.admission && reserved.contextDelivery) { return { state: 'ADMITTED', identity,
+          admission: reserved.admission, contextDelivery: reserved.contextDelivery } }
         return { state: this.#faulted ? 'UNKNOWN' : 'PENDING', identity }
       })
     } catch (error) {
-      if (!reserved.written && this.#active === reserved) this.#active = undefined
+      if (!reserved.written && this.#active === reserved) { this.#active = undefined }
       throw error
     }
   }
@@ -173,8 +173,8 @@ export class ClaudeDurableProvider {
     target = immutableSnapshot(target)
     const pending = this.#pending.get(target.identity.nativeRequestId)
     if (!pending || !pending.nativeRef || digest(target.identity) !== digest(pending.identity) ||
-        digest(target.providerRef) !== digest(pending.nativeRef)) return { state: 'UNCONFIRMED', requested: false }
-    if (pending.stopped) return { state: 'OBSERVED', requested: false, stopped: pending.stopped }
+        digest(target.providerRef) !== digest(pending.nativeRef)) { return { state: 'UNCONFIRMED', requested: false } }
+    if (pending.stopped) { return { state: 'OBSERVED', requested: false, stopped: pending.stopped } }
     if (this.#faulted || this.#active !== pending || pending.ended || this.#interrupting) {
       return { state: 'UNCONFIRMED', requested: false }
     }
@@ -183,7 +183,7 @@ export class ClaudeDurableProvider {
       return await invokeProviderEffect(permit, { kind: 'CANCEL', binding: pending.identity.binding,
         commandClaim, messageId: pending.identity.messageId, deliveryAttemptId: pending.identity.deliveryAttemptId,
         nativeTurnId: pending.nativeRef.nativeTurnId }, async () => {
-        if (this.#active !== pending || pending.ended) return { state: 'UNCONFIRMED', requested: false }
+        if (this.#active !== pending || pending.ended) { return { state: 'UNCONFIRMED', requested: false } }
         const connection = this.#availableConnection(pending.identity.binding)
         try { await connection.interrupt({ cancelQueued: false }) } catch { /* ACK loss is not terminal proof. */ }
         return pending.stopped ? { state: 'OBSERVED', requested: true, stopped: pending.stopped }
@@ -199,17 +199,17 @@ export class ClaudeDurableProvider {
     return this.#ready
   }
   #availableConnection(binding: ReadyProviderBinding): ClaudeProtocolConnection {
-    if (digest(this.#available()) !== digest(binding) || !this.#connection) throw new Error('CLAUDE_BINDING_CHANGED')
+    if (digest(this.#available()) !== digest(binding) || !this.#connection) { throw new Error('CLAUDE_BINDING_CHANGED') }
     return this.#connection
   }
 
   #observe(message: Record<string, unknown>, binding: ReadyProviderBinding): void {
-    if (readClaudeFrameString(message, 'session_id') !== binding.providerRef.nativeSessionRef) return
+    if (readClaudeFrameString(message, 'session_id') !== binding.providerRef.nativeSessionRef) { return }
     const uuid = readClaudeFrameString(message, 'uuid')
     const requestId = readClaudeFrameString(message, 'user_message_uuid') ?? uuid
-    if (!uuid || !requestId) return
+    if (!uuid || !requestId) { return }
     const pending = this.#pending.get(requestId)
-    if (!pending || digest(pending.identity.binding) !== digest(binding) || !pending.written) return
+    if (!pending || digest(pending.identity.binding) !== digest(binding) || !pending.written) { return }
     const body = message.message
     const isUser = message.type === 'user' && message.parent_tool_use_id === null && body &&
       typeof body === 'object' && 'role' in body && body.role === 'user'
@@ -217,7 +217,7 @@ export class ClaudeDurableProvider {
     if (isUser && !pending.admission) {
       const sent = pending.wire.message
       if (!('content' in body) || !sent || typeof sent !== 'object' || !('content' in sent) ||
-          digest(body.content) !== digest(sent.content)) return
+          digest(body.content) !== digest(sent.content)) { return }
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Exact native user receipt on the original connection/session/request UUID supplies the turn identity.
       const providerRef = immutableSnapshot({ ...binding.providerRef, nativeTurnId: uuid }) as ProviderRef
       const tuple = pending.identity
@@ -237,10 +237,10 @@ export class ClaudeDurableProvider {
         observedAt, providerRef, nativeEventId: uuid, admission, contextDelivery }))
     }
     if (message.type !== 'result' || !pending.nativeRef || pending.ended ||
-        readClaudeFrameString(message, 'user_message_uuid') !== pending.identity.nativeRequestId) return
+        readClaudeFrameString(message, 'user_message_uuid') !== pending.identity.nativeRequestId) { return }
     const turn = readClaudeFrameString(message, 'turn_uuid')
-    if (turn && turn !== pending.nativeRef.nativeTurnId) return
-    if (!CLAUDE_STREAM_JSON_FRAME_KINDS.some((kind) => kind === `message:result:${message.subtype}`)) return
+    if (turn && turn !== pending.nativeRef.nativeTurnId) { return }
+    if (!CLAUDE_STREAM_JSON_FRAME_KINDS.some((kind) => kind === `message:result:${message.subtype}`)) { return }
     pending.ended = true
     if (message.terminal_reason === 'aborted_streaming' || message.terminal_reason === 'aborted_tools') {
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Exact original request/session/connection and admitted native target correlate this aborted terminal; no process/tree stop claim.
@@ -258,11 +258,11 @@ export class ClaudeDurableProvider {
     }
   }
   #emitUnknown(pending: Pending, reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST'): void {
-    if (pending.ended) return
+    if (pending.ended) { return }
     this.sink(immutableSnapshot({ source: 'PROVIDER_PROTOCOL', kind: 'UNKNOWN',
       identity: pending.identity, observedAt: new Date().toISOString(), providerRef: pending.nativeRef, reason }))
   }
   #connectionLost(): void {
-    for (const pending of this.#pending.values()) this.#emitUnknown(pending, 'CONNECTION_LOST')
+    for (const pending of this.#pending.values()) { this.#emitUnknown(pending, 'CONNECTION_LOST') }
   }
 }

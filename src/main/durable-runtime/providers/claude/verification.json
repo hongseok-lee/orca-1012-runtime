@@ -1,5 +1,5 @@
 {
-  "설명": "PASS와 기존 hash는 검증 revision의 실제 과거 결과이며 이번 cold 교정의 성공 결과가 아니다.",
+  "설명": "기존 16 개 PASS는 과거 증거이고 coldReviewCorrection은 새 recovery 환경의 최초 3 개 실제 실행 결과입니다.",
   "verifiedProviderRevision": "0e78360c58128e194d745ffa6ccf069703aef1f7",
   "nodeVersion": "24.15.0",
   "typescriptVersion": "7.0.2",
@@ -7,18 +7,28 @@
   "initialFixturePasses": 15,
   "changedBoundaryPasses": 2,
   "distinctFixtureCases": 16,
-  "distinct관계": "최초 15개에 신규 lineage 1개를 합한 16개이다. 후속 실행 2개 중 응답 유실 1개는 기존 case의 재검증이다.",
+  "distinct관계": "최초 15 개에 신규 lineage 1 개를 합한 16 개이다. 후속 실행 2 개 중 응답 유실 1 개는 기존 case의 재검증이다.",
   "coldReviewCorrection": {
     "reviewComment": "6143099993",
     "writtenFocusedCases": 3,
-    "executedFocusedCases": 0,
-    "fixtureStatus": "WRITTEN_NOT_RUN",
-    "typecheckStatus": "NOT_RUN",
-    "remoteConnectionAttempts": 0,
-    "captureStatus": "NOT_RUN",
-    "한계": "현재 source는 교정했으나 원격 복구 전에는 실행하지 않는다. Timeout 또는 late open은 provider stopped proof가 아니다.",
-    "driverSourceSha256": "8483309a10e7793745ff490fac29d03005ce389fc5e646fafcec52166529126f",
-    "focusedFixtureSourceSha256": "93c3915632f6bd05b740c47d68f6a05a660f8e2aee0cca0b78ff29f29b079a44"
+    "executedFocusedCases": 3,
+    "fixtureStatus": "PASS",
+    "typecheckStatus": "PASS",
+    "captureStatus": "CLIENT_CONTEXT_READY_HANDOFF_PENDING",
+    "한계": "새 recovery 환경의 합성 연결에서만 통과했으며 timeout 또는 late open은 provider stopped proof가 아닙니다.",
+    "driverSourceSha256": "c45a433fc4e1d7aa10030467df3c1ef6e2f33374e2688704354f330de861cdf6",
+    "focusedFixtureSourceSha256": "93c3915632f6bd05b740c47d68f6a05a660f8e2aee0cca0b78ff29f29b079a44",
+    "scopedLintStatus": "PASS_AFTER_CURLY_ONLY_CORRECTION",
+    "remoteExecutionStatus": "COMPLETED_ON_RECOVERED_ENVIRONMENT",
+    "initialLintExit": 1,
+    "initialCurlyErrors": 22,
+    "fixtureExecutedDriverSha256": "8483309a10e7793745ff490fac29d03005ce389fc5e646fafcec52166529126f",
+    "fixtureBundleSha256": "cd9b3f76095a32f779836921a7660b3539bdb1d26504e00e1c3e39ff85d92abf",
+    "identicalTransformedCode": true,
+    "transformedCodeSha256": "4afa691cad1c4701836083885bcb5e2851465a172a7f8c871343a79e9575b486",
+    "fixtureRepeated": false,
+    "verifiedMainRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "contextTypeRevision": "6a61748f2de23db95d176acf0ecc728851988b66"
   },
   "dedicatedTypecheck": "PASS",
   "commonDatabaseRevision": "ad11b7fbe4016fe1aef0f916f2af7735e04f8af9",
@@ -30,5 +40,6 @@
   "actualProviderCalls": 0,
   "actualReportCapture": false,
   "resumePodReadinessQuery": "KUBERNETES_API_CONNECTION_TIMEOUT",
-  "한계": "실제 executor permit, PG 기록, writer gate 및 G-05가 미연결 또는 미검증이며 실제 provider 합격을 주장하지 않는다."
+  "한계": "실제 executor permit, PG 기록, writer gate 및 G-05가 미연결 또는 미검증이며 실제 provider 합격을 주장하지 않는다.",
+  "totalRecordedDistinctFixtureCases": 19
 }
