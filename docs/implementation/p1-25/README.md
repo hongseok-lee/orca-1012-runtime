@@ -14,7 +14,7 @@ Stream은 `orca-1012-dev-v1:ops`, 초기 epoch는 0이며 BIGINT는 decimal stri
 
 ## 최초 검증과 교정 관계
 
-제품 source는 `f9133468c8ab07f4595b0502b9f4eb52efc715db`이며, 최초 검증은 main `8edb42e16caf0ddaa840dc16e4e886e6acaca328`에 소유 source만 합성했다. 검증용 합성은 PR rebase나 live runtime 활성화가 아니다. PR의 기존 base `7b7e32c281f674450a711fad17921d13fcb74cc1`는 root의 최종 지정까지 유지한다.
+제품 source는 `f9133468c8ab07f4595b0502b9f4eb52efc715db`이며, 최초 검증은 main `8edb42e16caf0ddaa840dc16e4e886e6acaca328`에 소유 source만 합성했다. 검증용 합성은 PR rebase나 live runtime 활성화가 아니다. PR의 초기 base는 `7b7e32c281f674450a711fad17921d13fcb74cc1`였다. Root의 PR23 merge 뒤 지시에 따라 최종 base를 `6848555a37620228ecef7e37bb66a69fb16ce4e3`로 한 번 정리했다. Rebase 직후 소유 source·fixture·문서·JSON·PNG 21개 파일의 Git blob은 `0e38b8a9`와 모두 같았다. 이 문장의 publication 사실만 추가했으며 source·fixture·PNG는 변경하지 않았다. 최초 PG 검증의 합성 main은 위에 기록한 `8edb42e1`로 그대로 보존한다. 검증·설치·캡처는 반복하지 않았다.
 
 이전 source의 `read.ts` 매개변수·지역 변수 중복과 미정의 request 오류는 root 지시대로 `f9133468`에서 매개변수 이름 1줄만 교정했다. 이후 최초 scoped typecheck는 통과했다. 첫 configured lint는 결과 JSON의 문자열 결합 1건을 거절했다. `0a5549fda113d5d77db0160d03b3abc222a2c106`에서 해당 표현을 교정하고 실제 DDL의 필수 `runtime_members.storage_binding_id`를 fixture에 보완했다. 이 fixture 보완은 PG 실행 전 정적 대조이며 실제 PG 실패로 꾸미지 않는다. 결과의 합성 main도 환경값으로 정확히 기록했다. 제품 파일은 변경하지 않았다.
 
