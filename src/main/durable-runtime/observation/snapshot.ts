@@ -75,6 +75,11 @@ export function snapshotObservationRecovery(source: ObservationRecoveryRequest):
       workload.executionEpoch !== target.executionEpoch) {
     throw new DurableDatabaseError('OBSERVATION_PREPARED_BINDING')
   }
+  const workloadValues = Object.freeze({ attemptId: workload.attemptId, podUid: workload.podUid,
+    executionEpoch: workload.executionEpoch, incarnation: workload.incarnation, producerId: workload.producerId,
+    principalRef: workload.principalRef, authenticationEvidenceRef: workload.authenticationEvidenceRef })
+  logicalId('producer', workloadValues.producerId)
+  text(workloadValues.incarnation); text(workloadValues.principalRef); text(workloadValues.authenticationEvidenceRef)
   logicalId('observation-episode', prepared.episodeId)
   counter('row:observation-episode', prepared.expectedEpisodeRevision)
   text(prepared.challengeId); text(prepared.requestSourceRef); text(prepared.responseSourceRef)
@@ -84,13 +89,17 @@ export function snapshotObservationRecovery(source: ObservationRecoveryRequest):
   if (!(prepared.observedAt instanceof Date) || !Number.isFinite(prepared.observedAt.getTime())) {
     throw new DurableDatabaseError('OBSERVATION_PREPARED_TIME')
   }
-  const value: RecoverySnapshot = Object.freeze({ target, episodeId: prepared.episodeId,
+  const value: RecoverySnapshot = Object.freeze({ target, workload: workloadValues, episodeId: prepared.episodeId,
     expectedEpisodeRevision: prepared.expectedEpisodeRevision, challengeId: prepared.challengeId,
     requestSourceRef: prepared.requestSourceRef, responseSourceRef: prepared.responseSourceRef,
     state: prepared.state, observedAtISO: prepared.observedAt.toISOString(), stream: stream(prepared.stream),
     watermark: prepared.watermark, body: immutableJson(prepared.body) })
   if (value.watermark !== null) { counter('sequence:observation', value.watermark) }
   if ((value.stream === null) !== (value.watermark === null)) {
+    throw new DurableDatabaseError('OBSERVATION_PREPARED_STREAM')
+  }
+  if (value.stream !== null && (value.stream.producerId !== workloadValues.producerId ||
+      value.stream.incarnation !== workloadValues.incarnation)) {
     throw new DurableDatabaseError('OBSERVATION_PREPARED_STREAM')
   }
   const payloadHash = inputDigest({ ...value })

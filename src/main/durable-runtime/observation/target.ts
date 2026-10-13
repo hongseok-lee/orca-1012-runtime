@@ -3,6 +3,7 @@ import { DurableDatabaseError } from '../db/connection.ts'
 import type { RuntimeUnitRow } from '../db/rows.ts'
 import { snapshotObservationTarget } from './snapshot.ts'
 import type { ObservationTarget } from './types.ts'
+import type { ProducerStream } from '../events/types.ts'
 
 /** A same-TX binding check. The caller already holds every Session and the Unit;
  * this function never acquires a lower-ranked row or manufactures an episode. */
@@ -20,4 +21,21 @@ export async function assertCurrentObservationTarget(
     [target.runtimeUnitId, target.attemptId, target.podUid, target.executionEpoch])
   if (rows.rowCount !== 1) { throw new DurableDatabaseError('OBSERVATION_TARGET_STALE') }
   return rows.rows[0]
+}
+
+/** Reuses the actual P112 producer pair and original binding. A watermark from
+ * another producer/incarnation cannot be attached to this current execution. */
+export async function assertObservationProducerBinding(
+  tx: DurableTransaction, caller: ObservationTarget, source: ProducerStream
+): Promise<void> {
+  const target = snapshotObservationTarget(caller)
+  const producerId = source.producerId, incarnation = source.incarnation
+  if (!tx.isLockHeld(2, target.runtimeUnitId)) {
+    throw new DurableDatabaseError('OBSERVATION_UNIT_LOCK_REQUIRED')
+  }
+  const rows = await tx.query(`SELECT producer_id FROM durable_runtime.runtime_event_producers
+    WHERE producer_id=$1 AND incarnation=$2 AND runtime_unit_id=$3 AND attempt_id=$4
+    AND pod_uid=$5 AND execution_epoch=$6`,
+    [producerId, incarnation, target.runtimeUnitId, target.attemptId, target.podUid, target.executionEpoch])
+  if (rows.rowCount !== 1) { throw new DurableDatabaseError('OBSERVATION_PRODUCER_BINDING') }
 }

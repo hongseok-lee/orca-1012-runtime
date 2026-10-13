@@ -66,6 +66,8 @@ export type ObservationRecoveryRequest = {
 }
 export type RecoverySnapshot = {
   readonly target: ObservationTarget
+  readonly workload: Readonly<Pick<VerifiedWorkloadIdentity,
+    'attemptId' | 'podUid' | 'executionEpoch' | 'incarnation' | 'producerId' | 'principalRef' | 'authenticationEvidenceRef'>>
   readonly episodeId: ObservationEpisodeId
   readonly expectedEpisodeRevision: RowRevision<'observation-episode'>
   readonly challengeId: string
