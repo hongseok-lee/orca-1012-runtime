@@ -1,0 +1,27 @@
+{
+  "kind": "Actual remote-browser infrastructure recovery documentation; not product/HA qualification",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/f6d08583ab1935ceef4fd3f89a1b14491272c404/deploy/dev/storage/RECOVERY.md",
+  "capturedTargetSourceSHA": "f6d08583ab1935ceef4fd3f89a1b14491272c404",
+  "capturedAtUTC": "2026-10-13T01:20:15.157Z",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "deviceScaleFactor": 1
+  },
+  "heading": "Actual observations",
+  "headingY": 531.8125,
+  "freshUnauthenticatedContext": true,
+  "artifact": "p1-01-recovery-documentation.png",
+  "remoteExecution": true,
+  "artifactSHA256": "1a4b179766417b7894dce8c1ab849f7930da09dd4d14a4f9e49edf11991def1b",
+  "visualReview": {
+    "actualPNGViewed": true,
+    "headingVisible": true,
+    "transactionSynchronizationVisible": true,
+    "backupRecoveryWriterLockResultsVisible": true,
+    "remainingGatesVisible": true,
+    "credentialFree": true,
+    "reviewedAtUTC": "2026-10-13T01:21:20.178893+00:00"
+  }
+}
