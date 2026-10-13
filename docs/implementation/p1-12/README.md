@@ -75,10 +75,10 @@ Pod UID, executionEpoch and incarnation from PG. Forged claim origin is rejected
 caller payload cannot replace the stored handler input. This is historical-source
 preservation, not acceptance of a current-state projection.
 
-Final source `5d0595e5` mechanically separates queue helpers and aligns repository
+The pre-registration-correction source `5d0595e5` mechanically separates queue helpers and aligns repository
 format/lint rules. The affected TypeScript check and lint pass (0 errors/warnings);
 behavioral evidence stays attached to its actual executed revisions. No successful
-PG case was repeated solely for publication. Source hashes identify the final code.
+PG case was repeated solely for publication. The current verification manifest records source hashes for `98d995ed`.
 
 The first actual PG fixture failed with 42P08 from reusing one parameter as UUID
 and text; its dependent failures were not passes. Separate parameters and fixture
@@ -117,3 +117,31 @@ integration remain unverified and subject to root review/acceptance/merge.
 target code `5d0595e5cd62fa7d755299b5e5408c4ee5c554d4`. The saved result,
 report HTML and recovered PNG SHA256 values are recorded together. This was the
 first successfully recovered PNG; no further capture or PG suite run was made.
+
+## Producer registration replay correction
+
+Root review [6137555040](https://github.com/hongseok-lee/orca-1012-runtime/pull/12#issuecomment-6137555040)
+identified that producer registration still checked current membership before an
+existing immutable producer. Source `98d995ed2b2a493de0cf73f970bbd991c93f9dc4`
+now looks up an existing producer first and compares its locked original
+agent/Unit/attempt/Pod/epoch binding against the authenticated input. Exact replay
+returns without new-registration admission. Current attempt and Agent-to-Unit
+membership validation remain required for new producers; conflicting originals
+are rejected. Original authentication evidence checks remain on every call.
+
+[Focused evidence](actual-pg-registration-correction.json), recorded at
+2026-10-13 03:32:25.271 UTC, is one PASS with exit 0. The existing membership-change
+case was extended to assert identical producer re-registration succeeds after
+membership removal, changed binding rejects with EVENT_PRODUCER_CONFLICT and a
+new producer rejects with EVENT_BINDING. Related TypeScript/lint pass. This is an
+expanded execution of the existing thirteenth case: **13 distinct cases, 14 saved
+passing executions**, not 14 distinct cases or a repeated whole suite.
+
+The PNG and HTML are retained unchanged from source `5d0595e5`; their captured
+result artifact is now preserved byte-for-byte as
+[verification-before-registration-correction.json](verification-before-registration-correction.json).
+The original capture hashes still match. That PNG does not depict the later
+producer correction; the new focused JSON and current verification manifest do.
+No new capture, shared runtime sync/restart, installation or shared fault occurred.
+Root requested rebase after the schema predecessor merge; PR16 remained OPEN at
+this correction, so the current base is preserved pending that predecessor.

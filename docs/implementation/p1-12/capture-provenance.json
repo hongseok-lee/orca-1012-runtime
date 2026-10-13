@@ -14,5 +14,7 @@
   "scope": "Single final saved actual-PG fixture report; not product UI",
   "distinctPassingCases": 13,
   "fullSuiteRepeated": false,
-  "actualWorkerOrActiveKill": false
+  "actualWorkerOrActiveKill": false,
+  "savedResultArtifact": "verification-before-registration-correction.json",
+  "relationship": "Captured before producer-registration correction; target code and result/HTML/PNG hashes unchanged. New registration evidence is actual-pg-registration-correction.json."
 }
