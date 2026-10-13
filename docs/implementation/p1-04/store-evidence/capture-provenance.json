@@ -1,0 +1,23 @@
+{
+  "capturedAt": "2026-10-13T02:32:12.459Z",
+  "kind": "browser-rendered saved actual module verification report; not product/native/RPC UI",
+  "actualUrl": "about:blank (setContent from saved safe verification JSON)",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "browserImage": "mcr.microsoft.com/playwright@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645",
+  "viewport": {
+    "width": 1120,
+    "height": 1160
+  },
+  "deviceScaleFactor": 1,
+  "headings": [
+    "7 distinct PostgreSQL cases passed",
+    "4 Linux materializer cases passed",
+    "Observed failure and verification boundary"
+  ],
+  "inputSha256": "31a8b987aa48f6e95e66accacc63490c2bc20524f0d5b79d3736fdd7cf5f021a",
+  "pngSha256": "d903dcb2432d5859fda2ff62858b19fc336f15300b2d96ee8a2a3404b9e48efe",
+  "implementationRevision": "1d3680316ff22729f24ef75b0fb6197045af8ecf",
+  "publicTargetRevision": "bdae20cfc187b04a270b5624e6aa670e69fb4046",
+  "boundary": "saved actual PG/materializer result report, not a newly repeated test"
+}
