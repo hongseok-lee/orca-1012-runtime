@@ -23,6 +23,12 @@ export function projectCommittedInputIdentity(page: CommittedJournalPage): Reado
     const eventBody = jsonObject(event.body)
     const input = typeof eventBody.inputId === 'string' ? byInput.get(eventBody.inputId) : undefined
     if (!input || input.sessionId !== page.scope.sessionId) { throw new JournalReadError('JOURNAL_INPUT_MISMATCH') }
+    if (input.submission && (input.submission.principal !== input.principal ||
+      input.submission.clientMessageId !== input.operationKey ||
+      input.submission.journalEpoch !== page.head.epoch ||
+      input.submission.journalSequence !== String(event.sequence))) {
+      throw new JournalReadError('JOURNAL_SUBMISSION_MISMATCH')
+    }
     const envelope = jsonObject(input.original)
     if (envelope.version !== 1) { throw new JournalReadError('JOURNAL_INPUT_BODY_UNREADABLE') }
     const payload = jsonObject(envelope.payload)
