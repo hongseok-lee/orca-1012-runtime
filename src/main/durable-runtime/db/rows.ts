@@ -146,3 +146,38 @@ export type RuntimeCommandHistoryRow = {
   occurred_at: Date;
   evidence_refs: readonly string[];
 };
+
+export type RuntimeEventProducerRow = {
+  producer_id: string;
+  incarnation: string;
+  agent_id: AgentId;
+  runtime_unit_id: RuntimeUnitId;
+  attempt_id: AttemptId;
+  pod_uid: string;
+  execution_epoch: ExecutionEpoch;
+  committed_through: Sequence<"producer-committed">;
+  processed_through: Sequence<"producer-processed">;
+  revision: RowRevision<"event-producer">;
+  created_at: Date;
+};
+export type RuntimeEventQueueRow = {
+  event_id: string;
+  producer_id: string;
+  incarnation: string;
+  producer_seq: Sequence<"producer">;
+  agent_id: AgentId;
+  payload: unknown;
+  committed_at: Date;
+  processed_at: Date | null;
+  state: "PENDING" | "PROCESSING" | "RETRY" | "DONE" | "FAILED";
+  attempt_count: string;
+  retry_count: string;
+  next_retry_at: Date | null;
+  last_error: string | null;
+  terminal_at: Date | null;
+  claim_owner: string | null;
+  claim_controller_term: ControllerTerm | null;
+  claim_token: string | null;
+  claim_expires_at: Date | null;
+  enqueue_transaction_id: string | null;
+};
