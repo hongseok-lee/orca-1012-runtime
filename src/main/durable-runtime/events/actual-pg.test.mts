@@ -268,3 +268,32 @@ check("guarded queue handler cannot commit its own partial projection", async ()
   assert.equal((await pool.query("SELECT count(*) AS n FROM public.p112_effects WHERE event_id=$1", [e.eventId])).rows[0].n, "0");
   assert.equal((await pool.query("SELECT last_error FROM durable_runtime.runtime_event_queue WHERE event_id=$1", [e.eventId])).rows[0].last_error, "MUTATION_SQL_BOUNDARY");
 });
+check("expired claim preserves attempt charge and rejects the old token", async () => {
+  const f = await fixture(); const e = event(f, 1); await enqueueRuntimeEvent(pool, f.producer, e);
+  const initial = await claimRuntimeEvent(pool, f.stream, f.authority, { claimDurationMs: 25 });
+  assert.equal(initial.status, "CLAIMED");
+  const old = (initial as Extract<typeof initial, { status: "CLAIMED" }>).claim;
+  await delay(60);
+  const current = await claim(f);
+  assert.equal(current.attemptCount, 2);
+  assert.notEqual(current.token, old.token);
+  assert.equal((await processRuntimeEvent(pool, old, async () => { assert.fail("expired token executed"); })).status, "STALE");
+  assert.equal((await processRuntimeEvent(pool, current, async () => {})).status, "DONE");
+  assert.equal((await pool.query("SELECT count(*) AS n FROM durable_runtime.runtime_event_attempt_history WHERE event_id=$1 AND stage='UNCONFIRMED'", [e.eventId])).rows[0].n, "1");
+});
+check("processing COMMIT reply loss stays UNCERTAIN and replays its committed receipt", async () => {
+  const f = await fixture(); const e = event(f, 1); await enqueueRuntimeEvent(pool, f.producer, e);
+  const c = await claim(f); let once = true;
+  const lostReply = withClientHook(async (sql, _client, query) => {
+    const result = await query();
+    if (sql === "COMMIT" && once) { once = false; throw new Error("verification reply loss"); }
+    return result;
+  });
+  const uncertain = await processRuntimeEvent(lostReply, c, async tx => {
+    await tx.query("INSERT INTO public.p112_effects VALUES($1,'uncertain-commit')", [e.eventId]);
+  });
+  assert.equal(uncertain.status, "UNCERTAIN");
+  assert.equal((await processRuntimeEvent(pool, c, async () => { assert.fail("committed work reexecuted"); })).status, "DONE");
+  assert.equal((await pool.query("SELECT count(*) AS n FROM public.p112_effects WHERE event_id=$1", [e.eventId])).rows[0].n, "1");
+  assert.equal((await pool.query("SELECT count(*) AS n FROM durable_runtime.session_events WHERE session_id=ANY($1::uuid[])", [f.sessions])).rows[0].n, "2");
+});
