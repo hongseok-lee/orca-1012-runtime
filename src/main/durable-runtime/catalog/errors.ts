@@ -1,6 +1,8 @@
-export class CatalogError extends Error {
-  constructor(readonly code: string) {
-    super(`Catalog operation failed (${code})`)
+import { DurableDatabaseError } from '../db/connection.ts'
+
+export class CatalogError extends DurableDatabaseError {
+  constructor(code: string) {
+    super(code)
     this.name = 'CatalogError'
   }
 }
