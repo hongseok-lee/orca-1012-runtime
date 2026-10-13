@@ -62,3 +62,5 @@ or tested HA reconnect.
 Root가 확정한 전역 outbox anchor의 [로컬 source 교정 인계](anchor-source-handoff.md)를 추가했습니다. Source 90eb71b6에서 dataset_id 참조를 제거했으며 안정성과 epoch 분리 fixture 2개는 작성만 했습니다. Scoped typecheck와 새 fixture 및 PG 사례 8개는 다음 heavy 자리 배분까지 미실행입니다. 위 원 검증 결과는 해당 source와 시각의 이력으로 보존합니다.
 
 Anchor source 90eb71b6의 [최초 실제 검증](anchor-verification-report.md)을 기록했습니다. Scoped typecheck와 새 fixture 2개 및 configured lint는 통과했고, 첫 PG 하위 사례 8개는 통과 4개와 실패 4개입니다. 원 로그를 보존하고 성공 사례를 재실행하지 않았으며 heavy 점유를 반환했습니다. 다음 교정·검증 및 최종 수락은 Root의 후속 지정에 따릅니다.
+
+Fixture 1a25f853의 [focused 교정 실제 결과](focused-verification-report.md)를 추가했습니다. 실패 사례 1·3·4·5만 4개 통과했고 기존 통과 2·6·7·8과 Node/anchor 전체는 실행하지 않았습니다. 서로 다른 PG 사례 8개가 누적으로 통과했으며 변경 fixture의 type/lint도 오류 0개입니다. 원 실패 이력과 미완 범위를 보존하고 heavy 점유를 반환했습니다. 실제 PNG와 최종 Root 리뷰는 대기 중입니다.
