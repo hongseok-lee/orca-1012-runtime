@@ -1,6 +1,6 @@
 # P1-04 attachment schema predecessor
 
-Separate branch `implementation/p1-04-attachment-schema` stacks on P1-02 draft PR8 head `b124d1f7dc493ac537c5de4f83ae5b5c8da386aa`. Root attachment contract is implemented in new migration **008-attachment-store.sql**. Applied migrations001–007 and common identity API bytes remain unchanged. No package changes.
+Separate branch `implementation/p1-04-attachment-schema` started on P1-02 PR8 head `b124d1f7dc493ac537c5de4f83ae5b5c8da386aa` and was rebased after root merged PR8 onto main `c19f6fbfc23d4109385f4de9b96f63083abe75d2`, preserving the verified product hashes. Root attachment contract is implemented in new migration **008-attachment-store.sql**. Applied migrations001–007 and common identity API bytes remain unchanged. No package changes.
 
 The fixed relations are `attachment_blobs`, `attachment_uploads`, `attachment_upload_chunks`, `attachment_aliases`. `input_attachments(blob_ref,content_hash)` references the alias/hash pair. `rows.ts` adds four projections; BIGINT remains decimal strings. Server-reserved upload UUID is a string projection; common identity.ts is unchanged.
 
@@ -11,3 +11,7 @@ Uploads preserve id/principal/target/expected/creation time; counters cannot reg
 Follow common Session→Runtime Unit→storage/operation ordering before upload locks; the store must compare authenticated owner before exposing/altering data. Database ownership relations do not authenticate the caller. The alias CHECK requires an absolute non-dot-segment path; root directory and reserved filename remain trusted server/materializer responsibilities and are not configured here.
 
 This predecessor contains no store/materializer algorithm, RPC/UI/provider wiring, P1-03 business receipt or uncertain COMMIT work. Root/client consume the actual SHA; no acceptance of the full P1-04 feature is implied.
+
+## Actual focused verification
+
+Five real-PG schema cases passed on the separately owned attachment validation DB: decoded blob hash/empty bytes/immutability; upload/chunk bounds/terminal/append-only constraints; alias owner/blob/deferred relation plus failed transaction rollback; exact accepted-input alias/hash FK; commit-versus-abort terminal serialization. Remote typecheck, repository-configured lint and format passed. Passed008 was then applied to the existing target schema. Both readbacks report eight migrations and48tables;001–007 checksums remain identical. See schema-verification.json and the two actual readbacks. These are DB schema checks, not the client store/materializer restart/access/provider acceptance tests. No P1-02 retest or new capture.
