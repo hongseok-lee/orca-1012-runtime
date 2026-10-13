@@ -12,6 +12,8 @@ import { inputPayloadHash, inputScopeKey } from './canonical.ts'
 import { lockAggregates } from '../db/locks.ts'
 import { withDurableTransaction } from '../db/connection.ts'
 import { stageInputInTransaction } from './stage.ts'
+import { claimInputEffectInTransaction } from './effect-claim.ts'
+import { commandObject } from './stage-binding.ts'
 import { observeInputDeliveryInTransaction } from './observe.ts'
 import type { InputDeliveryObservation, ProviderCompletedProof } from './observation-types.ts'
 import type { ProviderAdmissionProof, ProviderStoppedProof, EvidenceRef } from '../runtime/runtime-evidence.ts'
@@ -259,4 +261,48 @@ caseTest('Catalog outer receipt and Tab tombstone compose cancel core once; roll
     // Even an actually held Unit cannot replace the snapshot's original Session membership.
     return recordInputCancel(tx,request,otherUnit)
   }),{code:'CANCEL_MEMBERSHIP_CHANGED'})
+})
+
+caseTest('caller mutation during SQL scope pause cannot replace stage predecessor, claim target or context payload',async()=>{
+  const f=await executionFixture(pool),prior=await stage(pool,f)
+  await nextStep(pool,f)
+  const next=await stageRequest(pool,f)
+  const request={...next.request,predecessor:{kind:'RECONCILED' as const,
+    receipt:{state:'RESOLVED' as const,identity:original(prior.request),result:{receipt:'STAGED'}}}}
+  const scopeSql='SELECT id FROM durable_runtime.sessions WHERE id=$1'
+  const stageHeld=gate(),stageRelease=gate(),stageOwner=holdSessionPool(pool,stageHeld,stageRelease,scopeSql)
+  const staging=inExecution(stageOwner,f,tx=>stageInputInTransaction(tx,f.authority,f.context,request,f.executor))
+  await stageHeld.promise
+  Reflect.set(request.envelope,'expectedPodUid','synthetic-mutated-target')
+  commandObject(request.input).deliveryAttemptId=randomUUID()
+  commandObject(request.input).bodyRef='synthetic-mutated-body'
+  Reflect.set(request.predecessor.receipt.identity.originalEnvelope,'executionEpoch','99')
+  request.predecessor.receipt.result.receipt='MUTATED'
+  stageRelease.release()
+  assert.equal((await staging).disposition,'STAGED')
+  const fixedStage=await pool.query("SELECT input,expected_pod_uid FROM durable_runtime.runtime_commands WHERE operation_id=$1 AND step_revision=$2 AND command_name='stageInput'",[f.context.operationId,f.envelope.stepRevision])
+  assert.equal(fixedStage.rows[0].input.deliveryAttemptId,next.deliveryId);assert.equal(fixedStage.rows[0].expected_pod_uid,f.podUid)
+  assert.equal(fixedStage.rows[0].input.bodyRef,`synthetic-sealed-message:${f.messageId}`)
+  const r=dispatch(f,next.deliveryId);await submitDispatch(pool,f,r)
+  const identity=original(r),claimHeld=gate(),claimRelease=gate(),claimOwner=holdSessionPool(pool,claimHeld,claimRelease,scopeSql)
+  const claiming=inExecution(claimOwner,f,tx=>claimInputEffectInTransaction(tx,f.authority,f.context,identity,f.executor))
+  await claimHeld.promise
+  Reflect.set(identity.originalEnvelope,'expectedPodUid','synthetic-mutated-claim-target')
+  Reflect.set(identity,'inputHash','0'.repeat(64))
+  claimRelease.release()
+  assert.equal((await claiming).disposition,'CLAIMED')
+  const frame=JSON.parse(JSON.stringify(await getRecoveryContextFrame(pool,f.authority)))
+  const proof={kind:'PROVIDER_CONTEXT_DELIVERY',source:'PROVIDER_PROTOCOL',sessionId:f.authority.sessionId,
+    contextRevision:frame.revision,contextHash:frame.hash,providerBindingRevision:counter('row:provider-binding','0'),
+    runtimeUnitId:f.context.runtimeUnitId,attemptId:f.attemptId,podUid:f.podUid,executionEpoch:f.envelope.executionEpoch,
+    evidenceRef:`synthetic-context-pause-${randomUUID()}`,observedAt:new Date().toISOString(),
+    providerRef:{provider:'codex',nativeSessionRef:'synthetic-context-pause-session'}} as unknown as VerifiedContextDeliveryProof
+  const frameHeld=gate(),frameRelease=gate(),frameOwner=holdSessionPool(pool,frameHeld,frameRelease,scopeSql)
+  const recording=inExecution(frameOwner,f,tx=>recordContextDeliveryInTransaction(tx,f.authority,frame,proof))
+  await frameHeld.promise
+  frame.payload.records.push({kind:'synthetic-caller-mutation'})
+  frame.payload.facts.push({state:'synthetic-caller-mutation'})
+  frameRelease.release()
+  const saved=await recording;assert.equal(saved.currentSatisfied,true)
+  const stored=await pool.query('SELECT context_hash FROM durable_runtime.provider_context_deliveries WHERE id=$1',[saved.deliveryProofId]);assert.equal(stored.rows[0].context_hash,proof.contextHash)
 })

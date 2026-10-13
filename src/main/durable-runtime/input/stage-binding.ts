@@ -1,7 +1,8 @@
 import type { DurableTransaction } from '../db/connection.ts'
 import type { JsonValue } from '../db/atomic.ts'
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
-import { inputDigest } from '../runtime/gateway/input.ts'
+import { inputDigest, canonicalInput } from '../runtime/gateway/input.ts'
+import type { CommandEnvelope } from '../runtime/command-types.ts'
 import { assertOriginal, originalIdentity } from '../runtime/gateway/store.ts'
 import type { CommandRow } from '../runtime/gateway/types.ts'
 import type { InputAuthority } from './types.ts'
@@ -90,4 +91,29 @@ export async function readInputExecutionTarget(
 }
 export function sameStageInput(a: JsonValue, b: JsonValue): boolean {
   return inputDigest(a) === inputDigest(b)
+}
+
+/** Owned plain JSON, frozen recursively; no caller reference survives an await. */
+export function ownedInputJson(value: JsonValue): JsonValue {
+  const snapshot: JsonValue = JSON.parse(canonicalInput(value))
+  function freeze(item: JsonValue): void {
+    if (item !== null && typeof item === 'object') {
+      for (const child of Object.values(item)) freeze(child)
+      Object.freeze(item)
+    }
+  }
+  freeze(snapshot)
+  return snapshot
+}
+/** Value validation only, not controller/workload authentication or permission. */
+export function snapshotInputEnvelope(envelope: CommandEnvelope): CommandEnvelope {
+  const snapshot = Object.freeze({ ...envelope })
+  logicalId('operation', snapshot.operationId)
+  counter('controller-term', snapshot.controllerTerm)
+  counter('step-revision', snapshot.stepRevision)
+  counter('execution-epoch', snapshot.executionEpoch)
+  counter('intent-revision', snapshot.intentRevision)
+  if ((snapshot.podTarget === 'EXISTING_POD' && !!snapshot.expectedPodUid) ||
+      (snapshot.podTarget === 'CREATE_WITHOUT_POD' && snapshot.expectedPodUid === null)) return snapshot
+  throw new InputStoreError('INPUT_COMMAND_TARGET')
 }

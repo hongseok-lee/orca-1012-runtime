@@ -5,6 +5,7 @@ import { counter } from '../../../shared/durable-runtime/identity.ts'
 import { assertInputScope } from '../input/authority.ts'
 import { requireInputSessionLock } from '../input/composition.ts'
 import { inputPayloadHash } from '../input/canonical.ts'
+import { ownedInputJson } from '../input/stage-binding.ts'
 import { InputStoreError, type InputAuthority } from '../input/types.ts'
 import { readRecoveryContextFrame } from './frame.ts'
 import type { RecoveryContextFrame, VerifiedContextDeliveryProof } from './types.ts'
@@ -16,11 +17,10 @@ export async function recordContextDeliveryInTransaction(
   frame: RecoveryContextFrame,
   proof: VerifiedContextDeliveryProof
 ) {
-  frame = { ...frame }
+  frame = Object.freeze({ ...frame, payload: ownedInputJson(frame.payload) })
   scope = { ...scope, scope: { ...scope.scope } }
   proof = { ...proof, providerRef: { ...proof.providerRef } }
   requireInputSessionLock(tx, scope.sessionId)
-  await assertInputScope(tx, scope)
   if (
     proof.kind !== 'PROVIDER_CONTEXT_DELIVERY' ||
     !['PROVIDER_PROTOCOL', 'PROVIDER_NATIVE_RECORD'].includes(proof.source) ||
@@ -39,6 +39,7 @@ export async function recordContextDeliveryInTransaction(
   }
   counter('context-revision', proof.contextRevision)
   counter('row:provider-binding', proof.providerBindingRevision)
+  await assertInputScope(tx, scope)
   const session = await tx.query<{ context_revision: string; provider_binding_revision: string }>(
     'SELECT context_revision,provider_binding_revision FROM durable_runtime.sessions WHERE id=$1',
     [scope.sessionId]

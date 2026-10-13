@@ -105,14 +105,14 @@ export function gate() {
   return {promise,release}
 }
 /** Only test-owned checkout clients; hold real Session row after SQL lock acquisition. */
-export function holdSessionPool(pool:Pool,held:ReturnType<typeof gate>,release:ReturnType<typeof gate>) {
+export function holdSessionPool(pool:Pool,held:ReturnType<typeof gate>,release:ReturnType<typeof gate>, pauseSql='SELECT id FROM durable_runtime.sessions WHERE id=$1 FOR UPDATE') {
   return new Proxy(pool,{get(target,key){
     if(key==='connect')return async()=>{
       const client=await target.connect()
       return new Proxy(client,{get(c,k){
         if(k==='query')return async(sql:unknown,...args:unknown[])=>{
           const result=await Reflect.apply(c.query,c,[sql,...args])
-          if(String(sql)==='SELECT id FROM durable_runtime.sessions WHERE id=$1 FOR UPDATE') {held.release();await release.promise}
+          if(String(sql)===pauseSql) {held.release();await release.promise}
           return result
         }
         const value=Reflect.get(c,k);return typeof value==='function'?value.bind(c):value
