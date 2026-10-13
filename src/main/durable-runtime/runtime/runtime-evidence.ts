@@ -1,5 +1,5 @@
 import type {
-  AttemptId, Counter, DeliveryAttemptId, ExecutionEpoch, LogicalId, MessageId,
+  AttemptId, DeliveryAttemptId, ExecutionEpoch, LogicalId, MessageId,
   ProducerId, Sequence, SessionId, SnapshotId, StorageBindingId, StorageEpoch
 } from '../../../shared/durable-runtime/identity.ts'
 
@@ -18,7 +18,7 @@ export type EvidenceRef = RuntimeReference<'evidence-ref'>
 export type PayloadHash = RuntimeReference<'sha256'>
 export type BodyRef = RuntimeReference<'sealed-body-ref'>
 export type ProviderTurnId = RuntimeReference<'provider-turn-id'>
-export type Incarnation = Counter<'incarnation'>
+export type Incarnation = RuntimeReference<'workload-incarnation'>
 export type ProducerSequence = Sequence<'producer'>
 export type CheckpointId = LogicalId<'checkpoint'>
 
@@ -103,7 +103,9 @@ export interface ProviderRef {
 
 export interface ProviderAdmissionProof extends VerifiedEvidence {
   readonly kind: 'PROVIDER_ADMISSION'
-  readonly source: 'PROVIDER_PROTOCOL'
+  // Either source must correlate the exact message/delivery/execution/provider
+  // binding below. PTY writes and uncorrelated transcripts are not evidence.
+  readonly source: 'PROVIDER_PROTOCOL' | 'PROVIDER_NATIVE_RECORD'
   readonly attemptId: AttemptId
   readonly podUid: PodUid
   readonly executionEpoch: ExecutionEpoch
