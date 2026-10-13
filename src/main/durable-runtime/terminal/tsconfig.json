@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "files": ["./index.ts", "./draft-parser.ts"]
+  "files": ["./index.ts", "./draft-parser.ts", "./ingress-fragments.test.mts"]
 }

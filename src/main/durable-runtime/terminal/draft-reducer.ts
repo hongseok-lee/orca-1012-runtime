@@ -53,6 +53,10 @@ export function reduceTerminalDraft(
   if (!snapshot.isCurrent()) {
     return result('STALE_SCOPE')
   }
+  const partialPaste = Boolean(original && (original.pasteOpen || original.pendingDelimiter))
+  if (partialPaste && snapshot.action.inputKind === 'query-reply') {
+    return result('UNSUPPORTED', 'Protocol reply meaning is unresolved inside a partial paste')
+  }
   // Replies/raw traffic never applies or transfers a managed draft, including an old floor's draft.
   if (snapshot.action.inputKind === 'query-reply' || snapshot.scope.binding.mode === 'RAW_TERMINAL') {
     const classified = classifyTerminalIngressText(snapshot, snapshot.action.text)
@@ -70,6 +74,10 @@ export function reduceTerminalDraft(
   let text = snapshot.action.text
   let pendingUtf8: readonly number[] = []
   const draft = original ?? emptyTerminalDraft(snapshot.scope.binding, snapshot.scope.draftRevision)
+  if (partialPaste && (snapshot.action.interrupt || snapshot.scope.semanticAdapterRequired ||
+    snapshot.action.agentPrompt || snapshot.action.resolvedLaunchDraft)) {
+    return result('UNSUPPORTED', 'Gesture or semantic intent is unresolved inside a partial paste')
+  }
   if (snapshot.source === 'BINARY') {
     const stream = snapshot.scope.stream
     if (!stream || snapshot.inputBytes === null ||
@@ -89,7 +97,11 @@ export function reduceTerminalDraft(
   } else if (draft.pendingUtf8.length > 0) {
     return result('UNSUPPORTED', 'Unary input cannot complete an unfinished binary UTF-8 character')
   }
-  const classified = classifyTerminalIngressText(snapshot, text)
+  // An existing partial paste owns its continuation. Do not reinterpret a fragment as
+  // clear, protocol reply or Stop before the exact delimiter/control parser sees it.
+  const classified = partialPaste
+    ? { kind: snapshot.action.enter ? 'CHAT_SUBMIT' as const : 'CHAT_FRAGMENT' as const, text }
+    : classifyTerminalIngressText(snapshot, text)
   if (classified.kind === 'STALE_SCOPE' || classified.kind === 'PROTOCOL_REPLY' ||
     classified.kind === 'RAW_CURRENT') {
     return result(classified.kind)

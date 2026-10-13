@@ -39,7 +39,7 @@ Unary는 기존 `TerminalSend.parse`와 `enter/interrupt === true`를 사용한�
 
 ## 분류와 draft 결과
 
-확인된 clear는 공유 `buildAgentTuiClearInput`이 생성하는 정확 bytes이며 enter=false이다. 일반 control burst는 clear가 아니다. Clear는 해당 draft만 reset한다. Query-reply는 protocol reply로 반환하며 draft나 Message / 활동 / wake를 바꾸지 않는다. Slash 및 서버가 알려 준 paced key 입력, mixed controls, malformed / nested delimiter는 `UNSUPPORTED`이며 원 draft를 보존한다.
+확인된 clear는 공유 `buildAgentTuiClearInput`이 생성하는 정확 bytes이며 enter=false이다. 일반 control burst는 clear가 아니다. Clear는 해당 draft만 reset한다. Query-reply는 protocol reply로 반환하며 draft나 Message / 활동 / wake를 바꾸지 않는다. 기존 draft에 열린 paste나 미완료 delimiter가 있으면 clear / protocol reply / Stop으로 조기 분류하지 않는다. 그 상태의 정확한 clear burst나 protocol reply는 원 draft를 보존하는 `UNSUPPORTED`이며 delimiter 조각은 원 parser를 이어 간다. Slash 및 서버가 알려 준 paced key 입력, mixed controls, malformed / nested delimiter는 `UNSUPPORTED`이며 원 draft를 보존한다.
 
 Mac body와 bracketed paste는 ingress 순서의 chunk로 누적한다. Delimiter와 UTF-8 조각이 미완료이면 원 stream과 같은 draft에 보관한다. 열린 paste 내부의 CR / newline은 본문이며 별도 CR submit으로 해석하지 않는다. 완성된 body 뒤 단독 CR 또는 unary Enter는 `SUBMIT_CANDIDATE`다. 결과에는 원 chunk와 ordered attachment reference가 들어가며 submit 후보 생성만으로 draft를 지우지 않는다.
 
@@ -51,6 +51,6 @@ Binary utility는 실제 `decodeTerminalStreamFrame`과 기존 strict ACK schema
 
 ## 미연결 경계와 검증 상태
 
-Root의 후속 같은 transaction API `acceptInputInTransaction(tx, snapshotRequest, expectedUnitId)` actual pin을 기다린다. Input callback, held lock marker, 공용 receipt / rows 또는 DDL을 복제하지 않았다. PG floor / draft / 입력 / receipt 원자 저장 계약도 root 후속이며 현재 코드는 저장하거나 COMMIT하지 않는다. 결과에서 `{send:{accepted:true}}`, durable ACK, native turn 또는 준비된 앱 capability를 생성하지 않는다.
+Root가 전달한 같은 transaction API의 조기 선행은 PR36 소스 `4d1cabbc93ea33289a708196951b8d2a92a1bfdf`다. Signature는 `acceptInputInTransaction(tx: DurableTransaction, snapshotRequest: InputRequest, expectedUnitId: RuntimeUnitId | null)`이며 해당 선행의 type / lint / focused PG는 아직 미실행이다. 이번 부분 paste 교정에는 Input 모듈을 합류하지 않고 전달된 선행 사실로만 기록했다. Input callback, held lock marker, 공용 receipt / rows 또는 DDL을 복제하지 않았다. PG floor / draft / 입력 / receipt 원자 저장 계약도 root 후속이며 현재 코드는 저장하거나 COMMIT하지 않는다. 결과에서 `{send:{accepted:true}}`, durable ACK, native turn 또는 준비된 앱 capability를 생성하지 않는다.
 
-Pure fixture, scoped type / lint와 최초 실제 캡처는 아직 미실행이다. 실제 앱, PG, provider, PTY, Cloud 및 runtime activation 합격을 주장하지 않는다. 다음 검증은 bridge의 구체 슬롯 배분 뒤 지정된 신규 경계만 수행한다.
+지정된 최초 경계의 pure fixture는 `ingress-fragments.test.mts`에 준비했다. 부분 paste 중 clear / protocol reply / Stop 분류 금지와 ESC → `[200~` continuation을 포함한다. Fixture, scoped type / lint와 최초 실제 캡처는 아직 미실행이다. 실제 앱, PG, provider, PTY, Cloud 및 runtime activation 합격을 주장하지 않는다. 다음 검증은 bridge의 구체 슬롯 배분 뒤 지정된 신규 경계만 수행한다.
