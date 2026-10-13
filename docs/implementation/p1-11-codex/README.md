@@ -1,6 +1,6 @@
 # P1-11 Codex 소유 구현 결과
 
-Codex driver가 shared 계약을 소비하도록 연결했고 root 리뷰의 세 protocol 경계를 추가 교정했습니다. 추가 교정은 현재 미실행이며 아래 기존 통과 결과는 과거 revision의 증거입니다. 승인된 원격 결정적 protocol fixture의 결과이며 실제 Codex inference·native resume 또는 P1-11/G-05 합격을 선언하지 않습니다. 구현 revision과 단계별 원본 결과 hash는 [results.json](results.json)에 있습니다.
+Codex driver가 shared 계약을 소비하도록 연결했고 root 리뷰의 세 protocol 경계를 추가 교정했습니다. 새 recovery 환경에서 추가 교정의 새 3개와 수정 1개를 첫 focused 실행했고 타입/lint도 통과했습니다. 아래 기존 전체 통과 결과는 과거 revision의 증거입니다. 승인된 원격 결정적 protocol fixture의 결과이며 실제 Codex inference·native resume 또는 P1-11/G-05 합격을 선언하지 않습니다. 구현 revision과 단계별 원본 결과 hash는 [results.json](results.json)에 있습니다.
 
 ## 실제 변경
 
@@ -22,7 +22,13 @@ Codex driver가 shared 계약을 소비하도록 연결했고 root 리뷰의 세
 
 확인한 descendants 종료 성공은 원 receipt·baseline·connection object에 묶어 보존합니다. 늦게 도착한 원 interrupted terminal과 이후 조회에서 결합하며 같은 permit을 다시 소비하거나 interrupt/process termination을 재실행하지 않습니다. 이미 확인한 옛 결과를 그 원 identity로 조회할 수 있지만 새 turn 또는 다른 connection의 proof로 전용하지 않습니다. ACK나 transport 종료를 terminal proof로 승격하지 않습니다.
 
-`ownership-boundaries.test.mts`의 새 fixture 3개는 지연 open, running/UNKNOWN turn 중복, descendants 종료 뒤 늦은 terminal과 새 turn·다른 connection의 negative scope를 다룹니다. 기존 `old target baseline never terminates descendants belonging to a later turn` case 1개는 첫 turn completed notification 뒤 새 turn을 시작하도록 교정했습니다. 네 case 모두 미실행이며 기존 전체 22개를 반복하지 않았습니다. root의 별도 실행 지시 전에는 type/lint/fixture·원격 접속·캡처를 수행하지 않습니다.
+`ownership-boundaries.test.mts`의 새 fixture 3개는 지연 open, running/UNKNOWN turn 중복, descendants 종료 뒤 늦은 terminal과 새 turn·다른 connection의 negative scope를 다룹니다. 기존 `old target baseline never terminates descendants belonging to a later turn` case 1개는 첫 turn completed notification 뒤 새 turn을 시작하도록 교정했습니다. root의 새 recovery 위임에 따라 새 3개와 수정 1개가 첫 focused 실행에서 PASS이며 skip은 0개입니다. 기존 전체 22개는 반복하지 않았습니다. 검증용 main은 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`이고 PR rebase와 구분합니다.
+
+## 새 recovery의 첫 focused 결과
+
+[새 focused 결과 JSON](recovery-focused-results.json)은 원본 TAP의 새 3 PASS와 수정 1 PASS, 실패 0개·skip 0개 및 최초 실행 시각을 기록합니다. 최초 시험은 `bba7df814e7b51f050df8b7673c7b5d2bf5e393b`, 소유 head는 `5215c27dc40121c9d2be01c7641605aaf2df7ef7`입니다. 최종 스타일 교정은 `ea060b01eb7b070fdc960472e5fa29c9f40c5cf0`이며 제품 의미를 바꾸지 않은 단일문 if 중괄호와 기존 fixture wire guard만 반영했습니다. 이 스타일 교정 뒤 타입/lint를 확인하고 이미 PASS한 4개를 재실행하지 않았습니다.
+
+최초 실패·교정 단계의 원 로그 hash와 소유 source hash를 함께 보존했습니다. 실제 writable NFS source와 별도 실행 디렉터리를 사용했고 shared tools/PG/main cache는 읽기 참조만 했습니다. package·lock·cache 대상은 수정하지 않았고 설치나 전체 build를 하지 않았습니다. heavy 점유는 검증 종료 직후 반환했습니다.
 
 ## 정확한 선행과 파일 소유권
 
@@ -32,11 +38,13 @@ context `6a61748f2de23db95d176acf0ecc728851988b66`, input `5ae4f671d0227abbc144f
 
 ## 원격 관측과 재현 경계
 
-기존 Node 24.15.0, TypeScript 7.0.2, esbuild 0.25.12 및 pg cache를 사용했습니다. 새 설치나 이미지/전체 build를 수행하지 않았습니다. 리뷰 교정 전 driver/protocol 전용 `tsc -p`는 통과했습니다. 이번 교정 revision의 타입 검사·lint·fixture 실행은 하지 않았습니다. 전용 `.mts`만 `bundle:true`, `platform:node`, `target:node24`, `format:esm`, `packages:external`로 변환해 Node `--test`로 실행했습니다. ESM 실행 디렉터리는 기존 cache에 대한 소유 symlink를 사용하며 cache 대상은 변경하지 않았습니다.
+기존 Node 24.15.0, TypeScript 7.0.2, esbuild 0.25.12 및 pg cache를 사용했습니다. 새 설치나 이미지/전체 build를 수행하지 않았습니다. 리뷰 교정 전 driver/protocol 전용 `tsc -p`는 통과했습니다. 새 recovery의 scoped 타입 검사와 configured lint도 통과했습니다. 첫 lint의 curly 58건과 기존 fixture unsafe optional chaining 1건을 보존하고 중괄호와 wire 존재 guard만 교정했습니다. 전용 `.mts`만 `bundle:true`, `platform:node`, `target:node24`, `format:esm`, `packages:external`로 변환해 Node `--test`로 실행했습니다. ESM 실행 디렉터리는 기존 cache에 대한 소유 symlink를 사용하며 cache 대상은 변경하지 않았습니다.
 
 기존 protocol 9개는 최초 revision의 결과를 재사용했습니다. shared 연결 driver 11개와 native wrapper 1개가 추가로 통과했습니다. 실제 wire params hash 교정은 새 fixture 1개만 확인했습니다. 최종 revision에서 전체 22개를 재실행했다고 주장하지 않습니다. 첫 타입 오류와 ESM pg 해석 실패, 이후 교정 및 각 원본 결과 hash를 results.json에 구분했습니다. 최초 native wrapper 성공은 tool 출력으로 관찰했고 별도 원본 TAP를 보존하지 못했습니다.
 
-최초 결과 캡처는 현재 미확인입니다. 기존 캡처 작업이 시작된 뒤 제어 turn이 usage limit으로 종료됐고, 이번 재개에서는 Kubernetes API 연결 시간 초과로 fresh Pod UID/readiness와 산출물의 완료 여부를 확인하지 못했습니다. PNG나 provenance를 만들어 채우지 않았습니다. 캡처 source와 입력 결과 JSON은 보존했으며 같은 실패 요청과 이미 통과한 fixture를 반복하지 않았습니다. PR은 draft로 유지합니다.
+[최초 focused 보고 캡처](evidence/results.png)는 새 recovery의 client browser에서 별도 비인증 Context를 열어 저장된 실제 focused 결과 JSON을 렌더링한 한 번의 PNG입니다. 실제 URL은 `about:blank (setContent)`이고 heading은 `P1-11 Codex ownership 교정의 첫 focused 검증 결과`입니다. 2026-10-13 11:39:21.615 UTC에 Chromium 147.0.7727.15 / Playwright 1.59.1, 1120 × 1420 viewport로 캡처했습니다. [provenance](evidence/provenance.json)에 입력·PNG hash와 원 시험·스타일 revision을 기록했습니다. 제품 UI, 실제 provider inference 또는 native iPhone 증거로 표시하지 않습니다.
+
+이전 환경에서 시작한 캡처 작업의 완료는 계속 미확인이며 그 원 실패 이력을 지우지 않았습니다. 이전 PNG를 반복한 것이 아니라 준비된 새 환경에서 처음 확인한 결과 보고서 PNG입니다. Root는 원본 TAP, 실제 source와 PNG를 각각 검토하고 최종 수용·base·merge를 결정합니다.
 
 ## 미연결 조건
 
