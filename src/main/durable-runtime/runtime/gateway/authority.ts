@@ -33,8 +33,12 @@ export class LockedGatewayAuthority {
     if (operation.rowCount !== 1 || operation.rows[0].controller_scope !== context.controller.scope) {
       throw new DurableDatabaseError('COMMAND_OPERATION_SCOPE');
     }
-    tx.advanceLock(5, context.controller.scope);
-    await tx.query('SELECT scope FROM durable_runtime.controller_leases WHERE scope=$1 FOR UPDATE', [context.controller.scope]);
+    if (!tx.isLockHeld(5, context.controller.scope)) {
+      tx.advanceLock(5, context.controller.scope);
+      const lease = await tx.query('SELECT scope FROM durable_runtime.controller_leases WHERE scope=$1 FOR UPDATE', [context.controller.scope]);
+      if (lease.rowCount !== 1) throw new DurableDatabaseError('COMMAND_AUTHORITY_STALE');
+      tx.markLockAcquired(5, context.controller.scope);
+    }
     const locked = new LockedGatewayAuthority(tx, context);
     await locked.assertCurrent();
     return locked;
