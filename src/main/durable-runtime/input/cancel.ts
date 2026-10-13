@@ -89,10 +89,20 @@ export async function requestInputCancel(
               AND cr.body_ref->>'operationId'=ci.operation_id::text
               AND cr.body_ref->'fixedDelivery'->>'deliveryAttemptId'=$3
              WHERE ci.session_id=$1 AND ci.target_message_id=$2
-               AND ci.target_runtime_unit_id=$4 AND ci.target_attempt_id=$5
-               AND ci.target_execution_epoch=$6
+               AND ci.target_runtime_unit_id=$4::uuid AND ci.target_attempt_id=$5::uuid
+               AND ci.target_execution_epoch=$6::bigint
                AND ci.interrupt_status='CONFIRMED'
                AND nullif(ci.interrupt_evidence_ref,'') IS NOT NULL
+             UNION ALL
+             SELECT 1 FROM durable_runtime.session_context_records cr
+             WHERE cr.session_id=$1 AND cr.target_message_id=$2 AND cr.kind='INPUT_INTERRUPTED'
+               AND cr.body_ref->>'classification'='ORIGINAL_EXECUTION'
+               AND cr.body_ref->'observation'->>'state'='INTERRUPTED'
+               AND cr.body_ref->'observation'->>'deliveryAttemptId'=$3
+               AND cr.body_ref->'observation'->>'runtimeUnitId'=$4::uuid::text
+               AND cr.body_ref->'observation'->>'attemptId'=$5::uuid::text
+               AND cr.body_ref->'observation'->>'executionEpoch'=$6::bigint::text
+               AND nullif(cr.body_ref->'observation'->>'evidenceRef','') IS NOT NULL
              LIMIT 1`,
               [
                 request.authority.sessionId,
