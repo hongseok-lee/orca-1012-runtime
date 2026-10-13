@@ -15,5 +15,6 @@
   "nativeBridgeWholeGraphTypecheck": "NOT_RUN",
   "actualProviderCalls": 0,
   "actualReportCapture": false,
+  "resumePodReadinessQuery": "KUBERNETES_API_CONNECTION_TIMEOUT",
   "한계": "실제 executor permit, PG 기록, writer gate 및 G-05가 미연결 또는 미검증이며 실제 provider 합격을 주장하지 않는다."
 }

@@ -35,3 +35,5 @@ ORCA_P111_FIXTURE_ROOT="$ARTIFACT_ROOT/images" node --test "$ARTIFACT_ROOT/proto
 입력 owner의 최종 claim/permit 및 context 기록 API, P112 spool/PG append/중앙 ACK, physical writer gate, 실제 계정 cold/interrupt/inference·Spot 및 G-05는 아직 미연결 또는 미검증이다. 메모리 sink 반환을 PG commit으로 보고하지 않는다. 합성 fixture 통과는 P1-11 또는 G-05 전체 합격이 아니다.
 
 실제 최초 보고 캡처는 아직 없으며 PR은 draft로 제출한다. 이번 지정 원격 Node fixture 범위에서 제품 UI나 browser 작업을 추가로 실행하지 않았다. Root가 최종 base와 해당 합류·캡처 범위를 지정한 뒤 후속 납품 조건을 판단한다.
+
+재개 뒤 최초 캡처를 위해 필요한 fresh Pod UID/readiness를 조회했으나 Kubernetes API 연결 timeout으로 exit 1이었다. 따라서 현재 원격 readiness와 소유 PID를 확인하지 못했고, browser 실행 또는 성공 검증의 반복은 하지 않았다. 기존 PR head와 디스크 증거를 대조해 보존했으며 원격 접근 경로의 조정은 root가 판단한다.
