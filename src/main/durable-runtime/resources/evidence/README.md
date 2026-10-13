@@ -24,4 +24,14 @@ Root/bridge의 heavy 실행 자리 인계 뒤 승인된 backend에서만 최초 
 
 전용 TypeScript 입력은 `tsconfig.verification.json`입니다. 실행할 때 DB tools cache의 `@types/node` 경로를 `--typeRoots`로 지정합니다. `prepare-verification.mjs`는 기존 tools cache의 esbuild를 사용해 세 test entry만 Node 24용 `.mjs`로 변환합니다. 이후 `node --test --test-concurrency=1 verification/*.test.mjs`를 실행합니다. 최초 미실행 묶음에 spec/status 불일치, old lastState와 새 container 자원 혼합, 원 종료 배치 미확인 및 child process 누락의 신규 4경계를 포함했습니다. scoped lint도 같은 소유 디렉터리만 확인합니다. 이미 통과한 다른 모듈 suite는 반복하지 않습니다.
 
-현재 fixture/typecheck/lint와 실제 read-only 표본은 아직 미실행입니다. 원격 실행 점유를 인계받으면 실패 원문과 focused 교정을 구분해 기록합니다. 실제 결과 화면은 아직 없으며 최초 실제 검증 후 기존 Expo browser 경로로 한 번 캡처합니다. 실제 Agent OOM·격리·물리 fencing·자원 정책 활성화는 이 작업에서 실행하지 않습니다.
+## 실제 관측 결과
+
+검증 code revision은 `e1b578313e8ef3ed23141128c2ae8543fbfdf201`이고 공통 source는 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`입니다. 승인된 원격 Node 24 환경에서 최초 fixture 묶음 **27건 PASS, 0건 실패, 0건 skip**을 확인했습니다. 7개 분류, 기존 음성 경계 15건, snapshot→digest 1건 및 원 종료 provenance 교정 4건입니다. 시험 파일 병렬도는 1이고 runtime fixture 실행은 한 번입니다.
+
+최초 typecheck는 fixture의 readonly JSON narrowing 1건에서 실패했고 해당 표현을 교정한 뒤 scoped typecheck가 통과했습니다. 최초 configured lint의 102건은 interface/type, 중괄호, template 및 indexed-object 표기 규칙이었습니다. 소유 파일에 한정해 기계적 교정한 뒤 남은 sample helper 1건만 focused lint로 확인했습니다. 최종 적용된 scoped lint 범위는 모두 0건 오류·0건 경고입니다. 시험 조건이나 자원 분류 계약을 바꾸지 않았고 이미 통과한 fixture를 재실행하지 않았습니다.
+
+실제 dev Backend Pod **1개**의 allowlist projection을 collector가 처리하여 `OBSERVED`, 논리 binding `null`, 자동 증설 후보 `false`를 확인했습니다. dev role은 Agent 자원 정책 대상이 아닙니다. Unit/attempt를 가짜로 채우지 않았고 production incident를 저장하지 않았습니다. 실제 Backend cgroup 파일은 조회하지 않았습니다. Cgroup 미노출·권한 실패·reset 및 원 incarnation delta 경계는 합성 fixture 결과입니다.
+
+[선별 결과 JSON](verification-result.json)에 실제 개수와 실패→focused 교정 관계를 보존했습니다. 이 화면은 검증 결과 문서이며 제품 UI 또는 실제 OOM 화면이 아닙니다. 최초 문서 화면 PNG는 client owner에게 한 번 인계하고 아직 수령하지 않았습니다.
+
+실제 Agent OOM·격리·물리 fencing·새 RW 허가·자원 정책 활성화는 검증하지 않았습니다. 신뢰 transport 인증 및 원 종료 자원·배치 보존 연결과 incident PG/P112 합류도 미연결입니다.
