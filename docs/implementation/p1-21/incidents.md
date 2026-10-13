@@ -1,6 +1,6 @@
 # P1-21 incident store와 P112 handler의 조기 source
 
-기준 main은 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`이며 이 branch는 반복 rebase하지 않았다. 공통 evidence API는 root의 원 provenance·child alias 교정 pin `250bc7eafc93c92df1ed3771da7d63d9dc4922cf`, DB 015의 DDL·rows는 단일 DB owner의 `c34d64e39a2eb25ab66f75e3aadc1ab816e91ced`를 소비한다. 해당 소유자의 파일이나 타입을 복제·수정하지 않는다. 실제 검증 때 이 exact 선행을 합성하는 것과 PR base 변경을 구분한다.
+기준 main은 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`이며 이 branch는 반복 rebase하지 않았다. 공통 evidence API는 root의 원 provenance·child alias 교정 pin `f07c504260cf3bd91071c8409b8c3b00c1ee990b`, DB 015의 DDL·rows는 단일 DB owner의 `9eaae10abd99f518737b518f09b633b955eae731`를 소비한다. 해당 소유자의 파일이나 타입을 복제·수정하지 않는다. 실제 검증 때 이 exact 선행을 합성하는 것과 PR base 변경을 구분한다.
 
 `prepareIncidentInput()`은 첫 SQL 대기 전에 공통 normalizer로 원 tuple·Date·중첩 JSON을 검증하고 복사한다. Session 목록·runtime event ID·versioned collection policy·receipt key·기존 상위 verified source 참조 및 observation 결합 provenance도 고정한다. Observation ID는 DB 015의 TEXT 계약이며 가짜 UUID를 요구하지 않는다. Caller가 주장한 sourceAuthenticated만으로 alias를 허용하지 않는다. 이 모듈은 기존 `VerifiedEvidence` 입력을 요구하며 해당 brand를 새로 만드는 factory는 제공하지 않는다. 실제 인증·collector 연결은 아직 미완료다.
 
@@ -17,3 +17,14 @@ Stale attempt/epoch는 원 이력과 분류만 저장하며 Unit의 phase·activ
 Observation·incident·state·audit·outbox와 외부 wrapper의 receipt는 같은 transaction에 속한다. Recovery episode counter·operation·reservation·증량·교체·provider·RW grant를 만들거나 변경하지 않는다. 새로운 resource outbox kind와 후속 소비자의 합류는 아직 runtime에 연결하지 않았다. 이 API는 DATA_ONLY이며 물리 종료·fencing·provider stop 또는 새 RW 권한을 반환하지 않는다.
 
 현재는 로컬 source 작성과 조기 API 납품이다. P121 scoped typecheck·lint·실제 PG 검증·결과 PNG는 실행하지 않았으며 PASS를 주장하지 않는다. DB 015도 이 작업에서 적용하지 않았다. 검증 slot은 bridge 인계 전 점유하지 않는다. Root만 기획·수용·리뷰·merge를 담당한다. P125의 수락된 PG 12 PASS·type/lint·PNG 1장과 PR20 source는 반복 실행하거나 수정하지 않았다.
+
+
+## 최초 PG fixture의 작성 상태
+
+`actual-pg.test.mts`와 `test-support.mts`에 root가 지정한 incident 경계 7개를 작성했다. 동시 동일 종료의 단일 incident와 receipt replay, lastState 반복·eviction/OOM 원 종료 합류와 unresolved observation의 원문 보존·proof 결합, 다른 container/새 attempt·incarnation 분리, source·alias conflict 및 receipt 직전 전체 rollback, stale epoch의 Unit 불변, 원 deadline 유지와 만료 audit/outbox 1회, 실제 P112 original row의 같은 TX 성공·handler 실패 rollback을 포함한다. 첫 await 뒤 Date·target·정책·receipt key·verified source 참조 변이도 지정된 snapshot 경계 안에서 확인한다.
+
+기존 collector 27개·P112·P125·DB 성공 suite를 import하거나 실행하지 않는다. 실제 동일 TX 사례는 수락된 P112 claim/process API를 사용하는 새 incident 합성 fixture이며 기존 P112 suite의 반복이 아니다. Handler 실패 사례는 실제 기록 뒤 예외를 던지고 원 queue의 `last_error`까지 확인해 다른 선행 오류를 rollback 성공으로 바꾸어 표시하지 않는다. Shared PG/Pod/Node fault나 actual Agent OOM을 주입하지 않는다.
+
+Fixture 실행은 `orca_p121_*` 소유 DB와 exact 001–015 migration chain을 요구한다. 최초 source·main·evidence·DB pin과 실제 성공/실패를 실행 후에만 JSON으로 기록한다. 명목상 verified source는 fixture assertion일 뿐 실제 인증이나 물리 권한의 증거가 아니다. 현재 fixture 파일 작성은 완료했지만 type/lint/PG는 모두 미실행이며 검증 점유를 받지 않았다.
+
+정적 대조에서 handler의 PG `attempt_count` BIGINT 재조회와 P112 `EventRecord.attemptCount`의 Number 변환 사이 digest 차이 가능성을 root에 보고했다. Product core는 `dffb4aa4` 그대로 보존했고 해당 실제 P112 경계가 fixture에 포함돼 있다. 실제 실행 결과나 교정 PASS로 기록하지 않는다.
