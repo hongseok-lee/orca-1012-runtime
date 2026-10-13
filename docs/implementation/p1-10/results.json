@@ -1,0 +1,149 @@
+{
+  "scope": "P1-10 storage module; actual remote PostgreSQL with synthetic proof authority; local filesystem fixture, not actual NFS/Agent/Compute fencing",
+  "publicationBase": "4557607b53d37df97dfbb8fa85e5b2f30037d53f",
+  "testedCorrectedSource": "f7e781c3",
+  "rebasedEquivalentSource": "c3fc38bb8425d4a45a129aabd4059287292842dd",
+  "nodeVersion": "24.15.0",
+  "typescriptVersion": "7.0.2",
+  "esbuildVersion": "0.25.12",
+  "dedicatedTypecheck": "PASS, including Promise-returning accessor rejection contracts",
+  "cumulativeDistinctPassedCases": 19,
+  "singleFullFinalSuiteRun": false,
+  "runs": [
+    {
+      "kind": "initial canonicalizer and isolated PostgreSQL",
+      "completedAtUTC": "2026-10-13T02:47:46.834213+00:00",
+      "passedChildCases": 12,
+      "failedChildCases": 1,
+      "skippedChildCases": 0,
+      "privateLogSHA256": "88af5dfd1b4d6637fd37edd3869e9121a683b3cbcbc1391a94b5eec7c689f3f3"
+    },
+    {
+      "kind": "failed assertion correction and three new PG boundaries",
+      "completedAtUTC": "2026-10-13T02:50:28.910291+00:00",
+      "passedChildCases": 4,
+      "failedChildCases": 0,
+      "skippedChildCases": 7,
+      "privateLogSHA256": "71c7e75a65234e6049f416f5fbcf071b1ca28142b1a85eea08227c9e18177ede"
+    },
+    {
+      "kind": "synchronous evidence boundary and local metadata reader",
+      "completedAtUTC": "2026-10-13T02:56:54.977643+00:00",
+      "passedChildCases": 4,
+      "failedChildCases": 0,
+      "skippedChildCases": 10,
+      "privateLogSHA256": "4e85205d19f29541fd7d64bfc6575dfda2437070ae8720b2c934d96791c6dec8"
+    }
+  ],
+  "resolvedFailures": [
+    {
+      "class": "TS2352",
+      "scope": "test-only opaque proof cast; before DB creation",
+      "resolution": "fixture-only unknown cast"
+    },
+    {
+      "class": "ASSERTION_EXPECTATION",
+      "scope": "rollback fixture expected unsanitized Error rather than existing safe DB_FAILURE",
+      "resolution": "fixture uses safe domain error and verifies rollback"
+    }
+  ],
+  "dependencies": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "normalizedCodeHashes": [
+        "eb08b452709583f9cbb4d62d70f10678714f95f6c711afe08a2e97ff0631eb07",
+        "eb08b452709583f9cbb4d62d70f10678714f95f6c711afe08a2e97ff0631eb07"
+      ],
+      "equal": true,
+      "sourceHashes": {
+        "before": "749e9f8671ef906c706256546945a532c8704f8e04195cd5baccff105947c219",
+        "after": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866"
+      }
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "normalizedCodeHashes": [
+        "ddbf7a283d191369e1e98def2e867b9bee4b717cf6d70674e7b65784ee8dff74",
+        "ddbf7a283d191369e1e98def2e867b9bee4b717cf6d70674e7b65784ee8dff74"
+      ],
+      "equal": true,
+      "sourceHashes": {
+        "before": "40e564f6e70dd73979eb2e527194480bbf71780f0ea1e76c41d72ea7e4535a16",
+        "after": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4"
+      }
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "normalizedCodeHashes": [
+        "9744aaf63d7911b3862d897736f87d6afa5faf00b2bf87ed68b7023844475296",
+        "9744aaf63d7911b3862d897736f87d6afa5faf00b2bf87ed68b7023844475296"
+      ],
+      "equal": true,
+      "sourceHashes": {
+        "before": "bda7d974ab4878617cc55b364f9773aa80d655e845e91e1a3a229bf46e3c5d75",
+        "after": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb"
+      }
+    }
+  ],
+  "ownedSourceByteEquivalentAcrossRebase": true,
+  "sourceHashes": {
+    "src/main/durable-runtime/storage/canonical.test.mts": "ddc52f24460bf0f7c4b360b2626a7b107160597540e6ab459dcbf803bf4a968f",
+    "src/main/durable-runtime/storage/canonical.ts": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+    "src/main/durable-runtime/storage/evidence-type-contract.test.ts": "4ab9d2bcc6addfe222976459a5f570c08d73bf24e31926815f292101d5078b66",
+    "src/main/durable-runtime/storage/evidence.ts": "b412fba81f4dcc4d18ecf63a8da32a2ad7724793f7892f0ad0f1e97a811ade18",
+    "src/main/durable-runtime/storage/observe.test.mts": "971ea05f8b8664edc6297a12cb9fe70e19c4048f91d52ed4a0b1218e021171e2",
+    "src/main/durable-runtime/storage/observe.ts": "8820286d3a4191c9b45c5173c59162f85bcf79035b81ea6b39a1cce15e324c40",
+    "src/main/durable-runtime/storage/postgres.test.mts": "8799d38583b095b3587cc2dcc0edb67412d0184e9d7d0255f05261c2ccdce325",
+    "src/main/durable-runtime/storage/store.ts": "125a5d08c7ef0cd60ef87b83c461c535491480d60fdb4bc25c8c9af7d64ce82a",
+    "src/main/durable-runtime/storage/tsconfig.json": "563703de075750c6adfbf769225f23ea5328484db7403daca4355f4b9ffb7c85"
+  },
+  "migrations": [
+    {
+      "file": "001-catalog.sql",
+      "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "file": "002-execution-storage.sql",
+      "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "file": "003-operations-resources.sql",
+      "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "file": "004-input-context.sql",
+      "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "file": "005-events-replay.sql",
+      "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "file": "006-snapshot-seals.sql",
+      "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "file": "007-storage-epoch-cancel-guards.sql",
+      "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "file": "008-attachment-store.sql",
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "file": "009-atomic-journal-outbox.sql",
+      "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    }
+  ],
+  "notQualified": [
+    "authenticated production verifier and topology/lifetime pin",
+    "current controller lease authority integration",
+    "actual NFS alias inode observation",
+    "actual Agent RO write rejection",
+    "old Compute loss/return",
+    "physical fencing",
+    "live RW handoff",
+    "G-04/full P1-10",
+    "product ACK/HA"
+  ]
+}
