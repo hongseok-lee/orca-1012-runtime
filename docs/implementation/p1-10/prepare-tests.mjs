@@ -8,7 +8,7 @@ if (!sourceRoot || !cachePackageJson || !outputDirectory) throw new Error('sourc
 const require = createRequire(resolve(cachePackageJson));
 const { build } = require('esbuild');
 await mkdir(outputDirectory, { recursive: true });
-for (const name of ['canonical','postgres']) {
+for (const name of ['canonical','postgres','observe']) {
   await build({ entryPoints: [resolve(sourceRoot, `src/main/durable-runtime/storage/${name}.test.mts`)],
     outfile: resolve(outputDirectory, `${name}.test.mjs`), bundle: true,
     platform: 'node', target: 'node24', format: 'esm', packages: 'external' });
