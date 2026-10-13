@@ -1,14 +1,21 @@
 {
-  "sourceRevision": "ae861915091894e91b66dcb766956205f870c83b",
+  "sourceRevision": "24b0c4d0ad2a12c99aa2c6c52cc6656c74a218c0",
   "remoteCheckedApiRevision": "aaaca9226c5f677e60c9a995ad1c18e3fe872304",
   "gatewayRevision": "9052837192bba831a4f0b444e02e51da57c13709",
   "schemaRevision": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
   "currentSourceValidation": {
-    "typecheck": "NOT RUN for latest source/test changes",
-    "PG": "NOT RUN: remote access paused by root",
-    "capture": "NOT TAKEN: actual results required first",
-    "newBoundaryCasesWritten": 10,
-    "newBoundaryCasesExecuted": 0
+    "tests": 11,
+    "pass": 11,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "startedAt": "2026-10-13T12:17:22.776Z",
+    "finishedAt": "2026-10-13T12:17:25.266Z",
+    "fileConcurrency": 1,
+    "typecheckExitCode": 0,
+    "lintExitCode": 0,
+    "formatExitCode": 0,
+    "capture": "최초 보고 화면 준비 중"
   },
   "historicalValidation": {
     "apiRevision": "aaaca9226c5f677e60c9a995ad1c18e3fe872304",
@@ -19,7 +26,7 @@
       "tests": 1,
       "pass": 1,
       "fail": 0,
-      "schemaPrefix": "001\u2013012",
+      "schemaPrefix": "001–012",
       "initialFailure": {
         "code": "23503",
         "constraint": "attempts_runtime_unit_id_resource_profile_revision_fkey",
@@ -36,12 +43,9 @@
   "scope": "Internal SQL module; no provider/public RPC/login/native/HA/fencing or service activation",
   "proofBoundary": "Opaque method-specific proofs supplied by upper verified boundary; no boolean/ACK/string factory",
   "pending": [
-    "Fresh authorized remote Pod/process readback",
-    "Latest dedicated typecheck/lint/format",
-    "First new owned-DB001\u2013013 stage/context boundary execution",
-    "First actual result report capture",
-    "Root final base/review/acceptance/merge",
-    "Actual provider delivery/interrupt, public wire and native gates"
+    "최초 결과 보고 화면 캡처",
+    "Root 최종 base·리뷰·수락·merge",
+    "실제 provider·공개 wire·native·fencing gate"
   ],
   "catalogCore": {
     "signature": "recordInputCancel(tx: DurableTransaction, snapshotRequest: CancelInputRequest, expectedUnitId: RuntimeUnitId | null)",
@@ -51,11 +55,12 @@
     ],
     "nestedMutationOrCommit": false,
     "wrapperReceiptContract": "preserved",
-    "validation": "NOT RUN; joined first unexecuted cases",
+    "validation": "최초 PG 11개 중 Catalog 동일 transaction·원 membership·rollback 경계 통과",
     "extractionCommit": "b9b233092e70ef1d3b3147f21fb1dbeb7a80c639"
   },
   "localAdditionalCorrections": [
     "Preserve interrupt outbox hint kind after spread; new Catalog case checks it",
     "Snapshot scoped observer inputs before await"
-  ]
+  ],
+  "evidence": "evidence/first-verification-results.json"
 }
