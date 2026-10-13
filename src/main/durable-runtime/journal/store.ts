@@ -8,6 +8,7 @@ import type {
 import { logicalId, counter } from "../../../shared/durable-runtime/identity.ts";
 import { DurableDatabaseError, type DurableTransaction } from "../db/connection.ts";
 import type { JsonValue } from "../db/atomic.ts";
+import { lockAggregates } from "../db/locks.ts";
 
 export type JournalSource =
   | { kind: "NATIVE"; sourceKind: string; provider: string; lineage: string; nativeId: string }
@@ -63,10 +64,7 @@ export async function appendSessionEvent(
   input: { sessionId: SessionId; source: JournalSource; body: JsonValue },
 ): Promise<JournalEvent> {
   const key = sourceKey(input.sessionId, input.source);
-  const session = await tx.query("SELECT id FROM durable_runtime.sessions WHERE id=$1 FOR UPDATE", [
-    input.sessionId,
-  ]);
-  if (session.rowCount !== 1) throw new DurableDatabaseError("JOURNAL_SESSION_MISSING");
+  await lockAggregates(tx, { sessionIds: [input.sessionId] });
   const existing = await tx.query(
     "SELECT event_id,journal_epoch,seq,committed_at,body=$2::jsonb AS matches FROM durable_runtime.session_events WHERE source_key=$1",
     [key, JSON.stringify(input.body)],
