@@ -6,8 +6,10 @@ import type { CommittedAttachment } from './types.ts'
 import { attachmentFilename } from './store.ts'
 
 export class AttachmentMaterializationError extends Error {
-  constructor(readonly code: string) {
+  readonly code: string
+  constructor(code: string) {
     super(`Attachment materialization failed (${code})`)
+    this.code = code
     this.name = 'AttachmentMaterializationError'
   }
 }

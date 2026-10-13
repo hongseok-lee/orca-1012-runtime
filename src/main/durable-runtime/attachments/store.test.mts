@@ -10,7 +10,7 @@ import {
   abortAttachmentUpload, appendAttachmentChunk, commitAttachmentUpload,
   readAttachmentUpload, readCommittedAttachment, saveAttachmentImage, startAttachmentUpload
 } from './store.ts'
-import { attachmentUploadId, pairedDeviceAttachmentPrincipal, type AttachmentAlias } from './types.ts'
+import { attachmentUploadId, pairedDeviceAttachmentPrincipal } from './types.ts'
 
 const owner = pairedDeviceAttachmentPrincipal(randomUUID())
 const other = pairedDeviceAttachmentPrincipal(randomUUID())
@@ -145,7 +145,8 @@ test('commit and abort contend on the same row and keep terminal state consisten
   if (state.state === 'COMMITTED') {
     assert.ok(outcomes[0].status === 'fulfilled')
     assert.ok(outcomes[1].status === 'fulfilled' && outcomes[1].value.kind === 'committed')
-    await transaction((tx) => readCommittedAttachment(tx, owner, (outcomes[0].value as AttachmentAlias).aliasPath))
+    const alias = outcomes[0].value
+    await transaction((tx) => readCommittedAttachment(tx, owner, alias.aliasPath))
   } else {
     assert.equal(state.state, 'ABORTED')
     assert.ok(outcomes[0].status === 'rejected' && outcomes[0].reason.code === 'UPLOAD_TERMINAL')
