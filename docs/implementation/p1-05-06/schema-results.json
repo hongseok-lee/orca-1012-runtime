@@ -1,0 +1,16 @@
+{
+  "migration": {
+    "version": "012-input-merge-boundary.sql",
+    "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+    "applied_at": "2026-10-13T02:55:56.410Z"
+  },
+  "result": "PASS: one focused actualPG012 schema boundary test",
+  "checks": {
+    "typecheck": "PASS",
+    "configured_lint": "PASS",
+    "format": "PASS"
+  },
+  "scope": "sealed row backfill, kind default/immutable/non-General closed, irreversible merge boundary/revision guard and preserved sealed payload guard only; not actual intake/100 component merge/seal algorithms",
+  "private_log_sha256": "6227c24f4c5fffd073bc84732376fa396ff416f4e97d4591b78b7226e374f9bd",
+  "applied_scope": "only own orca_p105_schema validation DB; no production012 apply"
+}
