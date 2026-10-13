@@ -1,0 +1,46 @@
+{
+  "sourceRevision": "eedd2b1ce1ad5667a64ba1d7264b8bfe590a836e",
+  "remoteCheckedApiRevision": "aaaca9226c5f677e60c9a995ad1c18e3fe872304",
+  "gatewayRevision": "9052837192bba831a4f0b444e02e51da57c13709",
+  "schemaRevision": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "currentSourceValidation": {
+    "typecheck": "NOT RUN for latest source/test changes",
+    "PG": "NOT RUN: remote access paused by root",
+    "capture": "NOT TAKEN: actual results required first",
+    "newBoundaryCasesWritten": 9,
+    "newBoundaryCasesExecuted": 0
+  },
+  "historicalValidation": {
+    "apiRevision": "aaaca9226c5f677e60c9a995ad1c18e3fe872304",
+    "apiTypecheck": "PASS; TS18047 nullable rowCount corrected before success",
+    "apiLint": "PASS",
+    "interruptedFocused": {
+      "sourceRevision": "9756b3dbd78f75128b526a2bae7adcdd6671f0c4",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "schemaPrefix": "001\u2013012",
+      "initialFailure": {
+        "code": "23503",
+        "constraint": "attempts_runtime_unit_id_resource_profile_revision_fkey",
+        "cause": "fixture omitted resource_profiles row before attempts INSERT",
+        "correction": "test fixture only; no schema/product contract change"
+      },
+      "sourceSha256": {
+        "src/main/durable-runtime/input/cancel.ts": "859be5e556c3bf8d9526c9556b57a25b8491aee3634985431bedd5293b889272",
+        "src/main/durable-runtime/input/cancel-interrupted.test.mts": "06fa97ffcb4fae2cb5c28ff4bde60018b1d9dfdffdc1fc5e9090a294b30fd876"
+      },
+      "evidenceBoundary": "synthetic persisted observations; no actual provider proof"
+    }
+  },
+  "scope": "Internal SQL module; no provider/public RPC/login/native/HA/fencing or service activation",
+  "proofBoundary": "Opaque method-specific proofs supplied by upper verified boundary; no boolean/ACK/string factory",
+  "pending": [
+    "Fresh authorized remote Pod/process readback",
+    "Latest dedicated typecheck/lint/format",
+    "First new owned-DB001\u2013013 stage/context boundary execution",
+    "First actual result report capture",
+    "Root final base/review/acceptance/merge",
+    "Actual provider delivery/interrupt, public wire and native gates"
+  ]
+}
