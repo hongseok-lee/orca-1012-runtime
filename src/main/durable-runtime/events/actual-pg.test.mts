@@ -179,7 +179,7 @@ check("projection rollback and DONE atomically include journal/outbox/history/re
   assert.equal((await pool.query("SELECT count(*) AS n FROM durable_runtime.session_events WHERE session_id=ANY($1::uuid[])", [f.sessions])).rows[0].n, "2");
   assert.equal((await pool.query("SELECT count(*) AS n FROM durable_runtime.outbox_events WHERE aggregate_id=ANY($1::uuid[])", [f.sessions])).rows[0].n, "2");
 });
-check("third started attempt takeover; sixth crash finalizes without seventh handler", async () => {
+check("third STARTED lease replacement; sixth UNCONFIRMED finalizes without seventh handler", async () => {
   const f = await fixture(); const e = event(f, 1); await enqueueRuntimeEvent(pool, f.producer, e);
   const first = await claim(f);
   await takeover(f); await claim(f); await takeover(f); const third = await claim(f);
@@ -193,6 +193,25 @@ check("third started attempt takeover; sixth crash finalizes without seventh han
   const history = await pool.query("SELECT stage,count(*) AS n FROM durable_runtime.runtime_event_attempt_history WHERE event_id=$1 GROUP BY stage ORDER BY stage", [e.eventId]);
   assert.deepEqual(history.rows, [{ stage: "STARTED", n: "6" }, { stage: "UNCONFIRMED", n: "6" }]);
   await assertFailureArtifacts(f, e.eventId);
+});
+check("stored replay survives removed membership and handler receives original PG binding", async () => {
+  const f = await fixture(); const e = event(f, 1); await enqueueRuntimeEvent(pool, f.producer, e);
+  await pool.query("DELETE FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1", [f.producer.runtimeUnitId]);
+  assert.equal((await enqueueRuntimeEvent(pool, f.producer, e)).status, "REPLAYED");
+  await errorCode(() => enqueueRuntimeEvent(pool, f.producer, { ...e, payload: { conflict: true } }), "EVENT_IDENTITY_CONFLICT");
+  await errorCode(() => enqueueRuntimeEvent(pool, f.producer, event(f, 2)), "EVENT_TARGET_BINDING");
+  const c = await claim(f);
+  await pool.query("UPDATE durable_runtime.runtime_units SET execution_epoch=2 WHERE id=$1", [f.producer.runtimeUnitId]);
+  assert.equal((await processRuntimeEvent(pool, { ...c, executionEpoch: counter("execution-epoch", "2") }, async () => {
+    assert.fail("caller-supplied execution binding must not authorize processing");
+  })).status, "STALE");
+  assert.equal((await processRuntimeEvent(pool, { ...c, payload: { forged: true } }, async (_tx, original) => {
+    assert.equal(original.attemptId, f.producer.workload.attemptId);
+    assert.equal(original.podUid, f.producer.workload.podUid);
+    assert.equal(original.executionEpoch, "1");
+    assert.equal(original.incarnation, f.producer.workload.incarnation);
+    assert.deepEqual(original.payload, e.payload);
+  })).status, "DONE");
 });
 async function assertFailureArtifacts(f: Fixture, eventId: string): Promise<void> {
   const row = (await pool.query("SELECT state,attempt_count,retry_count,processed_at,terminal_at IS NOT NULL AS terminal,claim_token FROM durable_runtime.runtime_event_queue WHERE event_id=$1", [eventId])).rows[0];

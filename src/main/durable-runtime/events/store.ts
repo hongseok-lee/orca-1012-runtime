@@ -142,11 +142,6 @@ export async function enqueueRuntimeEvent(pool: Pool, input: EventProducer, even
     if (!w.principalRef || !w.authenticationEvidenceRef || p.agent_id !== input.agentId ||
       p.runtime_unit_id !== input.runtimeUnitId || p.attempt_id !== w.attemptId || p.pod_uid !== w.podUid || p.execution_epoch !== w.executionEpoch)
       reject("EVENT_BINDING");
-    const validTargets = await tx.query(
-      `SELECT s.id FROM ${d}sessions s JOIN ${d}runtime_members m ON m.session_id=s.id
-       WHERE s.id=ANY($1::uuid[]) AND s.agent_id=$2 AND m.runtime_unit_id=$3`, [ids, p.agent_id, p.runtime_unit_id],
-    );
-    if (validTargets.rowCount !== ids.length) reject("EVENT_TARGET_BINDING");
     const prior = await tx.query<QueueRow & { matches: boolean }>(
       `SELECT q.*,payload=$4::jsonb AS matches FROM ${d}runtime_event_queue q
        WHERE event_id=$1 OR (producer_id=$2 AND incarnation=$3 AND producer_seq=$5)`,
@@ -159,6 +154,13 @@ export async function enqueueRuntimeEvent(pool: Pool, input: EventProducer, even
         row.producer_seq !== event.sequence || row.agent_id !== p.agent_id || !row.matches ||
         !sameTargets(await targets(tx, row.event_id), ids)) reject("EVENT_IDENTITY_CONFLICT");
     } else {
+      // A stored original replay survives current membership changes. Only a
+      // new event must satisfy the current target-membership admission check.
+      const validTargets = await tx.query(
+        `SELECT s.id FROM ${d}sessions s JOIN ${d}runtime_members m ON m.session_id=s.id
+         WHERE s.id=ANY($1::uuid[]) AND s.agent_id=$2 AND m.runtime_unit_id=$3`, [ids, p.agent_id, p.runtime_unit_id],
+      );
+      if (validTargets.rowCount !== ids.length) reject("EVENT_TARGET_BINDING");
       await tx.query(
         `INSERT INTO ${d}runtime_event_queue(event_id,producer_id,incarnation,producer_seq,agent_id,payload,state)
          VALUES($1,$2,$3,$4,$5,$6,'PENDING')`,
@@ -217,6 +219,9 @@ function record(head: Head): EventRecord {
     incarnation: head.producer.incarnation as ProducerStream["incarnation"],
     sequence: counter("sequence:producer", q.producer_seq), agentId: logicalId("agent", q.agent_id),
     runtimeUnitId: logicalId("runtime-unit", head.producer.runtime_unit_id), payload: q.payload,
+    attemptId: logicalId("attempt", head.producer.attempt_id),
+    podUid: head.producer.pod_uid as EventRecord["podUid"],
+    executionEpoch: counter("execution-epoch", head.producer.execution_epoch),
     targetSessionIds: head.targets, attemptCount: Number(q.attempt_count),
   };
 }
@@ -344,6 +349,8 @@ async function claimedHead(tx: DurableTransaction, claim: EventClaim, options: P
   if (!q || q.event_id !== claim.eventId || q.state !== "PROCESSING" || q.claim_token !== claim.token ||
     q.claim_owner !== claim.authority.owner || q.claim_controller_term !== claim.authority.term || !q.claim_live ||
     head.producer.runtime_unit_id !== claim.runtimeUnitId || q.agent_id !== claim.agentId ||
+    head.producer.attempt_id !== claim.attemptId || head.producer.pod_uid !== claim.podUid ||
+    head.producer.execution_epoch !== claim.executionEpoch ||
     Number(q.attempt_count) !== claim.attemptCount || !sameTargets(head.targets, claim.targetSessionIds)) reject("EVENT_STALE_CLAIM");
   return head;
 }
