@@ -30,7 +30,7 @@ before(async () => {
 })
 after(async () => { await pool?.end() })
 
-const transaction = <T>(run: Parameters<typeof withDurableTransaction<T>>[1]): Promise<T> =>
+const transaction = <T,>(run: Parameters<typeof withDurableTransaction<T>>[1]): Promise<T> =>
   withDurableTransaction(pool, run)
 const fixture = () => ({ id: attachmentUploadId(randomUUID()), principal: owner,
   contentBase64: randomBytes(12).toString('base64'), aliasRoot })
