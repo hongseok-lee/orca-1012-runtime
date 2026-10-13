@@ -1,0 +1,19 @@
+{
+  "설명": "기존 원격 개발 Pod에서 결정적 합성 protocol fixture를 실행한 실제 결과이다.",
+  "nodeVersion": "24.15.0",
+  "typescriptVersion": "7.0.2",
+  "esbuildVersion": "0.25.12",
+  "initialFixturePasses": 15,
+  "changedBoundaryPasses": 2,
+  "distinctFixtureCases": 16,
+  "dedicatedTypecheck": "PASS",
+  "commonDatabaseRevision": "ad11b7fbe4016fe1aef0f916f2af7735e04f8af9",
+  "commonRowsSha256": "0c6e1018b680867e738d464d56fda1d472cc5474299b448d2934751e91e23120",
+  "finalProtocolBundleSha256": "8d328f6a14395afd5793f1118c585baea99f18fe38319a3df604d4b959049d06",
+  "finalDriverSha256": "cf792b181fd104750f0ebb84ee592f08ec4260bac954d4aa62db2216a073730e",
+  "nativeBridgeSyntax": "PASS",
+  "nativeBridgeWholeGraphTypecheck": "NOT_RUN",
+  "actualProviderCalls": 0,
+  "actualReportCapture": false,
+  "한계": "실제 executor permit, PG 기록, writer gate 및 G-05가 미연결 또는 미검증이며 실제 provider 합격을 주장하지 않는다."
+}
