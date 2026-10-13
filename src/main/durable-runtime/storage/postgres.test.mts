@@ -84,7 +84,7 @@ const grantState = async (grant: string) => (await sql('SELECT state,revision FR
 await test('P1-10 actual PostgreSQL with synthetic authority', async t => {
   try {
     await applyMigrations(pool, await readMigrations(process.env.P110_MIGRATIONS!));
-    const run = (name: string, body: () => Promise<void>) => t.test(name, { skip: !!process.env.P110_ONLY && process.env.P110_ONLY !== name }, body);
+    const run = (name: string, body: () => Promise<void>) => t.test(name, { skip: !!process.env.P110_ONLY && !JSON.parse(process.env.P110_ONLY).includes(name) }, body);
     await run('no authority evidence means no verified binding', async () => {
       const a = new FixtureAuthority(); const store = new StorageStore(a);
       // Invalid proof is rejected before SQL; no fabricated success or new grant.
@@ -120,8 +120,8 @@ await test('P1-10 actual PostgreSQL with synthetic authority', async t => {
       const before=(await sql('SELECT count(*)::text AS n FROM durable_runtime.session_events WHERE session_id=$1',[f.target.sessionId])).rows[0].n;
       await assert.rejects(withDurableTransaction(pool,async tx=>{
         await lockAggregates(tx,{sessionIds:[f.target.sessionId],runtimeUnitIds:[f.target.unitId],storageDomains:[{backendId:f.candidate.domain.backendId,exportId:f.candidate.domain.exportId}]});
-        await store.reserveWriter(tx,{...f.target,grantId:g}); throw new Error('fixture-rollback');
-      }), /fixture-rollback/);
+        await store.reserveWriter(tx,{...f.target,grantId:g}); throw new DurableDatabaseError('STORAGE_FIXTURE_ROLLBACK');
+      }), e => e instanceof DurableDatabaseError && e.code === 'STORAGE_FIXTURE_ROLLBACK');
       assert.equal((await sql('SELECT count(*)::text AS n FROM durable_runtime.storage_write_grants WHERE id=$1',[g])).rows[0].n,'0');
       assert.equal((await sql('SELECT count(*)::text AS n FROM durable_runtime.session_events WHERE session_id=$1',[f.target.sessionId])).rows[0].n,before);
       const result=await withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:g}));assert.equal(result.status,'APPLIED');
@@ -168,6 +168,41 @@ await test('P1-10 actual PostgreSQL with synthetic authority', async t => {
       const m=await withDurableTransaction(pool,tx=>store.observeMount(tx,{...f.target,expectedBindingRevision:bindingRevision(1),mountId:randomUUID(),mountEvidenceRef:'arbitrary',writer:{grantId:g,expectedRevision:'0'}}));
       assert.equal(m.status,'BLOCKED');assert.deepEqual(await grantState(g),{state:'RESERVED',revision:'0'});
       assert.equal((await sql('SELECT identity_proof_ref FROM durable_runtime.storage_bindings WHERE id=$1',[f.target.bindingId])).rows[0].identity_proof_ref,f.ref);
+    });
+
+    await run('same canonical alias binding rejects duplicate registration in PG',async()=>{
+      const a=new FixtureAuthority(),d=randomUUID(),f=await fixture(a,d,'/alias');
+      await rejectCode(fixture(a,d,'/alias'),'23505');
+      assert.equal((await sql('SELECT count(*)::text AS n FROM durable_runtime.storage_bindings WHERE backend_id=$1 AND export_id=$2 AND canonical_directory=$3',['fixture-pv',d,'/alias'])).rows[0].n,'1');
+    });
+    await run('confirmed synthetic revoke, epoch and next activation compose atomically; old result is stale',async()=>{
+      const a=new FixtureAuthority(),f=await fixture(a),store=new StorageStore(a),g=randomUUID(),nextGrant=randomUUID();
+      await withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:g}));
+      await withDurableTransaction(pool,tx=>store.beginRevocation(tx,{...f.target,expectedBindingRevision:bindingRevision(1),grantId:g,expectedGrantRevision:'0',expectedGrantState:'RESERVED'}));
+      a.stopFixture('fixture-atomic-stop',f.execution);
+      const nextExecution={...f.execution,attemptId:f.next,podUid:'fixture-next-pod',incarnation:'fixture-next-incarnation',executionEpoch:counter('execution-epoch','1'),numericInstanceId:'123457'} as ExecutionTarget;
+      a.targets.set(f.next,nextExecution);a.mountFixture('fixture-next-rw',nextExecution,f.candidate,'RW');
+      await withDurableTransaction(pool,async tx=>{
+        const stopped=await store.confirmRevocation(tx,{...f.target,expectedBindingRevision:bindingRevision(2),grantId:g,expectedGrantRevision:'1',permanentStopRef:'fixture-atomic-stop'});
+        assert.equal(stopped.status,'APPLIED');if(stopped.status!=='APPLIED')throw new Error('fixture-not-applied');
+        // Synthetic execution handoff in the isolated DB only; never a live grant.
+        await tx.query("UPDATE durable_runtime.execution_grants SET state='REVOKED',revoked_at=clock_timestamp(),stopped_proof_ref='fixture-atomic-stop' WHERE attempt_id=$1",[f.target.attemptId]);
+        await tx.query('UPDATE durable_runtime.runtime_units SET execution_epoch=1,active_attempt_id=$2,revision=revision+1 WHERE id=$1',[f.target.unitId,f.next]);
+        await tx.query("INSERT INTO durable_runtime.execution_grants(id,runtime_unit_id,attempt_id,execution_epoch,state) VALUES($1,$2,$3,1,'ACTIVE')",[randomUUID(),f.target.unitId,f.next]);
+        const next={...f.target,attemptId:f.next,podUid:'fixture-next-pod',executionEpoch:counter('execution-epoch','1'),storageEpoch:epoch(1),expectedUnitRevision:unitRevision(1),expectedBindingRevision:bindingRevision(3)};
+        assert.equal((await store.reserveWriter(tx,{...next,grantId:nextGrant})).status,'APPLIED');
+        assert.equal((await store.observeMount(tx,{...next,expectedBindingRevision:bindingRevision(4),mountId:randomUUID(),mountEvidenceRef:'fixture-next-rw',writer:{grantId:nextGrant,expectedRevision:'0'}})).status,'APPLIED');
+      });
+      assert.deepEqual(await grantState(nextGrant),{state:'ACTIVE',revision:'1'});
+      await rejectCode(withDurableTransaction(pool,tx=>store.confirmRevocation(tx,{...f.target,expectedUnitRevision:unitRevision(1),expectedBindingRevision:bindingRevision(2),grantId:g,expectedGrantRevision:'1',permanentStopRef:'fixture-atomic-stop'})),'STORAGE_BINDING_STALE');
+      assert.deepEqual(await grantState(nextGrant),{state:'ACTIVE',revision:'1'});
+    });
+
+    await run('closed Session cannot reserve a writer despite an existing execution grant',async()=>{
+      const a=new FixtureAuthority(),f=await fixture(a),store=new StorageStore(a);
+      await sql("UPDATE durable_runtime.sessions SET lifecycle='CLOSED' WHERE id=$1",[f.target.sessionId]);
+      await rejectCode(withDurableTransaction(pool,tx=>store.reserveWriter(tx,{...f.target,grantId:randomUUID()})),'STORAGE_SESSION_CLOSED');
+      assert.equal((await sql('SELECT count(*)::text AS n FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1',[f.target.bindingId])).rows[0].n,'0');
     });
   } finally { await pool.end(); }
 });
