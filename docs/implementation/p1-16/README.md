@@ -1,29 +1,57 @@
-# P1-16 Catalog implementation status
+# P1-16 Catalog source handoff
 
-This first commit provides the internal typed compatibility facade and immutable
-first-await request capture. It imports the existing shared wire schemas, preserves
-opaque launch tokens, strips pairing-local UI fields before retaining UI requests,
-and prepares P1-03 receipt identities using a resolver-supplied canonical scope.
-Legacy requests get a per-request key and do not gain network retry exactly-once
-semantics. The query snapshot identity includes epoch, revision and query projection;
-unsafe numeric revision overflow is rejected.
+The [full root assignment](task-spec.md) remains authoritative. This source is an
+internal SQL implementation and typed compatibility facade. No public method
+registry, live product selection, server or provider is activated.
 
-`CatalogCompatibilityFacade` is internal and is not registered in the public method
-registry. SQL entries must be provided explicitly. An unavailable entry throws
-`CATALOG_ENTRY_UNAVAILABLE`; it does not fabricate empty data, physical-stop results
-or a tombstone-only successful close. An authority shape check is not authentication;
-the upper authenticated boundary supplies `CatalogAuthority`.
+The implementation imports DB014 row types and P1-03 receipt/transaction/lock
+helpers. Reads use one read-only REPEATABLE READ snapshot. Workspace routing is
+canonical and retains aliases/tombstones for receipt-first replay. Membership
+discovery includes every Session and shared-Unit peer, followed by held-lock and
+membership rechecks. Metadata rank6 precedes final projection-head rank10.
 
-The complete [root-assigned specification](task-spec.md) governs the remaining SQL
-composition. Current dependency pins: database014 `9044549c071e0bb4d9c614d0f577ef39df417cb1`,
-P113 intent snapshot `a99500d7424ff58843743eda173d8cc7156a0eee` and same-transaction sleep
-`d668ca342709c6ee1874c4d5542b743ab3202be0`, P107 cancel
-`ae861915091894e91b66dcb766956205f870c83b`. These predecessors are not assumed verified
-or merged into the baseline main. Their common files remain owned by their authors.
+`reserveCatalogWorkspace` and `createCatalogTerminal` capture trusted prepared
+configuration before the first await, insert unpublished logical rows, acquire
+actual Session/Unit/storage locks and compose the owner `recordUnitIntent` in the
+same receipt transaction. A new Unit starts ABSENT. Storage verification/proof
+and all execution/write grants are left untouched. Initial terminals have pending
+logical handles and no native provider, PTY or incarnation identity. Reserved
+public ID/path and original create/launch requests are immutable. The incumbent
+name generator runs under a namespace lock; stale prepared names fail and roll
+back instead of silently changing a reserved identity.
 
-New request-boundary test code is written but has not run. No typecheck, application
-installation/build, PostgreSQL execution, remote reconnection, source sync/watch,
-cloud/Pod operation or rendered screenshot was performed. Remote verification and
-the first actual capture wait for the root's explicit environment recovery notice.
-This partial source commit does not complete P1-16, activate RPCs or establish provider,
-PTY, storage-fence or HA qualification.
+Metadata update, selection/focus, rename and host UI entries do no wake/activity
+mutation. UI retains shared state and excludes pairing-local/private-session
+credentials. Close composes exact owner same-TX cancel, then tombstones its Tab
+and blocks its Session's new input. Other Sessions in a shared Unit stay open.
+`ptyKilled:false` and `unverifiable` describe the absent physical-stop evidence.
+Sleep delegates all safety decisions to the owner and preserves DEFERRED reasons.
+Removal reserves cancellation/tombstones/DELETE intent and retains original
+options linked to operation IDs in outbox. Its facade returns `removed:false`
+with an explicit physical-cleanup warning; no filesystem operation is performed.
+
+Dependency references: DB014 `521a9ba96393a4d4383e5b6f42ceb234dff15d97`, cancel
+`a1f44e80d6a6d90655b765fbbeaad359841dcf18`, lifecycle
+`4c516670a0fb8fc7204150a12863e15d758886d7`, corrected sleep
+`4db2bff75e9c61bc606f44d07ba2c70d30c94a55`. DB014 DDL/rows are byte-identical to
+early `9044549c071e0bb4d9c614d0f577ef39df417cb1`. Cancel API bytes are unchanged
+from `ae861915091894e91b66dcb766956205f870c83b`. These are source comparisons,
+not SQL/type/PG passes. The branch remains based on the root's
+`8edb42e16caf0ddaa840dc16e4e886e6acaca328`; predecessor integration and final PR
+rebase remain root decisions. No other owner's files are copied or changed.
+
+Current source limitations: production launch/physical-proof issuers are absent;
+binding retirement validates a pinned current tuple but BOUND ingestion is not
+implemented; PS fails explicitly if trusted stored physical projection is absent;
+full group/layout projection is incomplete; shared-Unit Workspace removal refuses
+to delete another Workspace's Unit and awaits its scoped cleanup contract.
+Actual controller consumption of preserved removal options is not integrated.
+Subscriptions are internal PG readers with local commit hints, not public streams
+or tested HA reconnect.
+
+New request/PG boundary test source is written but unexecuted. No typecheck,
+installation, build, PostgreSQL execution, remote reconnect, source sync/watch,
+cloud/Pod operation or rendered screenshot has occurred. Root recovery notice is
+required before first new remote verification/capture. This source handoff does
+not complete P1-16 or qualify native iPhone, provider readiness, physical stop,
+storage fencing, provisioning or HA.

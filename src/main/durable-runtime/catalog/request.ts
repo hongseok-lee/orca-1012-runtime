@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { RuntimeCapability } from '../../../shared/protocol-version.ts'
-import { omitPairingLocalUiFields } from '../../../shared/pairing-local-ui-fields.ts'
+import { catalogSharedUi } from './ui.ts'
 import type { JsonValue, ReceiptIdentity } from '../db/atomic.ts'
 import { inputPayloadHash } from '../input/canonical.ts'
 import { captureCatalogAuthority, type CatalogAuthority } from './authority.ts'
@@ -53,9 +53,9 @@ export function prepareCatalogCall<Method extends CatalogMethod>(
   }
   // Pairing-local UI must not reach host storage, including the retained request.
   const retained = method === 'ui.set' && raw !== null && typeof raw === 'object' && !Array.isArray(raw)
-    ? captureCatalogJson(omitPairingLocalUiFields(raw)) : raw
+    ? captureCatalogJson(catalogSharedUi(raw)) : raw
   const effective = method === 'ui.set' && parsed !== null && typeof parsed === 'object'
-    ? omitPairingLocalUiFields(parsed) : parsed
+    ? catalogSharedUi(parsed) : parsed
   const params = captureCatalogParsed(effective) as Immutable<CatalogParams<Method>>
   const original = captureCatalogJson({ method, paramsSupplied: supplied, params: retained })
   const mutationId = effective !== null && typeof effective === 'object' && 'clientMutationId' in effective
