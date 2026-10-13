@@ -1,0 +1,114 @@
+{
+  "scope": "P1-01 assigned logical backup/restore and single-container immediate-shutdown recovery; partial acceptance evidence",
+  "source_base": "a3ff1fe91d5752d62678f50df9429e9868a90d98",
+  "executed_tool_sha256": "6b0ac9180d465730492f1ccadfe73319b623a81132ef85bd082c05aac7ca35ae",
+  "postgres_version": "16.15",
+  "image": "docker.io/library/postgres@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54",
+  "placement": {
+    "postgres_on_spot": true,
+    "same_node_running_user_roles": [
+      "postgres",
+      "backend-dev",
+      "expo-dev"
+    ],
+    "statefulset_replicas": 1,
+    "observed_claim_referencing_pods": 1,
+    "attached_volume_count": 1,
+    "disk_type": "pd-balanced",
+    "disk_size_gib": 10,
+    "reclaim_policy": "Retain",
+    "nfs_disk_separation": "Prior accepted foundation evidence: separate NFS50Gi SSD, PGDATA/WAL dedicated block."
+  },
+  "backup_restore": {
+    "started_at": "2026-10-13T01:02:50.745839+00:00",
+    "completed_at": "2026-10-13T01:02:52.737533+00:00",
+    "format": "custom",
+    "bytes": 2887,
+    "sha256": "0415a3c6e21a43e4edb88dcd886e5c29af9ad44179bff3ba58a7c6bc2cff6722",
+    "file_mode": "0600",
+    "directory_mode": "0700",
+    "private_only": true,
+    "restored_to_separate_temporary_database": true,
+    "schema_hash": "c1729dccaacca23f3d47dc08892c44d84922b4821ada4344835cfdcbfd2f35a1",
+    "schema_hash_matches": true,
+    "fixture_count": 1,
+    "fixture_hash": "937255c374987a1bbfa0b1b1a31742d2",
+    "fixture_count_content_hash_matches": true,
+    "limits": [
+      "Single database logical snapshot; excludes global roles/tablespaces.",
+      "Normalized DDL excludes comments, owners, privileges and restrict keys.",
+      "Content/count comparison covers owned fixture, not exhaustive application data.",
+      "Temporary restore database uses same PostgreSQL server/disk; not independent disaster recovery or PITR."
+    ]
+  },
+  "crash_recovery": {
+    "method": "PostgreSQL SIGQUIT immediate shutdown",
+    "normal_shutdown_checkpoint": false,
+    "signal_at": "2026-10-13T01:03:49.626842+00:00",
+    "verification_complete_at": "2026-10-13T01:03:53.572580+00:00",
+    "old_server_start": "2026-10-12T22:01:12.049875+00:00",
+    "new_server_start": "2026-10-13T01:03:50.844702+00:00",
+    "restart_count_before": 0,
+    "restart_count_after": 1,
+    "container_incarnation_changed": true,
+    "same_pod_uid": true,
+    "same_pvc_uid": true,
+    "same_pv": true,
+    "same_system_identifier": true,
+    "same_pgdata_wal_filesystem_observed": true,
+    "wal_flush_lsn_before": "0/1DE1D88",
+    "wal_flush_lsn_after": "0/1DE1E00",
+    "committed_markers_retained": true,
+    "open_transaction_marker_absent": true,
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on",
+    "failed_sql_samples": 2,
+    "first_failed_sql_started_at": "2026-10-13T01:03:49.944182+00:00",
+    "first_successful_sql_started_at": "2026-10-13T01:03:51.117031+00:00",
+    "availability_measurement": "kubectl exec/local SQL samples; bounds include command/network overhead, not exact external-service downtime",
+    "recovery_messages": [
+      "database system was interrupted; last known up at 2026-10-12 22:06:20 UTC",
+      "database system was not properly shut down; automatic recovery in progress",
+      "redo starts at 0/1988310",
+      "invalid record length at 0/1DE1D88: expected at least 24, got 0",
+      "redo done at 0/1DE1D60 system usage: CPU: user: 0.00 s, system: 0.01 s, elapsed: 0.02 s",
+      "checkpoint starting: end-of-recovery immediate wait",
+      "checkpoint complete: wrote 975 buffers (6.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.034 s, sync=0.019 s, total=0.059 s; sync files=343, longest=0.002 s, average=0.001 s; distance=4454 kB, estimate=4454 kB; lsn=0/1DE1D88, redo lsn=0/1DE1D88",
+      "database system is ready to accept connections"
+    ],
+    "transaction_handshake": {
+      "observed_at": "2026-10-13T01:03:49.283646+00:00",
+      "before_signal": true,
+      "sql_sequence": "BEGIN; INSERT marker3; SELECT pg_sleep(120); ROLLBACK;",
+      "psql_on_error_stop": true,
+      "matched_dedicated_application_session": true,
+      "backend_xid_present": true,
+      "state": "active",
+      "wait_event": "PgSleep",
+      "independent_session_visible_marker_ids": [
+        1,
+        2
+      ],
+      "meaning": "The fixture INSERT completed inside an open transaction before PgSleep; independent reads could not see marker3 before or after recovery."
+    },
+    "previous_container_exit_code": 0,
+    "previous_container_exit_reason": "Completed",
+    "scope_precision": "Exit code0 for SIGQUIT immediate does not imply a clean database shutdown. Unclean shutdown and WAL redo were observed in server logs; this is not abrupt Compute loss or SIGKILL."
+  },
+  "writer_exclusion": {
+    "same_directory_second_postmaster_rejected": true,
+    "rejection_exit": 1,
+    "postmaster_pid_file_process_verified": true,
+    "single_parent_postmaster_observed": true,
+    "limit": "One same-container data-directory lock attempt; RWO/one attachment is not proof of cross-node fencing."
+  },
+  "unverified": [
+    "Actual GCP Spot Compute loss/replacement: deferred by root to P1-14/G-04 shared fault integration.",
+    "Durable product ACK while DB unavailable; only SQL is connected here.",
+    "PG HA/automatic failover, independent-server restore/PITR, cross-node writer fencing.",
+    "G-03 actual Agent minimum/resource qualification and full P1-01 acceptance.",
+    "Installed native iPhone capability."
+  ],
+  "publication": "Operational identities, backup path/content, authentication values and raw session logs omitted."
+}
