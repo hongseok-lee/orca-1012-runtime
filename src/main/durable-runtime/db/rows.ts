@@ -49,6 +49,7 @@ export type OperationRow = {
   revision: RowRevision<"operation">;
   step: string;
 };
+export type MessageInputKind = "GENERAL" | "COMMAND" | "QUESTION_RESPONSE" | "APPROVAL_RESPONSE";
 export type MessageRow = {
   id: MessageId;
   session_id: SessionId;
@@ -57,6 +58,8 @@ export type MessageRow = {
   sealed_revision: MessageRevision | null;
   sealed_payload_hash: string | null;
   intake_status: string;
+  input_kind: MessageInputKind;
+  merge_closed: boolean;
 };
 export type StorageBindingRow = {
   id: StorageBindingId;
