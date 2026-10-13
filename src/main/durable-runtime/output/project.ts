@@ -1,7 +1,7 @@
 import { agentJournalSubmissionKey } from '../../../shared/agent-session-journal-item-key'
-import { SendParams } from '../../../shared/rpc-contract/structured-agent-session-params'
 import type { AgentJournalRenderItem, AgentJournalSubmission } from '../../../shared/agent-session-journal-types'
-import { freezeJournalJson, jsonObject, journalSafeCounter, JournalReadError, type CommittedJournalPage } from './model.ts'
+import { jsonObject, journalSafeCounter, JournalReadError, type CommittedJournalPage } from './model.ts'
+import { decodeCommittedInputBody } from './input-codec.ts'
 
 /** Receipt-only utility. Not a full wire snapshot and never overrides dispatch proof.
  * Non-input events are returned explicitly, not aliased or silently skipped. */
@@ -29,12 +29,7 @@ export function projectCommittedInputIdentity(page: CommittedJournalPage): Reado
       input.submission.journalSequence !== String(event.sequence))) {
       throw new JournalReadError('JOURNAL_SUBMISSION_MISMATCH')
     }
-    const envelope = jsonObject(input.original)
-    if (envelope.version !== 1) { throw new JournalReadError('JOURNAL_INPUT_BODY_UNREADABLE') }
-    const payload = jsonObject(envelope.payload)
-    const parsed = SendParams.shape.body.safeParse(payload.body)
-    if (!parsed.success) { throw new JournalReadError('JOURNAL_INPUT_BODY_UNREADABLE') }
-    const body = freezeJournalJson(payload.body) as unknown as AgentJournalRenderItem['body']
+    const body = decodeCommittedInputBody(input)
     const own = input.submission !== null && input.submission.principal === page.scope.principal
     const observedAt = Date.parse(event.committedAt)
     if (!Number.isSafeInteger(observedAt)) { throw new JournalReadError('JOURNAL_TIME_UNREADABLE') }

@@ -4,6 +4,7 @@ import { inputPayloadHash } from '../input/canonical.ts'
 import type { JsonValue } from '../db/atomic.ts'
 import { SendParams } from '../../../shared/rpc-contract/structured-agent-session-params'
 import { structuredAgentSessionPayloadFingerprint } from '../../../shared/structured-agent-session-mutation'
+import { decodeCommittedInputBody } from './input-codec.ts'
 import {
   freezeJournalJson, jsonObject, JournalReadError,
   type VerifiedJournalReadScope, type CommittedJournalEvent, type OriginalInputComponent
@@ -12,7 +13,7 @@ import {
 type InputRow = {
   id: string; message_id: string; session_id: string; input_seq: string
   authenticated_sender: string; client_operation_id: string; original_payload_hash: string
-  body_or_blob_ref: unknown; attachments: unknown
+  body_or_blob_ref: unknown; attachments: unknown; terminal_scope_matches: boolean
   submission_input_id: string | null; submission_message_id: string | null; submission_session_id: string | null
   principal_id: string | null; client_message_id: string | null; wire_payload_fingerprint: string | null
   wire_fence: string | null; journal_epoch: string | null; journal_sequence: string | null; submitted_at: string | null
@@ -32,8 +33,13 @@ export async function readOriginalInputs(
   const result = await client.query<InputRow>(
     `SELECT i.id,i.message_id,i.session_id,i.input_seq::text,i.authenticated_sender,i.client_operation_id,
       i.original_payload_hash,i.body_or_blob_ref,
+      EXISTS(SELECT 1 FROM durable_runtime.tabs t WHERE t.session_id=i.session_id
+        AND t.terminal_handle=i.body_or_blob_ref->'scope'->>1) AS terminal_scope_matches,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('position',a.position::text,'aliasPath',a.blob_ref,
-        'contentHash',a.content_hash) ORDER BY a.position) FROM durable_runtime.input_attachments a
+        'contentHash',a.content_hash,'mediaType',b.media_type,'aliasPrincipal',aa.principal_id)
+        ORDER BY a.position) FROM durable_runtime.input_attachments a
+        LEFT JOIN durable_runtime.attachment_aliases aa ON aa.alias_path=a.blob_ref AND aa.content_hash=a.content_hash
+        LEFT JOIN durable_runtime.attachment_blobs b ON b.content_hash=aa.content_hash
         WHERE a.input_id=i.id),'[]'::jsonb) AS attachments,
       ss.input_id AS submission_input_id,ss.message_id AS submission_message_id,ss.session_id AS submission_session_id,
       ss.principal_id,ss.client_message_id,ss.wire_payload_fingerprint,ss.wire_fence::text,
@@ -63,6 +69,9 @@ export async function readOriginalInputs(
     }
     counter('session-fence', envelope.sessionFence)
     counter('sequence:input', row.input_seq)
+    if (envelope.method === 'terminal.send' && !row.terminal_scope_matches) {
+      throw new JournalReadError('JOURNAL_TERMINAL_SCOPE_MISMATCH')
+    }
     const expectedSource = JSON.stringify(['v1', row.session_id, 'producer', 'INPUT_SUBMISSION',
       row.session_id, 'durable-input-v1', row.input_seq])
     if (event.sourceKey !== expectedSource) { throw new JournalReadError('JOURNAL_INPUT_MISMATCH') }
@@ -79,7 +88,11 @@ export async function readOriginalInputs(
         attachment.aliasPath !== originalAttachment.aliasPath || attachment.contentHash !== originalAttachment.contentHash) {
         throw new JournalReadError('JOURNAL_INPUT_MISMATCH')
       }
-      return Object.freeze({ position: attachment.position, aliasPath: attachment.aliasPath, contentHash: attachment.contentHash })
+      if (attachment.aliasPrincipal !== row.authenticated_sender || typeof attachment.mediaType !== 'string') {
+        throw new JournalReadError('JOURNAL_INPUT_ATTACHMENT_MISMATCH')
+      }
+      return Object.freeze({ position: attachment.position, aliasPath: attachment.aliasPath, contentHash: attachment.contentHash,
+        mediaType: attachment.mediaType, aliasPrincipal: attachment.aliasPrincipal })
     })
     let submission: OriginalInputComponent['submission'] = null
     if (row.submission_input_id !== null) {
@@ -101,8 +114,10 @@ export async function readOriginalInputs(
         wirePayloadFingerprint: row.wire_payload_fingerprint!, wireFence: row.wire_fence!,
         journalEpoch: row.journal_epoch!, journalSequence: row.journal_sequence!, submittedAt: row.submitted_at })
     }
-    return Object.freeze({ inputId: row.id, messageId: row.message_id, sessionId: row.session_id,
+    const input = Object.freeze({ inputId: row.id, messageId: row.message_id, sessionId: row.session_id,
       inputSequence: row.input_seq, principal: row.authenticated_sender, operationKey: row.client_operation_id,
       originalPayloadHash: row.original_payload_hash, original, attachments: Object.freeze(attachments), submission })
+    decodeCommittedInputBody(input)
+    return input
   }))
 }

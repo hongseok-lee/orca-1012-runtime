@@ -35,7 +35,10 @@ export type OriginalInputComponent = Readonly<{
   operationKey: string
   originalPayloadHash: string
   original: FrozenJson
-  attachments: readonly Readonly<{ position: string; aliasPath: string; contentHash: string }>[]
+  attachments: readonly Readonly<{
+    position: string; aliasPath: string; contentHash: string
+    mediaType: string | null; aliasPrincipal: string | null
+  }>[]
   submission: Readonly<{
     principal: string
     clientMessageId: string
