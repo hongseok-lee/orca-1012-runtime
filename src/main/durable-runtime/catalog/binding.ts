@@ -27,7 +27,7 @@ export type PreparedCatalogBindingObservation = {
   readonly evidenceRef: string
 }
 
-export interface CatalogPhysicalObservationAuthority {
+export type CatalogPhysicalObservationAuthority = {
   /** Synchronous check of already prepared local evidence; no I/O/issuer here. */
   isPinned(observation: PreparedCatalogBindingObservation): boolean
 }
@@ -43,7 +43,7 @@ export async function applyCatalogBindingObservation(
   const observation = captureCatalogParsed(prepared) as PreparedCatalogBindingObservation
   if (!pinned || !observation.evidenceRef || !observation.podUid || !observation.ptyId || !observation.incarnationId ||
     call.params.worktree !== observation.workspaceSelector || call.params.publicationEpoch !== observation.publicationEpoch ||
-    call.params.terminal !== observation.terminalHandle || observation.kind !== 'STOPPED') throw new CatalogError('CATALOG_PHYSICAL_PROOF_REQUIRED')
+    call.params.terminal !== observation.terminalHandle || observation.kind !== 'STOPPED') {throw new CatalogError('CATALOG_PHYSICAL_PROOF_REQUIRED')}
   return mutateCatalogWorkspace(pool, call, observation.workspaceSelector, async (tx, workspace, membership) => {
     await lockCatalogWorkspaceMetadata(tx, membership)
     const target = resolveCatalogTab(await loadCatalogTabs(tx, workspace.workspace_id), call.params)
@@ -59,7 +59,7 @@ export async function applyCatalogBindingObservation(
       JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id AND a.runtime_unit_id=u.id AND a.execution_epoch=u.execution_epoch
       WHERE m.session_id=$1 AND u.id=$2 AND a.id=$3 AND u.execution_epoch=$4 AND a.pod_uid=$5`,
       [target.session_id, observation.runtimeUnitId, observation.attemptId, observation.executionEpoch, observation.podUid])).rows[0]
-    if (!tuple) throw new CatalogError('CATALOG_STALE_BINDING_OBSERVATION')
+    if (!tuple) {throw new CatalogError('CATALOG_STALE_BINDING_OBSERVATION')}
     // Retire only the current physical binding. User close/lifecycle remains independent.
     const payload = { ...target.payload, ptyId: null, incarnationId: null, status: 'pending-handle', terminal: null }
     await tx.query(`UPDATE durable_runtime.catalog_tab_metadata SET payload=$2,binding_revision=binding_revision+1,

@@ -39,7 +39,7 @@ export function discoverCatalogMembership(pool: Pool, workspaceId: WorkspaceId):
 export async function lockCatalogMembership(tx: DurableTransaction, expected: CatalogMembership): Promise<void> {
   await lockAggregates(tx, { sessionIds: expected.sessions, runtimeUnitIds: expected.units })
   const actual = await inspectCatalogMembership(tx, expected.workspaceId)
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new CatalogError('CATALOG_MEMBERSHIP_CHANGED_RETRYABLE')
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {throw new CatalogError('CATALOG_MEMBERSHIP_CHANGED_RETRYABLE')}
 }
 
 export function catalogUnitMembers(membership: CatalogMembership, unitId: RuntimeUnitId): readonly SessionId[] {

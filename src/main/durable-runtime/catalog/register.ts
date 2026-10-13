@@ -27,16 +27,16 @@ export async function registerCatalogProject(pool: Pool, authorityInput: Catalog
   const group = registration.group ? parseCatalogGroup({ id: registration.group.id, payload: registration.group as unknown as Record<string, unknown> }) : null
   const ui = parseCatalogUi(registration.ui)
   if (!authority.repositoryIds.includes(repo.id) || (group && !authority.projectGroupIds.includes(group.id)) ||
-    (repo.projectGroupId ?? null) !== (group?.id ?? null) || !registration.mutationId) throw new CatalogError('CATALOG_REGISTRATION_AUTHORITY')
+    (repo.projectGroupId ?? null) !== (group?.id ?? null) || !registration.mutationId) {throw new CatalogError('CATALOG_REGISTRATION_AUTHORITY')}
   const original = captureCatalogJson({ repo, group, ui })
   return runDurableMutation(pool, { key: { principalId: authority.principalId, sessionScope: `repo:${repo.id}`,
     method: 'catalog.register-project', operationKey: registration.mutationId }, payloadHash: inputPayloadHash(original), locks: {} }, async tx => {
     await lockCatalogMetadata(tx, ['dataset', `namespace:${repo.id}`, ...(group ? [`namespace:${group.id}`] : []), 'ui:host'])
-    for (const scope of ['catalog', 'ui:host']) await tx.query(`INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch)
-      VALUES($1,$2) ON CONFLICT(scope) DO NOTHING`, [scope, randomUUID()])
+    for (const scope of ['catalog', 'ui:host']) {await tx.query(`INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch)
+      VALUES($1,$2) ON CONFLICT(scope) DO NOTHING`, [scope, randomUUID()])}
     if (group) {
       const existing = (await tx.query('SELECT id FROM durable_runtime.catalog_project_groups WHERE id=$1 AND deleted_at IS NULL', [group.id])).rows[0]
-      if (!existing) await tx.query('INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)', [group.id, JSON.stringify(group)])
+      if (!existing) {await tx.query('INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)', [group.id, JSON.stringify(group)])}
     }
     await tx.query('INSERT INTO durable_runtime.catalog_repositories(id,project_group_id,payload) VALUES($1,$2,$3)', [repo.id, group?.id ?? null, JSON.stringify(repo)])
     await tx.query("INSERT INTO durable_runtime.catalog_ui_state(scope,payload) VALUES('host',$1) ON CONFLICT(scope) DO NOTHING", [JSON.stringify(ui)])

@@ -21,11 +21,11 @@ export async function loadCatalogTabs(tx: DurableTransaction, workspaceId: strin
 export function resolveCatalogTab(rows: readonly CatalogTab[], selector: { tabId?: string; leafId?: string; terminal?: string }): CatalogTab {
   const matches = rows.filter(row => {
     const payload = parseCatalogTab(row)
-    if (selector.terminal !== undefined) return row.terminal_handle === selector.terminal
+    if (selector.terminal !== undefined) {return row.terminal_handle === selector.terminal}
     return (row.public_tab_id === selector.tabId || (payload.type === 'terminal' && payload.parentTabId === selector.tabId)) &&
       (selector.leafId === undefined || (payload.type === 'terminal' && payload.leafId === selector.leafId))
   })
-  if (matches.length !== 1) throw new CatalogError(matches.length ? 'CATALOG_TAB_AMBIGUOUS' : 'CATALOG_TAB_NOT_FOUND')
+  if (matches.length !== 1) {throw new CatalogError(matches.length ? 'CATALOG_TAB_AMBIGUOUS' : 'CATALOG_TAB_NOT_FOUND')}
   return matches[0]
 }
 
@@ -37,14 +37,14 @@ export async function updateCatalogWorkspace(pool: Pool, input: PreparedCatalogC
     'linkedLinearIssueWorkspaceId', 'linkedLinearIssueOrganizationUrlKey', 'linkedGitLabMR', 'linkedGitLabIssue',
     'linkedBitbucketPR', 'linkedAzureDevOpsPR', 'linkedGiteaPR', 'linkedWorkItem', 'linkedTaskSourceContext',
     'isArchived', 'isUnread', 'isPinned', 'sortOrder', 'manualOrder', 'workspaceStatus', 'diffComments', 'mobileDiffReview'])
-  if (Object.keys(patch as object).some(key => !allowed.has(key))) throw new CatalogError('CATALOG_SET_FIELD_UNAVAILABLE')
+  if (Object.keys(patch as object).some(key => !allowed.has(key))) {throw new CatalogError('CATALOG_SET_FIELD_UNAVAILABLE')}
   return mutateCatalogWorkspace(pool, call, call.params.worktree, async (tx, workspace, membership) => {
     await lockCatalogWorkspaceMetadata(tx, membership)
     const current = (await tx.query<{ payload: Record<string, unknown> }>(
       'SELECT payload FROM durable_runtime.catalog_workspace_metadata WHERE workspace_id=$1', [workspace.workspace_id])).rows[0]
     const payload = captureCatalogJson({ ...current.payload, ...patch as object }) as Record<string, unknown>
     const worktree = parseCatalogWorkspace({ ...workspace, payload })
-    if (workspace.kind === 'FOLDER_WORKSPACE') throw new CatalogError('CATALOG_GIT_WORKSPACE_REQUIRED')
+    if (workspace.kind === 'FOLDER_WORKSPACE') {throw new CatalogError('CATALOG_GIT_WORKSPACE_REQUIRED')}
     await tx.query('UPDATE durable_runtime.catalog_workspace_metadata SET payload=$2,updated_at=clock_timestamp() WHERE workspace_id=$1',
       [workspace.workspace_id, JSON.stringify(payload)])
     await tx.query('UPDATE durable_runtime.workspaces SET revision=revision+1 WHERE id=$1', [workspace.workspace_id])
@@ -61,7 +61,7 @@ export async function updateCatalogUi(pool: Pool, input: PreparedCatalogCall<'ui
     await lockCatalogMetadata(tx, ['ui:host'])
     const row = (await tx.query<{ payload: Record<string, unknown> }>(
       "SELECT payload FROM durable_runtime.catalog_ui_state WHERE scope='host' FOR UPDATE")).rows[0]
-    if (!row) throw new CatalogError('CATALOG_UI_NOT_INITIALIZED')
+    if (!row) {throw new CatalogError('CATALOG_UI_NOT_INITIALIZED')}
     const ui = parseCatalogUi({ ...row.payload, ...patch })
     await tx.query("UPDATE durable_runtime.catalog_ui_state SET payload=$1,revision=revision+1 WHERE scope='host'", [JSON.stringify(ui)])
     const response = captureCatalogJson({ ui })
@@ -76,14 +76,14 @@ export async function selectCatalogTab(
 ): Promise<MutationOutcome> {
   const call = capturePreparedCatalogCall(input)
   const selector = call.method === 'session.tabs.activate' ? (call.params as PreparedCatalogCall<'session.tabs.activate'>['params']).worktree : workspaceSelector
-  if (!selector) throw new CatalogError('CATALOG_WORKSPACE_SELECTOR_REQUIRED')
+  if (!selector) {throw new CatalogError('CATALOG_WORKSPACE_SELECTOR_REQUIRED')}
   return mutateCatalogWorkspace(pool, call, selector, async (tx, workspace, membership) => {
     await lockCatalogWorkspaceMetadata(tx, membership)
     const tabs = await loadCatalogTabs(tx, workspace.workspace_id)
     const selected = resolveCatalogTab(tabs, call.params)
-    if (selected.lifecycle !== 'OPEN') throw new CatalogError('CATALOG_TAB_CLOSED')
+    if (selected.lifecycle !== 'OPEN') {throw new CatalogError('CATALOG_TAB_CLOSED')}
     if ('expectedIncarnationId' in call.params && call.params.expectedIncarnationId !== undefined &&
-      selected.payload.incarnationId !== call.params.expectedIncarnationId) throw new CatalogError('CATALOG_STALE_TERMINAL')
+      selected.payload.incarnationId !== call.params.expectedIncarnationId) {throw new CatalogError('CATALOG_STALE_TERMINAL')}
     for (const tab of tabs.filter(row => row.lifecycle === 'OPEN')) {
       const payload = { ...tab.payload, isActive: tab.tab_id === selected.tab_id }
       await tx.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2,updated_at=clock_timestamp() WHERE tab_id=$1',
@@ -92,7 +92,7 @@ export async function selectCatalogTab(
     await publishCatalogMutation(tx, call, workspace.workspace_id, 'CATALOG_TAB_SELECTED', { tabId: selected.public_tab_id })
     if (call.method === 'terminal.focus') {
       const terminal = parseCatalogTab(selected)
-      if (terminal.type !== 'terminal') throw new CatalogError('CATALOG_TERMINAL_REQUIRED')
+      if (terminal.type !== 'terminal') {throw new CatalogError('CATALOG_TERMINAL_REQUIRED')}
       return { focus: { handle: selected.terminal_handle!, tabId: terminal.parentTabId, worktreeId: workspace.public_id } }
     }
     // The adapter reads its response inside this same transaction via the shared projector.
@@ -109,14 +109,14 @@ export async function renameCatalogTerminal(
   return mutateCatalogWorkspace(pool, call, selector, async (tx, workspace, membership) => {
     await lockCatalogWorkspaceMetadata(tx, membership)
     const tab = resolveCatalogTab(await loadCatalogTabs(tx, workspace.workspace_id), call.params)
-    if (tab.lifecycle !== 'OPEN') throw new CatalogError('CATALOG_TAB_CLOSED')
-    if (call.params.expectedIncarnationId !== undefined && tab.payload.incarnationId !== call.params.expectedIncarnationId) throw new CatalogError('CATALOG_STALE_TERMINAL')
+    if (tab.lifecycle !== 'OPEN') {throw new CatalogError('CATALOG_TAB_CLOSED')}
+    if (call.params.expectedIncarnationId !== undefined && tab.payload.incarnationId !== call.params.expectedIncarnationId) {throw new CatalogError('CATALOG_STALE_TERMINAL')}
     const title = call.params.title
     const payload = captureCatalogJson({ ...tab.payload, title: title ?? '' })
     await tx.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2,updated_at=clock_timestamp() WHERE tab_id=$1',
       [tab.tab_id, JSON.stringify(payload)])
     const publicTab = parseCatalogTab(tab)
-    if (publicTab.type !== 'terminal') throw new CatalogError('CATALOG_TERMINAL_REQUIRED')
+    if (publicTab.type !== 'terminal') {throw new CatalogError('CATALOG_TERMINAL_REQUIRED')}
     const response: JsonValue = { rename: { handle: call.params.terminal, tabId: publicTab.parentTabId, title } }
     await publishCatalogMutation(tx, call, workspace.workspace_id, 'CATALOG_TERMINAL_RENAMED', response)
     return response
@@ -129,7 +129,7 @@ export async function activateCatalogWorkspace(pool: Pool, input: PreparedCatalo
     await lockCatalogWorkspaceMetadata(tx, membership, ['ui:host'])
     const row = (await tx.query<{ payload: Record<string, unknown> }>(
       "SELECT payload FROM durable_runtime.catalog_ui_state WHERE scope='host' FOR UPDATE")).rows[0]
-    if (!row) throw new CatalogError('CATALOG_UI_NOT_INITIALIZED')
+    if (!row) {throw new CatalogError('CATALOG_UI_NOT_INITIALIZED')}
     const worktree = parseCatalogWorkspace(workspace)
     const repoId = 'repoId' in worktree ? worktree.repoId : `folder-workspace:${worktree.projectGroupId}`
     const ui = parseCatalogUi({ ...row.payload, lastActiveRepoId: repoId, lastActiveWorktreeId: workspace.public_id })

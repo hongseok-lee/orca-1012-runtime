@@ -7,8 +7,6 @@ import { DurableTransaction, safeDatabaseError } from '../db/connection.ts'
 import type { WorkspaceId } from '../../../shared/durable-runtime/identity.ts'
 import type { Repo } from '../../../shared/repo-types.ts'
 import type { ProjectGroup } from '../../../shared/project-group-types.ts'
-import type { FolderWorkspace } from '../../../shared/folder-workspace-types.ts'
-import type { RuntimeWorktreeRecord } from '../../../shared/runtime-worktree-contracts.ts'
 import { normalizeRuntimePathForComparison } from '../../../shared/cross-platform-path.ts'
 import { worktreeIdsEqual } from '../../../shared/worktree/id.ts'
 import { branchSelectorMatches } from '../../runtime/runtime-worktree-path-identity.ts'
@@ -71,13 +69,13 @@ export async function loadCatalogWorkspaces(tx: DurableTransaction): Promise<Cat
 export async function resolveCatalogWorkspace(
   tx: DurableTransaction, selector: string, authority: CatalogAuthority
 ): Promise<CatalogWorkspace> {
-  if (typeof selector !== 'string' || !selector) throw new CatalogError('CATALOG_SELECTOR')
+  if (typeof selector !== 'string' || !selector) {throw new CatalogError('CATALOG_SELECTOR')}
   const rows = (await loadCatalogWorkspaces(tx)).filter(row => catalogWorkspaceAllowed(authority, row))
   if (selector === 'active') {
     const ui = (await tx.query<{ payload: Record<string, unknown> }>(
       "SELECT payload FROM durable_runtime.catalog_ui_state WHERE scope='host'")).rows[0]
     const active = ui?.payload.lastActiveWorktreeId
-    if (typeof active !== 'string' || !active) throw new CatalogError('selector_not_found')
+    if (typeof active !== 'string' || !active) {throw new CatalogError('selector_not_found')}
     selector = `id:${active}`
   }
   const aliasKey = selector.startsWith('id:') ? selector.slice(3) : selector
@@ -92,16 +90,16 @@ export async function resolveCatalogWorkspace(
     const payload = parseCatalogWorkspace(row)
     const branch = 'branch' in payload ? payload.branch : ''
     const displayName = 'displayName' in payload ? payload.displayName : payload.name
-    if (selector.startsWith('id:')) return worktreeIdsEqual(row.public_id, aliasKey) || aliasIds.has(row.workspace_id)
-    if (selector.startsWith('identity:')) return 'identity' in payload && payload.identity?.key === selector.slice(9)
-    if (selector.startsWith('path:')) return pathEqual(row.reserved_path, selector.slice(5))
-    if (selector.startsWith('branch:')) return branchSelectorMatches(branch, selector.slice(7))
-    if (selector.startsWith('name:')) return displayName === selector.slice(5)
-    if (selector.startsWith('issue:')) return 'linkedIssue' in payload && String(payload.linkedIssue) === selector.slice(6)
+    if (selector.startsWith('id:')) {return worktreeIdsEqual(row.public_id, aliasKey) || aliasIds.has(row.workspace_id)}
+    if (selector.startsWith('identity:')) {return 'identity' in payload && payload.identity?.key === selector.slice(9)}
+    if (selector.startsWith('path:')) {return pathEqual(row.reserved_path, selector.slice(5))}
+    if (selector.startsWith('branch:')) {return branchSelectorMatches(branch, selector.slice(7))}
+    if (selector.startsWith('name:')) {return displayName === selector.slice(5)}
+    if (selector.startsWith('issue:')) {return 'linkedIssue' in payload && String(payload.linkedIssue) === selector.slice(6)}
     return worktreeIdsEqual(row.public_id, selector) || aliasIds.has(row.workspace_id) || pathEqual(row.reserved_path, selector) || branchSelectorMatches(branch, selector)
   })
-  if (matches.length > 1) throw new CatalogError('selector_ambiguous')
-  if (!matches.length) throw new CatalogError('selector_not_found')
+  if (matches.length > 1) {throw new CatalogError('selector_ambiguous')}
+  if (!matches.length) {throw new CatalogError('selector_not_found')}
   // Tombstones are returned internally so old receipts can replay before current lifecycle checks.
   return matches[0]
 }
@@ -111,8 +109,8 @@ export async function readCatalogSnapshot(pool: Pool, inputAuthority: CatalogAut
   const authority = captureCatalogAuthority(inputAuthority)
   return withCatalogReadSnapshot(pool, async tx => {
     const heads = (await tx.query<CatalogHeadRow>('SELECT * FROM durable_runtime.catalog_heads ORDER BY scope')).rows
-    if (!heads.some(head => head.scope === 'catalog')) throw new CatalogError('CATALOG_HEAD_MISSING')
-    for (const head of heads) catalogSnapshotVersion(head.revision)
+    if (!heads.some(head => head.scope === 'catalog')) {throw new CatalogError('CATALOG_HEAD_MISSING')}
+    for (const head of heads) {catalogSnapshotVersion(head.revision)}
     const groups = (await tx.query<CatalogProjectGroupRow>(
       'SELECT * FROM durable_runtime.catalog_project_groups WHERE deleted_at IS NULL ORDER BY id'
     )).rows.filter(row => authority.projectGroupIds.includes(row.id)).map(parseCatalogGroup)
@@ -121,12 +119,12 @@ export async function readCatalogSnapshot(pool: Pool, inputAuthority: CatalogAut
     )).rows.filter(row => authority.repositoryIds.includes(row.id)).map(parseCatalogRepo)
     const workspaces = (await loadCatalogWorkspaces(tx)).filter(row =>
       row.deleted_at === null && catalogWorkspaceAllowed(authority, row))
-    for (const workspace of workspaces) parseCatalogWorkspace(workspace)
+    for (const workspace of workspaces) {parseCatalogWorkspace(workspace)}
     const tabs = (await tx.query<CatalogTab>(`SELECT m.*,t.workspace_id,t.session_id,t.kind,
       t.terminal_handle,t.lifecycle,t.revision AS tab_revision
       FROM durable_runtime.catalog_tab_metadata m JOIN durable_runtime.tabs t ON t.id=m.tab_id ORDER BY t.ui_order,t.id`
     )).rows.filter(row => workspaces.some(workspace => workspace.workspace_id === row.workspace_id))
-    for (const tab of tabs) parseCatalogTab(tab)
+    for (const tab of tabs) {parseCatalogTab(tab)}
     const ui = (await tx.query<CatalogUiStateRow>(
       "SELECT * FROM durable_runtime.catalog_ui_state WHERE scope='host'"
     )).rows[0] ?? null

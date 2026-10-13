@@ -26,7 +26,7 @@ export function captureCatalogSleep(input: PreparedCatalogSleep): PreparedCatalo
   if (activity && preparedAttemptId) {
     for (const sessionId of copied.discoveredMembers) {
       const observed = activity.member(sessionId, preparedAttemptId)
-      if (!observed || !Object.isFrozen(observed)) continue
+      if (!observed || !Object.isFrozen(observed)) {continue}
       const { observedAt, ...fields } = observed
       const evidence = Object.freeze({ ...captureCatalogParsed(fields), observedAt: new Date(captureCatalogInstant(observedAt)) }) as PreparedMemberActivity
       prepared.set(sessionId, { evidence, original: observed })
@@ -36,7 +36,7 @@ export function captureCatalogSleep(input: PreparedCatalogSleep): PreparedCatalo
     member: (sessionId: string, attemptId: string) => attemptId === preparedAttemptId ? prepared.get(sessionId)?.evidence ?? null : null,
     pinValid: (evidence: PreparedMemberActivity) => {
       const entry = prepared.get(evidence.sessionId)
-      if (!entry || entry.evidence !== evidence || !currentPinValid) return false
+      if (!entry || entry.evidence !== evidence || !currentPinValid) {return false}
       try { return currentPinValid(entry.original) === true } catch { return false }
     }
   })
@@ -48,7 +48,7 @@ export async function reserveCatalogSleep(
 ): Promise<MutationOutcome> {
   const call = capturePreparedCatalogCall(input), sleep = captureCatalogSleep(prepared)
   const owners = Object.freeze({ ...entries })
-  if (sleep.request.actorId !== call.context.authority.principalId) throw new CatalogError('CATALOG_SLEEP_AUTHORITY')
+  if (sleep.request.actorId !== call.context.authority.principalId) {throw new CatalogError('CATALOG_SLEEP_AUTHORITY')}
   return mutateCatalogWorkspace(pool, call, call.params.worktree, async (tx, workspace, membership) => {
     const request = sleep.request
     if (workspace.runtime_unit_id !== request.unitId ||

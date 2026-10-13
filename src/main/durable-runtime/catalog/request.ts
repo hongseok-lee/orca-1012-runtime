@@ -44,11 +44,11 @@ export function prepareCatalogCall<Method extends CatalogMethod>(
   const schema = catalogWireSchemas[method]
   let parsed: unknown
   if (schema === null) {
-    if (raw !== null) throw new CatalogError('CATALOG_PARAMS')
+    if (raw !== null) {throw new CatalogError('CATALOG_PARAMS')}
     parsed = null
   } else {
     const result = schema.safeParse(raw ?? {})
-    if (!result.success) throw new CatalogError('CATALOG_PARAMS')
+    if (!result.success) {throw new CatalogError('CATALOG_PARAMS')}
     parsed = result.data
   }
   // Pairing-local UI must not reach host storage, including the retained request.
@@ -73,7 +73,7 @@ export function prepareCatalogCall<Method extends CatalogMethod>(
 export function catalogReceiptIdentity(
   call: PreparedCatalogCall, scope: ResolvedCatalogScope
 ): ReceiptIdentity {
-  if (typeof scope !== 'string' || !scope) throw new CatalogError('CATALOG_SCOPE')
+  if (typeof scope !== 'string' || !scope) {throw new CatalogError('CATALOG_SCOPE')}
   return Object.freeze({
     key: Object.freeze({
       principalId: call.context.authority.principalId, sessionScope: scope,

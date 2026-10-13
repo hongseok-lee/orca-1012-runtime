@@ -3,7 +3,7 @@ import { captureCatalogAuthority, type CatalogAuthority } from './authority.ts'
 import { readCatalogSnapshot, type CatalogSnapshot } from './read.ts'
 
 /** Local commit hints only. A listener is not a transport or durable event log. */
-export interface CatalogChangeHints {
+export type CatalogChangeHints = {
   listen(onChange: () => void): () => void
 }
 
@@ -16,7 +16,7 @@ export async function subscribeCatalogSnapshots(
   let stopped = false, pending = true, running = false, last = ''
   const signature = (snapshot: CatalogSnapshot) => JSON.stringify(snapshot.heads.map(row => [row.scope, row.publication_epoch, row.revision]))
   const drain = async (): Promise<void> => {
-    if (running || stopped) return
+    if (running || stopped) {return}
     running = true
     try {
       while (pending && !stopped) {
@@ -25,7 +25,7 @@ export async function subscribeCatalogSnapshots(
         // Listener already attached. Recheck the same durable snapshot boundary;
         // a raced publication is re-read rather than guessed from an event payload.
         const checked = await readCatalogSnapshot(pool, authority)
-        if (signature(snapshot) !== signature(checked)) snapshot = checked
+        if (signature(snapshot) !== signature(checked)) {snapshot = checked}
         if (!stopped && signature(snapshot) !== last) {
           await observer(snapshot)
           last = signature(snapshot)
@@ -35,7 +35,7 @@ export async function subscribeCatalogSnapshots(
   }
   // Attach before first Pool checkout/snapshot.
   let started = false
-  const detach = hints.listen(() => { pending = true; if (started) void drain().catch(onError) })
+  const detach = hints.listen(() => { pending = true; if (started) {void drain().catch(onError)} })
   started = true
   try { await drain() } catch (error) { stopped = true; detach(); throw error }
   return () => { if (!stopped) { stopped = true; detach() } }

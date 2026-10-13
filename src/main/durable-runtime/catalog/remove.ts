@@ -30,7 +30,7 @@ export async function reserveCatalogRemoval(
   }
   return mutateCatalogWorkspace(pool, call, call.params.worktree, async (tx, workspace, membership) => {
     const unitIds = [...new Set(intents.map(request => request.authority.runtimeUnitId))].sort()
-    if (unitIds.length !== intents.length || JSON.stringify(unitIds) !== JSON.stringify(membership.units)) throw new CatalogError('CATALOG_DELETE_INTENT_SET')
+    if (unitIds.length !== intents.length || JSON.stringify(unitIds) !== JSON.stringify(membership.units)) {throw new CatalogError('CATALOG_DELETE_INTENT_SET')}
     // Never widen a Workspace-local removal into deleting a peer Workspace's Unit.
     // Workspace-scoped cleanup of a still-shared Unit needs the root's owner contract.
     if (membership.pairs.some(pair => !membership.workspaceSessions.includes(pair.sessionId))) {
@@ -42,7 +42,7 @@ export async function reserveCatalogRemoval(
     const tabs = await loadCatalogTabs(tx, workspace.workspace_id)
     const cancelled = new Set<string>()
     for (const tab of tabs.filter(row => row.lifecycle === 'OPEN')) {
-      if (tab.session_id === null || cancelled.has(tab.session_id)) continue
+      if (tab.session_id === null || cancelled.has(tab.session_id)) {continue}
       await cancelCatalogSessionMessages(tx, call, tab, membership, close, owners)
       cancelled.add(tab.session_id)
     }
@@ -52,12 +52,12 @@ export async function reserveCatalogRemoval(
         catalogUnitMembers(membership, request.authority.runtimeUnitId)))
     }
     await lockCatalogWorkspaceMetadata(tx, membership)
-    for (const sessionId of membership.workspaceSessions) await tx.query(`UPDATE durable_runtime.sessions
-      SET lifecycle='CLOSING',session_fence=session_fence+1,revision=revision+1 WHERE id=$1 AND lifecycle='OPEN'`, [sessionId])
+    for (const sessionId of membership.workspaceSessions) {await tx.query(`UPDATE durable_runtime.sessions
+      SET lifecycle='CLOSING',session_fence=session_fence+1,revision=revision+1 WHERE id=$1 AND lifecycle='OPEN'`, [sessionId])}
     await tx.query(`UPDATE durable_runtime.tabs SET lifecycle='CLOSED',closed_at=clock_timestamp(),revision=revision+1
       WHERE workspace_id=$1 AND lifecycle='OPEN'`, [workspace.workspace_id])
-    for (const tab of tabs) await tx.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2,updated_at=clock_timestamp() WHERE tab_id=$1',
-      [tab.tab_id, JSON.stringify({ ...tab.payload, isActive: false })])
+    for (const tab of tabs) {await tx.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2,updated_at=clock_timestamp() WHERE tab_id=$1',
+      [tab.tab_id, JSON.stringify({ ...tab.payload, isActive: false })])}
     await tx.query('UPDATE durable_runtime.workspaces SET deleted_at=clock_timestamp(),revision=revision+1 WHERE id=$1', [workspace.workspace_id])
     await tx.query('UPDATE durable_runtime.catalog_name_reservations SET retired=true WHERE workspace_id=$1', [workspace.workspace_id])
     // Full original request/options remain immutable in the outer receipt hash and linked outbox event.

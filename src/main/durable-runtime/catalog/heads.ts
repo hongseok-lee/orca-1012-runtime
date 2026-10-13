@@ -9,12 +9,12 @@ export async function advanceCatalogProjection(
 ): Promise<readonly CatalogHeadRow[]> {
   const scopes = Object.freeze([...new Set(inputScopes)].sort())
   for (const scope of scopes) {
-    if (tx.isLockHeld(10, scope)) continue
+    if (tx.isLockHeld(10, scope)) {continue}
     tx.advanceLock(10, scope)
     const row = await tx.query<CatalogHeadRow>(
       'SELECT * FROM durable_runtime.catalog_heads WHERE scope=$1 FOR UPDATE', [scope]
     )
-    if (row.rowCount !== 1) throw new DurableDatabaseError('CATALOG_HEAD_MISSING')
+    if (row.rowCount !== 1) {throw new DurableDatabaseError('CATALOG_HEAD_MISSING')}
     // Refuse the mutation rather than publish a rounded or zero wire revision.
     catalogSnapshotVersion(counter('row:catalog-head', BigInt(row.rows[0].revision) + 1n))
     tx.markLockAcquired(10, scope)
@@ -32,7 +32,7 @@ export async function advanceCatalogProjection(
 export async function lockCatalogMetadata(tx: DurableTransaction, inputKeys: readonly string[]): Promise<void> {
   const keys = Object.freeze([...new Set(inputKeys)].sort())
   for (const key of keys) {
-    if (tx.isLockHeld(6, key)) continue
+    if (tx.isLockHeld(6, key)) {continue}
     tx.advanceLock(6, key)
     await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`durable_runtime:catalog:${key}`])
     tx.markLockAcquired(6, key)
