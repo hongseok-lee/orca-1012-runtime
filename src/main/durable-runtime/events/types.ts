@@ -1,11 +1,11 @@
 import type { Pool } from "pg";
 import type {
-  AgentId, ControllerTerm, EventId, OperationId, ProducerId,
+  AgentId, AttemptId, ControllerTerm, EventId, ExecutionEpoch, OperationId, ProducerId,
   RuntimeUnitId, Sequence, SessionId,
 } from "../../../shared/durable-runtime/identity.ts";
 import type { JsonValue, MutationOutcome } from "../db/atomic.ts";
 import type { DurableTransaction } from "../db/connection.ts";
-import type { Incarnation, VerifiedWorkloadIdentity } from "../runtime/runtime-evidence.ts";
+import type { Incarnation, PodUid, VerifiedWorkloadIdentity } from "../runtime/runtime-evidence.ts";
 
 // Authentication is supplied by the workload boundary. This module exports no
 // factory that can turn an unverified string into a verified workload identity.
@@ -36,6 +36,10 @@ export interface EventRecord extends ProducerStream {
   readonly sequence: Sequence<"producer">;
   readonly agentId: AgentId;
   readonly runtimeUnitId: RuntimeUnitId;
+  // Original immutable PG producer binding, not the current Unit's execution.
+  readonly attemptId: AttemptId;
+  readonly podUid: PodUid;
+  readonly executionEpoch: ExecutionEpoch;
   readonly payload: JsonValue;
   readonly targetSessionIds: readonly SessionId[];
   readonly attemptCount: number;
