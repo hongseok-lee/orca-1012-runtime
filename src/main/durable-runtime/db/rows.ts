@@ -75,3 +75,38 @@ export type AttemptRow = {
   resource_profile_revision: ProfileRevision;
   mode: "COLD" | "RESTORE";
 };
+
+// Upload UUID is reserved by the authenticated server; this additive projection
+// does not change the common identity constructor or public RPC ID contract.
+export type AttachmentUploadRow = {
+  id: string;
+  principal_id: string;
+  target_connection_id: string | null;
+  expected_base64_length: string;
+  received_base64_length: string;
+  state: "OPEN" | "COMMITTED" | "ABORTED";
+  revision: RowRevision<"attachment-upload">;
+  created_at: Date;
+  updated_at: Date;
+};
+export type AttachmentBlobRow = {
+  content_hash: string;
+  content_bytes: Uint8Array;
+  byte_length: string;
+  media_type: string;
+  created_at: Date;
+};
+export type AttachmentUploadChunkRow = {
+  upload_id: string;
+  chunk_offset: string;
+  content_base64: string;
+  content_hash: string;
+  char_length: string;
+};
+export type AttachmentAliasRow = {
+  alias_path: string;
+  upload_id: string;
+  principal_id: string;
+  content_hash: string;
+  created_at: Date;
+};
