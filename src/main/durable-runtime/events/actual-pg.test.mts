@@ -222,7 +222,7 @@ check("six handler attempts; failed-finalization connection loss rolls back befo
     }
     return query();
   });
-  await errorCode(() => processRuntimeEvent(interrupted, sixth, async () => { throw new DurableDatabaseError("TEST_HANDLER"); }), "DB_FAILURE");
+  await errorCode(() => processRuntimeEvent(interrupted, sixth, async () => { throw new DurableDatabaseError("TEST_HANDLER"); }), "57P01");
   const before = (await pool.query("SELECT state,attempt_count FROM durable_runtime.runtime_event_queue WHERE event_id=$1", [e.eventId])).rows[0];
   assert.deepEqual(before, { state: "PROCESSING", attempt_count: "6" });
   assert.equal((await pool.query("SELECT count(*) AS n FROM durable_runtime.runtime_event_failure_contexts WHERE event_id=$1", [e.eventId])).rows[0].n, "0");
