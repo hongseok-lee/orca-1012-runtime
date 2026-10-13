@@ -25,10 +25,10 @@ DB owner의 교정된 016 pin `4f1ecdb62365e5400398fb9f2812c1569d0c9066`의 실�
 
 `listDueObservationEpisodes(pool, limit)`는 DB clock의 만료 OPEN episode만 읽습니다. `reserveObservationFence(pool, request)`는 DB deadline과 현재 원 target을 다시 확인하여 한 episode에 하나의 OBSERVATION_FENCE/FENCE_PENDING operation을 예약합니다. 명시된 versioned 정책의 실행 deadline과 결정적 외부 이름을 저장하고 재요청은 원 operation을 반환합니다. Runtime Unit의 phase는 BLOCKED로 표시하지만 사용자 desired와 원 writer를 변경하지 않습니다. 현재 scope/term의 접수 사실은 실행 lease나 committed claim이 아닙니다.
 
-`recordObservationFenceBlocked(pool, request)`는 원 episode·operation·target과 명시된 failure reference를 대조합니다. 같은 failure reference와 reason은 하나의 canonical outbox event/sourceEventId로 수렴하며 다른 reason으로 재사용하면 거절합니다. P125가 소비할 원 event·incident·operation·Unit identity만 제공하고 알림 authority나 정책을 발급하지 않습니다. Failure reference는 인증된 내부 caller의 출처이며 물리 차단 proof로 승격하지 않습니다. 저장 성공·type/lint·실제 PG·물리 fencing·provider·HA 합격은 주장하지 않습니다. 교정된 016도 첫 PG 검증 전입니다.
+`recordObservationFenceBlocked(pool, request)`는 원 episode·operation·target과 명시된 failure reference를 대조합니다. 같은 failure reference와 reason은 하나의 canonical outbox event/sourceEventId로 수렴하며 다른 reason으로 재사용하면 거절합니다. P125가 소비할 원 event·incident·operation·Unit identity만 제공하고 알림 authority나 정책을 발급하지 않습니다. Failure reference는 인증된 내부 caller의 출처이며 물리 차단 proof로 승격하지 않습니다. 소유 검증 DB의 최초 실제 PG 결과와 focused type/lint 결과는 아래 보고서에 기록합니다. Schema의 소비 검증과 DB owner의 별도 schema 검증은 구분합니다. 물리 fencing·provider·HA 합격은 주장하지 않습니다.
 
 PR23 source·시험·asset·본문은 수정하지 않습니다. 원격 검증은 정확한 schema/API와 bridge의 heavy 인계를 받은 뒤 신규 의미 경계만 실행합니다. 최초 PNG는 client 한 owner가 맡으며 해당 고정 URL·commit·heading을 bridge에 먼저 전달합니다. 기존 P113 22개/P103/P112 suite 및 촬영을 반복하지 않습니다.
 
 원 요청의 불변 값·await 중 pin 무효·producer/incarnation 불일치·IDLE/WAITING_INPUT과 raw observation 구분을 확인하는 신규 fixture 4개를 작성했습니다. 아직 실행하지 않았으며 SQL 수락·PG 검증 결과가 아닙니다.
 
-새 PG fixture 14개와 값 계약 fixture 4개를 작성했습니다. 같은 UUID의 다른 incarnation·높은 watermark, 과거 응답과 supersede, 실제 Unit lock 대기 중 pin 무효, fresh/만료의 양순서와 동시 경합, 새 Active의 원 operation 보존, 옛 timer와 새 attempt 분리, SQL rollback 및 canonical blocked source를 포함합니다. 전부 미실행이며 누적 PASS는 0개입니다. 기존 성공 suite를 재사용 실행하지 않았습니다.
+새 PG fixture 14개와 값 계약 fixture 4개를 작성했습니다. 같은 UUID의 다른 incarnation·높은 watermark, 과거 응답과 supersede, 실제 Unit lock 대기 중 pin 무효, fresh/만료의 양순서와 동시 경합, 새 Active의 원 operation 보존, 옛 timer와 새 attempt 분리, SQL rollback 및 canonical blocked source를 포함합니다. 최초 source `a7abf3af`에서 PG 14개와 값 계약 4개가 모두 통과했습니다. 최초 type/lint 실패는 타입 표기만 `dded2443`에서 교정했고 focused type/lint는 exit 0입니다. 통과한 PG/값 계약은 반복하지 않았습니다. [최초 결과와 미확인 경계](first-verification-report.md)에 원 실행과 교정 관계를 구분합니다.
