@@ -18,7 +18,7 @@ import { deferred, eventually, fixtureConfig, fixtureRuntime, fixtureContext } f
 if (process.env.ORCA_P116_PUBLIC_READ_APPROVED !== 'root-ready' ||
   !(process.env.PGDATABASE ?? '').startsWith('orca_p116_read_')) { throw new Error('Root Ready handoff and owned public-read DB required') }
 const pool = createDurablePool({ max: 6 })
-const transaction = <T>(body: (client: { query: PoolClient['query'] }) => Promise<T>) =>
+const transaction = <T,>(body: (client: { query: PoolClient['query'] }) => Promise<T>) =>
   withDurableTransaction(pool, tx => body(tx as unknown as { query: PoolClient['query'] }))
 const owner = pairedDeviceAttachmentPrincipal(randomUUID())
 const ui = { lastActiveRepoId: null, lastActiveWorktreeId: null, activeView: 'terminal', sidebarWidth: 240,
