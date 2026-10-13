@@ -89,6 +89,8 @@ export type ProviderObservation = {
   readonly source: 'PROVIDER_PROTOCOL'
   readonly identity: ProviderSubmissionIdentity
   readonly observedAt: string
+  readonly providerRef?: ProviderRef
+  readonly nativeEventId?: string
 } & (
   | { readonly kind: 'ADMITTED'; readonly admission: ProviderAdmissionProof;
       readonly contextDelivery: VerifiedContextDeliveryProof }
