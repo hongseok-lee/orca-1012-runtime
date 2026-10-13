@@ -44,7 +44,17 @@ node --test "$ARTIFACT_ROOT/cold-focus.test.mjs"
 - 실행 bundle SHA256은 `cd9b3f76095a32f779836921a7660b3539bdb1d26504e00e1c3e39ff85d92abf`이다.
 - 동일한 변환 코드 SHA256은 `4afa691cad1c4701836083885bcb5e2851465a172a7f8c871343a79e9575b486`이다.
 
-실제 SDK inference·provider auth·PG query·Cloud mutation·handler 활성화는 수행하지 않았다. 합성 연결의 timeout 및 late-open 처리를 실제 provider stopped proof로 기록하지 않았다. Heavy 자리는 반환했으며 최초 결과 보고 PNG는 별도 client ContextReady 경로에 이 heading과 immutable commit URL을 인계한다. 이 화면은 protocol 검증 보고 화면이며 제품 UI 또는 native iPhone 증거가 아니다.
+실제 SDK inference·provider auth·PG query·Cloud mutation·handler 활성화는 수행하지 않았다. 합성 연결의 timeout 및 late-open 처리를 실제 provider stopped proof로 기록하지 않았다. Heavy 자리는 반환했다. 별도 client Context에서 최초 README 보고 PNG 1 장을 생성했지만 요청한 신규 결과 heading은 이미지에 보이지 않는다. 원본과 직접 확인 한계를 아래에 남기며 이 화면은 제품 UI 또는 native iPhone 증거가 아니다.
+
+## 최초 PNG와 현재 합류 조건
+
+[첫 PNG 원본](evidence/first-report.png)과 [provenance](evidence/first-report-provenance.json)를 보존했다. 대상 source는 `68d6b974fed3ad6bd73c04a292b8b379eb979132`이며 PNG SHA256은 `ed6b6eb534bd03c80c495ebab68666a146ccf169a6d146339d96d185d9cbc50c`이다. 첫 navigation은 viewport 점검에서 실패해 PNG가 생성되지 않았고, 정렬을 교정한 다음 PNG 1 장을 생성했다. 생성 뒤에는 재촬영하지 않았다.
+
+DOM metadata에는 요청 heading이 기록되어 있지만 실제 PNG를 직접 열어보면 구현 설명과 과거 검증 부분만 보이며 `최초 cold 검증 결과` heading은 보이지 않는다. DOM 관측을 screenshot visibility proof로 승격하지 않는다. 이 PNG는 공개 README 보고 화면의 원본이며 요청한 신규 결과 heading 캡처의 수용 여부는 root가 판단한다.
+
+Root 지시로 main `02bfba1aa971d9449cad41103211e8a3d3503451`에 중간 rebase 1 회를 수행했고, 당시 head는 `a0495d0b73c9df3b2340e588bd57c2240f912223`이다. 캡처 source와 중간 rebase source 사이 소유 파일 15 개는 byte-identical이며 검증에 사용한 공통 의존 파일 39 개도 동일하다. 그 뒤에는 artifact·문서만 납품하며 fixture·typecheck·install·capture를 재실행하지 않는다.
+
+현재 main `02bf`에는 `context/`가 없고 shared 타입과 renderer는 `../../context/types.ts`를 import type한다. 지정 context pin은 전용 검증 합성에만 사용했으며 public 공통 폴더에 타입을 복제하거나 stub을 추가하지 않았다. 실제 type-only 선행은 PR24이고, root가 정한 순서는 PR19 schema 013 → PR24 P107/08 → PR21 → PR22이다. 최종 rebase는 PR24 합류 뒤 root가 지정하며 현재 중간 rebase를 최종 합류라고 주장하지 않는다.
 
 ## 아직 연결하거나 확인하지 않은 경계
 
@@ -52,6 +62,6 @@ node --test "$ARTIFACT_ROOT/cold-focus.test.mjs"
 
 입력 owner의 최종 claim/permit 및 context 기록 API, P112 spool/PG append/중앙 ACK, physical writer gate, 실제 계정 cold/interrupt/inference·Spot 및 G-05는 아직 미연결 또는 미검증이다. 메모리 sink 반환을 PG commit으로 보고하지 않는다. 합성 fixture 통과는 P1-11 또는 G-05 전체 합격이 아니다.
 
-최초 실제 결과 보고 PNG는 client ContextReady 인계 후 대기 중이며 PR은 draft로 유지한다. 제품 UI나 browser 동작 검증을 이 protocol 결과로 대신하지 않는다. 최종 base와 합류·수용 판단은 root가 담당한다.
+최초 PNG는 아래 원본으로 보존하며 요청 heading의 직접 확인은 미충족이다. PR은 draft로 유지한다. 제품 UI나 browser 동작 검증을 이 protocol 결과로 대신하지 않는다. 최종 base와 합류·수용 판단은 root가 담당한다.
 
 과거 환경에서 재개 뒤 최초 캡처를 준비하던 fresh Pod 조회는 Kubernetes API 연결 timeout으로 exit 1이었다. 이 실패는 과거 환경의 원 기록이며 새 recovery Ready 관측과 구분한다. 당시 browser 실행 또는 성공 검증의 반복은 하지 않았다. 기존 PR head와 디스크 증거를 대조해 보존했으며 원격 접근 경로의 조정은 root가 판단한다.
