@@ -98,9 +98,8 @@ export async function recordFailureEvidence(tx: DurableTransaction, request: Pre
   const ids = originals.rows.map(row => row.id)
   await tx.query('UPDATE durable_runtime.failure_incidents SET classification=$2,evidence_refs=$3::jsonb WHERE id=$1',
     [incident.id, classification.classification, JSON.stringify(ids)])
-  let next: FailureIncidentStateRow
-  if (!previous) {
-    next = (await tx.query<FailureIncidentStateRow>(
+  const next: FailureIncidentStateRow = !previous
+    ? (await tx.query<FailureIncidentStateRow>(
       `WITH first_seen AS (SELECT clock_timestamp() AS started_at)
        INSERT INTO durable_runtime.failure_incident_state
        (incident_id,runtime_unit_id,attempt_id,execution_epoch,collection_started_at,deadline_at,state,reason,classification_revision,evidence_ids)
@@ -108,12 +107,10 @@ export async function recordFailureEvidence(tx: DurableTransaction, request: Pre
        FROM first_seen RETURNING *`,
       [incident.id, t.runtimeUnitId, t.attemptId, t.executionEpoch, current ? input.collectionPolicy.budgetMs : 0,
         state, reason, classification.observationIds])).rows[0]
-  } else {
-    next = (await tx.query<FailureIncidentStateRow>(
+    : (await tx.query<FailureIncidentStateRow>(
       `UPDATE durable_runtime.failure_incident_state SET state=$2,reason=$3,revision=revision+1,
        classification_revision=classification_revision+1,evidence_ids=$4::text[] WHERE incident_id=$1 RETURNING *`,
       [incident.id, state, reason, classification.observationIds])).rows[0]
-  }
   const result: RecordFailureResult = { ...base, status: 'RECORDED', incidentId: incident.id,
     classification: classification.classification, revision: next.revision, state: next.state, reason: next.reason }
   await writeIncidentArtifacts(tx, { actorId: input.receiptKey.principalId, unitId: t.runtimeUnitId,

@@ -191,7 +191,6 @@ check('원 deadline은 추가 source·정책 변경에도 불변이며 만료 au
   const [a, b] = await Promise.all([expireFailureEvidenceWithReceipt(pool, expiry), expireFailureEvidenceWithReceipt(pool, {
     ...expiry, receiptKey: { ...expiry.receiptKey, operationKey: randomUUID() } })])
   assert.ok(a.status !== 'UNCERTAIN' && b.status !== 'UNCERTAIN')
-  if (a.status === 'UNCERTAIN' || b.status === 'UNCERTAIN') { throw new Error('fixture expiry uncertain') }
   const statuses = [a.receipt.response, b.receipt.response].map(value => {
     assert.ok(value && typeof value === 'object' && !Array.isArray(value)); return value.status
   })
