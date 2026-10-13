@@ -24,13 +24,13 @@ before(async () => {
 })
 after(async () => {
   if (process.env.P125_EVIDENCE) {
-    await writeFile(process.env.P125_EVIDENCE, JSON.stringify({ scope: 'ACTUAL_PG_REPLAY_NOTIFICATION_MODULE_WITH_FIXTURE_SOURCES',
+    await writeFile(process.env.P125_EVIDENCE, `${JSON.stringify({ scope: 'ACTUAL_PG_REPLAY_NOTIFICATION_MODULE_WITH_FIXTURE_SOURCES',
       recordedAt: new Date().toISOString(), sourceRevision: process.env.P125_SOURCE_REVISION,
-      baseRevision: '7b7e32c281f674450a711fad17921d13fcb74cc1', migrations, cases, observations,
+      baseRevision: process.env.P125_BASE_REVISION, migrations, cases, observations,
       authenticationVerified: false, providerRecoveryVerified: false, httpSseConnected: false,
       producerSpoolVerified: false, physicalHaFencingVerified: false,
       replyLossMode: 'driver hook discards reply after real PG COMMIT; not actual network loss',
-      rollbackFaultMode: 'statement hook rejects before COMMIT; no shared PG/Pod/Node fault' }, null, 2)+'\n', { mode: 0o600 })
+      rollbackFaultMode: 'statement hook rejects before COMMIT; no shared PG/Pod/Node fault' }, null, 2)}\n`, { mode: 0o600 })
   }
   await pool.end()
 })

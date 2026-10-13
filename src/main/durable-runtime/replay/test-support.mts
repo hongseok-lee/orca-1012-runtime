@@ -28,6 +28,8 @@ export async function fixture(pool: Pool): Promise<NotificationTarget> {
   const agent = logicalId('agent', randomUUID())
   const session = logicalId('session', randomUUID())
   const workspace = randomUUID()
+  const storageBinding = randomUUID()
+  const storageBackend = `p125-fixture-${randomUUID()}`
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -35,7 +37,9 @@ export async function fixture(pool: Pool): Promise<NotificationTarget> {
     await client.query("INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'p125-fixture')", [agent])
     await client.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,'p125','READY')", [workspace, randomUUID()])
     await client.query("INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')", [session, agent, workspace])
-    await client.query('INSERT INTO durable_runtime.runtime_members(session_id,runtime_unit_id) VALUES($1,$2)', [session, unit])
+    await client.query("INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,'fixture-export')", [storageBackend])
+    await client.query("INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$2,'fixture-export','/fixture','RO')", [storageBinding, storageBackend])
+    await client.query('INSERT INTO durable_runtime.runtime_members(session_id,runtime_unit_id,storage_binding_id) VALUES($1,$2,$3)', [session, unit, storageBinding])
     await client.query('COMMIT')
   } catch (error) { await client.query('ROLLBACK'); throw error } finally { client.release() }
   return { runtimeUnitId: unit, sessionIds: [session], agentId: agent }
