@@ -11,7 +11,8 @@ import {
   commandObject,
   originalStageForDelivery,
   stageBinding,
-  readInputExecutionTarget
+  readInputExecutionTarget,
+  snapshotInputEnvelope
 } from './stage-binding.ts'
 import { readRecoveryContextFrame } from '../context/frame.ts'
 import { InputStoreError, type InputAuthority } from './types.ts'
@@ -26,15 +27,16 @@ export async function claimInputEffectInTransaction(
 ) {
   scope = { ...scope, scope: { ...scope.scope } }
   context = { ...context, controller: { ...context.controller } }
-  requireInputSessionLock(tx, scope.sessionId)
-  await assertInputScope(tx, scope)
-  original = { ...original, originalEnvelope: { ...original.originalEnvelope } }
+  original = Object.freeze({ ...original, originalEnvelope: snapshotInputEnvelope(original.originalEnvelope) })
+  if (!/^[a-f0-9]{64}$/.test(original.inputHash)) throw new InputStoreError('INPUT_COMMAND_PAYLOAD')
   if (
     original.command !== 'dispatchInput' ||
     original.originalEnvelope.podTarget !== 'EXISTING_POD'
   ) {
     throw new InputStoreError('INPUT_DISPATCH_COMMAND')
   }
+  requireInputSessionLock(tx, scope.sessionId)
+  await assertInputScope(tx, scope)
   const authority = await LockedGatewayAuthority.acquire(tx, context)
   const command = await lookupCommand(authority, original)
   if (!command) {

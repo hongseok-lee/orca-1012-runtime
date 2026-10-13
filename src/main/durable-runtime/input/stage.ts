@@ -7,15 +7,31 @@ import { sealInputMessageInTransaction } from './seal.ts'
 import { LockedGatewayAuthority } from '../runtime/gateway/authority.ts'
 import { submitCommand, originalIdentity, assertOriginal } from '../runtime/gateway/store.ts'
 import { claimCommand, settleOwnedExecution } from '../runtime/gateway/claim.ts'
-import { canonicalInput } from '../runtime/gateway/input.ts'
+import { inputDigest } from '../runtime/gateway/input.ts'
 import type { GatewayContext, SubmitCommand, ExecutorId } from '../runtime/gateway/types.ts'
 import {
   stageBinding,
   originalStageForDelivery,
   sameStageInput,
   readInputExecutionTarget,
-  commandObject
+  commandObject,
+  ownedInputJson,
+  snapshotInputEnvelope
 } from './stage-binding.ts'
+
+function snapshotStagePredecessor(value: SubmitCommand['predecessor']): SubmitCommand['predecessor'] {
+  if (value.kind === 'NONE') return Object.freeze({ kind: 'NONE' as const })
+  if (value.kind !== 'RECONCILED') throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
+  const receipt = value.receipt
+  const identity = Object.freeze({ ...receipt.identity,
+    originalEnvelope: snapshotInputEnvelope(receipt.identity.originalEnvelope) })
+  if (!/^[a-f0-9]{64}$/.test(identity.inputHash)) throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
+  if (receipt.state === 'RESOLVED') return Object.freeze({ kind: 'RECONCILED' as const,
+    receipt: Object.freeze({ identity, state: 'RESOLVED' as const, result: ownedInputJson(receipt.result) }) })
+  if (receipt.state === 'REFUSED' && typeof receipt.reason === 'string') return Object.freeze({ kind: 'RECONCILED' as const,
+    receipt: Object.freeze({ identity, state: 'REFUSED' as const, reason: receipt.reason }) })
+  throw new InputStoreError('COMMAND_PREDECESSOR_INVALID')
+}
 
 /** Internal DB staging only. Every helper failure must unwind the owning P1-03 transaction. */
 export async function stageInputInTransaction(
@@ -27,17 +43,19 @@ export async function stageInputInTransaction(
 ) {
   scope = { ...scope, scope: { ...scope.scope } }
   context = { ...context, controller: { ...context.controller } }
-  requireInputSessionLock(tx, scope.sessionId)
-  await assertInputScope(tx, scope)
-  request = {
+  request = Object.freeze({
     ...request,
-    envelope: { ...request.envelope },
-    input: JSON.parse(canonicalInput(request.input))
-  }
+    envelope: snapshotInputEnvelope(request.envelope),
+    input: ownedInputJson(request.input),
+    predecessor: snapshotStagePredecessor(request.predecessor)
+  })
   if (request.command !== 'stageInput' || request.envelope.podTarget !== 'EXISTING_POD') {
     throw new InputStoreError('INPUT_STAGE_COMMAND')
   }
+  if (inputDigest(request.input) !== request.inputHash) throw new InputStoreError('COMMAND_INPUT_HASH')
   const binding = stageBinding(request.input)
+  requireInputSessionLock(tx, scope.sessionId)
+  await assertInputScope(tx, scope)
   const authority = await LockedGatewayAuthority.acquire(tx, context)
   const prior = await originalStageForDelivery(tx, binding.deliveryAttemptId)
   if (prior) {
