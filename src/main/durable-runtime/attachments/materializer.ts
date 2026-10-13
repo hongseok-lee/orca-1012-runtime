@@ -56,7 +56,7 @@ async function verifyTarget(
 ): Promise<void> {
   const file = await open(
     descriptorPath(directory, filename),
-    constants.O_RDONLY | constants.O_NOFOLLOW
+    constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK
   )
   try {
     const before = await file.stat()
