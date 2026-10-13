@@ -47,7 +47,7 @@ function text(value: unknown): string {
 
 function ids(value: unknown): readonly string[] {
   if (!Array.isArray(value)) { invalid() }
-  return Object.freeze([...new Set(value.map(text))])
+  return Object.freeze([...new Set(Array.from(value, text))])
 }
 
 function privateFile(path: string): ReturnType<typeof lstatSync> {
