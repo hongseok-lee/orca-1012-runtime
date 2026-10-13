@@ -8,6 +8,7 @@ declare const stopEvidenceBrand: unique symbol;
 export interface VerifiedDirectoryEvidence {
   readonly [directoryEvidenceBrand]: true;
   readonly evidenceRef: string;
+  readonly topologyPinId: string;
   readonly candidate: CanonicalCandidate;
 }
 export interface ExecutionTarget {
@@ -30,14 +31,20 @@ export interface VerifiedPermanentComputeStop {
   // Phase 1 requires a verified no-reentry boundary. STOPPED is insufficient.
   readonly disposition: 'DELETED_NO_REENTRY';
 }
-// This privileged dependency must be supplied by the authenticated observer / PV
-// authority. No production implementation or public string-to-proof constructor
-// is supplied here. Null/unavailable results fail closed. Fixture implementations
-// live exclusively in tests; injecting one into production is not authentication.
+// External collection/authentication/pinning finishes BEFORE entering a DB tx.
+// This accessor reads only immutable prepared local evidence; it cannot return a
+// Promise or perform cloud, K8s, filesystem or network I/O. Proof refs identify the
+// immutable original observation, never a mutable latest alias. The owner keeps
+// its topology/lifetime pin live until tx completion and releases it outside tx.
+// Actual authenticated verifier/pin implementations are not supplied. Fixture
+// evidence belongs only to tests and cannot qualify production fencing.
 export interface StorageEvidenceAuthority {
-  directory(reference: string): Promise<VerifiedDirectoryEvidence | null>;
-  revalidateDirectory(held: VerifiedDirectoryEvidence): Promise<VerifiedDirectoryEvidence | null>;
-  mount(reference: string): Promise<VerifiedMountEvidence | null>;
-  executionTarget(attemptId: AttemptId, podUid: string, incarnation: string, epoch: string): Promise<ExecutionTarget | null>;
-  permanentComputeStop(reference: string): Promise<VerifiedPermanentComputeStop | null>;
+  directory(reference: string): VerifiedDirectoryEvidence | null;
+  directoryPinValid(held: VerifiedDirectoryEvidence): boolean;
+  mount(reference: string): VerifiedMountEvidence | null;
+  mountPinValid(held: VerifiedMountEvidence): boolean;
+  executionTarget(attemptId: AttemptId, podUid: string, incarnation: string, epoch: string): ExecutionTarget | null;
+  executionTargetPinValid(held: ExecutionTarget): boolean;
+  permanentComputeStop(reference: string): VerifiedPermanentComputeStop | null;
+  computeStopPinValid(held: VerifiedPermanentComputeStop): boolean;
 }
