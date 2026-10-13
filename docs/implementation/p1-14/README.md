@@ -21,3 +21,5 @@ Root가 수락해 main `02bfba1aa971d9449cad41103211e8a3d3503451`에 합류한 P
 원격 검증용 합성 source에는 정확한 P113 pin의 `lifecycle/` 파일과 소유 HA 파일만 필요하다. 별도 `config/tsconfig.durable-runtime-ha.json`과 `ha/actual-pg.test.mts`를 작성했다. 실제 PG fixture는 `orca_p114_` 소유 DB와 main migration 001–012를 요구하며 환경이 없으면 skip하지 않고 실패한다. 동시 선출, lock 대기 후 DB 시간, stale 갱신/반납, COMMIT 응답 손실, DB 불가, 늦은 갱신 응답, 원 operation/명령/queue 3회 인수 및 외부 무응답 취소의 새 경계만 다룬다. 리뷰 교정으로 건강한 renewal과 pass gate의 COMMIT 전·후 경합 1건, 최초 await 뒤 nested inventory 교체 1건을 추가했다. 작성한 fixture는 총 9건이며 모두 미실행이다. Fixture의 인증 타입 단언은 실제 인증 증거가 아니다.
 
 Source API 조기 commit은 `2d0e435bd8676b3a4587f5d2ed387837874ee87b`이다. Type, lint 및 실제 PG 검증은 아직 실행하지 않았다. Bridge의 검증 자리 인계 전 원격 검증을 시작하지 않는다. Backend 재연결에서 성공한 정상 암호화 API는 이 core의 검증 결과가 아니다. 실제 검증 결과 화면도 아직 없다.
+
+최초 검증 결과: source `6f8c720245470e94a025ff58c4bfff11d0fef6d7`에서 PG 9건, fail/skip/cancelled 0건 및 scoped type/lint exit 0을 확인했다. 원 lint 54건은 소유 형식 교정으로 해결했다. 정확한 source/base/dependency와 한계는 [최초 검증 결과](evidence/first-verification.md)에 기록했다. 위 미실행 설명은 조기 source 제출 당시의 이력이다. 실제 HA 배포 및 공개 RPC 합류는 여전히 미완료다.
