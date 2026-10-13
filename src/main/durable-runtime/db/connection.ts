@@ -71,20 +71,26 @@ export class DurableTransaction {
   }
 
   isLockHeld(rank: number, key: string): boolean {
-    if (!this.active) throw new DurableDatabaseError("TX_CLOSED");
+    if (!this.active) {
+      throw new DurableDatabaseError("TX_CLOSED");
+    }
     return this.heldLocks.get(rank)?.has(key) ?? false;
   }
 
   // The lock helper calls this only after SQL succeeded and found its row.
   markLockAcquired(rank: number, key: string): void {
-    if (!this.active) throw new DurableDatabaseError("TX_CLOSED");
+    if (!this.active) {
+      throw new DurableDatabaseError("TX_CLOSED");
+    }
     const keys = this.heldLocks.get(rank) ?? new Set<string>();
     keys.add(key);
     this.heldLocks.set(rank, keys);
   }
 
   advanceLock(rank: number, key: string): void {
-    if (this.isLockHeld(rank, key)) return;
+    if (this.isLockHeld(rank, key)) {
+      return;
+    }
     if (rank < this.lockRank || (rank === this.lockRank && key < this.lastKey)) {
       throw new DurableDatabaseError("LOCK_ORDER");
     }

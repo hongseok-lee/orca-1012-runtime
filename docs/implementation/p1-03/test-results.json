@@ -1,0 +1,100 @@
+{
+  "behavioral_revision": "cf0fbca42aaf79122ed1d5ac4caf32431628b75c",
+  "early_api_revision": "d3771d1ebe06799d9a9ee6bc8cd3a4f6c3b929e0",
+  "base": "f01aa4d0d2d2288f99c97863a1e407a390d098b0",
+  "result": "11 distinct real-PG cases pass across initial2 + remaining9. Separate narrow lock pass is also included in remaining9; not a single all-green whole suite.",
+  "cases": [
+    {
+      "name": "callback before and midway failures roll back business receipt journal outbox audit",
+      "result": "PASS",
+      "evidence": "tests-private.log"
+    },
+    {
+      "name": "hidden callback commit and multi-statement transaction control are rejected",
+      "result": "PASS",
+      "evidence": "tests-private.log"
+    },
+    {
+      "name": "prelocked gateway reentry and journal reuse succeed but new reverse Session lock is rejected",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "owned backend termination before commit cannot return partial durable success",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "same authenticated key replays one receipt without duplicate callback effect",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "actual COMMIT response loss returns uncertain then original-key lookup finds same durable receipt",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "native source identity dedup preserves same event and distinct identity equal body",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "publisher cannot observe uncommitted outbox and concurrent claims are disjoint",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "actual owned publisher process crashes before publish and after publish preserve event ID for restart",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "publish failure records retry state and stale claim cannot overwrite new owner",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    },
+    {
+      "name": "unavailable owned DB connection never yields durable success or publish",
+      "result": "PASS",
+      "evidence": "tests-remaining-private.log"
+    }
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "configured_lint": "PASS",
+    "format": "PASS"
+  },
+  "failed_initial": {
+    "typecheck": "Response proxy Buffer.includes typing corrected",
+    "runtime": "Owned connection termination emitted an unhandled active-client ECONNRESET; sanitized client error listener added; later actual termination test passed"
+  },
+  "transport_injection": "Real local TCP proxy dropped PostgreSQL COMMIT reply after actual server CommandComplete; mutation returned UNCERTAIN; original key lookup found same receipt and one Message. No mock DB.",
+  "publisher_injection": "Actual owned child SIGKILL after claim before publish and after isolated file/report subscriber observation before completion marker. Restart reused same canonical event ID; local isolated delivery observer is not real provider/network acceptance.",
+  "gateway_integration": "Actual backend LockedGatewayAuthority source from9eb094867c5cdf4539e82914190163e72e51559c loaded in isolated execution copy with Node24 transform-types; synthetic controller fixture, no auth/fencing claim.",
+  "repetition_note": "Standalone narrow lock case was inadvertently included once again in remaining selector; other initial passing cases were skipped. No further repetition.",
+  "migration_scope": "009 applied only in own orca_p103 DB; no production009 apply/shared fault. Existing verified008 was included once when final source rebased, without008 schema tests.",
+  "timestamps": "recordedAt is DB transactional INSERT timestamp; commitObservedAt is worker wall clock after confirmation; transactionDurationMs is monotonic worker duration. No WAL-flush instant/global replay commit-order/E2E claim.",
+  "source_sha256": {
+    "src/main/durable-runtime/db/atomic.ts": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+    "src/main/durable-runtime/db/atomic.test.mts": "f51f08c673019ab3bfff06ee30bda5c4bc4b7d79b682f6d893479d791a4b3326",
+    "src/main/durable-runtime/db/connection.ts": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+    "src/main/durable-runtime/db/locks.ts": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+    "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+    "src/main/durable-runtime/journal/outbox-crash-worker.mts": "587a070c9bc853073347a1a0b580a34fa217d4dc1f90945981210833f3f8226d",
+    "src/main/durable-runtime/journal/publisher.ts": "728d47e6e9e43a62f46d618433a93989a116b88930ea8d1dd433ef6a1c18d807",
+    "src/main/durable-runtime/journal/store.ts": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb"
+  },
+  "private_log_sha256": {
+    "tests-remaining-private.log": "15ff699200ea727f27b1d2611b2dbb06f7ad0e7b6c59e5394d600c5f26485b4d",
+    "tests-private.log": "a6fa3c00fb8af4c8282e75a8e9eee33d56101e56e473c0e5f04ad8dbe02f3966",
+    "tests-lock-private.log": "fc03dc16e1f4fc04696f6994c764f6d0b8b3a019d7e8e38c7491486782ef6aaa"
+  },
+  "unjoined": [
+    "P1-05 intake",
+    "P1-12 actual producer spool/transport",
+    "P1-20 output",
+    "P1-25 replay order",
+    "provider/physical fencing/HA/native UI"
+  ]
+}

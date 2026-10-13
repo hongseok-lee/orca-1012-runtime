@@ -24,8 +24,9 @@ export async function claimOutbox(
     input.limit > 100 ||
     !Number.isSafeInteger(input.leaseMs) ||
     input.leaseMs < 1
-  )
+  ) {
     throw new DurableDatabaseError("OUTBOX_CLAIM_INPUT");
+  }
   const token = randomUUID();
   return withDurableTransaction(pool, async (tx) => {
     const result = await tx.query(
@@ -62,7 +63,9 @@ export async function recordOutboxFailure(
   claim: OutboxClaim,
   code: string,
 ): Promise<boolean> {
-  if (!/^[A-Z0-9_]{1,64}$/.test(code)) throw new DurableDatabaseError("OUTBOX_ERROR_CODE");
+  if (!/^[A-Z0-9_]{1,64}$/.test(code)) {
+    throw new DurableDatabaseError("OUTBOX_ERROR_CODE");
+  }
   return withDurableTransaction(pool, async (tx) => {
     const result = await tx.query(
       "UPDATE durable_runtime.outbox_events SET state='PENDING',claim_owner=NULL,claim_token=NULL,claim_expires_at=NULL,last_error_code=$4 WHERE id=$1 AND state='CLAIMED' AND claim_owner=$2 AND claim_token=$3 AND claim_expires_at>clock_timestamp()",

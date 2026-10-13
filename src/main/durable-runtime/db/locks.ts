@@ -23,7 +23,9 @@ async function lockRows(
   ids: readonly string[],
 ): Promise<void> {
   for (const id of [...new Set(ids)].sort()) {
-    if (tx.isLockHeld(rank, id)) continue;
+    if (tx.isLockHeld(rank, id)) {
+      continue;
+    }
     tx.advanceLock(rank, id);
     const result = await tx.query(
       `SELECT id FROM durable_runtime.${table} WHERE id=$1 FOR UPDATE`,
@@ -47,7 +49,9 @@ export async function lockAggregates(tx: DurableTransaction, locks: AggregateLoc
     ]),
   );
   for (const [key, domain] of [...domains].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
-    if (tx.isLockHeld(3, key)) continue;
+    if (tx.isLockHeld(3, key)) {
+      continue;
+    }
     tx.advanceLock(3, key);
     const result = await tx.query(
       "SELECT backend_id FROM durable_runtime.storage_domains WHERE backend_id=$1 AND export_id=$2 FOR UPDATE",
