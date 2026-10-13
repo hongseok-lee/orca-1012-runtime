@@ -63,15 +63,33 @@ export interface PlacementObservation {
   readonly otherUserPodUids: readonly string[]
   readonly platformPodUids: readonly string[]
   readonly unknownPodUids: readonly string[]
+  readonly provenance: OriginalObservationProvenance | null
+}
+export interface ResourceValues {
+  readonly memoryRequest: string | null
+  readonly memoryLimit: string | null
+  readonly cpuRequest: string | null
+  readonly cpuLimit: string | null
+}
+export interface OriginalObservationProvenance {
+  readonly target: FailureTarget
+  // Exact original termination/counter alias, not the latest Pod name/RV.
+  readonly eventKey: string
+  readonly sourceRef: string
+  readonly observedAt: string
+}
+export interface BoundResourceObservation {
+  readonly values: ResourceValues
+  readonly provenance: OriginalObservationProvenance
 }
 export interface ResourceObservation {
-  readonly desiredMemoryRequest: string | null
-  readonly desiredMemoryLimit: string | null
-  readonly admittedMemoryRequest: string | null
-  // null means absent; undefined/missing is represented by resources=null.
-  readonly admittedMemoryLimit: string | null
-  readonly admittedCpuRequest: string | null
-  readonly admittedCpuLimit: string | null
+  readonly desired: ResourceValues
+  readonly observedSpec: ResourceValues | null
+  readonly observedStatus: { readonly containerId: string | null; readonly values: ResourceValues } | null
+  readonly admitted: BoundResourceObservation | null
+  // A null plane is unknown, whereas values.memoryLimit=null in an original
+  // applied plane means a positively observed absent limit for that execution.
+  readonly applied: BoundResourceObservation | null
 }
 export interface FailureObservationInput {
   readonly observationId: string
