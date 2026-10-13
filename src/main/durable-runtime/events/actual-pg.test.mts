@@ -28,7 +28,7 @@ before(async () => {
   assert.equal(found.length, 11, "pinned complete owner schema required");
   const applied = await applyMigrations(pool, found);
   migrations = applied.map(({ version, checksum }) => ({ version, checksum }));
-  await pool.query("CREATE TABLE public.p112_effects(event_id uuid PRIMARY KEY, value text NOT NULL)");
+  await pool.query("CREATE TABLE IF NOT EXISTS public.p112_effects(event_id uuid PRIMARY KEY, value text NOT NULL)");
 });
 after(async () => {
   if (process.env.P112_EVIDENCE) await writeFile(process.env.P112_EVIDENCE, JSON.stringify({
@@ -66,14 +66,15 @@ async function fixture(): Promise<Fixture> {
     await client.query("INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision,updated_at) VALUES($1,0,'{}',0,clock_timestamp())", [unit]);
     await client.query("INSERT INTO durable_runtime.attempts(id,runtime_unit_id,execution_epoch,mode,pod_uid,incarnation,resource_profile_revision,effective_resources,status) VALUES($1,$2,1,'COLD',$3,$4,0,'{}','STOPPED')", [attempt, unit, pod, incarnation]);
     await client.query("INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,'fixture-export')", [storage]);
-    await client.query("INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$1,'fixture-export','/fixture','RO')", [storage]);
+    await client.query("INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$2,'fixture-export','/fixture','RO')", [storage, storage]);
     for (const session of sessions) {
       await client.query("INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')", [session, agent, workspace]);
       await client.query("INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)", [unit, session, storage]);
     }
     await client.query("INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at) VALUES($1,$2,1,clock_timestamp()+interval '5 minutes')", [authority.scope, authority.owner]);
     await client.query("COMMIT");
-  } finally { client.release(); }
+  } catch (error) { await client.query("ROLLBACK"); throw error; }
+  finally { client.release(); }
   const workload = {
     attemptId: attempt, producerId, incarnation, podUid: pod, executionEpoch: counter("execution-epoch", "1"),
     principalRef: "verification-only-not-authenticated", authenticationEvidenceRef: "verification-only-not-auth-proof",
@@ -241,4 +242,29 @@ check("invalid deadline, invalid binding and database outage have no success ACK
   try { await errorCode(() => enqueueRuntimeEvent(unavailable, f.producer, event(f, 1)), "DB_FAILURE"); }
   finally { await unavailable.end(); }
   assert.equal((await pool.query("SELECT count(*) AS n FROM durable_runtime.runtime_event_queue WHERE producer_id=$1", [f.stream.producerId])).rows[0].n, "0");
+});
+check("concurrent producer insert cannot invert consumer Session locks", async () => {
+  const f = await fixture(); const e = event(f, 1); await enqueueRuntimeEvent(pool, f.producer, e);
+  const c = await claim(f);
+  let entered!: () => void; const waiting = new Promise<void>(resolve => { entered = resolve; });
+  let release!: () => void; const gate = new Promise<void>(resolve => { release = resolve; });
+  const processing = processRuntimeEvent(pool, c, async tx => {
+    entered(); await gate; await tx.query("INSERT INTO public.p112_effects VALUES($1,'concurrent')", [e.eventId]);
+  });
+  await waiting;
+  const enqueuing = enqueueRuntimeEvent(pool, f.producer, event(f, 2));
+  release();
+  const [done, ack] = await Promise.all([processing, enqueuing]);
+  assert.equal(done.status, "DONE"); assert.equal(ack.durablyCommittedThrough, "2");
+});
+check("guarded queue handler cannot commit its own partial projection", async () => {
+  const f = await fixture(); const e = event(f, 1); await enqueueRuntimeEvent(pool, f.producer, e);
+  const c = await claim(f);
+  const result = await processRuntimeEvent(pool, c, async tx => {
+    await tx.query("INSERT INTO public.p112_effects VALUES($1,'must-rollback')", [e.eventId]);
+    await tx.query("COMMIT");
+  });
+  assert.equal(result.status, "RETRY");
+  assert.equal((await pool.query("SELECT count(*) AS n FROM public.p112_effects WHERE event_id=$1", [e.eventId])).rows[0].n, "0");
+  assert.equal((await pool.query("SELECT last_error FROM durable_runtime.runtime_event_queue WHERE event_id=$1", [e.eventId])).rows[0].last_error, "MUTATION_SQL_BOUNDARY");
 });

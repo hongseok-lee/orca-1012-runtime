@@ -105,6 +105,7 @@ export async function registerEventProducer(pool: Pool, input: EventProducer): P
   logicalId("attempt", w.attemptId); counter("execution-epoch", w.executionEpoch);
   if (!w.podUid || !w.principalRef || !w.authenticationEvidenceRef) reject("EVENT_BINDING");
   await withDurableTransaction(pool, async tx => {
+    await lockAggregates(tx, { runtimeUnitIds: [input.runtimeUnitId] });
     const binding = await tx.query(
       `SELECT a.id FROM ${d}attempts a WHERE a.id=$1 AND a.runtime_unit_id=$2 AND a.execution_epoch=$3 AND a.pod_uid=$4 AND a.incarnation=$5
        AND EXISTS(SELECT 1 FROM ${d}runtime_members m JOIN ${d}sessions s ON s.id=m.session_id WHERE m.runtime_unit_id=a.runtime_unit_id AND s.agent_id=$6)`,
@@ -134,6 +135,9 @@ export async function enqueueRuntimeEvent(pool: Pool, input: EventProducer, even
   const w = input.workload;
   const stream = { producerId: w.producerId, incarnation: w.incarnation };
   return withDurableTransaction(pool, async tx => {
+    // FK insertion also locks Session keys. Acquire them before the producer
+    // lock, so enqueue cannot invert a consumer's Session -> producer order.
+    await lockAggregates(tx, { sessionIds: ids, runtimeUnitIds: [input.runtimeUnitId] });
     const p = await producer(tx, stream, true);
     if (!w.principalRef || !w.authenticationEvidenceRef || p.agent_id !== input.agentId ||
       p.runtime_unit_id !== input.runtimeUnitId || p.attempt_id !== w.attemptId || p.pod_uid !== w.podUid || p.execution_epoch !== w.executionEpoch)
@@ -193,6 +197,7 @@ async function lockHead(tx: DurableTransaction, stream: ProducerStream, authorit
   // Head movement between discovery and locks requires a fresh transaction,
   // never acquiring an undiscovered Session after the Runtime/lease locks.
   if (before.processed_through !== p.processed_through) reject("EVENT_HEAD_CHANGED");
+  if (candidate.rows[0]) tx.advanceLock(7, candidate.rows[0].event_id);
   const q = await tx.query<QueueRow>(
     `SELECT q.*,claim_expires_at>clock_timestamp() AS claim_live,
        (next_retry_at IS NULL OR next_retry_at<=clock_timestamp()) AS retry_due
@@ -202,7 +207,7 @@ async function lockHead(tx: DurableTransaction, stream: ProducerStream, authorit
   const row = q.rows[0] ?? null;
   if ((row?.event_id ?? null) !== (candidate.rows[0]?.event_id ?? null) ||
     (row && !sameTargets(ids, await targets(tx, row.event_id)))) reject("EVENT_HEAD_CHANGED");
-  if (row) { tx.advanceLock(7, row.event_id); tx.markLockAcquired(7, row.event_id); }
+  if (row) tx.markLockAcquired(7, row.event_id);
   return { producer: p, queue: row, targets: ids };
 }
 function record(head: Head): EventRecord {
@@ -338,6 +343,7 @@ async function claimedHead(tx: DurableTransaction, claim: EventClaim, options: P
   const q = head.queue;
   if (!q || q.event_id !== claim.eventId || q.state !== "PROCESSING" || q.claim_token !== claim.token ||
     q.claim_owner !== claim.authority.owner || q.claim_controller_term !== claim.authority.term || !q.claim_live ||
+    head.producer.runtime_unit_id !== claim.runtimeUnitId || q.agent_id !== claim.agentId ||
     Number(q.attempt_count) !== claim.attemptCount || !sameTargets(head.targets, claim.targetSessionIds)) reject("EVENT_STALE_CLAIM");
   return head;
 }
