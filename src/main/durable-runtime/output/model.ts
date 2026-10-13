@@ -86,11 +86,11 @@ export function freezeJournalJson(value: unknown): FrozenJson {
   }
   return freeze(copy)
 }
-export function jsonObject(value: FrozenJson): { readonly [key: string]: FrozenJson } {
+export function jsonObject(value: FrozenJson): Readonly<Record<string, FrozenJson>> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     throw new JournalReadError('JOURNAL_FORMAT_UNREADABLE')
   }
-  return value as { readonly [key: string]: FrozenJson }
+  return value as Readonly<Record<string, FrozenJson>>
 }
 export function journalSafeCounter(value: string, positive = false): number {
   let decimal: string
