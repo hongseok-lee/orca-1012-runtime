@@ -1,0 +1,75 @@
+{
+  "status": "승인된 원격 결정적 protocol fixture 범위의 결과를 기록했습니다. 실제 provider와 P1-11/G-05 합격은 미확인입니다.",
+  "implementationRevision": "30a7dbffe03ca47b31fe8730f6a4a948c3509f30",
+  "dbPredecessor": "ad11b7fbe4016fe1aef0f916f2af7735e04f8af9",
+  "sharedRevision": "39e3e7ce1ed3a571d67094b298168934efb81aa1",
+  "inputRevision": "5ae4f671d0227abbc144f5ef6ba50a0346e59950",
+  "contextRevision": "6a61748f2de23db95d176acf0ecc728851988b66",
+  "gatewayRevision": "9052837192bba831a4f0b444e02e51da57c13709",
+  "node": "v24.15.0",
+  "typescript": "7.0.2",
+  "esbuild": "0.25.12",
+  "observedAt": "2026-10-13T04:04:09.467Z",
+  "checks": {
+    "protocol": {
+      "pass": 9,
+      "revision": "90167721b035215fa406a9fbeaf1482f7648a8a7",
+      "reused": true,
+      "note": "기존 9개 fixture를 재실행하지 않았습니다. 최초 protocol 구현의 검증 범위입니다.",
+      "tapSha256": "8167db9f177db26f95831dd6b315099dfa00e4d674c24fe99f5ddf34d191c342"
+    },
+    "sharedDriver": {
+      "pass": 11,
+      "reused": true,
+      "note": "shared 연결 뒤 wire hash 교정 전 소유 WIP에서 통과했습니다. 최종 전체 재실행으로 표시하지 않습니다.",
+      "tapSha256": "b2cf960ef528062984a847c508e21dd3610147650c532a9464723f92ada83824",
+      "ownedSourceArchiveSha256": "c055f1c7b33f30ce7556504f5a1d96a0b33ba521bc227927e55546be6a8df744"
+    },
+    "nativeWrapper": {
+      "pass": 1,
+      "reused": true,
+      "note": "최초 실행에서 생성 시 provider 호출 0과 미소유 baseline 종료 거절을 확인했습니다. 최초 결합 실행의 tool 출력으로 관찰했고 별도 원본 TAP는 보존하지 못했습니다."
+    },
+    "wireFocused": {
+      "pass": 1,
+      "note": "실제 turn/start params의 thread, client echo, 전체 내용 hash를 확인한 새 fixture만 실행했습니다.",
+      "tapSha256": "d65f06520ac542e8cbd81a9e646760342e2b493c819171e0421532107019ce03"
+    },
+    "typecheck": {
+      "state": "PASS",
+      "note": "driver/protocol와 전용 시험의 TypeScript 검사는 통과했습니다. 기존 native transport 전체 import graph의 타입 검사는 포함하지 않았습니다."
+    }
+  },
+  "failures": [
+    "첫 driver 타입 검사에서 literal 타입 및 fixture의 nominal/읽기 전용 타입 오류를 수정했습니다.",
+    "최초 결합 실행에서 ESM이 외부 pg cache를 찾지 못해 driver 시험이 실행 전에 중단됐습니다. 소유 실행 디렉터리에 기존 cache 참조를 연결했고 새 설치 없이 driver 11개가 통과했습니다."
+  ],
+  "boundaries": [
+    "실제 계정 inference, native cold/resume, permission-skip 실증, 자식 프로세스 종료 실증은 수행하지 않았습니다.",
+    "상위 executor의 실제 COMMIT/소유권/writer grant 인증과 입력 claim API는 아직 연결되지 않았습니다. TRANSACTION_LOCAL은 호출 권한이 아닙니다.",
+    "sink callback은 PG append, producer spool 또는 중앙 ACK가 아닙니다. 영속 원 identity reconciliation은 P112 합류 전입니다.",
+    "새 경로는 GENERAL만 처리합니다. 질문/승인/command/raw 채널은 미지원이며 reverse RPC는 수락 proof가 아닙니다.",
+    "첨부를 원 Component 순서의 JSON과 원 첨부 순서의 data URL 이미지로 직렬화했습니다. 실제 Codex data URL 수락과 이미지 내용 처리 능력은 미확인입니다.",
+    "native resume은 excludeTurns 응답 옵션을 전달합니다. 취소된 과거 작업의 실행 억제나 버전별 fallback 보장은 확인하지 않았습니다.",
+    "옛 target 뒤 새 dispatch가 생겼거나 effect가 진행 중이면 descendant baseline을 사용하지 않고 취소를 미확정으로 남깁니다.",
+    "동결 template, 관리 서비스, cache 대상, 보호 backup과 native transcript/auth/config를 실행하거나 변경하지 않았습니다. TTL은 조사하지 않았습니다."
+  ],
+  "sourceHashes": {
+    "src/main/durable-runtime/providers/codex/driver.test.mts": "611ec66bcae0f8664f288403bad3c3f173295b6c857730f98ea7171cf0cfe448",
+    "src/main/durable-runtime/providers/codex/driver.ts": "29b56e33731a88e9b1fde93bc979c7d8e40539590d260a2be6d3e3c391476422",
+    "src/main/durable-runtime/providers/codex/native-transport.test.mts": "a4ab2d4a43d9afdf888e89ca6ecdb0bb370342cc323621365b78f8a11bc816d2",
+    "src/main/durable-runtime/providers/codex/native-transport.ts": "a8e58f0aea873c446dcb51ee1193dac128dc5db95b752a8da2649e822de44410",
+    "src/main/durable-runtime/providers/codex/protocol.test.mts": "1afdb033614bcf3898f29ad8c3a89955c36ff2dfccffacdba29b26718f9b21ab",
+    "src/main/durable-runtime/providers/codex/protocol.ts": "0594f226d2b61a6da601d58a2b40199d28c13f8c120262fdab8808c8ad05356b",
+    "src/main/durable-runtime/providers/codex/tsconfig.json": "bc508fb314c7d9f0ac5da2b39d6e5e98e0cf4ee438aee07f57f4bcecc62dbf4a"
+  },
+  "sharedHashes": {
+    "src/main/durable-runtime/providers/shared/contracts.ts": "afdb62f6ecfd335c1d87d1dcde5b873c331ff7386e9136b5d77fe11b3ab3da87",
+    "src/main/durable-runtime/providers/shared/effect-boundary.ts": "ad3407b226b41e598bc4a17c29cb6d64f5b63ef554ff097a4a0798b98cdea62a",
+    "src/main/durable-runtime/providers/shared/recovery-renderer.ts": "52db0d617764de2d5f3b2f70dba520b7d4cb7c5c030fba61adb2095b7127bc8a"
+  },
+  "capture": {
+    "state": "UNCONFIRMED",
+    "note": "기존 최초 보고 캡처 작업의 완료를 이번 재개에서 확인하지 못했습니다. Kubernetes API 연결 시간 초과로 fresh Pod UID/readiness 및 PNG를 읽지 못했고 같은 원격 요청을 반복하지 않았습니다."
+  }
+}
