@@ -43,8 +43,6 @@ export function evaluateGrowth(input: GrowthInput): PolicyDecision {
   if (input.priorResourceWait) { return decision(policy, 'RESOURCE_WAIT', ['NO_NEW_MEMORY_CAUSE']) }
   const checks = inspectBudgets(policy, caps, profile, budget, target)
   if (checks.reasons.length > 0) { return decision(policy, 'BLOCKED', checks.reasons) }
-  const capacity = capacityDecision(policy, caps)
-  if (capacity) { return capacity }
   const current = positive(profile.memoryBytes)
   const refs = [profile.sourceRef, caps.sourceRef, budget.sourceRef]
   const reasons: string[] = [...classification.reasons, ...classification.missing]
@@ -63,8 +61,17 @@ export function evaluateGrowth(input: GrowthInput): PolicyDecision {
   if (!capEndpointKnown(targetMemory, profile.minimumMemoryBytes, caps, policy)) {
     return decision(policy, 'NEEDS_ADMISSION_EVIDENCE', ['CAP_ENDPOINT_NOT_ADMITTED', ...reasons])
   }
-  return decision(policy, 'GROW_CANDIDATE', reasons, targetMemory.toString(), refs,
-    peak !== null && usablePeak(peak, target, profile.profileRevision, budget.dbNowMs, policy) ? peak.windowId : null)
+  const windowId = peak !== null && usablePeak(peak, target, profile.profileRevision,
+    budget.dbNowMs, policy) ? peak.windowId : null
+  // First capacity wait fixes the same validated target/provenance as the
+  // candidate. The durable owner persists this plan; retries must read it.
+  const capacity = capacityDecision(policy, caps)
+  if (capacity) {
+    return capacity.kind === 'RESOURCE_WAIT'
+      ? decision(policy, 'RESOURCE_WAIT', [...capacity.reasons, ...reasons], targetMemory.toString(), refs, windowId)
+      : capacity
+  }
+  return decision(policy, 'GROW_CANDIDATE', reasons, targetMemory.toString(), refs, windowId)
 }
 
 export function evaluateReplacement(policy: ResourcePolicy, target: FailureTarget,
