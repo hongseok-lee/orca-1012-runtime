@@ -7,6 +7,8 @@ import { createSessionTabsRetirementProofDelta } from '../../runtime/rpc/methods
 import type { CapturedCatalogReadConfig } from './config.ts'
 import { CatalogReadError, catalogReadFailure } from './config.ts'
 import { SharedCatalogHeadHints } from './head-hints.ts'
+import { parseCatalogRepo } from '../catalog/payload.ts'
+import { getRepoExecutionHostId, getWorktreeExecutionHostId } from '../../../shared/execution-host.ts'
 import { authoritativeInventory, captureReadInvocation, catalogModules, projectTabs,
   resolveReadWorkspace, validateCatalogSnapshot, type CatalogReadInvocation } from './read.ts'
 
@@ -131,9 +133,12 @@ export class CatalogReadSubscriptions {
       const head = (await tx.query<{ dataset_name: string }>('SELECT dataset_name FROM durable_runtime.catalog_heads WHERE scope=$1',
         [`workspace:${row.workspace_id}`])).rows[0]
       if (!head || head.dataset_name !== this.config.datasetName) { throw new CatalogReadError('CATALOG_DATASET_MISMATCH') }
-      const repo = row.repo_id === null ? null : (await tx.query<{ payload: Record<string, unknown> }>(
-        'SELECT payload FROM durable_runtime.catalog_repositories WHERE id=$1', [row.repo_id])).rows[0]
-      const host = row.payload.hostId ?? row.payload.executionHostId ?? repo?.payload.executionHostId ?? 'local'
+      const repoRow = row.repo_id === null ? undefined : (await tx.query<{ id: string; payload: Record<string, unknown> }>(
+        'SELECT id,payload FROM durable_runtime.catalog_repositories WHERE id=$1', [row.repo_id])).rows[0]
+      const repo = repoRow === undefined ? undefined : parseCatalogRepo(repoRow)
+      if (row.kind === 'GIT' && !repo) { throw new CatalogReadError('CATALOG_REPO_NOT_FOUND') }
+      if (repo && getRepoExecutionHostId(repo) !== this.config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
+      const host = getWorktreeExecutionHostId(projection.projectCatalogWorktree(row), repo)
       if (host !== this.config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
       return { ...projectTabs(invocation, await projection.readWorkspaceTabsInTransaction(tx, row)), removed: true as const }
     })
