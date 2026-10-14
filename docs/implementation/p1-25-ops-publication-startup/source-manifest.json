@@ -20,8 +20,10 @@
     {
       "path": "src/main/orcad/orcad-ops-publication.value.test.mts",
       "role": "Backend 소유 변경",
-      "sha256": "ce3f7b58dfb7ec28d8a4c8616dfda1c759ceafd319d9290285250323a0788f5c",
-      "bytes": 3447
+      "sha256": "690a0c2e930171cc41e939032a48b820c764c63803d5f4a1240349f61b5ed23d",
+      "bytes": 3417,
+      "gitBlob": "0470bdb7d0200f4d0ee6dd519bbd9289c38e1bba",
+      "revision": "3037a8a1ae3fc4135fef0dfcee717c2c30e1f442"
     },
     {
       "path": "src/main/orcad/orcad-ops-publication.pg.test.mts",
@@ -51,15 +53,16 @@
     }
   ],
   "executions": {
-    "test": 0,
+    "test": 2,
     "type": 2,
-    "lint": 1,
-    "PG": 0,
+    "lint": 2,
+    "PG": 1,
     "build": 0,
     "install": 0,
     "live": 0,
     "capture": 0
   },
-  "qualification": "교정 fixture 타입의 소유 오류는 0개이지만 compiler exit 1과 기존 외부 진단 25개가 남습니다. 최초 lint 오류 1개에서 중단됐으며 값·PG·schema는 아직 실행되지 않았습니다. 원 최초 TS2352와 준비 helper 실패를 보존합니다.",
-  "approvedPGFixtureCorrection": "b9e8668706c77869f226711d9e30ae2f574f7aed"
+  "qualification": "새 두 callback과 한정 static 결과입니다. 기존 실제 화면은 이번 publisher의 live 실증이 아니며 dev 반영·전체 P1·HA·provider·native 완료를 선언하지 않습니다.",
+  "approvedPGFixtureCorrection": "b9e8668706c77869f226711d9e30ae2f574f7aed",
+  "approvedValueExpressionCorrection": "3037a8a1ae3fc4135fef0dfcee717c2c30e1f442"
 }
