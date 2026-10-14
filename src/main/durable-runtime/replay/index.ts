@@ -9,3 +9,12 @@ export type {
   PublicationResult,
   PublicationInput
 } from './types.ts'
+export { claimOpsReplayOutbox } from './claim.ts'
+export type { OpsReplayClaimInput, OpsReplayClaimIdentity } from './claim.ts'
+export { createOpsReplayPublicationWorker } from './worker.ts'
+export type {
+  OpsReplayWorkerConfig,
+  OpsReplayPassResult,
+  OpsReplayPublicationFailure,
+  OpsReplayPublicationWorker
+} from './worker.ts'
