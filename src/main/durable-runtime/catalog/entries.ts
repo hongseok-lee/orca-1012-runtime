@@ -21,6 +21,7 @@ import type { PreparedCatalogCall } from './request.ts'
 import { capturePreparedCatalogCall } from './mutation.ts'
 import { captureCatalogClose } from './close.ts'
 import { reserveCatalogRemoval, type PreparedCatalogRemoval } from './remove.ts'
+import { reserveCatalogBrowserTab, type PreparedCatalogBrowserLaunch } from './browser.ts'
 
 export type CatalogPreparedEntries = {
   /** Supplied before invoking the request; neither method is a public proof issuer. */
@@ -30,6 +31,7 @@ export type CatalogPreparedEntries = {
   readonly removal?: PreparedCatalogRemoval
   readonly binding?: PreparedCatalogBindingObservation
   readonly physicalAuthority?: CatalogPhysicalObservationAuthority
+  readonly browser?: PreparedCatalogBrowserLaunch
 }
 
 function response<Method extends CatalogMethod>(outcome: MutationOutcome): CatalogWireResults[Method] {
@@ -93,6 +95,7 @@ export function createCatalogEntries(pool: Pool, owners: CatalogOwnerEntries, pr
     'session.tabs.list': call => readCatalogWorkspaceTabs(pool, call),
     'session.tabs.listAll': call => readAllCatalogTabs(pool, call),
     'session.tabs.createTerminal': async call => response<'session.tabs.createTerminal'>(await createCatalogTerminal(pool, call, need('launch'), entries)),
+    'browser.tabCreate': async call => response<'browser.tabCreate'>(await reserveCatalogBrowserTab(pool, call, need('browser'))),
     'session.tabs.activate': async call => response<'session.tabs.activate'>(await selectCatalogTab(pool, call)),
     'session.tabs.close': async call => response<'session.tabs.close'>(await closeCatalogTab(pool, call, call.params.worktree, need('close'), entries)),
     'session.tabs.closeLifecycle': async call => response<'session.tabs.closeLifecycle'>(await applyCatalogBindingObservation(pool, call, need('binding'), need('physicalAuthority'))),
