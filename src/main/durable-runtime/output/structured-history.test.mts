@@ -9,6 +9,7 @@ import { buildStructuredHistoryPage } from './structured-history-page.ts'
 import { HISTORY_PAGE_CONTENT_BUDGET_BYTES } from '../../native-chat/agent-session-wire/agent-session-history-page-bounds.ts'
 import type { StructuredProjectionSnapshot } from './structured-projector.ts'
 
+// Read dependency: corrected PR64 product d4399f7705b2d6110ebbf5aeb2ce2f69316c23c6.
 // One value callback; the private scope assertion is a fixture premise, not an issuer.
 test('값1 실제 fold와 history의 sequence·cursor·byte 경계 및 원문 보존', () => {
   const scope = { principal: fingerprintAttachmentPrincipal('a'.repeat(64)),

@@ -8,7 +8,7 @@ import { registerCatalogProject, type CatalogRegistration } from '../catalog/reg
 import { captureCatalogReadContext } from './context.ts'
 import { captureDurableCatalogReadConfig } from './config.ts'
 import { DurableCatalogReadAdapter } from './public.ts'
-import { fixtureConfig, fixtureRuntime, fixtureContext } from './fixture-support.mts'
+import { fixtureConfig, fixtureRuntime, fixtureContext, deferred } from './fixture-support.mts'
 import { eraseRpcMethods } from '../../runtime/rpc/core.ts'
 import { RpcDispatcher } from '../../runtime/rpc/dispatcher.ts'
 import { WORKTREE_METHODS } from '../../runtime/rpc/methods/worktree.ts'
@@ -27,6 +27,7 @@ import type { CatalogWireResults } from '../catalog/wire.ts'
 import { STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY, CLAUDE_STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY,
   SESSION_TABS_AUTHORITATIVE_INVENTORY_RUNTIME_CAPABILITY } from '../../../shared/protocol-version.ts'
 
+// Read dependency: corrected PR64 product d4399f7705b2d6110ebbf5aeb2ce2f69316c23c6.
 // Source only: future Root dispatch supplies the exact prepared isolated DB. No DDL/reset/delete.
 if (process.env.ORCA_PUBLIC_STRUCTURED_HISTORY_APPROVED !== 'root-source-reviewed' ||
     !process.env.ORCA_PUBLIC_STRUCTURED_HISTORY_DB || process.env.ORCA_PUBLIC_STRUCTURED_HISTORY_DB !== process.env.PGDATABASE ||
@@ -140,9 +141,12 @@ test('PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history �
   })
   const before = await storedState(pool, sessionId)
   const transactions: Array<{ statements: string[]; released: number }> = []
+  const entered = deferred<void>(), resume = deferred<void>()
+  let gateConnect = false
   const observedPool = new Proxy(pool, { get(target, property) {
     if (property === 'end') { return () => { throw new Error('Borrowed Pool end forbidden') } }
     if (property === 'connect') { return async () => {
+      if (gateConnect) { gateConnect = false; entered.resolve(); await resume.promise }
       const client = await target.connect(), trace = { statements: [] as string[], released: 0 }
       transactions.push(trace)
       // Fixture-only instrumented actual client; no replacement query results.
@@ -168,6 +172,19 @@ test('PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history �
   assert.equal(transactions[0].statements.at(-1), 'COMMIT')
   assert.equal(transactions[0].statements.filter(sql => sql.includes('structured_session_aliases')).length, 2)
   assert.ok(transactions[0].statements.some(sql => sql.includes('input_components')))
+  const mutableRequest = { sessionId: publicSessionId, direction: 'tail', limit: 40 }
+  const mutableCapabilities = [...capabilities]
+  const mutableContext = fixtureContext(observed.runtime, { clientCapabilities: mutableCapabilities })
+  gateConnect = true
+  const detached = observed.adapter.history(mutableRequest, mutableContext)
+  await entered.promise
+  mutableRequest.sessionId = `structured_${randomUUID().replaceAll('-', '_')}`
+  mutableRequest.direction = 'after'; mutableRequest.limit = 1
+  mutableContext.authenticatedCallerFingerprint = 'b'.repeat(64)
+  mutableContext.clientKind = undefined; mutableCapabilities.splice(0)
+  mutableContext.runtime = fixtureRuntime().runtime
+  resume.resolve()
+  assert.deepEqual(await detached, result)
   const other = await history(request, 'b'.repeat(64))
   assert.deepEqual(other.page.items.map(item => item.itemId), [`input:${own.inputId}`, agentJournalSubmissionKey('same-history-key'), 'synthetic-provider-item'])
   assert.equal(other.page.submissions[0].payloadFingerprint, foreign.wireFingerprint)
@@ -184,6 +201,20 @@ test('PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history �
   } finally { denied.adapter.dispose(); wrongHost.adapter.dispose() }
   assert.deepEqual(await storedState(pool, sessionId), before)
   assert.deepEqual(state.unexpected, [])
+  // A stored alias with a real Session/Workspace but mismatched Agent provider is malformed.
+  // Prepare it once in the fixture, then verify the failed read performs zero writes.
+  const malformedSession = logicalId('session', randomUUID())
+  const malformedPublic = `structured_${randomUUID().replaceAll('-', '_')}`
+  await withDurableTransaction(pool, async tx => {
+    await tx.query(`INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle,session_fence)
+      VALUES($1,$2,$3,'CLOSED',0)`, [malformedSession, alias.agent_id, alias.workspace_id])
+    await tx.query(`INSERT INTO durable_runtime.structured_session_aliases(public_session_id,session_id,workspace_id,
+      provider,execution_host_id,location,original_create,created_by) VALUES($1,$2,$3,'claude','local','{}','{}',$4)`,
+      [malformedPublic, malformedSession, alias.workspace_id, fingerprintAttachmentPrincipal('a'.repeat(64))])
+  })
+  const beforeMalformed = await storedState(pool, sessionId)
+  await assert.rejects(history({ sessionId: malformedPublic, direction: 'tail' }), /STRUCTURED_HISTORY_ALIAS_SCOPE/)
+  assert.deepEqual(await storedState(pool, sessionId), beforeMalformed)
   // Unknown durable rows are preserved and rejected explicitly, never blank tail/missing fallback.
   await withDurableTransaction(pool, async tx => { await appendSessionEvent(tx, { sessionId,
     source: { kind: 'PRODUCER', sourceKind: 'SYNTHETIC_UNKNOWN_HISTORY', producerId: sessionId,
