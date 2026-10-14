@@ -56,7 +56,7 @@ test('PG 입력과 provider 출력은 별도 identity로 fold하며 revision·ba
   assert.deepEqual(first.items.map(x => x.itemId), [...centralIds, 'provider-user'])
   assert.equal(first.submissions.length, 2)
   assert.ok(first.submissions.every(x => x.dispatchState === 'pending' && x.providerItemId === null))
-  assert.ok(first.items.every(x => JSON.stringify(x.body) === JSON.stringify(message())))
+  for (const x of first.items) { assert.deepEqual(JSON.parse(JSON.stringify(x.body)), JSON.parse(JSON.stringify(message()))) }
   assert.deepEqual(first.unprojectedEvents.map(x => x.sequence), [1])
   assert.equal(empty.items.length, 0)
   providerBody.blocks[0].text = 'changed by caller'; one.original.payload.body.blocks[0].text = 'changed input'
