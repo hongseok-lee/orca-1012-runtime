@@ -42,12 +42,12 @@ function invalid(): never {
   throw new InputStoreError('OBSERVED_TURN_HISTORY_INVALID')
 }
 function object(value: unknown): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return invalid()
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) { return invalid() }
   // Object.entries avoids trusting an unchecked JSON type assertion.
   return Object.fromEntries(Object.entries(value))
 }
 function string(value: unknown): string {
-  if (typeof value !== 'string' || value.length === 0) return invalid()
+  if (typeof value !== 'string' || value.length === 0) { return invalid() }
   return value
 }
 function uuid<K extends string>(kind: K, value: unknown) {
@@ -57,21 +57,21 @@ function decimal<K extends string>(kind: K, value: unknown) {
   try { return counter(kind, string(value)) } catch { return invalid() }
 }
 function time(value: unknown): string {
-  if (value instanceof Date && !Number.isFinite(value.getTime())) return invalid()
+  if (value instanceof Date && !Number.isFinite(value.getTime())) { return invalid() }
   const text = value instanceof Date ? value.toISOString() : string(value)
-  if (!Number.isFinite(new Date(text).getTime())) return invalid()
+  if (!Number.isFinite(new Date(text).getTime())) { return invalid() }
   return text
 }
 function state(value: unknown): State {
-  if (value !== 'ADMITTED' && value !== 'SETTLED' && value !== 'INTERRUPTED') return invalid()
+  if (value !== 'ADMITTED' && value !== 'SETTLED' && value !== 'INTERRUPTED') { return invalid() }
   return value
 }
 function provider(value: unknown): Provider {
-  if (value !== 'claude' && value !== 'codex') return invalid()
+  if (value !== 'claude' && value !== 'codex') { return invalid() }
   return value
 }
 function classification(value: unknown): Classification {
-  if (value !== 'ORIGINAL_EXECUTION' && value !== 'CONTRADICTORY_NO_PERMISSION') return invalid()
+  if (value !== 'ORIGINAL_EXECUTION' && value !== 'CONTRADICTORY_NO_PERMISSION') { return invalid() }
   return value
 }
 
@@ -115,7 +115,7 @@ export async function readObservedTurnTargetInTransaction(
        AND e.body->>'nativeTurnId'=$2 ORDER BY e.journal_epoch,e.seq`,
     [scope.sessionId, nativeTurnId]
   )
-  if (result.rows.length === 0) throw new InputStoreError('OBSERVED_TURN_NOT_FOUND')
+  if (result.rows.length === 0) { throw new InputStoreError('OBSERVED_TURN_NOT_FOUND') }
   let target: Omit<ObservedTurnTarget, 'provenance'> | undefined
   let tupleKey: string | undefined
   let original = false
@@ -146,7 +146,7 @@ export async function readObservedTurnTargetInTransaction(
     const contextClass = classification(context.classification)
     const previousState = string(context.previousState)
     if (!['DISPATCH_INTENT','STAGED','EFFECT_POSSIBLE','ADMITTED','SETTLED',
-          'CANCELLED','UNKNOWN','INTERRUPTED'].includes(previousState)) return invalid()
+          'CANCELLED','UNKNOWN','INTERRUPTED'].includes(previousState)) { return invalid() }
     const contradictory = !['EFFECT_POSSIBLE','ADMITTED','UNKNOWN'].includes(previousState) &&
       previousState !== observedState
     if (body.kind !== 'INPUT_OBSERVATION' || fixed.sessionId !== scope.sessionId ||
@@ -163,10 +163,10 @@ export async function readObservedTurnTargetInTransaction(
         row.original_message !== fixed.messageId || row.message_session !== scope.sessionId ||
         row.original_attempt !== fixed.attemptId || row.attempt_unit !== fixed.runtimeUnitId ||
         row.attempt_epoch !== fixed.executionEpoch || row.pod_uid !== fixed.podUid ||
-        row.original_unit !== fixed.runtimeUnitId || row.member_session !== scope.sessionId) return invalid()
+        row.original_unit !== fixed.runtimeUnitId || row.member_session !== scope.sessionId) { return invalid() }
     const journalEpoch = decimal('journal-epoch', row.journal_epoch)
     const journalSequence = decimal('sequence:journal', row.seq)
-    if (journalSequence === '0') return invalid()
+    if (journalSequence === '0') { return invalid() }
     const observation = Object.freeze({
       eventId, contextId,
       contextRevision: decimal('context-revision', row.context_revision),
@@ -184,6 +184,6 @@ export async function readObservedTurnTargetInTransaction(
     original ||= contextClass === 'ORIGINAL_EXECUTION'
     provenance.push(observation)
   }
-  if (!original || !target) throw new InputStoreError('OBSERVED_TURN_NO_ORIGINAL')
+  if (!original || !target) { throw new InputStoreError('OBSERVED_TURN_NO_ORIGINAL') }
   return Object.freeze({ ...target, provenance: Object.freeze(provenance) })
 }
