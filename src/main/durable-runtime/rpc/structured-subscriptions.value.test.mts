@@ -6,27 +6,31 @@ import { STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY } from '../../../shared/pro
 import { captureDurableCatalogReadConfig } from './config.ts'
 import { createCatalogStructuredSubscriptions, type StructuredHistoryReadInput } from './structured-subscriptions.ts'
 import { fixtureConfig, fixtureContext, fixtureRuntime, deferred } from './fixture-support.mts'
+import { RuntimeSubscriptionRegistry } from '../../runtime/runtime-subscription-registry'
 
 if (process.env.ORCA_STRUCTURED_SUBSCRIBE_SOURCE_APPROVED !== 'root-source-reviewed') {
   throw new Error('Root source review required; this fixture has not run')
 }
 
 await test('값 1개: 원 wire·직렬 drain·원 receiver·같은 cursor와 fence·cleanup·늦은 결과를 구분합니다', async () => {
-  let head = 0, enabled = true, queries = 0, activeReads = 0, maximumReads = 0
+  let head = 0, observedFence = 1, enabled = true, queries = 0, activeReads = 0, maximumReads = 0
   const calls: unknown[] = [], captured: StructuredHistoryReadInput[] = [], frames: AgentSessionSubscribeEvent[] = []
   const errors: unknown[] = []
   // Synthetic Pool value seam only: no connection, authority, real PG or producer is created.
   const target = { connect() { throw new Error('No PG in value fixture') }, async query() {
     assert.equal(this, target); queries++
     return { rows: [{ public_session_id: 'synthetic-session', session_id: 'synthetic-internal',
-      journal_epoch: '0', next_event_seq: String(head + 1), session_fence: '1',
+      journal_epoch: '0', next_event_seq: String(head + 1), session_fence: String(observedFence),
       workspace_revision: '1', deleted_at: null, catalog: 'synthetic-head' }] }
   } }
   const pool = target as unknown as Pool
   const config = captureDurableCatalogReadConfig({ ...fixtureConfig(pool), pollIntervalMs: 60000 })
   const owner = fixtureRuntime()
+  const registry = new RuntimeSubscriptionRegistry()
   const runtime = new Proxy(owner.runtime, { get(object, key, receiver) {
-    if (key === 'registerOwnedSubscriptionCleanup') { return undefined }
+    if (key === 'registerOwnedSubscriptionCleanup') { return registry.registerOwned.bind(registry) }
+    if (key === 'registerSubscriptionCleanup') { return registry.register.bind(registry) }
+    if (key === 'cleanupSubscription') { return registry.cleanup.bind(registry) }
     if (key === 'getClientSettings') { return () => ({ experimentalStructuredNativeChat: enabled }) }
     return Reflect.get(object, key, receiver)
   } })
@@ -42,7 +46,7 @@ await test('값 1개: 원 wire·직렬 drain·원 receiver·같은 cursor와 fen
       try { return gate ? await gate.promise : page(head) } finally { activeReads-- }
     }
   } }
-  function page(sequence: number, fence = 1): AgentSessionHistoryResult {
+  function page(sequence: number, fence = observedFence): AgentSessionHistoryResult {
     const cursor = { epoch: '0', sequence }
     return { ok: true, page: { sessionId: 'synthetic-session', epoch: '0', fence, direction: 'tail',
       items: [], removedItemIds: [], submissions: [], window: { oldest: null, newest: null, nextCursor: cursor },
@@ -67,6 +71,16 @@ await test('값 1개: 원 wire·직렬 drain·원 receiver·같은 cursor와 fen
     stalled.resolve(page(1)); await Promise.all([one, two])
     await source.flush()
     assert.equal(maximumReads, 1); assert.equal(frames.at(-1)?.type, 'batch')
+    const atSameHead = frames.length
+    await source.flush(); assert.equal(frames.length, atSameHead)
+    const sameCursor = frames.at(-1)
+    observedFence++
+    await source.flush()
+    const checkpoint = frames.at(-1)
+    assert.equal(checkpoint?.type, 'batch')
+    if (sameCursor?.type !== 'batch' || checkpoint?.type !== 'batch') { throw new Error('Expected fence checkpoint batch') }
+    assert.deepEqual(checkpoint.batch.cursor, sameCursor.batch.cursor)
+    assert.equal(checkpoint.fence, observedFence)
     const fresh = fixtureContext(runtime, { requestId: 'frame-two', clientCapabilities: [STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY],
       reportSubscriptionError: error => errors.push(error) })
     const sibling: AgentSessionSubscribeEvent[] = []

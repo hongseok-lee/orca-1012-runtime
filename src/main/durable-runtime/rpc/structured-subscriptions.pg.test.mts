@@ -24,7 +24,7 @@ import { captureCatalogReadContext } from './context.ts'
 import { captureDurableCatalogReadConfig } from './config.ts'
 import { DurableCatalogReadAdapter } from './public.ts'
 // Exact PR67 dd0196e3 read dependency. No local copy of its reader or projector.
-import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
+import { createCatalogStructuredHistoryRpc, createCatalogStructuredHistoryReaderOwner } from './structured-history.ts'
 import { createCatalogStructuredSubscriptions, type StructuredHistoryReadInput } from './structured-subscriptions.ts'
 import { fixtureConfig, fixtureContext, fixtureRuntime, deferred } from './fixture-support.mts'
 
@@ -101,19 +101,14 @@ await test('PG 1개: 실제 RR history·원 commit·snapshot/batch/reset·두 fr
           body: { kind: 'message', role: 'assistant', blocks: [{ type: 'text', text: `synthetic-output-${revision}` }] } } } }))
   }
   const historyRpc = createCatalogStructuredHistoryRpc(config)
+  const capturedHistory = createCatalogStructuredHistoryReaderOwner(config)
   let firstRead = true, late: ReturnType<typeof deferred<void>> | null = null
   const entered = deferred<void>(), failed: unknown[] = []
-  // Source-only composition seam: uses the real PR67 RPC closure. Its approved minimal
-  // synchronous captured-reader extraction is still pending the Root merge notice.
+  // Only the scheduling barriers wrap the actual shared captured reader; no history implementation is copied.
   const readerOwner = { capture(input: StructuredHistoryReadInput) {
-    const policyRuntime = new Proxy(runtime, { get(target, property, receiver) {
-      if (property === 'getClientSettings') { return () => ({ experimentalStructuredNativeChat: input.structuredNativeChatEnabled }) }
-      return Reflect.get(target, property, receiver)
-    } })
-    const fixed = fixtureContext(policyRuntime, { authenticatedCallerFingerprint: input.authenticatedCallerFingerprint,
-      clientKind: input.clientKind, clientCapabilities: input.clientCapabilities })
+    const read = capturedHistory.capture(input)
     return async (request: Parameters<typeof historyRpc>[0]): Promise<AgentSessionHistoryResult> => {
-      const result = await historyRpc(request, fixed)
+      const result = await read(request)
       if (firstRead) { firstRead = false; await append(1) } // Commit strictly after opening RR snapshot, before listener attach.
       if (late) { const gate = late; late = null; entered.resolve(); await gate.promise }
       return result
@@ -145,7 +140,7 @@ await test('PG 1개: 실제 RR history·원 commit·snapshot/batch/reset·두 fr
   const reset: AgentSessionSubscribeEvent[] = []
   await source.subscribe({ sessionId: publicSessionId, cursor: { epoch: 'synthetic-old-epoch', sequence: 0 } }, context('reset'), event => reset.push(event))
   assert.equal(reset[0].type, 'reset')
-  let reconstructed = reduceStructuredAgentSession(rendered, { type: 'event', event })
+  const reconstructed = reduceStructuredAgentSession(rendered, { type: 'event', event })
   const actualTail = await historyRpc({ sessionId: publicSessionId, direction: 'tail' }, context('compare'))
   assert.deepEqual(reconstructed.items, actualTail.page.items)
   await append(3); late = deferred<void>()
@@ -154,8 +149,7 @@ await test('PG 1개: 실제 RR history·원 commit·snapshot/batch/reset·두 fr
   gate.resolve(); await pending
   assert.equal(sibling.length, afterClose); assert.equal(owner.cleanups.size, 0)
   const deniedConfig = captureDurableCatalogReadConfig({ ...settings, repositoryIds: [], launch: { ...settings.launch, repositories: [] } })
-  const deniedRpc = createCatalogStructuredHistoryRpc(deniedConfig)
-  const denied = createCatalogStructuredSubscriptions(deniedConfig, { capture: () => request => deniedRpc(request, context('denied')) })
+  const denied = createCatalogStructuredSubscriptions(deniedConfig)
   try {
     const delivered: AgentSessionSubscribeEvent[] = []
     await assert.rejects(denied.subscribe({ sessionId: publicSessionId }, context('denied'), event => delivered.push(event)), /ALIAS_SCOPE/)
@@ -163,12 +157,12 @@ await test('PG 1개: 실제 RR history·원 commit·snapshot/batch/reset·두 fr
   } finally { denied.dispose() }
   let failQuery = false
   const observedPool = new Proxy(pool, { get(target, property) {
-    if (property === 'query') { return (...args: Parameters<typeof pool.query>) => failQuery ? pool.query('SELECT 1/0') : pool.query(...args) }
+    if (property === 'query') { return (text: string, values?: unknown[]) => failQuery ? pool.query('SELECT 1/0') : pool.query(text, values) }
     const value = Reflect.get(target, property)
     return typeof value === 'function' ? value.bind(target) : value
   } })
   const observedConfig = captureDurableCatalogReadConfig({ ...settings, pool: observedPool })
-  const bad = createCatalogStructuredSubscriptions(observedConfig, readerOwner)
+  const bad = createCatalogStructuredSubscriptions(observedConfig)
   try {
     await bad.subscribe({ sessionId: publicSessionId }, { ...context('db-error'), reportSubscriptionError: error => failed.push(error) }, () => {})
     failQuery = true; await bad.flush()
