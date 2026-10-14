@@ -129,7 +129,7 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
         }
       } })
     }
-  })
+  } })
   const replayPage = randomUUID()
   try {
     assert.equal((await query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows[0].dataset_name, 'orca-1012-dev-v1')
