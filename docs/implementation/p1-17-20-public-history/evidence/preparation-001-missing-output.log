@@ -1,0 +1,68 @@
+✘ [ERROR] Could not resolve "./model.ts"
+
+    src/main/durable-runtime/output/structured-history.test.mts:6:92:
+      6 │ ...ittedJournalPage, type VerifiedJournalReadScope } from './model.ts'
+        ╵                                                           ~~~~~~~~~~~~
+
+✘ [ERROR] Could not resolve "./model.ts"
+
+    src/main/durable-runtime/output/structured-history.ts:8:125:
+      8 │ ...ittedJournalPage, type VerifiedJournalReadScope } from './model.ts'
+        ╵                                                           ~~~~~~~~~~~~
+
+✘ [ERROR] Could not resolve "./model.ts"
+
+    src/main/durable-runtime/output/structured-history-page.ts:11:33:
+      11 │ import { JournalReadError } from './model.ts'
+         ╵                                  ~~~~~~~~~~~~
+
+✘ [ERROR] Could not resolve "./model.ts"
+
+    src/main/durable-runtime/output/structured-projector.ts:5:153:
+      5 │ ...ittedJournalPage, type VerifiedJournalReadScope } from './model.ts'
+        ╵                                                           ~~~~~~~~~~~~
+
+✘ [ERROR] Could not resolve "./project.ts"
+
+    src/main/durable-runtime/output/structured-projector.ts:6:46:
+      6 │ import { projectCommittedInputIdentity } from './project.ts'
+        ╵                                               ~~~~~~~~~~~~~~
+
+✘ [ERROR] Could not resolve "./model.ts"
+
+    src/main/durable-runtime/output/read.ts:9:7:
+      9 │ } from './model.ts'
+        ╵        ~~~~~~~~~~~~
+
+✘ [ERROR] Could not resolve "./input-read.ts"
+
+    src/main/durable-runtime/output/read.ts:10:35:
+      10 │ import { readOriginalInputs } from './input-read.ts'
+         ╵                                    ~~~~~~~~~~~~~~~~~
+
+<shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:1467
+  let error = new Error(text);
+              ^
+
+Error: Build failed with 7 errors:
+src/main/durable-runtime/output/read.ts:9:7: ERROR: Could not resolve "./model.ts"
+src/main/durable-runtime/output/read.ts:10:35: ERROR: Could not resolve "./input-read.ts"
+src/main/durable-runtime/output/structured-history-page.ts:11:33: ERROR: Could not resolve "./model.ts"
+src/main/durable-runtime/output/structured-history.test.mts:6:92: ERROR: Could not resolve "./model.ts"
+src/main/durable-runtime/output/structured-history.ts:8:125: ERROR: Could not resolve "./model.ts"
+...
+    at failureErrorWithLog (<shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:1467:15)
+    at <shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:926:25
+    at <shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:878:52
+    at buildResponseToResult (<shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:924:7)
+    at <shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:951:16
+    at responseCallbacks.<computed> (<shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:603:9)
+    at handleIncomingPacket (<shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:658:12)
+    at Socket.readFromStdout (<shared-tools>/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:581:7)
+    at Socket.emit (node:events:509:28)
+    at addChunk (node:internal/streams/readable:563:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+Node.js v24.15.0

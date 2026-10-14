@@ -17,13 +17,10 @@ import { setSecretStore, type SecretStore } from '../../shared/secret-store'
 import type { ServePairingReadiness, ServeReadiness } from '../server/serve-readiness'
 import { mintOrcadPairingOffers, resolveOrcadPairingScopes } from './orcad-pairing'
 import { setRuntimeBrowserCommandsFactory } from '../runtime/runtime-browser-commands-factory'
-import { resolveOrcadBrowserProvider } from './orcad-browser-provider'
+import { resolveOrcadBrowserProvider, type OrcadBrowserProvider } from './orcad-browser-provider'
+import { createOrcadCatalogBrowserFactory } from './orcad-catalog-browser-host'
 import { resolveOrcadInstallRoot, resolveOrcadPath, resolveUserDataPath } from './orcad-app-paths'
-import {
-  describeOrcadBindExposure,
-  OrcadBindAddressError,
-  resolveOrcadBindHost
-} from './orcad-bind-address'
+import { describeOrcadBindExposure, OrcadBindAddressError, resolveOrcadBindHost } from './orcad-bind-address'
 import { acquireOrcadInstanceLock, OrcadInstanceLockError } from './orcad-instance-lock'
 import { startOrcadWithLifecycle } from './orcad-lifecycle'
 import { stopOrcadRuntimeWithDurableCatalog } from './orcad-durable-catalog-cleanup'
@@ -117,12 +114,8 @@ export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandl
   // is also the last point at which refusing costs nothing.
   const instanceLock = acquireOrcadInstanceLock(userDataPath)
   const browserProvider = await resolveOrcadBrowserProvider({ userDataPath })
-  setRuntimeBrowserCommandsFactory(browserProvider?.factory ?? null, {
-    headless: browserProvider !== null,
-    ...(browserProvider ? { isAvailable: () => browserProvider.isAvailable() } : {})
-  })
   return startOrcadWithLifecycle(
-    (registerCleanup) => startOrcadRuntime(options, registerCleanup, startupConfig),
+    (registerCleanup) => startOrcadRuntime(options, registerCleanup, startupConfig, browserProvider),
     async () => {
       try {
         await browserProvider?.stop()
@@ -138,7 +131,8 @@ export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandl
 async function startOrcadRuntime(
   options: OrcadOptions,
   registerCleanup: (cleanup: () => Promise<void>) => void,
-  startupConfig: startup.OrcadStartupConfig
+  startupConfig: startup.OrcadStartupConfig,
+  browserProvider: OrcadBrowserProvider | null
 ): Promise<Pick<OrcadHandle, 'readiness'>> {
   const { OrcaRuntimeService } = await import('../runtime/orca-runtime')
   const { OrcaRuntimeRpcServer } = await import('../runtime/runtime-rpc')
@@ -178,6 +172,12 @@ async function startOrcadRuntime(
     stopDurableCatalog: () => durableCatalog?.stop()
   }))
   const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog })
+  setRuntimeBrowserCommandsFactory(
+    createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
+      headless: browserProvider !== null,
+      ...(browserProvider ? { isAvailable: () => browserProvider.isAvailable() } : {})
+    }
+  )
   const { DesktopPushService } = await import('../runtime/push/desktop-push-service')
   const { resolvePushGatewayOrigin } = await import('../runtime/push/push-gateway-origin')
 

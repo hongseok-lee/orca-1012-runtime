@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: 공개 send는 strict wire와 인증·협상 거절 및 첫 await 이전의 원 입력·context·config capture를 보존합니다
+ok 1 - 공개 send는 strict wire와 인증·협상 거절 및 첫 await 이전의 원 입력·context·config capture를 보존합니다
+  ---
+  duration_ms: 34.977147
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2315.550865

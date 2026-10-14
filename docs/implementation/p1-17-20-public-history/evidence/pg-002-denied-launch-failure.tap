@@ -1,0 +1,34 @@
+TAP version 13
+# (node:25410) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history 경계
+not ok 1 - PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history 경계
+  ---
+  duration_ms: 1262.639643
+  type: 'test'
+  location: '<fixture-stage>/bundles/pg-sql-corrected.cjs:90227:27'
+  failureType: 'testCodeFailure'
+  error: 'Durable database operation failed (CATALOG_LAUNCH_CONFIGURATION)'
+  code: 'CATALOG_LAUNCH_CONFIGURATION'
+  name: 'CatalogError'
+  stack: |-
+    invalid (<fixture-stage>/bundles/pg-sql-corrected.cjs:14977:9)
+    <fixture-stage>/bundles/pg-sql-corrected.cjs:15016:7
+    Array.map (<anonymous>)
+    captureCatalogLaunchConfig (<fixture-stage>/bundles/pg-sql-corrected.cjs:15012:43)
+    captureDurableCatalogReadConfig (<fixture-stage>/bundles/pg-sql-corrected.cjs:15082:18)
+    new DurableCatalogReadAdapter (<fixture-stage>/bundles/pg-sql-corrected.cjs:22092:19)
+    setup (<fixture-stage>/bundles/pg-sql-corrected.cjs:90144:20)
+    TestContext.<anonymous> (<fixture-stage>/bundles/pg-sql-corrected.cjs:90378:18)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1208:7)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3736.238554
