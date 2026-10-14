@@ -20,3 +20,11 @@
 이번 배분은 source/fixture 작성까지다. 실제 최초 실행은 root가 읽은 뒤 기존 cache/별도 stage·소유 PG DB와 heavy 슬롯을 지정한다. 현재 dev C1 outbox/데이터 및 Backend C2/Client 환경은 변경하지 않는다. 설치·제품 build·live sync·startup 활성화는 없다. Public PR에 이 명세의 공개 사본 전문, 실제 source/결과와 원 실패·한계를 포함한다. 실제 서버 시작/종료 연결은 이 source 수락 후 Backend owner에 별도로 배분한다.
 
 원 사용자 빠른 개발 지시·단계 종료 원문 출력/작업계획 읽기·메모리/PR/디스크 증거 대조를 유지한다. 동결 template·보호 backup·TTL에는 접근하지 않는다. Native9 재사용+root/bridge 총11과 실제 heavy2 상한을 유지한다.
+
+## 2026-10-14 10:18 최초 실행 지정
+
+Root는 제품 cc399b66696aaf50c45d02d613c885a8d61e6fdb의 claim/worker 및 fixture pin81ccaabe801c552c905d35c5e840de3b60047431의 PG3·lifecycle4와 두 지원 파일을 읽었다. 같은 Queue worker에 다음 최초 실행만 위임한다. 원 제품3파일 bytes를 유지하고 아직 실행하지 않은 PG3와 lifecycle4, 소유 제품/fixture7파일 scoped type/lint를 수행한다. PG parent suite를 별도 성공 callback으로 합산하지 않는다. Lifecycle의 SQL simulation은 제어 흐름 근거이며 실제 PG/권한/HA 증거가 아니다.
+
+기존 Backend 개발 cache와 앞선 승인 stage를 재사용하고 이 pin의 실제 import closure와 SQL001–019만 확인한다. 새 전송은 해당 closure의 누락·차이 bytes만 허용한다. 전체 legacy checkout 후보 복사·압축·재해시, dependency 설치, 제품 build, 기존 성공 suite 반복을 하지 않는다. Actual import manifest에는 고정 Git blob hash·입력 pin·SQL19 hash를 남긴다. 별도 소유 DB 이름 orca_p125_publication_ 접두사에서 schema를 한 번 준비하고 기존 live orca_dev/C1 outbox와 서버에는 접근하지 않는다.
+
+Heavy1을 배분하며 전체 상한2를 유지한다. 최초 오류·raw TAP·실제 exit·소유 PID/시각·DB identity/ledger와 scoped static의 소유/외부 오류 구분을 보존한다. 실패를 숨기거나 이미 통과한 callback을 반복하지 않는다. Product/fixture 교정이 필요하면 정확 diff와 실패 근거를 먼저 root에 반환한다. PR52에 실제 결과를 반영하고 기존 원 screenshot을 재사용할 수 있는지 근거를 제시한다. 새 촬영·live sync·watch 재시작·publication startup 활성화는 이번 범위에 없다.

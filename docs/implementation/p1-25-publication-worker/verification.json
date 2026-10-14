@@ -1,0 +1,116 @@
+{
+  "fixedBase": "7bcd7c899aa13c0a62dbfe737c20c40c71307eaa",
+  "initialSourceFixturePin": "81ccaabe801c552c905d35c5e840de3b60047431",
+  "productPin": "cc399b66696aaf50c45d02d613c885a8d61e6fdb",
+  "fixtureTypeOnlyCorrectionPin": "e2aa2ac97f0ac1c4751a9184bf1d915f0cac85c2",
+  "productFileByteChanges": 0,
+  "firstCallbackCounts": {
+    "actualPg": {
+      "entered": 3,
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    "simulatedLifecycle": {
+      "entered": 4,
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "callbacks": {
+    "actualPg": [
+      "supported notification batch commits canonical cursor and PUBLISHED together; unsupported rows untouched",
+      "two owners skip locked claims; committed publication reply loss replays the original identity without another offset",
+      "malformed supported source fails once while another canonical source publishes in the same finite batch"
+    ],
+    "simulatedLifecycle": [
+      "config captured synchronously; manual pass and same-owner start cannot overlap",
+      "stop during acquisition drains returned claims without any publication and never ends borrowed Pool",
+      "stop retains an already-started publication result and defers remaining claims until natural expiry",
+      "failed poll finishes before a single bounded next timer; failure survives later empty success"
+    ]
+  },
+  "scopedType": {
+    "ownedFiles": 7,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 2,
+    "compilerExit": 1,
+    "externalLocation": "src/main/durable-runtime/db/connection.ts:30",
+    "externalCode": "TS7006",
+    "parameters": [
+      "oid",
+      "format"
+    ],
+    "wholeTypePass": false,
+    "repeated": 0
+  },
+  "scopedLint": {
+    "initialFiles": 7,
+    "initialExit": 1,
+    "initialRule": "typescript/consistent-type-imports",
+    "correctedFiles": 1,
+    "correctedExit": 0,
+    "correction": "notificationRow import -> import type only"
+  },
+  "preparationFailure": {
+    "module": "pg-types",
+    "code": "MODULE_NOT_FOUND",
+    "processExit": 1,
+    "registeredCallbacks": 0,
+    "productApiEntered": 0,
+    "pgAndSchemaEnteredAtThatTime": false,
+    "fileParentFailureCount": 1,
+    "fileParentAddedToPassOrCallbackCount": false,
+    "correction": "External existing pnpm package URL realpath normalization only; source preserveSymlinks and fixture bytes unchanged"
+  },
+  "runtimeImportCount": 27,
+  "sql001019Count": 19,
+  "gitBlobMismatchCount": 0,
+  "newOwnedDbSchemaApplications": 1,
+  "verificationSchemaLedgerBeforeAfterEqual": true,
+  "successfulCallbackRepeated": 0,
+  "cacheInputReused": 47,
+  "initialDeltaSourceFiles": 7,
+  "initialDeltaArchiveBytes": 9841,
+  "fixtureTypeOnlyDeltaFiles": 1,
+  "installProductBuildLiveSyncNewCaptureRebaseCount": 0,
+  "pids": {
+    "type": 17504,
+    "lint": 17538,
+    "correctedLint": 17623,
+    "preparationFailedLifecycle": 17637,
+    "firstEnteredLifecycle": 17799,
+    "schema": 17816,
+    "firstEnteredPg": 17827,
+    "exitedSupervisorsZombieExit0": [
+      17497,
+      17616,
+      17792
+    ],
+    "activeOwnedChildren": 0
+  },
+  "allOwnedChildProcessesExited": true,
+  "remoteHeavyAllocated": 1,
+  "remoteHeavyReturned": 1,
+  "lastPgFinishedAt": "2026-10-14T10:29:50.283Z",
+  "rawHashes": {
+    "type-first.log": "9a174cba5559904d3623b90738f64f0167995038cf4a18fc22cbac18ef828ac9",
+    "lint-first.log": "156ec4ce2129dc55bba0dfcb38f97088be41c1d8959a0e7d92e6c833ae207340",
+    "lint-type-import-correction.log": "9669b115363a780a654c9929cf73744e6a29aeeb62c32feab0aaaefa273b3993",
+    "lifecycle-first.log": "a23f65d7a3b1e548855379cda23be8526eb50659c1246ac99de07e7164cb1517",
+    "lifecycle-first-package-path.log": "4331e923de1d02f89760cd9be2dc728047ae9b744fbc9b3f0b6610820782d1ca",
+    "pg-first.log": "e4a247f6e526e75c3821b44b66ae8a3e2bfe48f32b7c0b0a4a4ae6f56756e219",
+    "lifecycle-results.json": "2ecf4714712d83049776926ce6433a259616da052912e79426d005cdbf6e361c",
+    "pg-results.json": "2d8ff6d7e45ce017ad7012c18039aa07381ec667f12050b0a72fc3756dd14b88",
+    "schema-ready.json": "f759d129e40234108d9276a34782f51fb3e969405968265aaa70faa245771b7a",
+    "type-import-correction.diff": "af7755ea7d3e2ca12bbbfdde0f981e938fc6b59e2ac997d3c2c82d5d0529cfb4",
+    "package-path-correction.diff": "cda76d06d7b879e4e7ae1923d4c2cb1cd807b93c1647149e4bda203df36d48f5"
+  },
+  "limitations": [
+    "Notification source metadata is synthetic trusted input; no authentication/provider proof.",
+    "Lifecycle uses SQL simulation only.",
+    "Runtime terminal source full normal-path matrix not exercised.",
+    "No server publication startup activation, live UI publication, physical resize/fencing/HA proof."
+  ]
+}
