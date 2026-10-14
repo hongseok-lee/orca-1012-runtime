@@ -135,13 +135,13 @@ export class ExternalChromiumBrowserProcess {
       const screencastParams = Screencast.parse(args[0])
       const stream = ScreencastViewer.parse(args[1])
       const page = await this.tabs.resolveTargetPage(host, params)
-      await this.session.connectCdp()
-      // connect may invalidate every mapping when the browser generation changes.
-      if (await this.tabs.resolveTargetPage(host, params) !== page) {
-        throw new BrowserError('browser_tab_closed', 'The owned browser target is unavailable.')
-      }
       const tab = await this.tabs.describePage(page)
-      return this.screencasts.start(page, screencastParams, stream, tab)
+      try {
+        return await this.screencasts.start(page, screencastParams, stream, tab)
+      } catch (error) {
+        await this.tabs.retireMissingTarget(page)
+        throw error
+      }
     }
     if (method === 'browserProceedCertificate') {
       throw new BrowserError(
@@ -150,8 +150,7 @@ export class ExternalChromiumBrowserProcess {
       )
     }
 
-    const page = await this.tabs.resolveTargetPage(host, params)
-    await this.session.selectPage(page.agentPageId)
+    const page = await this.tabs.resolveTargetPage(host, params, true)
     if (method === 'browserSnapshot') {
       return this.snapshot(page)
     }

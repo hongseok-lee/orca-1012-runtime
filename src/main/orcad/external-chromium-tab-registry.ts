@@ -4,6 +4,7 @@ import type { BrowserTabInfo } from '../../shared/runtime-types'
 import type { RuntimeBrowserCommandHost } from '../runtime/orca-runtime-browser'
 import { BrowserError } from '../browser/browser-error'
 import { externalCdpError } from './external-chromium-cdp-connection'
+import { ExternalChromiumTargetBinding } from './external-chromium-target-binding'
 import { normalizeBrowserNavigationUrl } from '../../shared/browser-url'
 import type { ExternalChromiumBrowserSession } from './external-chromium-browser-session'
 import {
@@ -16,12 +17,16 @@ export class ExternalChromiumTabRegistry {
   private readonly pagesByPublicId = new Map<string, ExternalChromiumPageRecord>()
   private readonly pagesByAgentId = new Map<string, ExternalChromiumPageRecord>()
   private readonly activePageIdByWorktree = new Map<string, string>()
+  private readonly targets: ExternalChromiumTargetBinding
   private initialAgentPageId: string | null = null
 
   constructor(
     private readonly session: ExternalChromiumBrowserSession,
     private readonly stopPage: (pageId: string) => Promise<void>
   ) {
+    this.targets = new ExternalChromiumTargetBinding(session,
+      page => this.pagesByPublicId.get(page.publicPageId) === page,
+      page => this.deletePage(page))
     session.cdp.onGenerationChanged(() => this.clear())
     session.cdp.onEvent((event) => {
       if (event.method !== 'Target.targetDestroyed') return
@@ -64,12 +69,7 @@ export class ExternalChromiumTabRegistry {
           `Browser page ${requestedPageId} was not found in this worktree.`
         )
       }
-      await this.session.connectCdp()
-      if (this.pagesByPublicId.get(existing.publicPageId) !== existing ||
-        !await this.session.cdp.hasTarget(existing.targetId, existing.browserGeneration)) {
-        this.deletePage(existing)
-        throw new BrowserError('browser_tab_closed', 'The owned browser target is unavailable.')
-      }
+      await this.targets.assertCurrent(existing)
       this.setActivePage(existing)
       return { browserPageId: existing.publicPageId }
     }
@@ -130,6 +130,7 @@ export class ExternalChromiumTabRegistry {
     params: Record<string, unknown>
   ): Promise<unknown> {
     const requestedWorktreeId = await this.resolveWorktreeId(host, params.worktree)
+    await this.session.connectCdp()
     const tabs = await this.session.readTabs()
     const liveAgentPageIds = new Set(tabs.map((tab) => tab.tabId))
     for (const page of this.pagesByPublicId.values()) {
@@ -188,7 +189,7 @@ export class ExternalChromiumTabRegistry {
     if (!page || (worktreeId && page.worktreeId !== worktreeId)) {
       throw new BrowserError('browser_tab_not_found', 'Browser tab was not found in this worktree.')
     }
-    await this.session.selectPage(page.agentPageId)
+    await this.targets.select(page)
     this.setActivePage(page)
     return { switched: pages.indexOf(page), browserPageId: page.publicPageId }
   }
@@ -216,7 +217,9 @@ export class ExternalChromiumTabRegistry {
       }
       return { closed: false }
     }
+    await this.targets.assertCurrent(page)
     await this.stopPage(page.publicPageId)
+    await this.targets.assertCurrent(page)
     await this.session.run(['tab', 'close', page.agentPageId])
     this.deletePage(page)
     if (page.worktreeId) {
@@ -227,7 +230,8 @@ export class ExternalChromiumTabRegistry {
 
   async resolveTargetPage(
     host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
+    params: Record<string, unknown>,
+    select = false
   ): Promise<ExternalChromiumPageRecord> {
     const worktreeId = await this.resolveWorktreeId(host, params.worktree)
     const page =
@@ -237,10 +241,17 @@ export class ExternalChromiumTabRegistry {
     if (!page || (worktreeId && page.worktreeId !== worktreeId)) {
       throw new BrowserError('browser_no_tab', 'No browser tab is active in this worktree.')
     }
+    if (select) await this.targets.select(page)
+    else await this.targets.assertCurrent(page)
     return page
   }
 
+  async retireMissingTarget(page: ExternalChromiumPageRecord): Promise<void> {
+    await this.targets.retireIfMissing(page)
+  }
+
   async describePage(page: ExternalChromiumPageRecord): Promise<BrowserTabInfo> {
+    await this.targets.assertCurrent(page)
     const tabs = await this.session.readTabs()
     const scopedTabs = tabs.filter(
       (tab) => this.pagesByAgentId.get(tab.tabId)?.worktreeId === page.worktreeId
@@ -270,6 +281,7 @@ export class ExternalChromiumTabRegistry {
   }
 
   private deletePage(page: ExternalChromiumPageRecord): void {
+    if (this.pagesByPublicId.get(page.publicPageId) !== page) return
     void this.stopPage(page.publicPageId)
     this.pagesByPublicId.delete(page.publicPageId)
     this.pagesByAgentId.delete(page.agentPageId)
