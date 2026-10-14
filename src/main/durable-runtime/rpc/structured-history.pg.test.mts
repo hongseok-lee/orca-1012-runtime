@@ -193,7 +193,7 @@ test('PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history �
   await assert.rejects(state.invoke('agentSession.history', request, null), /CATALOG_AUTHENTICATED_CALLER_REQUIRED/)
   await assert.rejects(history({ ...request, principal: 'a'.repeat(64) }), /schema|parameter|unrecognized|UNREADABLE/i)
   const denied = setup({ ...config, repositoryIds: [], launch: { ...config.launch, repositories: [] } })
-  const wrongHost = setup({ ...config, hostId: 'foreign-host', readHostIdentity: () => 'foreign-host' })
+  const wrongHost = setup({ ...config, hostId: 'runtime:foreign-host', readHostIdentity: () => 'runtime:foreign-host' })
   try {
     await assert.rejects(denied.invoke('agentSession.history', request), /STRUCTURED_HISTORY_ALIAS_SCOPE/)
     await assert.rejects(wrongHost.invoke('agentSession.history', request), /HOST_MISMATCH|ALIAS_SCOPE/)
