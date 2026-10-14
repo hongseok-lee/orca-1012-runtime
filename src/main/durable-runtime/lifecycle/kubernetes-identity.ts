@@ -25,8 +25,12 @@ export function inventoryRecord(value: unknown): Record<string, unknown> {
 
 /** Kubernetes UID/RV are opaque strings, never arithmetic counters. */
 export function inventoryOpaque(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.trim() !== value || /[\u0000-\u001f\u007f]/u.test(value)) {
+  if (typeof value !== 'string' || !value || value.trim() !== value) {
     throw new KubernetesInventoryError('IDENTITY_INVALID')
+  }
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) { throw new KubernetesInventoryError('IDENTITY_INVALID') }
   }
   return value
 }
