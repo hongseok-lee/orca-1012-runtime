@@ -1,8 +1,8 @@
 import type { AgentJournalCursor, AgentJournalRenderItem, AgentJournalSubmission } from '../../../shared/agent-session-journal-types'
 import { counter } from '../../../shared/durable-runtime/identity.ts'
-import { captureCatalogParsed, type Immutable } from '../catalog/immutable.ts'
+import { captureCatalogJson, captureCatalogParsed, type Immutable } from '../catalog/immutable.ts'
 import { canonicalInputJson } from '../input/canonical.ts'
-import { JournalReadError, snapshotJournalScope, type CommittedJournalEvent, type CommittedJournalPage, type VerifiedJournalReadScope } from './model.ts'
+import { JournalReadError, jsonObject, snapshotJournalScope, type CommittedJournalEvent, type CommittedJournalPage, type VerifiedJournalReadScope } from './model.ts'
 import { projectCommittedInputIdentity } from './project.ts'
 // Read dependency: PR62 product 98b45ebb / source 7b9762aa, not yet accepted.
 import { parseStructuredProviderEvent, type StructuredProviderLeafMutation } from './structured-provider-event.ts'
@@ -38,9 +38,11 @@ function safeSequence(value: number): void {
 }
 function eventKind(event: Immutable<CommittedJournalEvent>): string | undefined {
   const body = event.body
-  return body !== null && typeof body === 'object' && !Array.isArray(body) && typeof body.kind === 'string'
-    ? body.kind : undefined
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) { return undefined }
+  const object = jsonObject(body)
+  return typeof object.kind === 'string' ? object.kind : undefined
 }
+function jsonFact(value: unknown): string { return canonicalInputJson(captureCatalogJson(value)) }
 
 /** Pure PG fold. The supplied scope is already verified; this factory issues no authority.
  * This snapshot is neither a complete public history page nor a provider acceptance proof. */
@@ -105,7 +107,7 @@ export function createStructuredJournalProjection(
       next.tombstones.delete(itemId)
     }
     for (const event of page.events) {
-      const eventFact = canonicalInputJson(event)
+      const eventFact = jsonFact(event)
       for (const [index, id] of [[next.eventFacts, event.eventId], [next.sourceFacts, event.sourceKey]] as const) {
         const previous = index.get(id)
         if (previous !== undefined) { fail(previous === eventFact ? 'EVENT_REPEATED' : 'EVENT_BODY_CONFLICT') }
@@ -115,11 +117,11 @@ export function createStructuredJournalProjection(
       if (kind === 'INPUT_SUBMISSION') {
         const item = bySequence.get(event.sequence)
         if (!item || event.body === null || typeof event.body !== 'object' || Array.isArray(event.body)) { fail('INPUT') }
-        const inputId = event.body.inputId
+        const inputId = jsonObject(event.body).inputId
         const component = typeof inputId === 'string' ? components.get(inputId) : undefined
         if (!component) { fail('INPUT') }
         if (next.providerIds.has(item.itemId)) { fail('INPUT_PROVIDER_ID_COLLISION') }
-        const fact = canonicalInputJson(component), previous = next.inputFacts.get(item.itemId)
+        const fact = jsonFact(component), previous = next.inputFacts.get(item.itemId)
         if (previous !== undefined && previous !== fact) { fail('INPUT_BODY_CONFLICT') }
         if (previous === undefined) {
           next.inputFacts.set(item.itemId, fact); next.items.set(item.itemId, captureCatalogParsed(item))
@@ -131,7 +133,7 @@ export function createStructuredJournalProjection(
         if (!Number.isSafeInteger(observedAt)) { fail('OUTPUT_TIME') }
         const mutation = output.mutation
         if (mutation.kind === 'lifecycle-batch') {
-          const fact = canonicalInputJson(mutation), previous = next.settlements.get(mutation.settlementId)
+          const fact = jsonFact(mutation), previous = next.settlements.get(mutation.settlementId)
           if (previous !== undefined) {
             if (previous !== fact) { fail('SETTLEMENT_BODY_CONFLICT') }
             continue
@@ -143,7 +145,7 @@ export function createStructuredJournalProjection(
     }
     for (const submission of inputs.submissions) {
       const previous = next.submissions.get(submission.clientMessageId)
-      if (previous && canonicalInputJson(previous) !== canonicalInputJson(submission)) { fail('SUBMISSION_BODY_CONFLICT') }
+      if (previous && jsonFact(previous) !== jsonFact(submission)) { fail('SUBMISSION_BODY_CONFLICT') }
       if (!previous) { next.submissions.set(submission.clientMessageId, captureCatalogParsed(submission)) }
     }
     const published = render(next)
