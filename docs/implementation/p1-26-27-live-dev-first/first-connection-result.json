@@ -1,0 +1,148 @@
+{
+  "backendSourceMain": "7bcd7c899aa13c0a62dbfe737c20c40c71307eaa",
+  "backendApprovedInputCount": 214,
+  "wholeCheckoutRevisionProven": false,
+  "backendBuildObservedByOwner": {
+    "count": 1,
+    "minify": true,
+    "target": "node18",
+    "qualification": "기존 Backend owner의 최초 C2 반영 결과를 재사용했습니다. 이 문서 작업에서 build를 실행하지 않았습니다."
+  },
+  "startedAt": "2026-10-14T09:54:45.919Z",
+  "finishedAt": "2026-10-14T09:54:55.677Z",
+  "originalJobState": "failed",
+  "originalExitCode": 1,
+  "originalFailure": {
+    "code": "CAPTURE_URL_NOT_SAFE",
+    "phase": "actual-ui-observed",
+    "classification": "촬영 helper의 URL guard 거절",
+    "actualFailureRouteRecorded": false,
+    "actualFailureRouteSensitive": null,
+    "projectScreenshotCreated": false,
+    "retry": 0,
+    "helperChanged": false,
+    "qualification": "프로젝트 label visible 관측 뒤 세 번째 screenshot 호출 전에 거절했습니다. 원 실패와 exit 1을 유지합니다. 실제 route는 원 harness에 기록되지 않아 미확정입니다."
+  },
+  "assets": [
+    {
+      "path": "/ops/",
+      "status": 200,
+      "sha256": "431ad882ae230b71b42070fd015085953c3cc85355dce966422a74574159c3a6",
+      "bytes": 4045
+    },
+    {
+      "path": "/ops/styles.css",
+      "status": 200,
+      "sha256": "fa097831a780b7b65cc3fab71170514f4ff9da2046dfbe30f80f12190dfd217f",
+      "bytes": 6287
+    },
+    {
+      "path": "/ops/app.js",
+      "status": 200,
+      "sha256": "c19dedc83745ef897c88c4c4bf4e57cec1abb1fcf74ad58f0a628c631f6804bd",
+      "bytes": 18906
+    }
+  ],
+  "authenticatedAPI": [
+    {
+      "path": "/ops/v1/runtime-units",
+      "status": 200,
+      "unitCount": 0
+    },
+    {
+      "path": "/ops/v1/events",
+      "status": 200,
+      "replayStatus": "PAGE",
+      "eventCount": 0
+    },
+    {
+      "path": "/ops/v1/notifications",
+      "status": 200,
+      "notificationCount": 0
+    },
+    {
+      "path": "/ops/v1/events/stream",
+      "status": 200
+    }
+  ],
+  "OpsState": "empty",
+  "opsKeyInputEmpty": true,
+  "crypto": {
+    "secureContext": true,
+    "randomValues": true,
+    "subtleDigest": true
+  },
+  "existingPairedStateReused": true,
+  "normalTokenPersistence": {
+    "hostCount": 1,
+    "deviceTokenEntryCount": 1,
+    "deviceTokenNonempty": true,
+    "rawValuesPublished": false
+  },
+  "Expo": {
+    "HTTPStatus": 200,
+    "connectedImageObserved": true,
+    "emptyWorkspaceImageObserved": true,
+    "displayedWorkspaceCount": 0,
+    "registeredProjectLabelObserved": true,
+    "registeredProjectLabel": "Orca 1012 Dev",
+    "registeredProjectScreenshot": false,
+    "newWorkspaceCreated": false,
+    "rawFailureRoutePublished": false
+  },
+  "runtimeErrorCount": 0,
+  "consoleCounts": {
+    "expo:info": 1,
+    "expo:warning": 5,
+    "expo:log": 7
+  },
+  "originalCaptures": [
+    {
+      "file": "ops-empty-scope-first.png",
+      "provenance": "ops-empty-scope-first-provenance.json",
+      "sha256": "004784a90cd9fb0823c6571376f042f9c4bd7be318e5b04e67830b2db0c9237f",
+      "capturedAt": "2026-10-14T09:54:55.097Z",
+      "imagePixels": {
+        "width": 390,
+        "height": 1092
+      },
+      "sameOriginalBytes": true
+    },
+    {
+      "file": "expo-workspace-first.png",
+      "provenance": "expo-workspace-first-provenance.json",
+      "sha256": "9fb0bf1969a9fdb3a768b6d3f7a3dd1472a74b3ce5ed8c374f246c38eaf9980c",
+      "capturedAt": "2026-10-14T09:54:55.198Z",
+      "imagePixels": {
+        "width": 390,
+        "height": 844
+      },
+      "sameOriginalBytes": true
+    }
+  ],
+  "browserClosed": true,
+  "contextClosed": true,
+  "activeOwnedJobPIDs": 0,
+  "heavyReturned": true,
+  "originalAuthStateUnchanged": true,
+  "qualification": {
+    "synthetic": false,
+    "nativeIPhone": false,
+    "automaticAuth": false,
+    "centralBrowser": false,
+    "wholeHA": false,
+    "fullPageFeature": false
+  },
+  "publicationStepExecutions": {
+    "heavy": 0,
+    "browser": 0,
+    "screenshots": 0,
+    "API": 0,
+    "tests": 0,
+    "installs": 0,
+    "builds": 0,
+    "runtimeChanges": 0,
+    "productSourceChanges": 0,
+    "helperChanges": 0
+  }
+}
