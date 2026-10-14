@@ -20,11 +20,7 @@ import { setRuntimeBrowserCommandsFactory } from '../runtime/runtime-browser-com
 import { resolveOrcadBrowserProvider, type OrcadBrowserProvider } from './orcad-browser-provider'
 import { createOrcadCatalogBrowserFactory } from './orcad-catalog-browser-host'
 import { resolveOrcadInstallRoot, resolveOrcadPath, resolveUserDataPath } from './orcad-app-paths'
-import {
-  describeOrcadBindExposure,
-  OrcadBindAddressError,
-  resolveOrcadBindHost
-} from './orcad-bind-address'
+import { describeOrcadBindExposure, OrcadBindAddressError, resolveOrcadBindHost } from './orcad-bind-address'
 import { acquireOrcadInstanceLock, OrcadInstanceLockError } from './orcad-instance-lock'
 import { startOrcadWithLifecycle } from './orcad-lifecycle'
 import { stopOrcadRuntimeWithDurableCatalog } from './orcad-durable-catalog-cleanup'
