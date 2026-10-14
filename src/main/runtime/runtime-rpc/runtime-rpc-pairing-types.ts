@@ -1,3 +1,5 @@
+import type { RuntimeOpsHttpConfig } from '../../durable-runtime/ops/runtime-config.ts'
+import type { DurableCatalogReadConfig } from '../../durable-runtime/rpc/config.ts'
 import type { OrcaRuntimeService } from '../orca-runtime'
 import type { RpcAnyMethodDeclaration } from '../rpc/core'
 import type { DeviceRegistry } from '../device-registry'
@@ -57,6 +59,10 @@ export type OrcaRuntimeRpcServerOptions = {
   metadataOwnershipPollMs?: number
   // Why: tests may inject inert protocol stages before production authorization registers them.
   methods?: readonly RpcAnyMethodDeclaration[]
+  // Explicit server composition; absent preserves the existing runtime path.
+  durableCatalogRead?: DurableCatalogReadConfig
+  // Explicit opt-in; runtime verifies existing paired keys and supplies server scope.
+  opsHttp?: RuntimeOpsHttpConfig
 }
 
 export type PairingOfferUnavailableReason =

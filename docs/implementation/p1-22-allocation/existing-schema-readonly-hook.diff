@@ -1,0 +1,12 @@
+--- e131:actual-pg.test.mts
++++ execution-only:actual-pg.schema-readonly.mts
+@@ -17,7 +17,8 @@
+ before(async () => {
+   const files = await readMigrations(process.env.P122_MIGRATIONS!)
+   assert.equal(files.length, 19)
+-  schema = (await applyMigrations(pool, files)).map(({ version, checksum }) => ({ version, checksum }))
++  schema = (await pool.query<{ version: string; checksum: string }>('SELECT version,checksum FROM durable_runtime.schema_migrations ORDER BY version')).rows
++  assert.deepEqual(schema, files.map(({ version, checksum }) => ({ version, checksum })))
+ })
+ after(async () => {
+   if (process.env.P122_EVIDENCE) {

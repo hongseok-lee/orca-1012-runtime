@@ -1,3 +1,5 @@
+import { snapshotRuntimeOpsHttpConfig, type RuntimeOpsHttpConfig } from '../../durable-runtime/ops/runtime-config.ts'
+import { DurableCatalogReadAdapter } from '../../durable-runtime/rpc/public.ts'
 import { randomBytes } from 'node:crypto'
 import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap'
 import type { OrcaRuntimeService } from '../orca-runtime'
@@ -32,6 +34,7 @@ import { DEFAULT_WS_PORT } from './runtime-rpc-pairing-types'
 export class RuntimeRpcState {
   protected readonly runtime: OrcaRuntimeService
   protected readonly dispatcher: RpcDispatcher
+  protected readonly durableCatalogRead: DurableCatalogReadAdapter | null
   protected readonly userDataPath: string
   protected readonly pid: number
   protected readonly platform: NodeJS.Platform
@@ -40,6 +43,7 @@ export class RuntimeRpcState {
   protected readonly preferPinnedWsPort: boolean
   protected readonly exposeNetworkByDefault: boolean
   protected readonly pinnedBindHost: string | null
+  protected readonly opsHttp: RuntimeOpsHttpConfig | undefined
   protected readonly webClientRoot: string | undefined
   // Why: STA-2370 — the host the WS listener is currently bound to, so pairing can widen loopback→all-interfaces once.
   protected wsBoundHost: string | null = null
@@ -106,10 +110,14 @@ export class RuntimeRpcState {
     keepaliveIntervalMs = KEEPALIVE_INTERVAL_MS,
     longPollCap = LONG_POLL_CAP,
     metadataOwnershipPollMs = RUNTIME_METADATA_OWNERSHIP_POLL_MS,
-    methods
+    methods,
+    durableCatalogRead,
+    opsHttp
   }: OrcaRuntimeRpcServerOptions) {
     this.runtime = runtime
-    this.dispatcher = new RpcDispatcher({ runtime, methods: methods ?? ALL_RPC_METHODS })
+    this.durableCatalogRead = durableCatalogRead ? new DurableCatalogReadAdapter(durableCatalogRead) : null
+    const declarations = methods ?? ALL_RPC_METHODS
+    this.dispatcher = new RpcDispatcher({ runtime, methods: this.durableCatalogRead?.bind(declarations) ?? declarations })
     this.userDataPath = userDataPath
     this.pid = pid
     this.platform = platform
@@ -119,6 +127,7 @@ export class RuntimeRpcState {
     this.exposeNetworkByDefault = exposeNetworkByDefault
     this.pinnedBindHost = pinnedBindHost ?? null
     this.webClientRoot = webClientRoot
+    this.opsHttp = opsHttp ? snapshotRuntimeOpsHttpConfig(opsHttp) : undefined
     this.keepaliveIntervalMs = keepaliveIntervalMs
     this.longPollCap = longPollCap
     this.metadataOwnershipPollMs = metadataOwnershipPollMs

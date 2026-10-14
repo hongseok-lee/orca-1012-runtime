@@ -1,0 +1,42 @@
+{
+  "capturedAt": "2026-10-13T13:38:39.063Z",
+  "kind": "Terminal utility 최초 pure fragment 7개 및 type/lint 결과 보고 문서",
+  "PR": 35,
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/37b32a27e30b4a12b44ac478451b677b4e10fd41/docs/implementation/p1-18-19/README.md",
+  "targetSHA": "37b32a27e30b4a12b44ac478451b677b4e10fd41",
+  "sourceSHA": "d53227d6802808572219b09906c038add6481f8f",
+  "initialSourceSHA": null,
+  "typeCorrectionSourceSHA": null,
+  "reportDocumentSHA256": "b3181d4ebfbfb1341f038c6c457949bf2f4ed01b2e44d9d83ef4228a2b1e439c",
+  "resultDocumentSHA256": "5827f771602a55cacae5a0dd0cc67aea0b56d76268cf229edcd817bd875ac435",
+  "actualHeading": "미연결 경계와 검증 상태",
+  "actualResultParagraph": "지정된 최초 경계의 ingress-fragments.test.mts 7개는 소스 d53227d6802808572219b09906c038add6481f8f에서 첫 실행으로 모두 통과했다. 실패 / skip은 0이며 scoped type과 configured lint도 통과했다. 부분 paste 중 clear / protocol reply / Stop 분류 금지와 ESC → [200~ continuation을 포함한다. 해당 검증 PID는 종료됐고 heavy 1 슬롯을 반환했다. 결과는 first-fragment-results.json에 기록했다. 최초 실제 캡처는 아직 없다. 실제 앱, PG, provider, PTY, Cloud 및 runtime activation 합격을 주장하지 않는다.",
+  "headingRect": {
+    "x": 370,
+    "y": 1309.25,
+    "width": 721,
+    "height": 38.1875
+  },
+  "resultParagraphRect": {
+    "x": 370,
+    "y": 1573,
+    "width": 721,
+    "height": 145.5625
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 1800
+  },
+  "DPR": 1,
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "artifactSHA256": "92631283e1b9419c5c1cf5c19fb2a0fa9114a4a98712c81bcf6aafaf4bd69b8d",
+  "artifactBytes": 550640,
+  "screenshotExecutions": 1,
+  "productUI": false,
+  "nativeIPhone": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false
+}

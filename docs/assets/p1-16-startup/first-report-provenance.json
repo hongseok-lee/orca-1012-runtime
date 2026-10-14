@@ -1,0 +1,26 @@
+{
+  "PR": 47,
+  "targetSHA": "cf39e6d2a8449b59bad926eed0d5dd108d32a9e9",
+  "sourceSHA": "0ab1e637d1eb72406de7f2fac368050f9a57eb59",
+  "initialSourceSHA": "80cbdf6317f02f39c484a18eecc9f8e539d804eb",
+  "reportPath": "docs/implementation/p1-16-startup/first-report.html",
+  "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/cf39e6d2a8449b59bad926eed0d5dd108d32a9e9/docs/implementation/p1-16-startup/first-report.html",
+  "heading": "P1-16 orcad startup 최초 검증 결과",
+  "reportHTMLSHA256": "d0d93905a2a46c44b4c2f3e4fcb1b881a7a05643bdcfd930a5ee045a95704642",
+  "PGDistinct": 8,
+  "valuePass": 6,
+  "typeExit": 1,
+  "ownedType": 0,
+  "externalType": 25,
+  "lintExit": 0,
+  "capturedAt": "2026-10-14T02:13:25.081Z",
+  "viewport": {
+    "width": 1140,
+    "height": 2000
+  },
+  "artifactSHA256": "cc2dcc0a9116d45d92c993a9f485f329d889a7e41604b7fb5949d5e8d5c1b206",
+  "screenshotExecutions": 1,
+  "kind": "원 owner의 실제 검증 결과 보고 문서입니다. 합성 UI journey와 별도 증거이며 제품 또는 native UI 합격이 아닙니다.",
+  "renderingQualification": "공개 HTML을 원 bytes/hash와 대조하고 Content-Type만 text/html로 제공했습니다.",
+  "wholeSuiteAtFinalPinExecutions": 0
+}

@@ -1,0 +1,59 @@
+{
+  "productSource": "17cca6af7bb8fad1285921b399660a1a6806cad0",
+  "executedFixtureSource": "79f7d0e48be3cb790d77fa06626d30ff653307a0",
+  "publicHeadAtExecution": "14f8bce02171307372a3302eda7e1772502b56a3",
+  "newFixtureCorrectionSource": "9d8f399e6d5e73831851c689c1bd36430fcb0ed6",
+  "newFixtureSha256": "bed47665f2248b71917af6660ab344f5de18a87d46ad19b62b84d2f0fb55eb09",
+  "sourceDigestAtExecution": "03caa6cf3c8b74cd79195391922c470bf44e281174c71d4e23237d8320dca3f1",
+  "startedAt": "2026-10-13T14:41:03.559Z",
+  "finishedAt": "2026-10-13T14:41:10.198Z",
+  "controlPid": 9994,
+  "checks": {
+    "fixture-update": {
+      "pid": 10006,
+      "status": "FINISHED",
+      "exit": 0,
+      "startedAt": "2026-10-13T14:41:03.590Z",
+      "finishedAt": "2026-10-13T14:41:04.018Z",
+      "sha256": "81c52c1fd6aaffa88f5000b8a943aa3a9e20c6f2006805ff8c256fe33555b80a",
+      "bytes": 143
+    },
+    "corrected-fixture-type": {
+      "pid": 10013,
+      "status": "FINISHED",
+      "exit": 1,
+      "startedAt": "2026-10-13T14:41:04.033Z",
+      "finishedAt": "2026-10-13T14:41:10.197Z",
+      "sha256": "feb1af6d9f8919c1cf0e9c2f4bfd2e11bcd975ad786aebda6e1c965401fd9669",
+      "bytes": 569
+    }
+  },
+  "scopedType": {
+    "exit": 1,
+    "errors": 1,
+    "codes": [
+      "TS2352"
+    ],
+    "line": 62
+  },
+  "scopedLintExecuted": false,
+  "newPg": {
+    "written": 7,
+    "executed": 0,
+    "passed": 0,
+    "failed": 0,
+    "notEntered": 7
+  },
+  "heavyOccupied": false,
+  "newAllocationPending": true,
+  "correctionRevalidated": false,
+  "newRemoteCallsAfterRootStop": 0,
+  "oldCasesRepeated": 0,
+  "productSourceObjectsUnchanged": true,
+  "ddlChanged": false,
+  "authorityIssuerChanged": false,
+  "principalUnitScopeChanged": false,
+  "rawLog": "corrected-fixture-type-private.log",
+  "rawLogSha256": "feb1af6d9f8919c1cf0e9c2f4bfd2e11bcd975ad786aebda6e1c965401fd9669",
+  "originalFirstTypeLogSha256": "a4dbaed023d43c369f00d873d84cbf985c156a735932119c1818d8ef63a466e4"
+}
