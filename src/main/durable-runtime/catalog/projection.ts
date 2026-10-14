@@ -13,7 +13,7 @@ import { catalogSnapshotId, catalogSnapshotVersion } from './revision.ts'
 import { captureCatalogJson } from './immutable.ts'
 import { CatalogError } from './errors.ts'
 import { DEFAULT_WORKSPACE_STATUS_ID } from '../../../shared/workspace-statuses.ts'
-import { normalizeExecutionHostId, type ExecutionHostId } from '../../../shared/execution-host.ts'
+import { getWorktreeExecutionHostId, normalizeExecutionHostId, type ExecutionHostId } from '../../../shared/execution-host.ts'
 
 function head(snapshot: CatalogSnapshot, scope: string): CatalogHeadRow {
   const found = snapshot.heads.find(row => row.scope === scope)
@@ -73,7 +73,8 @@ function unverifiedCatalogPs(snapshot: CatalogSnapshot, workspace: CatalogWorksp
   const stored = projectCatalogWorktree(workspace)
   const repo = snapshot.repositories.find(row => row.id === workspace.repo_id)
   const group = snapshot.projectGroups.find(row => row.id === workspace.project_group_id)
-  const hostId = stored.hostId ?? repo?.executionHostId ?? undefined
+  const hostId = stored.hostId || repo?.executionHostId || repo?.connectionId
+    ? getWorktreeExecutionHostId(stored, repo) : undefined
   return { workspaceKind: workspace.kind === 'FOLDER_WORKSPACE' ? 'folder-workspace' : 'git',
     worktreeId: workspace.public_id, repoId: stored.repoId, ...(hostId ? { hostId } : {}),
     repo: repo?.displayName ?? group?.name ?? stored.repoId, path: stored.path, branch: stored.branch,
