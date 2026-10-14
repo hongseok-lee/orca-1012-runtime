@@ -2,7 +2,7 @@ import type { Pool } from 'pg'
 import type { RuntimeBrowserCommandHost } from '../runtime/orca-runtime-browser'
 import type { RuntimeBrowserCommandsFactory } from '../runtime/runtime-browser-commands-factory'
 import type { OrcadBrowserProvider } from './orcad-browser-provider'
-import type { DurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
+import type { CapturedCatalogReadConfig, DurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import type { CatalogAuthority } from '../durable-runtime/catalog/authority.ts'
 import { captureCatalogAuthority } from '../durable-runtime/catalog/authority.ts'
@@ -12,12 +12,12 @@ import { projectCatalogWorktree } from '../durable-runtime/catalog/projection.ts
 import type { CatalogRepositoryRow } from '../durable-runtime/db/rows.ts'
 import { CatalogError } from '../durable-runtime/catalog/errors.ts'
 import { getRepoExecutionHostId, getWorktreeExecutionHostId } from '../../shared/execution-host.ts'
+import { createOrcadCatalogBrowserPublication } from './orcad-catalog-browser-publication.ts'
 
 type BrowserWorkspace = Awaited<ReturnType<RuntimeBrowserCommandHost['resolveWorktreeSelector']>>
 
 /** Startup registration only: never accepts a request principal, token or authority. */
-function captureBrowserWorkspaceResolver(input: DurableCatalogReadConfig): (selector: string) => Promise<BrowserWorkspace> {
-  const config = captureDurableCatalogReadConfig(input)
+function captureBrowserWorkspaceResolver(config: CapturedCatalogReadConfig): (selector: string) => Promise<BrowserWorkspace> {
   const datasetName = config.datasetName
   const hostId = config.hostId
   const assertCurrentHost = config.assertCurrentHost.bind(config)
@@ -82,14 +82,16 @@ function captureBrowserWorkspaceResolver(input: DurableCatalogReadConfig): (sele
   }
 }
 
-/** Replace only the two Workspace resolvers on the actual Chromium factory host. */
+/** Install both Workspace resolvers and publication guard from one startup capture. */
 export function createOrcadCatalogBrowserFactory(
   provider: OrcadBrowserProvider | null,
   input?: DurableCatalogReadConfig
 ): RuntimeBrowserCommandsFactory | null {
   if (!provider || provider.kind !== 'chromium' || !input) { return provider?.factory ?? null }
   const factory = provider.factory.bind(provider)
-  const resolve = captureBrowserWorkspaceResolver(input)
+  const config = captureDurableCatalogReadConfig(input)
+  const resolve = captureBrowserWorkspaceResolver(config)
+  const withBrowserTabPublication = createOrcadCatalogBrowserPublication(config)
   return (host) => {
     // A separate inherited carrier also supports nonconfigurable methods on an
     // immutable owner. Every read still uses the original host receiver.
@@ -97,6 +99,7 @@ export function createOrcadCatalogBrowserFactory(
     return factory(new Proxy(carrier, {
       get(_target, property) {
         if (property === 'resolveWorktreeSelector' || property === 'resolveBrowserWorkspace') { return resolve }
+        if (property === 'withBrowserTabPublication') { return withBrowserTabPublication }
         const value = Reflect.get(host, property, host)
         return typeof value === 'function' ? value.bind(host) : value
       }
