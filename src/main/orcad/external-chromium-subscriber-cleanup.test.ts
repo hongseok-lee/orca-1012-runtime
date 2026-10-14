@@ -2,16 +2,19 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ExternalChromiumPageRecord } from './external-chromium-tab-projection'
 import { ExternalChromiumCdpConnection } from './external-chromium-cdp-connection'
 
-const controlled = vi.hoisted(() => ({
-  streams: [] as { stops: number; reject: ((error: Error) => void) | null }[],
-  boundary: null as 'budget' | 'viewport' | null
-}))
+type ControlledStream = { stops: number; reject: ((error: Error) => void) | null }
+const controlled = vi.hoisted(() => {
+  const state: { streams: ControlledStream[]; boundary: 'budget' | 'viewport' | null } = {
+    streams: [], boundary: null
+  }
+  return state
+})
 vi.mock('./external-chromium-target-screencast', () => ({
   ExternalChromiumTargetScreencast: class {
     readonly done: Promise<void>
     private resolveDone!: () => void
     private stopped = false
-    private readonly state = { stops: 0, reject: null as ((error: Error) => void) | null }
+    private readonly state: ControlledStream = { stops: 0, reject: null }
     constructor() {
       controlled.streams.push(this.state)
       this.done = new Promise(resolve => { this.resolveDone = resolve })
