@@ -90,11 +90,16 @@ export function createOrcadCatalogBrowserFactory(
   if (!provider || provider.kind !== 'chromium' || !input) { return provider?.factory ?? null }
   const factory = provider.factory.bind(provider)
   const resolve = captureBrowserWorkspaceResolver(input)
-  return (host) => factory(new Proxy(host, {
-    get(target, property) {
+  return (host) => {
+    // A separate inherited carrier also supports nonconfigurable methods on an
+    // immutable owner. Every read still uses the original host receiver.
+    const carrier: RuntimeBrowserCommandHost = Object.create(host)
+    return factory(new Proxy(carrier, {
+    get(_target, property) {
       if (property === 'resolveWorktreeSelector' || property === 'resolveBrowserWorkspace') { return resolve }
-      const value = Reflect.get(target, property, target)
-      return typeof value === 'function' ? value.bind(target) : value
+      const value = Reflect.get(host, property, host)
+      return typeof value === 'function' ? value.bind(host) : value
     }
-  }))
+    }))
+  }
 }
