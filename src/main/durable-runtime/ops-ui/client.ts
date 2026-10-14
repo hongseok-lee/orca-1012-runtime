@@ -86,25 +86,34 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
     ;(byId('unit-detail') as HTMLDialogElement).close()
     status('auth', '인증이 필요합니다', '유효 키로 연결하면 운영 상태를 조회할 수 있습니다.')
   }
+  class HttpFailure extends Error {
+    constructor(readonly status: number, code: string) { super(code); this.name = 'HttpFailure' }
+  }
+  function responseCode(data: unknown, fallback: string): string {
+    const candidate = data && typeof data === 'object' && 'error' in data ? data.error : null
+    return candidate && typeof candidate === 'object' && 'code' in candidate && typeof candidate.code === 'string' && /^[A-Za-z0-9_]+$/.test(candidate.code) ? candidate.code : fallback
+  }
+  async function responseFailure(response: Response): Promise<HttpFailure> {
+    const data: unknown = await response.json().catch(() => null)
+    return new HttpFailure(response.status, responseCode(data, response.status === 401 ? 'AUTH_REQUIRED' : 'REQUEST_FAILED'))
+  }
+  function confirmedRejection(error: unknown): error is HttpFailure {
+    return error instanceof HttpFailure && ((error.status >= 400 && error.status < 500) || error.status === 501)
+  }
   function errorState(error: unknown): void {
     if (error instanceof DOMException && error.name === 'AbortError') { return }
-    const code = error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message : 'REQUEST_FAILED'
-    if (code === 'AUTH_REQUIRED') {
-      disconnect(); text('auth-error', '인증키가 유효하지 않거나 인증이 필요합니다.'); byId('auth-error').hidden = false
+    const code = error instanceof Error && /^[A-Za-z0-9_]+$/.test(error.message) ? error.message : 'REQUEST_FAILED'
+    if ((error instanceof HttpFailure && error.status === 401) || code === 'AUTH_REQUIRED') {
+      disconnect(); text('auth-error', `인증키가 유효하지 않거나 인증이 필요합니다. 오류 코드: ${code}.`); byId('auth-error').hidden = false
     } else {
-      status('error', '조회에 실패했습니다', `오류 코드: ${code}. 빈 데이터로 처리하지 않았습니다.`, true)
+      status('error', '조회에 실패했습니다', `오류 코드: ${code}${error instanceof HttpFailure ? ' · HTTP ' + error.status : ''}. 빈 데이터로 처리하지 않았습니다.`, true)
     }
   }
   async function api<T>(path: string, body?: string, signal = controller.signal): Promise<T> {
     const headers: Record<string, string> = { Authorization: `Bearer ${key}`, Accept: 'application/json' }
     if (body !== undefined) { headers['Content-Type'] = 'application/json' }
     const response = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers, body, signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' })
-    if (!response.ok) {
-      const data: unknown = await response.json().catch(() => null)
-      const candidate = data && typeof data === 'object' && 'error' in data ? data.error : null
-      const code = candidate && typeof candidate === 'object' && 'code' in candidate && typeof candidate.code === 'string' && /^[A-Z0-9_]+$/.test(candidate.code) ? candidate.code : response.status === 401 ? 'AUTH_REQUIRED' : 'REQUEST_FAILED'
-      throw new Error(response.status === 401 ? 'AUTH_REQUIRED' : code)
-    }
+    if (!response.ok) { throw await responseFailure(response) }
     return await response.json() as T
   }
   function after(value: OpsReplayCursor): string {
@@ -213,7 +222,10 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       if (current !== generation) { return }
       notifications = notifications.map(n => n.id === notification.id ? { ...n, revision: result.revision, state: result.state, readAt: result.readAt, resolvedAt: result.resolvedAt } : n)
       readRetries.delete(notification.id); renderNotifications()
-    } catch (error) { if (current === generation) { renderNotifications(); errorState(error) } }
+    } catch (error) { if (current === generation) {
+      if (confirmedRejection(error)) { readRetries.delete(notification.id) }
+      renderNotifications(); errorState(error)
+    } }
   }
   async function command(unit: OpsUnit): Promise<void> {
     // A different card click must never become a retry of an earlier Unit's command.
@@ -235,8 +247,15 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       text('operation-refresh', '실제 상태 확인')
     } catch (error) {
       if (current === generation) {
-        text('operation-result', `Unit ${pending.unitId} · operation ${pending.operationId} · 접수 결과를 확인하지 못했습니다. 동일한 operation ID와 원 payload로 다시 확인할 수 있습니다.`)
-        text('operation-refresh', '원 요청으로 접수 재확인'); errorState(error)
+        if (confirmedRejection(error)) {
+          uncertainCommand = null
+          text('operation-result', `Unit ${pending.unitId} · operation ${pending.operationId} · 거절됨 · HTTP ${error.status} · ${error.message}. 원 요청은 재전송하지 않습니다.`)
+          text('operation-refresh', '상태 확인')
+        } else {
+          text('operation-result', `Unit ${pending.unitId} · operation ${pending.operationId} · 접수 결과가 불확정입니다${error instanceof HttpFailure ? ' · HTTP ' + error.status + ' · ' + error.message : ''}. 동일한 operation ID와 원 payload로 다시 확인할 수 있습니다.`)
+          text('operation-refresh', '원 요청으로 접수 재확인')
+        }
+        errorState(error)
       }
     } finally { if (current === generation) { operationInFlight = false; syncCommandControls() } }
   }
@@ -276,7 +295,8 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
   async function stream(current: number, signal: AbortSignal): Promise<void> {
     if (!cursor) { return }
     const response = await fetch(`${routes.stream}?after=${encodeURIComponent(after(cursor))}`, { headers: { Authorization: `Bearer ${key}`, Accept: 'text/event-stream' }, signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' })
-    if (!response.ok || !response.body) { throw new Error(response.status === 401 ? 'AUTH_REQUIRED' : 'STREAM_FAILED') }
+    if (!response.ok) { throw await responseFailure(response) }
+    if (!response.body) { throw new Error('STREAM_FAILED') }
     const reader = response.body.getReader(), decoder = new TextDecoder()
     let buffer = ''
     try {
@@ -299,7 +319,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
             if (page.status !== 'PAGE' || (id && id !== after(page.nextCursor))) { throw new Error('STREAM_CURSOR_INVALID') }
             replay(page)
           } else if (name === 'reset') { replay(JSON.parse(data) as OpsReplayPage); return }
-          else if (name === 'error') { throw new Error('STREAM_DATABASE_ERROR') }
+          else if (name === 'error') { throw new HttpFailure(503, responseCode(JSON.parse(data) as unknown, 'STREAM_DATABASE_ERROR')) }
           separator = buffer.match(/\r?\n\r?\n/)
         }
       }
@@ -329,7 +349,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       if (replay(events)) {
         void stream(current, signal).catch(error => {
           if (current !== generation || signal.aborted) { return }
-          if (error instanceof Error && error.message === 'AUTH_REQUIRED') { errorState(error); return }
+          if (error instanceof HttpFailure || (error instanceof Error && error.message === 'AUTH_REQUIRED')) { errorState(error); return }
           status('disconnected', '실시간 연결이 끊겼습니다', '마지막 관측 자료를 유지합니다. 다시 불러오면 저장된 cursor부터 page와 stream을 연결합니다.', true)
           text('event-state', '연결 끊김 · 마지막 cursor 보존')
         })
