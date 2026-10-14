@@ -69,7 +69,7 @@ await test('PG Browser reservation, receipt-first replay and existing projection
       await query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,$3,'READY')", [id, publicIds[index], payload.name])
       await query(`INSERT INTO durable_runtime.catalog_workspace_metadata(workspace_id,kind,project_group_id,reserved_path,payload,create_request)
         VALUES($1,'FOLDER_WORKSPACE',$2,$3,$4,'{}')`, [id, groupId, payload.folderPath, JSON.stringify(payload)])
-      await query('INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch) VALUES($1,$2)', [`workspace:${id}`, randomUUID()])
+      if (index === 0) {await query('INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch) VALUES($1,$2)', [`workspace:${id}`, randomUUID()])}
     }
     await query("INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'shell')", [agentId])
     await query("INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')", [sessionId, agentId, ids[0]])
@@ -108,7 +108,7 @@ await test('PG Browser reservation, receipt-first replay and existing projection
     const snapshot = await readCatalogSnapshot(pool, authority)
     const projection = projectCatalogTabs(snapshot, snapshot.workspaces.find(row => row.workspace_id === ids[0])!)
     assert.deepEqual(JSON.parse(JSON.stringify(projection.tabs)), [stored.payload]); assert.equal(projection.activeTabId, null)
-    assert.deepEqual(JSON.parse(JSON.stringify((await readAllCatalogTabs(pool, prepareCatalogCall('session.tabs.listAll', null, context))).snapshots
+    assert.deepEqual(JSON.parse(JSON.stringify((await readAllCatalogTabs(pool, prepareCatalogCall('session.tabs.listAll', null, { ...context, authority: { ...authority, workspacePublicIds: [publicIds[0]] } }))).snapshots
       .find(row => row.worktree === publicIds[0])!.tabs)), [stored.payload])
     const facade = new CatalogCompatibilityFacade(createCatalogEntries(pool, { recordUnitIntent, reserveSleep, recordInputCancel }, { browser: launch }))
     assert.deepEqual(await facade.invoke('browser.tabCreate', { worktree: publicIds[0], page: launch.browserPageId, url: 'https://changed.example/' }, context), { browserPageId: launch.browserPageId })
@@ -139,7 +139,7 @@ await test('PG Browser reservation, receipt-first replay and existing projection
     await assert.rejects(reserveCatalogBrowserTab(pool, prepareCatalogCall('browser.tabCreate', {
       worktree: publicIds[0] }, context), { ...launch, tabId: logicalId('tab', randomUUID()), browserPageId: `another-page:${ids[0]}` }), /CATALOG_WORKSPACE_DELETED/)
     // A late publication failure must roll back the Tab, metadata and receipt together.
-    await query('DELETE FROM durable_runtime.catalog_heads WHERE scope=$1', [`workspace:${ids[1]}`])
+    // The second Workspace head is deliberately absent from fixture setup; durable heads are retained.
     const failed = { tabId: logicalId('tab', randomUUID()), browserPageId: `rollback-page:${ids[1]}` }
     const rollbackBefore = await publicationState()
     await assert.rejects(reserveCatalogBrowserTab(pool, prepareCatalogCall('browser.tabCreate', { worktree: publicIds[1] }, context), failed), /CATALOG_HEAD_MISSING/)
