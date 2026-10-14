@@ -13,17 +13,17 @@ Root는 모듈 pin `e7fe71867c83a00b8e340b23b43e90e7d86a377f`의 제품·fixture
 - 원 준비 실패는 protocol-version의 runtime leaf 2개 누락이었다. 해당 leaf만 보충한 뒤 actual 입력 19개와 metafile를 보존했다. 다음 lint 설정 plugin 5개 누락과 이후 Node preload `pg-env.cjs` 누락도 원 실패로 보존했다. 고정 plugin 5개와 기존 성공 PG 환경 주입만 승인받아 교정했고 성공한 준비·bundle·lint·값은 반복하지 않았다.
 - Type은 미실행이다. 기존 bundle 3개의 사전 SHA 기록이 없다는 한계를 유지한다. 이번 사후 SHA 회수와 metafile 크기 대조로 과거 bytes의 동일성을 소급 증명하지 않는다. 값·PG generated wrapper는 원 bytes로 보존했고, database.generated.cts는 stdin 이름이며 실제 저장 파일이 아니었다.
 
-## 19:02 계약의 서버 설정 source와 대기 중인 배선
+## 19:02 계약의 서버 설정과 PR69 이후의 공개 배선 source
 
 새 `clipboard-config.ts`는 선택적 서버 `attachments: { aliasRoot }`만 capture한다. own-data·plain 객체와 정확한 필드를 검증하고 getter·foreign prototype·추가 key·잘못된 타입·빈 값·NUL·개행을 거절한다. 기존 UUID 기반 `reserveAttachmentAlias` 절대경로 검증을 재사용한다. 입력이 없으면 기존 capture 결과에 새 필드를 넣지 않는다. Pool·host owner를 freeze하거나 수정하지 않는다.
 
 `rpc/config.ts`와 `orcad-durable-catalog.ts`가 private JSON capture→prepare 재capture→readConfig로 같은 불변 사본을 전달한다. 기존 config file·pgpass 검증과 startup Pool stop 규칙을 유지한다. fallback root·request/env/tmp/과거 NFS 기본값·디렉터리 생성·filesystem materialization은 추가하지 않았으며 live 설정은 변경하지 않았다. 제품 조기 pin은 `1f7a882376470fa5ba27567d2a3e917f200d1e2b`이다.
 
-`public.ts`·`registry.ts`는 실제 수정하지 않았다. 검토용 diff는 adapter constructor의 factory 1회 capture, requireOpen, `CATALOG_CLIPBOARD_NOT_CONFIGURED`, 원 unary 5개와 kind mismatch 거절만 제안한다. PR69 이후 Root의 명시적인 소유권 이전을 기다린다. PG opt-out의 원 선언·handler 경로는 유지한다.
+Root가 PR69 병합 후 단일 소유권을 이전했다. 고정 main `663266d4d67c1a17a3943f05b172fdf5f757227c`에 충돌 없이 1회 정렬하고 `public.ts`·`registry.ts`에 clipboard 추가 배선을 적용했다. adapter constructor의 factory 1회 capture, requireOpen, `CATALOG_CLIPBOARD_NOT_CONFIGURED`, 원 unary 5개와 kind mismatch 거절을 연결한다. 추가 block을 제외한 public/registry bytes는 해당 main과 같으므로 병합된 create·history·send·cleanup을 보존한다. 원 다섯 선언/schema와 PG opt-out의 기존 경로는 변경하지 않았다. query 사전 교정 pin은 `97f0d9f434a585d70949058577c330e71bf49175`, 공개 glue pin은 `98dea7070fb6fbd22dd7275315934521e26c3c2b`이다.
 
-새 wiring 값 callback 1개·PG callback 1개의 source는 이 배선이 합류한 뒤 실행한다. 값은 설정 capture·미설정·disposed·kind 경계를, PG는 원 선언→RpcDispatcher→adapter→실제 handler와 재생성 뒤 commit replay·committed abort·원 bytes 및 기존 ledger 보존을 정의한다. 새 PG fixture는 기존 격리 DB의 고유 `/synthetic/public-clipboard-wiring/` prefix만 사용하며 migration/reset/delete를 하지 않는다. 이 후속 source의 lint·값·PG·type·원격 실행은 모두 0이다.
+새 wiring 값 callback 1개·PG callback 1개는 배선 source가 합류했지만 아직 미실행이다. Root의 후속 검증 gate를 기다린다. 값은 설정 capture·미설정·disposed·kind 경계를, PG는 원 선언→RpcDispatcher→adapter→실제 handler와 재생성 뒤 commit replay·committed abort·원 bytes 및 기존 ledger 보존을 정의한다. 새 PG fixture는 기존 격리 DB의 고유 `/synthetic/public-clipboard-wiring/` prefix만 사용하며 migration/reset/delete를 하지 않는다. 이 후속 source의 lint·값·PG·type·원격 실행은 모두 0이다.
 
-실제 서버 공개 등록·preview·provider materialization·SSH·device·HA 합격은 아직 아니다. non-null connectionId는 수락한 모듈에서 Save/Start의 PG 쓰기 전에 거절하며 물리 파일/SSH fallback을 만들지 않는다. 논리 alias는 provider 파일 읽기 성공 증거가 아니다. legacy Map 동시 제한·TTL·새 quota·앱 schema·orcad-entry.ts·attachment store/materializer/schema는 변경하지 않았다.
+공개 등록 source를 연결했지만 실제 runtime 활성화·preview·provider materialization·SSH·device·HA 합격은 아직 아니다. non-null connectionId는 수락한 모듈에서 Save/Start의 PG 쓰기 전에 거절하며 물리 파일/SSH fallback을 만들지 않는다. 논리 alias는 provider 파일 읽기 성공 증거가 아니다. legacy Map 동시 제한·TTL·새 quota·앱 schema·orcad-entry.ts·attachment store/materializer/schema는 변경하지 않았다.
 
 ![변경 전 C2 실제 화면, 이번 clipboard handler 성공 증거 아님](https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/3a315db34a635388bd7acd59828146f0ab6c83e9/docs/implementation/p1-26-27-live-dev-first/ops-empty-scope-first.png)
 
