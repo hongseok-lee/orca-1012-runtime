@@ -9,6 +9,7 @@ import { CatalogError } from '../catalog/errors.ts'
 import { BrowserTabCreateParams } from '../../../shared/rpc-contract/browser-tab-create-params.ts'
 import { normalizeBrowserNavigationUrl } from '../../../shared/browser-url.ts'
 import { BrowserError } from '../../browser/browser-error.ts'
+import { getRepoExecutionHostId, getWorktreeExecutionHostId } from '../../../shared/execution-host.ts'
 
 export function validateCatalogBrowserRequest(input: unknown) {
   const parsed = BrowserTabCreateParams.strict().safeParse(input)
@@ -59,7 +60,7 @@ export async function readCatalogBrowserState(
         throw new CatalogError('CATALOG_BROWSER_REPOSITORY_UNAVAILABLE')
       }
       repository = parseCatalogRepo(rows[0])
-      if ((repository.executionHostId ?? 'local') !== config.hostId) {
+      if (getRepoExecutionHostId(repository) !== config.hostId) {
         throw new CatalogError('CATALOG_REGISTRATION_HOST_MISMATCH')
       }
     } else if (workspace.kind !== 'FOLDER_WORKSPACE') {
@@ -70,8 +71,7 @@ export async function readCatalogBrowserState(
         (workspace.repo_id !== null && projected.repoId !== workspace.repo_id)) {
       throw new CatalogError('CATALOG_BROWSER_WORKSPACE_SHAPE')
     }
-    const actualHost = workspace.payload.hostId ?? workspace.payload.executionHostId ??
-      repository?.executionHostId ?? 'local'
+    const actualHost = getWorktreeExecutionHostId(projected, repository)
     if (actualHost !== config.hostId) { throw new CatalogError('CATALOG_REGISTRATION_HOST_MISMATCH') }
     if (page === undefined) { return { workspace } }
     const rows = (await tx.query<CatalogTab>(`SELECT m.*,t.workspace_id,t.session_id,t.kind,t.terminal_handle,

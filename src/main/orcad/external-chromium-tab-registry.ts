@@ -7,6 +7,7 @@ import type { BrowserSessionTabSelectionOptions } from '../runtime/browser-tab-c
 import { BrowserError } from '../browser/browser-error'
 import { externalCdpError } from './external-chromium-cdp-connection'
 import { ExternalChromiumTargetBinding } from './external-chromium-target-binding'
+import { captureExternalChromiumTabPublication } from './external-chromium-tab-publication'
 import { normalizeBrowserNavigationUrl } from '../../shared/browser-url'
 import type { ExternalChromiumBrowserSession } from './external-chromium-browser-session'
 import {
@@ -55,6 +56,8 @@ export class ExternalChromiumTabRegistry {
     params: z.infer<typeof BrowserTabCreateParams>,
     selection?: BrowserSessionTabSelectionOptions
   ): Promise<unknown> {
+    const publish = captureExternalChromiumTabPublication(host, this.session,
+      this.pagesByPublicId, this.pagesByAgentId, this.activePageIdByWorktree)
     if (params.placement?.kind === 'client') {
       throw new BrowserError(
         'browser_command_unavailable',
@@ -79,10 +82,7 @@ export class ExternalChromiumTabRegistry {
         )
       }
       await this.targets.assertCurrent(existing)
-      this.setActivePage(existing)
-      if (selection) {
-        host.markHeadlessBrowserSessionTabActive?.(existing.worktreeId, existing.publicPageId, selection)
-      }
+      await publish(existing, existing, selection)
       return { browserPageId: existing.publicPageId }
     }
     const url = normalizeBrowserNavigationUrl(String(params.url ?? 'about:blank'))
@@ -122,16 +122,8 @@ export class ExternalChromiumTabRegistry {
       if (agentPageId) {await this.session.run(['tab', 'close', agentPageId]).catch(() => {})}
       throw error
     }
-    this.pagesByPublicId.set(publicPageId, page)
-    this.pagesByAgentId.set(agentPageId, page)
-    this.setActivePage(page)
-    // Native command targeting stays active independently of UI selection and its audience.
-    if (selection) {
-      host.markHeadlessBrowserSessionTabActive?.(worktreeId, publicPageId, selection)
-    }
-    if (worktreeId) {
-      host.notifyHeadlessBrowserSessionTabsChanged?.(worktreeId)
-    }
+    // PG rejection leaves the native page unregistered. No generation-blind close.
+    await publish(page, undefined, selection)
     return { browserPageId: publicPageId }
   }
 
