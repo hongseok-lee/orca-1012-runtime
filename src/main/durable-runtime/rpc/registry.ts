@@ -60,6 +60,10 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.sendStructured(params, context) }
     }
+    if (method.name === 'browser.tabCreate') {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext) => adapter.createBrowser(params, context) }
+    }
     if (isCatalogMethodNotConnected(method.name)) {
       return { ...method, handler: () => { throw new CatalogReadError('CATALOG_METHOD_NOT_CONNECTED') } }
     }
