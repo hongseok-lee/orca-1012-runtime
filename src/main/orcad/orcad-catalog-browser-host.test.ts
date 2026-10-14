@@ -47,6 +47,8 @@ test('captured Catalog browser factory preserves host receivers and borrowed own
   host.getAgentBrowserBridge = function () { assert.equal(this, host); return null }
   let notified = false
   host.notifyHeadlessBrowserSessionTabsChanged = function () { assert.equal(this, host); notified = true }
+  Object.defineProperty(host, 'fixtureValue', { configurable: true,
+    get() { assert.equal(this, host); return 123 } })
   const descriptors = Object.getOwnPropertyDescriptors(host)
   const originalConnect = pool.connect, originalFactoryState = Object.getOwnPropertyDescriptors(config)
   const provider = browserFixtureProvider(value => { state.host = value })
@@ -59,6 +61,7 @@ test('captured Catalog browser factory preserves host receivers and borrowed own
   assert.deepEqual(await bound.resolveWorktreeSelector(`id:${launch.workspace.publicId}`), expected)
   assert.deepEqual(await bound.resolveBrowserWorkspace(launch.workspace.aliases[0]), expected)
   assert.equal(bound.getAgentBrowserBridge(), null)
+  assert.equal(Reflect.get(bound, 'fixtureValue'), 123)
   bound.notifyHeadlessBrowserSessionTabsChanged?.(launch.workspace.publicId); assert.equal(notified, true)
   assert.deepEqual(Object.getOwnPropertyDescriptors(host), descriptors)
   assert.deepEqual(Object.getOwnPropertyDescriptors(config), originalFactoryState)
