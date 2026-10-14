@@ -1,0 +1,323 @@
+{
+  "sourcePin": "2d9ab47e41ff3ba4d520feea4947a4979c7b75e3",
+  "fixedBase": "e12f94346756f5edb35ef9afad2083cfb706301c",
+  "executionCounts": {
+    "type": 2,
+    "lintIncludingFix": 3,
+    "controlledJobs": 1,
+    "controlledCallbacks": 8,
+    "actualPagesAndViewers": 1,
+    "actualChangedGeneration": 1,
+    "standaloneProbeRepeats": 0
+  },
+  "static": {
+    "firstTypeExit": 1,
+    "firstTypeQualification": "TS5102/TS5090은 설정 준비 실패였으며 이 시점의 제품 type는 미확인이었습니다.",
+    "firstLintExit": 1,
+    "firstLintDiagnostics": {
+      "braces": 84,
+      "typeOnlyImports": 2,
+      "equivalentAwaitTernary": 1
+    },
+    "correction": "격리 TS7 설정에서 baseUrl을 제거하고 paths를 상대화했습니다. 소유 source에는 괄호, type-only import 및 동등한 await ternary 교정만 반영했습니다. Root가 두 diff 전문을 수락했습니다.",
+    "correctedTypeExit": 0,
+    "correctedLintExit": 0,
+    "ownedTypeDiagnostics": 0,
+    "externalTypeDiagnostics": 0,
+    "configDiffSHA256": "cb3049912a3dd3053f57d493dcc77f18d66286448af7922a3d3b33988f010e9d",
+    "sourceFormatDiffSHA256": "2d8570933847a257f42c0a7c4cee4ad2a1774ef5d8602fac40233ea5e273b8df"
+  },
+  "controlled": {
+    "callbackEntries": 8,
+    "passed": 8,
+    "failed": 0,
+    "qualification": "Controlled stream 및 loopback CDP peer로 확인한 경계이며 실제 Chrome 증거와 구분합니다.",
+    "cases": [
+      {
+        "name": "external subscriber captured cleanup does not stop a replacement record after an old budget rejection",
+        "status": "passed",
+        "durationMs": 57.99017900000001,
+        "failureMessages": []
+      },
+      {
+        "name": "external subscriber captured cleanup does not stop a replacement record after an old viewport rejection",
+        "status": "passed",
+        "durationMs": 51.00362999999993,
+        "failureMessages": []
+      },
+      {
+        "name": "external target command boundary retires mapping-replaced before issuing any native tab selection",
+        "status": "passed",
+        "durationMs": 8.40795300000002,
+        "failureMessages": []
+      },
+      {
+        "name": "external target command boundary retires target-absent before issuing any native tab selection",
+        "status": "passed",
+        "durationMs": 1.1875199999999495,
+        "failureMessages": []
+      },
+      {
+        "name": "external target command boundary does not reconnect or infer target loss from unverifiable transport after a failed start",
+        "status": "passed",
+        "durationMs": 1.1865960000000086,
+        "failureMessages": []
+      },
+      {
+        "name": "external target stop command fence drains opening without another normal start after stop",
+        "status": "passed",
+        "durationMs": 50.56669500000021,
+        "failureMessages": []
+      },
+      {
+        "name": "external target stop command fence drains updates without another normal start after stop",
+        "status": "passed",
+        "durationMs": 11.762842999999975,
+        "failureMessages": []
+      },
+      {
+        "name": "external target stop command fence drains metrics without another normal start after stop",
+        "status": "passed",
+        "durationMs": 7.181147999999894,
+        "failureMessages": []
+      }
+    ],
+    "rawResultSHA256": "25bcdbeeb46ff90a7359f30f00377ded357cca80753d80ad39104a906024e099"
+  },
+  "actual": [
+    {
+      "boundary": "pages-and-viewers",
+      "entries": 1,
+      "startedAt": "2026-10-14T12:14:37.095Z",
+      "endedAt": "2026-10-14T12:14:45.423Z",
+      "controller": {
+        "controllerPid": 677900,
+        "kubectlPid": 677901,
+        "actualExitCode": 0,
+        "endedAt": "2026-10-14T12:14:45.446003+00:00"
+      },
+      "helperPid": 2767,
+      "nodeExitCode": 0,
+      "assertion": true,
+      "viewerCounts": [
+        {
+          "accepted": 4,
+          "refused": 0
+        },
+        {
+          "accepted": 3,
+          "refused": 2
+        },
+        {
+          "accepted": 5,
+          "refused": 0
+        }
+      ],
+      "nativeSpawns": 44,
+      "nativeCloses": 44,
+      "nativeSuccessfulExits": 44,
+      "knownPidCount": 45,
+      "knownPidsAbsent": true,
+      "knownPidObservedAt": "2026-10-14T12:16:01.477Z",
+      "wholeDaemonChromeTerminationVerified": false,
+      "rawResultSHA256": "e963394ef4f5345f8f696292cc0d89a5ffc9270b15dd227087cbb10d47e5f656",
+      "nativeTapSHA256": "f6bcfbd6e811607e9a8707a5168757432e963642b1f937df093a7ffda8ada82f",
+      "knownPidReadbackSHA256": "52e9aeed60716ab7193a89342a02a0b905adecedbb18e8a2ef849959eb59bd71",
+      "lastNativeClose": {
+        "index": 44,
+        "pid": 3012,
+        "exitCode": 0,
+        "closedResponse": true,
+        "qualification": "정확 소유 session close 응답이며 daemon/Chrome 전체 종료를 별도로 증명하지 않습니다."
+      }
+    },
+    {
+      "boundary": "changed-generation",
+      "entries": 1,
+      "startedAt": "2026-10-14T12:17:12.749Z",
+      "endedAt": "2026-10-14T12:17:26.684Z",
+      "controller": {
+        "controllerPid": 679380,
+        "kubectlPid": 679381,
+        "actualExitCode": 0,
+        "endedAt": "2026-10-14T12:17:26.705042+00:00"
+      },
+      "helperPid": 3045,
+      "nodeExitCode": 0,
+      "assertion": true,
+      "viewerCounts": [
+        {
+          "accepted": 2,
+          "refused": 0
+        },
+        {
+          "accepted": 1,
+          "refused": 0
+        },
+        {
+          "accepted": 3,
+          "refused": 0
+        }
+      ],
+      "nativeSpawns": 32,
+      "nativeCloses": 32,
+      "nativeSuccessfulExits": 31,
+      "knownPidCount": 33,
+      "knownPidsAbsent": true,
+      "knownPidObservedAt": "2026-10-14T12:18:23.245Z",
+      "wholeDaemonChromeTerminationVerified": false,
+      "rawResultSHA256": "5409573cc33dbc226bd98e1ada2ee7b0bfd790d0619ee863844b3a946e986951",
+      "nativeTapSHA256": "3b034f5fe5caca6077ddecbb31bd5a1e72fda533d3cefec32454fc30a7e95b55",
+      "knownPidReadbackSHA256": "ba6702993472bc22a0427edbab1c5d7d5c2d71eeaade76204443e950cf6c4a70",
+      "cleanupQualification": "원 fixture exit 0과 generation 거절 assertion은 보존합니다. BrowserSession.stop이 마지막 close 오류를 catch하므로 전체 cleanup PASS로 표시하지 않습니다.",
+      "closeSequence": [
+        {
+          "index": 29,
+          "pid": 3276,
+          "startedAt": "2026-10-14T12:17:18.195Z",
+          "endedAt": "2026-10-14T12:17:18.550Z",
+          "exitCode": 0,
+          "signal": null,
+          "stdoutBytes": 53,
+          "stderrBytes": 0,
+          "closedResponse": true,
+          "role": "기존 소유 session의 앞선 close"
+        },
+        {
+          "index": 31,
+          "pid": 3434,
+          "startedAt": "2026-10-14T12:17:21.275Z",
+          "endedAt": "2026-10-14T12:17:21.679Z",
+          "exitCode": 0,
+          "signal": null,
+          "stdoutBytes": 53,
+          "stderrBytes": 0,
+          "closedResponse": true,
+          "role": "replacement finally.stop의 close"
+        },
+        {
+          "index": 32,
+          "pid": 3437,
+          "startedAt": "2026-10-14T12:17:21.682Z",
+          "endedAt": "2026-10-14T12:17:26.684Z",
+          "exitCode": null,
+          "signal": "SIGTERM",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "closedResponse": null,
+          "role": "원 process.stop의 마지막 duplicate close",
+          "configuredTimeoutMs": 5000,
+          "elapsedMs": 5002,
+          "responseAbsent": true,
+          "qualification": "소유 CLI의 bounded timeout 뒤 SIGTERM이며 추가 수동 PID kill은 없었습니다."
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "file": "product-a.jpg",
+      "bytes": 14238,
+      "sha256": "246d664e15d706f4726689c90a20d9b0a06e812cf199dc45ca759c226d30e401",
+      "width": 640,
+      "height": 480,
+      "sourceBoundary": "pages-and-viewers",
+      "decoder": "기존 제품 binary wire decoder로 JPEG를 추출했습니다.",
+      "rootVisualAcceptance": true
+    },
+    {
+      "file": "product-b.jpg",
+      "bytes": 14085,
+      "sha256": "b74863f6af8a507ffcc63693b8b9a8dcbb44e26834050d408c1b736218d946bf",
+      "width": 640,
+      "height": 480,
+      "sourceBoundary": "pages-and-viewers",
+      "decoder": "기존 제품 binary wire decoder로 JPEG를 추출했습니다.",
+      "rootVisualAcceptance": true
+    }
+  ],
+  "limitations": [
+    "Fixture의 ready/flush caller를 사용했습니다. 전체 RuntimeBrowserScreencastController, 앱, 네트워크 및 encrypted RPC 통합은 검증하지 않았습니다.",
+    "changed-generation은 소유 browser 교체 후 옛 page 재구독 거절과 추가 frame 채택 0을 확인했습니다. 모든 내부 generation mismatch branch나 정상 reconnect의 증거가 아닙니다.",
+    "마지막 duplicate close의 timeout을 별도 실패로 기록합니다. Known PID 부재는 daemon/Chrome 전체 종료 합격을 뜻하지 않습니다.",
+    "자동 인증, 중앙 BrowserTab PG 영속성, Catalog resolver, live backend Chrome 활성화, background 지속 repaint, native iPhone 및 HA는 미검증입니다."
+  ],
+  "rootAcceptance": "Root가 실제 제품 JPEG 2개를 직접 열어 640 × 480 PRODUCT PAGE A/B 표식을 수락했습니다. 최종 제품 기능 수용과 merge는 Root 판단으로 남습니다.",
+  "evidenceInterpretation": "독립 probe JPEG 3개는 기존 별도 provenance에 보존하며 이번 제품 JPEG와 혼합하지 않습니다.",
+  "heavyNow": 0,
+  "rawEvidenceHashes": {
+    "type.log": "023cb281ad8e4e102c9d485d4966dbbe53c913a2ff66b81d30cffbf53d676472",
+    "lint.log": "3441af0aa8a61c5803b6e389f820b91b87b7d8093af6eb39758bd0020b5021fb",
+    "static-result.json": "57a2ca2288635483d6954d2aff04a2dae453aca6ba7176deaae48cfaca82da3c",
+    "lint-format-correction.log": "4c7faee97bb02d0a728cda116a39f7e03d325b9ace5617e0a834882371df0be6",
+    "type-corrected.log": "ecd5571d936b7632daf776a649fe341dfcfc7672e53f06238aed3d7cb36d3beb",
+    "lint-corrected.log": "83691f2fbe944ab56f58a77d2017cc8bee33786be7016a70480bb039112c1193",
+    "corrected-static-result.json": "d52da196f756b4bac63ebb51a458bda1819effa105864a47dadd37a63219bff3",
+    "static-correction-handoff.json": "2221fbcca7ee2fedf8f689c5b2d679d5f953d6d9cef07857589129247de3be8d",
+    "controlled-first.log": "214891c3e407fcccea7a295609e7891ba687b7b67e9f994185bf8ae3b2db4e88",
+    "controlled-first.json": "25bcdbeeb46ff90a7359f30f00377ded357cca80753d80ad39104a906024e099",
+    "controlled-first-handoff.json": "b8333ce44b2437d838427abbced363d417b4454730bca9387f7f5af7ec9d6232",
+    "actual-fixture.cjs": "48a2b0c60693c18c85e430deee0e65ca5f3291223c657f7a2a1de57db0cc59ae",
+    "actual-fixture.metafile.json": "a2d3d32a89674509ed286a5570b9bedc387e17db2e43992e9082ef27697f7c8e",
+    "actual-import-delta.json": "db8253ab45d5b9644625fb6097d036bba787ff4cb20cef2d12e3cb1089e16aa5",
+    "actual-pages-evidence/fixture-result.json": "e963394ef4f5345f8f696292cc0d89a5ffc9270b15dd227087cbb10d47e5f656",
+    "actual-pages-evidence/native-pids.jsonl": "f6bcfbd6e811607e9a8707a5168757432e963642b1f937df093a7ffda8ada82f",
+    "actual-pages-evidence/known-pid-readback.json": "52e9aeed60716ab7193a89342a02a0b905adecedbb18e8a2ef849959eb59bd71",
+    "actual-pages-evidence/COPY-MANIFEST.json": "4841c8aea60f202cec64569447e1a6e7599288e0af8ee9c29c3fac3c6fa0a1ee",
+    "actual-generation-evidence/generation-cleanup-readback.json": "8d8469704f860e9edf882172875a27bad13011a56eb3cf46361b07cbf7755c0c",
+    "actual-generation-evidence/fixture-result.json": "5409573cc33dbc226bd98e1ada2ee7b0bfd790d0619ee863844b3a946e986951",
+    "actual-generation-evidence/native-pids.jsonl": "3b034f5fe5caca6077ddecbb31bd5a1e72fda533d3cefec32454fc30a7e95b55",
+    "actual-generation-evidence/known-pid-readback.json": "ba6702993472bc22a0427edbab1c5d7d5c2d71eeaade76204443e950cf6c4a70",
+    "actual-generation-evidence/COPY-MANIFEST.json": "b1b8edf41f7ec1375b5aafb83e2ba934fbd0c79506f68fbcc6c96287d5f32b60"
+  },
+  "inputs": [
+    {
+      "boundary": "pages-and-viewers",
+      "sha256": "633a386777af029001a88395ec4b818144c2a8318d1ec80396a8cf2f29e04cdf",
+      "socketBytes": 70
+    },
+    {
+      "boundary": "changed-generation",
+      "sha256": "f560bfadabb1d9a11aa560fe8aea651d12fad2568132c1083fd97477d5616a54",
+      "socketBytes": 70
+    }
+  ],
+  "nativeBinarySHA256": "c249a948cb6a60df94320e319c372a5e679466ca8ea2cc4e69bac4fcc7c270f3",
+  "inputLineage": {
+    "preformatScanPin": "9ab64fcaa22e10ce103a66b83af9cf21df09460c",
+    "scanFiles": 86,
+    "scanBytes": 412570,
+    "missing": 0,
+    "scanSHA256": "4abfab7db88e02404f01a2d81e21a15804eddd483a0b1c31a930888a6ffc4ab1",
+    "preformatImportDeltaSHA256": "db8253ab45d5b9644625fb6097d036bba787ff4cb20cef2d12e3cb1089e16aa5",
+    "correctedSourcePin": "2d9ab47e41ff3ba4d520feea4947a4979c7b75e3",
+    "ownedOverlayFiles": 12,
+    "mechanicalChangedOwnedFiles": [
+      "src/main/orcad/external-chromium-browser-process.ts",
+      "src/main/orcad/external-chromium-cdp-connection.ts",
+      "src/main/orcad/external-chromium-screencast-fixture.ts",
+      "src/main/orcad/external-chromium-screencast-subscribers.ts",
+      "src/main/orcad/external-chromium-subscriber-cleanup.test.ts",
+      "src/main/orcad/external-chromium-tab-registry.ts",
+      "src/main/orcad/external-chromium-target-binding.test.ts",
+      "src/main/orcad/external-chromium-target-screencast.ts",
+      "src/main/orcad/external-chromium-target-stop.test.ts"
+    ],
+    "unchangedOwnedFiles": 3,
+    "mechanicalDiffSHA256": "2d8570933847a257f42c0a7c4cee4ad2a1774ef5d8602fac40233ea5e273b8df",
+    "correctedStaticStartedAt": "2026-10-14T12:07:35.684Z",
+    "correctedStaticEndedAt": "2026-10-14T12:07:45.400Z",
+    "overlayQualification": "초기 소유 12개 overlay 위에 기존 --fix와 명시적 소유 tab-registry 표현 교정이 반영된 실행 순서입니다. 86-file scan을 교정 후 재해시한 증거로 표시하지 않습니다.",
+    "actualBundle": {
+      "bytes": 1017898,
+      "sha256": "48a2b0c60693c18c85e430deee0e65ca5f3291223c657f7a2a1de57db0cc59ae",
+      "preservedLocalArtifactMtimeUTC": "2026-10-14T12:11:56.045135+00:00",
+      "metafileSHA256": "a2d3d32a89674509ed286a5570b9bedc387e17db2e43992e9082ef27697f7c8e",
+      "preservedLocalMetafileMtimeUTC": "2026-10-14T12:11:56.047085+00:00",
+      "actualStageRecordMtimeUTC": "2026-10-14T12:13:57.478839+00:00",
+      "qualification": "위 시각은 보존된 로컬 산출물의 파일 시각입니다. 독립적인 build 시작/종료 타임스탬프나 193개 입력 전체의 교정 후 bytes 일치를 새로 증명하지 않습니다. 기존 교정 실행 순서, 산출물 hash 및 actual entry 원기록을 연결합니다.",
+      "firstActualEntryUTC": "2026-10-14T12:14:37.091Z"
+    },
+    "additionalScanBuildExecution": 0
+  }
+}

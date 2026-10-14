@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { BrowserError } from '../browser/browser-error'
 import { BROWSER_UNAVAILABLE_ERROR_CODE } from '../../shared/runtime-types'
 import { runProcess } from '../../shared/child-process/run-process'
+import { ExternalChromiumCdpConnection, externalCdpError } from './external-chromium-cdp-connection'
 
 const COMMAND_TIMEOUT_MS = 90_000
 const MAX_OUTPUT_BYTES = 50 * 1024 * 1024
@@ -71,13 +72,16 @@ export function externalChromiumAgentBrowserEnvironment(options: {
 }
 
 export class ExternalChromiumBrowserSession {
+  readonly cdp = new ExternalChromiumCdpConnection()
+  freshStartupPageId: string | null = null
   private readonly profilePath: string
   private readonly sessionName: string
 
   constructor(
     private readonly agentBrowserPath: string,
     private readonly launch: ExternalChromiumLaunch,
-    statePath: string
+    statePath: string,
+    private readonly environment: NodeJS.ProcessEnv = process.env
   ) {
     const identity = createHash('sha256')
       .update(`${statePath}:${launch.provider}`)
@@ -88,6 +92,7 @@ export class ExternalChromiumBrowserSession {
   }
 
   async start(): Promise<string> {
+    this.freshStartupPageId = null
     await mkdir(this.profilePath, { recursive: true })
     // Why: the session name is stable across runs, so a daemon an earlier orcad left behind is
     // still driving the user's Chromium. Unlike the pane bridge this session never passes --cdp,
@@ -107,6 +112,7 @@ export class ExternalChromiumBrowserSession {
         'The browser launched without an automation target.'
       )
     }
+    this.freshStartupPageId = opened
     return opened
   }
 
@@ -119,7 +125,18 @@ export class ExternalChromiumBrowserSession {
     }
   }
 
+  async connectCdp(): Promise<void> {
+    try {
+      const data = z.object({ cdpUrl: z.string() }).parse(await this.run(['get', 'cdp-url']))
+      await this.cdp.connect(data.cdpUrl)
+    } catch {
+      this.cdp.close()
+      throw externalCdpError()
+    }
+  }
+
   async stop(): Promise<void> {
+    this.cdp.close()
     try {
       await this.run(['close'], CLOSE_TIMEOUT_MS)
     } catch {
@@ -159,7 +176,7 @@ export class ExternalChromiumBrowserSession {
     }
     args.push(...command, '--json')
     const env = externalChromiumAgentBrowserEnvironment({
-      inheritedEnv: process.env,
+      inheritedEnv: this.environment,
       executablePath: this.launch.executablePath,
       profilePath: this.profilePath,
       sessionName: this.sessionName,
