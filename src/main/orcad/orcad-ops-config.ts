@@ -17,6 +17,7 @@ export type OrcadOpsConfig = Readonly<{
   workspaceIds: readonly string[]
   lifecyclePolicy: LifecyclePolicy
   pollIntervalMs: number
+  workspaceScope?: 'explicit' | 'catalog'
 }>
 
 export function invalidOrcadOpsConfig(code = 'OPS_STARTUP_CONFIG'): never {
@@ -27,14 +28,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype
 }
 
-function record(value: unknown, keys: readonly string[]): Record<string, unknown> {
-  if (!isRecord(value) || Reflect.ownKeys(value).length !== keys.length ||
-      Reflect.ownKeys(value).some(key => typeof key !== 'string' || !keys.includes(key))) {
+function record(value: unknown, keys: readonly string[], optional: readonly string[] = []): Record<string, unknown> {
+  if (!isRecord(value) ||
+      Reflect.ownKeys(value).some(key => typeof key !== 'string' || ![...keys, ...optional].includes(key))) {
     invalidOrcadOpsConfig()
   }
   for (const key of keys) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key)
     if (!descriptor || !('value' in descriptor)) { invalidOrcadOpsConfig() }
+  }
+  for (const key of optional) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (descriptor && !('value' in descriptor)) { invalidOrcadOpsConfig() }
   }
   return value
 }
@@ -64,14 +69,16 @@ function origin(value: unknown): string {
 
 /** All owned scalars, arrays and policy values are detached before any I/O await. */
 export function captureOrcadOpsConfig(value: unknown): OrcadOpsConfig {
-  const input = record(value, ['origin', 'namespaceId', 'workspaceIds', 'lifecyclePolicy', 'pollIntervalMs'])
+  const input = record(value, ['origin', 'namespaceId', 'workspaceIds', 'lifecyclePolicy', 'pollIntervalMs'], ['workspaceScope'])
+  const workspaceScope = Object.hasOwn(input, 'workspaceScope') ? input.workspaceScope : 'explicit'
+  if (workspaceScope !== 'explicit' && workspaceScope !== 'catalog') { invalidOrcadOpsConfig() }
   const policy = record(input.lifecyclePolicy, ['operationDeadlineMs', 'idleDurationMs'])
   if (!Array.isArray(input.workspaceIds)) { invalidOrcadOpsConfig() }
   const workspaceIds: string[] = Array.from(input.workspaceIds, text)
   if (workspaceIds.some(id => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) ||
       new Set(workspaceIds).size !== workspaceIds.length) { invalidOrcadOpsConfig() }
   return Object.freeze({ origin: origin(input.origin), namespaceId: text(input.namespaceId),
-    workspaceIds: Object.freeze(workspaceIds), pollIntervalMs: positive(input.pollIntervalMs),
+    workspaceIds: Object.freeze(workspaceIds), pollIntervalMs: positive(input.pollIntervalMs), workspaceScope,
     lifecyclePolicy: Object.freeze({ operationDeadlineMs: positive(policy.operationDeadlineMs),
       idleDurationMs: policy.idleDurationMs === null ? null : positive(policy.idleDurationMs) }) })
 }

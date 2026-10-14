@@ -51,9 +51,10 @@ export async function prepareOrcadOps(
     const scope = Object.freeze({ datasetName: catalog.datasetName, namespaceId: config.namespaceId,
       workspaceIds: config.workspaceIds })
     const [{ withCatalogReadSnapshot, loadCatalogWorkspaces, catalogWorkspaceAllowed },
-      { createPgOpsServices }, { OPS_REPLAY_STREAM }, { getOpsUiAsset }] = await Promise.all([
+      { createPgOpsServices }, { OPS_REPLAY_STREAM }, { getOpsUiAsset }, catalogScope] = await Promise.all([
       import('../durable-runtime/catalog/read.ts'), import('../durable-runtime/ops/pg-services.ts'),
-      import('../durable-runtime/replay/types.ts'), import('../durable-runtime/ops-ui/index.ts')
+      import('../durable-runtime/replay/types.ts'), import('../durable-runtime/ops-ui/index.ts'),
+      config.workspaceScope === 'catalog' ? import('./orcad-ops-catalog-scope.ts') : undefined
     ])
     catalog.assertCurrentHost()
     const failure = await withCatalogReadSnapshot(catalog.pool, async tx => {
@@ -77,10 +78,12 @@ export async function prepareOrcadOps(
     catalog.assertCurrentHost()
     // Domain configuration failures stay outside the DB wrapper's error conversion.
     if (failure) { invalidOrcadOpsConfig(failure) }
+    const servicesConfig = Object.freeze({ pool: catalog.pool, scope, streamId: OPS_REPLAY_STREAM,
+      lifecyclePolicy: config.lifecyclePolicy, controllerConnected: false })
     return Object.freeze({ origin: config.origin, scope, streamId: OPS_REPLAY_STREAM,
       pollIntervalMs: config.pollIntervalMs, ui: getOpsUiAsset,
-      services: createPgOpsServices({ pool: catalog.pool, scope, streamId: OPS_REPLAY_STREAM,
-        lifecyclePolicy: config.lifecyclePolicy, controllerConnected: false }) })
+      services: catalogScope ? catalogScope.createOrcadOpsCatalogScopeServices(catalog, servicesConfig)
+        : createPgOpsServices(servicesConfig) })
   } catch (error) {
     if (error instanceof OrcadOpsConfigurationError) { throw error }
     invalidOrcadOpsConfig('OPS_STARTUP_UNAVAILABLE')
