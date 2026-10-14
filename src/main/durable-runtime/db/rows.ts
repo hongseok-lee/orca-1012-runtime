@@ -29,6 +29,7 @@ import type {
   WorkspaceId,
 } from "../../../shared/durable-runtime/identity.ts";
 export type { ObservationEpisodeRow, ObservationChallengeRow } from "./observation-rows.ts";
+export type { StructuredSessionAliasRow, StructuredSubmissionRow } from "./structured-session-rows.ts";
 
 export type SessionRow = {
   id: SessionId;
@@ -298,8 +299,7 @@ export type FailureIncidentObservationRow = {
 export type FailureIncidentAliasRow = {
   alias_key: string; incident_id: LogicalId<"incident">;
   runtime_unit_id: RuntimeUnitId; attempt_id: AttemptId;
-  alias_kind: EvidenceAlias["kind"]; alias_value: EvidenceAlias["value"];
-};
+  alias_kind: EvidenceAlias["kind"]; alias_value: EvidenceAlias["value"]; };
 export type FailureIncidentStateRow = {
   incident_id: LogicalId<"incident">; runtime_unit_id: RuntimeUnitId;
   attempt_id: AttemptId; execution_epoch: ExecutionEpoch;
