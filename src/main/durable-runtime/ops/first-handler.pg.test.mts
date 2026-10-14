@@ -16,7 +16,7 @@ import { createPgOpsServices } from './pg-services.ts'
 import { createDeviceRegistryOpsVerifier, type OpsServerScope } from './auth.ts'
 import { encodeOpsAfter } from './cursor.ts'
 import type { OpsHttpConfig, OpsHttpHandler, OpsHttpServices, OpsActor } from './types.ts'
-import type { OpsReplayPage, OpsUnitList } from './contract.ts'
+import type { OpsReplayPage, OpsUnitList, OpsUnitDetail } from './contract.ts'
 
 // Prepared first fixtures only. DB owner stages the pinned migrations; this file creates no DDL.
 let pool: Pool
@@ -129,6 +129,69 @@ test('stored workspace anchors prevent namespace leaks and query failure differs
   assert.equal((await wrongDataset.get('/ops/v1/runtime-units')).status, 403)
   const emptyScope = { ...f.scope, workspaceIds: [] }, empty = await serve(emptyScope, services(emptyScope))
   assert.deepEqual((await (await empty.get('/ops/v1/runtime-units')).json()).units, [])
+  // One existing callback covers both response forms at an actual PG await boundary.
+  // A different real connection commits changes after the original projector SELECT,
+  // before supplemental counts/mounts/detail queries resume. No fake query results.
+  for (const view of ['list', 'detail'] as const) {
+    const snapshot = await seed(), pendingId = randomUUID()
+    const historicalId = randomUUID(), cancelledId = randomUUID()
+    const lossTime = '2026-10-13T12:00:00.000Z'
+    await pool.query('UPDATE durable_runtime.runtime_units SET observation_lost_at=$2 WHERE id=$1', [snapshot.unit, lossTime])
+    await pool.query(`INSERT INTO durable_runtime.messages(id,session_id,seq,body_or_blob_ref,intake_status,cancel_requested_at,cancel_revision)
+      VALUES($1,$4,1,'{}','DURABLE',NULL,0),($2,$4,2,'{}','SETTLED',NULL,0),
+        ($3,$4,3,'{}','DURABLE',clock_timestamp(),1)`, [pendingId, historicalId, cancelledId, snapshot.sessions[0]])
+    const componentMessages = [pendingId, pendingId, historicalId, cancelledId]
+    for (const [index, messageId] of componentMessages.entries()) {
+      await pool.query(`INSERT INTO durable_runtime.input_components(id,message_id,session_id,input_seq,authenticated_sender,original_payload_hash,body_or_blob_ref)
+        VALUES($1,$2,$3,$4,'p126-owned-count-fixture',$5,'{}')`,
+      [randomUUID(), messageId, snapshot.sessions[0], index + 1, 'f'.repeat(64)])
+    }
+    const overlap = gate(); let paused = false, readerPid = 0
+    const overlapping = hookPool(pool, async (sql, client, execute) => {
+      const result = await execute()
+      if (!paused && sql.startsWith('SELECT jsonb_build_object(')) {
+        paused = true; readerPid = (await client.query('SELECT pg_backend_pid() AS pid')).rows[0].pid
+        overlap.signal(); await overlap.wait
+      }
+      return result
+    })
+    const owned = await serve(snapshot.scope, services(snapshot.scope, overlapping))
+    const path = view === 'list' ? '/ops/v1/runtime-units' : `/ops/v1/runtime-units/${snapshot.unit}`
+    const reading = owned.get(path)
+    const writer = await pool.connect()
+    try {
+      await overlap.entered
+      const writerPid = (await writer.query('SELECT pg_backend_pid() AS pid')).rows[0].pid
+      assert.notEqual(writerPid, readerPid)
+      await writer.query('BEGIN')
+      await writer.query('UPDATE durable_runtime.runtime_units SET revision=revision+1 WHERE id=$1', [snapshot.unit])
+      await writer.query("UPDATE durable_runtime.messages SET intake_status='SETTLED',revision=revision+1 WHERE id=$1", [pendingId])
+      await writer.query("UPDATE durable_runtime.sessions SET lifecycle='CLOSED',revision=revision+1 WHERE id=$1", [snapshot.sessions[0]])
+      await writer.query("UPDATE durable_runtime.storage_bindings SET access_state='RO',revision=revision+1 WHERE id=$1", [snapshot.binding])
+      await writer.query('COMMIT')
+      overlap.release()
+      const response = await reading; assert.equal(response.status, 200)
+      const payload = await response.json() as OpsUnitList | OpsUnitDetail
+      const unit = 'units' in payload ? payload.units[0] : payload.unit
+      assert.equal(unit.revision, '0'); assert.equal(unit.observed, 'unverifiable'); assert.equal(unit.observedAt, null)
+      assert.equal(unit.counts.pendingMessages, '1'); assert.equal(unit.counts.inputComponents, '2')
+      assert.equal(unit.mounts.find(mount => mount.id === snapshot.binding)?.accessState, 'UNKNOWN')
+      if ('units' in payload) {
+        assert.ok(payload.observedAt); assert.ok(Date.parse(payload.observedAt) > Date.parse(lossTime))
+      } else {
+        assert.equal(payload.sessions[0].lifecycle, 'OPEN'); assert.equal(payload.sessions[0].revision, '0')
+      }
+      const current = await (await owned.get(path)).json() as OpsUnitList | OpsUnitDetail
+      const currentUnit = 'units' in current ? current.units[0] : current.unit
+      assert.equal(currentUnit.revision, '1'); assert.equal(currentUnit.counts.pendingMessages, '0')
+      assert.equal(currentUnit.counts.inputComponents, '0'); assert.equal(currentUnit.observedAt, null)
+      assert.equal(currentUnit.mounts.find(mount => mount.id === snapshot.binding)?.accessState, 'RO')
+      if ('sessions' in current) { assert.equal(current.sessions[0].lifecycle, 'CLOSED'); assert.equal(current.sessions[0].revision, '1') }
+      assert.equal((await pool.query('SELECT count(*)::text AS n FROM durable_runtime.input_components WHERE session_id=$1', [snapshot.sessions[0]])).rows[0].n, '4')
+    } finally {
+      overlap.release(); await writer.query('ROLLBACK'); writer.release(); await Promise.allSettled([reading])
+    }
+  }
   const failing = hookPool(pool, async (sql, _client, execute) => { if (sql.includes('SELECT DISTINCT u.id')) { throw new Error('private SQL fixture must not leak') }; return execute() })
   const broken = await serve(f.scope, services(f.scope, failing)), response = await broken.get('/ops/v1/runtime-units')
   assert.equal(response.status, 503); assert.deepEqual(await response.json(), { error: { code: 'unavailable', message: 'The operations service could not confirm the result.' } })

@@ -41,16 +41,20 @@ export function createPgOpsServices(input: OpsPgConfig): OpsHttpServices {
   return Object.freeze({
     async units(value) {
       const actor = actorFor(value)
-      const ids = await read(tx => listVisibleUnitIds(tx, actor))
-      const units = []
-      for (const id of ids) { units.push(await projectOpsUnit(pool, actor, id, config.controllerConnected)) }
-      const clock = await read(tx => tx.query<{ now: Date }>('SELECT clock_timestamp() AS now'))
-      return { units, observedAt: opsTime(clock.rows[0].now) }
+      return read(async tx => {
+        const ids = await listVisibleUnitIds(tx, actor)
+        const units = []
+        for (const id of ids) { units.push(await projectOpsUnit(tx, actor, id, config.controllerConnected)) }
+        const clock = await tx.query<{ now: Date }>('SELECT clock_timestamp() AS now')
+        return { units, observedAt: opsTime(clock.rows[0].now) }
+      })
     },
     async unit(value, id) {
       const actor = actorFor(value)
-      const unit = await projectOpsUnit(pool, actor, id, config.controllerConnected)
-      return { unit, ...await read(tx => readOpsDetailRows(tx, actor, id)) }
+      return read(async tx => {
+        const unit = await projectOpsUnit(tx, actor, id, config.controllerConnected)
+        return { unit, ...await readOpsDetailRows(tx, actor, id) }
+      })
     },
     async operation(value, id) { const actor = actorFor(value); return read(tx => readOpsOperation(tx, actor, id)) },
     async events(value, query) {
