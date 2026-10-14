@@ -1,0 +1,254 @@
+{
+  "initialSource": "0b55ed2ad293e2eb29c8aade8da6da076f208ef0",
+  "productSource": "cbefa4e12a714559b4895856f53772d2fff533fa",
+  "fixtureCorrectionSource": "b94129cda3323ff7ae3c33314d37f0723e3ab002",
+  "fixedSqlSource": "235a1e43bae71f1e5cac62f02bea0ca04eb0b26a",
+  "value": {
+    "entered": 2,
+    "pass": 2,
+    "fail": 0,
+    "skip": 0,
+    "cases": [
+      "six metadata bindings preserve incumbent declarations; lifecycle remains explicitly disconnected",
+      "missing or forged transport caller and disposed metadata are rejected before Pool access"
+    ]
+  },
+  "pg": {
+    "entered": 5,
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "parentWrapperIsAdditionalCase": false,
+    "firstCallbackConsumesAllSixMethods": true,
+    "cases": [
+      "six real unary metadata methods share read/subscribe projection and receipt/audit/outbox without lifecycle activity",
+      "server scope and dataset/host mismatches reject mutations without legacy fallback or receipts",
+      "params/caller/capabilities/client kind and original host receiver are captured before checkout",
+      "closed Tab and stale incarnation reject new mutation; immutable terminal identity is retained",
+      "actual PG failure stays an error; observed COMMIT loss is UNCERTAIN with one retained legacy key"
+    ]
+  },
+  "type": {
+    "initialCompilerExit": 1,
+    "initialOwnedDiagnostics": 1,
+    "initialExternalDiagnostics": 25,
+    "correctedFixtureCompilerExit": 1,
+    "correctedOwnedDiagnostics": 0,
+    "correctedExternalDiagnostics": 25,
+    "wholeTypePass": false,
+    "externalDiagnostics": [
+      "source/src/main/github/project-view/project-view-config.ts(145,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-config.ts(157,11): error TS7022: 'view' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-config.ts(161,54): error TS7006: Parameter 'f' implicitly has an 'any' type.",
+      "source/src/main/github/project-view/project-view-config.ts(163,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(64,11): error TS7022: 'afterVar' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(65,11): error TS7022: 'query' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(83,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(117,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(129,11): error TS7022: 'afterVar' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(130,11): error TS7022: 'query' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(150,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/github/project-view/project-view-discovery.ts(190,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/ipc/ssh-connect-flow.ts(131,7): error TS7034: Variable 'conn' implicitly has type 'any' in some locations where its type cannot be determined.",
+      "source/src/main/ipc/ssh-connect-flow.ts(187,5): error TS7005: Variable 'conn' implicitly has an 'any' type.",
+      "source/src/main/memory/hydrate-local-pty-registry.ts(266,19): error TS2339: Property 'listSessions' does not exist on type 'DaemonPtyAdapter | DaemonPtyRouter | DegradedDaemonPtyProvider'.",
+      "source/src/main/persistence/tracking-repos/repo-worktree-pruning.ts(112,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Partial<Record<ExecutionHostId, WorkspaceSessionState>>'.",
+      "source/src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(226,11): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+      "source/src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(250,47): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+      "source/src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(265,43): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+      "source/src/main/runtime/runtime-worktree-lineage-controller.ts(112,13): error TS7022: 'lineage' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "source/src/main/source-control/hosted-review-creation-blocking.ts(70,10): error TS7053: Element implicitly has an 'any' type because expression of type 'NonNullable<HostedReviewCreationBlockedReason>' can't be used to index type '{ auth_required: { ok: false; code: \"auth_required\"; error: string; }; unsupported_provider: { ok: false; code: \"unsupported_provider\"; error: string; }; dirty: { ok: false; code: \"validation\"; error: string; }; ... 6 more ...; base_not_on_remote: { ...; }; }'.",
+      "source/src/main/telemetry/client.ts(26,10): error TS2552: Cannot find name 'ORCA_BUILD_IDENTITY'. Did you mean 'BUILD_IDENTITY'?",
+      "source/src/main/telemetry/client.ts(27,7): error TS2552: Cannot find name 'ORCA_BUILD_IDENTITY'. Did you mean 'BUILD_IDENTITY'?",
+      "source/src/main/telemetry/client.ts(30,10): error TS2304: Cannot find name 'ORCA_POSTHOG_WRITE_KEY'.",
+      "source/src/main/telemetry/client.ts(31,7): error TS2304: Cannot find name 'ORCA_POSTHOG_WRITE_KEY'."
+    ]
+  },
+  "lint": {
+    "initialExit": 1,
+    "initialErrors": 2,
+    "correctedFixtureExit": 0,
+    "otherFiveFilesRepeated": false
+  },
+  "preparationScopeError": {
+    "candidateFilesTransferred": 4780,
+    "compressedArchiveBytes": 5979879,
+    "candidateSourceBytes": 22328775,
+    "actualBundlerImportFiles": 1572,
+    "actualBundlerImportBytes": 6573320,
+    "qualification": "후보 4,780개 전송은 실제 closure 차이만 overlay하는 위임보다 확대된 행위입니다. 원 근거를 보존하며 stage 재준비·전체 hash 반복·기존 suite로 만회하지 않았습니다.",
+    "stageDiscarded": false,
+    "fullHashRepeated": false
+  },
+  "sourceMissingRuntimeImports": [],
+  "schema": {
+    "ownedSeparateDb": true,
+    "newDatabaseCreatedOnce": true,
+    "fixedMigrationCount": 19,
+    "prepareRuns": 1,
+    "devTouched": false,
+    "versions": [
+      {
+        "version": "001-catalog.sql",
+        "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+      },
+      {
+        "version": "002-execution-storage.sql",
+        "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+      },
+      {
+        "version": "003-operations-resources.sql",
+        "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+      },
+      {
+        "version": "004-input-context.sql",
+        "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+      },
+      {
+        "version": "005-events-replay.sql",
+        "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+      },
+      {
+        "version": "006-snapshot-seals.sql",
+        "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+      },
+      {
+        "version": "007-storage-epoch-cancel-guards.sql",
+        "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+      },
+      {
+        "version": "008-attachment-store.sql",
+        "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+      },
+      {
+        "version": "009-atomic-journal-outbox.sql",
+        "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+      },
+      {
+        "version": "010-runtime-command-ledger.sql",
+        "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+      },
+      {
+        "version": "011-runtime-event-producers.sql",
+        "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+      },
+      {
+        "version": "012-input-merge-boundary.sql",
+        "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+      },
+      {
+        "version": "013-context-deliveries.sql",
+        "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd"
+      },
+      {
+        "version": "014-durable-catalog.sql",
+        "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2"
+      },
+      {
+        "version": "015-failure-evidence.sql",
+        "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d"
+      },
+      {
+        "version": "016-observation-episodes.sql",
+        "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d"
+      },
+      {
+        "version": "017-structured-session-wire.sql",
+        "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146"
+      },
+      {
+        "version": "018-terminal-input-floor.sql",
+        "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27"
+      },
+      {
+        "version": "019-durable-resource-allocation.sql",
+        "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5"
+      }
+    ]
+  },
+  "initialStartedAt": "2026-10-14T09:46:12.674Z",
+  "initialFinishedAt": "2026-10-14T09:47:00.687Z",
+  "continuationStartedAt": "2026-10-14T09:49:30.482Z",
+  "finishedAt": "2026-10-14T09:50:34.748Z",
+  "processesEnded": [
+    16832,
+    17190,
+    16844,
+    16857,
+    16973,
+    17202,
+    17215,
+    17229,
+    17242,
+    17253,
+    17270,
+    17259
+  ],
+  "activeOwnedPids": [],
+  "heavyOccupied": false,
+  "oldReadSuiteRepeated": false,
+  "successfulCallbacksRepeated": false,
+  "install": false,
+  "appBuild": false,
+  "liveSourceSync": false,
+  "serverRestart": false,
+  "captureExecuted": false,
+  "syntheticTransportContextOnly": true,
+  "publicApiActivationQualified": false,
+  "logs": {
+    "prepare": {
+      "sha256": "d1e5e1aabd1b075384d0eb6bd98a1b7d9d6c421295ecfa776fce98eced265425",
+      "bytes": 103,
+      "exit": 0,
+      "pid": 16844
+    },
+    "scoped-type": {
+      "sha256": "d0b2745f3d7b866a940a432879c5b164c11c811768b44aeb68821ad4a5b6916a",
+      "bytes": 6938,
+      "exit": 1,
+      "pid": 16857
+    },
+    "scoped-lint": {
+      "sha256": "311cc3564b000fe857a89e920ae529744635fa59316204f6f34d3b204a8918a6",
+      "bytes": 986,
+      "exit": 1,
+      "pid": 16973
+    },
+    "prepare-fixture-correction": {
+      "sha256": "b452103d06c9dbdd41216ae2264bbf7fec83214f814c9b52d7d4919d94166169",
+      "bytes": 61,
+      "exit": 0,
+      "pid": 17202
+    },
+    "corrected-fixture-lint": {
+      "sha256": "3b257c4165c59db90014050664f3e3298001b8423f23c71c8f621df9c8fcf13f",
+      "bytes": 91,
+      "exit": 0,
+      "pid": 17215
+    },
+    "value-first": {
+      "sha256": "1df66b4451f16034b2ac4268f4450af58575b32e95e0572aa7596e426cdd5627",
+      "bytes": 631,
+      "exit": 0,
+      "pid": 17229
+    },
+    "prepare-owned-schema": {
+      "sha256": "e064c2345865da0e4ded0f74a55be4eb920ef8bf02cce198b3f5bb8749c0d034",
+      "bytes": 385,
+      "exit": 0,
+      "pid": 17242
+    },
+    "pg-first": {
+      "sha256": "d07a0ec55b19009f50dba26d5f340d17208e9289fdd6393c990d6215f911b348",
+      "bytes": 2174,
+      "exit": 0,
+      "pid": 17253
+    },
+    "corrected-fixture-type": {
+      "sha256": "01788b030accdc2b67711f979203b0fa75df955e1d0b4523d52210fdab9cd7cd",
+      "bytes": 6778,
+      "exit": 1,
+      "pid": 17270
+    }
+  }
+}
