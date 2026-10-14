@@ -1,0 +1,23 @@
+TAP version 13
+# Subtest: 승인한 clipboard value 소유 scope
+    # Subtest: 공개 schema와 인증 거절은 I/O 전에 처리하고 첫 await 전의 요청·context·서버 값을 유지합니다
+    ok 1 - 공개 schema와 인증 거절은 I/O 전에 처리하고 첫 await 전의 요청·context·서버 값을 유지합니다
+      ---
+      duration_ms: 31.664657
+      type: 'test'
+      ...
+    1..1
+ok 1 - 승인한 clipboard value 소유 scope
+  ---
+  duration_ms: 34.130306
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 620.891548
