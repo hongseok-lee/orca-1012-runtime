@@ -62,7 +62,7 @@ export function projectInitialStructuredCreateReceipt(
   uuid('session', alias.sessionId); uuid('workspace', alias.workspaceId)
   uuid('tab', reservation.tabId); uuid('operation', reservation.operationId)
   uuid('event', event.eventId); uuid('publication-epoch', reservation.publicationEpoch)
-  structuredCounterToNumber(event.epoch, 1)
+  structuredCounterToNumber(event.epoch, 0)
   for (const key of ['providerHandle', 'nativeSessionId', 'ptyId', 'incarnationId', 'terminal', 'terminalHandle', 'leafId', 'paneKey']) {
     if (Object.hasOwn(tab, key)) { invalidReceipt() }
   }

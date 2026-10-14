@@ -17,14 +17,14 @@ await test('원 초기 receipt만 공개 빈 page로 변환하며 내부 관계 
     reservation: { sessionId, tabId: randomUUID(), operationId: randomUUID(), publicationEpoch: randomUUID(), snapshotVersion: 1,
       tab: { type: 'agent-session', id: structuredAgentSessionTabId(publicSessionId), title: 'Codex', sessionId: publicSessionId,
         agent: 'codex', isActive: true } },
-    event: { eventId: randomUUID(), epoch: '1', sequence: '1' }, fence: 1, cursor: { epoch: '1', sequence: 1 } }
+    event: { eventId: randomUUID(), epoch: '0', sequence: '1' }, fence: 1, cursor: { epoch: '0', sequence: 1 } }
   const receipt: ReceiptRecord = { ...identity, response, recordedAt: new Date(0), intakeAt: null }
   const outcome: MutationOutcome = { status: 'COMMITTED', receipt, commitObservedAt: new Date(0), transactionDurationMs: 0 }
   const result = projectInitialStructuredCreateOutcome(outcome, identity, publicSessionId, workspaceId)
   assert.equal(result.ok, true)
   if (!result.ok) { throw new Error('Unexpected refusal') }
   assert.equal(result.replayed, false); assert.equal(result.value.sessionId, publicSessionId); assert.equal(result.fence, 1)
-  assert.deepEqual(result.value.page, { sessionId: publicSessionId, epoch: '1', fence: 1, direction: 'tail', items: [],
+  assert.deepEqual(result.value.page, { sessionId: publicSessionId, epoch: '0', fence: 1, direction: 'tail', items: [],
     removedItemIds: [], submissions: [], window: { oldest: null, newest: null, nextCursor: result.cursor }, liveCursor: result.cursor,
     hasOlder: false, hasNewer: false })
   assert.deepEqual(result.value.unconfirmedClientMessageIds, [])
