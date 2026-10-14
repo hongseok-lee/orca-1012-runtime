@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: private workspaceScope defaults to explicit, accepts catalog and rejects malformed or accessor options
+ok 1 - private workspaceScope defaults to explicit, accepts catalog and rejects malformed or accessor options
+  ---
+  duration_ms: 3.726937
+  type: 'test'
+  ...
+# Subtest: captured private mode, workspace IDs and policy are detached from later caller mutation
+ok 2 - captured private mode, workspace IDs and policy are detached from later caller mutation
+  ---
+  duration_ms: 1.343079
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 138.263223
