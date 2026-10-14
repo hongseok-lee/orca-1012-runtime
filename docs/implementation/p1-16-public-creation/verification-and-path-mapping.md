@@ -40,3 +40,27 @@ Parent는 제품 callback 수에 합산하지 않습니다. 이번 제품 callba
 Root는 원 TAP과 capture/atomic의 실제 source를 읽고 JSON 계약의 비교 방법을 지정했습니다. `captureCatalogJson`은 null-prototype 객체를 만들고 atomic 저장은 JSON.stringify를 사용하며 PG 재생은 일반 JSON 객체입니다. 제품 serialization이나 receipt 동작을 변경하지 않고 PG2의 생성·Terminal 원 응답 비교 두 곳만 양쪽 `JSON.parse(JSON.stringify(...))` 후 deep equality로 비교하도록 작성했습니다. JSON 필드·배열 순서·값과 후속 conflict·tombstone assertion은 유지했습니다. 해당 fixture 교정 pin은 `8794e279d16568f605261ce18d06d6c061b6aefc`입니다.
 
 교정 후 scoped type/lint·신규 값 callback·PG2는 아직 실행하지 않았습니다. Core binding/SQL/원 receipt 우선 경계는 변경하지 않았고 live source·config·NFS·provider·제품 build·재시작·화면 촬영도 하지 않았습니다. 기존 빈 화면을 이 생성 경로의 실증으로 표시하지 않습니다. 현재 source는 Root diff 리뷰에 제출한 상태이며 최종 기능 수용·활성화·merge는 Root가 판단합니다.
+
+## Root 수락 후 변경 4개 파일의 한정 검증 결과
+
+Root는 `8794e279`의 정확한 변경 4개 파일과 신규 값 callback을 전문 검토한 뒤, 이 4개 파일의 scoped type/lint와 신규 값 callback 1개·실패 PG2만 승인했습니다. 위의 미실행 문장은 source 제출 당시 기록이며 아래가 후속 실제 결과입니다. 시험 중 제품·fixture·SQL의 추가 교정은 없었습니다.
+
+| 한정 실행 | 실제 결과 | 범위 |
+|---|---|---|
+| Scoped type | 전체 exit 1, 소유 진단 0개·외부 진단 25개 | 변경 4개 파일이 root input입니다. 외부 진단은 원 로그와 일치하며 전체 compiler 통과로 표시하지 않습니다. |
+| Scoped lint | exit 0 | 같은 4개 파일만 확인했습니다. |
+| 신규 mapping 값 callback | 1개 진입·PASS, exit 0 | 원 성공 값 callback은 제외했습니다. |
+| 교정한 PG2 | 1개 진입·PASS, exit 0 | 원 PG1·3–5를 제외했고 후속 Terminal 재생·conflict·tombstone assertion까지 원 본문을 완료했습니다. |
+
+각 parent의 제품 callback 수는 0개입니다. 값 wrapper SHA-256은 `58b32b11cbd54df7a1b67916205cdcc38cf481e383ca8b0045f3230d2c88df32`, 선택한 본문 SHA-256은 `221306ffa5afb30d4ad7ce4de4023db4ba91092e542e6cb616eadd8613f92754`입니다. PG wrapper SHA-256은 `f68285cd5aca317c10419bb25bd171bacbd5485925f845ebbd21b0cc9353e622`, 선택한 본문 SHA-256은 `44dec076b61aefb9957acbe47a4e94c2b88d3fce0004c821a219d804ce49aa5f`입니다. 선택한 각 원 본문의 bytes를 wrapper에 그대로 보존했습니다.
+
+기존 stage에 고정 `8794e279`의 4개 파일 47,198바이트만 반영하고 fixture bundle 2개만 기존 esbuild로 변환했습니다. 압축 overlay는 17,913바이트입니다. 값의 실제 import는 169개, PG는 1,575개이며 모두 기존 actual 1,576개 manifest 안에 있습니다. 신규 import는 0개입니다. SQL 19개 manifest와 기존 소유 DB를 그대로 재사용했고 schema 재실행은 0회입니다. 성공 callback·전체 stage·설치·TS JS API 탐색을 반복하지 않았습니다.
+
+제어 PID 19622, type PID 19640, lint PID 19748, 값 runner PID 19762, PG runner PID 19775와 원 TAP에 관측한 PG child PID 19781은 모두 종료됐습니다. 값 child의 개별 PID는 미계측입니다. 값 실행 구간은 2026-10-14 11:40:42.354–11:40:45.100 UTC, PG2는 11:40:45.109–11:40:47.985 UTC이며 제어 종료는 11:40:47.986 UTC입니다. Heavy를 반환했습니다.
+
+- Scoped type 원 로그는 6,778바이트이며 SHA-256은 `01788b030accdc2b67711f979203b0fa75df955e1d0b4523d52210fdab9cd7cd`입니다.
+- Scoped lint 원 로그는 92바이트이며 SHA-256은 `cbae9f359e1bf77e33778c5dc507b58936460f282052abfff6babc546bd5d833`입니다.
+- 신규 값 TAP은 635바이트이며 SHA-256은 `815f8749aa25eb9308e98745fd02d7fd0d9795d88330b1e8c95cd52562f1da37`입니다.
+- 교정 PG2 TAP은 960바이트이며 SHA-256은 `adcf5cbcc052eb539d5d377cb3603ccb8820ab00c0a6f0852436aaed9e01a9b2`입니다.
+
+원 cancelledByParent와 prototype 비교 실패는 별도 원 로그로 그대로 보존했습니다. 성공 callback을 재실행하지 않았으며, 서로 다른 승인 revision의 누적 증거로 값 2개·PG 5개가 통과한 것입니다. 최종 source 전체 suite·전체 type·제품 build·live 활성화·물리 실행·화면 검증의 통과는 아닙니다. 추가 실행 없이 Root의 최종 리뷰를 기다립니다.

@@ -1,6 +1,6 @@
 # P1-16 공개 생성의 서버 준비 경계
 
-현재 결과와 별도 경로 좌표 교정 source는 [후속 실행·source 기록](verification-and-path-mapping.md)에 있습니다. 아래 미실행 문장은 각 최초 제출 단계 당시의 기록이며 현재 결과와 구분합니다. 원 PG1·값 callback 및 후속 PG3–5는 통과했지만 PG2는 원 실패를 보존하고 지정 비교 두 곳만 미실행 교정했습니다. 경로 좌표 제품 2개 파일과 신규 값 callback 1개도 아직 미실행입니다.
+현재 결과와 별도 경로 좌표 교정 source는 [후속 실행·source 기록](verification-and-path-mapping.md)에 있습니다. 아래 미실행 문장은 각 최초 제출 단계 당시의 기록이며 현재 결과와 구분합니다. 서로 다른 승인 revision의 증거로 값 2개·PG 5개가 통과했습니다. 교정 source의 변경 4개 파일 scoped type는 소유 진단 0개·기존 외부 진단 25개로 전체 exit 1이며 lint는 exit 0입니다. 원 PG2 취소·prototype 비교 실패를 보존했고 성공 callback·schema·전체 stage는 반복하지 않았습니다. 최종 source의 전체 suite 또는 live 성공으로 표시하지 않습니다.
 
 고정 base는 `648b0f4ec7c9a9e9c47c44620ca20d41706d07b8`이며 첫 제품 source는 `e45bd5dc42ec709f084ba8314c9cf0bf211238eb`입니다. 이 문서는 작성한 source와 미해결 계약을 기록합니다. 실행·검증·제품 완료 판정은 아닙니다. [Root 명세 전문](task-spec.md)을 따릅니다.
 
