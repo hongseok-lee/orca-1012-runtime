@@ -7,3 +7,6 @@ export { readControllerTakeoverSnapshot, assertLiveControllerLease } from './tak
 export type { ControllerTakeoverSnapshot } from './takeover.ts'
 export { runControllerPass } from './pass.ts'
 export type { ControllerPassRequest, ControllerPassResult, AbortableInventoryTransport } from './pass.ts'
+export { createControllerWorker } from './worker.ts'
+export type { ControllerWorker, ControllerWorkerPolicy, ControllerWorkerCallbacks,
+  ControllerWorkerSnapshot, ControllerWorkerFailure } from './worker.ts'

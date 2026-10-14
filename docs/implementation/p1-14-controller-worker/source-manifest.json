@@ -1,0 +1,76 @@
+{
+  "base": "e12f94346756f5edb35ef9afad2083cfb706301c",
+  "initialProductPin": "c1b818015578bc4a5b024d892e114592d4219ced",
+  "productSourcePin": "4f4005a7b42371d7b82cc4018a7848ae43d93982",
+  "fixturePin": "903f91e6deb6a72d9118ec8d0d85545d8e408d9b",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/ha/index.ts",
+      "sha256": "4675a8c1f3a12348794ea3682f6745bf95323696240a196d94bd5d38f1aa73c8",
+      "gitBlob": "810120532f494b8b438f961a2d94c560faee6d6d",
+      "bytes": 936
+    },
+    {
+      "path": "src/main/durable-runtime/ha/worker-fixtures.mts",
+      "sha256": "d14260b8bb0dd9d05d63a2bcfc3102333cfc60cf55d605f078b2f3ad7b412798",
+      "gitBlob": "4aa742e876b000444a87fff6b9bbb8b8866723c3",
+      "bytes": 2427
+    },
+    {
+      "path": "src/main/durable-runtime/ha/worker.pg.test.mts",
+      "sha256": "8ff1c87a75d75d718042645292a11cc691205b39e385801c8a274811c2548938",
+      "gitBlob": "6ba60094610d12a7618bc449df29a7ba924ca127",
+      "bytes": 11736
+    },
+    {
+      "path": "src/main/durable-runtime/ha/worker.ts",
+      "sha256": "16bcce24082a2c5b5fac58bb3a93e0f34cc837711f3e5a4f81e3e957ff6ebb7b",
+      "gitBlob": "d495bd4233c7d60bc5f7569b29f66e2ab1751fb7",
+      "bytes": 14352,
+      "beforeLintCorrection": {
+        "path": "src/main/durable-runtime/ha/worker.ts",
+        "sha256": "5b53f6f11353361fdf4dde0d660d3a3315e5004e1a5294974fda9cb5dbbb4048",
+        "gitBlob": "0817ce693cb676de7a930eeb12e0ea62a7267e25",
+        "bytes": 14357
+      }
+    },
+    {
+      "path": "src/main/durable-runtime/ha/worker.value.test.mts",
+      "sha256": "87097b30930854a5d1408f68464f6ef5016e447c98707c5795070e5e557dd75e",
+      "gitBlob": "c9c33a6cf19d1f5bfec762e8fac1cb0ef0694234",
+      "bytes": 1780
+    }
+  ],
+  "writtenCallbacks": {
+    "value": 1,
+    "actualPG": 4,
+    "executionScopeSetByRoot": true
+  },
+  "qualification": "Root가 지정한 최초 값 1개와 실제 PG 4개 및 소유 5개 scoped static을 실행했습니다. 물리 provider, 배치 HA 및 live 활성화는 미확인입니다.",
+  "reviewedProductSourcePin": "26f94d894f7ddbd48ab79d1c2cd5e32d53aef489",
+  "sourceSubmissionExecutions": {
+    "test": 0,
+    "type": 0,
+    "lint": 0,
+    "PG": 0,
+    "schema": 0,
+    "build": 0,
+    "install": 0,
+    "live": 0,
+    "capture": 0,
+    "heavy": 0
+  },
+  "executions": {
+    "valueCallbacks": 1,
+    "PGCallbacks": 4,
+    "schemaApplications": 1,
+    "scopedType": 1,
+    "scopedLintFive": 1,
+    "changedWorkerLint": 1,
+    "productBuild": 0,
+    "install": 0,
+    "live": 0,
+    "capture": 0,
+    "activeHeavy": 0
+  }
+}
