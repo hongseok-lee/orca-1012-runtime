@@ -216,3 +216,39 @@ await test('authenticated scope, real dataset/host guard, mutable invocation/con
     assert.deepEqual(state.unexpected, [])
   } finally { gate.resolve(); state.adapter.dispose() }
 })
+
+await test('concurrent separate Workspaces and Units share exactly one canonical binding without changing its original state or issuing physical rights', async () => {
+  const ws = await fixture(), state = setup(ws.config), before = await physicalCounts()
+  const canonical = ws.config.launch!.repositories[0].storage
+  const bindingRows = async () => (await pool.query(`SELECT to_jsonb(b) AS original FROM durable_runtime.storage_bindings b
+    WHERE backend_id=$1 AND export_id=$2 AND canonical_directory=$3`,
+  [canonical.backendId, canonical.exportId, canonical.canonicalDirectory])).rows as { original: Record<string, unknown> }[]
+  try {
+    const [left, right] = await Promise.all([
+      state.invoke('worktree.create', { repo: `id:${ws.repoId}`, name: 'canonical-left', clientMutationId: `canonical-left:${ws.id}` }),
+      state.invoke('worktree.create', { repo: `id:${ws.repoId}`, name: 'canonical-right', clientMutationId: `canonical-right:${ws.id}` })
+    ]) as [CatalogWireResults['worktree.create'], CatalogWireResults['worktree.create']]
+    assert.notEqual(left.worktree.id, right.worktree.id)
+    const first = (await stored(left.worktree.id))[0], second = (await stored(right.worktree.id))[0]
+    assert.notEqual(first.id, second.id); assert.notEqual(first.runtime_unit_id, second.runtime_unit_id)
+    assert.notEqual(first.session_id, second.session_id); assert.equal(first.binding_id, second.binding_id)
+    const bindings = await bindingRows(); assert.equal(bindings.length, 1)
+    const originalBinding = bindings[0].original
+    assert.equal(originalBinding.id, first.binding_id); assert.equal(originalBinding.access_state, 'UNVERIFIED')
+    assert.equal(originalBinding.identity_proof_ref, null); assert.equal(originalBinding.identity_verified_at, null)
+    assert.equal(originalBinding.writer_attempt_id, null); assert.equal(originalBinding.seal_id, null)
+    const peers = (await pool.query(`SELECT runtime_unit_id,session_id,storage_binding_id FROM durable_runtime.runtime_members
+      WHERE session_id=ANY($1::uuid[]) ORDER BY session_id`, [[first.session_id, second.session_id]])).rows
+    assert.equal(peers.length, 2); assert.ok(peers.every(row => row.storage_binding_id === originalBinding.id))
+    assert.deepEqual(new Set(peers.map(row => row.runtime_unit_id)), new Set([first.runtime_unit_id, second.runtime_unit_id]))
+    // A further fresh Workspace takes the existing exact-tuple branch. Compare
+    // the complete original row, including future additive metadata fields.
+    const third = await state.invoke('worktree.create', { repo: `id:${ws.repoId}`, name: 'canonical-existing',
+      clientMutationId: `canonical-existing:${ws.id}` }) as CatalogWireResults['worktree.create']
+    const existing = (await stored(third.worktree.id))[0]
+    assert.equal(existing.binding_id, originalBinding.id)
+    assert.notEqual(existing.runtime_unit_id, first.runtime_unit_id); assert.notEqual(existing.runtime_unit_id, second.runtime_unit_id)
+    assert.deepEqual(await bindingRows(), bindings)
+    assert.deepEqual(await physicalCounts(), before); assert.deepEqual(state.unexpected, [])
+  } finally { state.adapter.dispose() }
+})
