@@ -5,6 +5,7 @@ import type { Pool } from 'pg'
 import { captureDurableCatalogReadConfig, CatalogReadError } from './config.ts'
 import { captureCatalogReadContext } from './context.ts'
 import { DurableCatalogReadAdapter } from './public.ts'
+import { CATALOG_PUBLIC_METADATA_METHODS } from './metadata.ts'
 import { CATALOG_PUBLIC_READ_METHODS, CATALOG_PUBLIC_STREAM_METHODS, CATALOG_PUBLIC_CLEANUP_METHODS,
   isCatalogMethodNotConnected } from './registry.ts'
 import { SharedCatalogHeadHints } from './head-hints.ts'
@@ -49,7 +50,7 @@ await test('claimed payload identity and empty direct context cannot issue autho
   adapter.dispose()
 })
 
-await test('existing registry names, params schemas and stream kinds stay identical; old mutations are denied', async () => {
+await test('existing registry names, params schemas and stream kinds stay identical; unconnected mutations are denied', async () => {
   const { runtime, unexpected } = fixtureRuntime(), adapter = new DurableCatalogReadAdapter(fixtureConfig(noIo))
   const original = eraseRpcMethods([...REPO_METHODS, ...WORKTREE_METHODS, ...SESSION_TAB_METHODS, ...CLIENT_UI_METHODS, ...TERMINAL_METHODS])
   const bound = adapter.bind(original)
@@ -59,6 +60,7 @@ await test('existing registry names, params schemas and stream kinds stay identi
     assert.equal(bound[index].params, original[index].params)
     assert.equal(isStreamingDeclaration(bound[index]), isStreamingDeclaration(original[index]))
     if (isCatalogMethodNotConnected(bound[index].name) &&
+      !CATALOG_PUBLIC_METADATA_METHODS.includes(bound[index].name as never) &&
       ![...CATALOG_PUBLIC_READ_METHODS, ...CATALOG_PUBLIC_STREAM_METHODS, ...CATALOG_PUBLIC_CLEANUP_METHODS].includes(bound[index].name as never)) {
       const method = bound[index]
       await assert.rejects(async () => isStreamingDeclaration(method)

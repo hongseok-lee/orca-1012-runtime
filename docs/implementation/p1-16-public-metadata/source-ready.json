@@ -1,0 +1,17 @@
+{
+  "base": "235a1e43bae71f1e5cac62f02bea0ca04eb0b26a",
+  "earlyProductPin": "cbefa4e12a714559b4895856f53772d2fff533fa",
+  "taskSpecOriginalSha256": "bc6ea53ef797dd1c8be926f82642ebe872bda73c29ce767fc42167a14e4f841f",
+  "publicSpecSameBytes": true,
+  "publicGeneralizations": [],
+  "status": "SOURCE_AND_FIXTURES_WRITTEN_NOT_EXECUTED",
+  "typeExecuted": false,
+  "lintExecuted": false,
+  "valueExecuted": false,
+  "pgExecuted": false,
+  "heavyOccupied": false,
+  "remoteAccess": false,
+  "liveActivation": false,
+  "newPool": false,
+  "newListener": false
+}
