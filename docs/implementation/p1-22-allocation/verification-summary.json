@@ -445,5 +445,160 @@
       }
     ],
     "ownedProcessesActive": 0
+  },
+  "focusedTwo": {
+    "source": "a2b9d54bd42824db7f740390e2cd7b4b7dedcab3",
+    "productPin": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+    "previousFixturePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+    "history": [
+      {
+        "phase": "최초 원 fixture 준비",
+        "bodyCount": 7,
+        "fixturePreparationFail": 7,
+        "productApiEntered": 0,
+        "pass": 0,
+        "exactCode": "23503"
+      },
+      {
+        "phase": "귀속 교정 첫 실행",
+        "bodyCount": 7,
+        "pass": 5,
+        "fail": 2,
+        "skip": 0,
+        "failureScope": "capacity=false를 single-writer budget=false와 묶은 fixture facts 준비의 ERR_ASSERTION입니다."
+      },
+      {
+        "phase": "Root 승인 capacity fixture 교정 focused 2",
+        "bodyCount": 2,
+        "pass": 2,
+        "fail": 0,
+        "skip": 5,
+        "selectedCaseNumbers": [
+          2,
+          4
+        ],
+        "skippedCaseNumbers": [
+          1,
+          3,
+          5,
+          6,
+          7
+        ]
+      }
+    ],
+    "focused": {
+      "caseBodiesEntered": 2,
+      "pass": 2,
+      "fail": 0,
+      "skip": 5,
+      "exit": 0,
+      "cases": [
+        {
+          "name": "첫 capacity WAIT의 원 목표와 provenance를 재사용하며 같은 incident와 operation은 중복 charge가 없다",
+          "passed": true
+        },
+        {
+          "name": "실제 lease row-lock 대기 뒤 만료를 다시 판정하고 예약을 거절한다",
+          "passed": true
+        }
+      ],
+      "facts": {
+        "originalWaitTargetRepeatedCalculations": 0,
+        "actualLeaseSqlLockObserved": true
+      },
+      "canonicalCaseBodiesUnchanged": true,
+      "explicitSkipUsed": true,
+      "broadNameFilterUsed": false,
+      "capacityAvailableFalsePreserved": true,
+      "singleWriterBudgetAvailableIndependentSyntheticTrue": true,
+      "capacityTrueInjected": false
+    },
+    "static": {
+      "changedFixtureLintExit": 0,
+      "changedFixtureLintPid": 13884,
+      "successfulTypeRepeated": false,
+      "reusedProductTypePin": "1ac8c72d1dfcad7eaf39c64c7f276702bd7ff66e",
+      "reusedFixtureTypePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1"
+    },
+    "schema": {
+      "migrationOperatorInvoked": false,
+      "migrationSqlExecuted": 0,
+      "newDatabaseCreated": false,
+      "newSchemaPrepared": false,
+      "readOnlyChecksumCount": 19,
+      "allChecksumsMatch": true,
+      "dev019Applied": false
+    },
+    "cumulativeDistinctPassedPgCases": 7,
+    "priorSuccessfulFiveRepeated": false,
+    "artifacts": [
+      {
+        "name": "actual-pg-first.log",
+        "bytes": 8596,
+        "sha256": "20f31a6ce559c7be67e2c9b8add17b568f51535b62da75fd66326e6cac0aed73"
+      },
+      {
+        "name": "actual-pg-first-results.json",
+        "bytes": 4947,
+        "sha256": "d2d4f2998ed460058d8f6ac855f8951d66c8bd7ecc8e46522959ff4b1f3f1a85"
+      },
+      {
+        "name": "actual-pg-corrected-first.tap",
+        "bytes": 4445,
+        "sha256": "0a0b22d22dee81338bc0885520ad0d2bc826cdf0ab792159ee757295cd32c050"
+      },
+      {
+        "name": "actual-pg-corrected-first-results.json",
+        "bytes": 5092,
+        "sha256": "23ce820f74eed08bec41c4947f38ed8570ea7b4419e66988c0f0226d67e5724f"
+      },
+      {
+        "name": "actual-pg-focused-two.log",
+        "bytes": 2479,
+        "sha256": "86ef4c83a6050f7bcbcf201da3a30c276593ee78d7448d79b5b57b06b4dd96f7"
+      },
+      {
+        "name": "actual-pg-focused-two-results.json",
+        "bytes": 3981,
+        "sha256": "bd78ee6aa02cebd2bade4ddae96beed64355b5b5f31cffb5483081a3cf860437"
+      },
+      {
+        "name": "focused-two-state.json",
+        "bytes": 5357,
+        "sha256": "0d359b727c5594b6da37e66321153053ac1ec71a993fb6f594f1133ad1a1d839"
+      },
+      {
+        "name": "focused-fixture-lint.log",
+        "bytes": 91,
+        "sha256": "2731f4f307db7573231a9916d90b2589d06206d7bab214893c7b124e63660ca6"
+      },
+      {
+        "name": "source-manifest-focused.json",
+        "bytes": 23117,
+        "sha256": "93a2fb1cf9b10578b035caa0ad654bf709449e6250384d768c9a05416d74b61f"
+      },
+      {
+        "name": "focused-capacity-correction.diff",
+        "bytes": 1248,
+        "sha256": "cfa4b9c68b32ab0d16031861ae6f8c2261f332805984d3f29eaa1f2ad41475e6"
+      },
+      {
+        "name": "focused-selection-adapter.diff",
+        "bytes": 1342,
+        "sha256": "de19034a1cd78e0185bad6d52ef04ed8203d3bfda539e43ce7f012013539a351"
+      },
+      {
+        "name": "actual-pg.focused-two.mts",
+        "bytes": 20812,
+        "sha256": "2048d70b69a2eb8297ce506ba6f6fe5517f01f6c3c8bb911b215cfc46e1c581e"
+      },
+      {
+        "name": "actual-pg.focused-two.mjs",
+        "bytes": 119215,
+        "sha256": "92777c4cda4413f680e24d9a700ec0af9e1d36da04b6630ca9ac7c1b72e1d9c7"
+      }
+    ],
+    "ownedProcessesActive": 0,
+    "heavyReturned": true
   }
 }

@@ -46,6 +46,24 @@ Case 2와 4는 capacity=false fixture facts를 만드는 `test-support.mts:115`�
 
 원 corrected TAP/JSON·manifest·준비 hook·bundle의 SHA는 공개 결과 요약에 추가했다. 실제 child PID `13396`, `13417`, `13507`, `13513`은 모두 종료됐고 heavy 점유를 반환했다. 성공한 5개 PG는 반복하지 않았다. 최초 결과 PNG는 여전히 없고 실제 resize/fence/Pod·provider/Agent OOM·physical sleep/wake·HA/native iPhone은 미검증이다.
 
+## 승인된 capacity fixture 교정과 focused 2 결과
+
+Root가 원 TAP과 helper/policy guard를 읽고 예산 flag 분리를 승인했다. Fixture pin `a2b9d54bd42824db7f740390e2cd7b4b7dedcab3`은 `singleWriterBudgetAvailable=true`를 독립적인 synthetic 예산 입력으로 고정하며 외부 `capacityAvailable=false`는 그대로 유지한다. 정책 `8bd832f5`의 원 계산/guard·제품 11개 파일·DDL은 바꾸지 않았다. 실제 외부 capacity나 신뢰 issuer를 주입한 교정이 아니다.
+
+[명시적 focused 선택 adapter](focused-selection-adapter.diff)는 exact case 이름 두 개를 선택하고 **case 1·3·5·6·7의 callback을 skip**한다. Parent 이름이나 broad regex filter를 쓰지 않았다. 실제 결과 JSON의 callback은 case 2·4만 두 개이고 TAP은 PASS 2개·FAIL 0개·SKIP 5개다. 기존 DB와 001–019 checksum read-only 준비 hook을 그대로 재사용했으며 migration entry/SQL·신규 DB/schema 준비는 0회다. 기존 성공 type과 schema/policy/incident 시험을 반복하지 않았고 변경 helper의 lint는 exit 0이다.
+
+| 실제 단계 | 진입·범위 | PASS | FAIL | SKIP |
+|---|---|---:|---:|---:|
+| 원 fixture 준비 첫 실행 | Body 7개, allocation API 0개 | 0 | 7 | 0 |
+| Incident 귀속 교정 첫 실행 | Body 7개, case 1·3·5·6·7 통과 | 5 | 2 | 0 |
+| Capacity fixture 교정 focused 실행 | Case 2·4 callback만 실행 | 2 | 0 | 5 |
+
+지정 PG 경계는 **distinct 7개**가 통과했으며 run 수나 원 실패 body 수를 성공 개수에 더하지 않는다. Focused case 2는 첫 capacity WAIT의 고정 목표/provenance, 같은 incident/operation 재접수, 동일 profile/reservation/charge와 원 plan 불변을 확인했다. Case 4는 실제 lease SQL row-lock 대기를 관찰하고 대기 후 별도 DB clock의 만료 판정으로 예약을 거절했다. 앞 case 1의 실제 두 budget SQL wait·한도 보존과 case 6의 실제 ledger write 경계 rollback 증거는 원 성공 결과를 재사용했다.
+
+원 첫 실패·교정 pin·adapter·manifest·TAP/JSON·bundle SHA는 [공개 결과 요약](verification-summary.json)에 단계별로 보존했다. Lint PID `13884`, PG PID `13904`, test child `13910`은 모두 종료됐고 활성 소유 PID 0·heavy 슬롯 반환을 확인했다. 성공 5개를 반복하거나 추가 시험·정책 변경·rebase·설치·dev 019/live 활성화를 하지 않았다.
+
+이 결과는 실제 소유 PG core와 synthetic 권한/분류/admission/capacity 입력의 범위다. 최초 report PNG는 아직 없으며 실제 production issuer/admission·external capacity·provider·Agent OOM·resize/fence/Pod·physical sleep/wake·HA/native iPhone을 검증하지 않는다. Root가 원 결과와 별도 report PNG·최종 base/merge를 판단한다.
+
 ## 최초 소유 fixture의 작성 상태
 
 조기 API 납품 뒤 `actual-pg.test.mts`와 `test-support.mts`에 지정된 최초 PG 묶음 7개를 작성했다. 두 Unit의 실제 같은 scope 경합과 memory/CPU 합계, 원 capacity WAIT의 목표/provenance 및 동일 incident/operation 중복 charge 방지, REPLACE의 replacement-only charge, 실제 lease row-lock 대기 관찰 후 만료 판정, 첫 await body/callback 변이와 receipt replay·stale intent/attempt, 실제 ledger INSERT 직전 실패의 전체 rollback, expiry 뒤 점유 유지와 episode/rolling 예산·승인 profile 보존을 포함한다.
