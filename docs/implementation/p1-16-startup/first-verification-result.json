@@ -1,0 +1,146 @@
+{
+  "kind": "P1-16 orcad startup 최초 검증 결과",
+  "source_pin": "0ab1e637d1eb72406de7f2fac368050f9a57eb59",
+  "initial_source_pin": "80cbdf6317f02f39c484a18eecc9f8e539d804eb",
+  "fixture_correction_pin": "d7cf8d1c605eb69a4a26d31fe217499605874cf4",
+  "verification_base_pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+  "PR43_dependency_pin": "e1d747b54433533062d28b76a8687c3fcaf3f249",
+  "initial_result_recorded_at": "2026-10-14T01:23:22.807137+00:00",
+  "focused_result_recorded_at": "2026-10-14T01:50:41.230188+00:00",
+  "timestamps_meaning": "원 결과 JSON의 기록 시각이며 새 시험 또는 촬영 시각이 아닙니다.",
+  "initial": {
+    "PG_pass": 4,
+    "PG_preparation_fail": 4,
+    "value_pass": 6,
+    "type_exit": 1,
+    "owned_type_diagnostics": 3,
+    "transitive_type_diagnostics": 25,
+    "lint_exit": 1,
+    "lint_errors": 2,
+    "failure_code": "23514",
+    "failure_message": "Durable history is append-only",
+    "failed_startup_assertions_entered": false
+  },
+  "focused": {
+    "PG_pass": 4,
+    "PG_fail": 0,
+    "previous_PG_skipped": 4,
+    "previous_shared_setup_skipped": true,
+    "value_executions": 0,
+    "parent_counted": false,
+    "selection": "failed-four",
+    "cases": [
+      {
+        "boundary": "catalog-head",
+        "code": "CATALOG_HEAD_MISSING",
+        "PASS": true,
+        "startup_Pool_end_assertion": 1
+      },
+      {
+        "boundary": "ui-head",
+        "code": "CATALOG_STARTUP_HEAD_MISSING",
+        "PASS": true,
+        "startup_Pool_end_assertion": 1
+      },
+      {
+        "boundary": "ui-state",
+        "code": "CATALOG_STARTUP_UI_NOT_INITIALIZED",
+        "PASS": true,
+        "startup_Pool_end_assertion": 1
+      },
+      {
+        "boundary": "dataset",
+        "code": "CATALOG_STARTUP_DATASET_MISMATCH",
+        "PASS": true,
+        "startup_Pool_end_assertion": 1
+      }
+    ],
+    "type_exit": 1,
+    "owned_type_diagnostics": 0,
+    "transitive_type_diagnostics": 25,
+    "transitive_matches_initial": true,
+    "lint_exit": 0,
+    "lint_errors": 0,
+    "lint_warnings": 0,
+    "type_root_file_count": 4,
+    "lint_file_count": 5,
+    "full_entry_type_executed": false,
+    "generated_bundle_lint": false
+  },
+  "distinct_cumulative": {
+    "PG_pass": 8,
+    "value_pass": 6,
+    "whole_suite_at_final_pin_executions": 0,
+    "previous_successful_case_repetitions": 0
+  },
+  "validation": {
+    "new_isolated_databases": 4,
+    "SQL_range": "001–014",
+    "accepted_SQL_hash_count": 14,
+    "schema_applies_per_new_database": 1,
+    "protected_head_or_UI_deletes": 0,
+    "guard_disable": 0,
+    "DDL_modification": 0,
+    "dataset_missing_initial_seed_delete": 1,
+    "dataset_FK_references_confirmed_empty": true,
+    "source_stage_files": 26098,
+    "source_hash_changes": 0,
+    "active_owned_jobs_at_finish": 0,
+    "heavy_returned": true
+  },
+  "unchanged_owned_source_sha256": {
+    "src/main/orcad/orcad-durable-catalog.ts": "54463fa8091ebb5145f735923a5029fa320a13480b6f7cbe6f11479ad1b1f3fd",
+    "src/main/orcad/orcad-entry.ts": "766b2dd696678031c01ba8eddc8af5b875dd128372ae8e31533fbd6345aa452c",
+    "src/main/orcad/orcad-durable-catalog-cleanup.ts": "8e3078b2f36b3fb1502adc2fd5b271d16e58f22cef47fbeb0a4cb50f97a8884e",
+    "src/main/orcad/orcad-durable-catalog.pg.test.mts": "d52a1607032d10ea134788122ff577f257cb19e014fcf53ab2735748114248f8",
+    "src/main/orcad/orcad-durable-catalog.pg-fixtures.mts": "21a1baa0b174b69c60b1638070db1d1f239f8ab81ee4c0ff0c31878410724fdd",
+    "src/main/orcad/orcad-durable-catalog.value.test.mts": "01cd4b399c687ed9aa8195279b82ed92e15b94e67bdc1e8b75b70ec6c603f077"
+  },
+  "original_log_digests": [
+    {
+      "phase": "initial",
+      "name": "first-values-private.log",
+      "sha256": "c02c28892ec997af50a3b05e827736b04fa921a212c96d063870b6482f70a2e6"
+    },
+    {
+      "phase": "initial",
+      "name": "first-pg-private.log",
+      "sha256": "79b36ef9811a20e6f8d5d85abdb317d121ad5de0bfc9f96b57acc71aa9a2e519"
+    },
+    {
+      "phase": "initial",
+      "name": "scoped-type-private.log",
+      "sha256": "dd686f49f70af520ee52e68494cfcbf1ba8c25570dce7d999f92aa78878c3796"
+    },
+    {
+      "phase": "initial",
+      "name": "scoped-lint-private.log",
+      "sha256": "aa1b20095d53f1899d3661b21f92365ffb1a3e2744c8c53c0f303e8dd91a94ff"
+    },
+    {
+      "phase": "focused",
+      "name": "focused-pg-private.log",
+      "sha256": "6d30aae3fa1ce5ffd468c89462b0c1bfd17ad79e0afcd942511a660e74f34550"
+    },
+    {
+      "phase": "focused",
+      "name": "scoped-type-private.log",
+      "sha256": "01788b030accdc2b67711f979203b0fa75df955e1d0b4523d52210fdab9cd7cd"
+    },
+    {
+      "phase": "focused",
+      "name": "scoped-lint-private.log",
+      "sha256": "badbc4374cadd4cce1c2b4573d8760268ab51e94ee093b39268e5b30f01de745"
+    }
+  ],
+  "limitations": [
+    "보고 HTML은 원 결과 문서이며 screenshot이 아닙니다.",
+    "전체 type exit 1과 transitive 진단 25개를 유지합니다.",
+    "최종 pin에서 전체 PG 8개와 값 6개를 재실행하지 않았습니다.",
+    "실제 live Catalog 활성화·dev 013–014 적용·프로젝트 등록·Expo 클릭은 이번 결과에 없습니다.",
+    "제품 인증·provider·fence·RW·controller·HA 합격을 주장하지 않습니다."
+  ],
+  "publication_reexecutions": 0,
+  "screenshot_executions": 0,
+  "install_build_runtime_changes": 0
+}
