@@ -8,6 +8,13 @@ import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
 import { captureDurableCatalogReadConfig } from './config.ts'
 import { deferred, fixtureConfig, fixtureContext, fixtureRuntime, syntheticFingerprint } from './fixture-support.mts'
+import { closeCatalogTab } from '../catalog/close.ts'
+import { prepareCatalogCall } from '../catalog/request.ts'
+import { captureCatalogReadContext } from './context.ts'
+import { recordUnitIntent } from '../lifecycle/intent.ts'
+import { reserveSleep } from '../lifecycle/sleep.ts'
+import { recordInputCancel } from '../input/cancel.ts'
+import { createOrcadCatalogBrowserPublication } from '../../orcad/orcad-catalog-browser-publication.ts'
 
 if (process.env.ORCA_PUBLIC_BROWSER_PG_APPROVED !== 'root-source-reviewed' ||
     !(process.env.PGDATABASE ?? '').startsWith('orca_public_browser_')) {
@@ -18,7 +25,8 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
   const pool = createDurablePool({ max: 3, statement_timeout: 10000 })
   const query = (sql: string, values: readonly unknown[] = []) => withDurableTransaction(pool, tx => tx.query(sql, values))
   const workspaceId = logicalId('workspace', randomUUID())
-  const publicId = `synthetic-public-browser:${workspaceId}`
+  const folderId = `synthetic-public-browser:${workspaceId}`
+  const publicId = `folder:${folderId}`
   const groupId = `synthetic-public-browser-group:${randomUUID()}`
   const owner = fixtureRuntime()
   type CreateParams = Parameters<typeof owner.runtime.browserTabCreate>[0]
@@ -30,6 +38,15 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
   const gate = deferred<void>()
   const entered = deferred<void>()
   const nativeFailure = new Error('Synthetic central Browser failure')
+  const owners = { recordUnitIntent, reserveSleep, recordInputCancel }
+  const closeLogical = (page: string, closePool = pool) => {
+    const config = captureDurableCatalogReadConfig({ ...fixtureConfig(closePool), workspacePublicIds: [publicId] })
+    const call = prepareCatalogCall('session.tabs.close', { worktree: publicId, tabId: page },
+      captureCatalogReadContext(config, fixtureContext(owner.runtime)))
+    return closeCatalogTab(closePool, call, publicId, { inputAuthorities: [] }, owners)
+  }
+  let holdPublicationCommit = false, guardBackendPid = 0
+  const publicationCommitEntered = deferred<void>(), publicationCommitRelease = deferred<void>()
   const protectedTables = ['agents', 'sessions', 'runtime_units', 'runtime_members', 'operations', 'attempts',
     'execution_grants', 'storage_bindings', 'storage_write_grants', 'storage_mounts', 'resource_profiles']
   const protectedState = async () => {
@@ -56,7 +73,7 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
     calls.push({ params: { ...params }, caller: caller === undefined ? undefined : { ...caller } })
     if (mode === 'failure') { throw nativeFailure }
     if (mode === 'close') {
-      await query("UPDATE durable_runtime.tabs SET lifecycle='CLOSED',closed_at=clock_timestamp() WHERE id=$1", [stored.id])
+      await closeLogical(params.page)
     }
     return { browserPageId: mode === 'mismatch' ? 'synthetic-wrong-native-page' : params.page }
   }
@@ -72,6 +89,7 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
     return async () => {
       if (delayed) { delayed = false; entered.resolve(); await gate.promise }
       const client = await pool.connect()
+      if (holdPublicationCommit) { guardBackendPid = (await client.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows[0].pid }
       let mutation = false
       const clientCarrier: PoolClient = Object.create(client)
       return new Proxy(clientCarrier, { get(_clientTarget, key) {
@@ -91,6 +109,11 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
               SELECT $1,$2,$3,$4,payload_hash,response,intake_at FROM durable_runtime.rpc_receipts
               WHERE principal_id=$1 AND session_scope=$2 AND method=$3 AND response=$5::jsonb
               ORDER BY committed_at LIMIT 1`, [...values, JSON.stringify({ browserPageId: replayPage })])
+          }
+          if (mutation && sql === 'COMMIT' && holdPublicationCommit) {
+            holdPublicationCommit = false
+            publicationCommitEntered.resolve()
+            await publicationCommitRelease.promise
           }
           const result = await client.query(sql, values)
           if (mutation && (sql === 'COMMIT' || sql === 'ROLLBACK')) {
@@ -112,7 +135,7 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
     assert.equal((await query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows[0].dataset_name, 'orca-1012-dev-v1')
     await query("INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch) VALUES('catalog',$1) ON CONFLICT(scope) DO NOTHING", [randomUUID()])
     await query('INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)', [groupId, JSON.stringify({ id: groupId })])
-    const payload: FolderWorkspace = { id: publicId, projectGroupId: groupId, name: 'Synthetic public Browser',
+    const payload: FolderWorkspace = { id: folderId, projectGroupId: groupId, name: 'Synthetic public Browser',
       folderPath: `/synthetic/public-browser/${workspaceId}`, comment: '', linkedTask: null,
       createdAt: 7, updatedAt: 7, lastActivityAt: 7, sortOrder: 0, isArchived: false, isUnread: false, isPinned: false }
     await query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,$3,'PENDING')", [workspaceId, publicId, payload.name])
@@ -182,6 +205,68 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
     assert.equal(calls.length, nativeBeforeUncertain)
     assert.equal((await tab(uncertainPage)).lifecycle, 'OPEN')
     assert.equal((await receipts(uncertainPage)).length, 1)
+    // Actual close-first: the real Catalog close transaction commits before the guard.
+    const publication = createOrcadCatalogBrowserPublication(config)
+    const wrongDataset = createOrcadCatalogBrowserPublication(captureDurableCatalogReadConfig({
+      ...fixtureConfig(borrowed), workspacePublicIds: [publicId], datasetName: 'synthetic-wrong-dataset' }))
+    await assert.rejects(wrongDataset(publicId, firstPage, () => { assert.fail('Wrong dataset published') }), /CATALOG_BROWSER_DATASET_MISMATCH/)
+    const wrongHost = createOrcadCatalogBrowserPublication(captureDurableCatalogReadConfig({
+      ...fixtureConfig(borrowed), workspacePublicIds: [publicId], hostId: 'ssh:synthetic-other', readHostIdentity: () => 'ssh:synthetic-other' }))
+    await assert.rejects(wrongHost(publicId, firstPage, () => { assert.fail('Wrong host published') }), /CATALOG_REGISTRATION_HOST_MISMATCH/)
+    await assert.rejects(publication(publicId, 'synthetic-unreserved-page', () => { assert.fail('Wrong page published') }), /CATALOG_BROWSER_PAGE_CONFLICT/)
+    await closeLogical(failedPage)
+    const closeFirstStored = await tab(failedPage)
+    let publications = 0
+    await assert.rejects(publication(publicId, failedPage, () => { publications++ }), /CATALOG_BROWSER_PAGE_CLOSED/)
+    assert.equal(publications, 0)
+    assert.deepEqual(await tab(failedPage), closeFirstStored)
+    // Actual publication-first: pause only the guard's SQL COMMIT, after its sync
+    // callback, and observe the real close blocked on its Workspace FOR UPDATE.
+    const lockAttempted = deferred<void>()
+    let closingBackendPid = 0, closeFinished = false
+    const closeCarrier: Pool = Object.create(pool)
+    const closePool = new Proxy(closeCarrier, { get(_target, property) {
+      if (property !== 'connect') {
+        const value = Reflect.get(pool, property, pool)
+        return typeof value === 'function' ? value.bind(pool) : value
+      }
+      return async () => {
+        const client = await pool.connect()
+        const pid = (await client.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows[0].pid
+        const carrier: PoolClient = Object.create(client)
+        return new Proxy(carrier, { get(_target, key) {
+          if (key !== 'query') {
+            const value = Reflect.get(client, key, client)
+            return typeof value === 'function' ? value.bind(client) : value
+          }
+          return (sql: string, values: unknown[] = []) => {
+            const result = client.query(sql, values)
+            if (sql.includes('durable_runtime.workspaces') && sql.includes('FOR UPDATE')) {
+              closingBackendPid = pid
+              lockAttempted.resolve()
+            }
+            return result
+          }
+        } })
+      }
+    } })
+    holdPublicationCommit = true
+    const publishing = publication(publicId, generated.browserPageId, () => { publications++ })
+    await publicationCommitEntered.promise
+    assert.equal(publications, 1)
+    const closing = closeLogical(generated.browserPageId, closePool).then(result => { closeFinished = true; return result })
+    try {
+      await lockAttempted.promise
+      let blocked = false
+      for (let observed = 0; observed < 64 && !blocked; observed++) {
+        blocked = (await query('SELECT $2::int=ANY(pg_blocking_pids($1::int)) AS blocked', [closingBackendPid, guardBackendPid])).rows[0].blocked
+      }
+      assert.equal(blocked, true, 'exact close backend must wait for exact publication backend')
+      assert.equal(closeFinished, false)
+    } finally { publicationCommitRelease.resolve() }
+    await Promise.all([publishing, closing])
+    assert.equal((await tab(generated.browserPageId)).lifecycle, 'CLOSED')
+    assert.equal(publications, 1)
     mode = 'close'
     const replayRequest = { worktree: publicId, page: replayPage, activate: true, navigation: 'caller' as const }
     await assert.rejects(handler(replayRequest, context()), /CATALOG_BROWSER_CLOSED_DURING_CREATE_CLEANUP_UNVERIFIED/)
