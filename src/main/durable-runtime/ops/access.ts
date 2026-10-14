@@ -1,7 +1,7 @@
+import { DurableDatabaseError } from '../db/connection.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import type { JsonValue } from '../db/atomic.ts'
 import type { OpsActor } from './types.ts'
-import { OpsHttpError } from './errors.ts'
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /** The immutable 014 workspace anchor survives current member removal and tombstones. */
 export async function unitVisible(tx: DurableTransaction, actor: OpsActor, id: string): Promise<boolean> {
@@ -13,9 +13,9 @@ export async function unitVisible(tx: DurableTransaction, actor: OpsActor, id: s
 }
 export async function requireUnitAccess(tx: DurableTransaction, actor: OpsActor, id: string): Promise<void> {
   if (!(await tx.query('SELECT id FROM durable_runtime.runtime_units WHERE id=$1', [id])).rowCount) {
-    throw new OpsHttpError(404, 'not_found', 'The runtime unit was not found.')
+    throw new DurableDatabaseError('OPS_UNIT_MISSING')
   }
-  if (!(await unitVisible(tx, actor, id))) { throw new OpsHttpError(403, 'forbidden', 'The target is outside the server namespace.') }
+  if (!(await unitVisible(tx, actor, id))) { throw new DurableDatabaseError('OPS_TARGET_FORBIDDEN') }
 }
 export async function listVisibleUnitIds(tx: DurableTransaction, actor: OpsActor): Promise<string[]> {
   const result = await tx.query<{ id: string }>(`SELECT DISTINCT u.id FROM durable_runtime.runtime_units u

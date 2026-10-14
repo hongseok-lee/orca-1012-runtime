@@ -27,7 +27,7 @@ export function queryLimit(url: URL): number {
   if (text === null) { return 100 }
   if (!/^[1-9][0-9]*$/.test(text)) { return badRequest() }
   const limit = Number(text)
-  if (!Number.isInteger(limit) || limit < 1 || limit > 1000) { return badRequest() }
+  if (!Number.isSafeInteger(limit) || limit < 1) { return badRequest() }
   return limit
 }
 export async function jsonBody(request: IncomingMessage): Promise<Record<string, unknown>> {

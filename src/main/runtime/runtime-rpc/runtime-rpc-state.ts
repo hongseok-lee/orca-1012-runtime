@@ -1,3 +1,4 @@
+import { snapshotRuntimeOpsHttpConfig, type RuntimeOpsHttpConfig } from '../../durable-runtime/ops/runtime-config.ts'
 import { DurableCatalogReadAdapter } from '../../durable-runtime/rpc/public.ts'
 import { randomBytes } from 'node:crypto'
 import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap'
@@ -42,6 +43,7 @@ export class RuntimeRpcState {
   protected readonly preferPinnedWsPort: boolean
   protected readonly exposeNetworkByDefault: boolean
   protected readonly pinnedBindHost: string | null
+  protected readonly opsHttp: RuntimeOpsHttpConfig | undefined
   protected readonly webClientRoot: string | undefined
   // Why: STA-2370 — the host the WS listener is currently bound to, so pairing can widen loopback→all-interfaces once.
   protected wsBoundHost: string | null = null
@@ -109,7 +111,8 @@ export class RuntimeRpcState {
     longPollCap = LONG_POLL_CAP,
     metadataOwnershipPollMs = RUNTIME_METADATA_OWNERSHIP_POLL_MS,
     methods,
-    durableCatalogRead
+    durableCatalogRead,
+    opsHttp
   }: OrcaRuntimeRpcServerOptions) {
     this.runtime = runtime
     this.durableCatalogRead = durableCatalogRead ? new DurableCatalogReadAdapter(durableCatalogRead) : null
@@ -124,6 +127,7 @@ export class RuntimeRpcState {
     this.exposeNetworkByDefault = exposeNetworkByDefault
     this.pinnedBindHost = pinnedBindHost ?? null
     this.webClientRoot = webClientRoot
+    this.opsHttp = opsHttp ? snapshotRuntimeOpsHttpConfig(opsHttp) : undefined
     this.keepaliveIntervalMs = keepaliveIntervalMs
     this.longPollCap = longPollCap
     this.metadataOwnershipPollMs = metadataOwnershipPollMs

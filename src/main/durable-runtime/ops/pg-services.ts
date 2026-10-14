@@ -1,4 +1,4 @@
-import { withDurableTransaction } from '../db/connection.ts'
+import { DurableDatabaseError, withDurableTransaction } from '../db/connection.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import type { JsonValue } from '../db/atomic.ts'
 import { readReplayPage } from '../replay/read.ts'
@@ -96,8 +96,8 @@ export function createPgOpsServices(input: OpsPgConfig): OpsHttpServices {
       const row = await read(async tx => {
         const result = await tx.query<NotificationRow>('SELECT * FROM durable_runtime.notifications WHERE id=$1', [id])
         const found = result.rows[0]
-        if (!found) { throw new OpsHttpError(404, 'not_found', 'The notification was not found.') }
-        if (!(await targetVisible(tx, actor, found.target_ref))) { throw new OpsHttpError(403, 'forbidden', 'The target is outside the server namespace.') }
+        if (!found) { throw new DurableDatabaseError('OPS_NOTIFICATION_MISSING') }
+        if (!(await targetVisible(tx, actor, found.target_ref))) { throw new DurableDatabaseError('OPS_TARGET_FORBIDDEN') }
         return found
       })
       // Authority is minted only after actual bearer verification + stored target authorization.

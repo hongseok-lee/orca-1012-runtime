@@ -1,3 +1,5 @@
+import { createOpsHttpHandler } from '../../durable-runtime/ops/handler.ts'
+import { createDeviceRegistryOpsVerifier } from '../../durable-runtime/ops/auth.ts'
 import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap'
 import { watchRuntimeMetadataOwnership } from '../runtime-metadata-ownership-watch'
 import type { RpcTransport } from '../rpc/transport'
@@ -174,6 +176,8 @@ export class RuntimeRpcLifecycle extends RuntimeRpcWebSocketDispatch {
       host: options.host,
       port: options.port,
       staticRoot: this.webClientRoot,
+      ...(this.opsHttp ? { httpHandler: createOpsHttpHandler({ ...this.opsHttp,
+        authenticateBearer: createDeviceRegistryOpsVerifier(deviceRegistry, this.opsHttp.scope) }) } : {}),
       ...(options.fallbackPort !== undefined ? { fallbackPort: options.fallbackPort } : {}),
       ...(options.preferPinnedPort ? { preferPinnedPort: true } : {})
     })
@@ -187,6 +191,7 @@ export class RuntimeRpcLifecycle extends RuntimeRpcWebSocketDispatch {
       // terminateDeviceConnections); detach before propagating so the wiring only tracks live transports.
       this.detachWebSocketWiring?.()
       this.detachWebSocketWiring = null
+      await wsTransport.stop()
       throw error
     }
     this.wsBoundHost = options.host

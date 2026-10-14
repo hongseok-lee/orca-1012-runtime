@@ -4,7 +4,7 @@ import { OpsHttpError, sanitizeOpsError } from './errors.ts'
 import { snapshotOpsActor } from './auth.ts'
 import { bindOpsServices, routeOpsRequest, writeOpsJson } from './routes.ts'
 
-type RequestOwner = { response: ServerResponse; controller: AbortController }
+type RequestOwner = { request: IncomingMessage; response: ServerResponse; controller: AbortController; dispose(): void }
 export function createOpsHttpHandler(config: OpsHttpConfig): OpsHttpHandler {
   const origin = new URL(config.origin)
   if (!['http:', 'https:'].includes(origin.protocol) || origin.origin !== config.origin || !config.streamId ||
@@ -22,10 +22,11 @@ export function createOpsHttpHandler(config: OpsHttpConfig): OpsHttpHandler {
     let url: URL
     try { url = new URL(request.url ?? '/', origin) } catch { return false }
     if (url.pathname !== '/ops' && !url.pathname.startsWith('/ops/')) { return false }
-    const owner = { response, controller: new AbortController() }
+    const owner: RequestOwner = { request, response, controller: new AbortController(), dispose: () => finish() }
     owners.add(owner)
-    const finish = (): void => { owner.controller.abort(); owners.delete(owner); request.off('aborted', finish); response.off('close', finish); response.off('finish', finish) }
-    request.once('aborted', finish); response.once('close', finish); response.once('finish', finish)
+    const finish = (): void => { owner.controller.abort(); owners.delete(owner); request.off('aborted', disconnect); response.off('close', finish); response.off('finish', finish) }
+    const disconnect = (): void => { finish(); if (!response.destroyed) { response.destroy() } }
+    request.once('aborted', disconnect); response.once('close', finish); response.once('finish', finish)
     response.setHeader('Cache-Control', 'no-store'); response.setHeader('Referrer-Policy', 'no-referrer')
     response.setHeader('X-Content-Type-Options', 'nosniff')
     void (async () => {
@@ -64,10 +65,12 @@ export function createOpsHttpHandler(config: OpsHttpConfig): OpsHttpHandler {
     for (const owner of [...owners]) {
       owner.controller.abort()
       if (!owner.response.destroyed && !owner.response.writableEnded) {
+        // Finish the rejection before releasing a partially uploaded request/socket.
+        owner.response.once('finish', () => { if (!owner.request.complete) { owner.request.destroy() } })
         if (owner.response.headersSent) { owner.response.end() }
         else { writeOpsJson(owner.response, 503, { error: { code: 'stopping', message: 'The operations service is stopping.' } }) }
       }
-      owners.delete(owner)
+      owner.dispose()
     }
   }
   return handle

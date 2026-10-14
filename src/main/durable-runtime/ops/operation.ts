@@ -1,3 +1,4 @@
+import { DurableDatabaseError } from '../db/connection.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import type { OpsOperation } from './contract.ts'
 import type { JsonValue } from '../db/atomic.ts'
@@ -33,7 +34,7 @@ export const OPS_OPERATION_SELECT = `SELECT o.id,o.runtime_unit_id,o.kind,o.step
   FROM durable_runtime.operations o`
 export async function readOpsOperation(tx: DurableTransaction, actor: OpsActor, id: string): Promise<OpsOperation> {
   const found = await tx.query<OpsOperationRow>(`${OPS_OPERATION_SELECT} WHERE o.id=$1`, [id])
-  if (!found.rows[0]) { throw new OpsHttpError(404, 'not_found', 'The operation was not found.') }
+  if (!found.rows[0]) { throw new DurableDatabaseError('OPS_OPERATION_MISSING') }
   await requireUnitAccess(tx, actor, found.rows[0].runtime_unit_id)
   return projectOpsOperation(found.rows[0])
 }

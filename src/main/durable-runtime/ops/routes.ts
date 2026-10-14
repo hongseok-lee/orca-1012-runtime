@@ -41,7 +41,11 @@ export async function routeOpsRequest(
   if (request.method === 'GET' && (url.pathname === '/ops/v1/events' || url.pathname === '/ops/v1/events/stream')) {
     const stream = url.pathname.endsWith('/stream')
     const query = eventsQuery(request, url, config.streamId, stream)
-    if (stream) { await streamOpsEvents(response, signal, services.events, actor, query, config.pollIntervalMs) }
+    if (stream) {
+      // Authenticate/authorize the first PG page before committing stream headers.
+      const first = await services.events(actor, query)
+      if (!signal.aborted) { await streamOpsEvents(response, signal, services.events, actor, query, config.pollIntervalMs, first) }
+    }
     else { send(200, await services.events(actor, query)) }
     return
   }

@@ -1,5 +1,6 @@
 import type { ServerResponse } from 'node:http'
 import type { OpsActor, OpsEventsQuery, OpsHttpServices } from './types.ts'
+import type { OpsReplayPage } from './contract.ts'
 import { encodeOpsAfter } from './cursor.ts'
 import { sanitizeOpsError } from './errors.ts'
 function waitForDrain(response: ServerResponse, signal: AbortSignal): Promise<void> {
@@ -27,16 +28,18 @@ async function frame(response: ServerResponse, signal: AbortSignal, event: strin
 }
 export async function streamOpsEvents(
   response: ServerResponse, signal: AbortSignal, read: OpsHttpServices['events'], actor: OpsActor,
-  query: OpsEventsQuery, pollIntervalMs: number
+  query: OpsEventsQuery, pollIntervalMs: number, first: OpsReplayPage
 ): Promise<void> {
   response.statusCode = 200
   response.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
   response.setHeader('Cache-Control', 'no-store')
   let after = query.after
+  let pending: OpsReplayPage | null = first
   while (!signal.aborted && !response.destroyed && !response.writableEnded) {
     try {
       // Exactly one query/page at a time, then one frame with backpressure; no retained queue.
-      const page = await read(actor, { ...query, after })
+      const page: OpsReplayPage = pending ?? await read(actor, { ...query, after })
+      pending = null
       if (signal.aborted || response.destroyed || response.writableEnded) { break }
       if (page.status === 'RESET_REQUIRED') { await frame(response, signal, 'reset', page); break }
       after = Object.freeze({ ...page.nextCursor })
