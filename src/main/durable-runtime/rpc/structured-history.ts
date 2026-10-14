@@ -80,7 +80,7 @@ export function createCatalogStructuredHistoryRpc(config: CapturedCatalogReadCon
          JOIN durable_runtime.sessions s ON s.id=a.session_id AND s.workspace_id=a.workspace_id
          JOIN durable_runtime.workspaces w ON w.id=s.workspace_id
          JOIN durable_runtime.agents g ON g.id=s.agent_id
-         WHERE a.public_session_id=$1 AND w.dataset_name=$2 AND g.dataset_name=$2 AND s.dataset_name=$2`, [publicSessionId, config.datasetName])
+         WHERE a.public_session_id=$1 AND w.dataset_name=$2 AND g.dataset_name=$2`, [publicSessionId, config.datasetName])
       const alias = aliases.rows[0]
       if (aliases.rowCount !== 1 || !alias || !workspaces.some(ws => ws.workspace_id === alias.workspace_id) ||
         alias.execution_host_id !== config.hostId || alias.provider !== alias.agent_provider ||
