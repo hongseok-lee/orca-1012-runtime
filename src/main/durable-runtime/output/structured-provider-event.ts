@@ -59,15 +59,13 @@ function mutation(value: JsonValue | undefined): StructuredProviderMutation {
   const v = object(value)
   if (v.kind !== 'lifecycle-batch') { return leaf(v) }
   exact(v, ['kind', 'settlementId', 'mutations'])
-  if (!Array.isArray(v.mutations) || v.mutations.length > MAX_JOURNAL_LIFECYCLE_BATCH_MUTATIONS) {
+  if (!Array.isArray(v.mutations) || v.mutations.length === 0 ||
+    v.mutations.length > MAX_JOURNAL_LIFECYCLE_BATCH_MUTATIONS) {
     reject('STRUCTURED_OUTPUT_BATCH')
   }
   const mutations = v.mutations.map(leaf)
   const batch: Extract<StructuredProviderMutation, { kind: 'lifecycle-batch' }> = {
     kind: 'lifecycle-batch', settlementId: text(v.settlementId), mutations
-  }
-  if (Buffer.byteLength(JSON.stringify(batch), 'utf8') > MAX_JOURNAL_LIFECYCLE_BATCH_BYTES) {
-    reject('STRUCTURED_OUTPUT_BATCH')
   }
   Object.freeze(mutations)
   return Object.freeze(batch)
@@ -89,6 +87,11 @@ export function parseStructuredProviderEvent(input: unknown): StructuredProvider
     exact(s, ['kind', 'lineage', 'nativeEventId'])
     source = Object.freeze({ kind: 'NATIVE', lineage: text(s.lineage), nativeEventId: text(s.nativeEventId) })
   } else { return reject('STRUCTURED_OUTPUT_SOURCE') }
-  return Object.freeze({ version: 1, kind: 'STRUCTURED_PROVIDER_OUTPUT', publicSessionId: text(v.publicSessionId),
-    provider: v.provider, observedAt, source, mutation: mutation(v.mutation) })
+  const payload: StructuredProviderOutput = { version: 1, kind: 'STRUCTURED_PROVIDER_OUTPUT', publicSessionId: text(v.publicSessionId),
+    provider: v.provider, observedAt, source, mutation: mutation(v.mutation) }
+  if (payload.mutation.kind === 'lifecycle-batch' &&
+    Buffer.byteLength(JSON.stringify(payload), 'utf8') + 1 > MAX_JOURNAL_LIFECYCLE_BATCH_BYTES) {
+    reject('STRUCTURED_OUTPUT_BATCH')
+  }
+  return Object.freeze(payload)
 }
