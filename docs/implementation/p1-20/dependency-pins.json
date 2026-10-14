@@ -1,0 +1,18 @@
+{
+  "baseRevision": "02bfba1aa971d9449cad41103211e8a3d3503451",
+  "schema017Revision": "a24db99ed3184bb9cbd3b7fe70f8c85bfea8bf37",
+  "sameTXInputRevision": "4d1cabbc93ea33289a708196951b8d2a92a1bfdf",
+  "earlyAPIRevision": "2934a529ab1120c1da6b9a2922344b30966f224e",
+  "predecessorsMergedInBase": false,
+  "inputCanonicalAndAppendEqualToBase": true,
+  "consumedSourceSHA256": {
+    "a24db99ed3184bb9cbd3b7fe70f8c85bfea8bf37:src/main/durable-runtime/db/migrations/017-structured-session-wire.sql": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+    "4d1cabbc93ea33289a708196951b8d2a92a1bfdf:src/main/durable-runtime/input/intake.ts": "6ee23a500d570287d469c3e7d8882d3dc3f4c215f5f3c889c6c6e1a01ab75769",
+    "4d1cabbc93ea33289a708196951b8d2a92a1bfdf:src/main/durable-runtime/input/canonical.ts": "1e96b9cae2404c2efb437b834c57924d2984d0aa54f96cd6d377a1b472e376b6",
+    "4d1cabbc93ea33289a708196951b8d2a92a1bfdf:src/main/durable-runtime/input/append.ts": "1731f0f1800f60e336e402785be2def7238ccc8ca6d454c6e678e37ea6cdd434",
+    "02bfba1aa971d9449cad41103211e8a3d3503451:src/shared/rpc-contract/structured-agent-session-params.ts": "6e91d6f539ac159c6f19ca1208d80ad314b8a4a5aca7946f96280de887d8be6f",
+    "02bfba1aa971d9449cad41103211e8a3d3503451:src/shared/agent-session-journal-item-key.ts": "09ebe4758e3f38b5b7591f07f7b4dbfd04c7cc01713c9b0afe03b07b656d1fe8",
+    "02bfba1aa971d9449cad41103211e8a3d3503451:src/shared/structured-agent-session-mutation.ts": "e37f10cb6e7890fb08b767ef6ae2648fdd6b225ca52a32ed67a167fd5b363ac0",
+    "02bfba1aa971d9449cad41103211e8a3d3503451:src/shared/agent-session-wire.ts": "b2b9105c2465db7039dc6d744ee2b04a1e7d2260453210adb7394f10c461cf6f"
+  }
+}

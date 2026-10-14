@@ -1,0 +1,106 @@
+{
+  "recordedAt": "2026-10-13T14:33:40.268581+00:00",
+  "productSource": "4d1cabbc93ea33289a708196951b8d2a92a1bfdf",
+  "initialFixtureSource": "0c9e03467ff2c8da114a0151581df7f807cd85bd",
+  "executedFixtureSource": "85cb268fd936730f41de332fd1eabfa2e13fefea",
+  "verificationBase": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "schemaVersions": [
+    "001-catalog.sql",
+    "002-execution-storage.sql",
+    "003-operations-resources.sql",
+    "004-input-context.sql",
+    "005-events-replay.sql",
+    "006-snapshot-seals.sql",
+    "007-storage-epoch-cancel-guards.sql",
+    "008-attachment-store.sql",
+    "009-atomic-journal-outbox.sql",
+    "010-runtime-command-ledger.sql",
+    "011-runtime-event-producers.sql",
+    "012-input-merge-boundary.sql"
+  ],
+  "initialScopedTypeExit": 1,
+  "initialScopedLintExit": 1,
+  "initialPGExecutions": 0,
+  "correction": "fixture의 caller 소유 배열을 mutable 변수로 유지하고 for 문의 중괄호만 추가했습니다. 제품 intake/index bytes와 callback 의미는 변경하지 않았습니다.",
+  "finalScopedTypeExit": 0,
+  "finalConfiguredLintExit": 0,
+  "scopedLintFileCount": 4,
+  "firstPG": {
+    "cases": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "startedAt": "2026-10-13T14:30:02.207Z",
+    "finishedAt": "2026-10-13T14:30:03.431Z",
+    "sameTransaction": true,
+    "actualHeldSessionRank": 1,
+    "actualHeldUnitRank": 2,
+    "attachmentAliasRank": 6,
+    "callerMutationAfterFirstRealScopeSQL": true,
+    "originalPayloadAndHashRetained": true,
+    "originalEventIdentityAndWakeRetained": true,
+    "outerDraftAndTabMetadataRolledBack": true,
+    "allIntakeEffectsAndCountersRolledBack": true,
+    "nestedTransactionOrCommit": false
+  },
+  "rawTAPSHA256": "bb8ee48976f9757b2a46a79a818c97ad4b33b9190b5b6082b4246e451766ceca",
+  "executedFixtureSHA256": "afc9dad2410b0d18e9730e881947d82c5416639591a354f975586debbf2674da",
+  "initialFixtureSHA256": "65435806915f55b4662fecbd5014bfd35d9e774ca3aa756b9b8ad029c904d2f9",
+  "tools": {
+    "Node": "24.15.0",
+    "TypeScript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "typesNode": "25.9.5"
+  },
+  "previousSuccessfulSuiteExecutions": 0,
+  "newInstallExecutions": 0,
+  "productBuildExecutions": 0,
+  "runtimeActivationExecutions": 0,
+  "captureExecutions": 0,
+  "proofBoundary": "실제 소유 PG의 SQL rollback 경계이며 authority·draft/Tab metadata는 fixture 합성 입력입니다. 기존 P103 receipt 재생/COMMIT 성공 증거는 재사용합니다. 실제 provider·인증·public RPC·P117/P118 전체 gate 합격은 아닙니다.",
+  "heavyReleasedAt": "2026-10-13T14:30:03.443Z",
+  "remainingGates": [
+    "최초 결과 보고 PNG",
+    "상위 adapter 합류",
+    "root 최종 base·CI·리뷰·수용"
+  ],
+  "artifacts": {
+    "execution-manifest.json": {
+      "sha256": "b8f526b4f77001ab0860f20420a22797bc385c8e4ccec6a1a257bcb7738193f4",
+      "bytes": 20292
+    },
+    "first-intake-composition-pg-private.log": {
+      "sha256": "bb8ee48976f9757b2a46a79a818c97ad4b33b9190b5b6082b4246e451766ceca",
+      "bytes": 768
+    },
+    "first-owned-db-prepare-private.log": {
+      "sha256": "ce5df256beb2eb190245b06ace4ebb70eedcb0acdd5f29574fd02eb200d08709",
+      "bytes": 1799
+    },
+    "first-type-private.log": {
+      "sha256": "62267e37f401f9227d6a21b535c3850013469a56cd99a1ca5b8fe17618b55cf0",
+      "bytes": 154
+    },
+    "first-lint-private.log": {
+      "sha256": "3afce9e1fbe5f5a52f3a31ef2493028357425472872746e71e19e495e4ddb25a",
+      "bytes": 746
+    },
+    "corrected-execution-manifest.json": {
+      "sha256": "29b03b2fb635c044ecb879bb4ad9be1574bbf54269c2a9f8b1c2768f51f76411",
+      "bytes": 20427
+    },
+    "corrected-type-private.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "corrected-lint-private.log": {
+      "sha256": "db223d892c48ffda1e9035a5c7906cf022908da502e205277f90462a2ad74d38",
+      "bytes": 92
+    },
+    "verifier-digests.json": {
+      "sha256": "78f87a333bf79d5c8fba8b90c206b2fb75c502596c4191c2057582c0c065de62",
+      "bytes": 200
+    }
+  }
+}
