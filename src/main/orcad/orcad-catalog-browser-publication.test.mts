@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import type { RuntimeBrowserCommandHost } from '../runtime/orca-runtime-browser'
+import type { RuntimeBrowserCommandHost, RuntimeBrowserCommands } from '../runtime/orca-runtime-browser'
 import type { BrowserSessionTabSelectionOptions } from '../runtime/browser-tab-create-publication'
 import { ExternalChromiumTabRegistry } from './external-chromium-tab-registry'
 import { ExternalChromiumBrowserSession, type AgentBrowserTab } from './external-chromium-browser-session'
 import { ExternalChromiumCdpConnection } from './external-chromium-cdp-connection'
-import { deferred } from '../durable-runtime/rpc/fixture-support.mts'
+import { deferred, fixtureConfig } from '../durable-runtime/rpc/fixture-support.mts'
+import type { Pool } from 'pg'
+import type { OrcadBrowserProvider } from './orcad-browser-provider'
+import { createOrcadCatalogBrowserFactory } from './orcad-catalog-browser-host.ts'
 
 if (process.env.ORCA_BROWSER_PUBLICATION_VALUE_APPROVED !== 'root-source-reviewed') {
   throw new Error('Root Browser publication value allocation required')
@@ -111,4 +114,48 @@ await test('실제 registry는 delayed native open 뒤 close 승리와 generatio
   assert.equal(notifications.length, 1)
   assert.equal(callbackCalls, 1)
   assert.ok(nativeCalls.every(args => args[0] !== 'tab' || args[1] !== 'close'))
+  // Actual host factory installation, still inside this single written value callback.
+  // Checkout intentionally fails before SQL; no PG or actual Browser is started.
+  let checkouts = 0, hostReads = 0, oldHostReads = 0, oldPublicationCalls = 0
+  const borrowed = { connect() {
+    assert.equal(this, borrowed)
+    checkouts++
+    return Promise.reject(Object.assign(new Error('Synthetic host checkout'), { code: 'Z0002' }))
+  } } as unknown as Pool
+  const input = { ...fixtureConfig(borrowed), workspacePublicIds: ['synthetic-installed-workspace'],
+    readHostIdentity() { assert.equal(this, input); hostReads++; return 'local' as const } }
+  const baseHost = Object.freeze({
+    resolveWorktreeSelector: async () => { oldHostReads++; throw new Error('Old Workspace resolver consulted') },
+    resolveBrowserWorkspace: async () => { oldHostReads++; throw new Error('Old Browser resolver consulted') },
+    withBrowserTabPublication: async () => { oldPublicationCalls++; throw new Error('Old publication hook consulted') },
+    getAgentBrowserBridge() { assert.equal(this, baseHost); return null }
+  }) as unknown as RuntimeBrowserCommandHost
+  const commands = {} as RuntimeBrowserCommands
+  let installed: RuntimeBrowserCommandHost | undefined
+  const provider: OrcadBrowserProvider = { kind: 'chromium', isAvailable: () => true, stop: async () => {},
+    factory(host) { assert.equal(this, provider); installed = host; return commands } }
+  const factory = createOrcadCatalogBrowserFactory(provider, input)!
+  assert.equal(factory(baseHost), commands)
+  assert.ok(installed)
+  assert.equal(installed.resolveWorktreeSelector, installed.resolveBrowserWorkspace)
+  assert.equal(installed.getAgentBrowserBridge(), null)
+  const withPublication = installed.withBrowserTabPublication!
+  assert.equal(typeof withPublication, 'function')
+  input.datasetName = 'changed-after-capture'
+  input.hostId = 'ssh:changed-after-capture'
+  input.workspacePublicIds[0] = 'changed-after-capture'
+  input.readHostIdentity = () => { throw new Error('Replacement host reader consulted') }
+  Object.defineProperty(borrowed, 'connect', { value() { throw new Error('Replacement connect consulted') } })
+  await assert.rejects(installed.resolveWorktreeSelector('synthetic-installed-workspace'), /Z0002/)
+  await assert.rejects(installed.resolveBrowserWorkspace('synthetic-installed-workspace'), /Z0002/)
+  await assert.rejects(withPublication('synthetic-installed-workspace', 'synthetic-installed-page', () => {
+    assert.fail('Failed checkout published')
+  }), /Z0002/)
+  assert.equal(checkouts, 3)
+  assert.ok(hostReads >= 3)
+  assert.equal(oldHostReads, 0)
+  assert.equal(oldPublicationCalls, 0)
+  assert.equal(Object.isFrozen(borrowed), false)
+  assert.equal(createOrcadCatalogBrowserFactory(provider), provider.factory)
+  assert.equal(createOrcadCatalogBrowserFactory(null, input), null)
 })
