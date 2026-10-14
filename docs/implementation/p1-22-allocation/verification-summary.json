@@ -258,5 +258,192 @@
   "podCreated": false,
   "dev019Applied": false,
   "installPerformed": false,
-  "rebasePerformed": false
+  "rebasePerformed": false,
+  "correctedFirst": {
+    "runs": 1,
+    "bodyCount": 7,
+    "pass": 5,
+    "fail": 2,
+    "skip": 0,
+    "exit": 1,
+    "cases": [
+      {
+        "name": "두 Unit의 실제 공유 scope 예약 경합은 memory와 CPU 한도를 넘기지 않는다",
+        "passed": true
+      },
+      {
+        "name": "첫 capacity WAIT의 원 목표와 provenance를 재사용하며 같은 incident와 operation은 중복 charge가 없다",
+        "passed": false,
+        "errorCode": "FIXTURE_FAILURE"
+      },
+      {
+        "name": "REPLACE는 원 승인 크기로 replacement만 한 번 소비한다",
+        "passed": true
+      },
+      {
+        "name": "실제 lease row-lock 대기 뒤 만료를 다시 판정하고 예약을 거절한다",
+        "passed": false,
+        "errorCode": "FIXTURE_FAILURE"
+      },
+      {
+        "name": "첫 await 뒤 원 body와 callback 변이에는 snapshot을 쓰며 원 receipt는 현재 lifecycle로 다시 판정하지 않는다",
+        "passed": true
+      },
+      {
+        "name": "실제 ledger INSERT 직전 SQL 실패는 profile·plan·예약·episode·receipt·audit·outbox 전체를 rollback한다",
+        "passed": true
+      },
+      {
+        "name": "예약 expiry와 논리 sleep/wake 뒤에도 원 점유·승인 profile·ledger와 episode 예산은 보존된다",
+        "passed": true
+      }
+    ],
+    "facts": {
+      "actualBudgetSqlLockObserved": {
+        "distinctControllerScopes": true,
+        "distinctBackendPids": [
+          75881,
+          75879
+        ],
+        "waitingConnections": 2
+      },
+      "sharedScopeOvershoot": 0,
+      "actualLedgerWriteBoundaryReached": true,
+      "expiryReleasedOccupancy": false,
+      "logicalModeTransitionsOnly": true
+    },
+    "failureBoundary": "Case 2와 4의 capacity=false fixture facts 생성에서 assert.ok(calculated.targetMemoryBytes)가 실패했습니다. 원 WAIT plan/lease-lock 경계에는 도달하지 못했습니다.",
+    "failureCode": "ERR_ASSERTION",
+    "failureSource": "src/main/durable-runtime/resources/allocation/test-support.mts:115",
+    "sourceDiagnosis": "소유 fixture는 capacityAvailable와 singleWriterBudgetAvailable을 같은 capacity 값으로 묶습니다. Exact policy guards.ts:67–70은 singleWriterBudgetAvailable=false를 BLOCKED/SINGLE_WRITER_OR_TOTAL_BUDGET으로 판정한 뒤 capacity 부족을 판정합니다. 두 값이 모두 false인 이번 입력은 capacity WAIT 입력과 다릅니다. 이는 정확한 소스를 읽어 해석한 원인이며 추가 정책 시험을 실행하지 않았습니다.",
+    "policySourceChanged": false,
+    "capacityTrueInjected": false,
+    "canonicalFixturePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+    "productPin": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+    "static": {
+      "fixtureTypeExit": 0,
+      "fixtureTypePid": 13396,
+      "fixtureLintExit": 0,
+      "fixtureLintPid": 13417,
+      "scope": "e131의 변경 fixture 2개이며 성공한 제품 전체 type은 반복하지 않았습니다."
+    },
+    "preparation": {
+      "migrationsExecuted": 0,
+      "migrationOperatorInvoked": false,
+      "newDatabaseCreated": false,
+      "newSchemaPrepared": false,
+      "existingSchemaChecksumCount": 19,
+      "allChecksumsMatch": true,
+      "readonlyExecutionHook": {
+        "canonicalFixturePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+        "canonicalSourceBytesPreserved": true,
+        "caseBodiesUnchanged": true,
+        "schemaMigrationOperatorInvoked": false,
+        "migrationsExecuted": 0,
+        "hookScope": "Root 지정 기존 DB를 재사용하기 위해 실행용 준비 hook만 실제 schema registry SELECT와 원 SQL checksum 대조로 대체합니다. Stub·모의 결과·DDL/guard 완화는 없습니다.",
+        "adapterSha256": "49eec4a2e24275fae15447d829776c3c61d8899112d208bbe1eb031a76a9613a",
+        "diffSha256": "dab05e397a1b91ee16b2a896aafb504f1d553dd20d8bf9bd922efa9edc570010"
+      },
+      "original13CanonicalFileBytesPreserved": true,
+      "originalCaseBodiesUnchanged": true
+    },
+    "artifacts": [
+      {
+        "name": "actual-pg-first.log",
+        "bytes": 8596,
+        "sha256": "20f31a6ce559c7be67e2c9b8add17b568f51535b62da75fd66326e6cac0aed73"
+      },
+      {
+        "name": "actual-pg-first-results.json",
+        "bytes": 4947,
+        "sha256": "d2d4f2998ed460058d8f6ac855f8951d66c8bd7ecc8e46522959ff4b1f3f1a85"
+      },
+      {
+        "name": "actual-pg-corrected-first.tap",
+        "bytes": 4445,
+        "sha256": "0a0b22d22dee81338bc0885520ad0d2bc826cdf0ab792159ee757295cd32c050"
+      },
+      {
+        "name": "actual-pg-corrected-first-results.json",
+        "bytes": 5092,
+        "sha256": "23ce820f74eed08bec41c4947f38ed8570ea7b4419e66988c0f0226d67e5724f"
+      },
+      {
+        "name": "corrected-first-state.json",
+        "bytes": 4538,
+        "sha256": "87df2e7b9e6fda88bc83fcb253a30d73d9cddd003297a280bcb5801cdc7acb6a"
+      },
+      {
+        "name": "source-manifest-fixture-correction.json",
+        "bytes": 22259,
+        "sha256": "23c3578db7a1e29dda6aa449f611dc52657c9f9e92c707e3df31887119a2d7a7"
+      },
+      {
+        "name": "schema-manifest.json",
+        "bytes": 5027,
+        "sha256": "ea5fc36f367e090041daf27f95066a13751f0565b5bd16267a88b39ce22d6f01"
+      },
+      {
+        "name": "fixture-identity-correction.diff",
+        "bytes": 9705,
+        "sha256": "490753676966bceeec4dbc97d6a0c2bd0a8de413d048d27c29a70878dd926b89"
+      },
+      {
+        "name": "fixture-type.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "fixture-type.pid",
+        "bytes": 6,
+        "sha256": "e45347e23ddcbc24da65143edd253d19f3415d2ea0fe5a3bb9d97e4adb4915df"
+      },
+      {
+        "name": "fixture-type.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "name": "fixture-lint.log",
+        "bytes": 92,
+        "sha256": "ab89e18ea87d4b92f615739b85f3d776b72b16f1d8f2f3b47a3aa5211f81b614"
+      },
+      {
+        "name": "fixture-lint.pid",
+        "bytes": 6,
+        "sha256": "a1fd2110bdfeeca5239aa030ca55dfe395b8999af5c0ef7cf37434198ae1b7cb"
+      },
+      {
+        "name": "fixture-lint.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "name": "fixture-static-state.json",
+        "bytes": 792,
+        "sha256": "60869d5d1a61004503931157cee1c980e857b9772523ee5c16ab53775767350e"
+      },
+      {
+        "name": "existing-schema-readonly-hook.diff",
+        "bytes": 634,
+        "sha256": "dab05e397a1b91ee16b2a896aafb504f1d553dd20d8bf9bd922efa9edc570010"
+      },
+      {
+        "name": "existing-schema-readonly-hook.json",
+        "bytes": 608,
+        "sha256": "5c2954c02dadf5448191a1dd7156391fd5eb6b1806f99075dabbfbfe978bad08"
+      },
+      {
+        "name": "actual-pg.schema-readonly.mts",
+        "bytes": 20529,
+        "sha256": "49eec4a2e24275fae15447d829776c3c61d8899112d208bbe1eb031a76a9613a"
+      },
+      {
+        "name": "actual-pg.corrected-first.mjs",
+        "bytes": 118714,
+        "sha256": "291c01847c0db24fb55074ea300eae9770131f63a3b20bb9c75e1d5a758b6fae"
+      }
+    ],
+    "ownedProcessesActive": 0
+  }
 }

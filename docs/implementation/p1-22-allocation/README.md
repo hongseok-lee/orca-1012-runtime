@@ -30,9 +30,21 @@ Due 조회는 실제 read-only transaction에서 원 operation/shape/facts/expir
 
 이후 신규 소유 DB에서 PG 7개를 한 번 실행했다. Test body 진입은 7개, PASS 0개, FAIL 7개, SKIP 0개다. **모두 공통 fixture 준비 SQL에서 실패했으며 allocation API 진입은 0개다.** 정확한 원 오류는 `23503: Failure classification evidence must belong to the original incident`다. `test-support.mts:67`은 observation·incident 귀속 행을 만들지 않고 synthetic observation ID를 `failure_incident_state.evidence_ids`에 넣었다. 실제 SQL 015의 guard가 이 입력을 거절했다. Raw JSON의 generic errorCode는 `FIXTURE_FAILURE`이며 원 TAP의 직접 PG 코드와 문구를 함께 보존했다.
 
-SQL 001–019는 소유 DB에 준비됐고 실제 checksum 19개가 manifest와 모두 같다. 이는 별도 schema suite PASS를 추가하거나 dev 019 적용을 뜻하지 않는다. Case 1의 서로 다른 controller scope·동일 budget/domain 설정과 실제 두 SQL wait 관찰 코드는 유지했지만 이번 실패로 그 경계에는 도달하지 않았다. Lease wait·ledger rollback·capacity WAIT·expiry/유한 예산의 제품 결과도 아직 미검증이다. PG를 반복하지 않았으며 child PID는 모두 종료됐다.
+SQL 001–019는 소유 DB에 준비됐고 실제 checksum 19개가 manifest와 모두 같다. 이는 별도 schema suite PASS를 추가하거나 dev 019 적용을 뜻하지 않는다. Case 1의 서로 다른 controller scope·동일 budget/domain 설정과 실제 두 SQL wait 관찰 코드는 유지했지만 이번 실패로 그 경계에는 도달하지 않았다. Lease wait·ledger rollback·capacity WAIT·expiry/유한 예산의 제품 결과도 아직 미검증이다. 이 원 실행 단계에서는 PG를 반복하지 않았으며 child PID는 모두 종료됐다. 이후 Root가 수락한 귀속 교정의 별도 최초 실행은 아래에 구분했다.
 
 원 source·fixture·type/lint·TAP·결과 JSON·bundle 및 세 manifest의 SHA는 [공개 결과 요약](verification-summary.json)에 있다. 원 raw 자료는 private 운영 증거로 보존했다. 최초 결과 PNG는 아직 없다. Production issuer·실제 admission/capacity·controller·resize/fence/Pod/provider/Agent OOM은 미연결이며 제품 합격을 선언하지 않는다. Root의 fixture 입력 검토와 후속 실행 배분이 남았다. PR 27의 기존 source·distinct PG 7개·원 실패/교정 로그·PNG는 변경하거나 반복하지 않았다.
+
+## Fixture 귀속 교정 뒤 첫 실행
+
+Root가 `e131eb6fd088c334024857293cc93d8ebb3b49e1`의 소유 fixture 2개를 수락한 뒤, 변경 fixture의 type/lint가 각각 exit 0으로 통과했다. 성공한 제품 전체 type·기존 schema/policy/incident suite는 반복하지 않았다. 원 7개 공통 준비 실패 TAP과 원 fixture는 보존했다.
+
+기존 소유 DB와 main `21a4dc31` + DB `02c5d3dc` + policy `8bd832f5`의 고정 사본을 사용했다. Canonical source 13개 파일은 exact hash로 대조하고, 실행용 준비 hook만 기존 schema registry의 실제 SELECT와 원 SQL checksum 대조로 바꿨다. [준비 hook 직접 diff](existing-schema-readonly-hook.diff)를 별도로 보존하며 7개 case body와 제품 source는 동일하다. Migration 적용 entry·신규 DB/schema 준비·001–019 migration 실행은 0회다. 기존 checksum 19개는 모두 같다. 모의 registry 결과나 DDL/guard 완화는 없다.
+
+Corrected first PG는 body 7개 진입, **PASS 5개·FAIL 2개·SKIP 0개**다. 성공한 경계는 두 Unit 공유 budget의 실제 SQL 대기·한도 보존(case 1), REPLACE의 replacement-only charge(case 3), 첫 await snapshot/replay/stale tuple(case 5), 실제 ledger write 직전 전체 rollback(case 6), expiry/논리 mode 뒤 점유·episode/rolling 예산·approved profile 보존(case 7)이다. Case 1에서 서로 다른 controller scope의 실제 PG backend PID `75881`, `75879`가 같은 budget row에서 동시에 대기했고 대기 연결 수는 2개였다. 예약과 memory/CPU 한도 검증이 통과했다. 공유 budget 한도 초과는 0이다. 내부 fixture 증거이며 실제 external capacity나 production issuer 합격은 아니다.
+
+Case 2와 4는 capacity=false fixture facts를 만드는 `test-support.mts:115`의 `assert.ok(calculated.targetMemoryBytes)`에서 `ERR_ASSERTION`으로 실패했다. 원 WAIT plan/lease lock 경계에는 아직 도달하지 못했다. 소유 helper가 `capacityAvailable`과 `singleWriterBudgetAvailable`을 같은 capacity 값으로 묶는다. 정확한 policy `guards.ts:67–70`은 single-writer budget false를 먼저 `BLOCKED/SINGLE_WRITER_OR_TOTAL_BUDGET`으로 판정하므로 두 false 입력은 capacity WAIT 입력과 다르다. 이는 정확한 소스 분기의 해석이며 추가 정책 시험이나 의미 교정은 하지 않았다. 남은 두 경계의 후속 판단은 Root가 맡는다.
+
+원 corrected TAP/JSON·manifest·준비 hook·bundle의 SHA는 공개 결과 요약에 추가했다. 실제 child PID `13396`, `13417`, `13507`, `13513`은 모두 종료됐고 heavy 점유를 반환했다. 성공한 5개 PG는 반복하지 않았다. 최초 결과 PNG는 여전히 없고 실제 resize/fence/Pod·provider/Agent OOM·physical sleep/wake·HA/native iPhone은 미검증이다.
 
 ## 최초 소유 fixture의 작성 상태
 
