@@ -124,6 +124,9 @@ test('stored workspace anchors prevent namespace leaks and query failure differs
   assert.equal((await h.get(`/ops/v1/runtime-units/${randomUUID()}`)).status, 404)
   assert.equal((await h.get(`/ops/v1/runtime-units/${f.unit}`)).status, 200)
   assert.deepEqual(await unitState(f.unit), before)
+  // Existing 001 admits one dataset; verify mismatched authenticated server scope, without inventing a second dataset row.
+  const wrongDataset = await serve({ ...f.scope, datasetName: 'fixture-other-dataset' }, services(f.scope))
+  assert.equal((await wrongDataset.get('/ops/v1/runtime-units')).status, 403)
   const emptyScope = { ...f.scope, workspaceIds: [] }, empty = await serve(emptyScope, services(emptyScope))
   assert.deepEqual((await (await empty.get('/ops/v1/runtime-units')).json()).units, [])
   const failing = hookPool(pool, async (sql, _client, execute) => { if (sql.includes('SELECT DISTINCT u.id')) { throw new Error('private SQL fixture must not leak') }; return execute() })
@@ -171,6 +174,9 @@ test('PAGE to SSE preserves filtered global cursor, reset and Last-Event-ID conf
   const page = await (await h.get(`/ops/v1/events?unit=${f.unit}`)).json() as OpsReplayPage
   assert.equal(page.status, 'PAGE'); if (page.status !== 'PAGE') { throw new Error('expected PAGE') }
   assert.equal(page.events.length, 0); assert.ok(BigInt(page.nextCursor.offset) > 0n)
+  const global = await (await h.get('/ops/v1/events')).json() as OpsReplayPage
+  assert.equal(global.status, 'PAGE'); if (global.status !== 'PAGE') { throw new Error('expected global PAGE') }
+  assert.equal(global.events.length, 0); assert.deepEqual(global.nextCursor, page.nextCursor)
   const after = encodeOpsAfter(page.nextCursor)
   const first = await firstFrame(await h.get(`/ops/v1/events/stream?unit=${f.unit}&after=${after}`))
   assert.ok(first.text.includes(`id: ${after}\nevent: page`)); await first.reader.cancel()
