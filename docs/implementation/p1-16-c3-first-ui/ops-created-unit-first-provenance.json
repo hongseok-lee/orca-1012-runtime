@@ -1,0 +1,38 @@
+{
+  "capturedAt": "2026-10-14T13:33:05.709Z",
+  "routePattern": "/ops/",
+  "queryKeys": [],
+  "rawURLRecorded": false,
+  "actualGeneratedWorkspaceName": "pearlfish",
+  "serverSourcePin": "e8ef0f7664bc8a5828b0c771b4b0bd247083a2ab",
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "artifactSHA256": "3b1e66cb087f28eca7cedd8152a6ece331812c895b8eff6ad1ba1c6514cec6a1",
+  "artifactBytes": 107005,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuth": false,
+  "centralBrowserQualified": false,
+  "fullPageFeatureQualified": false,
+  "TerminalExecutionQualified": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "imageDimensions": {
+    "width": 390,
+    "height": 1578
+  },
+  "serverSourcePinQualification": "Root가 승인한 source 참조이며 checkout 전체 Git SHA의 증명이 아닙니다.",
+  "wholeCheckoutGitSHAQualified": false,
+  "correlationPending": true,
+  "sameUnitQualified": false,
+  "DBCorrelationChecked": false,
+  "publicScreenshotBytesApprovedByRoot": true,
+  "opsAppSHA256": "6fcdaf20c50f786d8d3b16c72b1a1c29256f2ca6ff498e41eeb73f2ccfad1a8f"
+}
