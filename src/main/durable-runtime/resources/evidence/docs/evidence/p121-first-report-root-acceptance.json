@@ -1,0 +1,24 @@
+{
+  "PR": 26,
+  "basis": "Root가 원 PNG를 직접 열고 이번 게시 지시에서 구현 설명의 실제 browser 화면으로 수용했습니다.",
+  "caption": "evidence 모듈 구현 설명의 최초 실제 browser 화면; 결과 표는 viewport 밖",
+  "originalQualificationPreserved": true,
+  "originalQualifiedReportCaptures": 0,
+  "acceptanceScope": "evidence 모듈 구현 설명 화면",
+  "resultHeadingAndTableOutsideViewport": true,
+  "recaptured": false,
+  "originalArtifactHashes": {
+    "p121-first-report.png": "05558c9d6f389ef8fb55e07a7c32fa191c94b249cddc8f139a99a382a175e6cd",
+    "p121-first-report-provenance.json": "12a4557af3ceda41c6935950115dfbbadd5fe14e7154fd11ff11107cf420c2ce",
+    "capture-qualification.json": "fe85a4e52c1ee3887404a10951ccf86fb6cdc103a66a74d668c906fa4a4c22e6"
+  },
+  "executedSourceSHA": "e1b578313e8ef3ed23141128c2ae8543fbfdf201",
+  "captureTargetSHA": "f07c504260cf3bd91071c8409b8c3b00c1ee990b",
+  "capturedAt": "2026-10-13T13:04:36.444Z",
+  "viewport": {
+    "width": 1140,
+    "height": 1500
+  },
+  "fixtureResultReference": "../../verification-result.json",
+  "qualificationScope": "실제 OOM, transport 인증, fencing, 새 RW 허가 또는 제품 기능 합격을 뜻하지 않습니다."
+}
