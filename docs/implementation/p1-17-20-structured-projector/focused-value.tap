@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: PG 입력과 provider 출력은 별도 identity로 fold하며 revision·batch·불변 snapshot·실패 원자성을 보존합니다
+ok 1 - PG 입력과 provider 출력은 별도 identity로 fold하며 revision·batch·불변 snapshot·실패 원자성을 보존합니다
+  ---
+  duration_ms: 93.4692
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 732.512767
