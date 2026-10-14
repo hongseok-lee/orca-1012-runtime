@@ -37,17 +37,26 @@ export async function insertMembershipAndIntent(
     'SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1 ORDER BY session_id', [launch.unit.id])).rows.map(row => row.session_id)
   if (JSON.stringify(actualPeers) !== JSON.stringify(unitPeers)) {throw new CatalogError('CATALOG_MEMBERSHIP_CHANGED_RETRYABLE')}
   await lockAggregates(tx, { storageDomains: [{ backendId: launch.storage.backendId, exportId: launch.storage.exportId }] })
+  // The domain lock serializes exact-tuple selection and creation in this
+  // mutation. Reusing a canonical binding never changes proof, epoch or writer
+  // state, and never grants concurrent physical access to the shared directory.
+  let storage: StorageBindingRow | undefined
   if (launch.storage.createUnverified) {
-    // The null proof/verification and no-grant boundary is intentional.
-    await tx.query(`INSERT INTO durable_runtime.storage_bindings
-      (id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$2,$3,$4,'UNVERIFIED')`,
-      [launch.storage.id, launch.storage.backendId, launch.storage.exportId, launch.storage.canonicalDirectory])
+    storage = (await tx.query<StorageBindingRow>(`SELECT * FROM durable_runtime.storage_bindings
+      WHERE backend_id=$1 AND export_id=$2 AND canonical_directory=$3`,
+    [launch.storage.backendId, launch.storage.exportId, launch.storage.canonicalDirectory])).rows[0]
+    if (!storage) {
+      storage = (await tx.query<StorageBindingRow>(`INSERT INTO durable_runtime.storage_bindings
+        (id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$2,$3,$4,'UNVERIFIED') RETURNING *`,
+      [launch.storage.id, launch.storage.backendId, launch.storage.exportId, launch.storage.canonicalDirectory])).rows[0]
+    }
+  } else {
+    storage = (await tx.query<StorageBindingRow>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [launch.storage.id])).rows[0]
   }
-  const storage = (await tx.query<StorageBindingRow>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [launch.storage.id])).rows[0]
   if (!storage || storage.backend_id !== launch.storage.backendId || storage.export_id !== launch.storage.exportId ||
     storage.canonical_directory !== launch.storage.canonicalDirectory) {throw new CatalogError('CATALOG_STORAGE_CONFIGURATION')}
   await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
-    [launch.unit.id, launch.sessionId, launch.storage.id])
+    [launch.unit.id, launch.sessionId, storage.id])
   const unit = (await tx.query<RuntimeUnitRow>('SELECT * FROM durable_runtime.runtime_units WHERE id=$1', [launch.unit.id])).rows[0]
   if (!unit || (launch.unit.create && (unit.phase !== 'ABSENT' || unit.active_attempt_id !== null))) {throw new CatalogError('CATALOG_UNIT_CONFIGURATION')}
   if (launch.unit.authority.principalId !== call.context.authority.principalId) {throw new CatalogError('CATALOG_LAUNCH_AUTHORITY')}
