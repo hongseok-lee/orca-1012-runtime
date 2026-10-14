@@ -70,8 +70,10 @@ async function createTerminal(config: CapturedCatalogReadConfig, call: PreparedC
         row.backendId !== members[0].backendId || row.exportId !== members[0].exportId || row.canonicalDirectory !== members[0].canonicalDirectory)) {
       throw new CatalogError('CATALOG_STORAGE_CONFIGURATION')
     }
-    const row = (await tx.query<{ ui_order: number }>('SELECT ui_order FROM durable_runtime.tabs WHERE workspace_id=$1 ORDER BY ui_order DESC LIMIT 1', [workspace.workspace_id])).rows[0]
-    return { unit: members[0], uiOrder: (row?.ui_order ?? -1) + 1 }
+    const row = (await tx.query<{ ui_order: string }>('SELECT ui_order FROM durable_runtime.tabs WHERE workspace_id=$1 ORDER BY ui_order DESC LIMIT 1', [workspace.workspace_id])).rows[0]
+    const uiOrder = row === undefined ? 0 : Number(row.ui_order) + 1
+    if (!Number.isSafeInteger(uiOrder) || uiOrder < 0) { throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION') }
+    return { unit: members[0], uiOrder }
   })
   config.assertCurrentHost()
   const launch = prepareCatalogTerminalLaunch(config, call, repo, workspace, preparation.unit, preparation.uiOrder)

@@ -12,11 +12,12 @@ export const CATALOG_PUBLIC_STREAM_METHODS = Object.freeze(['session.tabs.subscr
 export const CATALOG_PUBLIC_CLEANUP_METHODS = Object.freeze(['session.tabs.unsubscribe', 'session.tabs.unsubscribeAll'] as const)
 const families = ['repo.', 'projectGroup.', 'folderWorkspace.', 'worktree.', 'ui.', 'session.tabs.']
 // Existing §6 metadata/creation names only. Chat/provider/browser RPCs retain
-// their current ownership; no new RPC schema or capability is introduced.
+// their current ownership. Structured creation remains explicitly disconnected
+// while this adapter is installed; no new RPC schema or capability is introduced.
 const terminalMetadata = new Set(['terminal.create', 'terminal.split', 'terminal.focus', 'terminal.rename',
   'terminal.close', 'terminal.closeTab', 'terminal.closeAll', 'terminal.stop', 'terminal.stopExact', 'terminal.sleep'])
 export function isCatalogMethodNotConnected(name: string): boolean {
-  return families.some(prefix => name.startsWith(prefix)) || terminalMetadata.has(name)
+  return families.some(prefix => name.startsWith(prefix)) || terminalMetadata.has(name) || name === 'agentSession.create'
 }
 export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDeclaration[], adapter: DurableCatalogReadAdapter): readonly RpcAnyMethodDeclaration[] {
   const read = new Set<string>(CATALOG_PUBLIC_READ_METHODS), stream = new Set<string>(CATALOG_PUBLIC_STREAM_METHODS)
