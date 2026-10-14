@@ -160,6 +160,7 @@ await test('observed turn resolves only immutable original execution and preserv
   const mutable: InputAuthority = { ...f.authority, scope: { ...f.authority.scope } }
   const captureBefore = await snapshot(pool,fixtures)
   const captured = await inExecution(pool,f,async (tx) => {
+    const transactionQuery = tx.query
     let scopeCalls = 0
     const borrowed = new Proxy(tx,{
       get(target,key) {
@@ -181,6 +182,7 @@ await test('observed turn resolves only immutable original execution and preserv
       }
     })
     const result = await readObservedTurnTargetInTransaction(borrowed,mutable,'codex',turn)
+    Reflect.set(tx,'query',transactionQuery)
     assert.equal(scopeCalls,1)
     return result
   })
