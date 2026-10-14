@@ -1,0 +1,45 @@
+{
+  "authority": "DATA_ONLY",
+  "policy": {
+    "revision": "initial-default-v1",
+    "capBytes": "17179869184",
+    "growth": [
+      "2",
+      "1"
+    ],
+    "growthPeak": [
+      "5",
+      "4"
+    ],
+    "downsize": [
+      "3",
+      "4"
+    ],
+    "downsizePeak": [
+      "13",
+      "10"
+    ],
+    "lowWatermark": [
+      "1",
+      "2"
+    ],
+    "roundingThresholdBytes": "268435456",
+    "largeStepBytes": "67108864",
+    "smallStepBytes": "1048576",
+    "replacementExtra": "3",
+    "rollingMs": 86400000,
+    "oomHoldMs": 86400000,
+    "episodeActiveMs": 1800000,
+    "downsizeActiveMs": 3600000,
+    "downsizeIntervalMs": 3600000,
+    "failureHoldMs": 86400000,
+    "sampleIntervalMs": 15000,
+    "maxGapMs": 60000,
+    "coveragePercent": "95",
+    "rollbackPerOperation": "1",
+    "memoryMetric": "WORKING_SET"
+  },
+  "immutable": true,
+  "minimumProfileObserved": false,
+  "actualAdmissionVerified": false
+}
