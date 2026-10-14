@@ -1,0 +1,37 @@
+{
+  "kind": "합성 DTO/HTTP를 사용한 실제 UI 브라우저 조작입니다. 실제 API 권한·Expo·native 제품 합격이 아닙니다.",
+  "sourcePin": "2b7fd5a681fa592d45d2b69d30ff88d1e1566892",
+  "apiContractPin": "93c93be939cc8a68c131941c8b981494d6c6ac3f",
+  "capturedAt": "2026-10-14T02:13:23.014Z",
+  "url": "http://127.0.0.1:45307/ops/",
+  "viewport": {
+    "width": 1440,
+    "height": 1200
+  },
+  "fullPage": false,
+  "DPR": 1,
+  "artifactSHA256": "61d913051e45c379774f27682577736fb688ab6e6b983988d77994bb5408143e",
+  "artifactBytes": 108851,
+  "actualProviderAssets": {
+    "/ops/": {
+      "SHA256": "431ad882ae230b71b42070fd015085953c3cc85355dce966422a74574159c3a6",
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 4045
+    },
+    "/ops/styles.css": {
+      "SHA256": "fa097831a780b7b65cc3fab71170514f4ff9da2046dfbe30f80f12190dfd217f",
+      "contentType": "text/css; charset=utf-8",
+      "bytes": 6287
+    },
+    "/ops/app.js": {
+      "SHA256": "f29579a2653cf14056faeccf8d74e0593c5e49f45179c9150dc7e95f40cc5569",
+      "contentType": "text/javascript; charset=utf-8",
+      "bytes": 29461
+    }
+  },
+  "synthetic": true,
+  "runtimeErrorsSoFar": [],
+  "screenshotExecutions": 1,
+  "ExpoAuthContextChanged": false,
+  "native": false
+}
