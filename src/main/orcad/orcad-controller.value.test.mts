@@ -18,8 +18,8 @@ if (process.env.ORCA_CONTROLLER_STARTUP_APPROVED !== 'root-ready') {
 }
 
 await test('controller opt-in captures strict private config, follows token rotation without credential errors, and cleans partial owners in order', async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'orca-controller-value-')), ca = dir + '/ca.pem', token = dir + '/token-current'
-  const configPath = dir + '/controller.json', old = process.env.ORCA_DURABLE_CONTROLLER_CONFIG
+  const dir = mkdtempSync(path.join(tmpdir(), 'orca-controller-value-')), ca = `${dir}/ca.pem`, token = `${dir}/token-current`
+  const configPath = `${dir}/controller.json`, old = process.env.ORCA_DURABLE_CONTROLLER_CONFIG
   const sockets = new Set<Socket>(), headers: (string | undefined)[] = []
   const server = createServer({ key: LOCAL_HTTPS_TEST_PRIVATE_KEY, cert: LOCAL_HTTPS_TEST_CERTIFICATE }, (request, response) => {
     headers.push(request.headers.authorization)
@@ -60,7 +60,7 @@ await test('controller opt-in captures strict private config, follows token rota
     writeFileSync(configPath, JSON.stringify(input()), { mode: 0o600 })
     assert.equal(readOrcadControllerConfig()?.datasetName, 'orca-1012-dev-v1')
     chmodSync(configPath, 0o640); assert.throws(readOrcadControllerConfig, sanitized); chmodSync(configPath, 0o600)
-    const link = dir + '/config-symlink'; symlinkSync(configPath, link)
+    const link = `${dir}/config-symlink`; symlinkSync(configPath, link)
     process.env.ORCA_DURABLE_CONTROLLER_CONFIG = link; assert.throws(readOrcadControllerConfig, sanitized)
     process.env.ORCA_DURABLE_CONTROLLER_CONFIG = configPath
     writeFileSync(configPath, JSON.stringify(input()).replace('"datasetName":', '"datasetName":"orca-1012-dev-v1","datasetName":'))
@@ -72,9 +72,9 @@ await test('controller opt-in captures strict private config, follows token rota
     writeFileSync(configPath, Buffer.alloc(1024 * 1024 + 1, 32)); assert.throws(readOrcadControllerConfig, sanitized)
 
     writeFileSync(ca, LOCAL_HTTPS_TEST_CERTIFICATE, { mode: 0o600 })
-    writeFileSync(dir + '/token-one', 'fixture-synthetic-first', { mode: 0o600 })
-    writeFileSync(dir + '/token-two', 'fixture-synthetic-rotated', { mode: 0o600 })
-    symlinkSync(dir + '/token-one', token)
+    writeFileSync(`${dir}/token-one`, 'fixture-synthetic-first', { mode: 0o600 })
+    writeFileSync(`${dir}/token-two`, 'fixture-synthetic-rotated', { mode: 0o600 })
+    symlinkSync(`${dir}/token-one`, token)
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject); server.listen(0, '127.0.0.1', () => { server.off('error', reject); resolve() })
     })
@@ -84,7 +84,7 @@ await test('controller opt-in captures strict private config, follows token rota
     writeFileSync(ca, 'changed-local-ca-after-capture')
     selected.inventory.tokenFile = '/not-selected'; selected.inventory.apiOrigin = 'https://not-selected.invalid'
     assert.equal((await transport.list(new AbortController().signal)).resourceVersion, 'fixture-list-rv')
-    symlinkSync(dir + '/token-two', dir + '/replacement-link'); renameSync(dir + '/replacement-link', token)
+    symlinkSync(`${dir}/token-two`, `${dir}/replacement-link`); renameSync(`${dir}/replacement-link`, token)
     await transport.list(new AbortController().signal)
     assert.deepEqual(headers, ['Bearer fixture-synthetic-first', 'Bearer fixture-synthetic-rotated'])
     unlinkSync(token)
@@ -103,7 +103,7 @@ await test('controller opt-in captures strict private config, follows token rota
         order.push('controller'); const first = controller.stop(); assert.equal(first, controller.stop()); return first
       } })
       try {
-        const config = captureOrcadControllerConfig({ ...input(), inventory: { ...input().inventory, caFile: dir + '/missing-ca' } })
+        const config = captureOrcadControllerConfig({ ...input(), inventory: { ...input().inventory, caFile: `${dir}/missing-ca` } })
         await assert.rejects(async () => controller.startController(config), sanitized)
         assert.equal(controller.controllerSnapshot().worker, null)
         await stopOrcadRuntimeWithDurableCatalog({ stopRpc: async () => { order.push('rpc') }, stopAgentControlAdapter: () => {},

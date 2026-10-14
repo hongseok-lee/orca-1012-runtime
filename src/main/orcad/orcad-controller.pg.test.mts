@@ -38,7 +38,7 @@ await test('two actual startup owners share one PG scope, observe owned HTTPS in
   const server = createServer({ key: LOCAL_HTTPS_TEST_PRIVATE_KEY, cert: LOCAL_HTTPS_TEST_CERTIFICATE }, (request, response) => {
     const index = tokenValues.findIndex(token => request.headers.authorization === `Bearer ${token}`)
     const url = new URL(request.url ?? '', 'https://fixture.invalid')
-    if (index < 0 || request.method !== 'GET' || url.pathname !== `/api/v1/namespaces/${namespace}/pods` ||
+    if (index === -1 || request.method !== 'GET' || url.pathname !== `/api/v1/namespaces/${namespace}/pods` ||
         url.searchParams.get('labelSelector') !== `orca.dev/role=runtime-agent,orca.dev/dataset=${dataset}`) {
       serverErrors.push('SYNTHETIC_REQUEST_BOUNDARY'); response.writeHead(403); response.end(); return
     }
@@ -90,8 +90,8 @@ await test('two actual startup owners share one PG scope, observe owned HTTPS in
         badgeColor: '#0ea5e9', kind: 'folder', projectGroupId: null, executionHostId: 'local' },
       group: null, ui: parseCatalogUi(getDefaultUIState()) })
     assert.equal(registered.status, 'COMMITTED')
-    writeFileSync(dir + '/ca.pem', LOCAL_HTTPS_TEST_CERTIFICATE, { mode: 0o600 })
-    for (const [index, token] of tokenValues.entries()) { writeFileSync(dir + `/token-${index}`, token, { mode: 0o600 }) }
+    writeFileSync(`${dir}/ca.pem`, LOCAL_HTTPS_TEST_CERTIFICATE, { mode: 0o600 })
+    for (const [index, token] of tokenValues.entries()) { writeFileSync(`${dir}/token-${index}`, token, { mode: 0o600 }) }
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject); server.listen(0, '127.0.0.1', () => { server.off('error', reject); resolve() })
     })
@@ -103,7 +103,7 @@ await test('two actual startup owners share one PG scope, observe owned HTTPS in
       ops: captureOrcadOpsConfig({ origin: 'http://127.0.0.1:16768', namespaceId: `fixture-controller:${index}`,
         workspaceIds: [], lifecyclePolicy: { operationDeadlineMs: 120000, idleDurationMs: null }, pollIntervalMs: 100 }),
       controller: captureOrcadControllerConfig({ datasetName: dataset, inventory: { apiOrigin: `https://127.0.0.1:${port}`,
-        namespace, dataset, caFile: dir + '/ca.pem', tokenFile: dir + `/token-${index}`, requestTimeoutMs: 1000,
+        namespace, dataset, caFile: `${dir}/ca.pem`, tokenFile: `${dir}/token-${index}`, requestTimeoutMs: 1000,
         watchTimeoutSeconds: 1, listLimit: 10 }, policy: { lease: { revision: 'startup-inventory-fixture-v1', durationMs: 5000 },
         renewIntervalMs: 1000, standbyPollIntervalMs: 50, passPollIntervalMs: 100, maximumWork: 10, externalBudgetMs: 3000 } }) }, owner => {
         assert.ok(owner?.controllerSnapshot)

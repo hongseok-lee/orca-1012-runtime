@@ -34,6 +34,7 @@ function record(value: unknown, keys: readonly string[]): Record<string, unknown
   return value as Record<string, unknown>
 }
 function text(value: unknown): string {
+  // oxlint-disable-next-line eslint/no-control-regex -- SAFETY: Explicitly reject control characters in private configuration text.
   if (typeof value !== 'string' || !value || value.trim() !== value || /[\u0000-\u001f\u007f]/u.test(value)) {
     invalidOrcadControllerConfig()
   }
