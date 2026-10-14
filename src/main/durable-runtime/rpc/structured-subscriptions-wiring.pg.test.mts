@@ -40,8 +40,11 @@ await test('배선 PG 1개: 실제 declaration→dispatcher→adapter→RR와 �
     await Promise.allSettled(starts)
     await pool.end()
   })
-  const identity = (await pool.query('SELECT current_database() AS database,(SELECT system_identifier::text FROM pg_control_system()) AS system')).rows[0]
-  assert.equal(identity.database, 'orca_public_structured_subscribe_20261014'); assert.equal(identity.system, '7696101282789175327')
+  const identity = (await pool.query(`SELECT current_database() AS database,
+    (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
+    (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
+  assert.equal(identity.database, 'orca_public_structured_subscribe_20261014'); assert.equal(identity.oid, '84739')
+  assert.equal(identity.system, '7696101282789175327')
   const ledger = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
   assert.equal(ledger.length, 19)
   // Preserve existing UUID seed rows; shared Catalog revision/UI heads may advance for this new registration.
