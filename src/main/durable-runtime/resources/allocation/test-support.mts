@@ -6,6 +6,7 @@ import type { SessionId } from '../../../../shared/durable-runtime/identity.ts'
 import type { VerifiedEvidence } from '../../runtime/runtime-evidence.ts'
 import type { MutationOutcome } from '../../db/atomic.ts'
 import type { FailureTarget, ClassificationResult } from '../evidence/types.ts'
+import { evidenceDigest } from '../evidence/normalize.ts'
 import { createInitialPolicy, evaluateGrowth } from '../policy/index.ts'
 import type { AdmissionShape } from '../policy/admission.ts'
 import type { ProfileEvidence, CapEvidence } from '../policy/types.ts'
@@ -27,6 +28,38 @@ export function authority(f: Fixture): ResourceAuthority {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Owned PG fixture scope, not a production string-to-authority factory.
   return { principalId: 'p122-fixture-operator', datasetName: 'orca-1012-dev-v1', domainIdentity: f.domain,
     budgetScope: f.scope, runtimeUnitId: f.target.runtimeUnitId, evidence: fixtureEvidence } as ResourceAuthority
+}
+// Fixture-only observation records. They do not claim collector/issuer trust.
+// Keep SQL 015's original incident/attempt/Unit guard enabled and satisfied.
+export async function recordFixtureClassification(client: Pick<PoolClient, 'query'>,
+  target: FailureTarget, incidentId: string, observationId: string): Promise<void> {
+  const classificationRevision = '1'
+  const evidence = { fixtureOnly: true, incidentId, target, classificationRevision }
+  await client.query(`INSERT INTO durable_runtime.failure_observations
+    (id,source_dedup_key,runtime_unit_id,attempt_id,pod_uid,execution_epoch,container_name,container_id,incarnation,
+      source_kind,source_ref,schema_version,observed_at,evidence,evidence_digest)
+    SELECT $1,$1,i.runtime_unit_id,i.attempt_id,i.pod_uid,$5,$6,i.container_id,i.restart_identity,
+      'UNTRUSTED_TEXT',$1,1,i.observed_at,$7::jsonb,$8
+    FROM durable_runtime.failure_incidents i WHERE i.id=$2 AND i.runtime_unit_id=$3 AND i.attempt_id=$4`,
+    [observationId, incidentId, target.runtimeUnitId, target.attemptId, target.executionEpoch,
+      target.containerName, JSON.stringify(evidence), evidenceDigest(evidence)])
+  await client.query(`INSERT INTO durable_runtime.failure_incident_observations
+    (observation_id,incident_id,runtime_unit_id,attempt_id) VALUES($1,$2,$3,$4)`,
+    [observationId, incidentId, target.runtimeUnitId, target.attemptId])
+  await client.query(`INSERT INTO durable_runtime.failure_incident_state
+    (incident_id,runtime_unit_id,attempt_id,execution_epoch,collection_started_at,deadline_at,state,classification_revision,evidence_ids)
+    VALUES($1,$2,$3,$4,clock_timestamp(),clock_timestamp()+interval '1 minute','CLASSIFIED',$5,$6::text[])`,
+    [incidentId, target.runtimeUnitId, target.attemptId, target.executionEpoch, classificationRevision, [observationId]])
+  const actual = (await client.query(`SELECT s.runtime_unit_id,s.attempt_id,s.execution_epoch,s.classification_revision,s.evidence_ids,
+    o.pod_uid,o.container_id,o.incarnation,o.evidence FROM durable_runtime.failure_incident_state s
+    JOIN durable_runtime.failure_incident_observations l ON l.incident_id=s.incident_id
+      AND l.runtime_unit_id=s.runtime_unit_id AND l.attempt_id=s.attempt_id
+    JOIN durable_runtime.failure_observations o ON o.id=l.observation_id
+      AND o.runtime_unit_id=l.runtime_unit_id AND o.attempt_id=l.attempt_id
+    WHERE s.incident_id=$1 AND o.id=$2`, [incidentId, observationId])).rows[0]
+  assert.deepEqual(actual, { runtime_unit_id: target.runtimeUnitId, attempt_id: target.attemptId,
+    execution_epoch: target.executionEpoch, classification_revision: classificationRevision, evidence_ids: [observationId],
+    pod_uid: target.podUid, container_id: target.runtimeContainerId, incarnation: target.incarnation, evidence })
 }
 export async function fixture(pool: Pool, shared?: Pick<Fixture, 'scope' | 'domain' | 'controller'>): Promise<Fixture> {
   const unit = logicalId('runtime-unit', randomUUID()), attempt = logicalId('attempt', randomUUID()), session = logicalId('session', randomUUID())
@@ -64,8 +97,7 @@ export async function fixture(pool: Pool, shared?: Pick<Fixture, 'scope' | 'doma
     await client.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [unit, session, binding])
     await client.query(`INSERT INTO durable_runtime.failure_incidents(id,runtime_unit_id,attempt_id,pod_uid,container_id,restart_identity,evidence_key,classification,evidence_refs,observed_at)
       VALUES($1,$2,$3,$4,$5,$6,$7,'ISOLATED_NODE_MEMORY_EXHAUSTION',$8::jsonb,clock_timestamp())`, [incidentId, unit, attempt, target.podUid, target.runtimeContainerId, target.incarnation, `fixture-incident:${incidentId}`, JSON.stringify([observation])])
-    await client.query(`INSERT INTO durable_runtime.failure_incident_state(incident_id,runtime_unit_id,attempt_id,execution_epoch,collection_started_at,deadline_at,state,classification_revision,evidence_ids)
-      VALUES($1,$2,$3,1,clock_timestamp(),clock_timestamp()+interval '1 minute','CLASSIFIED',1,$4::text[])`, [incidentId, unit, attempt, [observation]])
+    await recordFixtureClassification(client, target, incidentId, observation)
     await client.query('COMMIT')
   } catch (error) { await client.query('ROLLBACK'); throw error } finally { client.release() }
   return { target, session, incidentId, scope, domain, controller, shape, profile, classification }

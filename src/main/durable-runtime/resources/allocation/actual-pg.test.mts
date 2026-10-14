@@ -6,7 +6,7 @@ import { createDurablePool, DurableDatabaseError } from '../../db/connection.ts'
 import { readMigrations, applyMigrations } from '../../db/migrate.ts'
 import { prepareResourceOperation, reserveExistingResourcePlan, listDueResourceReservations } from './index.ts'
 import type { PrepareResourceRequest, ResourceFacts } from './types.ts'
-import { fixture, register, request, response, unitRevision, hookPool, gate, authority, authorizer } from './test-support.mts'
+import { fixture, register, request, response, unitRevision, hookPool, gate, authority, authorizer, recordFixtureClassification } from './test-support.mts'
 
 assert.match(process.env.PGDATABASE ?? '', /^orca_p122_[a-z0-9_]+$/)
 assert.ok(process.env.P122_MIGRATIONS)
@@ -212,14 +212,13 @@ check('예약 expiry와 논리 sleep/wake 뒤에도 원 점유·승인 profile·
   await pool.query("UPDATE durable_runtime.runtime_units SET desired_mode='SUSPENDED',intent_revision=intent_revision+1,revision=revision+1 WHERE id=$1", [f.target.runtimeUnitId])
   await pool.query("UPDATE durable_runtime.runtime_units SET desired_mode='RUNNING',intent_revision=intent_revision+1,revision=revision+1 WHERE id=$1", [f.target.runtimeUnitId])
   await pool.query('UPDATE durable_runtime.operations SET result=$2::jsonb WHERE id=$1', [first.operationId, JSON.stringify({ fixtureLogicalSettlement: true })])
-  const nextIncident = randomUUID()
+  const nextIncident = randomUUID(), nextObservation = `fixture-observation:${randomUUID()}`
   await pool.query(`INSERT INTO durable_runtime.failure_incidents(id,runtime_unit_id,attempt_id,pod_uid,container_id,restart_identity,evidence_key,classification,evidence_refs,observed_at)
-    SELECT $1,runtime_unit_id,attempt_id,pod_uid,container_id,restart_identity,$2,classification,evidence_refs,clock_timestamp()
-    FROM durable_runtime.failure_incidents WHERE id=$3`, [nextIncident, `fixture-new-memory-cause:${nextIncident}`, f.incidentId])
-  await pool.query(`INSERT INTO durable_runtime.failure_incident_state(incident_id,runtime_unit_id,attempt_id,execution_epoch,collection_started_at,deadline_at,state,classification_revision,evidence_ids)
-    SELECT $1,runtime_unit_id,attempt_id,execution_epoch,clock_timestamp(),clock_timestamp()+interval '1 minute','CLASSIFIED',1,evidence_ids
-    FROM durable_runtime.failure_incident_state WHERE incident_id=$2`, [nextIncident, f.incidentId])
-  const fresh = { ...request(f), incidentId: nextIncident, expectedUnitRevision: await unitRevision(pool, f), expectedIntentRevision: '2' }
+    SELECT $1,runtime_unit_id,attempt_id,pod_uid,container_id,restart_identity,$2,classification,$4::jsonb,clock_timestamp()
+    FROM durable_runtime.failure_incidents WHERE id=$3`, [nextIncident, `fixture-new-memory-cause:${nextIncident}`, f.incidentId, JSON.stringify([nextObservation])])
+  await recordFixtureClassification(pool, f.target, nextIncident, nextObservation)
+  const nextFixture = { ...f, incidentId: nextIncident, classification: { ...f.classification, observationIds: [nextObservation] } }
+  const fresh = { ...request(nextFixture), expectedUnitRevision: await unitRevision(pool, f), expectedIntentRevision: '2' }
   const exhausted = response(await prepareResourceOperation(pool, fresh)); assert.equal(exhausted.status, 'BLOCKED')
   assert.ok(exhausted.reasons.includes('EPISODE_GROWTH_EXHAUSTED')); assert.ok(exhausted.reasons.includes('ROLLING_GROWTH_EXHAUSTED'))
   const head = (await pool.query('SELECT * FROM durable_runtime.resource_unit_state WHERE runtime_unit_id=$1', [f.target.runtimeUnitId])).rows[0]
