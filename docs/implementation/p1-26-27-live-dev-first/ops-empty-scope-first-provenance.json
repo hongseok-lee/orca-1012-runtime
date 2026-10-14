@@ -1,0 +1,39 @@
+{
+  "sourceMain": "7bcd7c899aa13c0a62dbfe737c20c40c71307eaa",
+  "capturedAt": "2026-10-14T09:54:55.097Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "deviceScaleFactor": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "actualHeading": "운영 현황",
+  "artifactSHA256": "004784a90cd9fb0823c6571376f042f9c4bd7be318e5b04e67830b2db0c9237f",
+  "artifactBytes": 60180,
+  "kind": "ops-empty-scope-first",
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuth": false,
+  "centralBrowserQualified": false,
+  "authInputsEmpty": true,
+  "rePairing": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "route": "/ops/",
+  "originGeneralized": true,
+  "originalProvenancePreservedPrivately": true,
+  "originalProvenanceSHA256": "57fac504d06058a5fad565456cde9a80a0b9dec21fe3fe2f998c2f52122260b6",
+  "captureOption": {
+    "fullPage": true
+  },
+  "imagePixels": {
+    "width": 390,
+    "height": 1092
+  },
+  "wholeCheckoutRevisionProven": false,
+  "sourceMainQualification": "승인된 backend 214개 input의 기준 main이며 전체 실행 checkout Git SHA를 증명하지 않습니다.",
+  "fullPageFeatureQualified": false,
+  "HAQualified": false
+}

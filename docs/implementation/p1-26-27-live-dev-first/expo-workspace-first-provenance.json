@@ -1,0 +1,42 @@
+{
+  "sourceMain": "7bcd7c899aa13c0a62dbfe737c20c40c71307eaa",
+  "capturedAt": "2026-10-14T09:54:55.198Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "deviceScaleFactor": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "actualHeading": "Expo Web 실제 최초 재연결 화면",
+  "artifactSHA256": "9fb0bf1969a9fdb3a768b6d3f7a3dd1472a74b3ce5ed8c374f246c38eaf9980c",
+  "artifactBytes": 26013,
+  "kind": "expo-workspace-first",
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuth": false,
+  "centralBrowserQualified": false,
+  "authInputsEmpty": true,
+  "rePairing": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "route": "/",
+  "originGeneralized": true,
+  "originalProvenancePreservedPrivately": true,
+  "originalProvenanceSHA256": "9b228f5ca04c9e5e8e2ae9c5415a23331693bea8f5809e61717fa822907c8d18",
+  "captureOption": {
+    "fullPage": true
+  },
+  "imagePixels": {
+    "width": 390,
+    "height": 844
+  },
+  "wholeCheckoutRevisionProven": false,
+  "sourceMainQualification": "승인된 backend 214개 input의 기준 main이며 전체 실행 checkout Git SHA를 증명하지 않습니다.",
+  "fullPageFeatureQualified": false,
+  "HAQualified": false,
+  "headingQualification": "원 actualHeading은 캡처 설명용 문자열입니다. 실제 이미지의 제목은 Welcome back이며 Connected 및 0 worktrees를 확인했습니다.",
+  "visibleImageHeading": "Welcome back",
+  "clientSourceChanged": false
+}
