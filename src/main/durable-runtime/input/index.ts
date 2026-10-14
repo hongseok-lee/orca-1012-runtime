@@ -1,4 +1,9 @@
-export { acceptInput, resolveInputReceipt, closeInputMergeBoundary } from './intake.ts'
+export {
+  acceptInput,
+  acceptInputInTransaction,
+  resolveInputReceipt,
+  closeInputMergeBoundary
+} from './intake.ts'
 export { sealInputMessage } from './seal.ts'
 export {
   prepareInputRequest,

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "./input-codec.ts",
+    "./input-read.ts",
+    "./model.ts",
+    "./project.ts",
+    "./read.ts",
+    "./index.ts",
+    "./terminal-codec.test.mts",
+    "./terminal-media.pg.test.mts"
+  ]
+}

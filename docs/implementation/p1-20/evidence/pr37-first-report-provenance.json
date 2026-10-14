@@ -1,0 +1,66 @@
+{
+  "PR": 37,
+  "capturedAt": "2026-10-13T14:58:17.084Z",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/ea1f72d6384756752951a881d3bbd759b4cfd36f/docs/implementation/p1-20/evidence/verification-report.md",
+  "targetSHA": "ea1f72d6384756752951a881d3bbd759b4cfd36f",
+  "currentHeadAtHandshake": "ea1f72d6384756752951a881d3bbd759b4cfd36f",
+  "sourceSHA": "d6aeb9c1d8b079a4edf5bae289cb5bdc6e477686",
+  "initialSourceSHA": null,
+  "reportDocumentSHA256": "11c94ce62db37451e9d3cd7dfe97f15c61e10eecdea6db2ae43454cd4c528f86",
+  "resultDocumentSHA256": "0cbd02f957d12f5392c1b62fd5d231e48db22b62c5ed76e339379cffc11f8104",
+  "actualHeading": "P120 journal 및 Terminal codec 검증 결과",
+  "actualResultParagraphs": [
+    "새 Terminal codec의 순수 2개와 실제 PG media join 1개가 최초 실행에서 모두 통과했습니다. Fail·skip·cancelled는 0개이며 새 범위의 scoped type/lint도 exit 0입니다. 기존 순수 5개·PG distinct 6개 성공은 원 source의 이력이며 이번 실행에서 반복하지 않았습니다."
+  ],
+  "actualTableText": "구분\t실제 실행 source\t결과\n새 원 Terminal codec\td6aeb9c1d8b079a4edf5bae289cb5bdc6e477686\t순수 2개 + PG media 1개 최초 통과, type/lint 0\n기존 journal·structured identity 이력\t5cafadce3afb6c7e1bfd467f2963eb4d3b51545c\t순수 5개 + PG distinct 6개, 최종 type/lint 0. 이번 재실행 0",
+  "headingRect": {
+    "x": 370,
+    "y": 376,
+    "width": 721,
+    "height": 50.59375
+  },
+  "resultParagraphRects": [
+    {
+      "x": 370,
+      "y": 442.59375,
+      "width": 721,
+      "height": 72
+    }
+  ],
+  "tableRect": {
+    "x": 370,
+    "y": 530.59375,
+    "width": 721,
+    "height": 232
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 2000
+  },
+  "DPR": 1,
+  "counts": {
+    "newTerminalPure": 2,
+    "newTerminalPGMedia": 1,
+    "newFail": 0,
+    "newSkip": 0,
+    "priorPure": 5,
+    "priorPGDistinct": 6,
+    "priorCasesRerun": 0
+  },
+  "typeExit": 0,
+  "lintExit": 0,
+  "initialFailure": null,
+  "playwright": "1.59.1",
+  "browser": "147.0.7727.15",
+  "artifactSHA256": "a662dd5d23a84c2264d95e9a073a43cf23958863868b7d6f9b869281e7670b77",
+  "artifactBytes": 522598,
+  "screenshotExecutions": 1,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false,
+  "productUI": false,
+  "nativeIPhone": false,
+  "PublicRPCQualification": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "kind": "PG journal 및 원 Terminal codec 최초 검증 결과 보고 화면"
+}
