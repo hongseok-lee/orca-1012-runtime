@@ -16,7 +16,8 @@ if (process.env.ORCA_PUBLIC_CLIPBOARD_WIRING_APPROVED !== 'root-wiring-reviewed'
 
 await test('서버 첨부 설정의 capture·미설정·disposed·unary 경계를 유지합니다', async () => {
   let connects = 0
-  const pool = { connect() { connects++; throw new Error('Unexpected PG I/O') } } as unknown as Pool
+  const pool = { connect() { connects++; throw new Error('Unexpected PG I/O') },
+    query() { throw new Error('Unexpected PG I/O') } } as unknown as Pool
   const settings = { aliasRoot: '/synthetic/public-clipboard-wiring/value' }
   const input = { ...fixtureConfig(pool), attachments: settings }
   const captured = captureDurableCatalogReadConfig(input)
