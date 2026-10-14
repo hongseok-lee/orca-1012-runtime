@@ -20,7 +20,7 @@ export class ExternalChromiumTargetScreencast {
   private readonly transportIdentity: number
   private closed = false
   private started = false
-  private metricsApplied = false
+  private metricsAttempted = false
   private cleanup: Promise<void> | null = null
   private opening: Promise<void> | null = null
   private seq = 0
@@ -92,14 +92,15 @@ export class ExternalChromiumTargetScreencast {
   private async applyViewport(): Promise<void> {
     const { viewportWidth: width, viewportHeight: height, deviceScaleFactor, mobile } = this.options
     if (width === undefined || height === undefined) {
-      if (this.metricsApplied) await this.command('Emulation.clearDeviceMetricsOverride')
-      this.metricsApplied = false
+      if (this.metricsAttempted) await this.command('Emulation.clearDeviceMetricsOverride')
+      this.metricsAttempted = false
       return
     }
+    // Chromium may apply metrics before its response is cancelled.
+    this.metricsAttempted = true
     await this.command('Emulation.setDeviceMetricsOverride', {
       width, height, deviceScaleFactor: deviceScaleFactor ?? 1, mobile: mobile === true
     })
-    this.metricsApplied = true
   }
   private receive(raw: unknown): void {
     const parsed = Frame.safeParse(raw)
@@ -182,7 +183,7 @@ export class ExternalChromiumTargetScreencast {
     const sessionId = this.sessionId
     if (!sessionId) return
     if (this.started) await this.cleanupCommand('Page.stopScreencast').catch(() => {})
-    if (this.metricsApplied) await this.cleanupCommand('Emulation.clearDeviceMetricsOverride').catch(() => {})
+    if (this.metricsAttempted) await this.cleanupCommand('Emulation.clearDeviceMetricsOverride').catch(() => {})
     this.connection.cancelSession(sessionId, this.transportIdentity)
     if (this.connection.ownsTransport(this.transportIdentity, this.page.browserGeneration)) {
       await this.connection.command('Target.detachFromTarget', { sessionId }, undefined, this.transportIdentity).catch(() => {})
