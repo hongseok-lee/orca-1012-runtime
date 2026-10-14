@@ -106,7 +106,8 @@ export function facts(f: Fixture, capacity: boolean, kind: 'GROW' | 'REPLACE' = 
   const caps: CapEvidence = { verified: true, sourceRef: `fixture-capacity-observation:${capacity ? 'available' : 'unavailable'}`,
     policyBytes: (128n * Mi).toString(), unitBudgetBytes: (128n * Mi).toString(), quotaBytes: (128n * Mi).toString(),
     ratioBytes: (128n * Mi).toString(), reservationBytes: (128n * Mi).toString(), admittedEndpoints: [],
-    capacityAvailable: capacity, singleWriterBudgetAvailable: capacity }
+    // Independent synthetic budget evidence; unavailable external capacity stays false.
+    capacityAvailable: capacity, singleWriterBudgetAvailable: true }
   const now = Date.now()
   const calculated = evaluateGrowth({ policy, target: f.target, classification: f.classification, classificationTarget: f.target,
     currentAgent: true, profile: f.profile, caps, peak: null, priorResourceWait: false,
