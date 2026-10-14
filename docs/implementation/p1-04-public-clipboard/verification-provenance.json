@@ -1,0 +1,354 @@
+{
+  "validatedModuleSourcePin": "e7fe71867c83a00b8e340b23b43e90e7d86a377f",
+  "validatedWiringSourcePin": "8bc8987920910f7cebfe990e0e2cbbcbde83d37a",
+  "alignedSourceHead": "5ff280e518de94667d419a1130c6393d642c22ca",
+  "fixedMain": "0da789b920cf43a5d993936e29ff7ceb304fde1d",
+  "owned10Unchanged": [
+    {
+      "path": "src/main/durable-runtime/rpc/clipboard.ts",
+      "mode": "100644",
+      "blob": "bc95dc99e498ef89d3cb2f3122a348e64c639367"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/clipboard.value.test.mts",
+      "mode": "100644",
+      "blob": "82c7efb43245d30223737cf471d459e75e280a5e"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/clipboard.pg.test.mts",
+      "mode": "100644",
+      "blob": "cc93e30ed3255ea2aafd05f6112681f9bd579130"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/clipboard-config.ts",
+      "mode": "100644",
+      "blob": "936bf20fdfede7f8a952ddb92121d8f2f64739b8"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/config.ts",
+      "mode": "100644",
+      "blob": "b5b3d6a76f021ee5ccf0345696930b7a71d05557"
+    },
+    {
+      "path": "src/main/orcad/orcad-durable-catalog.ts",
+      "mode": "100644",
+      "blob": "08d84ec4e71ae95925d8e2628578ef0cc3952da6"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/public.ts",
+      "mode": "100644",
+      "blob": "d8171e1045f4797ac070684135daef79dc282444"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/registry.ts",
+      "mode": "100644",
+      "blob": "2ef4c6b385cda7b0691f72f2da376d9a78eee64a"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/clipboard-wiring.value.test.mts",
+      "mode": "100644",
+      "blob": "cd7f89753cc28828d8bd196248cb25d130fcd8bd"
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/clipboard-wiring.pg.test.mts",
+      "mode": "100644",
+      "blob": "c6e47f861aae3db06a19125a7a14b7e3a7e44a03"
+    }
+  ],
+  "nonOwnedSourceEqualsFixedMain": true,
+  "rootModuleAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/70#issuecomment-6176021991",
+  "rootWiringAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/70#issuecomment-6177172411",
+  "moduleResult": {
+    "ownedLintFiles": 3,
+    "valueProductCallbacks": 1,
+    "PGProductCallbacks": 1,
+    "schemaAppliedOnce": 19,
+    "type": "NOT_RUN"
+  },
+  "wiringResult": {
+    "ownedLintFiles": 7,
+    "valueProductCallbacks": 1,
+    "PGProductCallbacks": 1,
+    "parentProductCallbackCount": 0,
+    "tapTestsIncludingParentPerFixture": 2,
+    "valueExit": 0,
+    "PGExit": 0,
+    "startedAt": "2026-10-14T19:57:47.723Z",
+    "endedAt": "2026-10-14T19:57:53.095Z",
+    "pid": 28321,
+    "type": "NOT_RUN",
+    "schemaApplied": 0
+  },
+  "actualInputs": {
+    "value": 540,
+    "PG": 1610,
+    "union": 1612,
+    "rootDirectAuditMismatches": 0
+  },
+  "database": {
+    "name": "orca_public_clipboard_20261014",
+    "oid": "80991",
+    "systemIdentifier": "7696101282789175327",
+    "dataset": "orca-1012-dev-v1",
+    "ledgerEntries": 19,
+    "ledgerBeforeSha256": "25ae3ebe71f0484e8d9dd74c3525625ddb5e30299a4baab4845f28d878704229",
+    "ledgerAfterSha256": "25ae3ebe71f0484e8d9dd74c3525625ddb5e30299a4baab4845f28d878704229",
+    "originalRows": {
+      "agents": {
+        "before": 1,
+        "after": 1,
+        "existingRowsPreserved": true
+      },
+      "workspaces": {
+        "before": 1,
+        "after": 1,
+        "existingRowsPreserved": true
+      },
+      "sessions": {
+        "before": 1,
+        "after": 1,
+        "existingRowsPreserved": true
+      },
+      "messages": {
+        "before": 1,
+        "after": 1,
+        "existingRowsPreserved": true
+      },
+      "input_components": {
+        "before": 1,
+        "after": 1,
+        "existingRowsPreserved": true
+      },
+      "input_attachments": {
+        "before": 1,
+        "after": 1,
+        "existingRowsPreserved": true
+      },
+      "attachment_uploads": {
+        "before": 4,
+        "after": 6,
+        "existingRowsPreserved": true
+      },
+      "attachment_upload_chunks": {
+        "before": 3,
+        "after": 5,
+        "existingRowsPreserved": true
+      },
+      "attachment_aliases": {
+        "before": 2,
+        "after": 4,
+        "existingRowsPreserved": true
+      },
+      "attachment_blobs": {
+        "before": 2,
+        "after": 3,
+        "existingRowsPreserved": true
+      }
+    },
+    "resetOrDelete": false
+  },
+  "manifestCorrection": {
+    "path": "src/main/orcad/orcad-durable-catalog-launch.ts",
+    "bytes": 620,
+    "blob": "18860cefbe9bc7af44dd6ccfa83e3164a4c99426",
+    "sha256": "deb335c0eb46dddc3437e25ab50370b58756b49d361246fb7dd5d4ea808227a0",
+    "metadataOnly": true,
+    "sourceTransferred": 0,
+    "valueBundleReusedSha256": "7049ee2c483d56462d2873c986dd19c09538e9dbe9130cda2d22630715914342",
+    "valueMetafileReusedSha256": "28441d4538c420c140aea9a252a936f98099f99b0e7b9d60a970d39ca4b223a0"
+  },
+  "wrapper": {
+    "PG": [
+      {
+        "kind": "pg",
+        "sourceSha256": "8ca93ab56eb84c813cfbbf1bb701cb080ba99e4a40258af5cc04123adca0c41c",
+        "originalBodySha256": "604a739a17fb328967d03f32016b1ed6976c5ecd30ab62ba2ade984836c96427",
+        "wrapperSha256": "e0c57e3b0b9447c5331815c0228b43f34e12b2ca20b1077967f22f36685edee3",
+        "sourceOrAssertionsChanged": false,
+        "productCallbacks": 1,
+        "parentProductCallbackCount": 0
+      }
+    ],
+    "originalCallbackBodiesRootChecked": true,
+    "productCallbacks": 1,
+    "parentNotProductCallback": true
+  },
+  "bundleLimit": "모듈 bundle 3개의 사전 SHA는 기록하지 않았습니다. 사후 SHA·크기 회수로 이전 bytes를 소급 증명하지 않습니다.",
+  "alignedInputDelta": [
+    {
+      "path": "src/main/durable-runtime/catalog/projection.ts",
+      "validated": {
+        "gitEntry": "100644 blob e656c1f8c0390cd3b0592fd4ed2878fa13d4b739\tsrc/main/durable-runtime/catalog/projection.ts",
+        "bytes": 11368,
+        "sha256": "2908fe12e9de5e1959984355b856a007ec8d43dc1e166c53c2383c305e055a11"
+      },
+      "aligned": {
+        "gitEntry": "100644 blob 89215e82ccc206ab513e1a482054f0ba5b6e9c95\tsrc/main/durable-runtime/catalog/projection.ts",
+        "bytes": 11464,
+        "sha256": "69b4bc8716ea543639b7314fdf71af8362061d9d93c421e85873c9d50a829328"
+      }
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/read.ts",
+      "validated": {
+        "gitEntry": "100644 blob 2a505969b955a98719200234f6055f16a6b16f9b\tsrc/main/durable-runtime/rpc/read.ts",
+        "bytes": 6209,
+        "sha256": "6d0ce41e3d7527593da74c22dc908dd6311703620cc47ae1a926d765135f5526"
+      },
+      "aligned": {
+        "gitEntry": "100644 blob 00132da01b037b192ea168116b9759679c878212\tsrc/main/durable-runtime/rpc/read.ts",
+        "bytes": 6349,
+        "sha256": "e1b9312cf66ffa0911842a2e0502c5a712cef2d29291002b7fc4db4ac89808ee"
+      }
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/subscriptions.ts",
+      "validated": {
+        "gitEntry": "100644 blob 059b945c937ddcd266d2b2ca854f0f54b41c3a77\tsrc/main/durable-runtime/rpc/subscriptions.ts",
+        "bytes": 10281,
+        "sha256": "57a61e415210275d2f6565eceb443ded7c7c8a7115baed927e1982f1e03b63b3"
+      },
+      "aligned": {
+        "gitEntry": "100644 blob 740eb3661531bccc9ff7c3a4bf32506f06606193\tsrc/main/durable-runtime/rpc/subscriptions.ts",
+        "bytes": 10760,
+        "sha256": "f4a3a7e30520d3dc5d32e30704718622bbea9a23c94d13a4f7b59bc3bbb71b32"
+      }
+    }
+  ],
+  "alignedInputDeltaQualification": "성공 검증 pin은 8bc89879입니다. 정렬 이후 3개 소비 의존성 차이를 기록하며 최종 head로 성공 검증을 소급하지 않습니다.",
+  "knownPids": {
+    "pids": {
+      "28321": [
+        "Name:\tMainThread",
+        "State:\tZ (zombie)",
+        "Pid:\t28321",
+        "PPid:\t1"
+      ],
+      "28328": [
+        "ABSENT"
+      ],
+      "28335": [
+        "Name:\tesbuild",
+        "State:\tZ (zombie)",
+        "Pid:\t28335",
+        "PPid:\t1"
+      ],
+      "28341": [
+        "ABSENT"
+      ],
+      "28347": [
+        "ABSENT"
+      ],
+      "28358": [
+        "ABSENT"
+      ],
+      "28364": [
+        "ABSENT"
+      ]
+    },
+    "utc": "2026-10-14T19:58:21.388Z"
+  },
+  "artifacts": [
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/module-owned-lint.log",
+      "publicSha256": "2fc8efa20f413e2575e05f4dfdd3adcbd55c21ea7421507008f06d7f66863d9e",
+      "publicBytes": 92,
+      "originalSha256": "2fc8efa20f413e2575e05f4dfdd3adcbd55c21ea7421507008f06d7f66863d9e",
+      "originalBytes": 92
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/module-value.tap",
+      "publicSha256": "c025ab3db884a5e71f0feb7e036e5faab2a0144adf9471fea06f53e75b57c898",
+      "publicBytes": 614,
+      "originalSha256": "c025ab3db884a5e71f0feb7e036e5faab2a0144adf9471fea06f53e75b57c898",
+      "originalBytes": 614
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/module-pg.tap",
+      "publicSha256": "11f9fe7807ed888b034a40af04ef67ab4c556da63b2f17eca6b9286f55c3876a",
+      "publicBytes": 1236,
+      "originalSha256": "11f9fe7807ed888b034a40af04ef67ab4c556da63b2f17eca6b9286f55c3876a",
+      "originalBytes": 1236
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/wiring-owned-lint.log",
+      "publicSha256": "552bc579d27632d2e09df9d67b2db132ea8f3e7f65448943142ab9a25a3e2e42",
+      "publicBytes": 92,
+      "originalSha256": "552bc579d27632d2e09df9d67b2db132ea8f3e7f65448943142ab9a25a3e2e42",
+      "originalBytes": 92
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/wiring-value.tap",
+      "publicSha256": "0291c32afc53d18c682be4d6e89a6d452ec29752b3415299cb2de6ded159e98c",
+      "publicBytes": 557,
+      "originalSha256": "0291c32afc53d18c682be4d6e89a6d452ec29752b3415299cb2de6ded159e98c",
+      "originalBytes": 557
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/wiring-pg.tap",
+      "publicSha256": "4b942c34a26173bd61449fa5823d8caa0ba2a16599141877f02d7a109a387f2c",
+      "publicBytes": 1192,
+      "originalSha256": "4b942c34a26173bd61449fa5823d8caa0ba2a16599141877f02d7a109a387f2c",
+      "originalBytes": 1192
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/module-missing-runtime.excerpt.log",
+      "publicSha256": "d7619344980ba5ff448bb0d6cf9bfd68980b1eaf3533f2572226398dfcdb1776",
+      "publicBytes": 292,
+      "originalSha256": "80ad8e8c64d38dc4f6033a486c08951dd5981f683c3dea1dcb2534ec77dd1a61",
+      "originalBytes": 2055
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/module-missing-lint-plugin.excerpt.log",
+      "publicSha256": "73dee37bb7ad2158ecea3c6c535a8dc834d664edd9c78272e82a0c58912d5bcf",
+      "publicBytes": 200,
+      "originalSha256": "fbc85a68f6578ae5cb80567fe6009b8f419e01acfb58acca6af4c180d2033cee",
+      "originalBytes": 202
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/module-missing-preload.excerpt.log",
+      "publicSha256": "25203d9e2b2d8409f164ee5bc61238c9a2a4c7d9b00724b22cc9e1897b73d29a",
+      "publicBytes": 88,
+      "originalSha256": "d455d5de9e127f6ee663b896147dcb638742fbbae9ccca5a5202f36975eb621b",
+      "originalBytes": 929
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/wiring-missing-manifest.excerpt.log",
+      "publicSha256": "8530ab830fdf04f61e6746974c3245932752df22add6d593b5f5f59f1bbce9e4",
+      "publicBytes": 74,
+      "originalSha256": "d3dca06b78c264dff29920d2441840f74dcc9a0132e7246180bbccb6f69d8353",
+      "originalBytes": 983
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/actual-input-manifest.json",
+      "publicSha256": "082f8c6fa05cf85eb07802fb2d93e68750d0333a5b825a00f0971bf9bc3cdcf7",
+      "publicBytes": 389261
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/value.metafile.json",
+      "publicSha256": "99f7d147cbea982f9f9fcc500453b6661c2accba5e2b9af270bed4414876ca82",
+      "publicBytes": 363577,
+      "originalSha256": "28441d4538c420c140aea9a252a936f98099f99b0e7b9d60a970d39ca4b223a0",
+      "originalBytes": 363568
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/pg.metafile.json",
+      "publicSha256": "653c2f62ab337f7f913efc8753fad97a92d336e9a1643585a021285c51478ca2",
+      "publicBytes": 1176463,
+      "originalSha256": "dce4ec72f2aade5e9c1478e7a08d6ed0cf728aef0b06b3bb4ad1decde197cce4",
+      "originalBytes": 1176478
+    },
+    {
+      "publicPath": "docs/implementation/p1-04-public-clipboard/evidence/actual-input-delta.diff",
+      "publicSha256": "b2a4c4657a93f83591a31fdf02cf8e4bffd0a99dec6480466b220d636df4bb9d",
+      "publicBytes": 5839,
+      "originalSha256": "b2a4c4657a93f83591a31fdf02cf8e4bffd0a99dec6480466b220d636df4bb9d",
+      "originalBytes": 5839
+    }
+  ],
+  "limits": [
+    "합성 인증 context입니다. 실제 device 인증을 검증하지 않았습니다.",
+    "논리 alias와 PG bytes를 검증했으며 physical alias·provider·preview·SSH·HA·live 활성화는 검증하지 않았습니다.",
+    "최종 정렬 이후 성공 검증을 반복하지 않았습니다."
+  ]
+}

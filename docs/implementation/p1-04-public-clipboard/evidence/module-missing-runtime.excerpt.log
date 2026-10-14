@@ -1,0 +1,4 @@
+✘ [ERROR] Could not resolve "./remote-server-update"
+✘ [ERROR] Could not resolve "./skill-install-capability"
+src/shared/protocol-version.ts:1:48: ERROR: Could not resolve "./remote-server-update"
+src/shared/protocol-version.ts:12:7: ERROR: Could not resolve "./skill-install-capability"

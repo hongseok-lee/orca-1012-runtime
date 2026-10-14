@@ -5,6 +5,7 @@ import type { Pool, PoolConfig } from 'pg'
 import { LOCAL_EXECUTION_HOST_ID, getRepoExecutionHostId } from '../../shared/execution-host.ts'
 import type { CatalogAuthority } from '../durable-runtime/catalog/authority.ts'
 import type { CatalogSnapshot } from '../durable-runtime/catalog/read.ts'
+import { captureCatalogClipboardConfig, type CatalogClipboardConfig } from '../durable-runtime/rpc/clipboard-config.ts'
 import type { DurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import { captureOrcadCatalogLaunchConfig } from './orcad-durable-catalog-launch.ts'
 import type { CatalogLaunchConfig } from '../durable-runtime/rpc/launch-config.ts'
@@ -24,6 +25,7 @@ export type OrcadDurableCatalogConfig = {
   readonly workspacePublicIds: readonly string[]
   readonly pg: Readonly<Required<Pick<PoolConfig, 'host' | 'port' | 'database' | 'user' | 'max'>>>
   readonly pgpassFile: string
+  readonly attachments?: CatalogClipboardConfig
   readonly launch?: CatalogLaunchConfig
 }
 
@@ -68,7 +70,7 @@ function privateFile(path: string): Stats {
 
 /** Captures server-owned values synchronously; no await, environment writes or credential reads. */
 export function captureOrcadDurableCatalogConfig(value: unknown, pgpassFile: string): OrcadDurableCatalogConfig {
-  const input = record(value, ['datasetName', 'hostId', 'repositoryIds', 'projectGroupIds', 'workspacePublicIds', 'pg'], ['launch'])
+  const input = record(value, ['datasetName', 'hostId', 'repositoryIds', 'projectGroupIds', 'workspacePublicIds', 'pg'], ['launch', 'attachments'])
   if (input.datasetName !== 'orca-1012-dev-v1') { invalid('CATALOG_STARTUP_DATASET_UNSUPPORTED') }
   if (input.hostId !== LOCAL_EXECUTION_HOST_ID) { invalid('CATALOG_STARTUP_HOST_UNSUPPORTED') }
   const pg = record(input.pg, ['host', 'port', 'database', 'user', 'max'])
@@ -82,8 +84,10 @@ export function captureOrcadDurableCatalogConfig(value: unknown, pgpassFile: str
   if (repositoryIds.length + projectGroupIds.length + workspacePublicIds.length === 0) {
     invalid('CATALOG_STARTUP_REGISTRATION_REQUIRED')
   }
+  const attachments = captureCatalogClipboardConfig(Object.getOwnPropertyDescriptor(input, 'attachments'))
   const launch = captureOrcadCatalogLaunchConfig(Object.getOwnPropertyDescriptor(input, 'launch'), repositoryIds)
-  return Object.freeze({ ...(launch === undefined ? {} : { launch }), datasetName: 'orca-1012-dev-v1', hostId: LOCAL_EXECUTION_HOST_ID,
+  return Object.freeze({ ...(launch === undefined ? {} : { launch }),
+    ...(attachments === undefined ? {} : { attachments }), datasetName: 'orca-1012-dev-v1', hostId: LOCAL_EXECUTION_HOST_ID,
     repositoryIds, projectGroupIds, workspacePublicIds, pgpassFile: text(pgpassFile),
     pg: Object.freeze({ host: text(pg.host), port, database: text(pg.database), user: text(pg.user), max }) })
 }
@@ -164,7 +168,8 @@ export async function prepareOrcadDurableCatalog(
   poolFactory?: (config: PoolConfig) => Pool
 ): Promise<OrcadDurableCatalog | null> {
   if (input === null) { return null }
-  const config = captureOrcadDurableCatalogConfig({ datasetName: input.datasetName, hostId: input.hostId,
+  const attachments = captureCatalogClipboardConfig(Object.getOwnPropertyDescriptor(input, 'attachments'))
+  const config = captureOrcadDurableCatalogConfig({ ...(attachments === undefined ? {} : { attachments }), datasetName: input.datasetName, hostId: input.hostId,
     repositoryIds: input.repositoryIds, projectGroupIds: input.projectGroupIds,
     workspacePublicIds: input.workspacePublicIds, pg: input.pg, ...(input.launch === undefined ? {} : { launch: input.launch }) }, input.pgpassFile)
   const { createDurablePool, safeDatabaseError } = await import('../durable-runtime/db/connection.ts')
@@ -188,7 +193,8 @@ export async function prepareOrcadDurableCatalog(
     return Object.freeze({ readConfig: Object.freeze({ pool, datasetName: config.datasetName,
       hostId: config.hostId, readHostIdentity: () => config.hostId, repositoryIds: config.repositoryIds,
       projectGroupIds: config.projectGroupIds, workspacePublicIds: config.workspacePublicIds,
-      ...(config.launch === undefined ? {} : { launch: config.launch }) }), stop })
+      ...(config.launch === undefined ? {} : { launch: config.launch }),
+      ...(config.attachments === undefined ? {} : { attachments: config.attachments }) }), stop })
   } catch (error) {
     try { await stop() } catch { /* Preserve the sanitized original startup verdict. */ }
     if (error instanceof OrcadDurableCatalogConfigurationError) { throw error }

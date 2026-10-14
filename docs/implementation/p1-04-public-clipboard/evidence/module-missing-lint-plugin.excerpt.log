@@ -1,0 +1,3 @@
+Failed to parse oxlint configuration file.
+  x Failed to load JS plugin: ./config/oxlint-plugins/app-store-performance.mjs
+  |   Cannot find module './config/oxlint-plugins/app-store-performance.mjs'

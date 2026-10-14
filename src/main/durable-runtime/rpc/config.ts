@@ -1,4 +1,5 @@
 import type { Pool } from 'pg'
+import { captureCatalogClipboardConfig, type CatalogClipboardConfig } from './clipboard-config.ts'
 import { captureCatalogLaunchConfig, type CatalogLaunchConfig } from './launch-config.ts'
 import type { ExecutionHostId } from '../../../shared/execution-host.ts'
 import { normalizeExecutionHostId } from '../../../shared/execution-host.ts'
@@ -12,6 +13,7 @@ export type DurableCatalogReadConfig = {
   readonly repositoryIds: readonly string[]
   readonly projectGroupIds: readonly string[]
   readonly workspacePublicIds: readonly string[]
+  readonly attachments?: CatalogClipboardConfig
   readonly launch?: CatalogLaunchConfig
   readonly pollIntervalMs?: number
 }
@@ -47,11 +49,13 @@ export function captureDurableCatalogReadConfig(input: DurableCatalogReadConfig)
     if (current !== hostId) { throw new CatalogReadError('CATALOG_HOST_MISMATCH') }
   }
   const repositoryIds = ids(input.repositoryIds)
+  const attachments = captureCatalogClipboardConfig(Object.getOwnPropertyDescriptor(input, 'attachments'))
   const launchDescriptor = Object.getOwnPropertyDescriptor(input, 'launch')
   if (launchDescriptor !== undefined && !('value' in launchDescriptor)) { throw new CatalogReadError('CATALOG_SERVER_CONFIG') }
   const launch = captureCatalogLaunchConfig(launchDescriptor?.value, repositoryIds)
   const config = Object.freeze({ pool, datasetName, hostId, pollIntervalMs, assertCurrentHost,
     ...(launch === undefined ? {} : { launch }),
+    ...(attachments === undefined ? {} : { attachments }),
     repositoryIds, projectGroupIds: ids(input.projectGroupIds), workspacePublicIds: ids(input.workspacePublicIds) })
   assertCurrentHost()
   return config
