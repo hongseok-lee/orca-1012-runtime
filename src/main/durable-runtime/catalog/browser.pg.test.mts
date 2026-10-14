@@ -80,7 +80,7 @@ await test('PG Browser reservation, receipt-first replay and existing projection
       VALUES($1,$2,'synthetic-export','/synthetic/browser','UNVERIFIED')`, [bindingId, backendId])
     await query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [unitId, sessionId, bindingId])
     const protectedBefore = await protectedState(), publicationBefore = await publicationState()
-    const launch = { tabId: logicalId('tab', randomUUID()), browserPageId: 'public-browser::opaque-page' }
+    const launch = { tabId: logicalId('tab', randomUUID()), browserPageId: `public-browser::opaque-page:${ids[0]}` }
     const call = prepareCatalogCall('browser.tabCreate', { worktree: `id:${publicIds[0]}`, page: launch.browserPageId,
       url: 'localhost:3000', activate: true, navigation: 'caller' }, context)
     const outcome = await reserveCatalogBrowserTab(pool, call, launch)
@@ -107,18 +107,18 @@ await test('PG Browser reservation, receipt-first replay and existing projection
     }
     const snapshot = await readCatalogSnapshot(pool, authority)
     const projection = projectCatalogTabs(snapshot, snapshot.workspaces.find(row => row.workspace_id === ids[0])!)
-    assert.deepEqual(projection.tabs, [stored.payload]); assert.equal(projection.activeTabId, null)
-    assert.deepEqual((await readAllCatalogTabs(pool, prepareCatalogCall('session.tabs.listAll', null, context))).snapshots
-      .find(row => row.worktree === publicIds[0])!.tabs, [stored.payload])
+    assert.deepEqual(JSON.parse(JSON.stringify(projection.tabs)), [stored.payload]); assert.equal(projection.activeTabId, null)
+    assert.deepEqual(JSON.parse(JSON.stringify((await readAllCatalogTabs(pool, prepareCatalogCall('session.tabs.listAll', null, context))).snapshots
+      .find(row => row.worktree === publicIds[0])!.tabs)), [stored.payload])
     const facade = new CatalogCompatibilityFacade(createCatalogEntries(pool, { recordUnitIntent, reserveSleep, recordInputCancel }, { browser: launch }))
     assert.deepEqual(await facade.invoke('browser.tabCreate', { worktree: publicIds[0], page: launch.browserPageId, url: 'https://changed.example/' }, context), { browserPageId: launch.browserPageId })
     assert.deepEqual((await query(`SELECT t.*,m.public_tab_id,m.payload,m.launch_request FROM durable_runtime.tabs t
       JOIN durable_runtime.catalog_tab_metadata m ON m.tab_id=t.id WHERE t.id=$1`, [launch.tabId])).rows[0], stored)
-    const second = { tabId: logicalId('tab', randomUUID()), browserPageId: 'second-browser-page' }
+    const second = { tabId: logicalId('tab', randomUUID()), browserPageId: `second-browser-page:${ids[0]}` }
     const secondCall = prepareCatalogCall('browser.tabCreate', { worktree: publicIds[0] }, context)
     assert.deepEqual(response(await reserveCatalogBrowserTab(pool, secondCall, second)), { browserPageId: second.browserPageId })
     assert.equal((await query('SELECT ui_order FROM durable_runtime.tabs WHERE id=$1', [second.tabId])).rows[0].ui_order, '1')
-    const collision = { tabId: logicalId('tab', randomUUID()), browserPageId: 'existing-other-kind' }
+    const collision = { tabId: logicalId('tab', randomUUID()), browserPageId: `existing-other-kind:${ids[0]}` }
     await query("INSERT INTO durable_runtime.tabs(id,workspace_id,kind,ui_order,lifecycle) VALUES($1,$2,'file',2,'OPEN')", [collision.tabId, ids[0]])
     await query(`INSERT INTO durable_runtime.catalog_tab_metadata(tab_id,public_tab_id,payload,launch_request)
       VALUES($1,$2,$3,'{}')`, [collision.tabId, collision.browserPageId, JSON.stringify({ type: 'file', id: collision.browserPageId,
@@ -137,10 +137,10 @@ await test('PG Browser reservation, receipt-first replay and existing projection
     await query('UPDATE durable_runtime.workspaces SET deleted_at=clock_timestamp() WHERE id=$1', [ids[0]])
     assert.equal((await reserveCatalogBrowserTab(pool, call, launch)).status, 'REPLAYED')
     await assert.rejects(reserveCatalogBrowserTab(pool, prepareCatalogCall('browser.tabCreate', {
-      worktree: publicIds[0] }, context), { ...launch, tabId: logicalId('tab', randomUUID()), browserPageId: 'another-page' }), /CATALOG_WORKSPACE_DELETED/)
+      worktree: publicIds[0] }, context), { ...launch, tabId: logicalId('tab', randomUUID()), browserPageId: `another-page:${ids[0]}` }), /CATALOG_WORKSPACE_DELETED/)
     // A late publication failure must roll back the Tab, metadata and receipt together.
     await query('DELETE FROM durable_runtime.catalog_heads WHERE scope=$1', [`workspace:${ids[1]}`])
-    const failed = { tabId: logicalId('tab', randomUUID()), browserPageId: 'rollback-page' }
+    const failed = { tabId: logicalId('tab', randomUUID()), browserPageId: `rollback-page:${ids[1]}` }
     const rollbackBefore = await publicationState()
     await assert.rejects(reserveCatalogBrowserTab(pool, prepareCatalogCall('browser.tabCreate', { worktree: publicIds[1] }, context), failed), /CATALOG_HEAD_MISSING/)
     assert.equal((await query('SELECT count(*)::text AS n FROM durable_runtime.tabs WHERE id=$1', [failed.tabId])).rows[0].n, '0')
