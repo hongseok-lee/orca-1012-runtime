@@ -1,0 +1,63 @@
+{
+  "기록": "제품 3개와 전용 fixture 2개의 source 제출입니다. 실행 검증 결과가 아닙니다.",
+  "originalFixedMain": "276d043ff91d5f3597119a6fd2d21b7f4994b113",
+  "mergedHistoryBase": "dfe265b48c311874fba41be3260effab4440e986",
+  "originalReadDependency": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+  "earlyProductPin": "5d51c9ac891622cc07d6331c1c3783d12e30883b",
+  "productPin": "99ca5b9f03caf71aa0b81927c379396b49e433fb",
+  "fixturePin": "17bb1682eadfe47d6d3a1cf8e65c2cebb84072f5",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/rpc/session-head-hints.ts",
+      "sha256": "2fe49195e995c54fbc1f0287aa0eb51fc5b16b92edc433a62b5fa663e53f4b7b",
+      "gitBlob": "46abb2009e872ce618000e3fc026db995e8947ae",
+      "bytes": 4827
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-history.ts",
+      "sha256": "34b7476c69e40f85b726c06222014241f8cc0a208782b7ab24815ae27ebf3add",
+      "gitBlob": "380ad387f87589b7e58b84bf1475f68815b403c5",
+      "bytes": 10209
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions.pg.test.mts",
+      "sha256": "1293951448a10edb230d98ae3a4b37efff7c5460412a15edc4ba03ae2dc9235e",
+      "gitBlob": "0184707ddcb390dac3eece94b133c8635ea8d88f",
+      "bytes": 13477
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions.ts",
+      "sha256": "e4e881d0681866330eeccba95130e75aeb3e1a51270ef97c0545ba851aee18d2",
+      "gitBlob": "8ebd06d7758d65caab8818f9a05c86567ee46a82",
+      "bytes": 10465
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions.value.test.mts",
+      "sha256": "9ba932f2a000bb13961721c8c7bb3158f6ae42f985c73dbc3efbe4556014fe10",
+      "gitBlob": "2e90bca28165b0a2f78fc42b2ad959ca8a5e7034",
+      "bytes": 8367
+    }
+  ],
+  "rootContractSha256": "06922d56742f06110fb20da935a9e7e32f17af8957756b883dc2127e21ba09c5",
+  "approvedPublicCommonSha256": "5e040a2c8d8d9c9465a5d8359a6767c36210826f01b128ee2f19e55638ad8e01",
+  "callbacks": {
+    "value": 1,
+    "pg": 1
+  },
+  "executions": {
+    "type": 0,
+    "lint": 0,
+    "value": 0,
+    "pg": 0,
+    "schema": 0,
+    "remote": 0,
+    "build": 0,
+    "install": 0,
+    "live": 0,
+    "browser": 0
+  },
+  "publicRegistryConnected": false,
+  "nativeProviderStarted": false,
+  "historyRrBodySha256": "ad3ad269adf004163594ba6bf2b8d32ac5211d7ba4453b2f66dac576b090de86",
+  "historyRrBodyByteUnchanged": true
+}
