@@ -20,8 +20,8 @@ PG fixture의 authority와 launch는 격리된 시험 입력이며 실제 HTTP �
 
 최초 검증 source는 `4eaf9151b3dd525f1b2a32eb1113219cc46a8172`이며 제품과 fixture bytes는 수정하지 않았다. 새 소유 DB에 원 SQL 001–019를 한 번 적용했고 dev DB는 변경하지 않았다. 고정 source와 기존 cache를 재사용했으며 소유 5개 31,277 bytes만 전송했다. 실제 누락 value import와 추가 dependency 전송은 0개다. Generator나 부모 callback은 추가하지 않았으며 원 callback body와 assertions를 유지했다.
 
-소유 5개 scoped type 진단은 0개이고 lint는 exit 0·오류/경고 0개다. 전체 compiler CLI는 exit 1이며 외부 진단 31개를 원 로그에 보존했다. 그중 6개는 이번 좁은 stage에서 `notifications/types.ts`를 찾지 못한 transitive 진단이다. 소유/외부 파일 구분을 전체 타입 합격으로 표현하지 않으며 외부 진단의 기존 오류 여부를 새로 판정하지 않았다. 원 CLI 결과와 전체 진단은 비공개 실행 증거로 보존했다.
+소유 5개 scoped type 진단은 0개이고 lint는 exit 0·오류/경고 0개다. 최초 전체 compiler CLI는 exit 1이며 원 31개 진단을 보존했다. Root가 그중 6개를 이번 stage의 `notifications/types.ts` 준비 누락으로, 나머지 25개를 기존 외부 진단으로 구분했다. 실제 고정 main의 Gitblob `8767c51b23ae9545e5500dad5a060db9a5b56a0c`, SHA256 `50a099d14d164af7db8d63f0de0c722085c5e916523dad9032f0bc87717f1cb3`, 2,009 bytes인 해당 파일만 기존 cache에서 소유 stage에 symlink했다. 추출 타입이나 stub는 사용하지 않았다. 같은 type roots 5개의 후속 확인에서 준비 누락은 0개, 소유 진단은 0개이며 외부 25개는 원 나머지 진단과 정확히 같다. 전체 compiler exit 1은 유지하며 전체 타입 PASS로 표현하지 않는다. 원/후속 CLI 로그와 입력 교정 근거를 모두 보존했다. 성공한 값·PG callback과 schema는 재실행하지 않았다.
 
-실제 job은 12:05:21–12:06:12 UTC에 실행됐고 owner PID 20116은 종료 후 zombie 상태이며 기록된 자식 PID는 모두 부재다. 활동 중인 소유 PID는 0개이고 heavy 1을 반환했다. 준비 helper는 실제 `readMigrations.version`에 `.sql`이 포함된 사실에 맞춰 suffix 비교만 실행 전에 교정했다. 원 helper/hash와 좁은 교정 관계를 보존했으며 제품·fixture·SQL 의미는 변경하지 않았다.
+실제 job은 12:05:21–12:06:12 UTC에 실행됐고 owner PID 20116은 종료 후 zombie 상태이며 기록된 자식 PID는 모두 부재다. 활동 중인 소유 PID는 0개이고 heavy 1을 반환했다. 준비 helper는 실제 `readMigrations.version`에 `.sql`이 포함된 사실에 맞춰 suffix 비교만 실행 전에 교정했다. 원 helper/hash와 좁은 교정 관계를 보존했으며 제품·fixture·SQL 의미는 변경하지 않았다. 타입 후속 확인 PID 20642도 종료 후 zombie 상태로 비활성이며 사용한 heavy 1을 반환했다.
 
 원 결과는 [값 TAP](first-value.tap)과 [PG TAP](first-pg.tap), [검증 요약](source-delivery.json)에 기록했다. 성공 callback·기존 suite·화면은 재실행하지 않았다. Live/source sync·runtime config 변경·설치·제품/릴리스 build·restart·browser·촬영은 모두 0회다. 새 Workspace의 실제 화면 캡처와 provenance는 아직 없고, 과거 C2 화면/PG9를 이 기능의 증거로 재사용하지 않았다. Live 합류 이후 실제 화면 확인과 전체 P1-26/27 완료는 아직이다.
