@@ -1,5 +1,5 @@
 import type { Pool, QueryResult } from 'pg'
-import { notificationRow } from './publication-worker-fixture.mts'
+import type { notificationRow } from './publication-worker-fixture.mts'
 
 export function controlGate() {
   let signal!: () => void, release!: () => void
