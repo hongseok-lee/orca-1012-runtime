@@ -1,0 +1,40 @@
+{
+  "capturedAt": "2026-10-13T14:32:35.327Z",
+  "PR": 41,
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/6cf175499b5ce2fd0349ab0e3f8f679db3a2e1e6/docs/implementation/p1-22-policy/README.md",
+  "targetSHA": "6cf175499b5ce2fd0349ab0e3f8f679db3a2e1e6",
+  "sourceSHA": "0ac75cf2527d8fa782eccffb5932fc27ecf9e0b6",
+  "viewport": {
+    "width": 1140,
+    "height": 1800
+  },
+  "DPR": 1,
+  "artifactSHA256": "f6699742c4a71b5e069731d663540bf98002d6476099d32cfbb4febcf2784ada",
+  "artifactBytes": 507583,
+  "actualHeading": "최초 관측 결과",
+  "headingRect": {
+    "x": 370,
+    "y": 1399.421875,
+    "width": 721,
+    "height": 38.1875
+  },
+  "actualResultParagraph": "승인된 원격 Node 24와 기존 읽기 전용 tools cache에서 21건 PASS, 0건 실패, 0건 skip을 확인했습니다. Scoped typecheck 1회와 configured lint 1회도 첫 실행에 통과했습니다. Lint는 10개 소유 파일, 1 thread, 0건 오류·0건 경고이며 시험 파일 병렬도는 1입니다. 실패 교정이나 통과 사례 재실행은 없습니다.",
+  "resultParagraphRect": {
+    "x": 370,
+    "y": 1453.609375,
+    "width": 721,
+    "height": 96
+  },
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "screenshotExecutions": 1,
+  "reportDocumentSHA256": "afc990c32e5dfbccc16968e354b8fa4c6cd9e48efc2c0f3b17e0d698ea02de16",
+  "resultDocumentSHA256": "4db9b8f689d5164f0b396ccd8504bb893f063d0007acc8d4988f6d7ef2fc06fa",
+  "productUI": false,
+  "nativeIPhone": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "authority": "DATA_ONLY",
+  "caption": "P1-22·P1-24 최초 순수 fixture 21건의 실제 browser 보고 화면",
+  "focused8857ExecutionEvidence": false
+}
