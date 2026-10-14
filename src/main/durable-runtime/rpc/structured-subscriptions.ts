@@ -33,6 +33,7 @@ type Subscription = {
   base: string
   fingerprint: string
   close(): void
+  idle(): Promise<void>
 }
 
 /**
@@ -88,7 +89,8 @@ export function createCatalogStructuredSubscriptions(
     let running: Promise<void> | null = null
     let detach = (): void => {}
     let releaseRegistration = (): void => {}
-    const record: Subscription = { id, base, fingerprint: caller.fingerprint, close }
+    const record: Subscription = { id, base, fingerprint: caller.fingerprint, close,
+      idle: () => running ?? Promise.resolve() }
     const aborted = (): void => releaseRegistration()
     function close(): void {
       if (closed) { return }
@@ -197,5 +199,10 @@ export function createCatalogStructuredSubscriptions(
     disposed = true
     for (const record of [...subscriptions.values()]) { record.close() }
   }
-  return Object.freeze({ subscribe, unsubscribe, dispose })
+  /** Internal poll/drain barrier; no new wire method or independent consumer loop. */
+  async function flush(): Promise<void> {
+    await hints.flush()
+    await Promise.all([...subscriptions.values()].map(record => record.idle().catch(() => {})))
+  }
+  return Object.freeze({ subscribe, unsubscribe, dispose, flush })
 }
