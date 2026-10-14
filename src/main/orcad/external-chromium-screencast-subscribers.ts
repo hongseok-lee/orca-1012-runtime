@@ -166,9 +166,11 @@ export class ExternalChromiumScreencastSubscribers {
       const owners = [...record.subscribers].filter(([, s]) => hasScreencastViewportSize(s.viewport))
       const next = owners.at(-1)
       record.owner = next?.[0] ?? null
-      record.latest = null
-      for (const viewer of record.subscribers.values()) viewer.pendingFrame = null
-      if (next) void record.stream.updateViewport(next[1].viewport).catch(() => this.stopRecord(record))
+      if (next) {
+        record.latest = null
+        for (const viewer of record.subscribers.values()) viewer.pendingFrame = null
+        void record.stream.updateViewport(next[1].viewport).catch(() => this.stopRecord(record))
+      }
     }
     void this.applyBudget(record).catch(() => this.stopRecord(record))
   }

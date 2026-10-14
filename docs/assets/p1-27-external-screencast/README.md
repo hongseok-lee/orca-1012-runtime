@@ -39,3 +39,17 @@ transport/reconnect 종료는 미실행입니다. Browser generation 거절과 t
 상위 의미의 거절을 확인하는 fixture이며 모든 내부 branch의 실행 증거를 대신하지 않습니다.
 실제 source 검증과 image marker 판정, 제품 연결 범위 수락은 Root가 별도로 결정합니다.
 자동 인증·중앙 BrowserTab PG 영속성·Catalog resolver·live Chrome 활성화는 이번 변경에 포함되지 않습니다.
+
+Root가 source 리뷰에서 지정한 세 교정을 별도 commit으로 보존했습니다.
+늦은 budget/viewport 거절은 captured stream만 종료하고 새 page stream을 조회하지 않습니다.
+정상 CDP command는 stop/browser generation/실제 transport identity로 차단하며,
+opening과 update 종료를 기다린 후 별도 cleanup 경로로 정확 stop/clear/detach를 보냅니다.
+일반 select/goto/close/기존 publicPageId 재호출과 stream start는 공통 Target binding 검사를 사용합니다.
+Target가 없거나 endpoint generation이 바뀌면 old mapping을 제거하며 다른 page를 추측하지 않습니다.
+
+교정의 지연 실패와 await/stop 경합을 노출하는 source fixture는
+`external-chromium-subscriber-cleanup.test.ts`, `external-chromium-target-stop.test.ts`,
+`external-chromium-target-binding.test.ts`입니다. 모두 미실행입니다.
+앞의 두 fixture는 controlled stream rejection 또는 loopback CDP peer로 소유권과 명령 순서를 확인하도록
+작성한 경합 fixture입니다. 실제 Chromium·제품 wire 성공을 대신하는 자료가 아닙니다.
+공통 Target boundary fixture도 negative source 경계이며 실제 browser generation 실행 증거로 확대하지 않습니다.
