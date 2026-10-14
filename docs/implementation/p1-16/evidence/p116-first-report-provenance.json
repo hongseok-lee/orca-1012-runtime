@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-13T13:11:08.046Z",
+  "kind": "Catalog 최초 PG 4개 통과와 실패 4개 교정 및 pure Node 13개 재사용 결과 문서",
+  "PR": 28,
+  "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/765b5ebd9bc25fea645b846cf0d37c4db2e847a7/docs/implementation/p1-16/first-verification-report.html",
+  "sourceURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/765b5ebd9bc25fea645b846cf0d37c4db2e847a7/docs/implementation/p1-16/first-verification-report.html",
+  "targetSHA": "765b5ebd9bc25fea645b846cf0d37c4db2e847a7",
+  "sourceSHA": "1a25f853d0b1004c21d1a70bbae038354dcc3c4e",
+  "productSourceSHA": "90eb71b6d16b4bab8f92b97fda4c3726b6922047",
+  "typeCorrectionSourceSHA": null,
+  "reportDocumentSHA256": "02ba71ae40e9b0e90022702e7a935e31058da5c398a9ccced2eadcc710bde5e2",
+  "resultDocumentSHA256": "08e626516236a97bf228b1cf743d8f4cb150b772111a6a453c1c8318f69222fb",
+  "renderMode": "원 owner HTML bytes를 hash 대조 후 그대로 렌더했다.",
+  "actualHeading": "P1-16 Catalog 교정 검증 결과",
+  "actualRenderedResultText": "서로 다른 PG 사례 8개 통과",
+  "headingRect": {
+    "x": 53,
+    "y": 57,
+    "width": 1034,
+    "height": 51
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 1500
+  },
+  "DPR": 1,
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "artifactSHA256": "e940d6016d85ba327b45d25dc9cd6f20489c5271a2a3f60b8da3f3a61892f874",
+  "artifactBytes": 136120,
+  "productUI": false,
+  "nativeIPhone": false,
+  "HAQualification": false,
+  "independentContext": true,
+  "ExpoPairingContextChanged": false,
+  "screenshotExecutions": 1
+}

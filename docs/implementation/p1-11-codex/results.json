@@ -1,0 +1,175 @@
+{
+  "status": "새 3개와 수정 1개는 첫 실행에서 PASS이며 스타일 및 fixture guard 교정 뒤 scoped 타입/lint도 PASS입니다. 실제 inference/auth/PG/spool 합격이 아닙니다.",
+  "implementationRevision": "30a7dbffe03ca47b31fe8730f6a4a948c3509f30",
+  "dbPredecessor": "ad11b7fbe4016fe1aef0f916f2af7735e04f8af9",
+  "sharedRevision": "39e3e7ce1ed3a571d67094b298168934efb81aa1",
+  "inputRevision": "5ae4f671d0227abbc144f5ef6ba50a0346e59950",
+  "contextRevision": "6a61748f2de23db95d176acf0ecc728851988b66",
+  "gatewayRevision": "9052837192bba831a4f0b444e02e51da57c13709",
+  "node": "v24.15.0",
+  "typescript": "7.0.2",
+  "esbuild": "0.25.12",
+  "observedAt": "2026-10-13T04:04:09.467Z",
+  "checks": {
+    "protocol": {
+      "pass": 9,
+      "revision": "90167721b035215fa406a9fbeaf1482f7648a8a7",
+      "reused": true,
+      "note": "기존 9개 fixture를 재실행하지 않았습니다. 최초 protocol 구현의 검증 범위입니다.",
+      "tapSha256": "8167db9f177db26f95831dd6b315099dfa00e4d674c24fe99f5ddf34d191c342"
+    },
+    "sharedDriver": {
+      "pass": 11,
+      "reused": true,
+      "note": "shared 연결 뒤 wire hash 교정 전 소유 WIP에서 통과했습니다. 최종 전체 재실행으로 표시하지 않습니다.",
+      "tapSha256": "b2cf960ef528062984a847c508e21dd3610147650c532a9464723f92ada83824",
+      "ownedSourceArchiveSha256": "c055f1c7b33f30ce7556504f5a1d96a0b33ba521bc227927e55546be6a8df744"
+    },
+    "nativeWrapper": {
+      "pass": 1,
+      "reused": true,
+      "note": "최초 실행에서 생성 시 provider 호출 0과 미소유 baseline 종료 거절을 확인했습니다. 최초 결합 실행의 tool 출력으로 관찰했고 별도 원본 TAP는 보존하지 못했습니다."
+    },
+    "wireFocused": {
+      "pass": 1,
+      "note": "실제 turn/start params의 thread, client echo, 전체 내용 hash를 확인한 새 fixture만 실행했습니다.",
+      "tapSha256": "d65f06520ac542e8cbd81a9e646760342e2b493c819171e0421532107019ce03"
+    },
+    "typecheck": {
+      "state": "PASS",
+      "note": "driver/protocol와 전용 시험의 TypeScript 검사는 통과했습니다. 기존 native transport 전체 import graph의 타입 검사는 포함하지 않았습니다."
+    }
+  },
+  "failures": [
+    "첫 driver 타입 검사에서 literal 타입 및 fixture의 nominal/읽기 전용 타입 오류를 수정했습니다.",
+    "최초 결합 실행에서 ESM이 외부 pg cache를 찾지 못해 driver 시험이 실행 전에 중단됐습니다. 소유 실행 디렉터리에 기존 cache 참조를 연결했고 새 설치 없이 driver 11개가 통과했습니다."
+  ],
+  "boundaries": [
+    "실제 계정 inference, native cold/resume, permission-skip 실증, 자식 프로세스 종료 실증은 수행하지 않았습니다.",
+    "상위 executor의 실제 COMMIT/소유권/writer grant 인증과 입력 claim API는 아직 연결되지 않았습니다. TRANSACTION_LOCAL은 호출 권한이 아닙니다.",
+    "sink callback은 PG append, producer spool 또는 중앙 ACK가 아닙니다. 영속 원 identity reconciliation은 P112 합류 전입니다.",
+    "새 경로는 GENERAL만 처리합니다. 질문/승인/command/raw 채널은 미지원이며 reverse RPC는 수락 proof가 아닙니다.",
+    "첨부를 원 Component 순서의 JSON과 원 첨부 순서의 data URL 이미지로 직렬화했습니다. 실제 Codex data URL 수락과 이미지 내용 처리 능력은 미확인입니다.",
+    "native resume은 excludeTurns 응답 옵션을 전달합니다. 취소된 과거 작업의 실행 억제나 버전별 fallback 보장은 확인하지 않았습니다.",
+    "옛 target 뒤 새 dispatch가 생겼거나 effect가 진행 중이면 descendant baseline을 사용하지 않고 취소를 미확정으로 남깁니다.",
+    "동결 template, 관리 서비스, cache 대상, 보호 backup과 native transcript/auth/config를 실행하거나 변경하지 않았습니다. TTL은 조사하지 않았습니다."
+  ],
+  "sourceHashes": {
+    "src/main/durable-runtime/providers/codex/driver.test.mts": "611ec66bcae0f8664f288403bad3c3f173295b6c857730f98ea7171cf0cfe448",
+    "src/main/durable-runtime/providers/codex/driver.ts": "29b56e33731a88e9b1fde93bc979c7d8e40539590d260a2be6d3e3c391476422",
+    "src/main/durable-runtime/providers/codex/native-transport.test.mts": "a4ab2d4a43d9afdf888e89ca6ecdb0bb370342cc323621365b78f8a11bc816d2",
+    "src/main/durable-runtime/providers/codex/native-transport.ts": "a8e58f0aea873c446dcb51ee1193dac128dc5db95b752a8da2649e822de44410",
+    "src/main/durable-runtime/providers/codex/protocol.test.mts": "1afdb033614bcf3898f29ad8c3a89955c36ff2dfccffacdba29b26718f9b21ab",
+    "src/main/durable-runtime/providers/codex/protocol.ts": "0594f226d2b61a6da601d58a2b40199d28c13f8c120262fdab8808c8ad05356b",
+    "src/main/durable-runtime/providers/codex/tsconfig.json": "bc508fb314c7d9f0ac5da2b39d6e5e98e0cf4ee438aee07f57f4bcecc62dbf4a"
+  },
+  "sharedHashes": {
+    "src/main/durable-runtime/providers/shared/contracts.ts": "afdb62f6ecfd335c1d87d1dcde5b873c331ff7386e9136b5d77fe11b3ab3da87",
+    "src/main/durable-runtime/providers/shared/effect-boundary.ts": "ad3407b226b41e598bc4a17c29cb6d64f5b63ef554ff097a4a0798b98cdea62a",
+    "src/main/durable-runtime/providers/shared/recovery-renderer.ts": "52db0d617764de2d5f3b2f70dba520b7d4cb7c5c030fba61adb2095b7127bc8a"
+  },
+  "capture": {
+    "state": "CAPTURED",
+    "note": "새 recovery 환경의 실제 첫 focused 결과를 client browser의 별도 비인증 Context에서 최초 한 번 캡처했습니다. 제품 UI/실제 provider 증거가 아닙니다.",
+    "actualUrl": "about:blank (setContent)",
+    "heading": "P1-11 Codex ownership 교정의 첫 focused 검증 결과",
+    "capturedAt": "2026-10-13T11:39:21.615Z",
+    "pngSha256": "d5c403eab097f79c8bdc3ac69c0fa6ea75ed65ad7ac4a0831345ce949e6aa287",
+    "inputSha256": "8aaf00e755650efde29a399f86dcb3eca91a2147b7138d8ac72522542235b44a"
+  },
+  "reviewCorrection": {
+    "codeRevision": "bba7df814e7b51f050df8b7673c7b5d2bf5e393b",
+    "reviewedHead": "46f2bb186f7acc5fc57639741537c3f7d8804b58",
+    "rootReviewComment": "https://github.com/hongseok-lee/orca-1012-runtime/pull/22#issuecomment-6143239997",
+    "changes": [
+      "open의 첫 await 전에 opening을 예약해 동시 Cold가 transport 두 개를 만들지 않도록 교정했습니다. 거절된 permit은 protocol open에 들어가지 않습니다.",
+      "request 응답 대기와 native turn 미종료 상태를 분리했습니다. 정확한 원 terminal 전에는 다음 delivery를 effect 전에 busy/unverifiable로 거절하고 원 scope를 보존합니다. 동일 request 조회는 재호출하지 않습니다.",
+      "descendants 종료 성공을 원 receipt/baseline/connection에 묶어 보존했습니다. 늦은 exact terminal과 이후 재조회에서 결합하며 다시 interrupt/terminate하거나 새 permit을 사용하지 않습니다."
+    ],
+    "newFixtureFile": "src/main/durable-runtime/providers/codex/ownership-boundaries.test.mts",
+    "newFixtureCount": 3,
+    "newFixtureState": "PASS: 새 환경 첫 실행 3개입니다.",
+    "newFixtureDescriptions": [
+      "지연된 opener의 동시 Cold와 거절된 permit 뒤 정상 Cold를 확인하도록 작성했습니다.",
+      "running/UNKNOWN 원 turn의 다음 delivery 거절·원 조회·잘못된 terminal 격리·정확한 terminal 뒤 새 delivery를 확인하도록 작성했습니다.",
+      "먼저 확인한 descendants 종료와 늦은 terminal의 재조회, 새 turn 및 다른 connection의 negative scope를 확인하도록 작성했습니다."
+    ],
+    "affectedExistingFixture": "old target baseline never terminates descendants belonging to a later turn",
+    "affectedExistingFixtureChange": "첫 turn의 실제 completed notification을 주입한 뒤 다음 turn을 시작하도록 교정했습니다. 옛 target의 interrupt/terminate 0회 기대를 보존했습니다.",
+    "affectedExistingFixtureState": "PASS: 새 환경 첫 focused 실행 1개입니다.",
+    "currentTypecheck": "PASS",
+    "currentLint": "PASS",
+    "currentRuntime": "합성 protocol focused 4개만 PASS입니다.",
+    "currentCapture": "CAPTURED: 실제 focused 보고서의 최초 PNG이며 제품 UI가 아닙니다.",
+    "boundary": "busy/unverifiable는 이 연결의 effect 범위입니다. 독립 정상 입력의 durable 접수 제한이나 quota/정책을 추가하지 않았습니다.",
+    "sourceHashes": {
+      "src/main/durable-runtime/providers/codex/driver.test.mts": "e1198eb9940bc0e5b25900cf9df2d304727afe6abef1422b743d8f7dcafe5522",
+      "src/main/durable-runtime/providers/codex/driver.ts": "317e140653512c97d2519cf9cfbc466e5a2b74a22c916e1c248a62857b20854d",
+      "src/main/durable-runtime/providers/codex/native-transport.test.mts": "a4ab2d4a43d9afdf888e89ca6ecdb0bb370342cc323621365b78f8a11bc816d2",
+      "src/main/durable-runtime/providers/codex/native-transport.ts": "a8e58f0aea873c446dcb51ee1193dac128dc5db95b752a8da2649e822de44410",
+      "src/main/durable-runtime/providers/codex/ownership-boundaries.test.mts": "3a6e04cd2a3527761a45ece535639026a3912c282650d1742e5913d16b831d44",
+      "src/main/durable-runtime/providers/codex/protocol.test.mts": "1afdb033614bcf3898f29ad8c3a89955c36ff2dfccffacdba29b26718f9b21ab",
+      "src/main/durable-runtime/providers/codex/protocol.ts": "c2dbde62bf3611de69483e273323f730c197a5d388e50e0fe33fad10c422fa03",
+      "src/main/durable-runtime/providers/codex/tsconfig.json": "f279c9ebd8c365350e50956b3800fea64a558d06bf18d66115792fa1ad291f2a"
+    },
+    "unchanged": "shared/Claude/DB/input/lifecycle/Catalog와 native transport는 수정하지 않았습니다. 원 실패·원본 TAP·최초 PNG 미확인 상태를 보존했습니다."
+  },
+  "recoveryFocused": {
+    "status": "새 3개와 수정 1개는 첫 실행에서 PASS이며 스타일 및 fixture guard 교정 뒤 scoped 타입/lint도 PASS입니다. 실제 inference/auth/PG/spool 합격이 아닙니다.",
+    "testedCodeRevision": "bba7df814e7b51f050df8b7673c7b5d2bf5e393b",
+    "testedOwnerHead": "5215c27dc40121c9d2be01c7641605aaf2df7ef7",
+    "finalStyleRevision": "ea060b01eb7b070fdc960472e5fa29c9f40c5cf0",
+    "verificationMain": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "sharedRevision": "39e3e7ce1ed3a571d67094b298168934efb81aa1",
+    "contextTypesRevision": "6a61748f2de23db95d176acf0ecc728851988b66",
+    "sourceInputsSha256": "5e4fc059aa8d4977991f3f3b70e239d0b096727a391eb704f41b4b26a313af74",
+    "firstStartedAt": "2026-10-13T11:32:21.510Z",
+    "firstCompletedAt": "2026-10-13T11:32:25.966Z",
+    "newBoundaries": {
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0
+    },
+    "changedOldTarget": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "node": "v24.15.0",
+    "typescript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "firstLintFailure": "configured lint에서 curly 58건과 기존 fixture의 unsafe optional chaining 1건으로 실패했습니다. 원 로그와 source/test hash를 보존했습니다.",
+    "limitedCorrection": "Codex 소유 단일문 if의 중괄호와 기존 fixture의 wire 존재 guard만 교정했습니다. 의미가 같은 focused 4개를 재실행하지 않고 lint만 해당 실패를 교정해 확인했습니다. 변경된 타입은 scoped tsc로 확인했습니다.",
+    "historicalSuites": "기존 protocol 9개·driver 11개·hash focused 1개·native wrapper 1개 전체는 반복하지 않았습니다.",
+    "noRuntimeQualification": "permit은 합성 callback이고 실제 COMMIT/소유권/writer grant를 인증하지 않습니다. 실제 provider credential/inference/cold resume/data URL wire, PG receipt/spool/ACK와 writer fencing은 미연결입니다.",
+    "busyBoundary": "BUSY/UNVERIFIABLE는 exact 연결의 effect 범위이며 독립 입력의 durable 접수 금지 정책이 아닙니다.",
+    "captureHeading": "P1-11 Codex ownership 교정의 첫 focused 검증 결과",
+    "rawLogHashes": {
+      "recovery-first-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recovery-first-lint.log": "7396571c78049813868d5e9f3c9cd174c394e6cfaf1d645e2a7136c2fef1b640",
+      "recovery-first-ownership.log": "36cb317212703660ce336e1353f5f5e56b8eaa113195ef7c67fe54340676d551",
+      "recovery-first-old-target.log": "a09827b657ae0bc8dc6a95b9314811dd108ddc88c0e26e67661977b148268a6d"
+    },
+    "finalLogHashes": {
+      "recovery-final-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recovery-final-lint.log": "f0b3f74d1f706ddbbcbf2a167cea524f13f342392c2469b9a89a87406064a612",
+      "recovery-lint-curly-fix.log": "79826dfbf295c56ced79389e623fcab5711d1457d3730c9de151ff7937b94e17"
+    },
+    "finalOwnerSourceHashes": {
+      "driver.test.mts": "2c6e00597898d2a9209b8d1970a73239d0e829f9f71f0bda42083f73766a7665",
+      "driver.ts": "7305d2a464a169e4ab4228bfc3c11c6398d241af70824a8d0db0558cee6ea2f3",
+      "native-transport.test.mts": "a4ab2d4a43d9afdf888e89ca6ecdb0bb370342cc323621365b78f8a11bc816d2",
+      "native-transport.ts": "70ec82efa4452b3e55d1664da0f890c8c49ce3bcf357638fc07da11472f7fbdb",
+      "ownership-boundaries.test.mts": "f00385503b1111c5be25b7a3a660613955ff28c3b0cf1696b9b4ced260ede456",
+      "protocol.test.mts": "7fc622571fa1fc4f2fc4eedc9b3ea1b601852ab5c0438a5bf5dea849e0d41d60",
+      "protocol.ts": "fe8a3fc2303558fbfae5da429032bb7f8afd37451a72769a5ce4bb04197c4541",
+      "tsconfig.json": "f279c9ebd8c365350e50956b3800fea64a558d06bf18d66115792fa1ad291f2a"
+    },
+    "canonicalNfsFinalOwnerSourceEqualsLocal": true
+  }
+}

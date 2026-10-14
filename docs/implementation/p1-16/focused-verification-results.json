@@ -1,0 +1,68 @@
+{
+  "source": "1a25f853d0b1004c21d1a70bbae038354dcc3c4e",
+  "productSource": "90eb71b6d16b4bab8f92b97fda4c3726b6922047",
+  "base": "6848555a37620228ecef7e37bb66a69fb16ce4e3",
+  "inputPin": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+  "schema013": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "schema014": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "startedAt": "2026-10-13T12:58:13.370Z",
+  "finishedAt": "2026-10-13T12:58:22.283Z",
+  "node": "v24.15.0",
+  "caseSelection": "1,3,4,5",
+  "focusedPg": {
+    "executed": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "originalCaseNumbers": [
+      1,
+      3,
+      4,
+      5
+    ],
+    "names": [
+      "concurrent same-key create and caller retry retain one stable object and unverified storage",
+      "nested launch request mutated after first await stays detached and create failure rolls back all aggregates",
+      "retired generated name is included in the namespace choice and stale preparation rolls back",
+      "pin invalidated while Pool checkout waits cannot commit SUSPENDED"
+    ],
+    "topLevelTapCounts": {
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "parentIncluded": true
+    }
+  },
+  "priorPassedPgCasesReused": [
+    2,
+    6,
+    7,
+    8
+  ],
+  "distinctCatalogPgPass": 8,
+  "priorNodePassReused": 11,
+  "priorAnchorPassReused": 2,
+  "priorSuccessfulCallbacksRepeated": false,
+  "fixtureTypecheck": {
+    "exit": 0,
+    "errors": 0,
+    "scope": "catalog.pg.test.mts and required imports"
+  },
+  "fixtureLint": {
+    "exit": 0,
+    "errors": 0,
+    "scope": "catalog.pg.test.mts only"
+  },
+  "newRelationErrors": [],
+  "previous23505ConstraintNameReadback": "새 오류가 없어 이전 실패를 재현하거나 별도 constraint 조회를 하지 않았습니다.",
+  "sourceDigest": "bce89c79d83075c038a963de887bb6738efa42068f689dd3eab64e4a24ce343c",
+  "fixtureSha256": "e6617ea7753c51d139da06adec217cbb35337a8f4c3c7a6245c18130f532ea32",
+  "sourceFiles": 2251,
+  "originalRawLogsUnchanged": true,
+  "ddlReset": false,
+  "newInstall": false,
+  "sharedCacheWrites": false,
+  "actualPng": false,
+  "expoWebQualification": false,
+  "nativeIphoneQualification": false
+}

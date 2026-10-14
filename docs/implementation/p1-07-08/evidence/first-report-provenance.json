@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-10-13T13:04:33.263Z",
+  "kind": "P107/08 원격 최초 PG 11개 결과 보고 화면",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/380accc6f7d3787838cae8de35b528de45b6af20/docs/implementation/p1-07-08/evidence/first-verification.md",
+  "targetSHA": "380accc6f7d3787838cae8de35b528de45b6af20",
+  "sourceSHA": "24b0c4d0ad2a12c99aa2c6c52cc6656c74a218c0",
+  "reportDocumentSHA256": "20c3027e21fa0359a0ba9c52b89e44121cfa407ecbc875ac9f86f6baccdcc9e6",
+  "resultDocumentSHA256": "5abf2c2bd52ae14ade3c0a2f47aa90f536cd01bb0a5a39de3408aa40f96e8570",
+  "actualHeading": "P107/08 최초 검증 결과",
+  "viewport": {
+    "width": 1140,
+    "height": 1500
+  },
+  "DPR": 1,
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "artifactSHA256": "7650863a0e9ea50bbddc6fa8665af7f5130f2b61dc571d90cdd8ffe158fc9ac2",
+  "artifactBytes": 351134,
+  "productUI": false,
+  "nativeIPhone": false,
+  "HAQualification": false,
+  "independentContext": true,
+  "screenshotExecutions": 1,
+  "caption": "원격 최초 PG 11개 결과 보고 화면입니다. 제품 앱·native iPhone·HA 검증 화면이 아닙니다."
+}

@@ -1,0 +1,42 @@
+{
+  "capturedAt": "2026-10-13T13:38:32.724Z",
+  "kind": "Incident 초기 6개 통과와 실패 1개 한정 교정의 distinct PG 7개 결과 보고 문서",
+  "PR": 27,
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/4133d5fd60451e0dbefe86d606bd5b921a0e8ad5/docs/implementation/p1-21/incidents.md",
+  "targetSHA": "4133d5fd60451e0dbefe86d606bd5b921a0e8ad5",
+  "sourceSHA": "31bcb302550c75385e623925ed8a00e8e8452135",
+  "initialSourceSHA": "32ea8374bc55e52515de33871349d89eae4b6099",
+  "typeCorrectionSourceSHA": null,
+  "reportDocumentSHA256": "c5655ea7bb7b21b6a6c912da2734a186a46a2f8edf68565c03a551f787f2c3e8",
+  "resultDocumentSHA256": "23fc6ff4bdaa217a6b53bbc12be3187ebd5fab1d645248f0e0929e912582cfa7",
+  "actualHeading": "최초 실제 검증과 한정 교정",
+  "actualResultParagraph": "원 source 32ea8374bc55e52515de33871349d89eae4b6099의 첫 PG는 7개 중 6 PASS, 1 FAIL, 0 SKIP였다. 실패한 P112 사례는 DONE 대신 RETRY를 반환했고 실제 queue의 원 오류는 INCIDENT_EVENT_RECORD_CONFLICT였다. attempt_count SQL 타입은 BIGINT이며 PG driver는 문자열 \"1\", 기존 P112 head.record()는 숫자 1을 사용했다. 동일 원 행의 digest가 표현 차이로 달라졌다. 최초 TAP과 결과 JSON을 수정하지 않고 보존했다.",
+  "headingRect": {
+    "x": 370,
+    "y": 1158.421875,
+    "width": 721,
+    "height": 38.1875
+  },
+  "resultParagraphRect": {
+    "x": 370,
+    "y": 1212.609375,
+    "width": 721,
+    "height": 121.171875
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 1800
+  },
+  "DPR": 1,
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "artifactSHA256": "bda2f83af8c719adcceb335a3691c227e39a96f06a981e164aa7701b4cfa5718",
+  "artifactBytes": 593695,
+  "screenshotExecutions": 1,
+  "productUI": false,
+  "nativeIPhone": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false
+}

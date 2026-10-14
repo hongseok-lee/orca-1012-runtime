@@ -1,0 +1,122 @@
+{
+  "source": "90eb71b6d16b4bab8f92b97fda4c3726b6922047",
+  "publicHeadAtExecution": "1a6545a53687b4d7c898b2547869fadefcf96472",
+  "base": "6848555a37620228ecef7e37bb66a69fb16ce4e3",
+  "inputPin": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+  "schema013": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "schema014": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "startedAt": "2026-10-13T12:30:25.480Z",
+  "finishedAt": "2026-10-13T12:30:35.610Z",
+  "node": "v24.15.0",
+  "typecheck": {
+    "exit": 0,
+    "errors": 0
+  },
+  "anchorFixtures": {
+    "executed": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "pg": {
+    "subtests": 8,
+    "passed": 4,
+    "failed": 4,
+    "skipped": 0,
+    "cases": [
+      {
+        "number": 1,
+        "name": "concurrent same-key create and caller retry retain one stable object and unverified storage",
+        "status": "FAIL"
+      },
+      {
+        "number": 2,
+        "name": "alias resolver uses the same object and read-only tab snapshots do not mark activity",
+        "status": "PASS"
+      },
+      {
+        "number": 3,
+        "name": "nested launch request mutated after first await stays detached and create failure rolls back all aggregates",
+        "status": "FAIL"
+      },
+      {
+        "number": 4,
+        "name": "retired generated name is included in the namespace choice and stale preparation rolls back",
+        "status": "FAIL"
+      },
+      {
+        "number": 5,
+        "name": "pin invalidated while Pool checkout waits cannot commit SUSPENDED",
+        "status": "FAIL"
+      },
+      {
+        "number": 6,
+        "name": "same-TX cancel plus tombstone rollback, one Session close in a shared Unit, and no fabricated physical stop",
+        "status": "PASS"
+      },
+      {
+        "number": 7,
+        "name": "latest P113 CLOSING sleep is DEFERRED, not a fabricated successful stop",
+        "status": "PASS"
+      },
+      {
+        "number": 8,
+        "name": "stale physical tuple fails; exact synthetic retirement never resurrects a CLOSED Tab",
+        "status": "PASS"
+      }
+    ],
+    "topLevelTapCounts": {
+      "tests": 9,
+      "passed": 4,
+      "failed": 5,
+      "parentFailureIncluded": true
+    },
+    "registrationNowCommitted": true,
+    "firstFailure": "Fresh immutable response and persisted replay response have different object prototypes.",
+    "subsequentFailureCodes": [
+      "23505"
+    ],
+    "diagnosticInference": "The first assertion prevented used-name fixture bookkeeping; subsequent fresh fixtures may reuse the stored public path. This is not yet confirmed by a corrective execution."
+  },
+  "lint": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "files": 33
+  },
+  "priorSuccessfulNodeCasesRepeated": 0,
+  "priorNodeDistinctPass": 11,
+  "newNodeDistinctPass": 2,
+  "sourceDigest": "8788a83de8eef3cdc8c5adafa3e516a4eedc824fc3ebd68ebe63b3ebac20d836",
+  "sourceFiles": 2251,
+  "sharedCacheChanged": false,
+  "newInstall": false,
+  "testDigests": {
+    "src/main/durable-runtime/catalog/catalog.pg.test.mts": "7bd1a3fbec3dd279acbcafd1a8a18fec9c03918f9cbc9655ebb3c340637be0af",
+    "src/main/durable-runtime/catalog/payload.test.mts": "0337f28c84d5f073f9fb63f823b8e349ec0110f639977e8edbd5622d8f346df9",
+    "src/main/durable-runtime/catalog/ps-reservation.test.mts": "40a51f371fea98b4ed9f1552a3c1f4fbbd37224072a7261c11793b0574d5cb8e",
+    "src/main/durable-runtime/catalog/request.test.mts": "b42c9b65b9dc31a5a42886311cd5121a6677ee75597d5b1a97737791c4adee8d",
+    "src/main/durable-runtime/catalog/sleep-pin.test.mts": "4adeab16eda795fd2bad2e4008a846cc1fa1e9a89b55e7fd54a555f4469cd547",
+    "src/main/durable-runtime/catalog/aggregate-anchor.test.mts": "d62709b05be78ddeedc5861d00781560af856c4fc8aeb018108e3d8078b3766a"
+  },
+  "schemaDigests": {
+    "src/main/durable-runtime/db/migrations/001-catalog.sql": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+    "src/main/durable-runtime/db/migrations/002-execution-storage.sql": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+    "src/main/durable-runtime/db/migrations/003-operations-resources.sql": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+    "src/main/durable-runtime/db/migrations/004-input-context.sql": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+    "src/main/durable-runtime/db/migrations/005-events-replay.sql": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+    "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+    "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+    "src/main/durable-runtime/db/migrations/008-attachment-store.sql": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+    "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+    "src/main/durable-runtime/db/migrations/010-runtime-command-ledger.sql": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+    "src/main/durable-runtime/db/migrations/011-runtime-event-producers.sql": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+    "src/main/durable-runtime/db/migrations/012-input-merge-boundary.sql": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+    "src/main/durable-runtime/db/migrations/013-context-deliveries.sql": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+    "src/main/durable-runtime/db/migrations/014-durable-catalog.sql": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2"
+  },
+  "status": "미완료",
+  "actualPng": false,
+  "expoWebResult": false,
+  "nativeIphoneResult": false
+}
