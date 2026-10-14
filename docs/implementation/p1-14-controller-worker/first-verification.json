@@ -1,0 +1,640 @@
+{
+  "기록": "최초 값 1개와 실제 PG 4개가 모두 통과했습니다. 원 lint 오류 1개와 동등 표현 교정의 직접 diff를 보존했습니다. 기존 성공 시험과 scoped type을 반복하지 않았습니다.",
+  "base": "e12f94346756f5edb35ef9afad2083cfb706301c",
+  "originalProductPin": "26f94d894f7ddbd48ab79d1c2cd5e32d53aef489",
+  "fixturePin": "903f91e6deb6a72d9118ec8d0d85545d8e408d9b",
+  "lintCorrectionPin": "4f4005a7b42371d7b82cc4018a7848ae43d93982",
+  "startedAt": "2026-10-14T11:35:23.157Z",
+  "endedAt": "2026-10-14T11:36:37.049Z",
+  "callbacks": {
+    "valueEntered": 1,
+    "valuePassed": 1,
+    "pgEntered": 4,
+    "pgPassed": 4,
+    "failed": 0,
+    "cancelled": 0,
+    "parentProductCount": 0,
+    "valueExit": 0,
+    "pgExit": 0,
+    "successfulCallbacksRepeated": 0
+  },
+  "static": {
+    "originalScopedTypeExit": 0,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0,
+    "typeRepeatedAfterEquivalentLint": false,
+    "originalLintExit": 1,
+    "originalLintRule": "unicorn(no-useless-spread)",
+    "originalLintLocation": "src/main/durable-runtime/ha/worker.ts:154",
+    "correction": "Promise.allSettled([...calls]) → Promise.allSettled(calls)",
+    "changedWorkerLintExit": 0,
+    "wholeFiveLintRepeated": false
+  },
+  "inputs": {
+    "manifestFiles": 41,
+    "actualCallbackImports": 37,
+    "importsIncludingMigration": 38,
+    "sqlFiles": 19,
+    "gitBlobMismatches": 0,
+    "filePins": [
+      {
+        "path": "src/main/durable-runtime/attachments/types.ts",
+        "bytes": 2592,
+        "sha256": "a2c2a8d84ca2337dfaa8aabc5d9e58756a9361df65af50f3c15663d5e88ef282",
+        "gitBlob": "d373dc3683026da60295f210f0d93666eed55b2d"
+      },
+      {
+        "path": "src/main/durable-runtime/db/atomic.ts",
+        "bytes": 9074,
+        "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+        "gitBlob": "5437efd3e2466b6357d918fac84768479871e03e"
+      },
+      {
+        "path": "src/main/durable-runtime/db/connection.ts",
+        "bytes": 3803,
+        "sha256": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+        "gitBlob": "39bffee2b1d8b01a26b466362e032c8f80fb1eb3"
+      },
+      {
+        "path": "src/main/durable-runtime/db/locks.ts",
+        "bytes": 2071,
+        "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+        "gitBlob": "2fc02747102fddc0f4ad669a6484c2382f7f5822"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrate.ts",
+        "bytes": 3136,
+        "sha256": "2ec01fa1bd35f29edffa19a5f3089642d68146399a1d506e042beab85257abf1",
+        "gitBlob": "9172ba37b4578252a8bb94244083a0d119037bc8"
+      },
+      {
+        "path": "src/main/durable-runtime/events/claim.ts",
+        "bytes": 4305,
+        "sha256": "edd0af494c86bc28b3571835e90164e13ccb8b1ef2e0a22de053f91c125d30f8",
+        "gitBlob": "f78d9f08eca0f6a9fb48791679e0ee86b73a8923"
+      },
+      {
+        "path": "src/main/durable-runtime/events/enqueue.ts",
+        "bytes": 4461,
+        "sha256": "c00f8c0c6dfa99908c3f47eb2b535935e17919f203dcc83bccec879bee2717e9",
+        "gitBlob": "886acb0c8a76bba8d16cb8497976d7ca9bc89ad2"
+      },
+      {
+        "path": "src/main/durable-runtime/events/head.ts",
+        "bytes": 5164,
+        "sha256": "b558f859ea96281d2127287bd7b04f8d969ca7aa584bc2c16b63b2b7926e2f0b",
+        "gitBlob": "2a952860c58032cb1def19d62fa5b1ab81c3bf2e"
+      },
+      {
+        "path": "src/main/durable-runtime/events/internal.ts",
+        "bytes": 4330,
+        "sha256": "a21459b893a771314da3961ffe4975bf65cb3152478b89410e4349ee81c4890a",
+        "gitBlob": "b17eba450a4642c98e80018c32cede5de4bef6fd"
+      },
+      {
+        "path": "src/main/durable-runtime/events/model.ts",
+        "bytes": 520,
+        "sha256": "e302c10cf8cdd1727a06d0d2a3258535683a83d50763603baae99526b03d6be9",
+        "gitBlob": "df704394b8bd1c53bd5dff875e49879a533b8c4e"
+      },
+      {
+        "path": "src/main/durable-runtime/events/process.ts",
+        "bytes": 4789,
+        "sha256": "3ce4f24d1e8c4b382d9e86e944adfaab609008c66e946c5d56b9ed2396700e9f",
+        "gitBlob": "b5b9b585512586321d827c337ab41f18fd526269"
+      },
+      {
+        "path": "src/main/durable-runtime/events/producer.ts",
+        "bytes": 2975,
+        "sha256": "9058b45460967f294fb895848e731a8c08f03a6b8446c0ecfe301c06a63b481c",
+        "gitBlob": "736fb79df9fe458c6a8b3ba27bf03463c0b515d5"
+      },
+      {
+        "path": "src/main/durable-runtime/events/store.ts",
+        "bytes": 252,
+        "sha256": "a0556849eb1f3e764da02c1ef95b66238462d0cc479228f112a64ec1553f6850",
+        "gitBlob": "67b28c6006e53e0c2c8d4a041372a048ad6935ea"
+      },
+      {
+        "path": "src/main/durable-runtime/events/terminal.ts",
+        "bytes": 5500,
+        "sha256": "ca27fdf45851b45cf52ddcdc81ee75a65f0fa9f133d5df9ffe07c10b0beed744",
+        "gitBlob": "d0aaed84ddab0d9b5b9d540ee385c7131e0d4e20"
+      },
+      {
+        "path": "src/main/durable-runtime/events/types.ts",
+        "bytes": 3012,
+        "sha256": "8751791c6a3f1592818984770189e75a72d746bc6fbebe0e4ac1df4de12504fd",
+        "gitBlob": "ae64e372bae6fb4163509139bd609791875381cf"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/instance.ts",
+        "bytes": 2836,
+        "sha256": "bc1937cfffeaf22649e53ee3cf569758a55eee6108d6631fba4c30d4a2a1c8aa",
+        "gitBlob": "0aa1d59ed06b67dafaba0847c8687e3f8d08b827"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/lease.ts",
+        "bytes": 9550,
+        "sha256": "53f4126f2186cda2cb6bdfb42c62925e294000f91768112163631c73d6e9edb2",
+        "gitBlob": "713672a23556dfed1ff46c11a2b7bf4e1cdc1f46"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/pass.ts",
+        "bytes": 13414,
+        "sha256": "db8b7f276e9f5601049a1e33cddd92e45992451edf608d183e1ad55d3b024e65",
+        "gitBlob": "5e9b2310e29f01722a02a1e3f7fda7dfa7d04c9c"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/session.ts",
+        "bytes": 7260,
+        "sha256": "abe4e37dcccc5f0686d22a23e0bb3d6cf9bdda3d2766c33b99351612448683c9",
+        "gitBlob": "5d7f69f8a28d7fa709507b6da138d85111109a21"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/takeover.ts",
+        "bytes": 7907,
+        "sha256": "85b60e5cb20c507d68208e6eccd3cb011027bacab70ad67c53f2e09ae3bbffde",
+        "gitBlob": "4dc217b15d91546d11b66c8570226d68d99f450b"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/worker-fixtures.mts",
+        "bytes": 2427,
+        "sha256": "d14260b8bb0dd9d05d63a2bcfc3102333cfc60cf55d605f078b2f3ad7b412798",
+        "gitBlob": "4aa742e876b000444a87fff6b9bbb8b8866723c3"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/worker.pg.test.mts",
+        "bytes": 11736,
+        "sha256": "8ff1c87a75d75d718042645292a11cc691205b39e385801c8a274811c2548938",
+        "gitBlob": "6ba60094610d12a7618bc449df29a7ba924ca127"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/worker.ts",
+        "bytes": 14352,
+        "sha256": "16bcce24082a2c5b5fac58bb3a93e0f34cc837711f3e5a4f81e3e957ff6ebb7b",
+        "gitBlob": "d495bd4233c7d60bc5f7569b29f66e2ab1751fb7"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/worker.value.test.mts",
+        "bytes": 1780,
+        "sha256": "87097b30930854a5d1408f68464f6ef5016e447c98707c5795070e5e557dd75e",
+        "gitBlob": "c9c33a6cf19d1f5bfec762e8fac1cb0ef0694234"
+      },
+      {
+        "path": "src/main/durable-runtime/input/canonical.ts",
+        "bytes": 3814,
+        "sha256": "1e96b9cae2404c2efb437b834c57924d2984d0aa54f96cd6d377a1b472e376b6",
+        "gitBlob": "e372521b947b217adabf526edabf6466f1e56e49"
+      },
+      {
+        "path": "src/main/durable-runtime/input/types.ts",
+        "bytes": 1609,
+        "sha256": "e88cd450ae308c6c116540e11784dd42bac15ba44e8794ca1dbf2a42c851403f",
+        "gitBlob": "aca164902d055cffe28fcd3407507b195ac537b8"
+      },
+      {
+        "path": "src/main/durable-runtime/journal/store.ts",
+        "bytes": 6238,
+        "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+        "gitBlob": "1b0de8b5c6961f60315f714071e6cf627233dc43"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/controller.ts",
+        "bytes": 13487,
+        "sha256": "782b30cc88af8b95662c3c1ff8d0175e74fa5acccf89cee8833539f2097050c0",
+        "gitBlob": "bbb4ea73fad61ca799996c5fc3446b625377ffb0"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/due.ts",
+        "bytes": 1289,
+        "sha256": "0c949a936a4596fe5b4e1a91d2ad7cb1c16e83ec2840b2b07f68b8efcedaccd4",
+        "gitBlob": "397de3cd55747061a8101da46fefb263047f796b"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/intent.ts",
+        "bytes": 9436,
+        "sha256": "e77c340841fee1b76696361a42e8811ea1dc81e39a6c3ab6674b0cd416d8d989",
+        "gitBlob": "4dc32b3df9f88ccd04af1bfc3b87c9dec08569ce"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/locks.ts",
+        "bytes": 1610,
+        "sha256": "81fe5f65f8a4d14af3fb41b08f7d955f421bfe94c521b6dc12f21abe52a9d506",
+        "gitBlob": "a3d937b9d17b4cc329bc570104057ba0175bc591"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/reconcile-request.ts",
+        "bytes": 955,
+        "sha256": "37ec13377cd193c6cfd1a5d24a0ccf0e42b7534a560b7d203a581ffff4f3a40f",
+        "gitBlob": "ca22c800942b15ca199df3f5cd9a53db7b57412e"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/request.ts",
+        "bytes": 879,
+        "sha256": "5797065225668c0079dfb0bf3f93f8d19cd4f233c9e9bc0e8a7c5c8cdb9fd2f0",
+        "gitBlob": "6a77ff2d280f6de32a071dc7bc0420fac335cac5"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/verification-fixtures.mts",
+        "bytes": 5550,
+        "sha256": "8c7203d09b9cad03147d257482f5218c3fba4e7d391ea428f9861d289ad9e7a4",
+        "gitBlob": "72e5267f5bb02a8d3f0d2f935b5f6efdbabd62c2"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/watch.ts",
+        "bytes": 8660,
+        "sha256": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5",
+        "gitBlob": "3d9fe495f3a10f12d66ef2e4c7dffb820ff5deee"
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+        "bytes": 5150,
+        "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+        "gitBlob": "0c9ebfdb32abe7555b9297c5b703014070daade4"
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/gateway/claim.ts",
+        "bytes": 7342,
+        "sha256": "3c6c91d7ec48131c698c0f1df8fceb7b481219f75ea9b0123a038766c14ad7d4",
+        "gitBlob": "d4f4df9b46726071df2976731f03971f8bd2baa5"
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+        "bytes": 2182,
+        "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+        "gitBlob": "2e16ca8ad10ee7cdbb730efc7e10752198fc942a"
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+        "bytes": 9729,
+        "sha256": "778330564d02ec4835fcd7734f0116ddce748afd10490b2c494857d82b19b623",
+        "gitBlob": "9146ca0b51a41e53b53fd00509271b37430b7e6d"
+      },
+      {
+        "path": "src/shared/durable-runtime/identity.ts",
+        "bytes": 3357,
+        "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+        "gitBlob": "11c0f09a0bfc3950a29465efa6d504b9e3207a75"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/index.ts",
+        "bytes": 936,
+        "sha256": "4675a8c1f3a12348794ea3682f6745bf95323696240a196d94bd5d38f1aa73c8",
+        "gitBlob": "810120532f494b8b438f961a2d94c560faee6d6d"
+      }
+    ],
+    "sql": [
+      {
+        "path": "src/main/durable-runtime/db/migrations/001-catalog.sql",
+        "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+        "bytes": 2801,
+        "gitBlob": "4136743b1d83cb2229c86c52f088a74cd69842da"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/002-execution-storage.sql",
+        "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+        "bytes": 10866,
+        "gitBlob": "ce2bf1d2518a835aee76c257bcc33fa3783dc664"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/003-operations-resources.sql",
+        "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+        "bytes": 4205,
+        "gitBlob": "7a02b3c7e0e4869f14cc2ff9ae579ff7037402e4"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/004-input-context.sql",
+        "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+        "bytes": 7731,
+        "gitBlob": "0c0f893a2e766e5e8b025c92b2a47f2cf3535972"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/005-events-replay.sql",
+        "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+        "bytes": 7858,
+        "gitBlob": "6b93e0d43e7b0fb3d17cc9986acf7b15143835d0"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql",
+        "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+        "bytes": 2756,
+        "gitBlob": "92bd8cad64d5d5acd9b2406399073f9c902d37e6"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql",
+        "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+        "bytes": 4404,
+        "gitBlob": "a6003a49ec14deeab2e798acb9c78240e085d584"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/008-attachment-store.sql",
+        "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+        "bytes": 6084,
+        "gitBlob": "5991c99117a8207b50a57fa2771e1b87d3eae205"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql",
+        "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+        "bytes": 2175,
+        "gitBlob": "e0dcc43c473770cd1134288e26e0f8bc7ebd3386"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/010-runtime-command-ledger.sql",
+        "sha256": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+        "bytes": 4849,
+        "gitBlob": "bed0a1fd0c52ed5f65c74b7f68e8222410f3c07d"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/011-runtime-event-producers.sql",
+        "sha256": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+        "bytes": 5037,
+        "gitBlob": "759e1270e22a319c2dd1afbb1f1df40d2a2be97b"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/012-input-merge-boundary.sql",
+        "sha256": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+        "bytes": 1244,
+        "gitBlob": "3933af0d38d7ecddc563537a9c71b26ab6ea21a2"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/013-context-deliveries.sql",
+        "sha256": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+        "bytes": 1910,
+        "gitBlob": "90d49e9c074c34c589a663bd490c0e12eb857fc4"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/014-durable-catalog.sql",
+        "sha256": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+        "bytes": 9419,
+        "gitBlob": "ab98cd7a258fe8a3ffc5312d015184bc5a091426"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/015-failure-evidence.sql",
+        "sha256": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+        "bytes": 8211,
+        "gitBlob": "ee305a5395ccba5a1e87d65897ffccf207e61cc9"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/016-observation-episodes.sql",
+        "sha256": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+        "bytes": 7243,
+        "gitBlob": "46ded89c7e507e4f7e3bca592e93f131628f700e"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/017-structured-session-wire.sql",
+        "sha256": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+        "bytes": 1852,
+        "gitBlob": "975c657c262e4b974173bbbefe72cbb0e08eb440"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/018-terminal-input-floor.sql",
+        "sha256": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+        "bytes": 2345,
+        "gitBlob": "e10c162dfdd4f1275cb46bd1559d81702f66472d"
+      },
+      {
+        "path": "src/main/durable-runtime/db/migrations/019-durable-resource-allocation.sql",
+        "sha256": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+        "bytes": 11743,
+        "gitBlob": "63f497f142d83825cc43526fed23614d2a749556"
+      }
+    ],
+    "wrapperPins": [
+      {
+        "fixture": "src/main/durable-runtime/ha/worker.value.test.mts",
+        "sourceSha256": "87097b30930854a5d1408f68464f6ef5016e447c98707c5795070e5e557dd75e",
+        "wrapperSha256": "9bd649590bb2210b1d20f816dd66ad6f3e8a20353c2883947ae650c2ebbbeb9c",
+        "originalBodySha256": "15c2f74f7283a85541918ac4e1452e1808d7540c97d5f44ab0fcd0459bcf942a",
+        "assertionsChanged": false,
+        "parentTestsAdded": 1,
+        "parentProductCallbackCount": 0,
+        "callbacks": 1,
+        "scope": "원 setup 및 callback을 parent async t.test/t.after scope에 보존했습니다."
+      },
+      {
+        "fixture": "src/main/durable-runtime/ha/worker.pg.test.mts",
+        "sourceSha256": "8ff1c87a75d75d718042645292a11cc691205b39e385801c8a274811c2548938",
+        "wrapperSha256": "b81f536eb1b070b20ff271fc7ef5f411fde1794e42bd87e6a9db28f41c47fab1",
+        "originalBodySha256": "a88d7d8378e16842e792cf7e7c10ac4942ea5409bf285dfd2076265d77fad49a",
+        "assertionsChanged": false,
+        "parentTestsAdded": 1,
+        "parentProductCallbackCount": 0,
+        "callbacks": 4,
+        "scope": "원 setup 및 callback을 parent async t.test/t.after scope에 보존했습니다."
+      }
+    ]
+  },
+  "schema": {
+    "target": "별도 소유 orca_p114_worker_ 검증 DB",
+    "applications": 1,
+    "ledger": [
+      {
+        "version": "001-catalog.sql",
+        "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+        "applied_at": "2026-10-14T11:36:32.834Z"
+      },
+      {
+        "version": "002-execution-storage.sql",
+        "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+        "applied_at": "2026-10-14T11:36:32.954Z"
+      },
+      {
+        "version": "003-operations-resources.sql",
+        "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+        "applied_at": "2026-10-14T11:36:33.014Z"
+      },
+      {
+        "version": "004-input-context.sql",
+        "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+        "applied_at": "2026-10-14T11:36:33.083Z"
+      },
+      {
+        "version": "005-events-replay.sql",
+        "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+        "applied_at": "2026-10-14T11:36:33.166Z"
+      },
+      {
+        "version": "006-snapshot-seals.sql",
+        "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+        "applied_at": "2026-10-14T11:36:33.200Z"
+      },
+      {
+        "version": "007-storage-epoch-cancel-guards.sql",
+        "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+        "applied_at": "2026-10-14T11:36:33.203Z"
+      },
+      {
+        "version": "008-attachment-store.sql",
+        "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+        "applied_at": "2026-10-14T11:36:33.237Z"
+      },
+      {
+        "version": "009-atomic-journal-outbox.sql",
+        "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+        "applied_at": "2026-10-14T11:36:33.244Z"
+      },
+      {
+        "version": "010-runtime-command-ledger.sql",
+        "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+        "applied_at": "2026-10-14T11:36:33.266Z"
+      },
+      {
+        "version": "011-runtime-event-producers.sql",
+        "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+        "applied_at": "2026-10-14T11:36:33.284Z"
+      },
+      {
+        "version": "012-input-merge-boundary.sql",
+        "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+        "applied_at": "2026-10-14T11:36:33.288Z"
+      },
+      {
+        "version": "013-context-deliveries.sql",
+        "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+        "applied_at": "2026-10-14T11:36:33.305Z"
+      },
+      {
+        "version": "014-durable-catalog.sql",
+        "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+        "applied_at": "2026-10-14T11:36:33.360Z"
+      },
+      {
+        "version": "015-failure-evidence.sql",
+        "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+        "applied_at": "2026-10-14T11:36:33.396Z"
+      },
+      {
+        "version": "016-observation-episodes.sql",
+        "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+        "applied_at": "2026-10-14T11:36:33.430Z"
+      },
+      {
+        "version": "017-structured-session-wire.sql",
+        "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+        "applied_at": "2026-10-14T11:36:33.449Z"
+      },
+      {
+        "version": "018-terminal-input-floor.sql",
+        "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+        "applied_at": "2026-10-14T11:36:33.460Z"
+      },
+      {
+        "version": "019-durable-resource-allocation.sql",
+        "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+        "applied_at": "2026-10-14T11:36:33.529Z"
+      }
+    ],
+    "devMutation": 0
+  },
+  "processes": {
+    "record": "지정한 제어 및 자식 PID가 모두 종료됐습니다. 신규 job과 live 조작은 없습니다.",
+    "processes": [
+      {
+        "pid": 19310,
+        "state": "Z",
+        "active": false
+      },
+      {
+        "pid": 19317,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19330,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19421,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19490,
+        "state": "Z",
+        "active": false
+      },
+      {
+        "pid": 19497,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19510,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19524,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19541,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19552,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19530,
+        "state": "ABSENT",
+        "active": false
+      },
+      {
+        "pid": 19558,
+        "state": "ABSENT",
+        "active": false
+      }
+    ],
+    "active": 0,
+    "heavyReturned": true,
+    "endedAt": "2026-10-14T11:36:37.049Z"
+  },
+  "preparation": {
+    "localOriginalError": "/bin/bash: line 59: python: command not found",
+    "localOriginalExit": 127,
+    "correction": "동일한 준비 스크립트를 확인된 python3로 실행했습니다. 원격 제품과 callback은 원 오류 시 미진입이었습니다.",
+    "typeApiGuess": 0,
+    "parentScopeAppliedFromStart": true
+  },
+  "evidence": {
+    "first-value.tap": {
+      "sha256": "79ce9d567764d2f98241cb64eacd7b42ca188b14b42154ec548f9e52bd73bcb2",
+      "bytes": 589
+    },
+    "first-pg.tap": {
+      "sha256": "64e75ff6731cbf7621d2f13ec386f03300d0b3b1ba1b2265f5d0894ad1d16877",
+      "bytes": 1925
+    },
+    "scoped-type-private.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "scoped-lint-private.log": {
+      "sha256": "f3ee830ec3cccf8738d0b6187b8854156cdf9331ac6c584ed5afd998201e2224",
+      "bytes": 635
+    },
+    "changed-worker-lint-private.log": {
+      "sha256": "cef3d9c5bcc3b56558ad53d9380715c3b51fdb1c2549e2592a152b43c096280a",
+      "bytes": 91
+    },
+    "schema-ready.json": {
+      "sha256": "2250f7ddb89dc46cd94bba68158ddcc3a5d10fd9f35762199629f675dda62e25",
+      "bytes": 3963
+    }
+  },
+  "limits": [
+    "Callback 관측은 물리 provider 또는 K8s 실행 증거가 아닙니다.",
+    "Live entry, controllerConnected, 기존 runtime과 source는 변경하지 않았습니다.",
+    "전체 HA, 실제 배치 및 외부 writer 종료는 이번 결과로 합격 처리하지 않습니다."
+  ],
+  "newInstall": 0,
+  "productBuild": 0,
+  "liveMutation": 0,
+  "successfulCallbacksRepeated": 0
+}
