@@ -1,15 +1,30 @@
-# P1-04 공개 clipboard의 PG handler source
+# P1-04 공개 clipboard의 PG handler와 서버 설정 source
 
-고정 main `be454791e2294330033a0af45b30fbdb8eb71fcd` 위에서 독립 `createCatalogClipboardRpc` factory와 값 callback 1개·격리 PG callback 1개를 작성했다. 제품 조기 pin은 `17258cb65b0061e2d1faea51d273b1e77c130732`이며 fixture pin은 `3cbc3dce`다. 이 단계의 실제 시험·type·lint·PG·원격·filesystem 실증·build·설치·live 실행과 heavy 점유는 모두 0이다.
+Root는 모듈 pin `e7fe71867c83a00b8e340b23b43e90e7d86a377f`의 제품·fixture와 실제 최초 결과를 [6176021991](https://github.com/hongseok-lee/orca-1012-runtime/pull/70#issuecomment-6176021991)로 수락했다. 원 base는 `be454791e2294330033a0af45b30fbdb8eb71fcd`이고 고정 main `e9ae59dc075adc9e3bde624ad00da1c116e71db8` 정렬은 1회였다. 수락한 handler와 module fixture 2개의 bytes/mode를 그대로 유지한다.
 
-기존 다섯 clipboard 이름·schema·응답을 유지하며 실제 store의 start/chunk/commit/save/abort를 SQL transaction 안에서 호출한다. 검증된 transport context의 `authenticatedCallerFingerprint`를 `fingerprintAttachmentPrincipal`에 전달하므로 structured send와 같은 principal 표현을 사용한다. raw clientId·bearer·요청 principal을 인증 자료로 사용하지 않는다. 합성 fixture context는 실제 인증 발급이나 기기 pairing 합격이 아니다.
+기존 다섯 clipboard 이름·schema·응답을 유지하며 실제 store의 start/chunk/commit/save/abort를 SQL transaction 안에서 호출한다. transport가 검증한 `authenticatedCallerFingerprint`를 `fingerprintAttachmentPrincipal`에 전달하므로 structured send와 같은 principal 표현을 사용한다. raw clientId·bearer·요청 principal은 인증 자료가 아니다. 합성 fixture context는 실제 인증 발급이나 기기 pairing 합격이 아니다.
 
-factory는 원 config 값·host guard의 receiver·Pool connect의 receiver·서버 aliasRoot를 동기 capture한다. 실제 dataset_metadata와 현재 host를 store 호출 전에 대조하며 borrowed Pool을 변경하거나 종료하지 않는다. handler는 요청과 context를 첫 await 전에 분리하고 원 store의 chunk replay 경계 및 committed abort 보존을 유지한다. SQL COMMIT 실패를 성공 결과로 바꾸지 않는다.
+원 factory는 config·host guard·Pool connect의 receiver·서버 aliasRoot를 동기 capture한다. 실제 dataset_metadata와 현재 host를 대조하며 borrowed Pool을 변경하거나 종료하지 않는다. 요청과 context를 첫 await 전에 분리하고 원 store의 chunk replay 및 committed abort 보존을 유지한다. SQL COMMIT 실패를 성공으로 바꾸지 않는다.
 
-값 fixture는 schema 오류·인증 부재·SSH target을 첫 connect 전에 거절하는 경계와 첫 await 중 request/context/options/config/connect 변경 capture를 정의한다. 격리 PG fixture는 handler의 start→ordered chunks→새 adapter→commit replay, duplicate chunk의 원 boundary와 conflict, 작은 Save, wrong principal, incomplete/aborted, committed 후 abort에도 실제 blob 및 input_attachments 참조 보존을 정의한다. fixture는 root가 제공한 기존 19개 migration의 별도 소유 DB만 사용하며 migration/reset/delete를 수행하지 않는다. 정의를 작성한 것이며 PASS 결과는 아직 없다.
+## 수락한 최초 모듈 결과와 원 실패
 
-`public.ts`·`registry.ts`·`config.ts`·`orcad-entry.ts`와 legacy clipboard·attachment store/materializer/schema는 수정하지 않았다. 실제 서버 등록과 stable aliasRoot의 startup 공급은 미연결이다. 논리 alias는 provider가 읽을 수 있는 물리 파일 증거가 아니며 preview·provider materialization·SSH 경로도 미연결이다. non-null connectionId는 Save/Start의 PG 쓰기 전에 거절하고 기존 다른 경로의 non-null target도 Commit 성공으로 반환하지 않는다. filesystem/SSH fallback·legacy Map 동시 제한·TTL·새 quota를 추가하지 않았다.
+- 소유 lint 3개와 값 callback 1개는 `2026-10-14 18:35:56–18:35:57 UTC`에 exit 0이었다. 값 TAP SHA256은 `c025ab3db884a5e71f0feb7e036e5faab2a0144adf9471fea06f53e75b57c898`이다.
+- 격리 `orca_public_clipboard_20261014`의 SQL 19개 최초 적용과 PG callback 1개는 `18:47:10–18:47:14 UTC`에 exit 0이었다. PG system은 `7696101282789175327`, dataset은 `orca-1012-dev-v1`, ledger는 19개였다. PG TAP SHA256은 `11f9fe7807ed888b034a40af04ef67ab4c556da63b2f17eca6b9286f55c3876a`이다. DB reset/delete는 없었다.
+- 원 준비 실패는 protocol-version의 runtime leaf 2개 누락이었다. 해당 leaf만 보충한 뒤 actual 입력 19개와 metafile를 보존했다. 다음 lint 설정 plugin 5개 누락과 이후 Node preload `pg-env.cjs` 누락도 원 실패로 보존했다. 고정 plugin 5개와 기존 성공 PG 환경 주입만 승인받아 교정했고 성공한 준비·bundle·lint·값은 반복하지 않았다.
+- Type은 미실행이다. 기존 bundle 3개의 사전 SHA 기록이 없다는 한계를 유지한다. 이번 사후 SHA 회수와 metafile 크기 대조로 과거 bytes의 동일성을 소급 증명하지 않는다. 값·PG generated wrapper는 원 bytes로 보존했고, database.generated.cts는 stdin 이름이며 실제 저장 파일이 아니었다.
+
+## 19:02 계약의 서버 설정 source와 대기 중인 배선
+
+새 `clipboard-config.ts`는 선택적 서버 `attachments: { aliasRoot }`만 capture한다. own-data·plain 객체와 정확한 필드를 검증하고 getter·foreign prototype·추가 key·잘못된 타입·빈 값·NUL·개행을 거절한다. 기존 UUID 기반 `reserveAttachmentAlias` 절대경로 검증을 재사용한다. 입력이 없으면 기존 capture 결과에 새 필드를 넣지 않는다. Pool·host owner를 freeze하거나 수정하지 않는다.
+
+`rpc/config.ts`와 `orcad-durable-catalog.ts`가 private JSON capture→prepare 재capture→readConfig로 같은 불변 사본을 전달한다. 기존 config file·pgpass 검증과 startup Pool stop 규칙을 유지한다. fallback root·request/env/tmp/과거 NFS 기본값·디렉터리 생성·filesystem materialization은 추가하지 않았으며 live 설정은 변경하지 않았다. 제품 조기 pin은 `1f7a882376470fa5ba27567d2a3e917f200d1e2b`이다.
+
+`public.ts`·`registry.ts`는 실제 수정하지 않았다. 검토용 diff는 adapter constructor의 factory 1회 capture, requireOpen, `CATALOG_CLIPBOARD_NOT_CONFIGURED`, 원 unary 5개와 kind mismatch 거절만 제안한다. PR69 이후 Root의 명시적인 소유권 이전을 기다린다. PG opt-out의 원 선언·handler 경로는 유지한다.
+
+새 wiring 값 callback 1개·PG callback 1개의 source는 이 배선이 합류한 뒤 실행한다. 값은 설정 capture·미설정·disposed·kind 경계를, PG는 원 선언→RpcDispatcher→adapter→실제 handler와 재생성 뒤 commit replay·committed abort·원 bytes 및 기존 ledger 보존을 정의한다. 새 PG fixture는 기존 격리 DB의 고유 `/synthetic/public-clipboard-wiring/` prefix만 사용하며 migration/reset/delete를 하지 않는다. 이 후속 source의 lint·값·PG·type·원격 실행은 모두 0이다.
+
+실제 서버 공개 등록·preview·provider materialization·SSH·device·HA 합격은 아직 아니다. non-null connectionId는 수락한 모듈에서 Save/Start의 PG 쓰기 전에 거절하며 물리 파일/SSH fallback을 만들지 않는다. 논리 alias는 provider 파일 읽기 성공 증거가 아니다. legacy Map 동시 제한·TTL·새 quota·앱 schema·orcad-entry.ts·attachment store/materializer/schema는 변경하지 않았다.
 
 ![변경 전 C2 실제 화면, 이번 clipboard handler 성공 증거 아님](https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/3a315db34a635388bd7acd59828146f0ab6c83e9/docs/implementation/p1-26-27-live-dev-first/ops-empty-scope-first.png)
 
-이 이미지는 root가 수락한 PR51의 변경 전 C2 실제 화면이며 immutable 촬영 provenance를 재사용한다. 이번 factory·clipboard 업로드·preview·새 PG fixture의 성공 증거가 아니다. 새 촬영과 이미지 변경은 0이다. 후속 최초 검증 배분·서버 배선·수락·merge는 root가 결정한다.
+이미지는 Root가 수락한 PR51의 변경 전 C2 실제 화면이며 immutable provenance를 재사용한다. 이번 clipboard handler·업로드·preview 성공 증거가 아니다. 새 촬영과 이미지 변경은 0이다. 후속 배선·검증 배분·수락·merge는 Root가 결정한다.
