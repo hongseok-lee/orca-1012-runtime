@@ -104,6 +104,21 @@ await test('PG-only PENDING browser Workspace lookup preserves RR ownership and 
     await query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1', [repoId,
       JSON.stringify({ ...registration.repo, executionHostId: foreignHost })])
     await unchanged(() => assert.rejects(host.resolveBrowserWorkspace(first.workspace.publicId), { code: 'CATALOG_REGISTRATION_HOST_MISMATCH' }))
+    // connectionId만 있는 원격 repo는 local 등록에 채택하지 않습니다.
+    await query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1', [repoId,
+      JSON.stringify({ ...registration.repo, executionHostId: undefined, connectionId: 'synthetic-browser-ssh' })])
+    await unchanged(() => assert.rejects(host.resolveBrowserWorkspace(first.workspace.publicId), { code: 'CATALOG_REGISTRATION_HOST_MISMATCH' }))
+    // Repo의 명시 host와 파싱한 Worktree의 hostId 우선순위를 유지합니다.
+    await query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1', [repoId,
+      JSON.stringify({ ...registration.repo, connectionId: 'synthetic-browser-ssh' })])
+    assert.deepEqual(await unchanged(() => host.resolveBrowserWorkspace(first.workspace.publicId)), expected)
+    await query('UPDATE durable_runtime.catalog_workspace_metadata SET payload=$2 WHERE workspace_id=$1', [first.workspace.id,
+      JSON.stringify({ ...first.workspace.payload, hostId: foreignHost, executionHostId: LOCAL_EXECUTION_HOST_ID })])
+    await unchanged(() => assert.rejects(host.resolveBrowserWorkspace(first.workspace.publicId), { code: 'CATALOG_REGISTRATION_HOST_MISMATCH' }))
+    await query('UPDATE durable_runtime.catalog_workspace_metadata SET payload=$2 WHERE workspace_id=$1', [first.workspace.id,
+      JSON.stringify({ ...first.workspace.payload, hostId: LOCAL_EXECUTION_HOST_ID, executionHostId: foreignHost })])
+    assert.deepEqual(await unchanged(() => host.resolveBrowserWorkspace(first.workspace.publicId)), expected)
+    await query('UPDATE durable_runtime.catalog_workspace_metadata SET payload=$2 WHERE workspace_id=$1', [first.workspace.id, JSON.stringify(first.workspace.payload)])
     await query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1', [repoId, JSON.stringify(registration.repo)])
     await query('UPDATE durable_runtime.workspaces SET deleted_at=clock_timestamp(),revision=revision+1 WHERE id=$1', [second.workspace.id])
     await unchanged(() => assert.rejects(host.resolveBrowserWorkspace(second.workspace.aliases[0]), { code: 'CATALOG_WORKSPACE_DELETED' }))

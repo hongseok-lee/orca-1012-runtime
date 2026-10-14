@@ -14,6 +14,7 @@ test('captured Catalog browser factory preserves host receivers and borrowed own
     repo_id: launch.workspace.repoId, project_group_id: null, reserved_path: launch.workspace.reservedPath,
     payload: launch.workspace.payload, deleted_at: null, provisioning_state: 'PENDING' }
   const registration = browserFixtureRegistration('synthetic-value-repo')
+  const repositoryRow = { id: registration.repo.id, payload: registration.repo }
   const state: { host?: RuntimeBrowserCommandHost; connects: number; releases: number; ends: number; queries: string[] } =
     { connects: 0, releases: 0, ends: 0, queries: [] }
   const owner = new pg.Pool({ max: 1 })
@@ -27,7 +28,7 @@ test('captured Catalog browser factory preserves host receivers and borrowed own
           : sql.includes('catalog_workspace_metadata') ? [row]
           : sql.includes('workspace_aliases') ? [{ workspace_id: launch.workspace.id }]
           : sql.includes('FROM durable_runtime.workspaces') ? [{ id: launch.workspace.id, dataset_name: 'orca-1012-dev-v1' }]
-          : sql.includes('catalog_repositories') ? [{ id: registration.repo.id, payload: registration.repo }]
+          : sql.includes('catalog_repositories') ? [repositoryRow]
           : []
         return { rows, rowCount: rows.length, command: 'SELECT', fields: [], oid: 0 }
       } }
@@ -74,5 +75,19 @@ test('captured Catalog browser factory preserves host receivers and borrowed own
   assert.equal(state.connects, 2); assert.equal(state.releases, 2); assert.equal(state.ends, 0)
   assert.equal(state.queries.filter(sql => sql === 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY').length, 2)
   assert.equal(state.queries.filter(sql => sql === 'COMMIT').length, 2)
+  // 기존 두 resolver assertion 뒤에 host 우선순위 경계만 추가합니다.
+  const foreignHost = 'runtime:browser-fixture-other'
+  repositoryRow.payload = { ...registration.repo, executionHostId: undefined, connectionId: 'synthetic-browser-ssh' }
+  await assert.rejects(bound.resolveBrowserWorkspace(launch.workspace.publicId), { code: 'CATALOG_REGISTRATION_HOST_MISMATCH' })
+  repositoryRow.payload = { ...registration.repo, connectionId: 'synthetic-browser-ssh' }
+  assert.deepEqual(await bound.resolveBrowserWorkspace(launch.workspace.publicId), expected)
+  row.payload = { ...launch.workspace.payload, hostId: foreignHost, executionHostId: LOCAL_EXECUTION_HOST_ID }
+  await assert.rejects(bound.resolveBrowserWorkspace(launch.workspace.publicId), { code: 'CATALOG_REGISTRATION_HOST_MISMATCH' })
+  row.payload = { ...launch.workspace.payload, hostId: LOCAL_EXECUTION_HOST_ID, executionHostId: foreignHost }
+  assert.deepEqual(await bound.resolveBrowserWorkspace(launch.workspace.publicId), expected)
+  assert.equal(state.connects, 6); assert.equal(state.releases, 6); assert.equal(state.ends, 0)
+  assert.equal(state.queries.filter(sql => sql === 'COMMIT').length, 4)
+  assert.equal(state.queries.filter(sql => sql === 'ROLLBACK').length, 2)
+
   } finally { await owner.end() }
 })
