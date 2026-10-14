@@ -1,0 +1,24 @@
+{
+  "sourcePin": "d53227d6802808572219b09906c038add6481f8f",
+  "verificationScope": "지정된 최초 pure fragment 경계만 확인했습니다. 실제 앱, PG, PTY 또는 provider 검증이 아닙니다.",
+  "completedAt": "2026-10-13T13:06:07.435Z",
+  "fixture": {
+    "file": "src/main/durable-runtime/terminal/ingress-fragments.test.mts",
+    "tests": 7,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0,
+    "concurrency": 1
+  },
+  "type": "PASS",
+  "lint": {
+    "status": "PASS",
+    "files": 7,
+    "warnings": 0,
+    "errors": 0
+  },
+  "partialPasteBoundary": "열린 paste와 미완료 delimiter에서 정확한 clear burst, protocol reply 및 interrupt가 원 draft를 보존했습니다. ESC → [200~ split도 이어졌습니다.",
+  "capture": "최초 실제 결과 캡처는 아직 없습니다. 과거 provider PNG를 이 작업의 증거로 사용하지 않았습니다.",
+  "remaining": "Input 선행 source는 합류하지 않았습니다. PG floor/draft/inbox/receipt 원자 저장과 기존 registry 및 실제 binary client 연결은 root 후속입니다.",
+  "activation": "Runtime, RPC, provider, floor 또는 draft 저장을 활성화하지 않았습니다."
+}

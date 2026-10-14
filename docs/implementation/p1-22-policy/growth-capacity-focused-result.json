@@ -1,0 +1,51 @@
+{
+  "결과": "새 capacity focused 1건과 변경 파일 type/lint가 최초 실행에 교정 없이 통과했습니다.",
+  "authority": "DATA_ONLY",
+  "executedSourceSHA": "8857ea44614867f6c2410dad6bf8b79e65585ac9",
+  "fixture": {
+    "tests": 1,
+    "pass": 1,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "executions": 1,
+    "fileConcurrency": 1
+  },
+  "type": {
+    "exitCode": 0,
+    "executions": 1,
+    "scope": "growth.ts와 새 growth-capacity.test.mts 및 그 타입 의존성"
+  },
+  "lint": {
+    "exitCode": 0,
+    "executions": 1,
+    "files": 2,
+    "threads": 1,
+    "warnings": 0,
+    "errors": 0
+  },
+  "sourceGraphEquivalence": {
+    "status": "BYTE_EQUIVALENT",
+    "files": 23,
+    "node": "v24.15.0",
+    "sourceSHA": "8857ea44614867f6c2410dad6bf8b79e65585ac9"
+  },
+  "finishedAt": "2026-10-13T14:44:00.738Z",
+  "initialErrors": [],
+  "correctionsAfterExecution": [],
+  "API_signatureChanged": false,
+  "original21Repeated": false,
+  "firstPNGTarget": "6cf175499b5ce2fd0349ab0e3f8f679db3a2e1e6",
+  "firstPNGSource": "0ac75cf2527d8fa782eccffb5932fc27ecf9e0b6",
+  "firstPNGRepresentsFocusedExecution": false,
+  "actualOOMAdmissionReservationRWVerified": false,
+  "originalLogsSHA256": {
+    "fixture-first.tap": "fae6b41a44636b8c137fcaf08d7be14e0e6283e65899cac03f280d4a2a60570b",
+    "transform-first.log": "88ec7c5dcebcca38f1332a9b228007f7c2b215ef6b5ae3f40b206a44b105c72e",
+    "equivalence-first.json": "486d2375169f839d2ba9239ec28e13a386b88c12ccd1be06c6d37c89f63901dd",
+    "lint-first.log": "37cb2556e9da19b4715c694b76ac5b1755b75010d3dd3acfffc09a5559d33953",
+    "status.json": "52351369a58d60870d9ebb2e69fc6fbc43951f144eb09634cce09382a20d7243",
+    "type-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "equivalence-first.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

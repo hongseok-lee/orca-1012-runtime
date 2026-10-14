@@ -1,0 +1,108 @@
+{
+  "sourceSHA": "a7abf3af8e966f791295af69ac6c115569881b79",
+  "focusedTypeSourceSHA": "dded2443c4dbca38003d128a7c5fd60f1ded9c39",
+  "schemaSHA": "4f1ecdb62365e5400398fb9f2812c1569d0c9066",
+  "counts": {
+    "pgPass": 14,
+    "valuePass": 4,
+    "fail": 0,
+    "skip": 0
+  },
+  "cases": [
+    {
+      "number": 1,
+      "name": "concurrent/repeated loss retains one PG first time +6h and receipt replay preserves the original result",
+      "result": "PASS"
+    },
+    {
+      "number": 2,
+      "name": "5h59m fresh IDLE resolves original episode without changing work/idle/desired/readiness",
+      "result": "PASS"
+    },
+    {
+      "number": 3,
+      "name": "5h59m fresh WAITING_INPUT resolves original episode without changing work/idle/desired/readiness",
+      "result": "PASS"
+    },
+    {
+      "number": 4,
+      "name": "same producer UUID but another persisted incarnation cannot recover with a higher watermark",
+      "result": "PASS"
+    },
+    {
+      "number": 5,
+      "name": "superseded challenge and past response remain history and cannot resolve the current request",
+      "result": "PASS"
+    },
+    {
+      "number": 6,
+      "name": "pin invalidated during real Unit lock wait is rejected at accepting SQL with no recovery writes",
+      "result": "PASS"
+    },
+    {
+      "number": 7,
+      "name": "fresh first at an expired deadline wins; old timer is a no-op",
+      "result": "PASS"
+    },
+    {
+      "number": 8,
+      "name": "fence first serializes fresh to history; repeated and new Active requests preserve original operation/name/deadline",
+      "result": "PASS"
+    },
+    {
+      "number": 9,
+      "name": "due read does not fence ordinary long work or a before-deadline episode",
+      "result": "PASS"
+    },
+    {
+      "number": 10,
+      "name": "same failure source yields one canonical BLOCKED event and no new writer or physical stop",
+      "result": "PASS"
+    },
+    {
+      "number": 11,
+      "name": "actual SQL failure rolls back new episode, loss timestamp, audit and outbox in the same transaction",
+      "result": "PASS"
+    },
+    {
+      "number": 12,
+      "name": "concurrent fresh and expired fence serialize to exactly one winning transition",
+      "result": "PASS"
+    },
+    {
+      "number": 13,
+      "name": "wrong UID or epoch cannot consume the original challenge or clear loss",
+      "result": "PASS"
+    },
+    {
+      "number": 14,
+      "name": "old expired timer and repeated original loss do not affect a new active attempt or reuse its old loss time",
+      "result": "PASS"
+    },
+    {
+      "number": 15,
+      "name": "loss snapshot retains original identity, target and producer pair across caller mutation",
+      "result": "PASS"
+    },
+    {
+      "number": 16,
+      "name": "prepared state Date, JSON and workload values are fixed before an await and current owner pin is rechecked",
+      "result": "PASS"
+    },
+    {
+      "number": 17,
+      "name": "another producer or incarnation cannot contribute an unrelated high watermark",
+      "result": "PASS"
+    },
+    {
+      "number": 18,
+      "name": "prepared IDLE and WAITING_INPUT are accepted value states while unprepared raw observations remain rejected",
+      "result": "PASS"
+    }
+  ],
+  "firstTypeExit": 1,
+  "firstLintExit": 1,
+  "focusedTypeExit": 0,
+  "focusedLintExit": 0,
+  "scope": "소유 PG transaction과 synthetic trusted source 값 계약만 검증했습니다. 실제 transport·fence·HA 합격이 아닙니다."
+}

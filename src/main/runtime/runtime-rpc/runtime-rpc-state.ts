@@ -1,3 +1,4 @@
+import { DurableCatalogReadAdapter } from '../../durable-runtime/rpc/public.ts'
 import { randomBytes } from 'node:crypto'
 import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap'
 import type { OrcaRuntimeService } from '../orca-runtime'
@@ -32,6 +33,7 @@ import { DEFAULT_WS_PORT } from './runtime-rpc-pairing-types'
 export class RuntimeRpcState {
   protected readonly runtime: OrcaRuntimeService
   protected readonly dispatcher: RpcDispatcher
+  protected readonly durableCatalogRead: DurableCatalogReadAdapter | null
   protected readonly userDataPath: string
   protected readonly pid: number
   protected readonly platform: NodeJS.Platform
@@ -106,10 +108,13 @@ export class RuntimeRpcState {
     keepaliveIntervalMs = KEEPALIVE_INTERVAL_MS,
     longPollCap = LONG_POLL_CAP,
     metadataOwnershipPollMs = RUNTIME_METADATA_OWNERSHIP_POLL_MS,
-    methods
+    methods,
+    durableCatalogRead
   }: OrcaRuntimeRpcServerOptions) {
     this.runtime = runtime
-    this.dispatcher = new RpcDispatcher({ runtime, methods: methods ?? ALL_RPC_METHODS })
+    this.durableCatalogRead = durableCatalogRead ? new DurableCatalogReadAdapter(durableCatalogRead) : null
+    const declarations = methods ?? ALL_RPC_METHODS
+    this.dispatcher = new RpcDispatcher({ runtime, methods: this.durableCatalogRead?.bind(declarations) ?? declarations })
     this.userDataPath = userDataPath
     this.pid = pid
     this.platform = platform

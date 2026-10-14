@@ -1,0 +1,42 @@
+{
+  "capturedAt": "2026-10-13T13:38:35.941Z",
+  "kind": "Structured utility 최초 pure fixture 8개 및 한정 type/lint 교정 결과 보고 문서",
+  "PR": 34,
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/2d74199bb87d46893cb471351edf3ed85864fc1e/docs/implementation/p1-17/README.md",
+  "targetSHA": "2d74199bb87d46893cb471351edf3ed85864fc1e",
+  "sourceSHA": "1a4f791d772387ff586f0e2a05070f2a22f8088a",
+  "initialSourceSHA": null,
+  "typeCorrectionSourceSHA": "3338b67c580d54ab1546ff7db74c2089e76d78fc",
+  "reportDocumentSHA256": "34ab0a28f4f25c052bd38de0eec9a84972a00ebebdfe2622a7f747ef4052965e",
+  "resultDocumentSHA256": "f89d2f3890cf30f3eba81f963879448376f3de0e74865c21c33212bb18ff3fd5",
+  "actualHeading": "P117 structured 준비 utility의 조기 납품",
+  "actualResultParagraph": "2026-10-13 13:06 UTC에 기존 원격 Node 24.15.0과 읽기 전용 cache를 사용해 신규 pure fixture 8 개를 최초 실행했습니다. PASS 8 개, fail 0 개, skip 0 개입니다. 기준 source는 조기 API commit 1a4f791d772387ff586f0e2a05070f2a22f8088a이며 당시 branch head는 b9bdee579e060044ebbde6c91222b4330ca92ea1입니다. 실제 schema/fingerprint·retryUnknown·safe counter·위조 caller 거절·첫 await 뒤 mutation 격리 및 최소 capability/projection 경계를 합성 자료로 확인했습니다. 인증·native 증거·COMMIT 자료는 fixture의 합성 입력이며 실제 증거를 발급하거나 실행하지 않았습니다.",
+  "headingRect": {
+    "x": 370,
+    "y": 376,
+    "width": 721,
+    "height": 50.59375
+  },
+  "resultParagraphRect": {
+    "x": 370,
+    "y": 1462.5,
+    "width": 721,
+    "height": 168.78125
+  },
+  "viewport": {
+    "width": 1140,
+    "height": 2400
+  },
+  "DPR": 1,
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "artifactSHA256": "2f62a0eba73d9c885cf35673dba2713a38e0c89f69f6a11c882432930b3e195a",
+  "artifactBytes": 689517,
+  "screenshotExecutions": 1,
+  "productUI": false,
+  "nativeIPhone": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false
+}
