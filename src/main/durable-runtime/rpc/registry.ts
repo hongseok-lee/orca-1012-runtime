@@ -1,4 +1,5 @@
 import { CATALOG_STRUCTURED_CREATE_METHODS } from './structured-create.ts'
+import { CATALOG_STRUCTURED_HISTORY_METHODS } from './structured-history.ts'
 import type { RpcAnyMethodDeclaration, RpcContext } from '../../runtime/rpc/core.ts'
 import type { DurableCatalogReadAdapter } from './public.ts'
 import { CatalogReadError } from './config.ts'
@@ -40,6 +41,10 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
     if (structured.has(method.name)) {
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.createStructured(method.name, params, context) }
+    }
+    if (CATALOG_STRUCTURED_HISTORY_METHODS.some(name => name === method.name)) {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext) => adapter.history(params, context) }
     }
     if (isCatalogMethodNotConnected(method.name)) {
       return { ...method, handler: () => { throw new CatalogReadError('CATALOG_METHOD_NOT_CONNECTED') } }
