@@ -56,6 +56,9 @@ test('Browser uses incumbent schema, separate IDs and detached credential-free c
     worktree: 'id:synthetic-workspace', url: 'javascript:alert(1)' }, context), validLaunch), /CATALOG_BROWSER_URL/)
   await assert.rejects(reserveCatalogBrowserTab(neverPool, prepareCatalogCall('browser.tabCreate', {
     worktree: 'id:synthetic-workspace', bearer: 'synthetic-private' }, context), validLaunch), /CATALOG_BROWSER_REQUEST/)
+  await assert.rejects(reserveCatalogBrowserTab(neverPool, prepareCatalogCall('browser.tabCreate', {
+    worktree: 'id:synthetic-workspace', placement: { kind: 'server', rpcContext: { bearer: 'synthetic-private' } }
+  }, context), validLaunch), /CATALOG_BROWSER_REQUEST/)
   await assert.rejects(reserveCatalogBrowserTab(neverPool, prepareCatalogCall('browser.tabCreate', {}, context), validLaunch), /CATALOG_WORKSPACE_SELECTOR_REQUIRED/)
   assert.throws(() => captureCatalogBrowserLaunch({ ...validLaunch, browserPageId: '' }), /CATALOG_BROWSER_PAGE_ID/)
   assert.equal(checkouts, 0)

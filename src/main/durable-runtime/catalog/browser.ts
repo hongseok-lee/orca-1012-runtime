@@ -36,6 +36,16 @@ function browserLaunchRequest(call: PreparedCatalogCall<'browser.tabCreate'>) {
       Object.keys(request.params).some(key => !Object.hasOwn(BrowserTabCreateParams.shape, key))) {
     throw new CatalogError('CATALOG_BROWSER_REQUEST')
   }
+  for (const [key, value] of Object.entries(request.params)) {
+    if (key === 'placement') {
+      if (value === null || typeof value !== 'object' || Array.isArray(value) ||
+          Object.keys(value).some(field => !['kind', 'browserHostClientId'].includes(field))) {
+        throw new CatalogError('CATALOG_BROWSER_REQUEST')
+      }
+    } else if (value !== null && typeof value === 'object') {
+      throw new CatalogError('CATALOG_BROWSER_REQUEST')
+    }
+  }
   return request
 }
 
