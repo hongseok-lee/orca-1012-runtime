@@ -157,7 +157,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
   function renderUnits(list: OpsUnitList): void {
     units = list.units
     text('unit-count', String(units.length)); text('pending-count', sum('pendingMessages')); text('input-count', sum('inputComponents')); text('unknown-count', sum('historicalUnknown'))
-    text('observed-at', `관측: ${time(list.observedAt)}`)
+    text('observed-at', `목록 조회 시각: ${time(list.observedAt)}`)
     byId('unit-rows').replaceChildren(); byId('unit-cards').replaceChildren(); byId('units-empty').hidden = units.length !== 0
     for (const unit of units) {
       const row = node('tr'), identity = node('td', unit.alias ?? unit.id)
