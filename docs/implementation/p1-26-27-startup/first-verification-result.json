@@ -1,0 +1,160 @@
+{
+  "sourcePin": "4738e30929fb71760410fdcd3e7ce88501a621fb",
+  "fixedBase": "235a1e43bae71f1e5cac62f02bea0ca04eb0b26a",
+  "rootReviewComment": "https://github.com/hongseok-lee/orca-1012-runtime/pull/49#issuecomment-6164919256",
+  "status": "FIRST_FOUR_CALLBACKS_PASS_SCOPED_TYPE_EXTERNAL_FAILURE",
+  "firstRunEndedAt": "2026-10-14T09:20:37.773Z",
+  "value": {
+    "callbacks": 3,
+    "pass": 3,
+    "fail": 0,
+    "skip": 0
+  },
+  "actualPg": {
+    "callbacks": 1,
+    "pass": 1,
+    "fail": 0,
+    "skip": 0,
+    "newOwnedDatabaseOnly": true,
+    "schemaPreparedOnce": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ]
+  },
+  "fileOrParentCounted": false,
+  "cases": [
+    {
+      "kind": "value",
+      "testNumber": 1,
+      "name": "unset Ops and configured Ops without Catalog retain distinct sanitized startup paths",
+      "result": "PASS"
+    },
+    {
+      "kind": "value",
+      "testNumber": 2,
+      "name": "strict private file, fields, origins, internal IDs and policy capture reject unsafe input",
+      "result": "PASS"
+    },
+    {
+      "kind": "value",
+      "testNumber": 3,
+      "name": "Ops preparation failure preserves RPC-first Catalog cleanup and the original failure",
+      "result": "PASS"
+    },
+    {
+      "kind": "pg",
+      "testNumber": 1,
+      "name": "actual Catalog authority, dataset, tombstones and same borrowed Pool reach the existing Runtime config",
+      "result": "PASS"
+    }
+  ],
+  "static": {
+    "typeExit": 1,
+    "ownedDiagnosticCount": 0,
+    "externalDiagnosticCount": 25,
+    "sameExternalDiagnosticsAsP116": true,
+    "fullEntryTypeRoot": false,
+    "typeRoots": [
+      "src/main/orcad/orcad-ops-config.ts",
+      "src/main/orcad/orcad-ops.ts",
+      "src/main/orcad/orcad-ops.value.test.mts",
+      "src/main/orcad/orcad-ops.pg.test.mts"
+    ],
+    "lintExit": 0,
+    "lintFiles": [
+      "src/main/orcad/orcad-entry.ts",
+      "src/main/orcad/orcad-ops-config.ts",
+      "src/main/orcad/orcad-ops.ts",
+      "src/main/orcad/orcad-ops.value.test.mts",
+      "src/main/orcad/orcad-ops.pg.test.mts"
+    ]
+  },
+  "preparation": {
+    "firstExit": 1,
+    "firstFailure": "ACTUAL_IMPORT_NOT_PINNED",
+    "firstProductStaticAndCallbackEntryCount": 0,
+    "correction": "기존 source symlink의 논리 경로를 compiler/bundler의 preserveSymlinks=true로 유지했습니다. 입력 bytes와 assertions는 불변입니다.",
+    "correctedExit": 0,
+    "inputFiles": 4771,
+    "actualImports": 193,
+    "SQLFiles": 19,
+    "format": "cjs",
+    "target": "node24",
+    "minify": false,
+    "assertionsChanged": false,
+    "addedParentTests": 0,
+    "typeStubOrExtractedAlias": false
+  },
+  "ownedSourceHashes": [
+    {
+      "path": "src/main/orcad/orcad-entry.ts",
+      "sha256": "d5fab4974b1dbaf51dac44be202be6414ca3ed1f5ce18456fbde9ed0d68f7d73"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-config.ts",
+      "sha256": "7c5ba3e978732431dd0ced942d3b614eaeb02dcde8f7a81179ed64016186c3d8"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.ts",
+      "sha256": "5aa3e051a984de445734f856c489e330e0eca17206b08d154eb845bbc072169a"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.value.test.mts",
+      "sha256": "268b029b3e300b161eca07a169d91886e3b2ee73d2bf475a28cde0f2671bd4ca"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.pg.test.mts",
+      "sha256": "215d5e288f0d1c5562218c05bba52b2e3a648bce38f25cdc694efd15dd9f0dea"
+    }
+  ],
+  "tools": {
+    "node": "v24.15.0",
+    "typescript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "@types/node": "25.9.5",
+    "pg": "8.23.1"
+  },
+  "originalEvidenceSha256": {
+    "firstPreparationLog": "b4269351cd72c0190b90cc9f69e076d51db2eb58501ce6f082da8a672a57e3d2",
+    "firstValueTap": "8138ffcb1c7d29402cac508e140e4430cd22845a680c374d9dca49f2aeca2c32",
+    "firstPgTap": "f9a03abed6985d3ec05bb59cf5173abc81c761047036d30d5c2398fd46c6e5ec",
+    "firstTypeLog": "4e695a39cb09358220bf8a18d73ce2f210de1d08f403b06f982ed6ef52c1e89d",
+    "firstLintLog": "7506d3fc0b8f2c08cfa0496d7740676b795c8f9ce4573ed0bccd9b2bbd7abfa3",
+    "inputManifest": "6f3660d57d469af4b3df3aafb3fff43e18a29727e3748b38bc80e6193adcc6bc",
+    "actualImportManifest": "ca4eced42c7f7287e0c76288bc99f7c9c2153f00f1979e9807a082d0416b51ef"
+  },
+  "scope": {
+    "freshPgAndBackendIdentityMatchedAndReady": true,
+    "liveOwnedPidCount": 0,
+    "exitedSupervisorZombies": 3,
+    "heavyReturned": 1,
+    "priorSuitesRepeated": 0,
+    "productOrFixtureBytesChanged": 0,
+    "runtimeRestarts": 0,
+    "runtimeActivation": false,
+    "configRegistrationSeedOutsideFixture": false,
+    "newCaptures": 0,
+    "installs": 0,
+    "wholeBuilds": 0,
+    "cloudMutations": 0
+  },
+  "limitations": "신규 callback 4개와 소유 범위의 static만 수행했습니다. 전체 type PASS나 실제 Runtime HTTP/UI 활성화·브라우저·Expo/native·HA 합격이 아닙니다."
+}
