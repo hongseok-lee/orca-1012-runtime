@@ -1,0 +1,141 @@
+{
+  "검증 결과": "018 최초 소유 PG fixture 1건과 전용 typecheck 및 scoped lint를 통과했습니다.",
+  "schema_source": "58af00c45327221de84c729b6d818dfbe405daf9",
+  "fixture_sha256": "fd3674e499636d50f5670c93195676d80a454d675d2aaf93583db44a92e61b6f",
+  "018_checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+  "distinct_pg_tests": 1,
+  "pg_executions": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "type_exit": 0,
+  "lint_exit": 0,
+  "concurrent_pg_blocking_observed": true,
+  "started_at": "2026-10-13T14:04:14Z",
+  "ended_at": "2026-10-13T14:04:19Z",
+  "prior001017_bytes_unchanged": true,
+  "migration_chain": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "applied_at": "2026-10-13T14:04:16.595Z"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "applied_at": "2026-10-13T14:04:16.699Z"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "applied_at": "2026-10-13T14:04:16.762Z"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "applied_at": "2026-10-13T14:04:16.816Z"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "applied_at": "2026-10-13T14:04:16.883Z"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "applied_at": "2026-10-13T14:04:16.912Z"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "applied_at": "2026-10-13T14:04:16.914Z"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "applied_at": "2026-10-13T14:04:16.945Z"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "applied_at": "2026-10-13T14:04:16.953Z"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "applied_at": "2026-10-13T14:04:16.973Z"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "applied_at": "2026-10-13T14:04:16.990Z"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "applied_at": "2026-10-13T14:04:16.993Z"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "applied_at": "2026-10-13T14:04:17.004Z"
+    },
+    {
+      "version": "014-durable-catalog.sql",
+      "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "applied_at": "2026-10-13T14:04:17.045Z"
+    },
+    {
+      "version": "015-failure-evidence.sql",
+      "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "applied_at": "2026-10-13T14:04:17.083Z"
+    },
+    {
+      "version": "016-observation-episodes.sql",
+      "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+      "applied_at": "2026-10-13T14:04:17.111Z"
+    },
+    {
+      "version": "017-structured-session-wire.sql",
+      "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+      "applied_at": "2026-10-13T14:04:17.127Z"
+    },
+    {
+      "version": "018-terminal-input-floor.sql",
+      "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+      "applied_at": "2026-10-13T14:04:17.138Z"
+    }
+  ],
+  "migration_chain_scope": "새 소유 검증 DB의 최초 설치 전제입니다. 기존 데이터 복원이나 dev 적용이 아닙니다.",
+  "검증 범위": [
+    "원 handle/Session tuple FK와 identity 불변을 확인했습니다.",
+    "generation/revision 감소와 새 generation 없는 owner/device/mode 변경을 거절했습니다.",
+    "두 transaction이 실제로 겹친 같은 handle CAS에서 한 건만 성공하고 stale CAS는 0행이었습니다.",
+    "같은 floor의 연결 변경에 revision 증가를 요구하고 옛 연결 pin을 거절했습니다.",
+    "기존 legacy draft의 본문·첨부·revision·시각 및 별도 historical 행을 그대로 보존했습니다.",
+    "같은 transaction의 floor 변경과 draft 변경·삽입을 고의 실패로 전부 rollback했습니다."
+  ],
+  "미검증 범위": [
+    "인증된 reattach와 floor 권한 발급은 소비 모듈의 범위입니다.",
+    "draft codec, intake 합류, 공개 RPC, PTY 및 실제 기기 동작은 이 schema fixture가 검증하지 않았습니다.",
+    "소비 모듈의 첫 실제 결과 이미지 연계를 기다립니다. 별도 schema 이미지를 만들지 않았습니다."
+  ],
+  "dev013018_applied": false,
+  "evidence_type_overlay_source": "250bc7eafc93c92df1ed3771da7d63d9dc4922cf",
+  "tools_versions": {
+    "node": "24.15.0",
+    "pg": "8.23.1",
+    "typescript": "7.0.2",
+    "oxlint": "1.80.0"
+  },
+  "raw_artifacts_sha256": {
+    "end.json": "23d9cc1cbda3af8bee3f37d8f6beecdee63afc3325837b90613aab4e8fe91d38",
+    "first-pg-private.tap": "fc7a12ecd27f8ba2dd1efa15d355e083704961e0bd01bccb5ae97e62ad3745a7",
+    "lint-private.log": "34cbc867f33ff0efd45b6191c5ae9d2e6e13149b3598c6d5fa13acf92ca5b06d",
+    "owned-pid-final-metadata.txt": "c1e92e03517479f8d9aa85950c8628313b36611514286b2bd0edda556e131ad4",
+    "prepare-private.log": "6c5733a34e2202b5dd76684a8a90ee7fc11351ae5bef7d2408f7966c0e2b2981",
+    "schema-results.json": "d122246b7de673faca732911f7ec3ec32b4ca0da34331d488e9011b3c39fc7ac",
+    "start.json": "c8e20ceb20a46ced789760ad47fc61bcefcd2e159ab0dd49fac092acde33a1ec",
+    "typecheck-private.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

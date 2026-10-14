@@ -1,0 +1,23 @@
+--- a2b9:canonical actual-pg.test.mts
++++ execution-only focused-two.mts
+@@ -17,7 +17,8 @@
+ before(async () => {
+   const files = await readMigrations(process.env.P122_MIGRATIONS!)
+   assert.equal(files.length, 19)
+-  schema = (await applyMigrations(pool, files)).map(({ version, checksum }) => ({ version, checksum }))
++  schema = (await pool.query<{ version: string; checksum: string }>('SELECT version,checksum FROM durable_runtime.schema_migrations ORDER BY version')).rows
++  assert.deepEqual(schema, files.map(({ version, checksum }) => ({ version, checksum })))
+ })
+ after(async () => {
+   if (process.env.P122_EVIDENCE) {
+@@ -33,8 +34,9 @@
+   }
+   await pool.end()
+ })
++const focusedCaseNames = new Set(["첫 capacity WAIT의 원 목표와 provenance를 재사용하며 같은 incident와 operation은 중복 charge가 없다", "실제 lease row-lock 대기 뒤 만료를 다시 판정하고 예약을 거절한다"])
+ function check(name: string, body: () => Promise<void>) {
+-  test(name, { timeout: 120000 }, async () => {
++  test(name, { skip: !focusedCaseNames.has(name), timeout: 120000 }, async () => {
+     try { await body(); cases.push({ name, passed: true }) } catch (error) {
+       cases.push({ name, passed: false, errorCode: error instanceof DurableDatabaseError ? error.code : 'FIXTURE_FAILURE' }); throw error
+     }

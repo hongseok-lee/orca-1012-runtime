@@ -1,0 +1,52 @@
+{
+  "base": "ebd86a1e48fe8209853a56e93c92b6a087f37a1a",
+  "productSource": "c44b439cf7489eee72833abb5afb47847bcf844e",
+  "executionStatus": "작성했으며 PG/type/lint는 미실행입니다.",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/structured/durable-alias.ts",
+      "sha256": "4a7c976dcec3d7d81b3f6fae93a55d82862905e4b4796b39f1dc6f137ca45495",
+      "bytes": 2487
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-common.ts",
+      "sha256": "4e3dad803882f0c61c210335b8d2bc2238d632a5792bbc85379ae1ab83457501",
+      "bytes": 2350
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-create.ts",
+      "sha256": "5ddf7b73c87c47114fe39ea982fb5c456f4b7b36b0fcbe15b12d454ffaba1327",
+      "bytes": 5515
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-fixtures.mts",
+      "sha256": "a4f87fba60ad4fdfcf824531c64b56f395d8bb2022cd200f89e860a4994401b7",
+      "bytes": 12014
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-index.ts",
+      "sha256": "a39a0c5e297a4dfc6e104c81b759dcb2a5901fccb5169eb86973961815249991",
+      "bytes": 478
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-send.ts",
+      "sha256": "d926bb2ea808f1a9a3a1d944ea36b9e3170c2eba35bc233757fd73a84d8d7c2e",
+      "bytes": 8906
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-types.ts",
+      "sha256": "49a7c38b82a28f5003f3bcb73120149cf1ae482bb4ddd7d020b2556b3369eaa3",
+      "bytes": 2627
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable.pg.test.mts",
+      "sha256": "efd8ea7a9905387f2ffd33d4de26ed2d5f7aae7a39bc8b0d6c40a307339716b0",
+      "bytes": 16157
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable.tsconfig.verification.json",
+      "sha256": "ef02ee090f385f44705dbbb8e7d5e34de49da5a37a3b5c4548f2286135144731",
+      "bytes": 322
+    }
+  ]
+}

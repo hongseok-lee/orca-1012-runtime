@@ -1,0 +1,138 @@
+{
+  "sourcePin": "8187d4706506fea3ec6479e39fcf198b3eefde2c",
+  "productPin": "d6ee3ebc46dbd156b779f30815ba4ca73d1ab8ce",
+  "fixtureSha256": "fe03738f62f906662f757db63a19af73e3282502851bc29a36fbc2e72b7cbe5a",
+  "requestedCallbacks": [
+    1,
+    7
+  ],
+  "actualCallbacksEntered": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "actualPass": 7,
+  "actualFail": 0,
+  "actualSkip": 0,
+  "successfulCallbacksRepeated": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "focusedTwoOnlySatisfied": false,
+  "parentWrappersCountedAsCases": false,
+  "distinctPgCases": 7,
+  "lintExit": 0,
+  "typeRepeated": false,
+  "node13Repeated": false,
+  "oldCatalogPg8Repeated": false,
+  "dbPreparationRepeated": false,
+  "migrationRepeated": false,
+  "oldMalformedRowsChanged": false,
+  "startedAt": "2026-10-13T15:55:03.086Z",
+  "finishedAt": "2026-10-13T15:55:07.210Z",
+  "bundleSha256": "e5dda0b43f638056da9460e3625676c55212e988db846bcf26ebd05cd622e39f",
+  "heavyOccupied": false,
+  "originalProductPin": "17cca6af7bb8fad1285921b399660a1a6806cad0",
+  "initialHistory": {
+    "source": "9d8f399e6d5e73831851c689c1bd36430fcb0ed6",
+    "pass": 5,
+    "fail": 2,
+    "failedCases": [
+      1,
+      7
+    ],
+    "rawTapSha256": "22e3eb0134bd61cddb76f48b5d9317ba8ca03eada45b0d7867ac10f3dd6a7d53"
+  },
+  "priorScopedTypeExit": 0,
+  "scopeError": "Node 부모 이름 필터가 자식 전체를 포함해 실제 callback 7개가 진입했고 기존 성공 5개를 반복했습니다. 추가 실행은 하지 않았습니다.",
+  "rootReview": "https://github.com/hongseok-lee/orca-1012-runtime/pull/39#issuecomment-6149860777",
+  "rootAcceptedDistinctPgCases": 7,
+  "captureKind": "실제 결과 문서이며 제품 UI가 아닙니다.",
+  "actualPngReady": false,
+  "logs": {
+    "focused-workspace-fixture-lint": {
+      "sha256": "6999521c7108541c0e206334091ac9952dc5a4353e5f3d1e2ca13c3d8607822f",
+      "bytes": 91,
+      "exit": 0,
+      "pid": 12187
+    },
+    "focused-workspace-test-prepare": {
+      "sha256": "f80eab0ddb2c6157c77e0de182767d7651d738a9244aaa437c436bc19120e155",
+      "bytes": 43,
+      "exit": 0,
+      "pid": 12201
+    },
+    "focused-workspace-pg": {
+      "sha256": "8ecc13946aca08a714dd2dfc006409405df2d67c5d3fd7f980bd7877de58fb47",
+      "bytes": 2607,
+      "exit": 0,
+      "pid": 12214
+    }
+  },
+  "processesEnded": [
+    12175,
+    12187,
+    12201,
+    12214,
+    12220
+  ],
+  "ownedActivePids": [],
+  "cases": [
+    {
+      "number": 1,
+      "name": "non-UUID public ID commits logical graph, fence one, event and outer receipt; replay has no effect",
+      "initial": "FAIL",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": false
+    },
+    {
+      "number": 2,
+      "name": "failure after Catalog head and first journal event rolls back the graph and receipt together",
+      "initial": "PASS",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": true
+    },
+    {
+      "number": 3,
+      "name": "nested prepared DTO and owner callback receiver are fixed before the first SQL await",
+      "initial": "PASS",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": true
+    },
+    {
+      "number": 4,
+      "name": "deleted existing Workspace is rejected without publishing new rows",
+      "initial": "PASS",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": true
+    },
+    {
+      "number": 5,
+      "name": "changed shared Unit peers are rejected rather than adding a new lower-rank lock",
+      "initial": "PASS",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": true
+    },
+    {
+      "number": 6,
+      "name": "existing public ID grammar and physical-handle exclusion reject invalid preparation",
+      "initial": "PASS",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": true
+    },
+    {
+      "number": 7,
+      "name": "new active agent-session Tab clears the prior logical active Tab in the same Workspace",
+      "initial": "FAIL",
+      "afterCorrection": "PASS",
+      "repeatedPriorSuccess": false
+    }
+  ]
+}

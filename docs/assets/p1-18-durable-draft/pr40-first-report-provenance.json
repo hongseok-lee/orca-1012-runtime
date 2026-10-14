@@ -1,0 +1,73 @@
+{
+  "PR": 40,
+  "capturedAt": "2026-10-13T14:58:20.318Z",
+  "url": "https://github.com/hongseok-lee/orca-1012-runtime/blob/8368b3b8f6eb3a81cc2613f2ec45bb9344295655/docs/implementation/p1-18-durable-draft/README.md",
+  "targetSHA": "8368b3b8f6eb3a81cc2613f2ec45bb9344295655",
+  "currentHeadAtHandshake": "8368b3b8f6eb3a81cc2613f2ec45bb9344295655",
+  "sourceSHA": "5010b6a50f03ae4c4e0a0c14d37305a41775f645",
+  "initialSourceSHA": "48c993c36204606b537ba12f3219e317f9e8a380",
+  "reportDocumentSHA256": "62d0ccf9a7193f772ff7e6cb5523ae4f3d34c2a4dd1e7e4b7a527142b3e22720",
+  "resultDocumentSHA256": "e11d8d61f813bf92d3692f8d4cc3ab15f7bcd16062710818ae72862278098cdf",
+  "actualHeading": "최초 durable PG 검증과 한정 교정",
+  "actualResultParagraphs": [
+    "Root가 수락한 receiver 교정 source 48c993c36204606b537ba12f3219e317f9e8a380의 최초 ESM 변환은 신규 fixture 57행의 여분 닫는 괄호로 중단됐다. 원 오류는 Expected \";\" but found \")\"다. 그 단계에서 PG / type / lint는 실행하지 않았다. 최초 원 로그와 source manifest를 비공개 증거에 그대로 보존했다. Fixture의 괄호 1개만 제거한 교정 source는 5010b6a50f03ae4c4e0a0c14d37305a41775f645이며 제품 코드 / receiver / payload 의미를 변경하지 않았다.",
+    "2026-10-13 14:40:01 UTC에 기존 원격 Node 24.15.0과 읽기 전용 도구 / PG cache로 준비된 durable PG 9개를 최초 실행해 PASS 9개, fail 0개, skip 0개를 확인했다. 파일 병렬은 1이다. Scoped type exit는 0이고 configured lint는 신규 소유 파일 10개에서 warning / error 0이다. 결과는 first-durable-results.json에 기록했다. 기존 pure 7개 / Input 11개 / DB018 schema 1개 성공 시험은 반복하지 않았다."
+  ],
+  "actualTableText": null,
+  "headingRect": {
+    "x": 370,
+    "y": 1149,
+    "width": 721,
+    "height": 38.1875
+  },
+  "resultParagraphRects": [
+    {
+      "x": 370,
+      "y": 1203.1875,
+      "width": 721,
+      "height": 121.171875
+    },
+    {
+      "x": 370,
+      "y": 1340.359375,
+      "width": 721,
+      "height": 120.78125
+    }
+  ],
+  "tableRect": null,
+  "viewport": {
+    "width": 1140,
+    "height": 2000
+  },
+  "DPR": 1,
+  "counts": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "concurrency": 1
+  },
+  "typeExit": 0,
+  "lintExit": 0,
+  "initialFailure": {
+    "step": "esbuild",
+    "message": "Expected \";\" but found \")\"",
+    "file": "src/main/durable-runtime/terminal/durable-draft.test.mts",
+    "line": 57,
+    "pgExecuted": false,
+    "correction": "fixture의 여분 닫는 괄호 1개만 제거했습니다."
+  },
+  "playwright": "1.59.1",
+  "browser": "147.0.7727.15",
+  "artifactSHA256": "0cc558c7b8b96291dbae8a04f5ac46ff6aab11380d2c5822a02df21ee9c2f6ef",
+  "artifactBytes": 667639,
+  "screenshotExecutions": 1,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false,
+  "productUI": false,
+  "nativeIPhone": false,
+  "PublicRPCQualification": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "kind": "기존 원 receiver와 same-TX draft의 최초 durable PG 9건 및 fixture 괄호 한정 교정 결과 보고 문서"
+}

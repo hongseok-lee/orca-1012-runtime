@@ -1,0 +1,42 @@
+{
+  "executed_source": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "generation": "recovery-20261013",
+  "migration": {
+    "version": "014-durable-catalog.sql",
+    "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+    "applied_at": "2026-10-13T10:54:30.522Z"
+  },
+  "actual_pg_cases": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "checks": {
+    "typecheck": "PASS",
+    "configured_lint": "PASS",
+    "first_actual_pg": "PASS",
+    "format": "NOT_RUN"
+  },
+  "versions": {
+    "node": "24.15.0",
+    "pg": "8.23.1",
+    "typescript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "types_node": "25.9.5"
+  },
+  "result": "별도 소유 PG에서 014의 첫 mutation·CAS·guard·rollback 사례 1건이 통과했습니다.",
+  "scope": "013/014 chain의 최초 설치는 시험 전제입니다. 과거 013 PASS suite나 001–012 기능 회귀 suite는 실행하지 않았습니다.",
+  "original001013_checksum_match": true,
+  "dev_schema_scope": "새 빈 dev에는 main 001–012만 적용했습니다. 013/014는 dev에 적용하지 않았습니다.",
+  "source_code_correction": "SQL·row type·fixture 코드를 교정하거나 PG 사례를 재실행하지 않았습니다.",
+  "tools_correction": "최초 tools 설치의 autoInstallPeers lock 설정 불일치를 명령의 고정 설정으로만 교정했습니다. 공개 package/lock과 기존 PG cache/lock은 변경하지 않았습니다.",
+  "capture": "소비 모듈의 최초 실제 결과 캡처 연계를 기다립니다. 별도 schema PNG는 촬영하지 않았습니다.",
+  "proof_boundary": "DB 제약 검증이며 Catalog/RPC/실제 provider/HA 완료를 의미하지 않습니다.",
+  "private_log_sha256": {
+    "pg": "9fcc28fee2632bdf84c7c6b3385c244cd5a673f232c1e028dfb8e1383aba3c1a",
+    "type": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint": "47a026bff2757c04b787bc2a06e9eb6627fa33f75139b47e243c3e313431377c"
+  },
+  "tools_lock_sha256": "986f44594f304c91c52660a34d40263e414481a444a24c708ee205edb51ae6a8",
+  "lint_config_sha256": "c9937ad53bdaa27b1289b9e46ecd55d13151f3e1f619a78e35c88363b585096e"
+}
