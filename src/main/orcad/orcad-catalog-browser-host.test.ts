@@ -77,7 +77,9 @@ test('captured Catalog browser factory preserves host receivers and borrowed own
   assert.equal(state.queries.filter(sql => sql === 'COMMIT').length, 2)
   // 기존 두 resolver assertion 뒤에 host 우선순위 경계만 추가합니다.
   const foreignHost = 'runtime:browser-fixture-other'
-  repositoryRow.payload = { ...registration.repo, executionHostId: undefined, connectionId: 'synthetic-browser-ssh' }
+  const connectionOnlyRepo = { ...registration.repo, connectionId: 'synthetic-browser-ssh' }
+  delete connectionOnlyRepo.executionHostId
+  repositoryRow.payload = connectionOnlyRepo
   await assert.rejects(bound.resolveBrowserWorkspace(launch.workspace.publicId), { code: 'CATALOG_REGISTRATION_HOST_MISMATCH' })
   repositoryRow.payload = { ...registration.repo, connectionId: 'synthetic-browser-ssh' }
   assert.deepEqual(await bound.resolveBrowserWorkspace(launch.workspace.publicId), expected)
