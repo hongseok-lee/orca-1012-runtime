@@ -62,7 +62,7 @@ export function createOpsHttpHandler(config: OpsHttpConfig): OpsHttpHandler {
   }) as OpsHttpHandler
   handle.stop = async () => {
     stopped = true
-    for (const owner of [...owners]) {
+    for (const owner of owners) {
       owner.controller.abort()
       if (!owner.response.destroyed && !owner.response.writableEnded) {
         // Finish the rejection before releasing a partially uploaded request/socket.

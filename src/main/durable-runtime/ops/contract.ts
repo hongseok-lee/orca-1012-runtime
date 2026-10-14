@@ -1,3 +1,4 @@
+import type { JsonValue } from '../db/atomic.ts'
 /** Root P126/127 wire DTOs. IDs/counters are strings; unavailable observations are null. */
 export type OpsCounter = string
 export type OpsId = string
@@ -51,7 +52,7 @@ export type OpsUnitDetail = { unit: OpsUnit; sessions: OpsSession[]; tabs: OpsTa
 export type OpsReplayCursor = { streamId: string; epoch: OpsCounter; offset: OpsCounter }
 export type OpsReplayEvent = {
   cursor: OpsReplayCursor; sourceEventId: OpsId; occurredAt: string; publishedAt: string
-  payload: null | boolean | number | string | OpsReplayEvent['payload'][] | { [key: string]: OpsReplayEvent['payload'] }
+  payload: JsonValue
 }
 export type OpsReplayPage =
   | { status: 'PAGE'; events: OpsReplayEvent[]; nextCursor: OpsReplayCursor; highWatermark: OpsReplayCursor; minimumOffset: OpsCounter; scanned: number }

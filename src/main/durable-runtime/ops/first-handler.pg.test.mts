@@ -81,8 +81,8 @@ async function firstFrame(response: Response) {
 test('actual existing-key verification rejects invalid and cookie-only credentials and cross origin', async () => {
   const f = await seed(), h = await serve(f.scope, services(f.scope))
   assert.equal((await h.get('/ops/v1/runtime-units')).status, 200)
-  assert.equal((await fetch(h.origin + '/ops/v1/runtime-units', { headers: { Authorization: 'Bearer invalid-fixture' } })).status, 401)
-  assert.equal((await fetch(h.origin + '/ops/v1/runtime-units', { headers: { Cookie: 'fixture=session' } })).status, 401)
+  assert.equal((await fetch(`${h.origin}/ops/v1/runtime-units`, { headers: { Authorization: 'Bearer invalid-fixture' } })).status, 401)
+  assert.equal((await fetch(`${h.origin}/ops/v1/runtime-units`, { headers: { Cookie: 'fixture=session' } })).status, 401)
   assert.equal((await h.get('/ops/v1/runtime-units', { Origin: 'https://cross-origin.invalid' })).status, 403)
   assert.equal((await h.get('/ops/v1/runtime-units', { Origin: h.origin })).status, 200)
 })
@@ -295,6 +295,6 @@ test('request schema, counters, unsupported actions and unowned URLs retain dist
   const base = { operationId: randomUUID(), expectedRevision: '0', action: 'wake', params: { expectedIntentRevision: '0' } }
   assert.equal((await h.post(`/ops/v1/runtime-units/${f.unit}/commands`, { ...base, expectedRevision: '9223372036854775808' })).status, 400)
   assert.equal((await h.post(`/ops/v1/runtime-units/${f.unit}/commands`, { ...base, action: 'sleep', params: {} })).status, 501)
-  assert.equal((await fetch(h.origin + '/ops/v1/runtime-units/' + f.unit + '/commands', { method: 'POST', headers: h.headers, body: '{}' })).status, 400)
+  assert.equal((await fetch(`${h.origin}/ops/v1/runtime-units/${f.unit}/commands`, { method: 'POST', headers: h.headers, body: '{}' })).status, 400)
   assert.equal(await (await h.get('/unowned')).text(), 'static fallback fixture')
 })
