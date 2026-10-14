@@ -128,6 +128,29 @@ await test('PG1 실제 registry send는 receipt-first·원 입력·scope·COMMIT
       (SELECT count(*)::integer FROM durable_runtime.session_events WHERE session_id=$1 AND body->>'kind'='INPUT_SUBMISSION') AS events,
       (SELECT count(*)::integer FROM durable_runtime.rpc_receipts WHERE method='agentSession.send' AND session_scope=$2) AS receipts`,
       [alias.session_id, JSON.stringify(['structured-session', publicSessionId])])).rows[0]
+    // Only this callback's new UUID-scoped synthetic repository/Workspace rows are changed.
+    const repositoryPayload = (await pool.query('SELECT payload FROM durable_runtime.catalog_repositories WHERE id=$1',
+      [ws.repoId])).rows[0].payload
+    const workspaceMetadata = (await pool.query('SELECT kind,payload FROM durable_runtime.catalog_workspace_metadata WHERE workspace_id=$1',
+      [alias.workspace_id])).rows[0]
+    assert.notEqual(workspaceMetadata.kind, 'FOLDER_WORKSPACE')
+    const noSend = { inputs: 0, submissions: 0, events: 0, receipts: 0 }
+    assert.deepEqual(await inputCounts(), noSend)
+    const legacyRepository = { ...repositoryPayload, connectionId: `synthetic-send-host-${ws.id}` }
+    delete legacyRepository.executionHostId
+    await pool.query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1', [ws.repoId, legacyRepository])
+    await assert.rejects(state.invoke('agentSession.send', send(text)), /CATALOG_REGISTRATION_HOST_MISMATCH/)
+    assert.deepEqual(await inputCounts(), noSend)
+    // Explicit local ownership wins over legacy connectionId; Worktree host still has its own boundary.
+    await pool.query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1',
+      [ws.repoId, { ...legacyRepository, executionHostId: 'local' }])
+    await pool.query('UPDATE durable_runtime.catalog_workspace_metadata SET payload=$2 WHERE workspace_id=$1',
+      [alias.workspace_id, { ...workspaceMetadata.payload, hostId: `runtime:synthetic-send-host-${ws.id}` }])
+    await assert.rejects(state.invoke('agentSession.send', send(text)), /CATALOG_REGISTRATION_HOST_MISMATCH/)
+    assert.deepEqual(await inputCounts(), noSend)
+    await pool.query('UPDATE durable_runtime.catalog_workspace_metadata SET payload=$2 WHERE workspace_id=$1',
+      [alias.workspace_id, workspaceMetadata.payload])
+    // The unchanged first send below must succeed with explicit local + legacy connectionId retained.
     const physicalBefore = await physical(pool)
     assert.deepEqual(physicalBefore, { attempts: 0, execution_grants: 0, storage_grants: 0, verification: 0 })
     const firstParams = send(text), first = await state.invoke('agentSession.send', firstParams) as AgentSessionMutationResult<AgentSessionSendResult>
