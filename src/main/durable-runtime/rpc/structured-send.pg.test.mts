@@ -173,7 +173,7 @@ await test('PG1 실제 registry send는 receipt-first·원 입력·scope·COMMIT
     }
     await assert.rejects(state.invoke('agentSession.send', send({ kind: 'message', role: 'user', blocks: [
       { type: 'image-ref', url: 'https://example.invalid/not-connected.png' }] })), /STRUCTURED_IMAGE_URL_NOT_CONNECTED/)
-    const denied = setup(pool, { ...ws.config, repositoryIds: [], workspacePublicIds: [], projectGroupIds: [] })
+    const denied = setup(pool, { ...ws.config, repositoryIds: [], workspacePublicIds: [], projectGroupIds: [], launch: { ...ws.config.launch, repositories: [] } })
     try { await assert.rejects(denied.invoke('agentSession.send', send(text)), /selector_not_found/) }
     finally { denied.adapter.dispose() }
     await assert.rejects(state.invoke('agentSession.send', send(image(ownerImage.aliasPath)), { authenticatedCallerFingerprint: 'b'.repeat(64) }), /ALIAS_NOT_FOUND/)
