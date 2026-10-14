@@ -1,3 +1,4 @@
+import { posix } from 'node:path'
 import { structuredAgentSessionTabId } from '../../../shared/structured-agent-session-projection.ts'
 import { isAgentSessionId } from '../../../shared/agent-session-record.ts'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -18,10 +19,39 @@ import type { PreparedCatalogAgentSession, CatalogAgentSessionReservation } from
 
 export type { PreparedCatalogAgentSession, CatalogAgentSessionReservation } from './agent-session-types.ts'
 
+function normalizedReservationPath(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() === value && value.startsWith('/') &&
+    !value.includes('\\') && posix.normalize(value) === value && (value === '/' || !value.endsWith('/')) &&
+    !Array.from(value).some(character => character.charCodeAt(0) <= 0x1f || character.charCodeAt(0) === 0x7f) &&
+    !value.split('/').some(part => part === '.' || part === '..')
+}
+
 function captureAgentSession(input: PreparedCatalogAgentSession): PreparedCatalogAgentSession {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(input, 'originalRequest')
+  if (originalDescriptor && 'value' in originalDescriptor && originalDescriptor.value !== null &&
+      typeof originalDescriptor.value === 'object' && Object.hasOwn(originalDescriptor.value, 'server')) {
+    throw new CatalogError('CATALOG_AGENT_SESSION_SERVER_CONFLICT')
+  }
   // SAFETY: a detached copy of the supplied typed configuration, not an authority issuer.
   const prepared = captureCatalogParsed(input) as PreparedCatalogAgentSession
   const { workspace, runtime, tab } = prepared
+  if (Object.hasOwn(prepared.originalRequest, 'server')) {throw new CatalogError('CATALOG_AGENT_SESSION_SERVER_CONFLICT')}
+  const server = prepared.serverLaunch
+  if (server !== undefined) {
+    const mapping = server?.storagePathMapping
+    if (!server || typeof server !== 'object' || Array.isArray(server) ||
+      Object.keys(server).some(key => !['agentHomePath', 'storagePathMapping'].includes(key)) ||
+      !mapping || typeof mapping !== 'object' || Array.isArray(mapping) ||
+      Object.keys(mapping).some(key => !['localDirectory', 'canonicalDirectory'].includes(key)) ||
+      !normalizedReservationPath(server.agentHomePath) || !normalizedReservationPath(mapping.localDirectory) ||
+      !normalizedReservationPath(mapping.canonicalDirectory) ||
+      mapping.canonicalDirectory !== runtime.storage.canonicalDirectory ||
+      !(mapping.localDirectory === '/' || server.agentHomePath === mapping.localDirectory ||
+        server.agentHomePath.startsWith(`${mapping.localDirectory}/`)) ||
+      posix.basename(server.agentHomePath) !== runtime.agent.id) {
+      throw new CatalogError('CATALOG_AGENT_SESSION_SERVER_CONFIGURATION')
+    }
+  }
   logicalId('workspace', workspace.workspace_id); logicalId('session', runtime.sessionId)
   logicalId('agent', runtime.agent.id); logicalId('runtime-unit', runtime.unit.id)
   logicalId('storage-binding', runtime.storage.id); logicalId('tab', tab.id)
@@ -113,7 +143,8 @@ export async function reserveCatalogAgentSessionInTransaction(
     [prepared.tab.id, identity.workspace_id, runtime.sessionId, prepared.tab.uiOrder])
   await tx.query(`INSERT INTO durable_runtime.catalog_tab_metadata(tab_id,public_tab_id,payload,launch_request,launch_token)
     VALUES($1,$2,$3,$4,NULL)`, [prepared.tab.id, structuredAgentSessionTabId(prepared.publicSessionId),
-    JSON.stringify(prepared.tab.payload), JSON.stringify(prepared.originalRequest)])
+    JSON.stringify(prepared.tab.payload), JSON.stringify(prepared.serverLaunch === undefined ? prepared.originalRequest
+      : { ...prepared.originalRequest, server: prepared.serverLaunch })])
   const created = (await loadCatalogTabs(tx, identity.workspace_id)).find(tab => tab.tab_id === prepared.tab.id)
   if (!created) {throw new CatalogError('CATALOG_TAB_NOT_FOUND')}
   const tab = parseCatalogTab(created)

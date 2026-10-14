@@ -19,6 +19,11 @@ export type PreparedCatalogAgentSession = {
   readonly tab: { readonly id: TabId; readonly uiOrder: number; readonly payload: RuntimeMobileSessionAgentTab }
   /** Original structured intent, including supplied policy/version metadata. */
   readonly originalRequest: Record<string, unknown>
+  /** Server reservation coordinates, separate from the original wire intent. */
+  readonly serverLaunch?: Readonly<{
+    agentHomePath: string
+    storagePathMapping: Readonly<{ localDirectory: string; canonicalDirectory: string }>
+  }>
 }
 
 export type CatalogAgentSessionReservation = {
