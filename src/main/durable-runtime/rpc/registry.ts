@@ -6,6 +6,10 @@ import { CatalogReadError } from './config.ts'
 import { CATALOG_PUBLIC_CREATION_METHODS } from './creation.ts'
 import { CATALOG_PUBLIC_METADATA_METHODS } from './metadata.ts'
 
+export const CATALOG_PUBLIC_CLIPBOARD_METHODS = Object.freeze([
+  'clipboard.saveImageAsTempFile', 'clipboard.startImageUpload', 'clipboard.appendImageUploadChunk',
+  'clipboard.commitImageUpload', 'clipboard.abortImageUpload'
+] as const)
 export const CATALOG_PUBLIC_READ_METHODS = Object.freeze([
   'repo.list', 'projectGroup.list', 'folderWorkspace.list', 'worktree.list', 'worktree.ps', 'worktree.show', 'ui.get',
   'session.tabs.list', 'session.tabs.listAll'
@@ -23,10 +27,15 @@ export function isCatalogMethodNotConnected(name: string): boolean {
 }
 export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDeclaration[], adapter: DurableCatalogReadAdapter): readonly RpcAnyMethodDeclaration[] {
   const read = new Set<string>(CATALOG_PUBLIC_READ_METHODS), stream = new Set<string>(CATALOG_PUBLIC_STREAM_METHODS)
+  const clipboard = new Set<string>(CATALOG_PUBLIC_CLIPBOARD_METHODS)
   const cleanup = new Set<string>(CATALOG_PUBLIC_CLEANUP_METHODS)
   const metadata = new Set<string>(CATALOG_PUBLIC_METADATA_METHODS)
   const creation = new Set<string>(CATALOG_PUBLIC_CREATION_METHODS), structured = new Set<string>(CATALOG_STRUCTURED_CREATE_METHODS)
   return Object.freeze(methods.map(method => {
+    if (clipboard.has(method.name)) {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext) => adapter.clipboard(method.name, params, context) }
+    }
     if (stream.has(method.name)) {
       if (!('stream' in method && method.stream)) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext, emit: (result: unknown) => void) => adapter.subscribe(method.name, params, context, emit) }

@@ -1,3 +1,4 @@
+import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
 import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
 import { createCatalogStructuredSendRpc } from './structured-send.ts'
@@ -20,9 +21,11 @@ export class DurableCatalogReadAdapter {
   private readonly structured: ReturnType<typeof createCatalogStructuredRpc>
   private readonly structuredHistory: ReturnType<typeof createCatalogStructuredHistoryRpc>
   private readonly structuredSend: ReturnType<typeof createCatalogStructuredSendRpc>
+  private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
   private disposed = false
   constructor(config: DurableCatalogReadConfig) {
     this.config = captureDurableCatalogReadConfig(config)
+    this.clipboardRpc = this.config.attachments === undefined ? null : createCatalogClipboardRpc(this.config, this.config.attachments)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
     this.metadata = createCatalogMetadataFacade(this.config)
     this.creation = createCatalogCreationFacade(this.config)
@@ -58,6 +61,13 @@ export class DurableCatalogReadAdapter {
     try {
       this.requireOpen()
       return await this.structured(method as CatalogStructuredCreateMethod, params, context)
+    } catch (error) { throw catalogReadFailure(error) }
+  }
+  async clipboard(method: string, params: unknown, context: RpcContext): Promise<unknown> {
+    try {
+      this.requireOpen()
+      if (this.clipboardRpc === null) { throw new CatalogReadError('CATALOG_CLIPBOARD_NOT_CONFIGURED') }
+      return await this.clipboardRpc(method as CatalogClipboardMethod, params, context)
     } catch (error) { throw catalogReadFailure(error) }
   }
   async unsubscribe(method: string, params: unknown, context: RpcContext): Promise<unknown> {
