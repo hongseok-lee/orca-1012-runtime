@@ -109,10 +109,17 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         }
         captured.assertCurrentHost()
         const transport = await prepareOrcadControllerInventory(config)
+        // Dataset 전체 queue 소비를 서버가 명시적으로 선택합니다. 원 transaction에서 claim 뒤 payload를 검증합니다.
+        // Payload 없는 head로 kind를 추정하거나 새 권한을 만들지 않습니다.
+        const selectedEventWork = config.structuredOutput ? Object.freeze({
+          handler: (await import('../durable-runtime/events/structured-output.ts')).structuredOutputEventHandler,
+          options: Object.freeze({ claimDurationMs: config.structuredOutput.claimDurationMs })
+        }) : null
         if (closing) { return }
         captured.assertCurrentHost()
-        // No plan/event/execute/lookup placeholder: the original pass keeps those jobs unclaimed.
-        worker = createControllerWorker(captured.pool, config.policy, { inventory: { transport,
+        // Plan/execute/lookup 대체 callback이나 별도 queue 소비 loop는 만들지 않습니다.
+        worker = createControllerWorker(captured.pool, config.policy, {
+          ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source) {
             if (closing) { return }
             captured.assertCurrentHost()
