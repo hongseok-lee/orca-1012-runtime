@@ -1,0 +1,23 @@
+
+  x eslint(no-unused-vars): Type 'AgentSessionAttachResult' is imported but never used.
+    ,-[src/main/durable-runtime/rpc/structured-send.pg.test.mts:21:15]
+ 20 | import type { AgentSessionSendResult } from '../../../shared/agent-session-wire.ts'
+ 21 | import type { AgentSessionAttachResult, AgentSessionMutationResult } from '../../../shared/agent-session-wire.ts'
+    :               ^^^^^^^^^^^^|^^^^^^^^^^^
+    :                           `-- 'AgentSessionAttachResult' is imported here
+ 22 | import type { CatalogWireResults } from '../catalog/wire.ts'
+    `----
+  help: Consider removing this import.
+
+  x eslint(no-unused-vars): Function 'counts' is declared but never used.
+    ,-[src/main/durable-runtime/rpc/structured-send.pg.test.mts:93:16]
+ 92 | }
+ 93 | async function counts(pool: Pool) {
+    :                ^^^|^^
+    :                   `-- 'counts' is declared here
+ 94 |   return (await pool.query(`SELECT (SELECT count(*)::integer FROM durable_runtime.structured_session_aliases) AS aliases,
+    `----
+  help: Consider removing this declaration.
+
+Found 0 warnings and 2 errors.
+Finished in 269ms on 6 files with 176 rules using 2 threads.

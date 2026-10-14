@@ -1,0 +1,197 @@
+{
+  "reviewedSourcePin": "a614538bdeee4627f2d456751c5dcc148203902f",
+  "alignedSourceHead": "58f80972e4385326fe55ab29c55506039407b91b",
+  "fixedBase": "8fdb1918ae03eeb96fbdebc47743f728c1c33b05",
+  "sourceTree": "90c7dc163c3e2dd4db436c1008025d0ba686f663",
+  "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/69#issuecomment-6176448367",
+  "ownedManifest": [
+    {
+      "path": "src/main/durable-runtime/rpc/structured-send-resolution.ts",
+      "mode": "100644",
+      "blob": "28171d1bce11143725fd00490039dcf454b15a78",
+      "bytes": 7360,
+      "sha256": "5e4e39e31fd53abeb26b558bb470e08ca10a55c3279d6afa6a8e24aa1474e6f3",
+      "reviewedBlobModeUnchanged": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-send.pg.test.mts",
+      "mode": "100644",
+      "blob": "48f8421ef40f760ca078438147c7e5c4390187fa",
+      "bytes": 17974,
+      "sha256": "86ca7910154c3b4926ef3a853b71be4eae01972fce776533ec4a6e694f003c4e",
+      "reviewedBlobModeUnchanged": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-send.ts",
+      "mode": "100644",
+      "blob": "18f217a4317846be5e420155c95d6cbb59b2561e",
+      "bytes": 4231,
+      "sha256": "2e2f7036c96ede134120b5049ee25723c7282b3b37a17b86759de8aad26839e3",
+      "reviewedBlobModeUnchanged": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-send.value.test.mts",
+      "mode": "100644",
+      "blob": "06e4aa624a7c9eb1e556fcd5cbbb3e1e1438748d",
+      "bytes": 6250,
+      "sha256": "b3e4c4d7a70b081d7a4325d0f6214c73fb86046e948c439b2fab1b2429db8f74",
+      "reviewedBlobModeUnchanged": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/public.ts",
+      "mode": "100644",
+      "blob": "ec61ae54d2979bf22ba895419b95939c888e85a0",
+      "bytes": 4665,
+      "sha256": "0f053bef990512b8a76324738898b6cd38f43b5c0e7fee38adcc44fbb512e924",
+      "reviewedBlobModeUnchanged": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/registry.ts",
+      "mode": "100644",
+      "blob": "ba9fc415b7d29cbced62f3cf1560c4f731cbb7f0",
+      "bytes": 4325,
+      "sha256": "6098791393ca1fe57820c9ae36cd97de6ca0b55adf6c99d87c96b11118229d90",
+      "reviewedBlobModeUnchanged": true
+    }
+  ],
+  "nonOwnedFilesMatchFixedMain": true,
+  "actualInputEquivalence": {
+    "sourceInputs": 1609,
+    "metafileInputs": 1610,
+    "SQLFiles": 19,
+    "ownedUnchanged": 6,
+    "nonOwnedActualInputDelta": [],
+    "sourceInputMismatch": [],
+    "generatedFixtureParentBodyUnchanged": true
+  },
+  "hostValidation": {
+    "controlPid": 27516,
+    "PGRunnerPid": 27568,
+    "PGTestFileChildPid": 27574,
+    "startedAt": "2026-10-14T19:17:03.196Z",
+    "finishedAt": "2026-10-14T19:17:11.398Z",
+    "changedLintFiles": 2,
+    "lintExit": 0,
+    "PGCallbacks": 1,
+    "PGTests": 1,
+    "PGPass": 1,
+    "PGFail": 0,
+    "PGExit": 0,
+    "PGBundleSha256": "efd93ed1e91fff7a8cce0f818ae86dae655a165bf9afdb80eb3d34b853e01225",
+    "PGTAPSha256": "343d1b078f43896d615fd144729531b368a9e4914d5519855c31c0e5a7229dac",
+    "PGSystemIdentifierAndDatabaseOidUnchanged": true,
+    "ledger19Unchanged": true,
+    "existingRowsObservedTables": 16,
+    "existingRowsPreserved": 36,
+    "missingOrChangedExistingRows": 0,
+    "preCounts": {
+      "workspaces": 1,
+      "sessions": 2,
+      "aliases": 1,
+      "receipts": 6,
+      "journal": 4,
+      "inputs": 3,
+      "attempts": 0,
+      "execution_grants": 0,
+      "storage_grants": 0
+    },
+    "postCounts": {
+      "workspaces": 2,
+      "sessions": 4,
+      "aliases": 2,
+      "receipts": 12,
+      "journal": 8,
+      "inputs": 6,
+      "attempts": 0,
+      "execution_grants": 0,
+      "storage_grants": 0
+    },
+    "readOnlyPreAndPost": true,
+    "knownProcesses": "제어 PID와 artifact child는 자식 없는 Z 상태이며 나머지 관측 자식은 종료됐습니다. 활성 heavy는 0입니다."
+  },
+  "validationHistory": [
+    {
+      "sourcePin": "814f3f0d20ab6a524788e7ab3405936cd4bc7274",
+      "lintExit": 1,
+      "errors": [
+        "미사용 AgentSessionAttachResult type import",
+        "호출 없는 비공개 counts 함수"
+      ],
+      "value": 0,
+      "PG": 0,
+      "SQL": 0
+    },
+    {
+      "sourcePin": "e70cf84f8066a67e11ae582e9b85bed67d02ab83",
+      "correction": "Root 승인으로 미사용 선언 두 개만 제거했습니다. 제품과 assertions는 불변입니다.",
+      "changedFixtureLintExit": 0,
+      "firstValueCallbacks": 1,
+      "firstValueExit": 0,
+      "SQL19FirstApplicationCount": 1,
+      "firstPGCallbacks": 1,
+      "firstPGExit": 0,
+      "postLedgerCollectionError": "Supervisor에 PGPASSFILE이 전달되지 않아 종료 후 ledger 수집이 실패했습니다. 원 오류를 보존했고 기존 private PG 환경의 읽기 전용 조회로 수집만 보완했습니다. 시험과 migration 적용은 반복하지 않았습니다."
+    },
+    {
+      "sourcePin": "a614538bdeee4627f2d456751c5dcc148203902f",
+      "correction": "Root가 누락 host case를 지적해 canonical Repo/Worktree helper와 PG fixture 23줄만 추가했습니다.",
+      "changedLintFiles": 2,
+      "PGCallbacks": 1,
+      "PGExit": 0,
+      "valueRerun": 0,
+      "schemaReapplication": 0
+    }
+  ],
+  "valueReuseLimit": "원 value fixture와 PASS 산출물을 보존했습니다. 교정 전 e70cf84f checkout의 결과이며 새 host branch 합격을 의미하지 않습니다. 새 host 경계는 host PG callback으로 검증했습니다.",
+  "repeatedValidation": {
+    "value": 0,
+    "type": 0,
+    "schema": 0,
+    "capture": 0,
+    "install": 0,
+    "fullBuild": 0,
+    "liveChange": 0
+  },
+  "qualificationLimits": [
+    "합성 fingerprint와 UUID scope를 사용한 격리 PG fixture이며 실제 pairing 또는 앱 인증 검증이 아닙니다.",
+    "Provider dispatch·수락, URL 첨부, 실제 앱 이미지 통합, Browser, native 앱과 HA는 미완료입니다."
+  ],
+  "artifacts": [
+    {
+      "path": "first-lint-failure.txt",
+      "bytes": 1164,
+      "sha256": "76837e7478cf6d0ecc1435f8f9cf511afb5a0ad33973cdc3c17bf686f3c5a6f6",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "corrected-fixture-lint.txt",
+      "bytes": 91,
+      "sha256": "7ab72316ec579ac6a668850b7adcfd77099c5754649ddb7e31ef1f2fb6ee18fd",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "first-value.tap",
+      "bytes": 452,
+      "sha256": "d98d79bf14183b9a8a8b0f6436d0a64ca547ba3e7c98fa2ff8fb7404288fac53",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "first-pg.tap",
+      "bytes": 835,
+      "sha256": "1d00e2020f52c9cf3dfeb6b341769313e7437a2ae31b9b93687a3a9707460e79",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "host-lint.txt",
+      "bytes": 92,
+      "sha256": "02a1d47bfc776759ee23e35309250b436caa94954485e27b58e3ac89f665cedd",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "host-pg.tap",
+      "bytes": 836,
+      "sha256": "343d1b078f43896d615fd144729531b368a9e4914d5519855c31c0e5a7229dac",
+      "originalBytesUnchanged": true
+    }
+  ]
+}
