@@ -6,7 +6,7 @@ import type { LifecyclePolicy } from '../lifecycle/types.ts'
 export type CatalogLaunchRepositoryConfig = {
   readonly repositoryId: string
   readonly worktreeRoot?: string
-  readonly storage: { readonly backendId: string; readonly exportId: string; readonly canonicalDirectory: string }
+  readonly storage: { readonly backendId: string; readonly exportId: string; readonly canonicalDirectory: string; readonly localDirectory?: string }
   readonly agentHomeRoot: string
 }
 export type CatalogLaunchConfig = {
@@ -47,14 +47,15 @@ export function captureCatalogLaunchConfig(value: unknown, repositoryIds: readon
     const repositoryId = text(item.repositoryId)
     if (!repositoryIds.includes(repositoryId) || seen.has(repositoryId)) { invalid() }
     seen.add(repositoryId)
-    const storage = record(item.storage, ['backendId', 'exportId', 'canonicalDirectory'])
+    const storage = record(item.storage, ['backendId', 'exportId', 'canonicalDirectory', 'localDirectory'])
     const canonicalDirectory = catalogLaunchPath(storage.canonicalDirectory)
+    const localDirectory = storage.localDirectory === undefined ? canonicalDirectory : catalogLaunchPath(storage.localDirectory)
     const agentHomeRoot = catalogLaunchPath(item.agentHomeRoot)
     const worktreeRoot = item.worktreeRoot === undefined ? undefined : catalogLaunchPath(item.worktreeRoot)
-    if (!catalogLaunchContains(canonicalDirectory, agentHomeRoot) ||
-        worktreeRoot !== undefined && !catalogLaunchContains(canonicalDirectory, worktreeRoot)) { invalid() }
+    if (!catalogLaunchContains(localDirectory, agentHomeRoot) ||
+        worktreeRoot !== undefined && !catalogLaunchContains(localDirectory, worktreeRoot)) { invalid() }
     return Object.freeze({ repositoryId, ...(worktreeRoot === undefined ? {} : { worktreeRoot }), agentHomeRoot,
-      storage: Object.freeze({ backendId: text(storage.backendId), exportId: text(storage.exportId), canonicalDirectory }) })
+      storage: Object.freeze({ backendId: text(storage.backendId), exportId: text(storage.exportId), canonicalDirectory, localDirectory }) })
   })
   return Object.freeze({ policy: Object.freeze({ operationDeadlineMs: deadline, idleDurationMs: idle }), repositories: Object.freeze(repositories) })
 }

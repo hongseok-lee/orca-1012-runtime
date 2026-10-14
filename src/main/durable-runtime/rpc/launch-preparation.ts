@@ -33,7 +33,7 @@ export function requireCatalogLaunchRepository(config: CapturedCatalogReadConfig
     throw new CatalogError('CATALOG_LAUNCH_LOCAL_REPOSITORY_REQUIRED')
   }
   const path = catalogLaunchPath(repo.path)
-  if (!catalogLaunchContains(launch.storage.canonicalDirectory, path) && (repo.kind ?? 'git') === 'folder') {
+  if (!catalogLaunchContains(launch.storage.localDirectory ?? launch.storage.canonicalDirectory, path) && (repo.kind ?? 'git') === 'folder') {
     throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION')
   }
   if ((repo.kind ?? 'git') === 'git' && launch.worktreeRoot === undefined) { throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION') }
@@ -70,7 +70,9 @@ function launchTail(
   const authority = Object.freeze({ principalId: call.context.authority.principalId, runtimeUnitId: unitId,
     scope: JSON.stringify(['catalog-launch-v1', config.datasetName, config.hostId, workspace.repoId, unitId]) }) as UnitIntentAuthority
   const original = call.original as Record<string, unknown>
-  const launchRequest = { ...original, server: { agentHomePath: posix.join(repo.agentHomeRoot, agentId) } }
+  const launchRequest = { ...original, server: { agentHomePath: posix.join(repo.agentHomeRoot, agentId),
+    storagePathMapping: { localDirectory: repo.storage.localDirectory ?? repo.storage.canonicalDirectory,
+      canonicalDirectory: repo.storage.canonicalDirectory } } }
   const fields: Omit<PreparedCatalogLaunch, symbol> = { workspace, tab: { id: tabId, publicId, parentTabId, leafId, terminalHandle, uiOrder, payload },
     sessionId, agent: { id: agentId, provider: selectedProvider, create: true }, unit: { id: unitId, create: unit === null, authority },
     storage: { id: logicalId('storage-binding', unit?.bindingId ?? randomUUID()), createUnverified: unit === null,
@@ -97,7 +99,7 @@ export function prepareCatalogWorktreeLaunch(
   const reservedPath = folder ? repo.path : computeWorktreePath(reservedName, repo.path,
     { workspaceDir: launch.worktreeRoot!, nestWorkspaces: false }, launch.worktreeRoot!)
   catalogLaunchPath(reservedPath)
-  if (!catalogLaunchContains(launch.storage.canonicalDirectory, reservedPath)) { throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION') }
+  if (!catalogLaunchContains(launch.storage.localDirectory ?? launch.storage.canonicalDirectory, reservedPath)) { throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION') }
   const label = resolveWorktreeCreateDisplayNameRequest(params.displayName, params.displayNameKind, name,
     params.cliProvenanceRequest !== undefined, generatedName)
   const meta: WorktreeMeta = { displayName: '', isArchived: false, isUnread: false, isPinned: false,
@@ -135,7 +137,7 @@ export function prepareCatalogTerminalLaunch(
   if (workspace.repo_id !== repo.id || workspace.runtime_unit_id !== unit.unitId ||
       unit.backendId !== launch.storage.backendId || unit.exportId !== launch.storage.exportId ||
       unit.canonicalDirectory !== launch.storage.canonicalDirectory ||
-      !catalogLaunchContains(launch.storage.canonicalDirectory, catalogLaunchPath(workspace.reserved_path))) {
+      !catalogLaunchContains(launch.storage.localDirectory ?? launch.storage.canonicalDirectory, catalogLaunchPath(workspace.reserved_path))) {
     throw new CatalogError('CATALOG_STORAGE_CONFIGURATION')
   }
   const payload = parseCatalogWorkspace(workspace) as RuntimeWorktreeRecord
