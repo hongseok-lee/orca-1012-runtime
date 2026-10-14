@@ -1,0 +1,192 @@
+{
+  "validatedSourcePin": "6e124f66274395136236f19e3ff4f9c5f446eb5d",
+  "validatedBase": "8fdb1918ae03eeb96fbdebc47743f728c1c33b05",
+  "alignedMain": "663266d4d67c1a17a3943f05b172fdf5f757227c",
+  "rootFirstValidationAccepted": true,
+  "result": {
+    "ownedLintFiles": 5,
+    "ownedLintExit": 0,
+    "valuePass": 1,
+    "valueFail": 0,
+    "valueSkipped": 0,
+    "valueCancelled": 0,
+    "PGPass": 1,
+    "PGFail": 0,
+    "PGSkipped": 0,
+    "PGCancelled": 0,
+    "PGExit": 0,
+    "typeExecuted": false,
+    "DBExisted": false,
+    "schemaApplicationCount": 1,
+    "SQLAppliedNow": 19,
+    "ledger19Unchanged": true,
+    "originalSeedPreserved": true
+  },
+  "actualInputCounts": {
+    "value": 157,
+    "PG": 314,
+    "rootAuditedUnion": 316
+  },
+  "jobs": [
+    {
+      "name": "prepare",
+      "pid": 28030,
+      "startedAt": "2026-10-14T19:28:41.060Z",
+      "finishedAt": "2026-10-14T19:28:41.875Z",
+      "exit": 0,
+      "terminated": true,
+      "rawSha256": "e44bb5a9d9208549cb13b2e544d1ff3c9525a10b45c3bc7c8cfa5c6c70fc4963"
+    },
+    {
+      "name": "owned-lint",
+      "pid": 28043,
+      "startedAt": "2026-10-14T19:28:41.880Z",
+      "finishedAt": "2026-10-14T19:28:42.289Z",
+      "exit": 0,
+      "terminated": true,
+      "rawSha256": "7e30a1978868975add2027705af8825e15d38d8eedb7b2a67c4fe26e18c44f9c"
+    },
+    {
+      "name": "value",
+      "pid": 28057,
+      "startedAt": "2026-10-14T19:28:42.294Z",
+      "finishedAt": "2026-10-14T19:28:44.228Z",
+      "exit": 0,
+      "terminated": true,
+      "rawSha256": "108d84e0abca9d9a127c1662b1d9bf449b84f77131b9c7e9f4a4f2b28cc3bcb3"
+    },
+    {
+      "name": "schema",
+      "pid": 28070,
+      "startedAt": "2026-10-14T19:28:44.233Z",
+      "finishedAt": "2026-10-14T19:28:45.568Z",
+      "exit": 0,
+      "terminated": true,
+      "rawSha256": "c29ed0de4b8f5b54379a505c0372df069a306152faba77bc525689a5f70022b4"
+    },
+    {
+      "name": "pg",
+      "pid": 28085,
+      "startedAt": "2026-10-14T19:28:45.656Z",
+      "finishedAt": "2026-10-14T19:28:47.046Z",
+      "exit": 0,
+      "terminated": true,
+      "rawSha256": "80fea6850d603e67b023965ccf8df74dc886c721bf565e49b3ee6053b0dfdf3d"
+    }
+  ],
+  "rawArtifacts": [
+    {
+      "path": "prepare.log",
+      "sha256": "e44bb5a9d9208549cb13b2e544d1ff3c9525a10b45c3bc7c8cfa5c6c70fc4963",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "owned-lint.log",
+      "sha256": "7e30a1978868975add2027705af8825e15d38d8eedb7b2a67c4fe26e18c44f9c",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "value.tap",
+      "sha256": "108d84e0abca9d9a127c1662b1d9bf449b84f77131b9c7e9f4a4f2b28cc3bcb3",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "schema.log",
+      "sha256": "c29ed0de4b8f5b54379a505c0372df069a306152faba77bc525689a5f70022b4",
+      "originalBytesUnchanged": true
+    },
+    {
+      "path": "pg.tap",
+      "sha256": "80fea6850d603e67b023965ccf8df74dc886c721bf565e49b3ee6053b0dfdf3d",
+      "originalBytesUnchanged": true
+    }
+  ],
+  "database": {
+    "name": "orca_catalog_host_20261014",
+    "oid": 88487,
+    "existed": false,
+    "ledgerCount": 19,
+    "ledgerUnchanged": true,
+    "schemaApplicationCount": 1,
+    "expectedSystemIdentifier": "7696101282789175327",
+    "expectedSystemAssertionPassed": true,
+    "measuredSystemFieldInSchemaReady": false,
+    "measuredFieldMissingLimitationRetained": true,
+    "remeasured": false
+  },
+  "alignment": {
+    "owned5BlobModeUnchanged": true,
+    "ownedObjects": [
+      "100644 blob 89215e82ccc206ab513e1a482054f0ba5b6e9c95\tsrc/main/durable-runtime/catalog/projection.ts",
+      "100644 blob 6f25cd05529160bc436ac2d418bf15a430c202b1\tsrc/main/durable-runtime/rpc/catalog-host.pg.test.mts",
+      "100644 blob 484a6b81876cd1b81470c8a85b39da79145a48e7\tsrc/main/durable-runtime/rpc/catalog-host.value.test.mts",
+      "100644 blob 00132da01b037b192ea168116b9759679c878212\tsrc/main/durable-runtime/rpc/read.ts",
+      "100644 blob 740eb3661531bccc9ff7c3a4bf32506f06606193\tsrc/main/durable-runtime/rpc/subscriptions.ts"
+    ],
+    "changedOriginalConsumedPaths": [
+      "src/main/durable-runtime/rpc/public.ts",
+      "src/main/durable-runtime/rpc/registry.ts"
+    ],
+    "valueManifestPathsChanged": [],
+    "PGManifestPathsChanged": [
+      "src/main/durable-runtime/rpc/public.ts",
+      "src/main/durable-runtime/rpc/registry.ts"
+    ],
+    "merged69": {
+      "html_url": "https://github.com/hongseok-lee/orca-1012-runtime/pull/69",
+      "merged": true,
+      "merged_at": "2026-10-14T19:31:26Z",
+      "merge_commit_sha": "663266d4d67c1a17a3943f05b172fdf5f757227c",
+      "state": "closed",
+      "head": "1f32801c29125d4d5c2d1864dc192303d408f360",
+      "base": "8fdb1918ae03eeb96fbdebc47743f728c1c33b05"
+    },
+    "exactDelta": "alignment-consumed-input.diff",
+    "exactDeltaSha256": "9510150faf13ad2c2f4b47d8a87960583e84c2dd69a5679c8188dd6674413cf9",
+    "allFinalInputsIdenticalClaimed": false,
+    "newPGPassClaimed": false,
+    "runtimeClosureRebuilt": false,
+    "acceptanceOwner": "Root"
+  },
+  "activeKnownJobs": 0,
+  "knownPids": [
+    {
+      "pid": 28023,
+      "state": "Z"
+    },
+    {
+      "pid": 28030,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 28043,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 28057,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 28070,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 28085,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 28091,
+      "state": "ABSENT",
+      "observedIn": "pg.log",
+      "recordedAt": "2026-10-14T19:30:14.372Z"
+    }
+  ],
+  "newValidationExecutions": 0,
+  "limitations": [
+    "Scoped type not executed",
+    "Synthetic fixture authentication is not actual device authentication",
+    "Actual Chrome/provider/native/HA not verified",
+    "schema-ready measured system field absent",
+    "Final merged dependency acceptance is a Root decision"
+  ]
+}

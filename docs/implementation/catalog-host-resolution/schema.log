@@ -1,0 +1,3 @@
+(node:28070) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"database":"orca_catalog_host_20261014","existed":false,"ledger":19,"appliedNow":19}

@@ -10,6 +10,8 @@ import { SESSION_TABS_AUTHORITATIVE_INVENTORY_RUNTIME_CAPABILITY } from '../../.
 import { captureCatalogReadContext } from './context.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
 import { CatalogReadError } from './config.ts'
+import { getRepoExecutionHostId, getWorktreeExecutionHostId } from '../../../shared/execution-host.ts'
+import { projectCatalogWorktree } from '../catalog/projection.ts'
 
 export type CatalogReadInvocation = {
   readonly context: CatalogCallContext
@@ -36,11 +38,11 @@ export function validateCatalogSnapshot(config: CapturedCatalogReadConfig, snaps
     throw new CatalogReadError('CATALOG_DATASET_MISMATCH')
   }
   for (const repo of snapshot.repositories) {
-    if ((repo.executionHostId ?? 'local') !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
+    if (getRepoExecutionHostId(repo) !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
   }
   for (const row of snapshot.workspaces) {
-    const host = row.payload.hostId ?? row.payload.executionHostId ??
-      snapshot.repositories.find(repo => repo.id === row.repo_id)?.executionHostId ?? 'local'
+    const host = getWorktreeExecutionHostId(projectCatalogWorktree(row),
+      snapshot.repositories.find(repo => repo.id === row.repo_id))
     if (host !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
   }
 }
