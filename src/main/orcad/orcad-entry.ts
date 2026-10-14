@@ -27,7 +27,7 @@ import {
 import { acquireOrcadInstanceLock, OrcadInstanceLockError } from './orcad-instance-lock'
 import { startOrcadWithLifecycle } from './orcad-lifecycle'
 import { stopOrcadRuntimeWithDurableCatalog } from './orcad-durable-catalog-cleanup'
-import * as durableCatalogStartup from './orcad-durable-catalog'
+import * as startup from './orcad-ops'
 
 let runOrcadQuitHandlers = (): void => {}
 
@@ -109,7 +109,7 @@ export type OrcadHandle = {
  * for byte so the same harnesses can drive either host.
  */
 export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandle> {
-  const durableCatalogConfig = durableCatalogStartup.readOrcadDurableCatalogConfig()
+  const startupConfig = startup.readOrcadStartupConfig()
   installOrcadHostAdapters()
   const userDataPath = resolveUserDataPath()
   // Why before anything else touches the root: the profile index, the store and the daemon
@@ -122,7 +122,7 @@ export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandl
     ...(browserProvider ? { isAvailable: () => browserProvider.isAvailable() } : {})
   })
   return startOrcadWithLifecycle(
-    (registerCleanup) => startOrcadRuntime(options, registerCleanup, durableCatalogConfig),
+    (registerCleanup) => startOrcadRuntime(options, registerCleanup, startupConfig),
     async () => {
       try {
         await browserProvider?.stop()
@@ -138,7 +138,7 @@ export async function startOrcad(options: OrcadOptions = {}): Promise<OrcadHandl
 async function startOrcadRuntime(
   options: OrcadOptions,
   registerCleanup: (cleanup: () => Promise<void>) => void,
-  durableCatalogConfig: durableCatalogStartup.OrcadDurableCatalogConfig | null
+  startupConfig: startup.OrcadStartupConfig
 ): Promise<Pick<OrcadHandle, 'readiness'>> {
   const { OrcaRuntimeService } = await import('../runtime/orca-runtime')
   const { OrcaRuntimeRpcServer } = await import('../runtime/runtime-rpc')
@@ -167,7 +167,7 @@ async function startOrcadRuntime(
     await import('../runtime/agent-control-adapter')
 
   let rpc: InstanceType<typeof OrcaRuntimeRpcServer> | null = null
-  let durableCatalog: durableCatalogStartup.OrcadDurableCatalog | null = null
+  let durableCatalog: startup.OrcadDurableCatalog | null = null
   let uninstallHookStatusRepublish = (): void => {}
   let uninstallObservedStatusIdentity = (): void => {}
   registerCleanup(() => stopOrcadRuntimeWithDurableCatalog({
@@ -177,7 +177,7 @@ async function startOrcadRuntime(
     stopAgentHookServer: () => agentHookServer.stop(),
     stopDurableCatalog: () => durableCatalog?.stop()
   }))
-  durableCatalog = await durableCatalogStartup.prepareOrcadDurableCatalog(durableCatalogConfig)
+  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog })
   const { DesktopPushService } = await import('../runtime/push/desktop-push-service')
   const { resolvePushGatewayOrigin } = await import('../runtime/push/push-gateway-origin')
 
@@ -278,7 +278,7 @@ async function startOrcadRuntime(
   const bindHost = resolveOrcadBindHost(options.bind)
   rpc = new OrcaRuntimeRpcServer({
     runtime,
-    ...(durableCatalog ? { durableCatalogRead: durableCatalog.readConfig } : {}),
+    ...durableServices,
     userDataPath: runtimeUserDataPath,
     enableWebSocket: true,
     // Why pinned and not `exposeNetworkByDefault`: an unattended host's exposure must be
@@ -399,7 +399,7 @@ export const ORCAD_SHUTDOWN_DEADLINE_MS = 15_000
 
 export function resolveOrcadExitCode(error: unknown): number {
   return error instanceof OrcadInstanceLockError || error instanceof OrcadBindAddressError ||
-    error instanceof durableCatalogStartup.OrcadDurableCatalogConfigurationError
+    error instanceof startup.OrcadDurableCatalogConfigurationError
     ? ORCAD_EXIT_CONFIGURATION
     : ORCAD_EXIT_FAILED
 }
