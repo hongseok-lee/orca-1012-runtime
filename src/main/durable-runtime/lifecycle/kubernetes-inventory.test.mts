@@ -159,7 +159,7 @@ test('2. HTTPS chunk/UTF8/bookmark/UID/410/단절과 기존 recoverListWatch 연
       response.end(first + line('ERROR', { apiVersion: 'v1', kind: 'Status', code: 410 }))
       return
     }
-    if (mode === 'partial') { response.end(first + '{"type":"MOD'); return }
+    if (mode === 'partial') { response.end(`${first}{"type":"MOD`); return }
     if (mode === 'disconnect') {
       response.write(first, () => { setTimeout(() => response.destroy(), 10) })
       return
