@@ -1,0 +1,619 @@
+{
+  "scope": "ACTUAL_OWNED_PG_WITH_SYNTHETIC_TRUSTED_FIXTURE_INPUTS",
+  "source": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+  "verificationBase": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+  "dbSource": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+  "policySource": "8bd832f5da200ddf1773cf69e2e8043b8f4be407",
+  "originalAllocationSource": "74bc557a463166ad27d5ea6a1dc20a1ba3384e28",
+  "fixtureSource": "3879a217ab37bc6d417f9e622ee0fd7cb8f57fb7",
+  "ownedSourceFiles": 13,
+  "sourceFiles": 64,
+  "migrations": [
+    {
+      "path": "src/main/durable-runtime/db/migrations/001-catalog.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 2801,
+      "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/002-execution-storage.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 10866,
+      "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/003-operations-resources.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 4205,
+      "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/004-input-context.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 7731,
+      "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/005-events-replay.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 7858,
+      "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 2756,
+      "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 4404,
+      "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/008-attachment-store.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 6084,
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 2175,
+      "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/010-runtime-command-ledger.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 4849,
+      "sha256": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/011-runtime-event-producers.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 5037,
+      "sha256": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/012-input-merge-boundary.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 1244,
+      "sha256": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/013-context-deliveries.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 1910,
+      "sha256": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/014-durable-catalog.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 9419,
+      "sha256": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/015-failure-evidence.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 8211,
+      "sha256": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/016-observation-episodes.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 7243,
+      "sha256": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/017-structured-session-wire.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 1852,
+      "sha256": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/018-terminal-input-floor.sql",
+      "pin": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+      "bytes": 2345,
+      "sha256": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/019-durable-resource-allocation.sql",
+      "pin": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+      "bytes": 11743,
+      "sha256": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5"
+    }
+  ],
+  "appliedMigrationsAllChecksumMatch": true,
+  "type": {
+    "resumedExit": 1,
+    "resumedDiagnostic": "planning.ts(46,22): TS2698: Spread types may only be created from object types.",
+    "passSource": "1ac8c72d1dfcad7eaf39c64c7f276702bd7ff66e",
+    "exit": 0,
+    "correction": "resultJson의 실제 object 반환을 나타내는 타입 주석만 좁혔습니다.",
+    "successfulCheckRepeated": false
+  },
+  "lint": {
+    "firstExit": 1,
+    "firstDiagnostic": "typescript/consistent-indexed-object-style",
+    "passSource": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+    "exit": 0,
+    "correction": "동일한 index signature를 Record 표기로만 변경했습니다.",
+    "correctionScope": "repository.ts만 확인했습니다. 나머지 12개 소유 파일은 원 scoped lint에서 오류가 없습니다."
+  },
+  "pg": {
+    "runs": 1,
+    "testBodiesEntered": 7,
+    "pass": 0,
+    "fail": 7,
+    "skip": 0,
+    "fixtureSetupFailures": 7,
+    "allocationApiCallsReached": 0,
+    "budgetLockWaitReached": false,
+    "leaseLockWaitReached": false,
+    "ledgerFaultBoundaryReached": false,
+    "exactCode": "23503",
+    "exactError": "Failure classification evidence must belong to the original incident",
+    "failureSourceFile": "src/main/durable-runtime/resources/allocation/test-support.mts",
+    "failureSourceLine": 67,
+    "actualGuardSource": "src/main/durable-runtime/db/migrations/015-failure-evidence.sql",
+    "actualGuardLines": [
+      93,
+      98
+    ],
+    "cause": "evidence_ids가 참조하는 synthetic observation에 failure_observations 및 failure_incident_observations의 원 incident 귀속 행을 만들지 않고 failure_incident_state를 INSERT했습니다.",
+    "rawResultQualification": "원 JSON의 errorCode는 FIXTURE_FAILURE입니다. 직접 PG error의 23503과 정확한 문구는 원 TAP에서 확인하며 원 JSON을 변경하지 않았습니다.",
+    "남은 확인": "소유 fixture의 observation·incident link 준비가 미완료입니다. Allocation invariant와 실제 제품 실패는 아직 검증되지 않았습니다."
+  },
+  "artifacts": [
+    {
+      "name": "source-manifest.json",
+      "bytes": 21785,
+      "sha256": "e90cec1f71643265cf7a8b3a7aaa7c412eb37a92a4dfa160ae6725a44d04ae88"
+    },
+    {
+      "name": "source-manifest-correction.json",
+      "bytes": 22054,
+      "sha256": "fc42990d05bfc4687a077b63e93547005e852cd4c0ff11692cd215d04ba816b0"
+    },
+    {
+      "name": "source-manifest-lint-correction.json",
+      "bytes": 22108,
+      "sha256": "de6c0b583f8cb5004e4e6dec2ae6c819cd97c5f55d25d00cc2a43ef81b947498"
+    },
+    {
+      "name": "schema-manifest.json",
+      "bytes": 5027,
+      "sha256": "ea5fc36f367e090041daf27f95066a13751f0565b5bd16267a88b39ce22d6f01"
+    },
+    {
+      "name": "type-resumed.log",
+      "bytes": 132,
+      "sha256": "e0d2e275a1ced43390e9422c7df31a304b39ad39b2fed027fd97de230439eb94"
+    },
+    {
+      "name": "type-correction.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "lint-first.log",
+      "bytes": 613,
+      "sha256": "7eeeccd7b4cf3e39c3c7b42fa0df2e77e88d065d2058920b02d2da1925b4bb28"
+    },
+    {
+      "name": "lint-correction.log",
+      "bytes": 91,
+      "sha256": "af5b800dbfe51e17be14101c391bfe0d55260ca3d2391628c0632ba6722d7385"
+    },
+    {
+      "name": "actual-pg-first.log",
+      "bytes": 8596,
+      "sha256": "20f31a6ce559c7be67e2c9b8add17b568f51535b62da75fd66326e6cac0aed73"
+    },
+    {
+      "name": "actual-pg-first-results.json",
+      "bytes": 4947,
+      "sha256": "d2d4f2998ed460058d8f6ac855f8951d66c8bd7ecc8e46522959ff4b1f3f1a85"
+    },
+    {
+      "name": "actual-pg.first.mjs",
+      "bytes": 118368,
+      "sha256": "d9b7d934bea084bbd266c3eafde222976146f13b0883a0dbc61d215ed4e5c80c"
+    },
+    {
+      "name": "type-correction.diff",
+      "bytes": 763,
+      "sha256": "5a8d8ca6cc2dcb144f68296bfb1aeb526fc267ccdcf69f55854e2bd0fafac844"
+    },
+    {
+      "name": "lint-correction.diff",
+      "bytes": 779,
+      "sha256": "bc1dc0e9d47932bf907afe1587bf9fd7f3bf712c059ca3d7ae39950dac595c02"
+    },
+    {
+      "name": "job-state.json",
+      "bytes": 815,
+      "sha256": "e77fc7b33bdce0d032ae06957dcfc4908ba42232411c45ff9a90c53d459c8b4a"
+    },
+    {
+      "name": "job-state-correction.json",
+      "bytes": 1158,
+      "sha256": "c45cd7b193ac068b2ed4a421c56f44cc9ce89010ca509559672737326f71b4a3"
+    },
+    {
+      "name": "job-state-pg-first.json",
+      "bytes": 1460,
+      "sha256": "617207828fee161f7187585f20ca951107031f6abbc2fb923ec711f0f60778b3"
+    }
+  ],
+  "ownedProcessesActive": 0,
+  "capturePerformed": false,
+  "schemaSuiteRepeated": false,
+  "productionIssuerVerified": false,
+  "actualAdmissionVerified": false,
+  "externalCapacityVerified": false,
+  "actualResizeExecuted": false,
+  "actualFenceExecuted": false,
+  "podCreated": false,
+  "dev019Applied": false,
+  "installPerformed": false,
+  "rebasePerformed": false,
+  "correctedFirst": {
+    "runs": 1,
+    "bodyCount": 7,
+    "pass": 5,
+    "fail": 2,
+    "skip": 0,
+    "exit": 1,
+    "cases": [
+      {
+        "name": "두 Unit의 실제 공유 scope 예약 경합은 memory와 CPU 한도를 넘기지 않는다",
+        "passed": true
+      },
+      {
+        "name": "첫 capacity WAIT의 원 목표와 provenance를 재사용하며 같은 incident와 operation은 중복 charge가 없다",
+        "passed": false,
+        "errorCode": "FIXTURE_FAILURE"
+      },
+      {
+        "name": "REPLACE는 원 승인 크기로 replacement만 한 번 소비한다",
+        "passed": true
+      },
+      {
+        "name": "실제 lease row-lock 대기 뒤 만료를 다시 판정하고 예약을 거절한다",
+        "passed": false,
+        "errorCode": "FIXTURE_FAILURE"
+      },
+      {
+        "name": "첫 await 뒤 원 body와 callback 변이에는 snapshot을 쓰며 원 receipt는 현재 lifecycle로 다시 판정하지 않는다",
+        "passed": true
+      },
+      {
+        "name": "실제 ledger INSERT 직전 SQL 실패는 profile·plan·예약·episode·receipt·audit·outbox 전체를 rollback한다",
+        "passed": true
+      },
+      {
+        "name": "예약 expiry와 논리 sleep/wake 뒤에도 원 점유·승인 profile·ledger와 episode 예산은 보존된다",
+        "passed": true
+      }
+    ],
+    "facts": {
+      "actualBudgetSqlLockObserved": {
+        "distinctControllerScopes": true,
+        "distinctBackendPids": [
+          75881,
+          75879
+        ],
+        "waitingConnections": 2
+      },
+      "sharedScopeOvershoot": 0,
+      "actualLedgerWriteBoundaryReached": true,
+      "expiryReleasedOccupancy": false,
+      "logicalModeTransitionsOnly": true
+    },
+    "failureBoundary": "Case 2와 4의 capacity=false fixture facts 생성에서 assert.ok(calculated.targetMemoryBytes)가 실패했습니다. 원 WAIT plan/lease-lock 경계에는 도달하지 못했습니다.",
+    "failureCode": "ERR_ASSERTION",
+    "failureSource": "src/main/durable-runtime/resources/allocation/test-support.mts:115",
+    "sourceDiagnosis": "소유 fixture는 capacityAvailable와 singleWriterBudgetAvailable을 같은 capacity 값으로 묶습니다. Exact policy guards.ts:67–70은 singleWriterBudgetAvailable=false를 BLOCKED/SINGLE_WRITER_OR_TOTAL_BUDGET으로 판정한 뒤 capacity 부족을 판정합니다. 두 값이 모두 false인 이번 입력은 capacity WAIT 입력과 다릅니다. 이는 정확한 소스를 읽어 해석한 원인이며 추가 정책 시험을 실행하지 않았습니다.",
+    "policySourceChanged": false,
+    "capacityTrueInjected": false,
+    "canonicalFixturePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+    "productPin": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+    "static": {
+      "fixtureTypeExit": 0,
+      "fixtureTypePid": 13396,
+      "fixtureLintExit": 0,
+      "fixtureLintPid": 13417,
+      "scope": "e131의 변경 fixture 2개이며 성공한 제품 전체 type은 반복하지 않았습니다."
+    },
+    "preparation": {
+      "migrationsExecuted": 0,
+      "migrationOperatorInvoked": false,
+      "newDatabaseCreated": false,
+      "newSchemaPrepared": false,
+      "existingSchemaChecksumCount": 19,
+      "allChecksumsMatch": true,
+      "readonlyExecutionHook": {
+        "canonicalFixturePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+        "canonicalSourceBytesPreserved": true,
+        "caseBodiesUnchanged": true,
+        "schemaMigrationOperatorInvoked": false,
+        "migrationsExecuted": 0,
+        "hookScope": "Root 지정 기존 DB를 재사용하기 위해 실행용 준비 hook만 실제 schema registry SELECT와 원 SQL checksum 대조로 대체합니다. Stub·모의 결과·DDL/guard 완화는 없습니다.",
+        "adapterSha256": "49eec4a2e24275fae15447d829776c3c61d8899112d208bbe1eb031a76a9613a",
+        "diffSha256": "dab05e397a1b91ee16b2a896aafb504f1d553dd20d8bf9bd922efa9edc570010"
+      },
+      "original13CanonicalFileBytesPreserved": true,
+      "originalCaseBodiesUnchanged": true
+    },
+    "artifacts": [
+      {
+        "name": "actual-pg-first.log",
+        "bytes": 8596,
+        "sha256": "20f31a6ce559c7be67e2c9b8add17b568f51535b62da75fd66326e6cac0aed73"
+      },
+      {
+        "name": "actual-pg-first-results.json",
+        "bytes": 4947,
+        "sha256": "d2d4f2998ed460058d8f6ac855f8951d66c8bd7ecc8e46522959ff4b1f3f1a85"
+      },
+      {
+        "name": "actual-pg-corrected-first.tap",
+        "bytes": 4445,
+        "sha256": "0a0b22d22dee81338bc0885520ad0d2bc826cdf0ab792159ee757295cd32c050"
+      },
+      {
+        "name": "actual-pg-corrected-first-results.json",
+        "bytes": 5092,
+        "sha256": "23ce820f74eed08bec41c4947f38ed8570ea7b4419e66988c0f0226d67e5724f"
+      },
+      {
+        "name": "corrected-first-state.json",
+        "bytes": 4538,
+        "sha256": "87df2e7b9e6fda88bc83fcb253a30d73d9cddd003297a280bcb5801cdc7acb6a"
+      },
+      {
+        "name": "source-manifest-fixture-correction.json",
+        "bytes": 22259,
+        "sha256": "23c3578db7a1e29dda6aa449f611dc52657c9f9e92c707e3df31887119a2d7a7"
+      },
+      {
+        "name": "schema-manifest.json",
+        "bytes": 5027,
+        "sha256": "ea5fc36f367e090041daf27f95066a13751f0565b5bd16267a88b39ce22d6f01"
+      },
+      {
+        "name": "fixture-identity-correction.diff",
+        "bytes": 9705,
+        "sha256": "490753676966bceeec4dbc97d6a0c2bd0a8de413d048d27c29a70878dd926b89"
+      },
+      {
+        "name": "fixture-type.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "fixture-type.pid",
+        "bytes": 6,
+        "sha256": "e45347e23ddcbc24da65143edd253d19f3415d2ea0fe5a3bb9d97e4adb4915df"
+      },
+      {
+        "name": "fixture-type.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "name": "fixture-lint.log",
+        "bytes": 92,
+        "sha256": "ab89e18ea87d4b92f615739b85f3d776b72b16f1d8f2f3b47a3aa5211f81b614"
+      },
+      {
+        "name": "fixture-lint.pid",
+        "bytes": 6,
+        "sha256": "a1fd2110bdfeeca5239aa030ca55dfe395b8999af5c0ef7cf37434198ae1b7cb"
+      },
+      {
+        "name": "fixture-lint.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "name": "fixture-static-state.json",
+        "bytes": 792,
+        "sha256": "60869d5d1a61004503931157cee1c980e857b9772523ee5c16ab53775767350e"
+      },
+      {
+        "name": "existing-schema-readonly-hook.diff",
+        "bytes": 634,
+        "sha256": "dab05e397a1b91ee16b2a896aafb504f1d553dd20d8bf9bd922efa9edc570010"
+      },
+      {
+        "name": "existing-schema-readonly-hook.json",
+        "bytes": 608,
+        "sha256": "5c2954c02dadf5448191a1dd7156391fd5eb6b1806f99075dabbfbfe978bad08"
+      },
+      {
+        "name": "actual-pg.schema-readonly.mts",
+        "bytes": 20529,
+        "sha256": "49eec4a2e24275fae15447d829776c3c61d8899112d208bbe1eb031a76a9613a"
+      },
+      {
+        "name": "actual-pg.corrected-first.mjs",
+        "bytes": 118714,
+        "sha256": "291c01847c0db24fb55074ea300eae9770131f63a3b20bb9c75e1d5a758b6fae"
+      }
+    ],
+    "ownedProcessesActive": 0
+  },
+  "focusedTwo": {
+    "source": "a2b9d54bd42824db7f740390e2cd7b4b7dedcab3",
+    "productPin": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+    "previousFixturePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+    "history": [
+      {
+        "phase": "최초 원 fixture 준비",
+        "bodyCount": 7,
+        "fixturePreparationFail": 7,
+        "productApiEntered": 0,
+        "pass": 0,
+        "exactCode": "23503"
+      },
+      {
+        "phase": "귀속 교정 첫 실행",
+        "bodyCount": 7,
+        "pass": 5,
+        "fail": 2,
+        "skip": 0,
+        "failureScope": "capacity=false를 single-writer budget=false와 묶은 fixture facts 준비의 ERR_ASSERTION입니다."
+      },
+      {
+        "phase": "Root 승인 capacity fixture 교정 focused 2",
+        "bodyCount": 2,
+        "pass": 2,
+        "fail": 0,
+        "skip": 5,
+        "selectedCaseNumbers": [
+          2,
+          4
+        ],
+        "skippedCaseNumbers": [
+          1,
+          3,
+          5,
+          6,
+          7
+        ]
+      }
+    ],
+    "focused": {
+      "caseBodiesEntered": 2,
+      "pass": 2,
+      "fail": 0,
+      "skip": 5,
+      "exit": 0,
+      "cases": [
+        {
+          "name": "첫 capacity WAIT의 원 목표와 provenance를 재사용하며 같은 incident와 operation은 중복 charge가 없다",
+          "passed": true
+        },
+        {
+          "name": "실제 lease row-lock 대기 뒤 만료를 다시 판정하고 예약을 거절한다",
+          "passed": true
+        }
+      ],
+      "facts": {
+        "originalWaitTargetRepeatedCalculations": 0,
+        "actualLeaseSqlLockObserved": true
+      },
+      "canonicalCaseBodiesUnchanged": true,
+      "explicitSkipUsed": true,
+      "broadNameFilterUsed": false,
+      "capacityAvailableFalsePreserved": true,
+      "singleWriterBudgetAvailableIndependentSyntheticTrue": true,
+      "capacityTrueInjected": false
+    },
+    "static": {
+      "changedFixtureLintExit": 0,
+      "changedFixtureLintPid": 13884,
+      "successfulTypeRepeated": false,
+      "reusedProductTypePin": "1ac8c72d1dfcad7eaf39c64c7f276702bd7ff66e",
+      "reusedFixtureTypePin": "e131eb6fd088c334024857293cc93d8ebb3b49e1"
+    },
+    "schema": {
+      "migrationOperatorInvoked": false,
+      "migrationSqlExecuted": 0,
+      "newDatabaseCreated": false,
+      "newSchemaPrepared": false,
+      "readOnlyChecksumCount": 19,
+      "allChecksumsMatch": true,
+      "dev019Applied": false
+    },
+    "cumulativeDistinctPassedPgCases": 7,
+    "priorSuccessfulFiveRepeated": false,
+    "artifacts": [
+      {
+        "name": "actual-pg-first.log",
+        "bytes": 8596,
+        "sha256": "20f31a6ce559c7be67e2c9b8add17b568f51535b62da75fd66326e6cac0aed73"
+      },
+      {
+        "name": "actual-pg-first-results.json",
+        "bytes": 4947,
+        "sha256": "d2d4f2998ed460058d8f6ac855f8951d66c8bd7ecc8e46522959ff4b1f3f1a85"
+      },
+      {
+        "name": "actual-pg-corrected-first.tap",
+        "bytes": 4445,
+        "sha256": "0a0b22d22dee81338bc0885520ad0d2bc826cdf0ab792159ee757295cd32c050"
+      },
+      {
+        "name": "actual-pg-corrected-first-results.json",
+        "bytes": 5092,
+        "sha256": "23ce820f74eed08bec41c4947f38ed8570ea7b4419e66988c0f0226d67e5724f"
+      },
+      {
+        "name": "actual-pg-focused-two.log",
+        "bytes": 2479,
+        "sha256": "86ef4c83a6050f7bcbcf201da3a30c276593ee78d7448d79b5b57b06b4dd96f7"
+      },
+      {
+        "name": "actual-pg-focused-two-results.json",
+        "bytes": 3981,
+        "sha256": "bd78ee6aa02cebd2bade4ddae96beed64355b5b5f31cffb5483081a3cf860437"
+      },
+      {
+        "name": "focused-two-state.json",
+        "bytes": 5357,
+        "sha256": "0d359b727c5594b6da37e66321153053ac1ec71a993fb6f594f1133ad1a1d839"
+      },
+      {
+        "name": "focused-fixture-lint.log",
+        "bytes": 91,
+        "sha256": "2731f4f307db7573231a9916d90b2589d06206d7bab214893c7b124e63660ca6"
+      },
+      {
+        "name": "source-manifest-focused.json",
+        "bytes": 23117,
+        "sha256": "93a2fb1cf9b10578b035caa0ad654bf709449e6250384d768c9a05416d74b61f"
+      },
+      {
+        "name": "focused-capacity-correction.diff",
+        "bytes": 1248,
+        "sha256": "cfa4b9c68b32ab0d16031861ae6f8c2261f332805984d3f29eaa1f2ad41475e6"
+      },
+      {
+        "name": "focused-selection-adapter.diff",
+        "bytes": 1342,
+        "sha256": "de19034a1cd78e0185bad6d52ef04ed8203d3bfda539e43ce7f012013539a351"
+      },
+      {
+        "name": "actual-pg.focused-two.mts",
+        "bytes": 20812,
+        "sha256": "2048d70b69a2eb8297ce506ba6f6fe5517f01f6c3c8bb911b215cfc46e1c581e"
+      },
+      {
+        "name": "actual-pg.focused-two.mjs",
+        "bytes": 119215,
+        "sha256": "92777c4cda4413f680e24d9a700ec0af9e1d36da04b6630ca9ac7c1b72e1d9c7"
+      }
+    ],
+    "ownedProcessesActive": 0,
+    "heavyReturned": true
+  },
+  "fixtureMetadataVsActualExecution": {
+    "rawMetadataUnchanged": true,
+    "rawBaseline": "7aa2f3177768b1dfaf25d122b3348bdb28f9eace",
+    "rawPolicyCode": "8857ea44614867f6c2410dad6bf8b79e65585ac9",
+    "rawDb019OriginalCode": "730850ee335c41290af38ea8825484b5f4cc0b6f",
+    "actualComposite": {
+      "main": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "db": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+      "policyPublication": "8bd832f5da200ddf1773cf69e2e8043b8f4be407",
+      "product": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+      "fixturePrevious": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+      "fixtureFocused": "a2b9d54bd42824db7f740390e2cd7b4b7dedcab3"
+    },
+    "qualification": "원 JSON은 기존 hardcoded metadata이며 실제 실행 사본의 전체 pin은 manifest가 나타냅니다."
+  }
+}
