@@ -9,7 +9,8 @@ import { appendSessionEvent, enqueueOutbox, appendAudit } from '../journal/store
 import { discoverInputUnit, assertInputScope } from './authority.ts'
 import { canonicalInputJson, inputPayloadHash, inputScopeKey } from './canonical.ts'
 import { InputStoreError } from './types.ts'
-import type { CancelInputRequest, CancelInterruptStatus } from './cancel-types.ts'
+import type { CancelInputRequest, CancelInterruptStatus, ObservedTurnCancelRequest } from './cancel-types.ts'
+import { readObservedTurnTargetInTransaction, type ObservedTurnTarget } from './observed-turn-target.ts'
 
 /** Fixed Message intent, not current-screen/latest-turn inference or provider interrupt. */
 export async function requestInputCancel(
@@ -151,6 +152,138 @@ export async function recordInputCancel(
     : possible
       ? 'REQUESTED'
       : 'NOT_REQUIRED'
+  const recorded = await recordCancelIntent(tx, request, unit, row, effect, possible, interrupt)
+  return recorded.result
+}
+
+type CancelMessageRow = { revision: string; intake_status: string }
+type CancelDeliveryRow = {
+  id: string
+  runtime_unit_id: string
+  attempt_id: string
+  execution_epoch: string
+  provider_ref: string | null
+}
+
+/** Historical target only. Caller owns auth, receipt replay, locks, transaction and COMMIT. */
+export async function recordObservedTurnCancel(
+  transaction: DurableTransaction,
+  snapshotRequest: ObservedTurnCancelRequest,
+  expectedUnitId: RuntimeUnitId
+) {
+  const request: ObservedTurnCancelRequest = {
+    authority: {
+      principal: snapshotRequest.authority.principal,
+      sessionId: snapshotRequest.authority.sessionId,
+      scope: { ...snapshotRequest.authority.scope }
+    },
+    provider: snapshotRequest.provider,
+    nativeTurnId: snapshotRequest.nativeTurnId,
+    method: snapshotRequest.method,
+    operationKey: snapshotRequest.operationKey,
+    originalPayload: JSON.parse(canonicalInputJson(snapshotRequest.originalPayload))
+  }
+  const unit = expectedUnitId
+  const query = transaction.query.bind(transaction)
+  const isLockHeld = transaction.isLockHeld.bind(transaction)
+  // All nested readers/writers use the same captured method and receiver. The
+  // borrowed transaction itself is neither modified nor frozen.
+  const tx = new Proxy(transaction, {
+    get(owner, key) {
+      if (key === 'query') { return query }
+      if (key === 'isLockHeld') { return isLockHeld }
+      const value = Reflect.get(owner, key)
+      return typeof value === 'function' ? value.bind(owner) : value
+    }
+  })
+  inputScopeKey(request.authority)
+  logicalId('runtime-unit', unit)
+  requireInputSessionLock(tx, request.authority.sessionId)
+  if (!isLockHeld(2, unit)) {
+    throw new InputStoreError('CANCEL_UNIT_LOCK_REQUIRED')
+  }
+  await assertInputScope(tx, request.authority)
+  const membership = await query<{ runtime_unit_id: string }>(
+    'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1',
+    [request.authority.sessionId]
+  )
+  if (membership.rows[0]?.runtime_unit_id !== unit) {
+    throw new InputStoreError('CANCEL_MEMBERSHIP_CHANGED')
+  }
+  const target = await readObservedTurnTargetInTransaction(
+    tx, request.authority, request.provider, request.nativeTurnId
+  )
+  if (target.runtimeUnitId !== unit) {
+    throw new InputStoreError('CANCEL_OBSERVED_UNIT_MISMATCH')
+  }
+  const message = await query<CancelMessageRow>(
+    'SELECT revision,intake_status FROM durable_runtime.messages WHERE id=$1 AND session_id=$2 FOR UPDATE',
+    [target.messageId, target.sessionId]
+  )
+  const row = message.rows[0]
+  if (!row) {
+    throw new InputStoreError('CANCEL_TARGET_NOT_FOUND')
+  }
+  const deliveries = await query<CancelDeliveryRow>(
+    `SELECT d.id,d.runtime_unit_id,d.attempt_id,d.execution_epoch,d.provider_ref
+     FROM durable_runtime.delivery_attempts d
+     JOIN durable_runtime.attempts a ON a.id=d.attempt_id
+     WHERE d.id=$1 AND d.session_id=$2 AND d.message_id=$3 AND d.runtime_unit_id=$4
+       AND d.attempt_id=$5 AND d.execution_epoch=$6
+       AND a.runtime_unit_id=$4 AND a.execution_epoch=$6 AND a.pod_uid=$7 FOR UPDATE OF d`,
+    [target.deliveryAttemptId, target.sessionId, target.messageId, target.runtimeUnitId,
+      target.attemptId, target.executionEpoch, target.podUid]
+  )
+  const delivery = deliveries.rows[0]
+  if (!delivery || deliveries.rowCount !== 1) {
+    throw new InputStoreError('CANCEL_OBSERVED_DELIVERY_MISMATCH')
+  }
+  // Message state and delivery state text are deliberately not completion evidence.
+  const terminalObservation = target.provenance.some((entry) =>
+    entry.classification === 'ORIGINAL_EXECUTION' &&
+    (entry.state === 'SETTLED' || entry.state === 'INTERRUPTED')
+  )
+  const confirmed = await query(
+    `SELECT 1 FROM durable_runtime.cancel_intents ci
+     JOIN durable_runtime.session_context_records cr
+       ON cr.session_id=ci.session_id AND cr.target_message_id=ci.target_message_id
+      AND cr.kind='CANCEL_INTENT' AND cr.body_ref->>'operationId'=ci.operation_id::text
+     WHERE ci.session_id=$1 AND ci.target_message_id=$2
+       AND ci.target_runtime_unit_id=$3 AND ci.target_attempt_id=$4
+       AND ci.target_execution_epoch=$5 AND ci.interrupt_status='CONFIRMED'
+       AND nullif(ci.interrupt_evidence_ref,'') IS NOT NULL
+       AND cr.body_ref->'fixedDelivery'->>'deliveryAttemptId'=$6
+       AND cr.body_ref->'fixedDelivery'->>'runtimeUnitId'=$3::uuid::text
+       AND cr.body_ref->'fixedDelivery'->>'attemptId'=$4::uuid::text
+       AND cr.body_ref->'fixedDelivery'->>'executionEpoch'=$5::bigint::text LIMIT 1`,
+    [target.sessionId, target.messageId, target.runtimeUnitId, target.attemptId,
+      target.executionEpoch, target.deliveryAttemptId]
+  )
+  const interrupt: CancelInterruptStatus = terminalObservation || !!confirmed.rowCount
+    ? 'ALREADY_SETTLED' : 'REQUESTED'
+  const recorded = await recordCancelIntent(
+    tx, { ...request, targetMessageId: target.messageId }, unit, row,
+    { ...delivery, provider_ref: target.nativeTurnId }, true, interrupt, target
+  )
+  return {
+    ...recorded.result,
+    target,
+    eventId: recorded.event.eventId,
+    journalEpoch: recorded.event.journalEpoch,
+    sequence: recorded.event.sequence
+  }
+}
+
+async function recordCancelIntent(
+  tx: DurableTransaction,
+  request: CancelInputRequest,
+  unit: RuntimeUnitId | null,
+  row: CancelMessageRow,
+  effect: CancelDeliveryRow | undefined,
+  possible: boolean,
+  interrupt: CancelInterruptStatus,
+  observed?: ObservedTurnTarget
+) {
   const operationId = logicalId('operation', randomUUID()) // Genuine cancel intent identity; not a wake/controller operation.
   const changed = await tx.query<{
     cancel_revision: string
@@ -208,9 +341,16 @@ export async function recordInputCancel(
           runtimeUnitId: effect.runtime_unit_id,
           attemptId: effect.attempt_id,
           executionEpoch: effect.execution_epoch,
-          providerTurnRef: effect.provider_ref
+          providerTurnRef: effect.provider_ref,
+          ...(observed ? {
+            provider: observed.provider, nativeSessionRef: observed.nativeSessionRef,
+            nativeTurnId: observed.nativeTurnId, podUid: observed.podUid
+          } : {})
         }
-      : null
+      : null,
+    ...(observed ? {
+      observedTurnProvenance: observed.provenance.map((entry) => ({ ...entry }))
+    } : {})
   }
   await tx.query(
     `INSERT INTO durable_runtime.session_context_records
@@ -258,11 +398,15 @@ export async function recordInputCancel(
   }
   // No desired mode/intent revision/activity update or provider I/O.
   return {
-    operationId,
-    targetMessageId: request.targetMessageId,
-    targetMessageRevision: row.revision,
-    cancelRevision: cancellation.cancel_revision,
-    interruptStatus: interrupt,
-    contextRevision
+    result: {
+      operationId,
+      targetMessageId: request.targetMessageId,
+      targetMessageRevision: row.revision,
+      cancelRevision: cancellation.cancel_revision,
+      interruptStatus: interrupt,
+      contextRevision
+    },
+    event
   }
 }
+
