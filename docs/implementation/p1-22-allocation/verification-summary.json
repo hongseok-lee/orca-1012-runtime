@@ -1,0 +1,262 @@
+{
+  "scope": "ACTUAL_OWNED_PG_WITH_SYNTHETIC_TRUSTED_FIXTURE_INPUTS",
+  "source": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+  "verificationBase": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+  "dbSource": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+  "policySource": "8bd832f5da200ddf1773cf69e2e8043b8f4be407",
+  "originalAllocationSource": "74bc557a463166ad27d5ea6a1dc20a1ba3384e28",
+  "fixtureSource": "3879a217ab37bc6d417f9e622ee0fd7cb8f57fb7",
+  "ownedSourceFiles": 13,
+  "sourceFiles": 64,
+  "migrations": [
+    {
+      "path": "src/main/durable-runtime/db/migrations/001-catalog.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 2801,
+      "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/002-execution-storage.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 10866,
+      "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/003-operations-resources.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 4205,
+      "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/004-input-context.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 7731,
+      "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/005-events-replay.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 7858,
+      "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 2756,
+      "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 4404,
+      "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/008-attachment-store.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 6084,
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 2175,
+      "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/010-runtime-command-ledger.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 4849,
+      "sha256": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/011-runtime-event-producers.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 5037,
+      "sha256": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/012-input-merge-boundary.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 1244,
+      "sha256": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/013-context-deliveries.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 1910,
+      "sha256": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/014-durable-catalog.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 9419,
+      "sha256": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/015-failure-evidence.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 8211,
+      "sha256": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/016-observation-episodes.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 7243,
+      "sha256": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/017-structured-session-wire.sql",
+      "pin": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "bytes": 1852,
+      "sha256": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/018-terminal-input-floor.sql",
+      "pin": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+      "bytes": 2345,
+      "sha256": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/019-durable-resource-allocation.sql",
+      "pin": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+      "bytes": 11743,
+      "sha256": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5"
+    }
+  ],
+  "appliedMigrationsAllChecksumMatch": true,
+  "type": {
+    "resumedExit": 1,
+    "resumedDiagnostic": "planning.ts(46,22): TS2698: Spread types may only be created from object types.",
+    "passSource": "1ac8c72d1dfcad7eaf39c64c7f276702bd7ff66e",
+    "exit": 0,
+    "correction": "resultJson의 실제 object 반환을 나타내는 타입 주석만 좁혔습니다.",
+    "successfulCheckRepeated": false
+  },
+  "lint": {
+    "firstExit": 1,
+    "firstDiagnostic": "typescript/consistent-indexed-object-style",
+    "passSource": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+    "exit": 0,
+    "correction": "동일한 index signature를 Record 표기로만 변경했습니다.",
+    "correctionScope": "repository.ts만 확인했습니다. 나머지 12개 소유 파일은 원 scoped lint에서 오류가 없습니다."
+  },
+  "pg": {
+    "runs": 1,
+    "testBodiesEntered": 7,
+    "pass": 0,
+    "fail": 7,
+    "skip": 0,
+    "fixtureSetupFailures": 7,
+    "allocationApiCallsReached": 0,
+    "budgetLockWaitReached": false,
+    "leaseLockWaitReached": false,
+    "ledgerFaultBoundaryReached": false,
+    "exactCode": "23503",
+    "exactError": "Failure classification evidence must belong to the original incident",
+    "failureSourceFile": "src/main/durable-runtime/resources/allocation/test-support.mts",
+    "failureSourceLine": 67,
+    "actualGuardSource": "src/main/durable-runtime/db/migrations/015-failure-evidence.sql",
+    "actualGuardLines": [
+      93,
+      98
+    ],
+    "cause": "evidence_ids가 참조하는 synthetic observation에 failure_observations 및 failure_incident_observations의 원 incident 귀속 행을 만들지 않고 failure_incident_state를 INSERT했습니다.",
+    "rawResultQualification": "원 JSON의 errorCode는 FIXTURE_FAILURE입니다. 직접 PG error의 23503과 정확한 문구는 원 TAP에서 확인하며 원 JSON을 변경하지 않았습니다.",
+    "남은 확인": "소유 fixture의 observation·incident link 준비가 미완료입니다. Allocation invariant와 실제 제품 실패는 아직 검증되지 않았습니다."
+  },
+  "artifacts": [
+    {
+      "name": "source-manifest.json",
+      "bytes": 21785,
+      "sha256": "e90cec1f71643265cf7a8b3a7aaa7c412eb37a92a4dfa160ae6725a44d04ae88"
+    },
+    {
+      "name": "source-manifest-correction.json",
+      "bytes": 22054,
+      "sha256": "fc42990d05bfc4687a077b63e93547005e852cd4c0ff11692cd215d04ba816b0"
+    },
+    {
+      "name": "source-manifest-lint-correction.json",
+      "bytes": 22108,
+      "sha256": "de6c0b583f8cb5004e4e6dec2ae6c819cd97c5f55d25d00cc2a43ef81b947498"
+    },
+    {
+      "name": "schema-manifest.json",
+      "bytes": 5027,
+      "sha256": "ea5fc36f367e090041daf27f95066a13751f0565b5bd16267a88b39ce22d6f01"
+    },
+    {
+      "name": "type-resumed.log",
+      "bytes": 132,
+      "sha256": "e0d2e275a1ced43390e9422c7df31a304b39ad39b2fed027fd97de230439eb94"
+    },
+    {
+      "name": "type-correction.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "lint-first.log",
+      "bytes": 613,
+      "sha256": "7eeeccd7b4cf3e39c3c7b42fa0df2e77e88d065d2058920b02d2da1925b4bb28"
+    },
+    {
+      "name": "lint-correction.log",
+      "bytes": 91,
+      "sha256": "af5b800dbfe51e17be14101c391bfe0d55260ca3d2391628c0632ba6722d7385"
+    },
+    {
+      "name": "actual-pg-first.log",
+      "bytes": 8596,
+      "sha256": "20f31a6ce559c7be67e2c9b8add17b568f51535b62da75fd66326e6cac0aed73"
+    },
+    {
+      "name": "actual-pg-first-results.json",
+      "bytes": 4947,
+      "sha256": "d2d4f2998ed460058d8f6ac855f8951d66c8bd7ecc8e46522959ff4b1f3f1a85"
+    },
+    {
+      "name": "actual-pg.first.mjs",
+      "bytes": 118368,
+      "sha256": "d9b7d934bea084bbd266c3eafde222976146f13b0883a0dbc61d215ed4e5c80c"
+    },
+    {
+      "name": "type-correction.diff",
+      "bytes": 763,
+      "sha256": "5a8d8ca6cc2dcb144f68296bfb1aeb526fc267ccdcf69f55854e2bd0fafac844"
+    },
+    {
+      "name": "lint-correction.diff",
+      "bytes": 779,
+      "sha256": "bc1dc0e9d47932bf907afe1587bf9fd7f3bf712c059ca3d7ae39950dac595c02"
+    },
+    {
+      "name": "job-state.json",
+      "bytes": 815,
+      "sha256": "e77fc7b33bdce0d032ae06957dcfc4908ba42232411c45ff9a90c53d459c8b4a"
+    },
+    {
+      "name": "job-state-correction.json",
+      "bytes": 1158,
+      "sha256": "c45cd7b193ac068b2ed4a421c56f44cc9ce89010ca509559672737326f71b4a3"
+    },
+    {
+      "name": "job-state-pg-first.json",
+      "bytes": 1460,
+      "sha256": "617207828fee161f7187585f20ca951107031f6abbc2fb923ec711f0f60778b3"
+    }
+  ],
+  "ownedProcessesActive": 0,
+  "capturePerformed": false,
+  "schemaSuiteRepeated": false,
+  "productionIssuerVerified": false,
+  "actualAdmissionVerified": false,
+  "externalCapacityVerified": false,
+  "actualResizeExecuted": false,
+  "actualFenceExecuted": false,
+  "podCreated": false,
+  "dev019Applied": false,
+  "installPerformed": false,
+  "rebasePerformed": false
+}
