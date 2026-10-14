@@ -206,6 +206,7 @@ export function createControllerWorker(pool: Pool, input: ControllerWorkerPolicy
   function launchRenew(): void {
     if (closing || renewing || acquiring) { return }
     renewing = Promise.resolve().then(async () => {
+      if (closing) { return }
       const result = await session!.renew()
       lastRenew = Object.freeze(result)
       // stop() clears session.lease; a late confirmed renewal still owns its exact new revision for cleanup.
@@ -218,6 +219,7 @@ export function createControllerWorker(pool: Pool, input: ControllerWorkerPolicy
   function launchAcquire(): void {
     if (closing || acquiring || renewing) { return }
     acquiring = Promise.resolve().then(async () => {
+      if (closing) { return }
       const result = await session!.acquire()
       lastAcquire = Object.freeze(result)
       if (result.status === 'ACTIVE') { confirmedLease = result.lease }
