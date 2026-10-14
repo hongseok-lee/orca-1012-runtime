@@ -11,6 +11,7 @@ export type OrcadControllerConfig = Readonly<{
   inventory: Readonly<{ apiOrigin: string; namespace: string; dataset: typeof dataset; caFile: string; tokenFile: string
     requestTimeoutMs: number; watchTimeoutSeconds: number; listLimit: number }>
   policy: ControllerWorkerPolicy
+  structuredOutput?: Readonly<{ claimDurationMs: number }>
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -62,7 +63,12 @@ function apiOrigin(value: unknown): string {
 
 /** All keys/scalars/policies detach synchronously. No Pool, token, external identity or config default is accepted. */
 export function captureOrcadControllerConfig(value: unknown): OrcadControllerConfig {
-  const input = record(value, ['datasetName', 'inventory', 'policy'])
+  const hasStructuredOutput = value !== null && typeof value === 'object' && Object.hasOwn(value, 'structuredOutput')
+  const input = record(value, hasStructuredOutput
+    ? ['datasetName', 'inventory', 'policy', 'structuredOutput'] : ['datasetName', 'inventory', 'policy'])
+  const structuredOutput = hasStructuredOutput
+    ? Object.freeze({ claimDurationMs: positive(record(input.structuredOutput, ['claimDurationMs']).claimDurationMs, true) })
+    : undefined
   const inventory = record(input.inventory, ['apiOrigin', 'namespace', 'dataset', 'caFile', 'tokenFile',
     'requestTimeoutMs', 'watchTimeoutSeconds', 'listLimit'])
   const policy = record(input.policy, ['lease', 'renewIntervalMs', 'standbyPollIntervalMs', 'passPollIntervalMs', 'maximumWork', 'externalBudgetMs'])
@@ -74,6 +80,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const durationMs = positive(lease.durationMs), renewIntervalMs = positive(policy.renewIntervalMs)
   if (renewIntervalMs >= durationMs) { invalidOrcadControllerConfig() }
   return Object.freeze({ datasetName: dataset,
+    ...(structuredOutput ? { structuredOutput } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),

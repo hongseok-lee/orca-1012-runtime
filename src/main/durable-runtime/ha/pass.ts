@@ -123,62 +123,66 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   try {
     await gate()
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
-    // listDueReconciliations retains its original PG deadline predicate/order.
-    const due = await listDueReconciliations(pool)
-    const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
-    const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
-    // Unresolved original commands also need lookup, even if their normal
-    // Unit projection does not currently appear in the due list.
-    const candidates: RuntimeUnitId[] = [...new Set([...due, ...snapshot.commands.map(c => c.runtime_unit_id)])]
-    for (const unitId of candidates) {
-      if (!room()) {break}
-      const unit = units.get(unitId)
-      if (!unit) {continue} // Never use a global due result to adopt another scope.
-      await gate()
-      const command = pending.get(unitId)
-      const operation = command
-        ? snapshot.operations.find(o => o.id === command.operation_id)
-        : snapshot.operations.find(o => o.runtime_unit_id === unitId && !o.terminal && o.retry_due)
-      work++
-      if (!operation) {
-        items.push({ kind: 'RECONCILE', identity: unitId, disposition: 'NO_ORIGINAL_OPERATION' })
-        continue
-      }
-      const selected = request.planStep?.(operation, unit)
-      if (!selected) {
-        items.push({ kind: 'RECONCILE', identity: operation.id, disposition: command ? 'LOOKUP_REQUIRED' : 'NO_STEP_HANDLER' })
-        continue
-      }
-      if (!command && !request.executeCommitted) {
-        items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'NO_EXECUTOR' })
-        continue
-      }
-      const plan: StepPlan = Object.freeze({ mutationKey: selected.mutationKey, step: selected.step,
-        executorId: selected.executorId, input: JSON.parse(canonicalInput(selected.input)) })
-      const prepared = await prepareReconcileStep(pool, {
-        ...plan, context: Object.freeze({ controller: request.controller, runtimeUnitId: unitId, operationId: operation.id }),
-        expectedUnitRevision: unit.revision, expectedIntentRevision: unit.intent_revision,
-        expectedStepRevision: operation.step_revision
-      })
-      if (prepared.mutation.status === 'UNCERTAIN') {
-        session.stop()
-        return { status: 'STOPPED', reason: 'UNCERTAIN_COMMIT', items }
-      }
-      await gate()
-      if (prepared.execution.disposition === 'COMMITTED_EXECUTE') {
-        const claim = prepared.execution.claim
-        if (!request.executeCommitted) {
-          items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE_NOT_WIRED' })
-        } else {
-          await external(signal => request.executeCommitted!(claim, signal))
-          items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE' })
+    // Planner가 없으면 due 조회와 candidate별 gate·미지원 항목의 work 계산을 생략합니다.
+    // 기존 queue/inventory budget과 takeover snapshot·lease 검증은 유지합니다.
+    if (request.planStep) {
+      // listDueReconciliations retains its original PG deadline predicate/order.
+      const due = await listDueReconciliations(pool)
+      const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
+      const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
+      // Unresolved original commands also need lookup, even if their normal
+      // Unit projection does not currently appear in the due list.
+      const candidates: RuntimeUnitId[] = [...new Set([...due, ...snapshot.commands.map(c => c.runtime_unit_id)])]
+      for (const unitId of candidates) {
+        if (!room()) {break}
+        const unit = units.get(unitId)
+        if (!unit) {continue} // Never use a global due result to adopt another scope.
+        await gate()
+        const command = pending.get(unitId)
+        const operation = command
+          ? snapshot.operations.find(o => o.id === command.operation_id)
+          : snapshot.operations.find(o => o.runtime_unit_id === unitId && !o.terminal && o.retry_due)
+        work++
+        if (!operation) {
+          items.push({ kind: 'RECONCILE', identity: unitId, disposition: 'NO_ORIGINAL_OPERATION' })
+          continue
         }
-      } else if (prepared.execution.reason === 'LOOKUP_ORIGINAL' && command && request.lookupOriginal) {
-        // P113 performed original gateway adoption. No receipt becomes a claim,
-        // no ACCEPTED/EXECUTING/UNKNOWN command is executed a second time here.
-        await external(signal => request.lookupOriginal!(command, signal))
-        items.push({ kind: 'RECONCILE', identity: command.id, disposition: 'LOOKUP_ORIGINAL' })
-      } else {items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })}
+        const selected = request.planStep?.(operation, unit)
+        if (!selected) {
+          items.push({ kind: 'RECONCILE', identity: operation.id, disposition: command ? 'LOOKUP_REQUIRED' : 'NO_STEP_HANDLER' })
+          continue
+        }
+        if (!command && !request.executeCommitted) {
+          items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'NO_EXECUTOR' })
+          continue
+        }
+        const plan: StepPlan = Object.freeze({ mutationKey: selected.mutationKey, step: selected.step,
+          executorId: selected.executorId, input: JSON.parse(canonicalInput(selected.input)) })
+        const prepared = await prepareReconcileStep(pool, {
+          ...plan, context: Object.freeze({ controller: request.controller, runtimeUnitId: unitId, operationId: operation.id }),
+          expectedUnitRevision: unit.revision, expectedIntentRevision: unit.intent_revision,
+          expectedStepRevision: operation.step_revision
+        })
+        if (prepared.mutation.status === 'UNCERTAIN') {
+          session.stop()
+          return { status: 'STOPPED', reason: 'UNCERTAIN_COMMIT', items }
+        }
+        await gate()
+        if (prepared.execution.disposition === 'COMMITTED_EXECUTE') {
+          const claim = prepared.execution.claim
+          if (!request.executeCommitted) {
+            items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE_NOT_WIRED' })
+          } else {
+            await external(signal => request.executeCommitted!(claim, signal))
+            items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE' })
+          }
+        } else if (prepared.execution.reason === 'LOOKUP_ORIGINAL' && command && request.lookupOriginal) {
+          // P113 performed original gateway adoption. No receipt becomes a claim,
+          // no ACCEPTED/EXECUTING/UNKNOWN command is executed a second time here.
+          await external(signal => request.lookupOriginal!(command, signal))
+          items.push({ kind: 'RECONCILE', identity: command.id, disposition: 'LOOKUP_ORIGINAL' })
+        } else {items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })}
+      }
     }
     for (const head of snapshot.queueHeads) {
       if (!room()) {break}
