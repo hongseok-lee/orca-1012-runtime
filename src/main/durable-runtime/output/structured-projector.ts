@@ -85,7 +85,7 @@ export function createStructuredJournalProjection(
     }
     if (expected !== page.cursor.sequence || (page.hasMore && page.events.length === 0)) { fail('CURSOR') }
     // Validate/decode original inputs through the existing mapper, without extra quotas.
-    const inputs = projectCommittedInputIdentity(page)
+    const inputs = projectCommittedInputIdentity({ ...page, scope: fixedScope })
     const bySequence = new Map(inputs.items.map(item => [item.sequence, item]))
     const components = new Map(page.inputs.map(component => [component.inputId, component]))
     const next: FoldState = { sequence: page.cursor.sequence, headSequence: page.head.sequence,
@@ -102,7 +102,7 @@ export function createStructuredJournalProjection(
         next.tombstones.set(itemId, revision); next.items.delete(itemId)
         return
       }
-      next.items.set(itemId, captureCatalogParsed({ itemId, revision, body: mutation.body,
+      next.items.set(itemId, captureCatalogParsed<AgentJournalRenderItem>({ itemId, revision, body: mutation.body,
         sequence: existing?.sequence ?? sequence, observedAt: existing?.observedAt ?? observedAt }))
       next.tombstones.delete(itemId)
     }
