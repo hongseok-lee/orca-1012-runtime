@@ -1,0 +1,123 @@
+{
+  "status": "최초 값 1개 및 실제 PG 1개 PASS이며 전체 타입 PASS는 아닙니다.",
+  "productSource": "95afac216e4e2b022ebacf61496db9ea683aed59",
+  "queueDependency": "cc399b66696aaf50c45d02d613c885a8d61e6fdb",
+  "base": "7318c47388d6ed9861a0e1f13c7351a6273c0f5f",
+  "initialFixture": "a101e22611ac016e72b09418c756646d1d27a8ba",
+  "PGFixtureCorrection": "b9e8668706c77869f226711d9e30ae2f574f7aed",
+  "valueExpressionCorrection": "3037a8a1ae3fc4135fef0dfcee717c2c30e1f442",
+  "productAndQueueUnchanged": true,
+  "correctionScope": "PG fixture의 synthetic authority 타입 단언과 값 fixture의 동일 assertion 조건식 표현만 교정했습니다. Runtime 값·assertion·분기 효과는 유지했습니다.",
+  "static": {
+    "initialFourRootTypeExit": 1,
+    "initialOwned": 1,
+    "initialExternal": 25,
+    "correctedPGFixtureTypeExit": 1,
+    "correctedPGFixtureOwned": 0,
+    "correctedPGFixtureExternal": 25,
+    "externalUnchanged": true,
+    "wholeTypePass": false,
+    "firstFourFileLintExit": 1,
+    "firstFourFileLintErrors": 1,
+    "changedValueFileLintExit": 0,
+    "otherThreeLintErrorsOnOriginalRun": 0,
+    "wholeFourFileLintRepeated": false,
+    "typeRepeatedAfterValueFormatting": false,
+    "originalListFilesLogBytes": 511164,
+    "originalFullTypeLogRepeatedOrRetransmitted": false
+  },
+  "callbacks": [
+    {
+      "kind": "value",
+      "count": 1,
+      "exit": 0,
+      "name": "unset and invalid Ops allocate no publisher; unstarted and failed-start owners close the original Pool once",
+      "passedAt": "2026-10-14T10:43:18.277Z"
+    },
+    {
+      "kind": "pg",
+      "count": 1,
+      "exit": 0,
+      "name": "actual startup worker publishes one notification with a canonical cursor, retains Catalog outbox and drains before Pool close",
+      "passedAt": "2026-10-14T10:43:22.006Z"
+    }
+  ],
+  "callbackPassTotal": 2,
+  "callbackFailTotal": 0,
+  "callbackSkipTotal": 0,
+  "parentOrFileAdded": false,
+  "PGAssertions": {
+    "actualStartupWorkerPublication": true,
+    "canonicalReplayCursorMatches": true,
+    "sourceOutboxState": "PUBLISHED",
+    "unsupportedCatalogOutboxUnchanged": true,
+    "rpcBeforePublisherDrain": true,
+    "PoolEndBeforeDrain": 0,
+    "originalPoolEndCount": 1,
+    "publicationAfterStop": 0,
+    "qualification": "Root가 읽은 단일 PG callback의 실제 assertion PASS 근거입니다. 추가 API/DB 검증은 실행하지 않았습니다."
+  },
+  "schema": {
+    "ownedDB": true,
+    "createCount": 1,
+    "applyCount": 1,
+    "ledgerCount": 19,
+    "fixedSQLChecksumsMatch": true,
+    "separatePostCallbackLedgerQuery": false,
+    "devChanged": false
+  },
+  "preparation": {
+    "initialValueImportCandidates": 237,
+    "initialActualBundleImports": 235,
+    "SQLCount": 19,
+    "wholePreparationRepeated": 0,
+    "fullManifestReprepared": 0,
+    "originalListFilesRecollectedOrRetransmitted": false,
+    "PGWrapperTypeErasureIdentical": true,
+    "PGHarnessReused": true,
+    "changedValueWrapperImports": 193,
+    "changedValueImportsWithinOriginal": true,
+    "productBuild": 0,
+    "install": 0,
+    "parentAdded": 0
+  },
+  "runtimeJob": {
+    "startedAt": "2026-10-14T10:43:15.965Z",
+    "endedAt": "2026-10-14T10:43:22.081Z",
+    "exit": 0,
+    "supervisorPID": 18332,
+    "valuePID": 18373,
+    "schemaPID": 18390,
+    "PGPID": 18401,
+    "activeOwnedJobs": 0,
+    "heavyReturned": 1
+  },
+  "originalFailures": [
+    {
+      "phase": "준비 helper",
+      "error": "MODULE_NOT_FOUND: typescript/lib/typescript.js",
+      "preserved": true
+    },
+    {
+      "phase": "최초 type",
+      "exit": 1,
+      "ownedErrors": 1,
+      "externalErrors": 25,
+      "code": "TS2352",
+      "preserved": true
+    },
+    {
+      "phase": "최초 소유 4개 lint",
+      "exit": 1,
+      "errors": 1,
+      "rule": "unicorn(prefer-ternary)",
+      "preserved": true
+    }
+  ],
+  "liveSync": 0,
+  "runtimeRestart": 0,
+  "screenshots": 0,
+  "oldSuitesRepeated": 0,
+  "successfulCallbacksRepeated": 0,
+  "qualification": "새 두 callback과 한정 static 결과입니다. 기존 실제 화면은 이번 publisher의 live 실증이 아니며 dev 반영·전체 P1·HA·provider·native 완료를 선언하지 않습니다."
+}

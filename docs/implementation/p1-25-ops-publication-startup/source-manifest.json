@@ -1,0 +1,68 @@
+{
+  "base": "7318c47388d6ed9861a0e1f13c7351a6273c0f5f",
+  "dependencyOriginal": "cc399b66696aaf50c45d02d613c885a8d61e6fdb",
+  "dependencyLocal": "bed615de1a2a9bbe53f7103945aea2b8e4633658",
+  "productSource": "95afac216e4e2b022ebacf61496db9ea683aed59",
+  "fixtureSource": "a101e22611ac016e72b09418c756646d1d27a8ba",
+  "files": [
+    {
+      "path": "src/main/orcad/orcad-ops.ts",
+      "role": "Backend 소유 변경",
+      "sha256": "c43ea1f54ad96042f4995ec176d8615afddf59ca8ca9894bae9b5752c7556d24",
+      "bytes": 5649
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-publication.ts",
+      "role": "Backend 소유 변경",
+      "sha256": "d1ee1b7f8ab304d9b8642a9b5a6cfcd1b24c954e38352d56783b4e9bf7687f56",
+      "bytes": 3246
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-publication.value.test.mts",
+      "role": "Backend 소유 변경",
+      "sha256": "690a0c2e930171cc41e939032a48b820c764c63803d5f4a1240349f61b5ed23d",
+      "bytes": 3417,
+      "gitBlob": "0470bdb7d0200f4d0ee6dd519bbd9289c38e1bba",
+      "revision": "3037a8a1ae3fc4135fef0dfcee717c2c30e1f442"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-publication.pg.test.mts",
+      "role": "Backend 소유 변경",
+      "sha256": "6da8cde1b1d68bbe396890ee836504861dfff500268d43b6f07a37cd9d221468",
+      "bytes": 8287,
+      "gitBlob": "08102602e4bd11b4428f5d2bfa9d6c4ebc847b39",
+      "revision": "b9e8668706c77869f226711d9e30ae2f574f7aed"
+    },
+    {
+      "path": "src/main/durable-runtime/replay/claim.ts",
+      "role": "Queue 의존성 원 bytes",
+      "sha256": "cd6818b4639d9ee32e5c9bc8e9a43ff3b39768a8a413fd35be06df8cf6ae701b",
+      "bytes": 3480
+    },
+    {
+      "path": "src/main/durable-runtime/replay/worker.ts",
+      "role": "Queue 의존성 원 bytes",
+      "sha256": "fd094cfa63227ff34f5014a74af1769574b9ef4318c1de1bbb47078b54daac88",
+      "bytes": 8141
+    },
+    {
+      "path": "src/main/durable-runtime/replay/index.ts",
+      "role": "Queue 의존성 원 bytes",
+      "sha256": "5ba4fb46dc1da2e0c54cf8c9330f8fb357cf0338bd85fbe34fdaa02dd7ecad71",
+      "bytes": 613
+    }
+  ],
+  "executions": {
+    "test": 2,
+    "type": 2,
+    "lint": 2,
+    "PG": 1,
+    "build": 0,
+    "install": 0,
+    "live": 0,
+    "capture": 0
+  },
+  "qualification": "새 두 callback과 한정 static 결과입니다. 기존 실제 화면은 이번 publisher의 live 실증이 아니며 dev 반영·전체 P1·HA·provider·native 완료를 선언하지 않습니다.",
+  "approvedPGFixtureCorrection": "b9e8668706c77869f226711d9e30ae2f574f7aed",
+  "approvedValueExpressionCorrection": "3037a8a1ae3fc4135fef0dfcee717c2c30e1f442"
+}

@@ -6,6 +6,7 @@ import { readOrcadDurableCatalogConfig, prepareOrcadDurableCatalog,
   type OrcadDurableCatalogConfig, type OrcadDurableCatalog } from './orcad-durable-catalog.ts'
 import { captureOrcadOpsConfig, readOrcadOpsConfig, invalidOrcadOpsConfig, OrcadOpsConfigurationError,
   type OrcadOpsConfig } from './orcad-ops-config.ts'
+import { ownOrcadOpsPublication } from './orcad-ops-publication.ts'
 
 // The entry consumes one composition surface; Catalog retains its existing Pool ownership and exit class.
 export { OrcadDurableCatalogConfigurationError } from './orcad-durable-catalog.ts'
@@ -26,8 +27,10 @@ export async function prepareOrcadStartup(
   const ops = input.ops === null ? null : captureOrcadOpsConfig(input.ops)
   if (ops && !input.catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
   const catalog = await prepareOrcadDurableCatalog(input.catalog)
-  ownCatalog(catalog)
+  const publication = catalog && ops ? ownOrcadOpsPublication(catalog) : null
+  ownCatalog(publication ?? catalog)
   const opsHttp = await prepareOrcadOps(ops, catalog?.readConfig)
+  if (opsHttp && publication) { await publication.startPublication(opsHttp) }
   return catalog ? Object.freeze({ durableCatalogRead: catalog.readConfig, ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
 }
 
