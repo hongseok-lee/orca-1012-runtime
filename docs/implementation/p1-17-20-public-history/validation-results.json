@@ -316,5 +316,33 @@
     "live/native history/reconnect/subscribe/provider/HA 전체 지원 완료 판정이 아닙니다.",
     "문서 정리 후 성공 lint/value/PG/SQL을 반복하지 않았습니다."
   ],
-  "rawEvidenceGeneralization": "원 자료는 비공개로 보존했습니다. 공개 TAP의 운영 절대경로는 일반화했고 원본/공개 SHA-256을 각각 기록했습니다."
+  "rawEvidenceGeneralization": "원 자료는 비공개로 보존했습니다. 공개 TAP의 운영 절대경로는 일반화했고 원본/공개 SHA-256을 각각 기록했습니다.",
+  "finalAlignment": {
+    "fixedMain": "276d043ff91d5f3597119a6fd2d21b7f4994b113",
+    "validatedSourcePin": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+    "ownedBlobModeUnchanged": true,
+    "ownedObjects": [
+      "100644 blob 2df3f23bfbc7c2ccef3a922e708dd3f6482b97e5\tsrc/main/durable-runtime/output/read.ts",
+      "100644 blob 3390cd7c576c68e36706f5d281f63cfaf5776728\tsrc/main/durable-runtime/output/structured-history-page.ts",
+      "100644 blob 22cbd0b9d425048423dddaa3122e919ab835a260\tsrc/main/durable-runtime/output/structured-history.test.mts",
+      "100644 blob 4f3448d7468b3f046e920fb3956576a3e61399b3\tsrc/main/durable-runtime/output/structured-history.ts",
+      "100644 blob 4239ce469c7495b01ebf04afd1763efd795e5e4f\tsrc/main/durable-runtime/rpc/public.ts",
+      "100644 blob 99fca7759b72cf963f4c00583f339d29878280f2\tsrc/main/durable-runtime/rpc/registry.ts",
+      "100644 blob e40cde4b9f3a5469ed09c5b75d1666b4b325cc8e\tsrc/main/durable-runtime/rpc/structured-history.pg.test.mts",
+      "100644 blob 20b3841cf5d6ac252afe2eab658d9d29ead8632b\tsrc/main/durable-runtime/rpc/structured-history.ts"
+    ],
+    "changedRuntimeInputs": [
+      "src/main/durable-runtime/catalog/entries.ts",
+      "src/main/durable-runtime/catalog/wire.ts"
+    ],
+    "acceptedAdditivePR": 65,
+    "acceptedAddedFiles": [
+      "src/main/durable-runtime/catalog/browser.pg.test.mts",
+      "src/main/durable-runtime/catalog/browser.ts",
+      "src/main/durable-runtime/catalog/browser.value.test.mts"
+    ],
+    "originalInputManifestRetained": true,
+    "newValidationExecutions": 0,
+    "mergeOwner": "Root"
+  }
 }

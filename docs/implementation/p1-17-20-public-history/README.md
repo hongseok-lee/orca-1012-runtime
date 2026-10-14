@@ -2,7 +2,7 @@
 
 기존 `agentSession.history`를 검증된 Catalog context와 실제 PG alias, 같은 REPEATABLE READ READ ONLY transaction의 raw reader·projector·page에 연결했습니다. 공개 strict schema와 tail/before/after 의미를 유지하며 CLOSED 이력을 읽기로 재개하지 않습니다.
 
-검증된 source는 `dd0196e3511b61b9f591cfc1238ec67b0781ab98`이고 source base는 `e9ae59dc075adc9e3bde624ad00da1c116e71db8`입니다. 이 문서는 그 source의 기존 결과만 정리합니다. 문서 commit을 새 제품/fixture 검증으로 표시하지 않습니다. 최종 main 정렬과 Root 수락/merge는 별도입니다.
+검증된 source는 `dd0196e3511b61b9f591cfc1238ec67b0781ab98`이고 source base는 `e9ae59dc075adc9e3bde624ad00da1c116e71db8`입니다. 이 문서는 그 source의 기존 결과만 정리합니다. 문서 commit을 새 제품/fixture 검증으로 표시하지 않습니다. Root가 원 입력·metafile·SQL·TAP·ledger·실패 seed를 직접 대조하여 결과를 수락했습니다. 최종 정렬은 지정 main `276d043ff91d5f3597119a6fd2d21b7f4994b113`으로 1회 수행했으며 소유 8개 파일의 blob/mode는 검증된 source와 같습니다. 기존 1,603개 실행 입력 중 합류 차이는 Root가 별도 diff와 PG 결과로 수락한 PR65의 `catalog/entries.ts`와 `catalog/wire.ts`뿐입니다. 원 입력 manifest는 `dd0196e3`의 실제 실행 기록으로 유지합니다. 이 합류로 값/PG/type/SQL을 반복하지 않았으며 merge는 Root가 담당합니다.
 
 | 확인 항목 | 실제 결과와 한계 |
 |---|---|
