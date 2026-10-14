@@ -1,6 +1,6 @@
 # Orcad startup의 HA worker와 inventory source
 
-고정 main `ea315306bbca379f039b9ff4a119276b47927e66`에서 기존 ControllerWorker를 Catalog startup의 선택 owner로 연결했습니다. 제품 pin은 `6e06534a8173939e9fb8d0519c85cc1bf34cf6ca`, fixture pin은 `e1c3a9646f27fe2edd1d547c31bcceb59f500e55`입니다. 제품 3개와 값/PG fixture 2개 및 이 구현 증거만 변경했습니다. 실제 실행·type·lint·PG·cluster·browser·install·build·watch/restart는 모두 0회입니다.
+고정 main `ea315306bbca379f039b9ff4a119276b47927e66`에서 기존 ControllerWorker를 Catalog startup의 선택 owner로 연결했습니다. 제품 pin은 `6e06534a8173939e9fb8d0519c85cc1bf34cf6ca`, fixture pin은 `e1c3a9646f27fe2edd1d547c31bcceb59f500e55`입니다. 제품 3개와 값/PG fixture 2개 및 이 구현 증거만 변경했습니다. 최초 실행은 원 lint 17건으로 멈춘 뒤, Root가 수락한 의미 불변 교정 `89095210aaa2f395bc85ceba9658cacae20b5ce4`에서 lint 0건·값 callback 1건·통합 PG callback 1건이 통과했습니다. 원 타입은 소유 진단 0건·기존 외부 진단 25건·compiler 전체 exit 1이며 재실행하지 않았습니다. 최종 base는 Root 지정 `c3adbe6cc1b49b01b1ecbc8684e8c3eb0f2bd146`로 한 번 정렬했고 수락된 제품 3개·fixture 2개 바이트를 유지했습니다. 설치·제품 build·browser·live sync·watch/restart는 0회입니다.
 
 ## 입력과 의존성
 
@@ -8,7 +8,7 @@
 
 Private JSON은 현재 UID 소유 regular file의 정확 0600 권한과 NOFOLLOW/open 후 fstat identity를 확인합니다. 1 MiB 이하를 bounded read하며 JSON 중복 key를 모든 깊이에서 거절합니다. Unknown/accessor/symbol key, 잘못된 숫자·origin·절대경로를 거절하고 첫 await 전에 nested policy/scalar를 복사해 고정합니다. Error에는 고정 코드만 남고 원 JSON·credential 값·경로·원 HTTP 오류는 포함하지 않습니다.
 
-PR58 원 의존 pin은 `e93249ea8fafbab3edb86142f00f6431f9ba0bfc`, Root 합류 pin은 `c3adbe6cc1b49b01b1ecbc8684e8c3eb0f2bd146`입니다. `kubernetes-identity.ts`, `kubernetes-inventory.ts`, `kubernetes-inventory.test.mts`의 Git blob이 두 pin에서 같습니다. PR58 source는 수정하거나 이 branch의 제품 diff로 복제하지 않았습니다. 작성 base는 그대로이며 합류 tree의 실제 transport를 후속 검증 입력으로 소비합니다. 자동 rebase는 하지 않았습니다.
+PR58 원 의존 pin은 `e93249ea8fafbab3edb86142f00f6431f9ba0bfc`, Root 합류 pin은 `c3adbe6cc1b49b01b1ecbc8684e8c3eb0f2bd146`입니다. `kubernetes-identity.ts`, `kubernetes-inventory.ts`, `kubernetes-inventory.test.mts`의 Git blob이 두 pin에서 같습니다. PR58 source는 수정하거나 이 branch의 제품 diff로 복제하지 않았습니다. 작성 및 실행 base는 원 pin으로 보존하고 실제 검증에는 합류 tree의 같은 transport 바이트를 소비했습니다. 검증 뒤 Root가 지정한 합류 pin으로 한 번만 최종 정렬했습니다. PR58 소유 3개 파일은 이 PR diff에 없습니다.
 
 CA는 서버가 지정한 local file에서 읽어 복사하고 실제 PR58 transport에만 전달합니다. Token reader는 각 HTTP 요청 때 지정 tokenFile의 현재 symlink target을 다시 읽습니다. Projected CA/token의 symlink는 private config의 NOFOLLOW 규칙과 구분합니다. 외부 다운로드·CLI·exec plugin·환경 변수 token 전달·raw credential accessor는 없습니다. 파일 읽기는 regular file과 유한 크기를 확인하며 원 CA/token은 snapshot이나 오류로 반환하지 않습니다.
 
@@ -27,7 +27,19 @@ Internal controllerSnapshot만 worker의 실제 상태와 최신 inventory metad
 | `orcad-controller.value.test.mts` | 값 1개 | Strict capture·private config identity/권한/중복 key·CA 복사와 projected token 회전·비밀 없는 오류·부분 실패 및 중복 stop cleanup 순서 |
 | `orcad-controller.pg.test.mts` | 통합 PG 1개 | 실제 두 startup owner와 같은 PG scope의 ACTIVE/STANDBY·소유 loopback HTTPS inventory·정상 stop 후 높은 term 인수·이전 관측 정지·Pool.end 각 1회·실제 Unit/operation/command/attempt/grant 행 불변 |
 
-Fixture는 아직 실행하지 않았습니다. 값 fixture의 idle Pool/connect 차단과 stop 관측 adapter는 실제 worker/transport stub이 아닙니다. PG fixture는 Root가 별도로 준비할 새 schema-only 소유 DB만 받으며 실제 registerCatalogProject로 fixture repository/UI를 초기화합니다. SQL/migration·dev/C3 변경은 fixture에 없습니다. Loopback은 기존 static test CA를 사용하는 합성 소유 HTTPS endpoint이며 실제 cluster/RBAC/Spot/서비스 주소 인수 증거가 아닙니다. 기존 HA4·startup 성공 suite는 반복하지 않았습니다.
+Fixture는 Root가 지정한 최초 값 1개·통합 PG 1개만 실행해 통과했습니다. Parent wrapper는 제품 callback 수에 넣지 않습니다. 값 fixture의 idle Pool/connect 차단과 stop 관측 adapter는 실제 worker/transport stub이 아닙니다. PG fixture는 최초 1회 생성 및 migration 19개 적용을 마친 격리 소유 DB `orca_p114_startup_20261014`만 받았으며 실제 registerCatalogProject로 fixture repository/UI를 초기화합니다. SQL/migration·dev/C3 변경은 fixture에 없습니다. Loopback은 기존 static test CA를 사용하는 합성 소유 HTTPS endpoint이며 실제 cluster/RBAC/Spot/서비스 주소 인수 증거가 아닙니다. 기존 HA4·startup 성공 suite는 반복하지 않았습니다.
+
+## 최초 실행과 원 실패 보존
+
+원 실행 `21489`는 2026-10-14 13:32:09.897 UTC에 `SCOPED_LINT_FAILURE`로 종료됐습니다. 소유 파일 5개의 타입 진단은 0건이지만 기존 외부 진단 25건으로 compiler 전체 exit는 1입니다. 이 결과를 전체 type PASS로 바꾸지 않았습니다. Lint 17건은 제어 문자 정규식 1건·문자열 연결 15건·findIndex 비교 1건이었고 당시 값/PG callback과 schema 준비는 미진입이었습니다.
+
+Root가 교정 diff를 읽고 의미 불변으로 수락했습니다. 원 제어 문자 거부 정규식에 한 줄 lint 예외를 붙이고 문자열 15곳을 같은 template literal로, findIndex 결과의 부재 검사를 `=== -1`로 표현했습니다. 원 assertion과 권한 의미는 유지했습니다. 후속 실행은 교정된 3개 파일만 copy-on-write로 반영하고 실제 SHA를 대조했으며, 통과한 준비·타입은 건너뛰었습니다. Fixture CJS 변환만 필요한 2개 runner에 적용했고 기존 source/cache를 재사용했습니다. 새 runtime import 경로는 없었습니다.
+
+Continuation `22041`은 2026-10-14 13:43:42.385–13:43:48.307 UTC에 lint 0건 → 최초 값 callback 1개 → 최초 schema 19개 적용 → 최초 통합 PG callback 1개 순서로 exit 0을 반환했습니다. 각 TAP의 raw pass 2개 중 1개는 parent scope이며 총 제품 callback은 2개입니다. 값 fixture는 strict capture/private config/회전 token/비밀 없는 오류와 부분 실패 cleanup을 확인했습니다. PG fixture는 실제 두 startup owner의 ACTIVE 1개·STANDBY 1개, 정상 release 후 term +1 인수와 inventory 관측, 소유 Pool 종료를 확인했습니다. 소유 loopback HTTPS는 합성 관측이며 실제 cluster/RBAC/Spot/provider 또는 물리 writer 정지 증거가 아닙니다.
+
+격리 DB `orca_p114_startup_20261014`는 직전에 없었으며 schema를 처음 한 번 적용했습니다. 통합 callback은 migration 19개 checksum/applied_at과 Unit/operation/command/attempt/grant 행 불변을 원 assertion으로 확인했습니다. 개발 DB나 C3 설정에는 쓰지 않았습니다. 제어 PID는 `Z/exitRaw=0`, 자식 4개는 부재이며 활성 0개·heavy 1개 반환을 확인했습니다. 성공 callback·타입·schema를 반복하지 않았습니다.
+
+[공개 결과와 원자료 hash](first-validation.json)는 입력 pin, 원 실패, 수락된 교정, 최초 TAP/phase/ledger 및 source/metafile hash를 구분합니다. 원 TAP·원 로그·metafile·입력 JSON은 비공개 원자료로 바이트 보존하며 auth/config/raw 자료는 공개하지 않았습니다. 최종 base 정렬 뒤 소유 제품 3개·fixture 2개 blob은 실행된 수락 교정 pin과 동일합니다. Foundation CI는 별도 저장소 검사이며 위 제품 callback 검증을 대체하지 않습니다.
 
 ## 기존 화면 provenance와 미확인 범위
 

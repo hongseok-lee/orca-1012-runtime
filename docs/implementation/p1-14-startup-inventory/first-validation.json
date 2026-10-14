@@ -1,0 +1,434 @@
+{
+  "record": "Root 승인 최초 실행의 결과입니다. 원자료는 비공개로 바이트 보존하고 공개 사본에는 결과와 원자료 hash만 기록합니다.",
+  "pins": {
+    "writtenBase": "ea315306bbca379f039b9ff4a119276b47927e66",
+    "originalProduct": "6e06534a8173939e9fb8d0519c85cc1bf34cf6ca",
+    "originalFixture": "e1c3a9646f27fe2edd1d547c31bcceb59f500e55",
+    "dependencyOriginal": "e93249ea8fafbab3edb86142f00f6431f9ba0bfc",
+    "dependencyMerged": "c3adbe6cc1b49b01b1ecbc8684e8c3eb0f2bd146",
+    "acceptedCorrection": "89095210aaa2f395bc85ceba9658cacae20b5ce4",
+    "finalBase": "c3adbe6cc1b49b01b1ecbc8684e8c3eb0f2bd146"
+  },
+  "inputs": {
+    "originalPinnedFiles": 266,
+    "originalActualRuntimeImports": 264,
+    "SQLFiles": 19,
+    "continuationCopyOnWriteFiles": [
+      {
+        "path": "src/main/orcad/orcad-controller-config.ts",
+        "oldSha256": "f8dfa1ffba13fc7118f09976ae8fd658732b18528fb16944f8754101493a8033",
+        "sha256": "0f472f74276c2a451a345d49108e72908769a5a9c9c6df9603ab1d90653f5636",
+        "bytes": 8915,
+        "gitBlob": "9f0cd02109cec988bd630da5f1af32ddfd0c0484"
+      },
+      {
+        "path": "src/main/orcad/orcad-controller.value.test.mts",
+        "oldSha256": "a6cca420dd3e2e2c63e35860bcf1db07fcad38fe6e6cea6534453420af52ae4f",
+        "sha256": "10c8a97b8d8327d04f2aa38ca67a0af8d621ae421d5eab544ea05285afba7d31",
+        "bytes": 9731,
+        "gitBlob": "b00614b42e9d07e1b0218e8c44110e9bd3551dd3"
+      },
+      {
+        "path": "src/main/orcad/orcad-controller.pg.test.mts",
+        "oldSha256": "2a62336fb193412141adcb94e3641891771b7fe0109f12f3c37d51b3ad2f98d8",
+        "sha256": "f1ce3784d1c08b866a6006515f7547a545d3d9b614aeb8a09f26b60bfd2596b2",
+        "bytes": 11555,
+        "gitBlob": "0fa5b0b09b26cc93db2535ec8576398d7fa10393"
+      }
+    ],
+    "copiedSourceFiles": 3,
+    "closureReused": true,
+    "metafilePathComparison": [
+      {
+        "kind": "value",
+        "inputs": 226,
+        "newImportPaths": 0,
+        "removedImportPaths": 0
+      },
+      {
+        "kind": "pg",
+        "inputs": 264,
+        "newImportPaths": 0,
+        "removedImportPaths": 0
+      }
+    ],
+    "passedPreparationRerun": 0,
+    "typeRerun": 0,
+    "wrapperInputs": [
+      {
+        "kind": "value",
+        "sourceSha256": "10c8a97b8d8327d04f2aa38ca67a0af8d621ae421d5eab544ea05285afba7d31",
+        "wrapperSha256": "03e3fec8260a0eb80099e02897d8eec5a9edbc07394d03f7cc6af45fd0016527",
+        "originalBodySha256": "ffd6ee051a69af8d2fa7dcfa209302ffffbad138321e6707c9256a9f7f0ae1d4",
+        "runnerSha256": "9def4925d79b01c064d6bbb6b29abbd04c8bed305c3764afe07d3891d8d4729b",
+        "parentProductCallbackCount": 0,
+        "callbacks": 1,
+        "assertionsChanged": false
+      },
+      {
+        "kind": "pg",
+        "sourceSha256": "f1ce3784d1c08b866a6006515f7547a545d3d9b614aeb8a09f26b60bfd2596b2",
+        "wrapperSha256": "b286228cd2a86396f04b28167bb961890f0fc1492cf41ff8e3d2689988b0445f",
+        "originalBodySha256": "ef5aad2413f6c1d0eca896a4e3a8a249be8c3cb0dc507c5a3b1286ae000c7d81",
+        "runnerSha256": "de30faa858189a1988642445ced74c31831b7d2c616bbe3cb5bd42a80735eabd",
+        "parentProductCallbackCount": 0,
+        "callbacks": 1,
+        "assertionsChanged": false
+      }
+    ]
+  },
+  "originalFailure": {
+    "controllerPid": 21489,
+    "endedAt": "2026-10-14T13:32:09.897Z",
+    "exit": 1,
+    "code": "SCOPED_LINT_FAILURE",
+    "type": {
+      "wholeExit": 1,
+      "ownedDiagnostics": 0,
+      "externalDiagnostics": 25,
+      "interpretation": "원 제품/fixture pin의 소유 진단 0건이며 외부 25건으로 compiler 전체 exit는 1입니다. 최종 전체 type PASS를 주장하지 않습니다."
+    },
+    "lintErrors": 17,
+    "lintRules": {
+      "eslint/no-control-regex": 1,
+      "eslint/prefer-template": 15,
+      "unicorn/consistent-existence-index-check": 1
+    },
+    "valueCallbacksEntered": 0,
+    "pgCallbacksEntered": 0,
+    "schemaExecutions": 0
+  },
+  "acceptedCorrection": {
+    "pin": "89095210aaa2f395bc85ceba9658cacae20b5ce4",
+    "changedFiles": 3,
+    "description": "제어 문자 거부 정규식은 그대로 두고 해당 식에 한 줄 lint 예외를 붙였습니다. 문자열 15곳과 findIndex 부재 비교는 동등 표현으로 바꿨습니다. Assertion·권한 의미는 유지했습니다."
+  },
+  "firstContinuation": {
+    "controllerPid": 22041,
+    "startedAt": "2026-10-14T13:43:42.385Z",
+    "endedAt": "2026-10-14T13:43:48.307Z",
+    "exit": 0,
+    "lint": {
+      "files": 5,
+      "errors": 0,
+      "warnings": 0,
+      "exit": 0
+    },
+    "callbacks": {
+      "value": 1,
+      "integrationPG": 1,
+      "parentCallbacksCounted": 0,
+      "rawNodeTestPassCountEach": 2,
+      "explanation": "각 TAP의 raw pass 2개에는 parent scope 1개가 포함됩니다. 제품 callback은 값 1개와 PG 1개만 계산했습니다."
+    },
+    "database": {
+      "name": "orca_p114_startup_20261014",
+      "databaseExisted": false,
+      "existingLedgerReused": false,
+      "schemaApplicationsThisRun": 1,
+      "ledgerCount": 19,
+      "dataset": "orca-1012-dev-v1",
+      "preFixtureCounts": {
+        "catalog_repositories": "0",
+        "workspaces": "0",
+        "runtime_units": "0",
+        "operations": "0",
+        "runtime_commands": "0",
+        "attempts": "0",
+        "execution_grants": "0",
+        "storage_write_grants": "0",
+        "controller_leases": "0",
+        "outbox_events": "0",
+        "replay_events": "0"
+      },
+      "ledgerUnchangedByPGCallback": true,
+      "physicalRowsUnchangedByPGCallback": [
+        "runtime_units",
+        "operations",
+        "runtime_commands",
+        "attempts",
+        "execution_grants",
+        "storage_write_grants"
+      ],
+      "evidenceBoundary": "PG callback의 원 assertion 통과로 확인했습니다. 별도 재조회나 시험을 반복하지 않았습니다."
+    },
+    "events": [
+      {
+        "time": "2026-10-14T13:43:42.385Z",
+        "phase": "START",
+        "pid": 22041,
+        "skip": [
+          "prepare",
+          "scoped-type"
+        ]
+      },
+      {
+        "time": "2026-10-14T13:43:42.418Z",
+        "phase": "CHILD_START",
+        "step": "continuation-lint",
+        "pid": 22048
+      },
+      {
+        "time": "2026-10-14T13:43:42.768Z",
+        "phase": "CHILD_EXIT",
+        "step": "continuation-lint",
+        "pid": 22048,
+        "code": 0
+      },
+      {
+        "time": "2026-10-14T13:43:43.422Z",
+        "phase": "CHILD_START",
+        "step": "first-value",
+        "pid": 22068
+      },
+      {
+        "time": "2026-10-14T13:43:44.102Z",
+        "phase": "CHILD_EXIT",
+        "step": "first-value",
+        "pid": 22068,
+        "code": 0
+      },
+      {
+        "time": "2026-10-14T13:43:44.105Z",
+        "phase": "CHILD_START",
+        "step": "prepare-database",
+        "pid": 22086
+      },
+      {
+        "time": "2026-10-14T13:43:45.190Z",
+        "phase": "CHILD_EXIT",
+        "step": "prepare-database",
+        "pid": 22086,
+        "code": 0
+      },
+      {
+        "time": "2026-10-14T13:43:45.193Z",
+        "phase": "CHILD_START",
+        "step": "first-pg",
+        "pid": 22097
+      },
+      {
+        "time": "2026-10-14T13:43:48.307Z",
+        "phase": "CHILD_EXIT",
+        "step": "first-pg",
+        "pid": 22097,
+        "code": 0
+      },
+      {
+        "time": "2026-10-14T13:43:48.307Z",
+        "phase": "END",
+        "pid": 22041,
+        "code": 0
+      }
+    ],
+    "cleanup": {
+      "controllerState": "Z",
+      "controllerExitRaw": 0,
+      "childPidsAbsent": [
+        22048,
+        22068,
+        22086,
+        22097
+      ],
+      "activeKnownProcesses": 0,
+      "heavyReturned": 1,
+      "observedAt": "2026-10-14T15:32:18.393Z"
+    }
+  },
+  "limits": {
+    "controllerConnected": false,
+    "inventoryEndpoint": "소유 loopback HTTPS와 정적 test CA를 사용했습니다. 실제 cluster/RBAC/Spot/공개 주소 인수 증거가 아닙니다.",
+    "physicalExecutorOrWriterProof": false,
+    "liveControllerEnabled": false,
+    "newRuntimeOrBrowserScreen": false,
+    "previousScreen": "PR51의 기존 Ops 빈 scope baseline만 출처와 한계를 유지했습니다.",
+    "oldSuccessfulSuitesRepeated": 0,
+    "installation": 0,
+    "productBuild": 0,
+    "liveSourceSync": 0,
+    "watchRestart": 0,
+    "newCapture": 0
+  },
+  "rawArtifactHashes": [
+    {
+      "name": "actual-import-manifest.json",
+      "bytes": 92176,
+      "sha256": "46d2aacbb3f83248afb03ca933c9443911cfafe7a72b79794aff11b50f760b32"
+    },
+    {
+      "name": "continuation-launch.json",
+      "bytes": 757,
+      "sha256": "0825c19666a3ca132845c9094f4999730a92798cf3a4fb0bc5d0cc4461a46425"
+    },
+    {
+      "name": "continuation-lint-private.log",
+      "bytes": 92,
+      "sha256": "6fd32c55c99ac2abd10da9dc1369387d329d31c712c5d285fef5df2648a1ccb5"
+    },
+    {
+      "name": "continuation-lint.exit",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "continuation-runner-input.json",
+      "bytes": 1345,
+      "sha256": "8ee9935849ddf2ea40d0e5b7f32a38d616fcdeb22c46255e878e7933bf48f849"
+    },
+    {
+      "name": "continuation-source-actual.json",
+      "bytes": 599,
+      "sha256": "0e8295f082651bedcd2108a457ba6dd6d04cfe082d12259be0912cdfb8ab40e6"
+    },
+    {
+      "name": "continuation-source-delta.json",
+      "bytes": 1194,
+      "sha256": "f6724203926988580279abb9c53616cf13fca5d4abca3ea02837e30f140e8161"
+    },
+    {
+      "name": "continuation-supervisor-private.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "continuation.events.jsonl",
+      "bytes": 944,
+      "sha256": "75a05d43b148242a882fbf6d6e922c041f22f214a2ca9261ced0c5b5a06f29b9"
+    },
+    {
+      "name": "continuation.exit",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "continuation.phase.txt",
+      "bytes": 8,
+      "sha256": "090c5c5a0933c65e11a6bd1369950404bfc5c442df64d1f3168e211bc9d07780"
+    },
+    {
+      "name": "database.metafile.json",
+      "bytes": 2993,
+      "sha256": "37b6cface366795a0a074b6a6a9f45c7f9eca3c797aa63ce5fdbc3db6b314024"
+    },
+    {
+      "name": "events.jsonl",
+      "bytes": 794,
+      "sha256": "a5d102eca72e1500fdaebb2c31575c3cc77c1f4f52046c97a67f86ae11aa4437"
+    },
+    {
+      "name": "first-pg-entries.jsonl",
+      "bytes": 1148,
+      "sha256": "cb9b493bd0b2ae856d7fa06c1a5fca38c55f834a9cc3414091d36fbe80f863cb"
+    },
+    {
+      "name": "first-pg-private.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "first-pg.exit",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "first-pg.tap",
+      "bytes": 978,
+      "sha256": "61646265f196516db109f7a15bd37af02e482ccd02318701919193513ee687d6"
+    },
+    {
+      "name": "first-value-entries.jsonl",
+      "bytes": 1214,
+      "sha256": "3869f423d15944ee7560d96e968586514e0a69dff74178a26316c6c4111ef1b2"
+    },
+    {
+      "name": "first-value-private.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "first-value.exit",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "first-value.tap",
+      "bytes": 653,
+      "sha256": "6793b3f82e3e3de75e8b36e68c3c9769e5e96268c49d3966381ed5badb65b3c9"
+    },
+    {
+      "name": "first.exit",
+      "bytes": 1,
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "name": "input-manifest.json",
+      "bytes": 89826,
+      "sha256": "ce89716940f2c5058835114007e029861bec6fc3145a7f020874be5288f1f81c"
+    },
+    {
+      "name": "pg.continuation.metafile.json",
+      "bytes": 175818,
+      "sha256": "a7b54cd51433d37ab11aa4c5bac14a04afe8cac02c933516aefb51f3ef760857"
+    },
+    {
+      "name": "pg.metafile.json",
+      "bytes": 175805,
+      "sha256": "525e87f3e7b1bd425146655caf7659c56c5521dc66ea9d9ec2445fd1036c9551"
+    },
+    {
+      "name": "prepare-database-private.log",
+      "bytes": 466,
+      "sha256": "3621b4bf84b6e1ddaadfab0e1ee41f95220ed5dcedce57259a69156d5f915d31"
+    },
+    {
+      "name": "prepare-database.exit",
+      "bytes": 1,
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    },
+    {
+      "name": "prepare-result.json",
+      "bytes": 6837,
+      "sha256": "e6161cfa7771d89e6562ae888c3ad99d1b16d7e80cfbc137aa0b8b1de29af5ab"
+    },
+    {
+      "name": "schema-ready.json",
+      "bytes": 4439,
+      "sha256": "be20f77e21aa244d88b6acea9b060b14ffad585ae7888c469d2b151235e9868f"
+    },
+    {
+      "name": "scoped-lint-private.log",
+      "bytes": 10764,
+      "sha256": "50f67b95b5e5dafb785dc4a465a134777c7f1e6b01df84962c9253b27a05cef4"
+    },
+    {
+      "name": "scoped-lint.exit",
+      "bytes": 1,
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "name": "scoped-type-private.log",
+      "bytes": 6853,
+      "sha256": "5ba60a3236afeef12f572e1ca78e219ffe2dde717a5d754097d70f7cdfe2512a"
+    },
+    {
+      "name": "scoped-type.exit",
+      "bytes": 1,
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "name": "type-diagnostics.json",
+      "bytes": 5601,
+      "sha256": "0f9e24b5236726749f02962012316d78ceea45ee9534ba0a9c09e98d2ca36af0"
+    },
+    {
+      "name": "value.continuation.metafile.json",
+      "bytes": 154512,
+      "sha256": "0396840f558193130c459a47d9629c6a959ce64619f2d08d5327ecb2eacf4d6b"
+    },
+    {
+      "name": "value.metafile.json",
+      "bytes": 154499,
+      "sha256": "76fc391298d45584360cddba4d680224e15b9bc5a0ae167e7042f5f8ad5336cb"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "기록": "Source와 최소 fixture만 작성했습니다. 제품·callback·static·PG·cluster·browser 실행 결과가 아닙니다.",
+  "기록": "원 source-only 제출 사실과 최초 실행 pin을 보존합니다. 아래 finalFiles와 validation은 수락된 의미 불변 교정 및 후속 최초 검증을 구분합니다.",
   "base": "ea315306bbca379f039b9ff4a119276b47927e66",
   "productPin": "6e06534a8173939e9fb8d0519c85cc1bf34cf6ca",
   "fixturePin": "e1c3a9646f27fe2edd1d547c31bcceb59f500e55",
@@ -68,7 +68,9 @@
     "value": 1,
     "integrationPG": 1
   },
-  "executions": {
+  "controllerConnected": false,
+  "realProviderOrPhysicalWriterProof": false,
+  "originalSourceOnlyExecutions": {
     "test": 0,
     "type": 0,
     "lint": 0,
@@ -81,6 +83,39 @@
     "watchRestart": 0,
     "heavy": 0
   },
-  "controllerConnected": false,
-  "realProviderOrPhysicalWriterProof": false
+  "finalBase": "c3adbe6cc1b49b01b1ecbc8684e8c3eb0f2bd146",
+  "acceptedCorrectionPin": "89095210aaa2f395bc85ceba9658cacae20b5ce4",
+  "finalFiles": [
+    {
+      "path": "src/main/orcad/orcad-controller-config.ts",
+      "bytes": 8915,
+      "sha256": "0f472f74276c2a451a345d49108e72908769a5a9c9c6df9603ab1d90653f5636",
+      "gitBlob": "9f0cd02109cec988bd630da5f1af32ddfd0c0484"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller.ts",
+      "bytes": 8767,
+      "sha256": "055f9e5c7361728c743785d9ed69aa6b2d2864a2865c50f9525e77490671bbe4",
+      "gitBlob": "af26cdbb12ff1b2ebbc6b9779deff3ebdca1fb63"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.ts",
+      "bytes": 7257,
+      "sha256": "eeb01e57b8014d86b1b5f475076dd7a0f1c2d99dead030281220d5c9f7151eef",
+      "gitBlob": "b6498c2a995924afa67bb167f3ef17f9d1aeb115"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller.value.test.mts",
+      "bytes": 9731,
+      "sha256": "10c8a97b8d8327d04f2aa38ca67a0af8d621ae421d5eab544ea05285afba7d31",
+      "gitBlob": "b00614b42e9d07e1b0218e8c44110e9bd3551dd3"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller.pg.test.mts",
+      "bytes": 11555,
+      "sha256": "f1ce3784d1c08b866a6006515f7547a545d3d9b614aeb8a09f26b60bfd2596b2",
+      "gitBlob": "0fa5b0b09b26cc93db2535ec8576398d7fa10393"
+    }
+  ],
+  "validation": "first-validation.json"
 }
