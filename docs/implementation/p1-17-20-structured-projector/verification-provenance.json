@@ -1,0 +1,118 @@
+{
+  "kind": "PG_STRUCTURED_PROJECTION_SYNTHETIC_VALUE_EVIDENCE",
+  "verifiedSourcePin": "c8a40467b1257a3fc739382bb96bc05a463f26f7",
+  "productCorrectionPin": "d4399f7705b2d6110ebbf5aeb2ce2f69316c23c6",
+  "alignedSourcePin": "b4502c2e12586bdc0629ed7254dabb5842c877ce",
+  "finalFixedMain": "73ca23bf868c0d7ef7736fb69b72e00d7ba89b3c",
+  "ownedSourceFiles": [
+    {
+      "path": "src/main/durable-runtime/output/structured-projector.ts",
+      "mode": "100644",
+      "blob": "6823c41cea32f5e1d5999a1bc3c157d5d49d6281",
+      "sha256": "1019d5e01d7712293db82b57ce8423d91d8a2486ecec50294643c3eae986c58b",
+      "bytes": 9459
+    },
+    {
+      "path": "src/main/durable-runtime/output/structured-projector.value.test.mts",
+      "mode": "100644",
+      "blob": "d46bb5f4ba45b92f649cdfc5f038b1895d0cba6b",
+      "sha256": "044e26af278f2f0d067dcf65114afa551e35b0afbf141afa04a90f9b011552ca",
+      "bytes": 11194
+    }
+  ],
+  "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/64#issuecomment-6173848009",
+  "originalType": {
+    "sourcePin": "c871c5ed1cdcff27f5da6e95d88a94af98b5eeaa",
+    "compilerExit": 1,
+    "ownedDiagnostics": 2,
+    "externalDiagnostics": 2,
+    "rawSha256": "f7c2077b6cbc22af50e2758d65924ec4461286e1a1baa93ac535559bc448f7d5"
+  },
+  "correctedType": {
+    "sourcePin": "d4399f7705b2d6110ebbf5aeb2ce2f69316c23c6",
+    "compilerExit": 1,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 2,
+    "rawSha256": "1d40b1f07a134f90b4f814627629d4baf42a291ab378962fd9f25e3812e9f15a"
+  },
+  "originalValueFailure": {
+    "sourcePin": "d4399f7705b2d6110ebbf5aeb2ce2f69316c23c6",
+    "callbackEntered": true,
+    "exit": 1,
+    "rawTapSha256": "137c468efde75a358beb938003aea6bd4038c84d48a65d6579d9b2928a0546ee",
+    "assertion": "JSON.stringify key order equality"
+  },
+  "focusedChecks": {
+    "changed-fixture-lint": {
+      "pid": 23991,
+      "startedAt": "2026-10-14T17:02:25.250Z",
+      "finishedAt": "2026-10-14T17:02:25.735Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "fa94b000f55bb29d02ff8bee3d7efebaefd3f8b65de94777beb0965a31bbd1b1",
+      "bytes": 91
+    },
+    "corrected-value": {
+      "pid": 24010,
+      "startedAt": "2026-10-14T17:02:25.851Z",
+      "finishedAt": "2026-10-14T17:02:26.747Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "b66a1905fd078d0488e42c81580de045b19219d3db1a1a833124ebd53ad33487",
+      "bytes": 451
+    }
+  },
+  "focusedControl": {
+    "pid": 23984,
+    "startedAt": "2026-10-14T17:02:25.227Z",
+    "finishedAt": "2026-10-14T17:02:26.748Z"
+  },
+  "bundle": {
+    "beforeSha256": "f7a5475c9eb608e7fbebf42acd1bece433735395bb80db03f5ad4c5b8cd61b1f",
+    "sha256": "dc4193594184186180c17fb1dc8bef197f3b3e272974cc20bb7d825b4bef3cf1",
+    "bytes": 1007608,
+    "prefixSha256": "6d22a0904b2547ba5fe8794a072dd4aeb6e7e58a08a1f9280a8dd2c74a07f9b3",
+    "suffixSha256": "ca129c9aacbc4120b71b303ad0d5ce0c5cf212bb3b0d6894b1f25403f680da14",
+    "beforeStatementSha256": "8ddb40e93f8132908f19376131b22f998d8a422b301d940b2a48a8655d6f3106",
+    "afterStatementSha256": "d6e6763fc66913369de37a1a4af7f63d0ce436b3ce504c0e1c8fa5ea7f7d1bfa",
+    "onlyApprovedAssertionReplaced": true,
+    "wholeBundleRegenerated": false,
+    "sourceClosureRecomputed": false
+  },
+  "focusedTap": {
+    "path": "focused-value.tap",
+    "sha256": "b66a1905fd078d0488e42c81580de045b19219d3db1a1a833124ebd53ad33487",
+    "tests": 1,
+    "pass": 1,
+    "fail": 0
+  },
+  "inputIdentity": {
+    "recordedSourceAndConfigInputs": 348,
+    "manifestSha256": "9333fd9694a8a233a58874c52322ed60c6c02783bcf7e85b47d5377d40b24e25",
+    "ownedApprovedCorrections": 2,
+    "unownedInputsComparedAtFinalAlignment": 346,
+    "changedUnownedValidationInputs": [],
+    "ownedBlobModeBytesUnchanged": true
+  },
+  "limitations": {
+    "originalEsbuildMetafileSaved": false,
+    "exactOmittedInputsProven": false,
+    "completeRuntimeClosureProven": false,
+    "esbuildServicePidMeasured": false,
+    "compilerFullPass": false,
+    "realPGOrProviderEvidence": false,
+    "publicHistorySubscribeIntegrated": false
+  },
+  "additionalExecutionsAtFinalAlignment": {
+    "type": 0,
+    "lint": 0,
+    "value": 0,
+    "closureRecalculation": 0,
+    "PG": 0,
+    "schema": 0,
+    "browser": 0,
+    "live": 0,
+    "build": 0,
+    "install": 0
+  }
+}
