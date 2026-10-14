@@ -1,0 +1,107 @@
+{
+  "sourcePin": "18ae46e716c7a538418ee2be0be2d9b05fff0baa",
+  "originalBrowserProductPin": "2b7fd5a681fa592d45d2b69d30ff88d1e1566892",
+  "immutableOriginalAssetCommit": "bedd88c7ba91b6593ecdd783584220f435b184d9",
+  "originalAppSHA256": "f29579a2653cf14056faeccf8d74e0593c5e49f45179c9150dc7e95f40cc5569",
+  "originalJourneyRequests": 29,
+  "originalJourneyObservations": 15,
+  "APIContractPin": "13da77014fa533f5ce0e61505cc7a62160f0f6d5",
+  "actualAtomicSourcePin": "47c9a5dfa617d32dbcf43a6eda6320e853f360e1",
+  "actualAPIHashes": {
+    "contract": "3060fb59a9bab017970b623d2eedc4ed0d1002a797f6ac2b4810f476501b9b74",
+    "atomic": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40"
+  },
+  "typeExit": 0,
+  "lintExit": 0,
+  "lintWarnings": 0,
+  "lintErrors": 0,
+  "firstLintExit": 1,
+  "firstLintErrors": 4,
+  "rejectedAliasExtractType": {
+    "exitCode": 0,
+    "productPass": false,
+    "reason": "실제 atomic.ts 대신 추출 alias를 사용한 준비 입력이므로 제품 type PASS에서 제외했습니다."
+  },
+  "rejectedLayoutSourcePin": "22ee1aa516b9bc2f8caede84926d43f6ad6a688a",
+  "presentationFactory": "self-contained createOpsUiPresentation을 bootOpsUi 두 번째 인자로 직렬화했습니다. onCommand/onDetail/isCommandBlocked callbacks만 표시 접점에 전달하며 controller/auth/retry 상태를 유지합니다.",
+  "staticPhases": [
+    {
+      "name": "factory-actual-type",
+      "PID": 15708,
+      "startedAt": "2026-10-14T02:38:28.926Z",
+      "finishedAt": "2026-10-14T02:38:30.869Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "factory-ui-lint",
+      "PID": 15761,
+      "startedAt": "2026-10-14T02:38:30.869Z",
+      "finishedAt": "2026-10-14T02:38:31.242Z",
+      "exitCode": 0,
+      "signal": null
+    }
+  ],
+  "currentActualAppSHA256": "4689b5dddda42057f1414e7cb2ce35e789cf37351817f47fa1022b40e608ffd0",
+  "limitedSmoke": {
+    "status": "PASS",
+    "sourcePin": "18ae46e716c7a538418ee2be0be2d9b05fff0baa",
+    "checks": [
+      {
+        "name": "실제 bootstrap과 serialized factory 실행",
+        "pass": true,
+        "at": "2026-10-14T02:41:08.395Z"
+      },
+      {
+        "name": "mobile 원 Unit 카드 펼침",
+        "pass": true,
+        "at": "2026-10-14T02:41:08.451Z"
+      },
+      {
+        "name": "factory onDetail 접점과 원 Unit 상세",
+        "pass": true,
+        "at": "2026-10-14T02:41:08.529Z"
+      },
+      {
+        "name": "factory onCommand 접점이 원 Unit에 wake를 전달",
+        "pass": true,
+        "at": "2026-10-14T02:41:08.588Z"
+      },
+      {
+        "name": "미연결 Unit disabled 사유 유지",
+        "pass": true,
+        "at": "2026-10-14T02:41:08.666Z"
+      },
+      {
+        "name": "변경 접점 smoke의 runtime/console 오류 0",
+        "pass": true,
+        "at": "2026-10-14T02:41:08.679Z"
+      }
+    ],
+    "requestsCount": 9,
+    "runtimeErrors": 0,
+    "consoleErrors": 0,
+    "startedAt": "2026-10-14T02:41:07.483Z",
+    "finishedAt": "2026-10-14T02:41:08.693Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "browserSmokeExecutions": 1,
+    "newPNGs": 0
+  },
+  "activeOwnedPIDs": 0,
+  "browserClosed": true,
+  "HTTPServerClosed": true,
+  "apiFilesChanged": 0,
+  "fullSourceOrNodeModulesCopy": 0,
+  "installs": 0,
+  "wholeBuilds": 0,
+  "originalJourneyReruns": 0,
+  "PGExecutions": 0,
+  "ExpoAuthChanges": 0,
+  "MetroRestarts": 0,
+  "liveSync": 0,
+  "modelRetry": 0,
+  "qualification": "원 journey 및 한정 smoke는 합성 DTO/HTTP 시나리오입니다. 실제 API 권한·Expo·native·provider·HA 합격이 아닙니다. 원 PNG와 원 29요청·15관측은 변경하지 않았습니다."
+}
