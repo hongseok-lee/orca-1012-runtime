@@ -124,6 +124,6 @@ export async function requireOpenIntent(tx: DurableTransaction, unit: RuntimeUni
     [unit.id, unit.active_attempt_id])
   if (closed.rowCount || cancel.rowCount) { throw new DurableDatabaseError('RESOURCE_CLOSE_OR_CANCEL_PENDING') }
 }
-export function resultJson(value: AllocationResult): JsonValue {
+export function resultJson(value: AllocationResult): { [key: string]: JsonValue } {
   return { ...value, reasons: [...value.reasons] }
 }
