@@ -11,6 +11,7 @@ import { parseCatalogRepo } from '../durable-runtime/catalog/payload.ts'
 import { projectCatalogWorktree } from '../durable-runtime/catalog/projection.ts'
 import type { CatalogRepositoryRow } from '../durable-runtime/db/rows.ts'
 import { CatalogError } from '../durable-runtime/catalog/errors.ts'
+import { getRepoExecutionHostId, getWorktreeExecutionHostId } from '../../shared/execution-host.ts'
 
 type BrowserWorkspace = Awaited<ReturnType<RuntimeBrowserCommandHost['resolveWorktreeSelector']>>
 
@@ -59,7 +60,7 @@ function captureBrowserWorkspaceResolver(input: DurableCatalogReadConfig): (sele
           throw new CatalogError('CATALOG_BROWSER_REPOSITORY_UNAVAILABLE')
         }
         repository = parseCatalogRepo(rows[0])
-        if ((repository.executionHostId ?? 'local') !== hostId) {
+        if (getRepoExecutionHostId(repository) !== hostId) {
           throw new CatalogError('CATALOG_REGISTRATION_HOST_MISMATCH')
         }
       } else if (workspace.kind !== 'FOLDER_WORKSPACE') {
@@ -70,8 +71,7 @@ function captureBrowserWorkspaceResolver(input: DurableCatalogReadConfig): (sele
           (workspace.repo_id !== null && projected.repoId !== workspace.repo_id)) {
         throw new CatalogError('CATALOG_BROWSER_WORKSPACE_SHAPE')
       }
-      const actualHost = workspace.payload.hostId ?? workspace.payload.executionHostId ??
-        repository?.executionHostId ?? 'local'
+      const actualHost = getWorktreeExecutionHostId(projected, repository)
       if (actualHost !== hostId) { throw new CatalogError('CATALOG_REGISTRATION_HOST_MISMATCH') }
       // PENDING is a valid logical Workspace. No readiness, wake or activity mutation.
       return { id: workspace.public_id, hostId,
