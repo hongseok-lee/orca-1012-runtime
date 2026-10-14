@@ -5,14 +5,17 @@ import type { DurableCatalogReadConfig, CapturedCatalogReadConfig } from './conf
 import { captureReadInvocation, readCatalogRpc } from './read.ts'
 import { bindDurableCatalogReadMethods } from './registry.ts'
 import { CatalogReadSubscriptions } from './subscriptions.ts'
+import { createCatalogMetadataFacade, mutateCatalogRpc, type CatalogMetadataMethod } from './metadata.ts'
 
 export class DurableCatalogReadAdapter {
   private readonly config: CapturedCatalogReadConfig
   private readonly subscriptions: CatalogReadSubscriptions
+  private readonly metadata: ReturnType<typeof createCatalogMetadataFacade>
   private disposed = false
   constructor(config: DurableCatalogReadConfig) {
     this.config = captureDurableCatalogReadConfig(config)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
+    this.metadata = createCatalogMetadataFacade(this.config)
   }
   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
   async read(method: string, params: unknown, context: RpcContext): Promise<unknown> {
@@ -25,6 +28,12 @@ export class DurableCatalogReadAdapter {
   async subscribe(method: string, params: unknown, context: RpcContext, emit: (frame: unknown) => void): Promise<void> {
     try { this.requireOpen(); await this.subscriptions.subscribe(method, params, context, emit) }
     catch (error) { throw catalogReadFailure(error) }
+  }
+  async mutate(method: string, params: unknown, context: RpcContext): Promise<unknown> {
+    try {
+      this.requireOpen()
+      return await mutateCatalogRpc(this.config, this.metadata, method as CatalogMetadataMethod, params, context)
+    } catch (error) { throw catalogReadFailure(error) }
   }
   async unsubscribe(method: string, params: unknown, context: RpcContext): Promise<unknown> {
     try { this.requireOpen(); return await this.subscriptions.unsubscribe(method, params, context) }
