@@ -63,7 +63,7 @@ export class ExternalChromiumScreencastSubscribers {
             this.send(subscriber, bytes)
             if (screencastSubscriberIsGhost(subscriber.delivery)) ghosts.push(id)
           }
-          for (const id of ghosts) this.leave(page.publicPageId, record, id)
+          for (const id of ghosts) this.leave(record, id)
           return true
         },
         onEvent: (event) => {
@@ -97,7 +97,7 @@ export class ExternalChromiumScreencastSubscribers {
       if (viewer.pairedDeviceId !== undefined) {
         for (const [id, subscriber] of record.subscribers) {
           if (id !== subscriptionId && subscriber.pairedDeviceId === viewer.pairedDeviceId) {
-            this.leave(page.publicPageId, record, id)
+            this.leave(record, id)
           }
         }
       }
@@ -106,7 +106,7 @@ export class ExternalChromiumScreencastSubscribers {
         await this.applyBudget(record)
       }
     } catch {
-      this.leave(page.publicPageId, record, subscriptionId)
+      this.leave(record, subscriptionId)
       throw externalCdpError()
     }
     return {
@@ -116,9 +116,9 @@ export class ExternalChromiumScreencastSubscribers {
         const subscriber = record.subscribers.get(subscriptionId)
         if (record.stopping || !subscriber?.pendingFrame) return
         this.send(subscriber, subscriber.pendingFrame)
-        if (screencastSubscriberIsGhost(subscriber.delivery)) this.leave(page.publicPageId, record, subscriptionId)
+        if (screencastSubscriberIsGhost(subscriber.delivery)) this.leave(record, subscriptionId)
       },
-      session: { done, stop: () => this.leave(page.publicPageId, record, subscriptionId),
+      session: { done, stop: () => this.leave(record, subscriptionId),
         updateViewport: (value) => this.updateViewport(record, subscriptionId, value) }
     }
   }
@@ -150,7 +150,7 @@ export class ExternalChromiumScreencastSubscribers {
     for (const viewer of record.subscribers.values()) viewer.pendingFrame = null
     await record.stream.updateViewport(viewport)
   }
-  private leave(pageId: string, record: PageStream, id: string): void {
+  private leave(record: PageStream, id: string): void {
     const subscriber = record.subscribers.get(id)
     if (!subscriber) return
     record.subscribers.delete(id)
@@ -168,16 +168,18 @@ export class ExternalChromiumScreencastSubscribers {
       record.owner = next?.[0] ?? null
       record.latest = null
       for (const viewer of record.subscribers.values()) viewer.pendingFrame = null
-      if (next) void record.stream.updateViewport(next[1].viewport).catch(() => this.stopPage(pageId))
+      if (next) void record.stream.updateViewport(next[1].viewport).catch(() => this.stopRecord(record))
     }
-    void this.applyBudget(record).catch(() => this.stopPage(pageId))
+    void this.applyBudget(record).catch(() => this.stopRecord(record))
   }
-  async stopPage(pageId: string): Promise<void> {
-    const record = this.pages.get(pageId)
-    if (!record) return
+  private async stopRecord(record: PageStream): Promise<void> {
     record.stopping = true
     record.stream.stop()
     await record.stream.done
+  }
+  async stopPage(pageId: string): Promise<void> {
+    const record = this.pages.get(pageId)
+    if (record) await this.stopRecord(record)
   }
   async stopAll(): Promise<void> {
     await Promise.all([...this.pages.keys()].map(id => this.stopPage(id)))
