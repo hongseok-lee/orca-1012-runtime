@@ -1,0 +1,102 @@
+{
+  "PR": 39,
+  "capturedAt": "2026-10-14T01:21:52.387Z",
+  "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/cde9e0cc35ae8cb355516d1c350fbe21ada43f7d/docs/implementation/p1-17-catalog-composition/first-verification-report.html",
+  "sourceURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/cde9e0cc35ae8cb355516d1c350fbe21ada43f7d/docs/implementation/p1-17-catalog-composition/first-verification-report.html",
+  "targetSHA": "cde9e0cc35ae8cb355516d1c350fbe21ada43f7d",
+  "sourceSHA": "8187d4706506fea3ec6479e39fcf198b3eefde2c",
+  "productSourceSHA": "d6ee3ebc46dbd156b779f30815ba4ca73d1ab8ce",
+  "originalProductSourceSHA": "17cca6af7bb8fad1285921b399660a1a6806cad0",
+  "reportPath": "docs/implementation/p1-17-catalog-composition/first-verification-report.html",
+  "reportHTMLSHA256": "10d9ac27c9b119a95fc1a7225909aaf2a45ab24ebf262c01da00973c7391bc8a",
+  "publicSourceBytesVerified": true,
+  "reportHTMLBytes": 4515,
+  "renderingQualification": "공개 raw URL에서 조회한 HTML을 소유 원본과 byte 단위로 대조했습니다. 같은 URL의 응답 Content-Type만 text/html로 제공하여 원문을 변경하지 않고 보고 문서로 렌더링했습니다.",
+  "actualHeading": "P1-17 Catalog 합성 검증 실제 결과",
+  "actualSummary": "Distinct PG 7개 · 기존 type exit 0 · fixture lint exit 0",
+  "actualResultParagraph": "최초 5 PASS / 2 FAIL → 교정 후 실제 callback 7 PASS / 0 FAIL / 0 SKIP",
+  "actualScopeQualification": "실행 범위 오류: 지정 실패 1·7 외 성공 2–6도 반복했습니다. Node 부모 이름 필터가 자식 전체를 포함했습니다. 성공 5개 반복을 기록하며 focused 2개만 실행한 결과로 표시하지 않습니다. Parent wrapper는 별도 사례가 아닙니다.",
+  "actualSourceParagraph": "fixture/source 8187d4706506fea3ec6479e39fcf198b3eefde2c\n제품 d6ee3ebc46dbd156b779f30815ba4ca73d1ab8ce\n원 logic 17cca6af7bb8fad1285921b399660a1a6806cad0",
+  "actualTableText": "사례\t원 callback\t최초\t교정 후\t범위\n1\tnon-UUID public ID commits logical graph, fence one, event and outer receipt; replay has no effect\tFAIL\tPASS\t원 실패 교정\n2\tfailure after Catalog head and first journal event rolls back the graph and receipt together\tPASS\tPASS\t성공 반복\n3\tnested prepared DTO and owner callback receiver are fixed before the first SQL await\tPASS\tPASS\t성공 반복\n4\tdeleted existing Workspace is rejected without publishing new rows\tPASS\tPASS\t성공 반복\n5\tchanged shared Unit peers are rejected rather than adding a new lower-rank lock\tPASS\tPASS\t성공 반복\n6\texisting public ID grammar and physical-handle exclusion reject invalid preparation\tPASS\tPASS\t성공 반복\n7\tnew active agent-session Tab clears the prior logical active Tab in the same Workspace\tFAIL\tPASS\t원 실패 교정",
+  "targetRects": [
+    {
+      "x": 50,
+      "y": 57,
+      "width": 1040,
+      "height": 46.5
+    },
+    {
+      "x": 50,
+      "y": 150.84375,
+      "width": 1040,
+      "height": 67.640625
+    },
+    {
+      "x": 50,
+      "y": 227.484375,
+      "width": 1040,
+      "height": 26.34375
+    },
+    {
+      "x": 50,
+      "y": 262.828125,
+      "width": 1040,
+      "height": 76.6875
+    },
+    {
+      "x": 50,
+      "y": 403.0625,
+      "width": 1040,
+      "height": 65.0625
+    },
+    {
+      "x": 50,
+      "y": 561.359375,
+      "width": 1040,
+      "height": 294.5
+    }
+  ],
+  "viewport": {
+    "width": 1140,
+    "height": 2000
+  },
+  "DPR": 1,
+  "initialPg": {
+    "pass": 5,
+    "fail": 2,
+    "failedCallbacks": [
+      1,
+      7
+    ]
+  },
+  "actualAfterCorrection": {
+    "callbacksEntered": 7,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0
+  },
+  "repeatedSuccessfulCallbacks": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "distinctPgCases": 7,
+  "priorTypeExit": 0,
+  "fixtureLintExit": 0,
+  "playwright": "1.59.1",
+  "browser": "147.0.7727.15",
+  "artifactSHA256": "395826ac0098a798489e71c40a82153b6a0208fcb31f55221562dfcd682f46c5",
+  "artifactBytes": 232634,
+  "screenshotExecutions": 1,
+  "modelRetry": 0,
+  "independentContext": true,
+  "ExpoAuthContextChanged": false,
+  "productUI": false,
+  "nativeIPhone": false,
+  "PublicRPCQualification": false,
+  "providerQualification": false,
+  "HAQualification": false,
+  "kind": "P1-17 Catalog 합성의 실제 검증 결과 보고 문서입니다."
+}

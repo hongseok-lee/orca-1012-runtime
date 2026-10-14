@@ -1,0 +1,55 @@
+{
+  "status": "미완료",
+  "verificationSource": "6c83a0b971e57fb8894abab573e292423e066fe9",
+  "pendingFixtureSource": "eaef00fa2284665402d4e1e1920ad6e087b4d09b",
+  "base": "6848555a37620228ecef7e37bb66a69fb16ce4e3",
+  "inputPin": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+  "schema013": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "schema014": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "finishedAt": "2026-10-13T12:00:11.270Z",
+  "node": "v24.15.0",
+  "nodeCases": {
+    "initialPass": 7,
+    "initialFail": 3,
+    "correctedPass": 3,
+    "firstPinPass": 1,
+    "distinctPass": 11,
+    "skipped": 0,
+    "passingCasesRepeated": 0
+  },
+  "pg": {
+    "plannedSubtests": 8,
+    "executedSubtests": 0,
+    "passedSubtests": 0,
+    "registrationFailureCodes": [
+      "22P02",
+      "23502"
+    ],
+    "schemaVersions": 14,
+    "schemaAppliedOnce": true,
+    "resourceProfileFixtureExecuted": false
+  },
+  "typecheck": {
+    "exit": 1,
+    "remainingErrors": 1,
+    "code": "TS2339",
+    "detail": "CatalogHeadRow에는 dataset_id가 없습니다. 전역 outbox UUID anchor는 Root 계약을 기다립니다."
+  },
+  "lint": {
+    "exit": 0,
+    "errors": 0,
+    "source": "6c83a0b971e57fb8894abab573e292423e066fe9"
+  },
+  "captures": {
+    "actualPng": false,
+    "expoWeb": false,
+    "nativeIphone": false
+  },
+  "activation": false,
+  "limitations": [
+    "전역 outbox UUID anchor가 미확정입니다.",
+    "BOUND와 group/layout은 미완입니다.",
+    "공유 Unit의 Workspace removal 계약은 미완입니다.",
+    "공개 RPC와 provider 및 실제 Pod 동작은 활성화하지 않았습니다."
+  ]
+}

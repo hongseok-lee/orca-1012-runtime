@@ -1,0 +1,68 @@
+{
+  "baseline": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "earlyCatalogApi": "100eba269c9084f269185a8f1eccdbd2f64e0ded",
+  "sourceReferences": [
+    {
+      "commit": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+      "path": "src/main/durable-runtime/db/migrations/014-durable-catalog.sql",
+      "sha256": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "bytes": 9419,
+      "consumption": "source reference; owner implementation supplied at integration"
+    },
+    {
+      "commit": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+      "path": "src/main/durable-runtime/db/rows.ts",
+      "sha256": "f70b879c9e444fcbf2accba76a6e7a0d7ee43f08a33003d81978dad38f926902",
+      "bytes": 7180,
+      "consumption": "source reference; owner implementation supplied at integration"
+    },
+    {
+      "commit": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+      "path": "src/main/durable-runtime/input/cancel.ts",
+      "sha256": "9f03715fe48273d8910abc46b33a394e26633df2ea83c1ef1ead9ae09f30c5ed",
+      "bytes": 10913,
+      "consumption": "source reference; owner implementation supplied at integration"
+    },
+    {
+      "commit": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+      "path": "src/main/durable-runtime/input/cancel-types.ts",
+      "sha256": "295328d10e873384ee7c04b27296518c5e0589357284a7d98ad391387e534615",
+      "bytes": 820,
+      "consumption": "source reference; owner implementation supplied at integration"
+    },
+    {
+      "commit": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "path": "src/main/durable-runtime/lifecycle/intent.ts",
+      "sha256": "e77c340841fee1b76696361a42e8811ea1dc81e39a6c3ab6674b0cd416d8d989",
+      "bytes": 9436,
+      "consumption": "source reference; owner implementation supplied at integration"
+    },
+    {
+      "commit": "4c516670a0fb8fc7204150a12863e15d758886d7",
+      "path": "src/main/durable-runtime/lifecycle/types.ts",
+      "sha256": "5f785c32973be2ae3ff9971494e7d0537fbbf26bb85989631e42ad1fdaebb761",
+      "bytes": 2766,
+      "consumption": "source reference; owner implementation supplied at integration"
+    },
+    {
+      "commit": "4db2bff75e9c61bc606f44d07ba2c70d30c94a55",
+      "path": "src/main/durable-runtime/lifecycle/sleep.ts",
+      "sha256": "c83258c90bb8836a631bf0e880bc3b27462e43f2047ada3bf522c803bbf82e56",
+      "bytes": 8542,
+      "consumption": "source reference; owner implementation supplied at integration"
+    }
+  ],
+  "comparisons": {
+    "database014EarlyFinal": "014 DDL and rows.ts byte-identical to 9044549c071e0bb4d9c614d0f577ef39df417cb1",
+    "cancelEarlyFinal": "cancel.ts and cancel-types.ts byte-identical to ae861915091894e91b66dcb766956205f870c83b",
+    "lifecycleConsumerEntries": "intent.ts/types.ts/sleep.ts byte-identical between 223d67e20b3257fbd967d121dadef7942de438e9 and 4c516670a0fb8fc7204150a12863e15d758886d7"
+  },
+  "validation": {
+    "testsExecuted": false,
+    "typecheckExecuted": false,
+    "sqlExecuted": false,
+    "remoteCalls": false,
+    "actualCapture": false,
+    "dependencyIntegrationIntoBranch": false
+  }
+}

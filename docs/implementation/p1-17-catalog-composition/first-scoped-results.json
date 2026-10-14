@@ -1,0 +1,76 @@
+{
+  "source": "17cca6af7bb8fad1285921b399660a1a6806cad0",
+  "publicHeadAtExecution": "c99bfbd612efc708ab9ff3aedfd9f475d9287c11",
+  "base": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "priorVerifiedBase": "6848555a37620228ecef7e37bb66a69fb16ce4e3",
+  "input": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+  "schema013": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "schema014": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "schemaSourceSha256": {
+    "src/main/durable-runtime/db/migrations/013-context-deliveries.sql": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+    "src/main/durable-runtime/db/migrations/014-durable-catalog.sql": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2"
+  },
+  "sourceDigest": "ad61962af94318b88d6848c00a14ce18713b05b0978d375c5e706213eacd99f7",
+  "testSha256": "1aa0186f8a8a876e517c42c2a9b894d763552bf53fc1fdcbf288548b41d12bd4",
+  "startedAt": "2026-10-13T14:29:40.711Z",
+  "finishedAt": "2026-10-13T14:29:48.100Z",
+  "node": "v24.15.0",
+  "tools": {
+    "typescript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "@types/node": "25.9.5",
+    "pg": "8.23.1"
+  },
+  "preparation": {
+    "exit": 0,
+    "priorInputFilesMatched": 2251,
+    "composedInputFilesMatched": 2255,
+    "base8edNonOwnerFilesMatched": 2176,
+    "overlayFiles": 6
+  },
+  "scopedType": {
+    "exit": 1,
+    "errors": 2,
+    "codes": [
+      "TS2741",
+      "TS2367"
+    ],
+    "scope": "6 changed Catalog entry/helper/export/fixture files and required imports"
+  },
+  "scopedLint": {
+    "executed": false
+  },
+  "newPg": {
+    "written": 7,
+    "executed": 0,
+    "passed": 0,
+    "failed": 0,
+    "notEntered": 7
+  },
+  "rawLogs": {
+    "composition-prepare-private.log": {
+      "sha256": "69856373104b95d70ec21d7db24930412fcda72e4420eb860df7a8ce83462035",
+      "bytes": 101
+    },
+    "composition-type-private.log": {
+      "sha256": "a4dbaed023d43c369f00d873d84cbf985c156a735932119c1818d8ef63a466e4",
+      "bytes": 477
+    }
+  },
+  "heavyOccupied": false,
+  "heavyReturnedAt": "2026-10-13T14:29:48.100Z",
+  "oldCatalogPgRepeated": 0,
+  "oldPureNodeRepeated": 0,
+  "install": false,
+  "sharedCacheWrites": false,
+  "ddlChanges": false,
+  "pgSqlExecuted": false,
+  "recapture": false,
+  "productActivation": false,
+  "processesEnded": [
+    9225,
+    9237,
+    9244
+  ]
+}
