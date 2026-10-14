@@ -1,0 +1,647 @@
+{
+  "기록": "원자료만 통합했으며 완료된 시험과 준비 작업을 재실행하지 않았습니다.",
+  "base": "3a36c318e1ec9c6e68acc499ae39dd97317d6b98",
+  "executionHead": "529813906b06d38ae6dcb9f811eacf64e3d07eef",
+  "originalProductPin": "a01469422b417c7bf6f3c3544837b1f156e5cff3",
+  "originalFixturePin": "4e6f3b33c59f9457384fe4a386a6518348dde8a5",
+  "ownedFilesUnchanged": [
+    {
+      "path": "src/main/orcad/orcad-controller-config.ts",
+      "bytes": 9423,
+      "sha256": "3d655c09e64a070bdaed214e745953afbef6da70eac7216b3d9d0bc9507583ba",
+      "gitBlob": "f5b952c5e9a26b8714606b2705f5755e31928c79"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller.ts",
+      "bytes": 9397,
+      "sha256": "2e8849a1f715fbe9f5d9b21ac56949b9fee9a77ec9243efe812b22101b6db45c",
+      "gitBlob": "b737e25dcab3644f3078166749b837fbe9b8da26"
+    },
+    {
+      "path": "src/main/durable-runtime/ha/pass.ts",
+      "bytes": 13767,
+      "sha256": "93a820075a9a11f50f473cc7c1259fe0dbc23e9db250a4702e4a0b211a9708fd",
+      "gitBlob": "a9ac6182e8413b2be62ad9bd236f25c85273686e"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller-structured-output.value.test.mts",
+      "bytes": 4259,
+      "sha256": "3f3a51ea2b82e6d8cafaa1d68dba9d791420d9f1bf6f3fc1567213fba254f11f",
+      "gitBlob": "3d97880fa2ef7cedcf8c915c8e52ab8e451334fa"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller-structured-output.pg.test.mts",
+      "bytes": 14559,
+      "sha256": "e51958c5163c2ca2282ee45034b143d16669c0f16b34676d98aad1086eaf15f2",
+      "gitBlob": "2ec431ab997c8d8cfeb658d3d14ca9eaf1c62a8b"
+    }
+  ],
+  "type": {
+    "compilerExit": 1,
+    "ownedDiagnosticCount": 1,
+    "externalDiagnosticCount": 20,
+    "listedFiles": 637,
+    "ownedDiagnostic": "source/src/main/durable-runtime/ha/pass.ts(6,63): error TS2307: Cannot find module '../runtime/gateway/types.ts' or its corresponding type declarations.",
+    "laterFixedPinMissingInputsAdded": [
+      "src/main/durable-runtime/runtime/gateway/types.ts",
+      "src/main/durable-runtime/runtime/command-types.ts",
+      "src/main/runtime/rpc/core.ts",
+      "src/main/runtime/orca-runtime.ts"
+    ],
+    "reruns": 0,
+    "pass": false,
+    "qualification": "후속 입력 4개 추가 뒤 재검증하지 않았습니다. 외부 20개는 이번 원결과이며 기존 baseline으로 간주하지 않습니다."
+  },
+  "lint": {
+    "exit": 0,
+    "files": 5,
+    "rules": 176,
+    "warnings": 0,
+    "errors": 0,
+    "qualification": "첫 플러그인 입력 누락으로 실제 lint 진입 전 실패한 뒤 필요한 설정 입력과 cwd만 교정했습니다. 통과한 lint는 반복하지 않았습니다."
+  },
+  "callbacks": {
+    "value": 1,
+    "pg": 1,
+    "valueExit": 0,
+    "pgExit": 0,
+    "rawTapTestsEach": 2,
+    "rawTapPassEach": 2,
+    "parentProductCallbacksEach": 0,
+    "assertionsChanged": false
+  },
+  "schema": {
+    "createdThisRun": true,
+    "applications": 1,
+    "migrationCount": 19,
+    "reset": 0,
+    "ledger": [
+      {
+        "version": "001-catalog.sql",
+        "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+        "applied_at": "2026-10-14T16:49:00.224Z"
+      },
+      {
+        "version": "002-execution-storage.sql",
+        "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+        "applied_at": "2026-10-14T16:49:00.300Z"
+      },
+      {
+        "version": "003-operations-resources.sql",
+        "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+        "applied_at": "2026-10-14T16:49:00.353Z"
+      },
+      {
+        "version": "004-input-context.sql",
+        "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+        "applied_at": "2026-10-14T16:49:00.412Z"
+      },
+      {
+        "version": "005-events-replay.sql",
+        "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+        "applied_at": "2026-10-14T16:49:00.486Z"
+      },
+      {
+        "version": "006-snapshot-seals.sql",
+        "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+        "applied_at": "2026-10-14T16:49:00.519Z"
+      },
+      {
+        "version": "007-storage-epoch-cancel-guards.sql",
+        "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+        "applied_at": "2026-10-14T16:49:00.522Z"
+      },
+      {
+        "version": "008-attachment-store.sql",
+        "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+        "applied_at": "2026-10-14T16:49:00.554Z"
+      },
+      {
+        "version": "009-atomic-journal-outbox.sql",
+        "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+        "applied_at": "2026-10-14T16:49:00.560Z"
+      },
+      {
+        "version": "010-runtime-command-ledger.sql",
+        "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+        "applied_at": "2026-10-14T16:49:00.580Z"
+      },
+      {
+        "version": "011-runtime-event-producers.sql",
+        "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+        "applied_at": "2026-10-14T16:49:00.596Z"
+      },
+      {
+        "version": "012-input-merge-boundary.sql",
+        "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+        "applied_at": "2026-10-14T16:49:00.599Z"
+      },
+      {
+        "version": "013-context-deliveries.sql",
+        "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+        "applied_at": "2026-10-14T16:49:00.611Z"
+      },
+      {
+        "version": "014-durable-catalog.sql",
+        "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+        "applied_at": "2026-10-14T16:49:00.658Z"
+      },
+      {
+        "version": "015-failure-evidence.sql",
+        "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+        "applied_at": "2026-10-14T16:49:00.695Z"
+      },
+      {
+        "version": "016-observation-episodes.sql",
+        "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+        "applied_at": "2026-10-14T16:49:00.721Z"
+      },
+      {
+        "version": "017-structured-session-wire.sql",
+        "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+        "applied_at": "2026-10-14T16:49:00.739Z"
+      },
+      {
+        "version": "018-terminal-input-floor.sql",
+        "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+        "applied_at": "2026-10-14T16:49:00.749Z"
+      },
+      {
+        "version": "019-durable-resource-allocation.sql",
+        "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+        "applied_at": "2026-10-14T16:49:00.808Z"
+      }
+    ]
+  },
+  "runtimeInputCount": 212,
+  "runtimeWrappers": [
+    {
+      "kind": "value",
+      "sourceSha256": "3f3a51ea2b82e6d8cafaa1d68dba9d791420d9f1bf6f3fc1567213fba254f11f",
+      "originalBodySha256": "e07b399121d35ec8d4a40b725b141f1a7ff118125f25b2a9605e034e2ebc1443",
+      "wrapperSha256": "4eeb8cb83cdbefbdb6804e81b84c54d32c0032bb597e6145f5480c21a61ac690",
+      "runnerSha256": "3e3519fa0689407c6c8f86c9de38f2474b8cf10597fbc634555c8c67824ac548",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "sourceOrAssertionsChanged": false
+    },
+    {
+      "kind": "pg",
+      "sourceSha256": "e51958c5163c2ca2282ee45034b143d16669c0f16b34676d98aad1086eaf15f2",
+      "originalBodySha256": "cee63f2f8927ba6321c470298f016c5c4bc64a2b48e3cf6839f2004b733cecee",
+      "wrapperSha256": "b733bbd0075bd4e9e7ec493d8bdced28fc3243279bf672bb60433abd1ab0a970",
+      "runnerSha256": "e4b26ee20ddc3d873a5dcfcad0859ac11576f9382e34a88ed7e7628d548b8703",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "sourceOrAssertionsChanged": false
+    }
+  ],
+  "events": [
+    {
+      "at": "2026-10-14T16:45:14.591Z",
+      "phase": "START",
+      "pid": 23083
+    },
+    {
+      "at": "2026-10-14T16:45:14.613Z",
+      "phase": "CHILD_START",
+      "step": "scoped-type",
+      "pid": 23090
+    },
+    {
+      "at": "2026-10-14T16:45:21.001Z",
+      "phase": "CHILD_EXIT",
+      "step": "scoped-type",
+      "pid": 23090,
+      "code": 1,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:45:21.038Z",
+      "phase": "CHILD_START",
+      "step": "scoped-lint",
+      "pid": 23178
+    },
+    {
+      "at": "2026-10-14T16:45:21.175Z",
+      "phase": "CHILD_EXIT",
+      "step": "scoped-lint",
+      "pid": 23178,
+      "code": 1,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:45:21.175Z",
+      "phase": "FIRST_FAILURE",
+      "code": "SCOPED_LINT_FAILURE"
+    },
+    {
+      "at": "2026-10-14T16:45:21.175Z",
+      "phase": "END",
+      "pid": 23083,
+      "code": 1
+    },
+    {
+      "at": "2026-10-14T16:47:15.038Z",
+      "phase": "START",
+      "pid": 23231
+    },
+    {
+      "at": "2026-10-14T16:47:15.091Z",
+      "phase": "CHILD_START",
+      "step": "scoped-lint-after-input-correction",
+      "pid": 23238
+    },
+    {
+      "at": "2026-10-14T16:47:15.551Z",
+      "phase": "CHILD_EXIT",
+      "step": "scoped-lint-after-input-correction",
+      "pid": 23238,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:47:15.556Z",
+      "phase": "CHILD_START",
+      "step": "prepare-runners",
+      "pid": 23252
+    },
+    {
+      "at": "2026-10-14T16:47:17.634Z",
+      "phase": "CHILD_EXIT",
+      "step": "prepare-runners",
+      "pid": 23252,
+      "code": 1,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:47:17.634Z",
+      "phase": "FIRST_FAILURE",
+      "code": "FIXTURE_PREPARATION_FAILURE"
+    },
+    {
+      "at": "2026-10-14T16:47:17.634Z",
+      "phase": "END",
+      "pid": 23231,
+      "code": 1
+    },
+    {
+      "at": "2026-10-14T16:48:58.752Z",
+      "phase": "START",
+      "pid": 23322
+    },
+    {
+      "at": "2026-10-14T16:48:58.758Z",
+      "phase": "CHILD_START",
+      "step": "prepare-runners-after-package-boundary",
+      "pid": 23329
+    },
+    {
+      "at": "2026-10-14T16:48:59.251Z",
+      "phase": "CHILD_EXIT",
+      "step": "prepare-runners-after-package-boundary",
+      "pid": 23329,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:48:59.254Z",
+      "phase": "CHILD_START",
+      "step": "first-value",
+      "pid": 23342
+    },
+    {
+      "at": "2026-10-14T16:48:59.691Z",
+      "phase": "CHILD_EXIT",
+      "step": "first-value",
+      "pid": 23342,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:48:59.695Z",
+      "phase": "CHILD_START",
+      "step": "prepare-database",
+      "pid": 23359
+    },
+    {
+      "at": "2026-10-14T16:49:00.845Z",
+      "phase": "CHILD_EXIT",
+      "step": "prepare-database",
+      "pid": 23359,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:49:00.847Z",
+      "phase": "CHILD_START",
+      "step": "first-pg",
+      "pid": 23370
+    },
+    {
+      "at": "2026-10-14T16:49:03.306Z",
+      "phase": "CHILD_EXIT",
+      "step": "first-pg",
+      "pid": 23370,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "at": "2026-10-14T16:49:03.306Z",
+      "phase": "END",
+      "pid": 23322,
+      "code": 0
+    }
+  ],
+  "processesAtObservation": [
+    {
+      "pid": 23083,
+      "state": "Z",
+      "exitRaw": 256
+    },
+    {
+      "pid": 23090,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23178,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23231,
+      "state": "Z",
+      "exitRaw": 256
+    },
+    {
+      "pid": 23238,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23252,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23322,
+      "state": "Z",
+      "exitRaw": 0
+    },
+    {
+      "pid": 23329,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23342,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23359,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 23370,
+      "state": "ABSENT"
+    }
+  ],
+  "observedAt": "2026-10-14T16:49:37.205Z",
+  "activeKnownProcesses": 0,
+  "cleanupQualification": "제어 PID 3개는 종료된 Z 상태이고 자식 PID는 모두 ABSENT입니다. 마지막 제어 PID 23322의 exitRaw는 0입니다. fixture의 borrowed Pool 재사용과 caller cleanup assertion은 PG callback에서 통과했습니다. 운영 서비스 전체 종료나 실제 provider 정리는 검증 범위가 아닙니다.",
+  "preparationFailures": [
+    {
+      "controllerPid": 23083,
+      "reason": "고정 lint 설정이 참조하는 JS 플러그인 입력 누락",
+      "correction": "고정 pin의 플러그인 5개와 독립 source cwd를 준비했습니다. 제품과 fixture는 변경하지 않았습니다."
+    },
+    {
+      "controllerPid": 23231,
+      "reason": "ACTUAL_RUNTIME_IMPORT_NOT_PINNED: 외부 zod package 입력을 source 입력으로 잘못 분류했습니다.",
+      "correction": "준비 helper의 external에 pg와 zod를 명시하고 별도 출력 파일명을 사용했습니다. 통과한 type/lint를 반복하지 않았습니다."
+    }
+  ],
+  "limits": [
+    "전체 타입 통과가 아닙니다.",
+    "실제 provider·CLI 인증·Spot 장애·물리 RW·전체 P1-14 합격이 아닙니다.",
+    "controllerConnected는 false이며 live source를 활성화하지 않았습니다.",
+    "새 설치·제품 build·다른 suite·화면 촬영·서비스 재시작은 하지 않았습니다."
+  ],
+  "rawArtifacts": [
+    {
+      "name": "first-original-evidence/events.jsonl",
+      "sha256": "1f9601bdcae82af3b01d36abb7e2edc7e1c628c82d34e7c65d00181f214bccbe",
+      "bytes": 618
+    },
+    {
+      "name": "first-original-evidence/first.exit",
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+      "bytes": 1
+    },
+    {
+      "name": "first-original-evidence/scoped-lint-private.log",
+      "sha256": "fbc85a68f6578ae5cb80567fe6009b8f419e01acfb58acca6af4c180d2033cee",
+      "bytes": 202
+    },
+    {
+      "name": "first-original-evidence/scoped-lint.exit",
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+      "bytes": 1
+    },
+    {
+      "name": "first-original-evidence/scoped-type-private.log",
+      "sha256": "f57d1a5154d8b114de98b16e8e6740fe59475557c104d12e8704480d7f99e7f8",
+      "bytes": 65228
+    },
+    {
+      "name": "first-original-evidence/scoped-type.exit",
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+      "bytes": 1
+    },
+    {
+      "name": "first-original-evidence/type-diagnostics.json",
+      "sha256": "4f69ba4f396e3f41903e8d35a5c9880cc528a43fae26a28d63769baafdcf5be7",
+      "bytes": 70171
+    },
+    {
+      "name": "input-correction-original-evidence/continuation.events.jsonl",
+      "sha256": "cad623717fbe8709abdc4051b6cde484fbe9caa657d2dfbdcfdfaf1a4fa1f30f",
+      "bytes": 680
+    },
+    {
+      "name": "input-correction-original-evidence/continuation.exit",
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+      "bytes": 1
+    },
+    {
+      "name": "input-correction-original-evidence/prepare-runners-private.log",
+      "sha256": "efb1ebb21fea068e0c38fe762c7ae8ea3ed7cd4c838646fa47444599c3409f5b",
+      "bytes": 678
+    },
+    {
+      "name": "input-correction-original-evidence/scoped-lint-after-input-correction-private.log",
+      "sha256": "ba5c7fa2cb35400a43c858db663adf01573d084f345f571e293272dc5453c28c",
+      "bytes": 92
+    },
+    {
+      "name": "first-execution-evidence/actual-runtime-imports.json",
+      "sha256": "2fc102264c02709a5dd0ae2f5d0001e2fc6f24182b08f04e4f814f750af1acec",
+      "bytes": 64873
+    },
+    {
+      "name": "first-execution-evidence/database.metafile.json",
+      "sha256": "789d0b39827a9ec79012aa75cffe2ee23fdaada7cb352258cda7acf56dae3e42",
+      "bytes": 2879
+    },
+    {
+      "name": "first-execution-evidence/first-pg-entries.jsonl",
+      "sha256": "cde338a1e077c738d51ba3a63030c538b3131e7e216dad1b224991c58f40d181",
+      "bytes": 1224
+    },
+    {
+      "name": "first-execution-evidence/first-pg-private.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "first-execution-evidence/first-pg.exit",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "bytes": 1
+    },
+    {
+      "name": "first-execution-evidence/first-pg.tap",
+      "sha256": "d17aa2be4946daf407094ddecbf22ef2d787df93ff6ab895d24e2fb00e878b6d",
+      "bytes": 1042
+    },
+    {
+      "name": "first-execution-evidence/first-value-entries.jsonl",
+      "sha256": "6543869c944ffd5d44856bf6db1f4be8cedfa41672f44e7151f40c97f30c71ff",
+      "bytes": 1131
+    },
+    {
+      "name": "first-execution-evidence/first-value-private.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "first-execution-evidence/first-value.exit",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "bytes": 1
+    },
+    {
+      "name": "first-execution-evidence/first-value.tap",
+      "sha256": "f6f041c8fcb87007e8e8ab4dd4e094a9ea573a2e5b92ece782454e0fadd7ed71",
+      "bytes": 607
+    },
+    {
+      "name": "first-execution-evidence/input-manifest.json",
+      "sha256": "bd290c146302053184500e1442252b5604e1063c8ab5946cb24a0610422b45a7",
+      "bytes": 143703
+    },
+    {
+      "name": "first-execution-evidence/package-boundary-launch.json",
+      "sha256": "5feeb7f1b732ee797a5110338399c9b82a6573d8d0c5a5f4b1ba2b9368bf1d81",
+      "bytes": 215
+    },
+    {
+      "name": "first-execution-evidence/package-boundary.events.jsonl",
+      "sha256": "dc3787d7a1c3303c0774b1e643d2c32b564892e2872964fc028a475a9c3c9db8",
+      "bytes": 989
+    },
+    {
+      "name": "first-execution-evidence/package-boundary.exit",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "bytes": 1
+    },
+    {
+      "name": "first-execution-evidence/pg.metafile.json",
+      "sha256": "01464749b28926a198c1cc1a9a6f71a6f9a57bfa7ad611d4d8a7b714a3e123c2",
+      "bytes": 127016
+    },
+    {
+      "name": "first-execution-evidence/prepare-database-private.log",
+      "sha256": "854acef759000820f1632a71fca140270ee94cb0e5b98690b5dee074a3bd3e20",
+      "bytes": 477
+    },
+    {
+      "name": "first-execution-evidence/prepare-database.exit",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "bytes": 1
+    },
+    {
+      "name": "first-execution-evidence/prepare-runners-after-package-boundary-private.log",
+      "sha256": "4966192a4b6e4b6eb10fa49aba9769022ace3d90f9e7c1ec5cc481b97b068554",
+      "bytes": 71
+    },
+    {
+      "name": "first-execution-evidence/prepare-runners-after-package-boundary.exit",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "bytes": 1
+    },
+    {
+      "name": "first-execution-evidence/schema-ready.json",
+      "sha256": "28086cc03d4d14e0788fcb27f6f12639c8951d2d68b4ca02de001a221a72206d",
+      "bytes": 4463
+    },
+    {
+      "name": "first-execution-evidence/value.metafile.json",
+      "sha256": "0430df556903c2277b6231f49a5cb9321c58d3e93ee2b2f10bfd09a6dc96d4dc",
+      "bytes": 78464
+    },
+    {
+      "name": "execution-observation.json",
+      "sha256": "14c5f70692fc8bed8abb334837c751d1b3e332d1bf9bd6ac2d2066ae92209a69",
+      "bytes": 9934
+    },
+    {
+      "name": "preparation-input-correction.diff",
+      "sha256": "4f3c4f32a37ced29e7be5eebe55f813b896a9b4cd77a098baa534221d896e05e",
+      "bytes": 4530
+    },
+    {
+      "name": "package-boundary-correction.diff",
+      "sha256": "266e0e7ffca9da1f18629159fa3859b97eb64bf3dda32490a89715b3c7f207fa",
+      "bytes": 2881
+    },
+    {
+      "name": "supervisor.mjs",
+      "sha256": "74cd3df6228a0b45431f8c37b8333ecebe05a5cbf7e368823b75069146975c45",
+      "bytes": 3444
+    },
+    {
+      "name": "prepare-runners.mjs",
+      "sha256": "f82deb2c66b34aadd448285ae3730b199115a56ad9560c4afdf9fb325b941ff8",
+      "bytes": 2965
+    },
+    {
+      "name": "prepare-runners-external-packages.mjs",
+      "sha256": "8018530a030697bd9515a8daf8d8c55f6100613fdef811505343f73aaa24cd96",
+      "bytes": 3041
+    },
+    {
+      "name": "scoped-type.json",
+      "sha256": "4040ee81d3bab2b440c996788c5cf46691e9978a511977d9c6c1278b0af5ce96",
+      "bytes": 1230
+    },
+    {
+      "name": "continuation-input-manifest.json",
+      "sha256": "d055e9a1491d6de25714bda81d77075cbae702450bebd4246fa055536881ebb3",
+      "bytes": 143704
+    }
+  ],
+  "inputCountQualification": {
+    "initialSourceAndConfigInputs": 443,
+    "sqlInputs": 19,
+    "rootAuditedInitialUnion": 462,
+    "finalSourceAndConfigInputs": 452,
+    "finalUnion": 471,
+    "addedAfterFirstCompiler": [
+      "config/oxlint-plugins/app-store-performance.mjs",
+      "config/oxlint-plugins/mobile-pairing-qrcode-import.mjs",
+      "config/oxlint-plugins/quadratic-buffer-concat.mjs",
+      "config/oxlint-plugins/renderer-scrollbar-style.mjs",
+      "config/oxlint-plugins/sort-comparator-performance.mjs",
+      "src/main/durable-runtime/runtime/command-types.ts",
+      "src/main/durable-runtime/runtime/gateway/types.ts",
+      "src/main/runtime/orca-runtime.ts",
+      "src/main/runtime/rpc/core.ts"
+    ],
+    "qualification": "Root의 초기 462개 감사와 후속 타입 입력 4개·lint 플러그인 5개가 포함된 최종 471개를 구분합니다. 타입은 재실행하지 않았습니다."
+  }
+}

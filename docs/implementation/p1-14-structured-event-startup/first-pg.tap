@@ -1,0 +1,25 @@
+TAP version 13
+# (node:23376) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: 승인한 structured startup pg 소유 scope
+    # Subtest: 실제 startup의 structured 출력 선택 소비는 reconcile 후보보다 먼저 같은 원 사건을 commit하고 빌린 Pool을 보존한다
+    ok 1 - 실제 startup의 structured 출력 선택 소비는 reconcile 후보보다 먼저 같은 원 사건을 commit하고 빌린 Pool을 보존한다
+      ---
+      duration_ms: 2146.604469
+      type: 'test'
+      ...
+    1..1
+ok 1 - 승인한 structured startup pg 소유 scope
+  ---
+  duration_ms: 2151.720092
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2366.343842
