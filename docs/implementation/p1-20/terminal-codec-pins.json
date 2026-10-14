@@ -1,0 +1,47 @@
+{
+  "earlyCodecRevision": "26e841770e7bb6b920c733a313ec302111e7ddb0",
+  "preparedSourceRevision": "e975394146ed742f815e21dbed688cba27664603",
+  "terminalWriterFactsRevision": "103b85872c3c9adb94fdfa6461b1cf8f1a83ea76",
+  "baseRevision": "02bfba1aa971d9449cad41103211e8a3d3503451",
+  "schema017Revision": "a24db99ed3184bb9cbd3b7fe70f8c85bfea8bf37",
+  "sameTXInputRevision": "4d1cabbc93ea33289a708196951b8d2a92a1bfdf",
+  "facts": [
+    {
+      "path": "src/main/durable-runtime/terminal/managed-preparation.ts",
+      "revision": "103b85872c3c9adb94fdfa6461b1cf8f1a83ea76",
+      "sha256": "107592fa584498676c8a8a513b9dc7fa6dcbb49506bb28fee6645087a85ff13c"
+    },
+    {
+      "path": "src/main/durable-runtime/terminal/managed-ingress.ts",
+      "revision": "103b85872c3c9adb94fdfa6461b1cf8f1a83ea76",
+      "sha256": "c63520b1aa3898dfe77bd70fab6599e967c7ea488fbcf7aba0a90275395c21a1"
+    },
+    {
+      "path": "src/main/durable-runtime/terminal/durable-codec.ts",
+      "revision": "103b85872c3c9adb94fdfa6461b1cf8f1a83ea76",
+      "sha256": "55f3dcf9ad7261adecba894c8972beb84644557d828095585451b7f36eccc0fa"
+    },
+    {
+      "path": "src/main/durable-runtime/terminal/draft-reducer.ts",
+      "revision": "103b85872c3c9adb94fdfa6461b1cf8f1a83ea76",
+      "sha256": "0a31a4bce80ac13a123e530afd29f85dce7a5e60fae373e5cb5cbdaa65e65190"
+    },
+    {
+      "path": "src/main/durable-runtime/terminal/types.ts",
+      "revision": "103b85872c3c9adb94fdfa6461b1cf8f1a83ea76",
+      "sha256": "d4181db22f13f02a8e2c7852ebbf33314ef64d576f96d1b50fea14ada98685fb"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/008-attachment-store.sql",
+      "revision": "02bfba1aa971d9449cad41103211e8a3d3503451",
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    }
+  ],
+  "otherOwnerFilesModified": false,
+  "writerImportedOrActivated": false,
+  "newPureFixturesWritten": 2,
+  "newPGFixturesWritten": 1,
+  "newFixturesExecuted": false,
+  "typeExecutedForCodec": false,
+  "lintExecutedForCodec": false
+}
