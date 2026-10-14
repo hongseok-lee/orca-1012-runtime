@@ -76,7 +76,7 @@ async function snapshot(pool: Pool, fixtures: readonly ExecutionFixture[]) {
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.operation_id) FROM durable_runtime.cancel_intents r WHERE r.session_id=ANY($1::uuid[])) AS cancels,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.session_context_records r WHERE r.session_id=ANY($1::uuid[])) AS contexts,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.journal_epoch,r.seq) FROM durable_runtime.session_events r WHERE r.session_id=ANY($1::uuid[])) AS journal,
-      (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.outbox_events r WHERE r.aggregate_id=ANY($2::uuid[])) AS outbox,
+      (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.outbox_events r WHERE r.aggregate_id=ANY($2::uuid[]) OR r.aggregate_id=ANY($1::uuid[])) AS outbox,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.runtime_units r WHERE r.id=ANY($2::uuid[])) AS units,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.attempts r WHERE r.runtime_unit_id=ANY($2::uuid[])) AS attempts,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.runtime_audit_events r WHERE r.session_id=ANY($1::uuid[])) AS audit,
@@ -92,6 +92,21 @@ await test('observed turn resolves only immutable original execution and preserv
   assert.equal(process.env.ORCA_OBSERVED_TURN_PG_APPROVED, 'root-observed-turn-target')
   const pool = createDurablePool({ database: process.env.PGDATABASE, max: 3 })
   t.after(async () => { await pool.end() })
+  const identity = await pool.query(
+    `SELECT current_database() AS database,
+      (SELECT system_identifier::text FROM pg_control_system()) AS system_identifier,
+      (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS database_oid,
+      pg_backend_pid() AS backend_pid,
+      (SELECT jsonb_agg(dataset_name ORDER BY dataset_name) FROM durable_runtime.dataset_metadata) AS datasets`
+  )
+  assert.equal(identity.rowCount,1)
+  const actual = identity.rows[0]
+  t.diagnostic(JSON.stringify({ phase: 'before-seed', ...actual }))
+  assert.equal(actual.database,'orca_observed_turn_20261014')
+  assert.equal(actual.system_identifier,'7696101282789175327')
+  assert.deepEqual(actual.datasets,['orca-1012-dev-v1'])
+  assert.match(actual.database_oid,/^[1-9][0-9]*$/)
+  assert.ok(Number.isInteger(actual.backend_pid) && actual.backend_pid > 0)
   const ledger = await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')
   assert.equal(ledger.rows.length, 19)
   const f = await executionFixture(pool)
