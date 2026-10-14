@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import type { BrowserTabInfo } from '../../shared/runtime-types'
-import type { RuntimeBrowserCommandHost, RuntimeBrowserCommands } from '../runtime/orca-runtime-browser'
+import type { RuntimeBrowserCommandHost } from '../runtime/orca-runtime-browser'
 import type { BrowserTabCreateParams } from '../../shared/rpc-contract/browser-tab-create-params'
-import { resolveBrowserTabCreateFocus } from '../runtime/browser-tab-create-publication'
+import type { BrowserSessionTabSelectionOptions } from '../runtime/browser-tab-create-publication'
 import { BrowserError } from '../browser/browser-error'
 import { externalCdpError } from './external-chromium-cdp-connection'
 import { ExternalChromiumTargetBinding } from './external-chromium-target-binding'
@@ -53,30 +53,13 @@ export class ExternalChromiumTabRegistry {
   async createTab(
     host: RuntimeBrowserCommandHost,
     params: z.infer<typeof BrowserTabCreateParams>,
-    caller?: Parameters<RuntimeBrowserCommands['browserTabCreate']>[1]
+    selection?: BrowserSessionTabSelectionOptions
   ): Promise<unknown> {
     if (params.placement?.kind === 'client') {
       throw new BrowserError(
         'browser_command_unavailable',
         'Client-hosted browser placement is not supported by the external Chromium provider.'
       )
-    }
-    const focus = resolveBrowserTabCreateFocus({
-      activate: params.activate,
-      navigation: params.navigation,
-      clientKind: caller?.clientKind
-    })
-    const clientNavigationId = caller?.pairedDeviceId
-    const targetGroupId = params.targetGroupId
-    const selectSessionTab = (page: ExternalChromiumPageRecord): void => {
-      if (!focus.selects) {return}
-      host.markHeadlessBrowserSessionTabActive?.(page.worktreeId, page.publicPageId, {
-        ...(targetGroupId !== undefined ? { targetGroupId } : {}),
-        focusesHost: focus.focusesHost,
-        ...(clientNavigationId !== undefined
-          ? { caller: { clientNavigationId, navigation: focus.navigation } }
-          : {})
-      })
     }
     if (typeof params.profileId === 'string' && params.profileId !== 'default') {
       throw new BrowserError(
@@ -97,7 +80,9 @@ export class ExternalChromiumTabRegistry {
       }
       await this.targets.assertCurrent(existing)
       this.setActivePage(existing)
-      selectSessionTab(existing)
+      if (selection) {
+        host.markHeadlessBrowserSessionTabActive?.(existing.worktreeId, existing.publicPageId, selection)
+      }
       return { browserPageId: existing.publicPageId }
     }
     const url = normalizeBrowserNavigationUrl(String(params.url ?? 'about:blank'))
@@ -141,7 +126,9 @@ export class ExternalChromiumTabRegistry {
     this.pagesByAgentId.set(agentPageId, page)
     this.setActivePage(page)
     // Native command targeting stays active independently of UI selection and its audience.
-    selectSessionTab(page)
+    if (selection) {
+      host.markHeadlessBrowserSessionTabActive?.(worktreeId, publicPageId, selection)
+    }
     if (worktreeId) {
       host.notifyHeadlessBrowserSessionTabsChanged?.(worktreeId)
     }

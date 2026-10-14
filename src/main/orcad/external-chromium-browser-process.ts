@@ -22,6 +22,7 @@ import { ExternalChromiumTabRegistry } from './external-chromium-tab-registry'
 import { ExternalChromiumScreencastSubscribers } from './external-chromium-screencast-subscribers'
 import { Screencast } from '../../shared/rpc-contract/browser-params'
 import { BrowserTabCreateParams } from '../../shared/rpc-contract/browser-tab-create-params'
+import { resolveBrowserTabCreateFocus } from '../runtime/browser-tab-create-publication'
 import type { BrowserScreencastResult } from '../../shared/runtime-types'
 const ScreencastViewer = z.object({
   sendBinary: z.custom<(bytes: Uint8Array<ArrayBufferLike>) => boolean | void>(v => typeof v === 'function'),
@@ -107,11 +108,20 @@ export class ExternalChromiumBrowserProcess {
     if (!this.available) {throw new BrowserError('browser_unavailable', 'Browser process is unavailable.')}
     const params = (args[0] ?? {}) as Record<string, unknown>
     if (method === 'browserTabCreate') {
-      return this.tabs.createTab(
-        host,
-        args[0] as z.infer<typeof BrowserTabCreateParams>,
-        args[1] as Parameters<RuntimeBrowserCommands['browserTabCreate']>[1]
-      )
+      const createParams = args[0] as z.infer<typeof BrowserTabCreateParams>
+      const caller = args[1] as Parameters<RuntimeBrowserCommands['browserTabCreate']>[1]
+      const focus = resolveBrowserTabCreateFocus({
+        activate: createParams.activate,
+        navigation: createParams.navigation,
+        clientKind: caller?.clientKind
+      })
+      return this.tabs.createTab(host, createParams, focus.selects ? {
+        ...(createParams.targetGroupId !== undefined ? { targetGroupId: createParams.targetGroupId } : {}),
+        focusesHost: focus.focusesHost,
+        ...(caller?.pairedDeviceId !== undefined ? {
+          caller: { clientNavigationId: caller.pairedDeviceId, navigation: focus.navigation }
+        } : {})
+      } : undefined)
     }
     if (method === 'browserTabList') {
       return this.tabs.listTabs(host, params)

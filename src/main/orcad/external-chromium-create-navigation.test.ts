@@ -11,11 +11,11 @@ import { ExternalChromiumCdpConnection } from './external-chromium-cdp-connectio
 test('external create captures caller navigation before enqueue and preserves selection boundaries', async t => {
   const nativeCalls: string[][] = []
   const nativeTabs: AgentBrowserTab[] = []
-  const selections: Array<{
+  const selections: {
     worktreeId: string | undefined
     pageId: string
     options: BrowserSessionTabSelectionOptions | undefined
-  }> = []
+  }[] = []
   const notifications: string[] = []
   let generation = 'fixture-generation'
   let selectedAgentPageId: string | undefined
@@ -56,7 +56,7 @@ test('external create captures caller navigation before enqueue and preserves se
     assert.ok(tab)
     return `fixture-target-${tab.tabId}`
   })
-  const targetChecks: Array<[string, string]> = []
+  const targetChecks: [string, string][] = []
   t.mock.method(ExternalChromiumCdpConnection.prototype, 'hasTarget', async (id: string, epoch: string) => {
     targetChecks.push([id, epoch])
     return epoch === generation && nativeTabs.some(tab => id === `fixture-target-${tab.tabId}`)
@@ -121,14 +121,14 @@ test('external create captures caller navigation before enqueue and preserves se
   assert.deepEqual(notifications, ['owned-worktree'])
   assert.equal(nativeTabs[0].url, 'https://example.test/captured')
 
-  const cases: Array<{
+  const cases: {
     name: string
     clientKind?: 'mobile' | 'runtime'
     navigation?: RuntimeNavigationTarget
     activate?: boolean
     expectedNavigation: RuntimeNavigationTarget
     focusesHost: boolean
-  }> = [
+  }[] = [
     { name: 'mobile-default', clientKind: 'mobile', activate: true, expectedNavigation: 'caller', focusesHost: false },
     { name: 'runtime-default', clientKind: 'runtime', activate: true, expectedNavigation: 'caller', focusesHost: false },
     { name: 'caller', clientKind: 'mobile', navigation: 'caller', activate: true, expectedNavigation: 'caller', focusesHost: false },
@@ -178,7 +178,7 @@ test('external create captures caller navigation before enqueue and preserves se
       assert.equal((await commands.browserTabShow({ page, worktree: 'owned-worktree' })).tab.url, url)
       // Internal command targeting follows the page even when UI activate is false or omitted.
       const current = await commands.browserTabCurrent({ worktree: 'owned-worktree' })
-      assert.equal(Reflect.get(current, 'browserPageId'), page)
+      assert.equal(current.tab.browserPageId, page)
     }
   }
 
