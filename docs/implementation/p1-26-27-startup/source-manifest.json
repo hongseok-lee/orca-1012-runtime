@@ -1,0 +1,38 @@
+{
+  "base": "235a1e43bae71f1e5cac62f02bea0ca04eb0b26a",
+  "sourcePin": "4738e30929fb71760410fdcd3e7ce88501a621fb",
+  "files": [
+    {
+      "path": "src/main/orcad/orcad-entry.ts",
+      "sha256": "d5fab4974b1dbaf51dac44be202be6414ca3ed1f5ce18456fbde9ed0d68f7d73"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-config.ts",
+      "sha256": "7c5ba3e978732431dd0ced942d3b614eaeb02dcde8f7a81179ed64016186c3d8"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.pg.test.mts",
+      "sha256": "215d5e288f0d1c5562218c05bba52b2e3a648bce38f25cdc694efd15dd9f0dea"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.ts",
+      "sha256": "5aa3e051a984de445734f856c489e330e0eca17206b08d154eb845bbc072169a"
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.value.test.mts",
+      "sha256": "268b029b3e300b161eca07a169d91886e3b2ee73d2bf475a28cde0f2671bd4ca"
+    }
+  ],
+  "validation": {
+    "typeRuns": 0,
+    "lintRuns": 0,
+    "valueFixtureRuns": 0,
+    "pgFixtureRuns": 0,
+    "runtimeRestarts": 0,
+    "captures": 0,
+    "installs": 0,
+    "builds": 0,
+    "remoteHeavySlots": 0
+  },
+  "unmodifiedScope": "Catalog/RPC/provider/shared/DB/migration/lock 파일은 변경하지 않았습니다."
+}
