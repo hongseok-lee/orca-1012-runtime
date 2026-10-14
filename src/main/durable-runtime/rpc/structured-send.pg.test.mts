@@ -18,7 +18,7 @@ import { fingerprintAttachmentPrincipal } from '../attachments/types.ts'
 import { saveAttachmentImage, startAttachmentUpload, reserveAttachmentAlias } from '../attachments/store.ts'
 import { attachmentUploadId } from '../attachments/types.ts'
 import type { AgentSessionSendResult } from '../../../shared/agent-session-wire.ts'
-import type { AgentSessionAttachResult, AgentSessionMutationResult } from '../../../shared/agent-session-wire.ts'
+import type { AgentSessionMutationResult } from '../../../shared/agent-session-wire.ts'
 import type { CatalogWireResults } from '../catalog/wire.ts'
 import { STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY, CLAUDE_STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY,
   SESSION_TABS_AUTHORITATIVE_INVENTORY_RUNTIME_CAPABILITY, AGENT_SESSION_PENDING_SEND_RESULT_RUNTIME_CAPABILITY } from '../../../shared/protocol-version.ts'
@@ -89,12 +89,6 @@ async function physical(pool: Pool) {
     (SELECT count(*)::integer FROM durable_runtime.execution_grants) AS execution_grants,
     (SELECT count(*)::integer FROM durable_runtime.storage_write_grants) AS storage_grants,
     (SELECT count(*)::integer FROM durable_runtime.storage_bindings WHERE identity_verified_at IS NOT NULL) AS verification`)).rows[0]
-}
-async function counts(pool: Pool) {
-  return (await pool.query(`SELECT (SELECT count(*)::integer FROM durable_runtime.structured_session_aliases) AS aliases,
-    (SELECT count(*)::integer FROM durable_runtime.sessions) AS sessions,(SELECT count(*)::integer FROM durable_runtime.agents) AS agents,
-    (SELECT count(*)::integer FROM durable_runtime.tabs) AS tabs,(SELECT count(*)::integer FROM durable_runtime.session_events) AS events,
-    (SELECT count(*)::integer FROM durable_runtime.rpc_receipts) AS receipts`)).rows[0]
 }
 
 // Source fixture intentionally requires the actual future public wiring; no test injection replaces it.
