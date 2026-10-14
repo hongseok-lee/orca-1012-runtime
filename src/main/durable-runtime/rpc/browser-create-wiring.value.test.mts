@@ -43,7 +43,7 @@ await test('실제 Browser bind는 원 schema와 opt-out 선언을 보존하고 
   assert.equal(optOut.params, BrowserTabCreateParams)
   assert.equal(optOut.handler, originalHandler)
   assert.throws(() => adapter.bind([{ name: 'browser.tabCreate', params: BrowserTabCreateParams,
-    stream: true, handler: async () => {} }]), { code: 'CATALOG_METHOD_KIND_MISMATCH' })
+    stream: true, handler: async () => {} }]), { code: 'CATALOG_REGISTRY_KIND' })
 
   const method = buildRegistry(bound).get('browser.tabCreate')!
   if (isStreamingMethod(method)) { assert.fail('Browser create must remain unary') }

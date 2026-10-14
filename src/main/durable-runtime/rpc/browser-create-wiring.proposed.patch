@@ -39,7 +39,7 @@
        return { ...method, handler: (params: never, context: RpcContext) => adapter.history(params, context) }
      }
 +    if (method.name === 'browser.tabCreate') {
-+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_METHOD_KIND_MISMATCH') }
++      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
 +      return { ...method, handler: (params: never, context: RpcContext) => adapter.createBrowser(params, context) }
 +    }
      if (isCatalogMethodNotConnected(method.name)) {
