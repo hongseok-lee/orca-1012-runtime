@@ -46,6 +46,11 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.history(params, context) }
     }
+    // Durable pending intake only; provider dispatch and other chat methods keep their owners.
+    if (method.name === 'agentSession.send') {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext) => adapter.sendStructured(params, context) }
+    }
     if (isCatalogMethodNotConnected(method.name)) {
       return { ...method, handler: () => { throw new CatalogReadError('CATALOG_METHOD_NOT_CONNECTED') } }
     }
