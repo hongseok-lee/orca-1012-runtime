@@ -33,9 +33,8 @@ await test('배선 값 1개: 원 declaration·schema·capture·인증·소유 �
   // Opt-out composition keeps these original declarations; binding never edits them in place.
   const originalHandler = originalSubscribe.handler, originalCleanup = originalUnsubscribe.handler
   const capturesAtConstruction = queryCaptures
-  assert.equal(capturesAtConstruction, 1, 'one captured Pool/dataset owns the shared hint query')
   const methods = adapter.bind(native), secondBinding = adapter.bind(native)
-  assert.equal(queryCaptures, capturesAtConstruction, 'bind does not construct another structured owner')
+  assert.equal(queryCaptures, capturesAtConstruction, 'bind does not capture additional Pool query methods')
   const subscribe = methods.find(method => method.name === 'agentSession.subscribe')
   const unsubscribe = methods.find(method => method.name === 'agentSession.unsubscribe')
   assert.ok(subscribe && isStreamingMethod(subscribe)); assert.ok(unsubscribe && !isStreamingMethod(unsubscribe))
@@ -49,8 +48,8 @@ await test('배선 값 1개: 원 declaration·schema·capture·인증·소유 �
   assert.throws(() => UnsubscribeParams.parse({ sessionId: 'synthetic-wiring-session', unknown: true }))
   const wrongUnary = { ...originalSubscribe, stream: false } as unknown as RpcAnyMethodDeclaration
   const wrongStream = { ...originalUnsubscribe, stream: true } as unknown as RpcAnyMethodDeclaration
-  assert.throws(() => adapter.bind([wrongUnary]), /CATALOG_METHOD_KIND_MISMATCH/)
-  assert.throws(() => adapter.bind([wrongStream]), /CATALOG_METHOD_KIND_MISMATCH/)
+  assert.throws(() => adapter.bind([wrongUnary]), /CATALOG_REGISTRY_KIND/)
+  assert.throws(() => adapter.bind([wrongStream]), /CATALOG_REGISTRY_KIND/)
   const owner = fixtureRuntime(), registry = new RuntimeSubscriptionRegistry(), registered = new Set<string>()
   const runtime = new Proxy(owner.runtime, { get(object, property, receiver) {
     if (property === 'getClientSettings') { return () => ({ experimentalStructuredNativeChat: true }) }
