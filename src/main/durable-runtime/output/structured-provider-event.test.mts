@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { Buffer } from 'node:buffer'
 import { MAX_JOURNAL_LIFECYCLE_BATCH_BYTES, MAX_JOURNAL_LIFECYCLE_BATCH_MUTATIONS } from '../../native-chat/agent-session-journal/journal-row-schema.ts'
 import { parseStructuredProviderEvent } from './structured-provider-event.ts'
 
@@ -21,6 +22,18 @@ test('structured provider payload: real render shapes, strict envelope and detac
   }
   const native = { ...input(), provider: 'codex', source: { kind: 'NATIVE', lineage: 'original-thread', nativeEventId: 'original-event-17' } }
   assert.equal(parseStructuredProviderEvent(native).source.kind, 'NATIVE')
+  assert.throws(() => parseStructuredProviderEvent(input({ ...batch, mutations: [] })))
+  const sizedBatch = (characters: number) => input({ kind: 'lifecycle-batch', settlementId: 'boundary',
+    mutations: [{ kind: 'item', itemId: 'i', revision: 1, body: { kind: 'message', role: 'assistant',
+      blocks: [{ type: 'text', text: 'x'.repeat(characters) }] } }] })
+  const overhead = Buffer.byteLength(JSON.stringify(sizedBatch(0)), 'utf8') + 1
+  const boundary = sizedBatch(MAX_JOURNAL_LIFECYCLE_BATCH_BYTES - overhead)
+  assert.equal(Buffer.byteLength(JSON.stringify(boundary), 'utf8') + 1, MAX_JOURNAL_LIFECYCLE_BATCH_BYTES)
+  assert.equal(parseStructuredProviderEvent(boundary).mutation.kind, 'lifecycle-batch')
+  const overflow = sizedBatch(MAX_JOURNAL_LIFECYCLE_BATCH_BYTES - overhead + 1)
+  // A mutation-only check would admit this; the actual stored envelope is too large.
+  assert.ok(Buffer.byteLength(JSON.stringify(overflow.mutation), 'utf8') + 1 <= MAX_JOURNAL_LIFECYCLE_BATCH_BYTES)
+  assert.throws(() => parseStructuredProviderEvent(overflow))
   const original = input(batch)
   const captured = parseStructuredProviderEvent(original)
   item.body.blocks[0].text = 'caller mutation'
