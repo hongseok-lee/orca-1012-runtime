@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
-import type { Pool, PoolClient } from 'pg'
 import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
 import { readMigrations } from '../db/migrate.ts'
 import { resolveReceipt } from '../db/atomic.ts'
@@ -231,7 +230,7 @@ await test('public metadata first PG boundaries only; prior suites are not execu
       const observed = observedPool({ beforeConnect: async () => { if (blocked) { entered.resolve(); await gate.promise } } })
       const owner = fixtureRuntime(), allowed = [ws.repo]
       const input = { ...ws.config, pool: observed.borrowed, repositoryIds: allowed,
-        readHostIdentity() { assert.equal(this.hostId, 'local'); return this.hostId } }
+        readHostIdentity(): DurableCatalogReadConfig['hostId'] { assert.equal(this.hostId, 'local'); return this.hostId } }
       const adapter = new DurableCatalogReadAdapter(input)
       const capabilities: RuntimeCapability[] = [], context: RpcContext = fixtureContext(owner.runtime, { clientCapabilities: capabilities })
       const params = { worktree: ws.alias, tabId: ws.terminalPublic }
