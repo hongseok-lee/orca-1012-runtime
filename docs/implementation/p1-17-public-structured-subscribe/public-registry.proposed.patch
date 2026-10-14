@@ -1,0 +1,62 @@
+--- a/src/main/durable-runtime/rpc/public.ts
++++ b/src/main/durable-runtime/rpc/public.ts
+@@ -1,5 +1,6 @@
+ import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
+ import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
++import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
+ import { createCatalogCreationFacade, createCatalogRpc } from './creation.ts'
+ import type { CatalogCreationMethod } from './launch-preparation.ts'
+ import type { RpcContext, RpcAnyMethodDeclaration } from '../../runtime/rpc/core.ts'
+@@ -18,6 +19,7 @@
+   private readonly creation: ReturnType<typeof createCatalogCreationFacade>
+   private readonly structured: ReturnType<typeof createCatalogStructuredRpc>
+   private readonly structuredHistory: ReturnType<typeof createCatalogStructuredHistoryRpc>
++  private readonly structuredSubscriptions: ReturnType<typeof createCatalogStructuredSubscriptions>
+   private disposed = false
+   constructor(config: DurableCatalogReadConfig) {
+     this.config = captureDurableCatalogReadConfig(config)
+@@ -26,6 +28,7 @@
+     this.creation = createCatalogCreationFacade(this.config)
+     this.structured = createCatalogStructuredRpc(this.config)
+     this.structuredHistory = createCatalogStructuredHistoryRpc(this.config)
++    this.structuredSubscriptions = createCatalogStructuredSubscriptions(this.config)
+   }
+   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
+   async read(method: string, params: unknown, context: RpcContext): Promise<unknown> {
+@@ -65,6 +68,18 @@
+     try { this.requireOpen(); return await this.structuredHistory(params, context) }
+     catch (error) { throw catalogReadFailure(error) }
+   }
++  async subscribeStructured(params: unknown, context: RpcContext, emit: (frame: unknown) => void): Promise<void> {
++    try { this.requireOpen(); await this.structuredSubscriptions.subscribe(params, context, emit) }
++    catch (error) { throw catalogReadFailure(error) }
++  }
++  async unsubscribeStructured(params: unknown, context: RpcContext): Promise<unknown> {
++    try { this.requireOpen(); return this.structuredSubscriptions.unsubscribe(params, context) }
++    catch (error) { throw catalogReadFailure(error) }
++  }
+   private requireOpen(): void { if (this.disposed) { throw new CatalogReadError('CATALOG_ADAPTER_DISPOSED') } }
+-  dispose(): void { if (!this.disposed) { this.disposed = true; this.subscriptions.dispose() } }
++  dispose(): void {
++    if (this.disposed) { return }
++    this.disposed = true
++    try { this.subscriptions.dispose() } finally { this.structuredSubscriptions.dispose() }
++  }
+ }
+--- a/src/main/durable-runtime/rpc/registry.ts
++++ b/src/main/durable-runtime/rpc/registry.ts
+@@ -42,6 +42,14 @@
+       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+       return { ...method, handler: (params: never, context: RpcContext) => adapter.createStructured(method.name, params, context) }
+     }
++    if (method.name === 'agentSession.subscribe') {
++      if (!('stream' in method && method.stream)) { throw new CatalogReadError('CATALOG_METHOD_KIND_MISMATCH') }
++      return { ...method, handler: (params: never, context: RpcContext, emit: (result: unknown) => void) => adapter.subscribeStructured(params, context, emit) }
++    }
++    if (method.name === 'agentSession.unsubscribe') {
++      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_METHOD_KIND_MISMATCH') }
++      return { ...method, handler: (params: never, context: RpcContext) => adapter.unsubscribeStructured(params, context) }
++    }
+     if (CATALOG_STRUCTURED_HISTORY_METHODS.some(name => name === method.name)) {
+       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+       return { ...method, handler: (params: never, context: RpcContext) => adapter.history(params, context) }
