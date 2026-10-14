@@ -50,7 +50,7 @@
   ],
   "executions": {
     "test": 0,
-    "type": 0,
+    "type": 1,
     "lint": 0,
     "PG": 0,
     "build": 0,
@@ -58,5 +58,5 @@
     "live": 0,
     "capture": 0
   },
-  "qualification": "Source와 fixture 작성 제출이며 실행 결과는 미확보입니다."
+  "qualification": "제품과 fixture bytes는 최초 source pin 그대로입니다. 최초 scoped type exit 1(소유 1개/외부 25개)에서 종료됐으며 callback·lint·schema는 미실행입니다."
 }

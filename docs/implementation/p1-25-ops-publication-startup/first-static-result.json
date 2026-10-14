@@ -1,0 +1,64 @@
+{
+  "source": "95afac216e4e2b022ebacf61496db9ea683aed59",
+  "fixture": "a101e22611ac016e72b09418c756646d1d27a8ba",
+  "reviewedHead": "7da1c103676a1d39b4279ff4f7c938242042144f",
+  "queueDependency": "cc399b66696aaf50c45d02d613c885a8d61e6fdb",
+  "status": "최초 scoped type 실패이며 소유 fixture의 타입 단언 교정은 미적용입니다.",
+  "preparation": {
+    "initialHelperFailure": "MODULE_NOT_FOUND: typescript/lib/typescript.js",
+    "helperCorrection": "기존 esbuild transformSync를 사용해 value import 경로만 관찰하도록 교정했습니다. 제품·fixture bytes는 유지했습니다.",
+    "actualValueCandidates": 237,
+    "actualBundleImports": 235,
+    "GitBlobMismatch": 0,
+    "SQLFilesPinned": 19,
+    "deltaFiles": 8,
+    "deltaBytes": 36767,
+    "verificationHarnessOnly": true,
+    "productBuilds": 0
+  },
+  "static": {
+    "typeExit": 1,
+    "ownedDiagnostics": 1,
+    "externalDiagnostics": 25,
+    "externalSameAsAcceptedPR49": true,
+    "wholeTypePass": false,
+    "ownedFailure": {
+      "path": "src/main/orcad/orcad-ops-publication.pg.test.mts",
+      "line": 47,
+      "column": 23,
+      "code": "TS2352",
+      "reason": "Synthetic authority 객체의 CatalogAuthority 직접 단언입니다."
+    },
+    "lintExecutions": 0
+  },
+  "callbacks": {
+    "valueExecutions": 0,
+    "PGExecutions": 0,
+    "pass": 0,
+    "parentAdded": 0,
+    "TAPCreated": false
+  },
+  "schema": {
+    "applyCount": 0,
+    "ownedDatabaseCreated": false,
+    "ledgerRead": false
+  },
+  "process": {
+    "startedAt": "2026-10-14T10:30:55.138Z",
+    "endedAt": "2026-10-14T10:31:41.723Z",
+    "supervisorPID": 17888,
+    "supervisorExit": 1,
+    "typePID": 17909,
+    "typeExit": 1,
+    "activeOwnedJobs": 0,
+    "heavyReturned": 1
+  },
+  "proposedCorrection": {
+    "old": "as CatalogAuthority",
+    "new": "as unknown as CatalogAuthority",
+    "applied": false,
+    "productChanged": false,
+    "runtimeAuthorityChanged": false
+  },
+  "limits": "값·실제 PG·lint 및 drain/Pool 종료 증거는 아직 없습니다. 성공 callback 재실행, 기존 suite, 설치, 제품 build, live 반영은 모두 0회입니다."
+}

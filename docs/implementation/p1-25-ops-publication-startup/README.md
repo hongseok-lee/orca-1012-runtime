@@ -24,7 +24,7 @@ Owner는 실제 worker 생성 전에 기존 `ownCatalog` 콜백으로 노출됩�
 
 PG callback은 실제 startup이 만든 Pool을 관찰하며 실제 replay INSERT를 일시 정지합니다. RPC 정리 뒤 owner stop이 진행 중 발행을 기다리는지 확인하도록 작성했습니다. Stop 완료 뒤 별도 notification source 1개가 PENDING에 남는지 확인하는 입력도 포함합니다. Stub publisher나 복제한 claim 구현은 사용하지 않습니다.
 
-이번 제출의 test·type·lint·PG·build·install·live sync·restart·추가 capture 실행은 모두 0회입니다. Callback 결과와 static 결과는 미확보입니다. Root source 리뷰 후 첫 stage·DB·heavy 및 실행 범위를 배분받습니다. 기존 성공 Queue/Core/API/startup/HA suite는 반복하지 않았습니다. Queue 원 검증 결과 수락과 최종 합류, 실제 개발 서버 반영·UI source 소비는 아직입니다.
+최초 source 제출 이후 Root가 소유 static과 값 1개·실제 PG 1개의 첫 실행을 배분했습니다. Scoped type은 exit 1이며 소유 fixture의 `TS2352` 1개와 기존 외부 진단 25개가 발생했습니다. Supervisor는 이 오류에서 종료됐습니다. 값·PG·lint·DB schema는 미실행이고, 제품 build·install·live sync·restart·추가 capture는 모두 0회입니다. 원 결과와 한계는 [최초 static 결과](first-static-result.json)에 기록했습니다. Fixture 교정은 후보 diff만 준비했고 적용하지 않았습니다. 기존 성공 Queue/Core/API/startup/HA suite는 반복하지 않았습니다. Queue 원 검증 결과 수락과 최종 합류, 실제 개발 서버 반영·UI source 소비는 아직입니다.
 
 ## 기존 실제 화면의 provenance
 

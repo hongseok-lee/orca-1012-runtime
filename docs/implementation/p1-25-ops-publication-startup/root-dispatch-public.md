@@ -1,4 +1,4 @@
-> Root 위임의 공개 사본입니다. 계약과 수용기준을 보존하며 운영 대상은 일반화했습니다. private 정본은 수정하지 않았습니다. 원본 SHA-256: `bc511b6af18628dc07bc43d1599282d382830f1ef6a98d1d59adef8e9429fb42`.
+> Root 위임의 공개 사본입니다. 계약과 수용기준을 보존하며 운영 대상은 일반화했습니다. private 정본은 수정하지 않았습니다. 원본 SHA-256: `bae53870d96106023aa111e2e42ed4a42b9d7d95d0f8e8fbf72bc14ea8618954`.
 
 # P1-25 / P1-26 — Ops 발행 worker의 실제 startup 수명 연결
 
@@ -23,3 +23,11 @@
 Public PR에는 이 명세의 공개 사본 전문·실제 변경/의존 pin/검증 결과·현재 실제 화면의 정확한 provenance를 기록한다. 현재 첫 실제 화면을 재사용하면 이 새 publisher의 실증으로 표현하지 않는다. Root가 최종 댓글·합류·dev 반영 범위를 담당한다. 단위 합류를 전체P1/HA/provider/native 완료로 표시하지 않는다.
 
 새 기획과 작업목록은 root 전담이다. 원 사용자 빠른 개발·단계 종료 원문 재출력/작업계획 읽기, 메모리/PR/디스크 증거 대조를 유지한다. 기존 native9+root/bridge11·heavy2상한, 동결template/보호backup보존·TTL제외를 유지한다.
+
+## 2026-10-14 최초 한정 실행 지정
+
+Root는 제품95afac216e4e2b022ebacf61496db9ea683aed59의 두 파일과 fixturea101e22611ac016e72b09418c756646d1d27a8ba의 값1/PG1 전문을 읽었다. PR53 head7da1c103676a1d39b4279ff4f7c938242042144f는 위 소스와 Queue cc399 의존성 bytes를 유지한다. 기존 Backend에 새 callback 두 개와 소유4파일 scoped type/lint의 최초 실행을 지정한다. 값 fixture의 ownership adapter/차단한 connect와 실제 PG의 원 Pool query관측 proxy를 실제 publisher stub과 구분한다.
+
+기존 stage/cache의 정확한 actual import closure를 재사용하고 누락·차이 파일만 전송한다. 전체 legacy 후보 복사·압축·재해시/설치/제품 build는 없다. 원 imports·SQL001–019 hash와 source pin을 기록하고 별도 소유 orca_p125_startup_ DB에 schema를 한 번 준비한다. Live orca_dev/C1/C2/Expo는 변경하지 않는다. 다른 Queue 최초검증과 합계heavy2 내에서 Backend heavy1을 배분한다.
+
+원 TAP·실제 exit·PID/시각·ledger 및 scoped static 소유/외부 오류를 보존한다. 첫 실패의 교정은 원 근거와 diff를 root에 먼저 반환하며 성공 callback/기존 Queue·startup/API suite를 반복하지 않는다. 실제 callback은 notification1을 startup에서 발행하고 in-flight drain/Pool종료 순서와 비지원 Catalog outbox 보존을 확인하는 한 흐름이다. 불필요한 재촬영은 없다. PR53에 실제 결과를 게시하며 live 활성화와 최종 merge는 Queue 결과 수락 뒤 root가 별도로 지정한다.
