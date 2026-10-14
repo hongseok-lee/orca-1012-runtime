@@ -181,7 +181,7 @@ export function createCatalogStructuredSubscriptions(
     const input = UnsubscribeParams.parse(params)
     const caller = captureCaller(context, true)
     const base = structuredAgentSessionSubscriptionBase(context, input.sessionId)
-    for (const record of [...subscriptions.values()]) {
+    for (const record of Array.from(subscriptions.values())) {
       if (record.base !== base || record.fingerprint !== caller.fingerprint) { continue }
       if (input.subscriptionId !== undefined && record.id !== input.subscriptionId &&
           !(input.subscriptionId === base && record.id.startsWith(`${base}:`))) { continue }
@@ -193,7 +193,7 @@ export function createCatalogStructuredSubscriptions(
   function dispose(): void {
     if (disposed) { return }
     disposed = true
-    for (const record of [...subscriptions.values()]) { record.close() }
+    for (const record of Array.from(subscriptions.values())) { record.close() }
   }
   /** Internal poll/drain barrier; no new wire method or independent consumer loop. */
   async function flush(): Promise<void> {
