@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import type { BrowserTabInfo } from '../../shared/runtime-types'
 import type { RuntimeBrowserCommandHost } from '../runtime/orca-runtime-browser'
+import type { BrowserTabCreateParams } from '../../shared/rpc-contract/browser-tab-create-params'
+import type { BrowserSessionTabSelectionOptions } from '../runtime/browser-tab-create-publication'
 import { BrowserError } from '../browser/browser-error'
 import { externalCdpError } from './external-chromium-cdp-connection'
 import { ExternalChromiumTargetBinding } from './external-chromium-target-binding'
@@ -50,8 +52,15 @@ export class ExternalChromiumTabRegistry {
 
   async createTab(
     host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
+    params: z.infer<typeof BrowserTabCreateParams>,
+    selection?: BrowserSessionTabSelectionOptions
   ): Promise<unknown> {
+    if (params.placement?.kind === 'client') {
+      throw new BrowserError(
+        'browser_command_unavailable',
+        'Client-hosted browser placement is not supported by the external Chromium provider.'
+      )
+    }
     if (typeof params.profileId === 'string' && params.profileId !== 'default') {
       throw new BrowserError(
         'browser_profile_unavailable',
@@ -71,6 +80,9 @@ export class ExternalChromiumTabRegistry {
       }
       await this.targets.assertCurrent(existing)
       this.setActivePage(existing)
+      if (selection) {
+        host.markHeadlessBrowserSessionTabActive?.(existing.worktreeId, existing.publicPageId, selection)
+      }
       return { browserPageId: existing.publicPageId }
     }
     const url = normalizeBrowserNavigationUrl(String(params.url ?? 'about:blank'))
@@ -113,12 +125,10 @@ export class ExternalChromiumTabRegistry {
     this.pagesByPublicId.set(publicPageId, page)
     this.pagesByAgentId.set(agentPageId, page)
     this.setActivePage(page)
-    host.markHeadlessBrowserSessionTabActive?.(worktreeId, publicPageId, {
-      ...(typeof params.targetGroupId === 'string' ? { targetGroupId: params.targetGroupId } : {}),
-      // Why true: an external-Chromium create has no paired-device caller to stay local for, so it
-      // steers every screen exactly as this call did before create learned to stay local.
-      focusesHost: true
-    })
+    // Native command targeting stays active independently of UI selection and its audience.
+    if (selection) {
+      host.markHeadlessBrowserSessionTabActive?.(worktreeId, publicPageId, selection)
+    }
     if (worktreeId) {
       host.notifyHeadlessBrowserSessionTabsChanged?.(worktreeId)
     }

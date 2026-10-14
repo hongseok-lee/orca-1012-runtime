@@ -21,6 +21,8 @@ import {
 import { ExternalChromiumTabRegistry } from './external-chromium-tab-registry'
 import { ExternalChromiumScreencastSubscribers } from './external-chromium-screencast-subscribers'
 import { Screencast } from '../../shared/rpc-contract/browser-params'
+import { BrowserTabCreateParams } from '../../shared/rpc-contract/browser-tab-create-params'
+import { resolveBrowserTabCreateFocus } from '../runtime/browser-tab-create-publication'
 import type { BrowserScreencastResult } from '../../shared/runtime-types'
 const ScreencastViewer = z.object({
   sendBinary: z.custom<(bytes: Uint8Array<ArrayBufferLike>) => boolean | void>(v => typeof v === 'function'),
@@ -61,6 +63,17 @@ export class ExternalChromiumBrowserProcess {
         if (typeof property !== 'string') {
           return undefined
         }
+        if (property === 'browserTabCreate') {
+          return (params: unknown, caller?: Parameters<RuntimeBrowserCommands['browserTabCreate']>[1]) => {
+            // Capture before enqueue: callers may reuse their mutable request/context while queued.
+            const capturedParams = BrowserTabCreateParams.parse(params ?? {})
+            const capturedCaller = {
+              pairedDeviceId: caller?.pairedDeviceId,
+              clientKind: caller?.clientKind
+            }
+            return this.enqueue(() => this.invoke(host, property, [capturedParams, capturedCaller]))
+          }
+        }
         return (...args: unknown[]) => this.enqueue(() => this.invoke(host, property, args))
       }
     })
@@ -95,7 +108,20 @@ export class ExternalChromiumBrowserProcess {
     if (!this.available) {throw new BrowserError('browser_unavailable', 'Browser process is unavailable.')}
     const params = (args[0] ?? {}) as Record<string, unknown>
     if (method === 'browserTabCreate') {
-      return this.tabs.createTab(host, params)
+      const createParams = args[0] as z.infer<typeof BrowserTabCreateParams>
+      const caller = args[1] as Parameters<RuntimeBrowserCommands['browserTabCreate']>[1]
+      const focus = resolveBrowserTabCreateFocus({
+        activate: createParams.activate,
+        navigation: createParams.navigation,
+        clientKind: caller?.clientKind
+      })
+      return this.tabs.createTab(host, createParams, focus.selects ? {
+        ...(createParams.targetGroupId !== undefined ? { targetGroupId: createParams.targetGroupId } : {}),
+        focusesHost: focus.focusesHost,
+        ...(caller?.pairedDeviceId !== undefined ? {
+          caller: { clientNavigationId: caller.pairedDeviceId, navigation: focus.navigation }
+        } : {})
+      } : undefined)
     }
     if (method === 'browserTabList') {
       return this.tabs.listTabs(host, params)
