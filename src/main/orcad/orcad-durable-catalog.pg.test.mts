@@ -6,8 +6,8 @@ import { createDurablePool } from '../durable-runtime/db/connection.ts'
 import { registerCatalogProject } from '../durable-runtime/catalog/register.ts'
 import type { CatalogAuthority } from '../durable-runtime/catalog/authority.ts'
 import type { CatalogRegistration } from '../durable-runtime/catalog/register.ts'
-import { captureOrcadDurableCatalogConfig, prepareOrcadDurableCatalog,
-  OrcadDurableCatalogConfigurationError } from './orcad-durable-catalog.ts'
+import { captureOrcadDurableCatalogConfig, prepareOrcadDurableCatalog } from './orcad-durable-catalog.ts'
+import { prepareMissingStartupFixture, type MissingStartupBoundary } from './orcad-durable-catalog.pg-fixtures.mts'
 
 // Root supplies a new owned validation DB with accepted schema 001–014 first.
 // This fixture never migrates, applies dev schema or reuses PR43's validation DB.
@@ -18,7 +18,11 @@ if (process.env.ORCA_P116_STARTUP_APPROVED !== 'root-ready' ||
 const pg = { host: process.env.PGHOST!, port: Number(process.env.PGPORT ?? '5432'),
   database: process.env.PGDATABASE!, user: process.env.PGUSER!, max: 2 }
 const pgpassFile = process.env.PGPASSFILE!
-const pool = createDurablePool(pg)
+const selection = process.env.ORCA_P116_STARTUP_PG_SELECTION
+if (selection !== undefined && selection !== 'failed-four') { throw new Error('Unknown startup PG fixture selection') }
+const failedFourOnly = selection === 'failed-four'
+// In focused mode, even the successful callbacks' shared Pool/registration setup is skipped.
+let pool: Pool
 const repo = `synthetic-startup-repo:${randomUUID()}`
 const group = `synthetic-startup-group:${randomUUID()}`
 const input = () => ({ datasetName: 'orca-1012-dev-v1', hostId: 'local',
@@ -28,6 +32,12 @@ const ui = { lastActiveRepoId: null, lastActiveWorktreeId: null, activeView: 'te
   groupBy: 'none', sortBy: 'smart', projectOrderBy: 'manual', showActiveOnly: false, hideDefaultBranchWorkspace: false,
   filterRepoIds: [], collapsedGroups: [], uiZoomLevel: 0, editorFontZoomLevel: 0, worktreeCardProperties: [],
   statusBarItems: [], statusBarVisible: true, dismissedUpdateVersion: null, lastUpdateCheckAt: null }
+const registration = () => ({
+  repo: { id: repo, path: `/synthetic/startup/${repo}`, displayName: repo, badgeColor: '#ffffff', addedAt: 1,
+    kind: 'git', projectGroupId: group, executionHostId: 'local' },
+  group: { id: group, name: group, parentPath: null, parentGroupId: null, color: null, isCollapsed: false,
+    tabOrder: 0, createdAt: 1, updatedAt: 1, createdFrom: 'manual' }, ui
+}) as Pick<CatalogRegistration, 'repo' | 'group' | 'ui'>
 function observedFactory() {
   let ends = 0
   const statements: string[] = []
@@ -57,17 +67,26 @@ async function rejected(inputValue = input()) {
   await assert.rejects(prepareOrcadDurableCatalog(captureOrcadDurableCatalogConfig(inputValue, pgpassFile), observed.factory))
   assert.equal(observed.ends(), 1)
 }
+async function rejectedMissing(boundary: MissingStartupBoundary, expected: string) {
+  const missingPg = await prepareMissingStartupFixture(pg, boundary, registration())
+  const observed = observedFactory()
+  try {
+    await assert.rejects(prepareOrcadDurableCatalog(
+      captureOrcadDurableCatalogConfig({ ...input(), pg: missingPg }, pgpassFile), observed.factory),
+    (error: unknown): boolean => error instanceof Error && 'code' in error && error.code === expected)
+  } finally { assert.equal(observed.ends(), 1) }
+}
 await test('new orcad startup PG registration and Pool ownership boundaries', async t => {
   try {
-    const authority = { principalId: `synthetic-startup-principal:${randomUUID()}`,
-      repositoryIds: [repo], projectGroupIds: [group], workspacePublicIds: [] } as unknown as CatalogAuthority
-    await registerCatalogProject(pool, authority, { mutationId: `synthetic-startup-register:${randomUUID()}`,
-      repo: { id: repo, path: `/synthetic/startup/${repo}`, displayName: repo, badgeColor: '#ffffff', addedAt: 1,
-        kind: 'git', projectGroupId: group, executionHostId: 'local' },
-      group: { id: group, name: group, parentPath: null, parentGroupId: null, color: null, isCollapsed: false,
-        tabOrder: 0, createdAt: 1, updatedAt: 1, createdFrom: 'manual' }, ui } as CatalogRegistration)
+    if (!failedFourOnly) {
+      pool = createDurablePool(pg)
+      const authority = { principalId: `synthetic-startup-principal:${randomUUID()}`,
+        repositoryIds: [repo], projectGroupIds: [group], workspacePublicIds: [] } as unknown as CatalogAuthority
+      await registerCatalogProject(pool, authority, { mutationId: `synthetic-startup-register:${randomUUID()}`,
+        ...registration() } as CatalogRegistration)
+    }
 
-    await t.test('registered PG startup captures stable local identity and repeated normal cleanup closes once', async () => {
+    await t.test('registered PG startup captures stable local identity and repeated normal cleanup closes once', { skip: failedFourOnly }, async () => {
       const mutable = input(), observed = observedFactory()
       const pending = prepareOrcadDurableCatalog(captureOrcadDurableCatalogConfig(mutable, pgpassFile), observed.factory)
       mutable.hostId = 'runtime:synthetic-replacement'; mutable.repositoryIds[0] = 'synthetic-replacement'; mutable.pg.host = 'synthetic-replacement'
@@ -80,55 +99,28 @@ await test('new orcad startup PG registration and Pool ownership boundaries', as
       const stop1 = owner.stop(), stop2 = owner.stop()
       assert.equal(stop1, stop2); await Promise.all([stop1, stop2]); assert.equal(observed.ends(), 1)
     })
-    await t.test('unregistered configured project is failure and closes its Pool', async () => {
+    await t.test('unregistered configured project is failure and closes its Pool', { skip: failedFourOnly }, async () => {
       await rejected({ ...input(), repositoryIds: ['synthetic-missing-registration'] })
     })
-    await t.test('foreign registered repository host is failure and closes its Pool', async () => {
+    await t.test('foreign registered repository host is failure and closes its Pool', { skip: failedFourOnly }, async () => {
       await pool.query("UPDATE durable_runtime.catalog_repositories SET payload=jsonb_set(payload,'{executionHostId}','\"runtime:synthetic-other\"') WHERE id=$1", [repo])
       try { await rejected() } finally {
         await pool.query("UPDATE durable_runtime.catalog_repositories SET payload=jsonb_set(payload,'{executionHostId}','\"local\"') WHERE id=$1", [repo])
       }
     })
     await t.test('missing catalog head cannot become an empty successful startup', async () => {
-      const head = (await pool.query("DELETE FROM durable_runtime.catalog_heads WHERE scope='catalog' RETURNING *")).rows[0]
-      assert.ok(head)
-      try { await rejected() } finally {
-        await pool.query('INSERT INTO durable_runtime.catalog_heads(scope,dataset_name,publication_epoch,revision) VALUES($1,$2,$3,$4)',
-          [head.scope, head.dataset_name, head.publication_epoch, head.revision])
-      }
+      await rejectedMissing('catalog-head', 'CATALOG_HEAD_MISSING')
     })
     await t.test('missing UI publication head is an explicit startup configuration failure', async () => {
-      const head = (await pool.query("DELETE FROM durable_runtime.catalog_heads WHERE scope='ui:host' RETURNING *")).rows[0]
-      assert.ok(head)
-      const observed = observedFactory()
-      try {
-        await assert.rejects(prepareOrcadDurableCatalog(captureOrcadDurableCatalogConfig(input(), pgpassFile), observed.factory),
-          (error: unknown): boolean => error instanceof OrcadDurableCatalogConfigurationError && error.code === 'CATALOG_STARTUP_HEAD_MISSING')
-        assert.equal(observed.ends(), 1)
-      } finally {
-        await pool.query('INSERT INTO durable_runtime.catalog_heads(scope,dataset_name,publication_epoch,revision) VALUES($1,$2,$3,$4)',
-          [head.scope, head.dataset_name, head.publication_epoch, head.revision])
-      }
+      await rejectedMissing('ui-head', 'CATALOG_STARTUP_HEAD_MISSING')
     })
     await t.test('missing initialized UI is failure and closes its Pool', async () => {
-      const row = (await pool.query("DELETE FROM durable_runtime.catalog_ui_state WHERE scope='host' RETURNING *")).rows[0]
-      assert.ok(row)
-      try { await rejected() } finally {
-        await pool.query('INSERT INTO durable_runtime.catalog_ui_state(scope,payload,revision) VALUES($1,$2,$3)', [row.scope, row.payload, row.revision])
-      }
+      await rejectedMissing('ui-state', 'CATALOG_STARTUP_UI_NOT_INITIALIZED')
     })
     await t.test('missing dataset registration is failure and cannot start with an empty Catalog', async () => {
-      const heads = (await pool.query('DELETE FROM durable_runtime.catalog_heads RETURNING *')).rows
-      await pool.query('DELETE FROM durable_runtime.dataset_metadata')
-      try { await rejected() } finally {
-        await pool.query("INSERT INTO durable_runtime.dataset_metadata(dataset_name) VALUES('orca-1012-dev-v1')")
-        for (const head of heads) {
-          await pool.query('INSERT INTO durable_runtime.catalog_heads(scope,dataset_name,publication_epoch,revision) VALUES($1,$2,$3,$4)',
-            [head.scope, head.dataset_name, head.publication_epoch, head.revision])
-        }
-      }
+      await rejectedMissing('dataset', 'CATALOG_STARTUP_DATASET_MISMATCH')
     })
-    await t.test('registered workspace without its publication head is rejected', async () => {
+    await t.test('registered workspace without its publication head is rejected', { skip: failedFourOnly }, async () => {
       const id = randomUUID(), path = `/synthetic/startup/workspace/${id}`, publicId = `${repo}::${path}`
       const git = { path, head: '', branch: 'synthetic', isBare: false, isMainWorktree: false }
       const payload = { ...git, id: publicId, repoId: repo, displayName: 'Synthetic startup workspace', comment: '',
@@ -139,5 +131,5 @@ await test('new orcad startup PG registration and Pool ownership boundaries', as
         VALUES($1,'GIT',$2,$3,$4,$5,'{}')`, [id, repo, group, path, JSON.stringify(payload)])
       await rejected({ ...input(), workspacePublicIds: [publicId] })
     })
-  } finally { await pool.end() }
+  } finally { if (!failedFourOnly) { await pool?.end() } }
 })
