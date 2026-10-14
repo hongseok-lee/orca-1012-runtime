@@ -26,7 +26,7 @@ export function externalCdpError(): BrowserError {
   return new BrowserError('browser_screencast_unavailable', 'The owned browser CDP transport is unavailable.')
 }
 export function validateExternalBrowserEndpoint(value: unknown): string {
-  if (typeof value !== 'string') throw externalCdpError()
+  if (typeof value !== 'string' || value.trim() !== value || value.includes('?') || value.includes('#')) throw externalCdpError()
   try {
     const url = new URL(value)
     if (url.protocol !== 'ws:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)
@@ -46,6 +46,7 @@ export class ExternalChromiumCdpConnection {
   private readonly failures = new Set<() => void>()
   private readonly generations = new Set<() => void>()
   private connecting: Promise<void> | null = null
+  private rejectOpening: ((error: Error) => void) | null = null
 
   get generation(): string {
     if (!this.generationValue) throw externalCdpError()
@@ -73,9 +74,14 @@ export class ExternalChromiumCdpConnection {
     }
     this.endpoint = endpoint
     this.generationValue = createHash('sha256').update(endpoint).digest('hex')
-    const connecting = this.open(endpoint)
+    const connecting = this.open(endpoint).then(async () => {
+      await this.command('Target.setDiscoverTargets', { discover: true })
+    })
     this.connecting = connecting
-    try { await connecting } finally {
+    try { await connecting } catch {
+      this.close()
+      throw externalCdpError()
+    } finally {
       if (this.connecting === connecting) this.connecting = null
     }
   }
@@ -83,6 +89,7 @@ export class ExternalChromiumCdpConnection {
     return new Promise((resolve, reject) => {
       const socket = new WebSocket(endpoint, { handshakeTimeout: 8000, maxPayload: 50 * 1024 * 1024 })
       this.socket = socket
+      this.rejectOpening = reject
       let opened = false
       const fail = (): void => {
         if (this.socket !== socket) return
@@ -91,7 +98,12 @@ export class ExternalChromiumCdpConnection {
       }
       socket.on('error', fail)
       socket.on('close', fail)
-      socket.once('open', () => { opened = true; resolve() })
+      socket.once('open', () => {
+        if (this.socket !== socket) return
+        opened = true
+        this.rejectOpening = null
+        resolve()
+      })
       socket.on('message', (bytes) => {
         if (this.socket !== socket) return
         let event: ExternalCdpEvent
@@ -137,6 +149,8 @@ export class ExternalChromiumCdpConnection {
   private failSocket(socket: WebSocket): void {
     if (this.socket !== socket) return
     this.socket = null
+    this.rejectOpening?.(externalCdpError())
+    this.rejectOpening = null
     for (const command of this.pending.values()) {
       clearTimeout(command.timer)
       command.reject(externalCdpError())

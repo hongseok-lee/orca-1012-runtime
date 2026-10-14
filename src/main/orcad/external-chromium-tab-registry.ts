@@ -64,6 +64,12 @@ export class ExternalChromiumTabRegistry {
           `Browser page ${requestedPageId} was not found in this worktree.`
         )
       }
+      await this.session.connectCdp()
+      if (this.pagesByPublicId.get(existing.publicPageId) !== existing ||
+        !await this.session.cdp.hasTarget(existing.targetId, existing.browserGeneration)) {
+        this.deletePage(existing)
+        throw new BrowserError('browser_tab_closed', 'The owned browser target is unavailable.')
+      }
       this.setActivePage(existing)
       return { browserPageId: existing.publicPageId }
     }
@@ -97,6 +103,10 @@ export class ExternalChromiumTabRegistry {
       await this.session.run(['open', url])
       if (!await this.session.cdp.hasTarget(targetId, page.browserGeneration)) throw externalCdpError()
     } catch (error) {
+      if (!agentPageId) {
+        const owned = await this.session.readTabs().then(tabs => tabs.filter(tab => tab.url === marker)).catch(() => [])
+        if (owned.length === 1) agentPageId = owned[0].tabId
+      }
       if (agentPageId) await this.session.run(['tab', 'close', agentPageId]).catch(() => {})
       throw error
     }

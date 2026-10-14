@@ -66,8 +66,8 @@ export class ExternalChromiumTargetScreencast {
       this.assertOpen()
       await this.command('Page.enable')
       await this.applyViewport()
-      await this.command('Page.startScreencast', this.captureParams())
       this.started = true
+      await this.command('Page.startScreencast', this.captureParams())
       this.assertOpen()
     } catch {
       this.fail()
