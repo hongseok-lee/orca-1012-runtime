@@ -1,0 +1,160 @@
+{
+  "source": "d6ee3ebc46dbd156b779f30815ba4ca73d1ab8ce",
+  "originalProductSource": "17cca6af7bb8fad1285921b399660a1a6806cad0",
+  "fixtureSource": "9d8f399e6d5e73831851c689c1bd36430fcb0ed6",
+  "publicHeadAtExecution": "d6ee3ebc46dbd156b779f30815ba4ca73d1ab8ce",
+  "base": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "input": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+  "schema013": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "schema014": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "sourceDigest": "4f09cca1a0b4d926255b8b36515d42ff7131d31db1d83082020f6ea7d391d745",
+  "fixtureSha256": "bed47665f2248b71917af6660ab344f5de18a87d46ad19b62b84d2f0fb55eb09",
+  "runtimeLaunchSha256": "d66a1599a733b3b7d9e33b7499203569a72d40e70d400256e069d20e1f26862e",
+  "bundleSha256": "f0e8d85468324be3eaadde7c4a969cb4f04e4cdd66f84fcd0e3952429e288a4e",
+  "startedAt": "2026-10-13T15:18:15.716Z",
+  "finishedAt": "2026-10-13T15:18:20.327Z",
+  "node": "v24.15.0",
+  "controlPid": 11095,
+  "checks": {
+    "format-runtime-launch-lint": {
+      "pid": 11107,
+      "status": "FINISHED",
+      "exit": 0,
+      "startedAt": "2026-10-13T15:18:15.770Z",
+      "finishedAt": "2026-10-13T15:18:16.689Z",
+      "sha256": "78a65ba1739b5ee48ad3db9c301f83600409208b36b076aa6a5c8a9ce71fe157",
+      "bytes": 91
+    },
+    "first-composition-test-prepare": {
+      "pid": 11121,
+      "status": "FINISHED",
+      "exit": 0,
+      "startedAt": "2026-10-13T15:18:16.708Z",
+      "finishedAt": "2026-10-13T15:18:17.178Z",
+      "sha256": "fd439755430dfc6e8a176fc11dfacab0265bd68eaaa3f87e9c5ad549c286397e",
+      "bytes": 43
+    },
+    "first-composition-pg": {
+      "pid": 11134,
+      "status": "FINISHED",
+      "exit": 1,
+      "startedAt": "2026-10-13T15:18:17.193Z",
+      "finishedAt": "2026-10-13T15:18:20.326Z",
+      "sha256": "22e3eb0134bd61cddb76f48b5d9317ba8ca03eada45b0d7867ac10f3dd6a7d53",
+      "bytes": 5488
+    }
+  },
+  "priorScopedType": {
+    "exit": 0,
+    "repeated": false,
+    "result": "absolute-path-verification/worker-results.json"
+  },
+  "focusedLint": {
+    "exit": 0,
+    "scope": "runtime-launch.ts only"
+  },
+  "firstPg": {
+    "executed": 7,
+    "passed": 5,
+    "failed": 2,
+    "skipped": 0,
+    "failedCases": [
+      1,
+      7
+    ],
+    "cases": [
+      {
+        "number": 1,
+        "name": "non-UUID public ID commits logical graph, fence one, event and outer receipt; replay has no effect",
+        "passed": false
+      },
+      {
+        "number": 2,
+        "name": "failure after Catalog head and first journal event rolls back the graph and receipt together",
+        "passed": true
+      },
+      {
+        "number": 3,
+        "name": "nested prepared DTO and owner callback receiver are fixed before the first SQL await",
+        "passed": true
+      },
+      {
+        "number": 4,
+        "name": "deleted existing Workspace is rejected without publishing new rows",
+        "passed": true
+      },
+      {
+        "number": 5,
+        "name": "changed shared Unit peers are rejected rather than adding a new lower-rank lock",
+        "passed": true
+      },
+      {
+        "number": 6,
+        "name": "existing public ID grammar and physical-handle exclusion reject invalid preparation",
+        "passed": true
+      },
+      {
+        "number": 7,
+        "name": "new active agent-session Tab clears the prior logical active Tab in the same Workspace",
+        "passed": false
+      }
+    ],
+    "tapParentIsAdditionalCase": false,
+    "topLevelTap": {
+      "tests": 8,
+      "passed": 5,
+      "failed": 3,
+      "parentIncluded": true
+    }
+  },
+  "failure": {
+    "code": "CATALOG_PAYLOAD",
+    "path": [
+      "resolveCatalogWorkspace",
+      "parseCatalogWorkspace",
+      "text"
+    ],
+    "fixtureSource": "catalog/agent-session.pg.test.mts:49-51",
+    "fixturePayload": {},
+    "case1Boundary": "after committed graph, effect-free replay and fence/ABSENT/null-handle readback; before final snapshot comparison",
+    "case7Boundary": "after first and second reservation COMMIT; before final active Tab snapshot assertion",
+    "sqlRelationErrorObserved": false,
+    "noSpeculativeProductFix": true
+  },
+  "sameSqlStrings": true,
+  "sameQueryParameters": true,
+  "newHelper": false,
+  "newTestSelector": false,
+  "typeRepeated": false,
+  "oldCasesRepeated": 0,
+  "sourceUpdateRepeated": false,
+  "install": false,
+  "ddlChanges": false,
+  "runtimeRestart": false,
+  "publicActivation": false,
+  "recapture": false,
+  "logs": {
+    "format-runtime-launch-lint-private.log": {
+      "sha256": "78a65ba1739b5ee48ad3db9c301f83600409208b36b076aa6a5c8a9ce71fe157",
+      "bytes": 91
+    },
+    "first-composition-pg-private.log": {
+      "sha256": "22e3eb0134bd61cddb76f48b5d9317ba8ca03eada45b0d7867ac10f3dd6a7d53",
+      "bytes": 5488
+    },
+    "first-composition-test-prepare-private.log": {
+      "sha256": "fd439755430dfc6e8a176fc11dfacab0265bd68eaaa3f87e9c5ad549c286397e",
+      "bytes": 43
+    }
+  },
+  "heavyOccupied": false,
+  "heavyReturnedAt": "2026-10-13T15:18:20.327Z",
+  "rootFollowupPending": true,
+  "processesEnded": [
+    11095,
+    11107,
+    11121,
+    11134,
+    11140
+  ]
+}

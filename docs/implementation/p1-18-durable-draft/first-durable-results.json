@@ -1,0 +1,41 @@
+{
+  "originalSourcePin": "48c993c36204606b537ba12f3219e317f9e8a380",
+  "sourcePin": "5010b6a50f03ae4c4e0a0c14d37305a41775f645",
+  "schemaPin": "58af00c45327221de84c729b6d818dfbe405daf9",
+  "inputPin": "4d1cabbc93ea33289a708196951b8d2a92a1bfdf",
+  "evidenceTypePin": "250bc7eafc93c92df1ed3771da7d63d9dc4922cf",
+  "pg": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "concurrency": 1
+  },
+  "type": {
+    "exitCode": 0
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": 10,
+    "warnings": 0,
+    "errors": 0
+  },
+  "initialFailure": {
+    "step": "esbuild",
+    "message": "Expected \";\" but found \")\"",
+    "file": "src/main/durable-runtime/terminal/durable-draft.test.mts",
+    "line": 57,
+    "pgExecuted": false,
+    "correction": "fixture의 여분 닫는 괄호 1개만 제거했습니다."
+  },
+  "remaining": "서버 인증 issuer / public RPC / 실제 설치 앱 / PTY / provider / Cloud 활성화는 없습니다. Device / floor / reattach 허가는 fixture의 합성 allowlist입니다.",
+  "payload": "{version:1,text,chunks,wire,originalIngressId}와 ordered aliasPath / contentHash 첨부를 유지했습니다.",
+  "completedAt": "2026-10-13T14:40:01Z",
+  "existingPure7Input11Schema1Repeated": false,
+  "captureExecutions": 0,
+  "pr35AssetPin": "9e393e684781b15b90af3b03e5cc86b8356da314",
+  "nodeVersion": "24.15.0",
+  "ownedPidsTerminated": 8,
+  "heavySlotReturned": 1,
+  "verificationScope": "실제 소유 PG와 합성 인증 / device / floor 자료의 신규 durable 합류 경계입니다. 실제 앱 / provider / 인증 issuer / HA 합격이 아닙니다."
+}
