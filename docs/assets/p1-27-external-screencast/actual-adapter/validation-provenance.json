@@ -282,5 +282,42 @@
       "socketBytes": 70
     }
   ],
-  "nativeBinarySHA256": "c249a948cb6a60df94320e319c372a5e679466ca8ea2cc4e69bac4fcc7c270f3"
+  "nativeBinarySHA256": "c249a948cb6a60df94320e319c372a5e679466ca8ea2cc4e69bac4fcc7c270f3",
+  "inputLineage": {
+    "preformatScanPin": "9ab64fcaa22e10ce103a66b83af9cf21df09460c",
+    "scanFiles": 86,
+    "scanBytes": 412570,
+    "missing": 0,
+    "scanSHA256": "4abfab7db88e02404f01a2d81e21a15804eddd483a0b1c31a930888a6ffc4ab1",
+    "preformatImportDeltaSHA256": "db8253ab45d5b9644625fb6097d036bba787ff4cb20cef2d12e3cb1089e16aa5",
+    "correctedSourcePin": "2d9ab47e41ff3ba4d520feea4947a4979c7b75e3",
+    "ownedOverlayFiles": 12,
+    "mechanicalChangedOwnedFiles": [
+      "src/main/orcad/external-chromium-browser-process.ts",
+      "src/main/orcad/external-chromium-cdp-connection.ts",
+      "src/main/orcad/external-chromium-screencast-fixture.ts",
+      "src/main/orcad/external-chromium-screencast-subscribers.ts",
+      "src/main/orcad/external-chromium-subscriber-cleanup.test.ts",
+      "src/main/orcad/external-chromium-tab-registry.ts",
+      "src/main/orcad/external-chromium-target-binding.test.ts",
+      "src/main/orcad/external-chromium-target-screencast.ts",
+      "src/main/orcad/external-chromium-target-stop.test.ts"
+    ],
+    "unchangedOwnedFiles": 3,
+    "mechanicalDiffSHA256": "2d8570933847a257f42c0a7c4cee4ad2a1774ef5d8602fac40233ea5e273b8df",
+    "correctedStaticStartedAt": "2026-10-14T12:07:35.684Z",
+    "correctedStaticEndedAt": "2026-10-14T12:07:45.400Z",
+    "overlayQualification": "초기 소유 12개 overlay 위에 기존 --fix와 명시적 소유 tab-registry 표현 교정이 반영된 실행 순서입니다. 86-file scan을 교정 후 재해시한 증거로 표시하지 않습니다.",
+    "actualBundle": {
+      "bytes": 1017898,
+      "sha256": "48a2b0c60693c18c85e430deee0e65ca5f3291223c657f7a2a1de57db0cc59ae",
+      "preservedLocalArtifactMtimeUTC": "2026-10-14T12:11:56.045135+00:00",
+      "metafileSHA256": "a2d3d32a89674509ed286a5570b9bedc387e17db2e43992e9082ef27697f7c8e",
+      "preservedLocalMetafileMtimeUTC": "2026-10-14T12:11:56.047085+00:00",
+      "actualStageRecordMtimeUTC": "2026-10-14T12:13:57.478839+00:00",
+      "qualification": "위 시각은 보존된 로컬 산출물의 파일 시각입니다. 독립적인 build 시작/종료 타임스탬프나 193개 입력 전체의 교정 후 bytes 일치를 새로 증명하지 않습니다. 기존 교정 실행 순서, 산출물 hash 및 actual entry 원기록을 연결합니다.",
+      "firstActualEntryUTC": "2026-10-14T12:14:37.091Z"
+    },
+    "additionalScanBuildExecution": 0
+  }
 }

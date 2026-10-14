@@ -64,6 +64,20 @@ B는 14,085 bytes/SHA256 `b74863f6af8a507ffcc63693b8b9a8dcbb44e26834050d408c1b73
 소유 browser 교체 후 옛 public page 재구독 거절과 기존 subscriber의 추가 frame 채택 0을 확인했습니다.
 Target 소멸이 먼저 mapping을 제거할 수 있으므로 모든 내부 generation mismatch branch나 정상 reconnect의 증거로 확대하지 않습니다.
 
+## 원 입력과 교정 후 실행의 lineage
+
+`inputscan 86`과 당시 `actual-import-delta`는 preformat `9ab64fcaa22e10ce103a66b83af9cf21df09460c` 기준입니다.
+86개 입력의 412,570 bytes와 missing 0 기록을 교정 후 `2d9ab47e` 전체 bytes 일치 증거로 표시하지 않습니다.
+기존 소유 12개 overlay 중 9개 파일에 Root가 수락한 format diff가 있고 3개는 그대로입니다.
+기존 `--fix`와 tab-registry의 동등한 await 표현 교정 뒤 corrected type/lint는 12:07:35.684–45.400 UTC에 실행됐습니다.
+
+보존된 actual bundle은 1,017,898 bytes/SHA256 `48a2b0c60693c18c85e430deee0e65ca5f3291223c657f7a2a1de57db0cc59ae`입니다.
+로컬 bundle 파일 시각은 12:11:56.045135 UTC, metafile 파일 시각은 12:11:56.047085 UTC이며,
+actual stage 원기록의 파일 시각은 12:13:57.478839 UTC입니다. 최초 actual entry는 12:14:37.091 UTC입니다.
+이 파일 시각을 별도로 기록하지 않은 build 시작/종료 타임스탬프로 바꾸지 않습니다.
+교정 후 모든 의존성 bytes 일치나 새 lineage 증명을 만들지 않고 기존 교정 실행 순서와 원 산출물 hash를 연결했습니다.
+재scan·재build·재실행은 하지 않았습니다. 입력 pin과 해당 원자료 hash는 검증 provenance에 기록했습니다.
+
 ## 종료 결과와 남은 한계
 
 첫 actual의 native CLI 44개는 모두 exit 0이었고 마지막 exact session close PID 3012가 `closed: true`를 반환했습니다.
