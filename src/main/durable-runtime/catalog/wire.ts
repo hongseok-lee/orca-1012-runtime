@@ -9,6 +9,8 @@ import {
 } from '../../../shared/rpc-contract/session-tabs-schemas-params.ts'
 import { TerminalFocus, TerminalHandle, TerminalRename } from '../../../shared/rpc-contract/terminal-unary-params.ts'
 import { UiUpdate } from '../../../shared/rpc-contract/client-ui-params.ts'
+import { BrowserTabCreateParams } from '../../../shared/rpc-contract/browser-tab-create-params.ts'
+import type { BrowserTabCreateResult } from '../../../shared/runtime-browser-contracts.ts'
 import type { Repo } from '../../../shared/repo-types.ts'
 import type { ProjectGroup } from '../../../shared/project-group-types.ts'
 import type { FolderWorkspace } from '../../../shared/folder-workspace-types.ts'
@@ -49,7 +51,8 @@ export const catalogWireSchemas = {
   'session.tabs.closeLifecycle': CloseLifecycleTab,
   'terminal.focus': TerminalFocus,
   'terminal.rename': TerminalRename,
-  'terminal.close': TerminalHandle
+  'terminal.close': TerminalHandle,
+  'browser.tabCreate': BrowserTabCreateParams
 } as const
 
 export type CatalogMethod = keyof typeof catalogWireSchemas
@@ -83,4 +86,5 @@ export type CatalogWireResults = {
   'terminal.focus': { focus: RuntimeTerminalFocus }
   'terminal.rename': { rename: RuntimeTerminalRename }
   'terminal.close': { close: RuntimeTerminalClose }
+  'browser.tabCreate': BrowserTabCreateResult
 }
