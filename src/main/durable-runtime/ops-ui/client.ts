@@ -16,7 +16,11 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
   let notifications: OpsNotification[] = []
   let nextNotification: string | null = null
   let operationId: string | null = null
-  let uncertainCommand: { unitId: string; body: string } | null = null
+  let operationUnitId: string | null = null
+  let operationInFlight = false
+  let uncertainCommand: { unitId: string; operationId: string; body: string } | null = null
+  let detailSequence = 0
+  let detailController: AbortController | null = null
   const readRetries = new Map<string, string>()
   const eventRows: HTMLElement[] = []
   const byId = (id: string) => {
@@ -56,16 +60,27 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
     text('connection', kind === 'ready' || kind === 'empty' ? '연결됨' : kind === 'loading' ? '조회 중' : kind === 'auth' ? '인증 필요' : '연결 확인 필요')
     byId('connection').dataset.state = kind === 'ready' || kind === 'empty' ? 'ready' : kind === 'auth' || kind === 'loading' ? kind : 'error'
   }
+  function invalidateDetail(): void {
+    detailSequence++; detailController?.abort(); detailController = null
+  }
+  function syncCommandControls(): void {
+    const blocked = uncertainCommand !== null || operationInFlight
+    for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-command="wake"]')) {
+      button.disabled = blocked
+      button.title = blocked ? '원 명령의 접수 결과를 확인하는 동안 새 명령은 시작할 수 없습니다.' : '명령을 접수합니다. 실제 완료 상태는 별도로 확인합니다.'
+    }
+    ;(byId('operation-refresh') as HTMLButtonElement).disabled = operationInFlight || (!uncertainCommand && !operationId)
+  }
   function clearData(): void {
     units = []; notifications = []; cursor = null; resetCursor = null; eventRows.length = 0
     for (const id of ['unit-rows', 'unit-cards', 'notifications', 'events', 'detail-body']) { byId(id).replaceChildren() }
     for (const id of ['unit-count', 'pending-count', 'input-count', 'unknown-count']) { text(id, '미관측') }
     text('observed-at', '관측 시각 미확인'); byId('units-empty').hidden = true
     text('notification-state', '아직 조회하지 않았습니다.'); text('event-state', '아직 조회하지 않았습니다.')
-    byId('operation-panel').hidden = true; operationId = null; uncertainCommand = null; readRetries.clear()
+    byId('operation-panel').hidden = true; operationId = null; operationUnitId = null; uncertainCommand = null; operationInFlight = false; readRetries.clear()
   }
   function disconnect(): void {
-    generation++; controller.abort(); controller = new AbortController(); key = ''; clearData()
+    generation++; controller.abort(); invalidateDetail(); controller = new AbortController(); key = ''; clearData()
     byId('auth-panel').hidden = false; byId('disconnect').hidden = true
     ;(byId('reload') as HTMLButtonElement).disabled = true
     ;(byId('unit-detail') as HTMLDialogElement).close()
@@ -121,10 +136,10 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       if (/snapshot|checkpoint|restore|unknown/i.test(action.action)) { continue }
       const enabled = action.action === 'wake' && action.enabled
       const button = node('button', action.action === 'wake' ? '깨우기 요청' : action.action) as HTMLButtonElement
-      button.type = 'button'; button.disabled = !enabled
+      button.type = 'button'; button.disabled = !enabled || uncertainCommand !== null || operationInFlight
       const reason = action.reason ?? (enabled ? null : '현재 연결되지 않은 명령입니다.')
       button.title = reason ?? '명령을 접수합니다. 실제 완료 상태는 별도로 확인합니다.'
-      if (enabled) { button.addEventListener('click', () => { void command(unit, button) }) }
+      if (enabled) { button.dataset.command = 'wake'; button.addEventListener('click', () => { void command(unit) }) }
       buttons.append(button)
       if (reason) { box.append(node('p', `${action.action}: ${reason}`, 'action-reason')) }
     }
@@ -145,15 +160,22 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       const more = node('button', 'Session·Tab·mount 상세') as HTMLButtonElement
       more.type = 'button'; more.addEventListener('click', () => { void detail(unit.id) }); card.append(more); byId('unit-cards').append(card)
     }
+    syncCommandControls()
   }
   async function detail(id: string): Promise<void> {
-    const current = generation, dialog = byId('unit-detail') as HTMLDialogElement
-    text('detail-title', 'Unit 상세 조회 중'); byId('detail-body').replaceChildren(); dialog.showModal()
+    invalidateDetail()
+    const current = generation, sequence = detailSequence, requestController = new AbortController()
+    detailController = requestController
+    const dialog = byId('unit-detail') as HTMLDialogElement
+    const active = () => current === generation && sequence === detailSequence && dialog.open && !requestController.signal.aborted
+    text('detail-title', 'Unit 상세 조회 중'); byId('detail-body').replaceChildren()
+    if (!dialog.open) { dialog.showModal() }
     try {
-      const data = await api<OpsUnitDetail>(`${routes.units}/${encodeURIComponent(id)}`)
-      if (current !== generation) { return }
+      const signal = AbortSignal.any([controller.signal, requestController.signal])
+      const data = await api<OpsUnitDetail>(`${routes.units}/${encodeURIComponent(id)}`, undefined, signal)
+      if (!active()) { return }
       text('detail-title', data.unit.alias ?? data.unit.id)
-      const body = byId('detail-body'); body.append(unitFacts(data.unit), actions(data.unit))
+      const body = byId('detail-body'); body.append(unitFacts(data.unit), actions(data.unit)); syncCommandControls()
       const sections: [string, string[]][] = [
         ['Sessions', data.sessions.map(s => `${s.id} · ${s.lifecycle} · revision ${s.revision}`)],
         ['Tabs', data.tabs.map(t => `${t.id} · ${t.kind} · ${t.lifecycle} · Session ${t.sessionId ?? '없음'}`)],
@@ -166,7 +188,8 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
         for (const value of rows.length ? rows : ['저장된 항목이 없습니다.']) { section.append(node('p', value)) }
         body.append(section)
       }
-    } catch (error) { if (current === generation) { text('detail-title', '상세 조회 실패'); errorState(error) } }
+    } catch (error) { if (active()) { text('detail-title', '상세 조회 실패'); errorState(error) } }
+    finally { if (sequence === detailSequence) { detailController = null } }
   }
   function renderNotifications(): void {
     const list = byId('notifications'); list.replaceChildren()
@@ -192,36 +215,45 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       readRetries.delete(notification.id); renderNotifications()
     } catch (error) { if (current === generation) { renderNotifications(); errorState(error) } }
   }
-  async function command(unit: OpsUnit, button?: HTMLButtonElement): Promise<void> {
-    const current = generation
-    if (button) { button.disabled = true }
+  async function command(unit: OpsUnit): Promise<void> {
+    // A different card click must never become a retry of an earlier Unit's command.
+    if (uncertainCommand || operationInFlight) { return }
     const request: OpsCommandRequest = { operationId: crypto.randomUUID(), expectedRevision: unit.revision, action: 'wake', params: { expectedIntentRevision: unit.intentRevision } }
-    const pending = uncertainCommand ?? { unitId: unit.id, body: JSON.stringify(request) }
-    uncertainCommand = pending; byId('operation-panel').hidden = false; text('operation-result', '접수 여부를 확인 중입니다.')
+    await sendCommand({ unitId: unit.id, operationId: request.operationId, body: JSON.stringify(request) })
+  }
+  async function sendCommand(pending: { unitId: string; operationId: string; body: string }): Promise<void> {
+    if (operationInFlight) { return }
+    const current = generation
+    operationInFlight = true; uncertainCommand = pending; operationId = null; operationUnitId = pending.unitId
+    syncCommandControls(); byId('operation-panel').hidden = false
+    text('operation-result', `Unit ${pending.unitId} · operation ${pending.operationId} · 접수 여부를 확인 중입니다.`)
     try {
       const result = await api<OpsCommandAdmission>(`${routes.units}/${encodeURIComponent(pending.unitId)}/commands`, pending.body)
       if (current !== generation) { return }
       operationId = result.operationId; uncertainCommand = null
-      text('operation-result', `접수됨 · ${result.receipt} · ${result.executionDisposition}. 실제 적용 완료는 아직 확인하지 않았습니다.`)
+      text('operation-result', `Unit ${pending.unitId} · operation ${result.operationId} · 접수됨 · ${result.receipt} · ${result.executionDisposition}. 실제 적용 완료는 아직 확인하지 않았습니다.`)
       text('operation-refresh', '실제 상태 확인')
     } catch (error) {
-      if (current === generation) { text('operation-result', '접수 결과를 확인하지 못했습니다. 동일한 operation ID와 원 payload로 다시 확인할 수 있습니다.'); text('operation-refresh', '같은 요청으로 접수 확인'); errorState(error) }
-    } finally { if (button && current === generation) { button.disabled = false } }
+      if (current === generation) {
+        text('operation-result', `Unit ${pending.unitId} · operation ${pending.operationId} · 접수 결과를 확인하지 못했습니다. 동일한 operation ID와 원 payload로 다시 확인할 수 있습니다.`)
+        text('operation-refresh', '원 요청으로 접수 재확인'); errorState(error)
+      }
+    } finally { if (current === generation) { operationInFlight = false; syncCommandControls() } }
   }
   async function refreshOperation(): Promise<void> {
-    if (uncertainCommand) {
-      const unit = units.find(u => u.id === uncertainCommand?.unitId)
-      if (unit) { await command(unit) }
-      return
-    }
+    if (operationInFlight) { return }
+    // Retry uses only the preserved target/body, even after the Unit leaves the list.
+    if (uncertainCommand) { await sendCommand(uncertainCommand); return }
     if (!operationId) { return }
-    const current = generation
+    const current = generation, id = operationId, unitId = operationUnitId
+    operationInFlight = true; syncCommandControls()
     try {
-      const value = await api<OpsOperation>(`${routes.operations}/${encodeURIComponent(operationId)}`)
+      const value = await api<OpsOperation>(`${routes.operations}/${encodeURIComponent(id)}`)
       if (current !== generation) { return }
       const label = { queued: '대기 중', blocked: '차단 / 대기', failed: '실패', applied: '실제 적용됨', unverifiable: '미확인' }[value.disposition]
-      text('operation-result', `${label} · ${value.step} · ${value.reason ?? '사유 없음'} · revision ${value.revision}`)
+      text('operation-result', `Unit ${unitId} · operation ${id} · ${label} · ${value.step} · ${value.reason ?? '사유 없음'} · revision ${value.revision}`)
     } catch (error) { if (current === generation) { errorState(error) } }
+    finally { if (current === generation) { operationInFlight = false; syncCommandControls() } }
   }
   function replay(page: OpsReplayPage): boolean {
     if (page.status === 'RESET_REQUIRED') {
@@ -276,14 +308,24 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
   async function load(): Promise<void> {
     if (!key) { return }
     generation++; const current = generation
-    controller.abort(); controller = new AbortController(); const signal = controller.signal
+    controller.abort(); invalidateDetail(); operationInFlight = false
+    controller = new AbortController(); const signal = controller.signal
+    syncCommandControls()
+    if (uncertainCommand) {
+      text('operation-result', `Unit ${uncertainCommand.unitId} · operation ${uncertainCommand.operationId} · 원 요청의 접수 결과를 재확인해야 합니다.`)
+      text('operation-refresh', '원 요청으로 접수 재확인')
+    }
     status('loading', '저장된 상태를 조회합니다', '자료를 확인할 때까지 미관측 상태를 유지합니다.')
-    const startCursor = resetCursor ?? cursor; resetCursor = null
+    const rangeReset = resetCursor !== null, startCursor = resetCursor ?? cursor
     try {
       const [list, notice, events] = await Promise.all([api<OpsUnitList>(routes.units, undefined, signal), api<OpsNotificationList>(routes.notifications, undefined, signal), api<OpsReplayPage>(routes.events + (startCursor ? `?after=${encodeURIComponent(after(startCursor))}` : ''), undefined, signal)])
       if (current !== generation) { return }
       renderUnits(list); notifications = notice.notifications; nextNotification = notice.nextAfterId; renderNotifications()
       status(units.length ? 'ready' : 'empty', '저장된 Unit이 없습니다', '연결과 조회는 정상입니다. 이 범위에 저장된 Unit이 없습니다.')
+      if (rangeReset && events.status === 'PAGE') {
+        // Keep old observations during reset/failure; replace them only on a new range PAGE.
+        eventRows.length = 0; byId('events').replaceChildren(); resetCursor = null
+      }
       if (replay(events)) {
         void stream(current, signal).catch(error => {
           if (current !== generation || signal.aborted) { return }
@@ -303,7 +345,9 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
   })
   byId('disconnect').addEventListener('click', disconnect)
   for (const id of ['reload', 'status-reload']) { byId(id).addEventListener('click', () => { void load() }) }
-  byId('close-detail').addEventListener('click', () => { (byId('unit-detail') as HTMLDialogElement).close() })
+  byId('close-detail').addEventListener('click', () => { invalidateDetail(); (byId('unit-detail') as HTMLDialogElement).close() })
+  byId('unit-detail').addEventListener('cancel', invalidateDetail)
+  byId('unit-detail').addEventListener('close', () => { if (!(byId('unit-detail') as HTMLDialogElement).open) { invalidateDetail() } })
   byId('operation-refresh').addEventListener('click', () => { void refreshOperation() })
   byId('more-notifications').addEventListener('click', () => {
     if (!nextNotification) { return }
@@ -313,7 +357,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES): void {
       const ids = new Set(notifications.map(n => n.id)); notifications.push(...page.notifications.filter(n => !ids.has(n.id))); nextNotification = page.nextAfterId; renderNotifications()
     }).catch(error => { if (current === generation) { errorState(error) } })
   })
-  window.addEventListener('pagehide', () => { generation++; controller.abort(); key = '' }, { once: true })
+  window.addEventListener('pagehide', () => { generation++; controller.abort(); invalidateDetail(); key = '' }, { once: true })
 }
 
 export const opsUiClientSource = `(${bootOpsUi.toString()})(${JSON.stringify(OPS_ROUTES)});`
