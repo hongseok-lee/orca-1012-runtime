@@ -1,10 +1,10 @@
 import type { OpsHttpHandler } from '../../durable-runtime/ops/types.ts'
 // WebSocket transport letting mobile clients reach the Orca runtime over LAN (wss:// with TLS, else ws://); auth is per-device tokens, independent of transport encryption.
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https'
-import { createServer as createHttpServer, type Server as HttpServer, type RequestListener } from 'node:http'
+import { createServer as createHttpServer, type Server as HttpServer } from 'node:http'
 import { WebSocketServer, type WebSocket } from 'ws'
 import type { RpcTransport } from './transport'
-import { createStaticWebClientHandler } from './static-web-client-handler'
+import { createWebSocketHttpHandler } from './ws-http-handler'
 import { RemoteRuntimeServerHeartbeat } from './remote-runtime-server-heartbeat'
 
 const MAX_WS_MESSAGE_BYTES = 1024 * 1024
@@ -177,16 +177,7 @@ export class WebSocketTransport implements RpcTransport {
   }
 
   private createHttpServer(): HttpServer | HttpsServer {
-    const staticListener = this.staticRoot
-      ? createStaticWebClientHandler(this.staticRoot)
-      : undefined
-    const requestListener: RequestListener | undefined = this.httpHandler
-      ? (request, response) => {
-          if (this.httpHandler!(request, response)) { return }
-          if (staticListener) { staticListener(request, response) }
-          else { response.statusCode = 404; response.end() }
-        }
-      : staticListener
+    const requestListener = createWebSocketHttpHandler(this.staticRoot, this.httpHandler)
     return this.tlsCert && this.tlsKey
       ? createHttpsServer({ cert: this.tlsCert, key: this.tlsKey }, requestListener)
       : createHttpServer(requestListener)
