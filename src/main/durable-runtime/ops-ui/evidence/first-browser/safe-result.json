@@ -1,0 +1,126 @@
+{
+  "sourcePin": "2b7fd5a681fa592d45d2b69d30ff88d1e1566892",
+  "preservedSourcePin": "79600a4933dbf7416808e540bb3483264cacdf48",
+  "apiContractPin": "93c93be939cc8a68c131941c8b981494d6c6ac3f",
+  "synthetic": true,
+  "journeyExecutions": 1,
+  "browserSessions": 1,
+  "observations": [
+    {
+      "name": "실제 provider app.js의 HTTP 로드와 초기 인증 화면 구동",
+      "passed": true,
+      "at": "2026-10-14T02:13:22.798Z"
+    },
+    {
+      "name": "desktop 정상 조회 및 알림 읽음과 해결 분리",
+      "passed": true,
+      "at": "2026-10-14T02:13:23.005Z"
+    },
+    {
+      "name": "mobile 미관측 telemetry 및 disabled 사유",
+      "passed": true,
+      "at": "2026-10-14T02:13:23.186Z"
+    },
+    {
+      "name": "상세 A 지연 후 닫기와 B 선택이 늦은 응답으로 덮이지 않음",
+      "passed": true,
+      "at": "2026-10-14T02:13:23.660Z"
+    },
+    {
+      "name": "command in-flight 중 다른 Unit의 새 command 차단",
+      "passed": true,
+      "at": "2026-10-14T02:13:23.911Z"
+    },
+    {
+      "name": "다른 Unit 클릭이 원 Unit 재전송을 유발하지 않음",
+      "passed": true,
+      "at": "2026-10-14T02:13:23.926Z"
+    },
+    {
+      "name": "503 불확정과 lowercase 코드 보존",
+      "passed": true,
+      "at": "2026-10-14T02:13:23.952Z"
+    },
+    {
+      "name": "목록에서 사라진 원 Unit의 동일 body 및 operation identity 재확인",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.125Z"
+    },
+    {
+      "name": "현재 Unit 목록에 없어도 원 operation 조회 가능",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.188Z"
+    },
+    {
+      "name": "확정 409 후 원 retry 종료 및 다른 Unit의 새 identity",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.332Z"
+    },
+    {
+      "name": "확정 거절 뒤 비활성 재확인이 command를 다시 보내지 않음",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.350Z"
+    },
+    {
+      "name": "RESET_REQUIRED 통지 동안 이전 자료 보존",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.428Z"
+    },
+    {
+      "name": "명시 reload의 새 epoch/range와 과거 eventRows 분리",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.492Z"
+    },
+    {
+      "name": "invalid auth의 원 lowercase 오류 및 인증 필요 상태",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.560Z"
+    },
+    {
+      "name": "실제 변환 toString 자산의 runtime 오류 0",
+      "passed": true,
+      "at": "2026-10-14T02:13:24.566Z"
+    }
+  ],
+  "runtimeErrorCount": 0,
+  "expectedHTTPConsoleMessages": [
+    {
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    }
+  ],
+  "commandRetryIdentity": {
+    "originalBodySHA256": "7f81b7fa193b789548f51f83c0b14fc20b2bf09fe5e1b1abe674fe2ce4b160ef",
+    "retryBodySHA256": "7f81b7fa193b789548f51f83c0b14fc20b2bf09fe5e1b1abe674fe2ce4b160ef",
+    "operationId": "311d3090-5243-4895-8a69-a13c20f631a7"
+  },
+  "resetCursor": {
+    "newRangeAfter": {
+      "streamId": "synthetic-stream",
+      "epoch": "2",
+      "offset": "9"
+    }
+  },
+  "ownedHTTPServerClosed": true,
+  "browserClosed": true,
+  "esbuildVersion": "0.25.12",
+  "playwrightVersion": "1.59.1",
+  "chromiumVersion": "147.0.7727.15",
+  "fullBuildExecutions": 0,
+  "installExecutions": 0,
+  "actualAPIQualified": false,
+  "nativeQualified": false,
+  "ExpoAuthChanged": false,
+  "qualification": "이 첫 UI 조작은 실제 getOpsUiAsset의 변환 자산과 합성 DTO/HTTP 응답을 사용했습니다. 실제 API 권한·Expo·native 제품·provider·HA 합격이 아닙니다. 두 owner 보고 PNG는 UI 조작과 별도입니다."
+}
