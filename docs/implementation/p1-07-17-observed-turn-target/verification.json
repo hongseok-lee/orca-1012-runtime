@@ -1,0 +1,139 @@
+{
+  "scope": "actual isolated PostgreSQL transaction/resolver fixture with synthetic authority/proof; no public API, actual provider authentication, native device or HA verification",
+  "verifiedSourcePin": "7f23c113f04f64d0a9a0a115c2a94962032a8b7b",
+  "alignedSourcePin": "7d1671504cd0179666d692300f315da5e6b74c57",
+  "base": "7e9fd6ddbade00acbe43787cdb29068141b02a1a",
+  "owned": {
+    "src/main/durable-runtime/input/observed-turn-target.ts": {
+      "sha256": "6746f1fcbe9a348fba83e86f4d2b302c8232efeebacf12408d6f2f79340df337",
+      "bytes": 9414,
+      "gitBlob": "36c9be6887c1f6f30e536ae567426ddd65abc04f",
+      "mode": "100644"
+    },
+    "src/main/durable-runtime/input/observed-turn-target.pg.test.mts": {
+      "sha256": "a49176bb824a56cb8b346d1dc93557a6b8d66426faf214b117374f964837c6b6",
+      "bytes": 13930,
+      "gitBlob": "23409b7f20397260d59d3e81ed6df7b0f282b10c",
+      "mode": "100644"
+    }
+  },
+  "history": [
+    {
+      "phase": "first-owned-lint",
+      "exit": 1,
+      "diagnostic": "eslint(curly)",
+      "errors": 12,
+      "rawLogSHA256": "852629eb62174d52c830a154009146381b89dd7183caa0e379ee6ca761ff9f82"
+    },
+    {
+      "phase": "changed-product-lint",
+      "exit": 0,
+      "correction": "12 reviewed braces only"
+    },
+    {
+      "phase": "first-PG",
+      "exit": 1,
+      "code": "DB_FAILURE",
+      "rawTAP_SHA256": "59a985286cab21c5023ed3dd6952c9e0521be04d64fefd7b8432a7f1b69e8ee4",
+      "causeSourceAnalysis": "Fixture query replacement remained installed for the transaction owner COMMIT.",
+      "unsanitizedRuntimeExceptionPreserved": false
+    },
+    {
+      "phase": "changed-fixture-lint",
+      "exit": 0,
+      "correction": "2 reviewed query save/restore lines only"
+    },
+    {
+      "phase": "corrected-PG",
+      "exit": 0,
+      "rawTAP_SHA256": "fc4c9de9dee706eaa303c58893b946959d0fbce27125d77e938c1eb4a5365b18"
+    }
+  ],
+  "TAP": {
+    "tests": 2,
+    "pass": 2,
+    "fail": 0,
+    "cancelled": 0
+  },
+  "productCallbacks": 1,
+  "parentProductCallbacks": 0,
+  "actualRuntimeImports": 31,
+  "metafileInputsIncludingGeneratedWrapper": 32,
+  "pgZodExternal": true,
+  "metafileSavedBeforeGuard": true,
+  "wrapper": {
+    "sourceSha256": "a49176bb824a56cb8b346d1dc93557a6b8d66426faf214b117374f964837c6b6",
+    "originalBodySha256": "c61cef94d66e0d7c625da8dd14ef1124f04f08b845cd40361ecaf93eababfa2b",
+    "wrapperSha256": "267633a96b916c5238b7ef79bc330bba19d3b47371960bf0feba694dba957d5a",
+    "runnerSHA256": "b5cdcdd502120efa52a8c011877359557793c161346f0ae4de804dfa82ab9880",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "sourceOrAssertionsChanged": false
+  },
+  "databaseIdentityVerified": true,
+  "sameOwnedDatabaseRetained": true,
+  "SQL19AppliedOnce": true,
+  "schemaRepeated": 0,
+  "ledgerRows": 19,
+  "ledgerUnchanged": true,
+  "ledgerHash": "d7e5cbb19d5555d29719acbb3e5ad469f0a6cfac2ed6b7c97bf9ee3bb9224a14",
+  "originalRows": 51,
+  "originalRowsPreserved": true,
+  "originalRowComparison": "PostgreSQL JSONB equality, independent of JSON key order",
+  "newUUIDSeedOnly": true,
+  "resetDelete": 0,
+  "dependencyDeltaDuringFinalAlignment": 0,
+  "ownedBlobModeUnchanged": true,
+  "typeExecuted": 0,
+  "productLintRepeatedAfterPass": 0,
+  "entirePrepareRepeated": 0,
+  "actualChecks": {
+    "changed-fixture-lint": {
+      "startedAt": "2026-10-14T20:29:09.662Z",
+      "endedAt": "2026-10-14T20:29:10.163Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "1785373695c5a129f71ad0d9d25c6d5c19129314085c62992b2311612666ebaf"
+    },
+    "fixture-bundle": {
+      "startedAt": "2026-10-14T20:29:10.168Z",
+      "endedAt": "2026-10-14T20:29:10.347Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "9c4b60959cb37210e79ed826b8d350181ca5cde62bf74f27d937f6e2c1c7dcf6"
+    },
+    "before-read": {
+      "startedAt": "2026-10-14T20:29:10.351Z",
+      "endedAt": "2026-10-14T20:29:10.823Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "3010deaab0c87f7e338122c0d7dea7aacd3e3ad61644ddc1a82c4ce08fb889bb"
+    },
+    "PG-callback": {
+      "startedAt": "2026-10-14T20:29:10.826Z",
+      "endedAt": "2026-10-14T20:29:14.893Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "fc4c9de9dee706eaa303c58893b946959d0fbce27125d77e938c1eb4a5365b18"
+    },
+    "after-read": {
+      "startedAt": "2026-10-14T20:29:14.899Z",
+      "endedAt": "2026-10-14T20:29:15.352Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "1ee7d87593d8669e8a80206196637509c4959f3b882af7ceeecfafee3dcf52e6"
+    }
+  },
+  "cleanup": {
+    "activeJobs": 0,
+    "heavyOccupied": false,
+    "knownChildrenAbsent": true,
+    "supervisorExitedZombie": true
+  },
+  "limits": [
+    "Synthetic proof is not actual provider authentication.",
+    "Production observe caller and public cancel wiring are not connected by this module.",
+    "Original first PG runtime exception was sanitized; cause is separately labeled source analysis.",
+    "Historical C3 Expo Web captures do not verify this resolver or native iPhone."
+  ]
+}
