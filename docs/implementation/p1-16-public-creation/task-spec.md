@@ -25,3 +25,13 @@
 아직 시험·설치·제품 build·live config/sync·runner 재시작·새 Pod/디렉터리 생성은 하지 않는다. 기존 source/cache를 재사용하며 전체 legacy 복사와 성공 suite 반복을 금지한다. 고정 base를 main 이동마다 재정렬하지 않는다. Public PR에는 이 명세의 공개 사본 전문·실제 source/의존/검증·실제 원 화면의 provenance와 한계를 담는다. 기존 빈 화면을 이 생성 경로의 실증으로 표시하지 않는다.
 
 빠른 개발·단계 종료 원문 출력/작업계획 읽기·메모리/PR/디스크 대조, native9+root/bridge11·heavy2 상한을 유지한다. 동결 template·원 backup·TTL에 접근하지 않는다. 계획/최종 수용 및 live 활성화 범위는 root만 결정한다.
+
+## 2026-10-14 10:46 root 검토 — 같은 실제 저장 범위의 canonical binding
+
+Root는 PR54 fbfaf92852c5dba228a0831b4d55d99ef698b8ac의 제품과 값1/PG4 fixture, 원 DDL002·runtime-launch.ts·create.ts·locks.ts 및 정본 §11.1을 읽었다. Worker의 계약 충돌 지적을 채택한다. 같은 `(backend_id, export_id, canonical_directory)`에 새 UUID binding을 계속 INSERT하라는 초기 5번은 UNIQUE와 충돌하며, 같은 디렉터리를 다른 자원으로 꾸미는 우회도 허용되지 않는다. 아래는 해당 부분의 root 수정이며 DDL은 유지한다.
+
+Catalog worker의 소유를 `src/main/durable-runtime/catalog/runtime-launch.ts`의 binding 확보 경계에만 추가한다. 기존 lock 순서와 실제 storage-domain 잠금을 획득한 같은 mutation transaction에서, createUnverified=true이면 exact tuple의 canonical binding을 조회한다. 이미 있으면 그 실제 id를 membership에 사용하고 원 행의 epoch/seal/verification/proof/writer/access_state/revision을 일절 수정하지 않는다. 없을 때만 제안한 새 UUID로 원 UNVERIFIED INSERT를 수행한다. createUnverified=false는 기존 id와 tuple의 엄격한 일치를 그대로 요구한다. 이 선택을 transaction 밖 선조회나 catch-all unique 오류 재시도에 맡기지 않는다. Membership INSERT에는 선택한 실제 binding id를 사용하며 생성/receipt/intent/outbox와 같은 transaction에 남긴다. FK/UNIQUE/writer guard·잠금 순서·공통 atomic·schema·권한 발급은 변경하지 않는다.
+
+이 설정의 canonicalDirectory는 현재 하나의 보수적인 실제 쓰기 범위다. 이를 공유하는 논리 Workspace/Unit은 같은 binding을 참조할 수 있지만 동시 RW가 허용되는 것은 아니다. 새 binding id 또는 가짜 경로를 만들어 기존 writer를 우회하지 않는다. 이 경계는 물리 실행 활성화·홈/checkout별 세분화·여러 Agent의 실제 병렬 실행 증거가 아니다. 후속 물리 배치에서는 실제 mount와 디렉터리 범위를 별도로 확정해야 한다.
+
+먼저 위 한정 제품 diff를 제출하고 기존 PG fixture에 최초 callback 1개만 추가한다. 같은 실제 tuple에 서로 다른 이름/key의 Workspace 두 개를 실제 PG에서 동시에 예약하여 논리 Unit/Session은 각각 별개, canonical binding은 정확히 하나, membership은 그 원 id를 참조하며 grant/attempt/proof 생성0임을 확인한다. 이어 기존 binding의 원 상태/epoch/proof 등 모든 값이 추가 예약으로 바뀌지 않음을 대조한다. 기존 PG3의 두번째 Git Workspace도 이제 같은 binding을 재사용해야 한다. 원4/값1과 이 신규1은 아직 실행하지 않았다. Root가 수정 source를 읽은 뒤 정확 첫 실행을 배분한다. 현재 새 실행/live 변경0을 유지한다.

@@ -30,7 +30,9 @@ private `launch` 형식은 다음과 같습니다. 아래 값은 전부 합성 �
 
 설정은 plain data로 동기 복사합니다. 중복/권한 밖 repository, 잘못된 policy, accessor 및 비정규 경로를 거절합니다. Git은 worktreeRoot가 필요하며 repo-folder는 실제 등록 repo.path를 사용합니다. canonicalDirectory의 문자열 containment만 검사하며 symlink, 실제 NFS, proof, verification, RW grant를 검증·발급하지 않습니다. 추가 Terminal은 Workspace의 실제 Unit과 membership의 기존 StorageBinding identity를 대조하고 재사용합니다.
 
-## Root에 반환하는 현재 계약 충돌
+## 최초 source에서 Root에 반환한 계약 충돌 이력
+
+아래는 `fbfaf92852c5dba228a0831b4d55d99ef698b8ac` 제출 당시의 원 충돌 기록입니다. Root는 이를 채택하고 10:46 후속 명세에서 canonical binding 재사용으로 계약을 정정했습니다. 최초 source와 충돌 증거는 보존합니다.
 
 명세의 repository별 `storage.canonicalDirectory`를 새 Workspace마다 새 StorageBinding으로 그대로 예약하면, 동일 repository의 두 번째 Workspace는 기존 unique tuple과 충돌합니다.
 
@@ -42,10 +44,18 @@ private `launch` 형식은 다음과 같습니다. 아래 값은 전부 합성 �
 
 ## 최소 fixture와 미실행 범위
 
-새 PG fixture는 실제 Registry/Dispatcher·Catalog 등록·원 issuer/core를 사용하고 이미 준비된 별도 소유 DB만 요구합니다. repo-folder와 추가 Terminal의 원 launchRequest/동일 Unit, receipt 우선/tombstone/payload conflict, Git 이름 예약/COMMIT 응답 유실, 인증·scope·dataset/host·mutable capture·PG 실패를 작성했습니다. 값 fixture는 설정의 동기 캡처/거절 및 미설정·disposed·인증 전 Pool 접근 0을 작성했습니다. 현재 Git fixture의 두 번째 Workspace는 위 미해결 계약을 포함하므로 선행 판정 전 성공을 주장하지 않습니다. 정확 실행 callback 배분은 Root의 source 리뷰 이후입니다.
+원 PG fixture 4개와 값 fixture 1개는 미실행 상태로 보존했습니다. 새 PG fixture는 실제 Registry/Dispatcher·Catalog 등록·원 issuer/core를 사용하고 이미 준비된 별도 소유 DB만 요구합니다. repo-folder와 추가 Terminal의 원 launchRequest/동일 Unit, receipt 우선/tombstone/payload conflict, Git 이름 예약/COMMIT 응답 유실, 인증·scope·dataset/host·mutable capture·PG 실패를 작성했습니다. 값 fixture는 설정의 동기 캡처/거절 및 미설정·disposed·인증 전 Pool 접근 0을 작성했습니다. 최초 Git fixture의 두 번째 Workspace도 이제 지정된 canonical binding 재사용 경로를 사용합니다. 실제 성공 결과는 아직 없습니다. 정확 실행 callback 배분은 Root의 source 리뷰 이후입니다.
 
 시험·type/lint·설치·제품 build·live 설정/sync·재시작·촬영·물리 Git/FS/Pod/provider/Cloud 실행은 모두 0입니다. 첫 type 결과도 아직 없으며 통과로 표시하지 않습니다. 기존 성공 suite와 원격 stage/cache는 반복하지 않았습니다. 기존 Core PR39/metadata PR50의 성공은 이번 생성 경계의 성공이 아닙니다.
 
 ## 화면 근거의 한계
 
 기존 [PR51의 첫 Expo/Ops 연결 증거](https://github.com/hongseok-lee/orca-1012-runtime/pull/51)는 당시 부분 source 반영과 빈 Workspace 화면의 이력입니다. 새 생성 경로의 실제 소비 화면·native iPhone·provider 성공 증거로 재사용하지 않습니다. 이번 단계의 신규 화면은 없습니다.
+
+## 10:46 계약 정정에 따른 한정 source 수정
+
+제품·추가 fixture pin은 `b17a095de4a8c5aa23a42b32154e0007daecb850`입니다. 제품 변경은 `catalog/runtime-launch.ts`의 binding 확보 경계뿐입니다. 기존 storage-domain lock을 얻은 같은 mutation transaction에서 `createUnverified=true`이면 exact `(backend_id, export_id, canonical_directory)`를 조회합니다. 있으면 실제 binding id를 사용하고, 없을 때만 원 제안 UUID로 UNVERIFIED binding을 INSERT합니다. Membership도 선택한 실제 id를 참조합니다. `createUnverified=false`는 원 id 조회와 tuple 일치 검사를 유지합니다. 기존 행을 UPDATE하지 않으므로 epoch/seal/verification/proof/writer/access_state/revision을 변경하지 않습니다.
+
+기존 lock 순서·원 receipt·intent·outbox·FK/UNIQUE/writer guard·공통 atomic/DDL은 그대로입니다. 같은 binding을 공유하는 논리 Unit은 동일한 보수적 실제 저장 범위를 참조할 뿐, 동시 RW 권한이나 물리 병렬 실행을 얻지 않습니다. 가짜 디렉터리나 새 binding으로 기존 writer를 우회하지 않습니다.
+
+기존 PG 파일 끝에 callback 1개만 추가했습니다. 서로 다른 이름/key의 두 Workspace를 `Promise.all`로 예약하여 Workspace/Unit/Session은 별개이고 binding/membership은 같은 실제 id임을 비교합니다. 이어 추가 Workspace 예약으로 exact tuple의 binding이 여전히 하나이고 원 행 전체가 불변임을 비교합니다. attempts·storage/execution grants·verification 증가 0과 원 물리 runtime 호출 0도 확인하도록 작성했습니다. 기존 값 1개·PG 4개 본문은 변경하지 않았습니다. 현재 작성 수는 값 1개·PG 5개이며 진입/PASS/FAIL/SKIP의 실제 결과는 아직 없습니다. 시험·type/lint·build·설치·live 변경은 계속 0회입니다. Root source 리뷰 뒤 최초 실행 배분을 기다립니다.
