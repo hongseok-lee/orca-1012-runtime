@@ -1,6 +1,6 @@
 # P1-16 공개 Catalog metadata RPC 연결
 
-고정 main `235a1e43bae71f1e5cac62f02bea0ca04eb0b26a`에서 분리했습니다. [Root 작업 명세 전문](task-spec.md)에 따라 기존 여섯 unary 이름을 실제 Catalog core에 연결하는 source와 최소 fixture를 작성했습니다. **아직 type·lint·값 fixture·PG fixture를 실행하지 않았으며 heavy 점유는 없습니다.** Source 리뷰 뒤 Root가 최초 실행을 별도 지정합니다.
+고정 main `235a1e43bae71f1e5cac62f02bea0ca04eb0b26a`에서 분리했습니다. [Root 작업 명세 전문](task-spec.md)에 따라 기존 여섯 unary 이름을 실제 Catalog core에 연결하는 source와 최소 fixture를 작성했습니다. **Root 배분에 따른 최초 값 2개와 PG 5개는 PASS입니다.** [실제 결과](first-verification-report.md)에서 최초 소유 type/lint 실패, fixture 타입 교정, type의 소유 0개·외부 25개 및 후보 전송 범위 확대를 구분합니다. 아래 작성 단계의 미실행 설명은 당시 이력이며 현재 결과는 해당 보고서를 우선합니다.
 
 ## 실제 변경과 export
 

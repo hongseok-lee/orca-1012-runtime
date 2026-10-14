@@ -22,3 +22,11 @@
 실제 최초 실행은 source 제출 후 root가 지정한다. 기존 remote cache/실제 import closure·별도 소유 DB만 사용하며 전체legacy복사/설치/전체build/live source sync/서버 restart/Cloud 변경은 없다. 원격 heavy는 총2 이하이고 다른 owner stage를 수정하지 않는다. Public PR에는 이 전문의 공개 사본·소유 변경·원 결과/실제 source pin·실제 첫 소비 화면 또는 기존 근거의 정확한 provenance·남은 생성/controller/실기기 한계를 기록한다. Root가 리뷰 댓글·후속 지시·최종 merge를 맡는다.
 
 빠른 개발/단계 종료 원문 재출력·작업계획 재읽기·지속 메모리/PR 증거 대조를 유지한다. 새 task split/계획은 root 전담이며 동결 template·보호 backup·TTL은 범위 밖이다.
+
+## 2026-10-14 09:38 root 최초 검증 배분
+
+Root가 source cbefa4e12a714559b4895856f53772d2fff533fa의 제품3파일 및 0b55ed2ad293e2eb29c8aade8da6da076f208ef0의 새 PG/value fixture 전문을 읽었다. 기존 facade/request/config/read와 실제 선언을 대조했다. 기존 public-read.value.test.mts의 네 줄 수정은 새 연결6개를 미연결 목록에서 제외하는 데 필요하므로 소유 범위를 허용한다. 기존 read suite 전체를 다시 실행하지 않는다.
+
+원 두 검증 묶음을 현재 독립 PG callback5개와 값 callback2개로 나눈 제출을 수용한다. source0b55의 최초 검증만 기존 Catalog worker가 실행한다. 같은 원격 cache를 재사용하되 본인 별도 stage와 orca_p116_metadata_ 접두의 새 소유 DB를 사용한다. 실제 import closure와 고정 main235a의 SQL001–019 bytes를 기록하고 schema 준비는 해당 새 DB에 한 번만 한다. 실제 dev 등록/Backend startup stage/live watch/config는 건드리지 않는다.
+
+실행 범위는 신규 값2·PG5와 변경 소유6파일의 scoped type/lint다. 최초 결과의 PASS/FAIL/SKIP 및 소유/외부 type 오류를 구분하고 parent test를 새 검증 항목으로 더하지 않는다. 기존 callback·설치·전체 source 복사·전체 build·browser 촬영은 없다. 첫 실패가 있으면 원 로그를 보존하고 코드 원인과 최소 교정을 반환하며 성공 callback을 무조건 반복하지 않는다. 원격 heavy1을 배분하고 전체2 상한을 유지한다. 새 공개 PR에 원 명세·변경·실제 결과를 담으며 기존 screenshot을 쓸 때 실제 source/합성 화면 출처를 표시한다.
