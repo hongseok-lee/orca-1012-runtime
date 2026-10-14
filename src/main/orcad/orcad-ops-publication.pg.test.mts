@@ -44,7 +44,7 @@ await test('actual startup worker publishes one notification with a canonical cu
     }
     const repo = `synthetic-publication-repo:${randomUUID()}`
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Owned PG fixture authority only; no client authentication is synthesized.
-    const authority = { principalId: 'synthetic-publication-owner', repositoryIds: [repo], projectGroupIds: [], workspacePublicIds: [] } as CatalogAuthority
+    const authority = { principalId: 'synthetic-publication-owner', repositoryIds: [repo], projectGroupIds: [], workspacePublicIds: [] } as unknown as CatalogAuthority
     const registered = await registerCatalogProject(observer, authority, { mutationId: `synthetic-register:${randomUUID()}`,
       repo: { id: repo, displayName: repo, path: `/synthetic/publication/${repo}`, addedAt: 1,
         badgeColor: '#0ea5e9', kind: 'folder', projectGroupId: null, executionHostId: 'local' },
