@@ -26,8 +26,10 @@
     {
       "path": "src/main/orcad/orcad-ops-publication.pg.test.mts",
       "role": "Backend 소유 변경",
-      "sha256": "0a742c7f86f45ad6cafd58345d0aed666869397ad39cb08b4b03f5249e245f01",
-      "bytes": 8276
+      "sha256": "6da8cde1b1d68bbe396890ee836504861dfff500268d43b6f07a37cd9d221468",
+      "bytes": 8287,
+      "gitBlob": "08102602e4bd11b4428f5d2bfa9d6c4ebc847b39",
+      "revision": "b9e8668706c77869f226711d9e30ae2f574f7aed"
     },
     {
       "path": "src/main/durable-runtime/replay/claim.ts",
@@ -50,13 +52,14 @@
   ],
   "executions": {
     "test": 0,
-    "type": 1,
-    "lint": 0,
+    "type": 2,
+    "lint": 1,
     "PG": 0,
     "build": 0,
     "install": 0,
     "live": 0,
     "capture": 0
   },
-  "qualification": "제품과 fixture bytes는 최초 source pin 그대로입니다. 최초 scoped type exit 1(소유 1개/외부 25개)에서 종료됐으며 callback·lint·schema는 미실행입니다."
+  "qualification": "교정 fixture 타입의 소유 오류는 0개이지만 compiler exit 1과 기존 외부 진단 25개가 남습니다. 최초 lint 오류 1개에서 중단됐으며 값·PG·schema는 아직 실행되지 않았습니다. 원 최초 TS2352와 준비 helper 실패를 보존합니다.",
+  "approvedPGFixtureCorrection": "b9e8668706c77869f226711d9e30ae2f574f7aed"
 }
