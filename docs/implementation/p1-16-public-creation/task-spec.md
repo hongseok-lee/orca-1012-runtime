@@ -51,3 +51,18 @@ Heavy1/전체2 상한이다. 첫 오류·TAP·callback 진입 수·실제 PID/�
 Root는 원 진단, launch-preparation/config, captureCatalogLaunch/immutable, WorktreeMeta와 실제 두 merge 함수·displayName helper를 읽었다. Catalog는 소유 두 제품 파일만 다음과 같이 교정하고 먼저 정확 diff를 제출한다. WorktreeMeta에 displayName 빈 문자열과 isArchived/isUnread/isPinned false, sortOrder/lastActivityAt 0을 원 displayName 계산 전에 제공한다. 이는 두 기존 merge 함수가 누락값에 적용하는 값과 같으며 현재 시각·실제 실행 성공을 만들지 않는다. 완성한 meta와 payload는 각각 실제 WorktreeMeta/RuntimeWorktreeRecord 구조로 타입 검사한다. Deep capture/freeze를 유지하되 readonly 배열을 mutable legacy DTO로 연결하는 타입 경계만 명시하고 DTO 필드를 넓은 단언으로 감추지 않는다. PreparedCatalogLaunch의 비공개 brand 발급 단언은 인증·서버 설정을 거친 현재 issuer 한 곳에만 두며, 실제 captureCatalogLaunch 검증과 내부 필드 구조 검사를 보존한다. Brand/공통 core API/권한 검증은 약화하지 않는다.
 
 제어문자 U+0000–001F/007F 거절은 동등 char-code 판정으로 바꾸거나 의도를 설명한 해당 한 줄 lint 예외로 보존한다. 문자 범위를 줄이거나 입력 허용을 넓히지 않는다. SQL/기대값/기타 제품 변경은 없다. 아직 교정 후 실행 허가는 아니며 root가 diff를 읽은 뒤 변경파일 static 및 미진입 첫6개만 이어갈 예정이다. 전체 stage/manifest/설치/schema를 다시 준비하지 않는다.
+
+## 2026-10-14 11:29 실제 경로 좌표 교정과 남은 최초 callback
+
+교정2파일 type/lint는 exit0, 원 값1과 PG1은 PASS다. 소유 DB schema001019는 최초 한 번 적용됐다. 원 PG2는 cancelledByParent, PG3–5는 미진입이며 원 TAP77d844c1과 supervisor18765/child 종료를 보존한다. Root가 원 fixture와 generated wrapper를 읽어 등록과 cleanup scope 차이를 확인했다. 실제 pool.end 시점의 인과는 미측정이다. Root는 setup/pool/after와 원 callback2–5를 같은 parent node:test의 t.test/t.after에 두는 wrapper8f309310만 수락했다. 원 body bytes는 불변이고 통과 PG1/값1/static/schema를 반복하지 않는다. Parent는 제품 callback 수에 합산하지 않는다.
+
+Root가 실제 C1 NFS 배치와 storage/canonical.ts를 대조한 결과, 초기 2번의 경로 포함 관계는 서로 다른 좌표를 비교하는 오류다. Backend 컨테이너의 local path와 authority backingRoot에 상대적인 canonicalDirectory는 같다고 가정할 수 없다. 예를 들어 컨테이너 /workspace/backend의 실제 NFS subPath는 /x/dev/backend/source이며, canonical 값은 설정된 backingRoot에 상대적으로 산출된다. NFS source IP나 문자열만으로 authority/backingRoot/실제 identity를 발급하지 않는다.
+
+기존 Catalog worker는 위 남은4개의 원 결과를 보존한 뒤, 소유 launch-config.ts/launch-preparation.ts에만 다음 경계 교정과 신규 값 callback1을 작성하여 diff를 제출한다. 아직 새 값 callback 실행이나 live 설정 변경은 없다.
+
+1. Private repository storage 설정에 선택적 localDirectory를 추가한다. 이는 같은 저장 범위의 서버 컨테이너 경로이며, 기존 설정은 canonicalDirectory와 같은 값으로 명시적으로 캡처해 호환한다. canonicalDirectory는 기존 backendId/exportId와 함께 원 canonical tuple로 유지한다. 두 경로 모두 기존 normalized absolute POSIX 검사를 통과해야 한다.
+2. agentHomeRoot/worktreeRoot/repo-folder repo.path/최종 reservedPath의 포함 관계는 localDirectory에서 검사한다. canonicalDirectory와 local path를 직접 비교하지 않는다. 서버가 캡처한 mapping은 호출자 RPC params에서 얻지 않는다. 원 Unit의 추가 Terminal은 원 canonical tuple 일치 및 현재 localDirectory의 포함 관계를 모두 요구한다.
+3. Prepared launchRequest.server에 storagePathMapping:{localDirectory,canonicalDirectory}를 캡처해 보존하고 원 agentHomePath 및 원 호출 params를 유지한다. 이것은 논리 배치 의도다. Symlink/mount identity 검증, backingRoot authority, storage proof, grant, physical writer 권한을 대신하지 않는다. Core binding 재사용/SQL/원 receipt 우선 경계는 변경하지 않는다.
+4. 신규 값 callback1은 서로 다른 좌표의 repo-folder/Git/추가 Terminal 준비, immutable mapping 보존과 원 canonical tuple 유지, localRoot 밖 및 유사 prefix 경로 거절을 다룬다. 기존 성공 callback은 재실행하지 않는다. 원 전체 stage/설치/schema 준비도 반복하지 않는다. Root가 diff와 fixture를 읽은 뒤 변경2파일 static 및 이 새 callback1만 배분한다.
+
+이는 전체 저장소 또는 Agent 홈의 물리 재설계가 아니다. 현재 보수적 공유 scope와 병렬 RW 미검증 한계는 그대로이며 실제 dev mapping과 홈 위치는 live 적용 계약에서 별도로 확정한다.
