@@ -95,11 +95,11 @@ export function createOrcadCatalogBrowserFactory(
     // immutable owner. Every read still uses the original host receiver.
     const carrier: RuntimeBrowserCommandHost = Object.create(host)
     return factory(new Proxy(carrier, {
-    get(_target, property) {
-      if (property === 'resolveWorktreeSelector' || property === 'resolveBrowserWorkspace') { return resolve }
-      const value = Reflect.get(host, property, host)
-      return typeof value === 'function' ? value.bind(host) : value
-    }
+      get(_target, property) {
+        if (property === 'resolveWorktreeSelector' || property === 'resolveBrowserWorkspace') { return resolve }
+        const value = Reflect.get(host, property, host)
+        return typeof value === 'function' ? value.bind(host) : value
+      }
     }))
   }
 }
