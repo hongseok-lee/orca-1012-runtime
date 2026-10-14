@@ -1,4 +1,5 @@
 import { constants, closeSync, fstatSync, lstatSync, openSync, readFileSync } from 'node:fs'
+import type { Stats } from 'node:fs'
 import process from 'node:process'
 import type { Pool, PoolConfig } from 'pg'
 import { LOCAL_EXECUTION_HOST_ID, getRepoExecutionHostId } from '../../shared/execution-host.ts'
@@ -41,7 +42,8 @@ function record(value: unknown, keys: readonly string[]): Record<string, unknown
 }
 
 function text(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.trim() !== value || /[\u0000\r\n]/.test(value)) { invalid() }
+  if (typeof value !== 'string' || !value || value.trim() !== value ||
+      value.includes('\0') || value.includes('\r') || value.includes('\n')) { invalid() }
   return value
 }
 
@@ -50,7 +52,7 @@ function ids(value: unknown): readonly string[] {
   return Object.freeze([...new Set(Array.from(value, text))])
 }
 
-function privateFile(path: string): ReturnType<typeof lstatSync> {
+function privateFile(path: string): Stats {
   try {
     const metadata = lstatSync(path)
     if (!metadata.isFile() || metadata.isSymbolicLink() || process.getuid === undefined ||
@@ -118,12 +120,13 @@ export async function validateOrcadDurableCatalogRegistration(config: OrcadDurab
     import('../durable-runtime/catalog/projection.ts'), import('../durable-runtime/rpc/config.ts'),
     import('../durable-runtime/rpc/read.ts')
   ])
-  await withCatalogReadSnapshot(pool, async tx => {
+  const datasets = await withCatalogReadSnapshot(pool, async tx => {
     const datasets = await tx.query<{ dataset_name: string }>('SELECT dataset_name FROM durable_runtime.dataset_metadata')
-    if (datasets.rows.length !== 1 || datasets.rows[0].dataset_name !== config.datasetName) {
-      invalid('CATALOG_STARTUP_DATASET_MISMATCH')
-    }
+    return datasets.rows
   })
+  if (datasets.length !== 1 || datasets[0].dataset_name !== config.datasetName) {
+    invalid('CATALOG_STARTUP_DATASET_MISMATCH')
+  }
   const authority = Object.freeze({ principalId: 'orcad-startup-registration',
     repositoryIds: config.repositoryIds, projectGroupIds: config.projectGroupIds,
     workspacePublicIds: config.workspacePublicIds }) as CatalogAuthority

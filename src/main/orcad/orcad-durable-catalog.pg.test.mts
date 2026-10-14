@@ -25,7 +25,9 @@ const failedFourOnly = selection === 'failed-four'
 let pool: Pool
 const repo = `synthetic-startup-repo:${randomUUID()}`
 const group = `synthetic-startup-group:${randomUUID()}`
-const input = () => ({ datasetName: 'orca-1012-dev-v1', hostId: 'local',
+const input = (): { datasetName: string; hostId: string; repositoryIds: string[];
+  projectGroupIds: string[]; workspacePublicIds: readonly string[]; pg: typeof pg } => ({
+  datasetName: 'orca-1012-dev-v1', hostId: 'local',
   repositoryIds: [repo], projectGroupIds: [group], workspacePublicIds: [], pg: { ...pg } })
 const ui = { lastActiveRepoId: null, lastActiveWorktreeId: null, activeView: 'terminal', sidebarWidth: 240,
   rightSidebarOpen: false, rightSidebarTab: 'explorer', rightSidebarExplorerView: 'files', rightSidebarWidth: 320,
