@@ -7,30 +7,43 @@ import { readOrcadDurableCatalogConfig, prepareOrcadDurableCatalog,
 import { captureOrcadOpsConfig, readOrcadOpsConfig, invalidOrcadOpsConfig, OrcadOpsConfigurationError,
   type OrcadOpsConfig } from './orcad-ops-config.ts'
 import { ownOrcadOpsPublication } from './orcad-ops-publication.ts'
+import { captureOrcadControllerConfig, readOrcadControllerConfig, invalidOrcadControllerConfig,
+  type OrcadControllerConfig } from './orcad-controller-config.ts'
+import { ownOrcadController, type OrcadControllerSnapshot } from './orcad-controller.ts'
 
 // The entry consumes one composition surface; Catalog retains its existing Pool ownership and exit class.
 export { OrcadDurableCatalogConfigurationError } from './orcad-durable-catalog.ts'
 export type { OrcadDurableCatalog } from './orcad-durable-catalog.ts'
-export type OrcadStartupConfig = Readonly<{ catalog: OrcadDurableCatalogConfig | null; ops: OrcadOpsConfig | null }>
+export type OrcadStartupConfig = Readonly<{ catalog: OrcadDurableCatalogConfig | null; ops: OrcadOpsConfig | null; controller?: OrcadControllerConfig | null }>
+export type OrcadStartupOwner = OrcadDurableCatalog & Readonly<{ controllerSnapshot?: () => OrcadControllerSnapshot }>
 
 export function readOrcadStartupConfig(): OrcadStartupConfig {
   const catalog = readOrcadDurableCatalogConfig()
   const ops = readOrcadOpsConfig()
+  const controller = readOrcadControllerConfig()
   if (ops && !catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
-  return Object.freeze({ catalog, ops })
+  if (controller && !catalog) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CATALOG_REQUIRED') }
+  return Object.freeze({ catalog, ops, ...(controller ? { controller } : {}) })
 }
 
 /** Publish ownership before Ops validation so the entry's existing failure cleanup can always close Catalog. */
 export async function prepareOrcadStartup(
-  input: OrcadStartupConfig, ownCatalog: (catalog: OrcadDurableCatalog | null) => void
+  input: OrcadStartupConfig, ownCatalog: (catalog: OrcadStartupOwner | null) => void
 ): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp'>> {
   const ops = input.ops === null ? null : captureOrcadOpsConfig(input.ops)
+  const controller = input.controller == null ? null : captureOrcadControllerConfig(input.controller)
   if (ops && !input.catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
+  if (controller && !input.catalog) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CATALOG_REQUIRED') }
   const catalog = await prepareOrcadDurableCatalog(input.catalog)
-  const publication = catalog && ops ? ownOrcadOpsPublication(catalog) : null
-  ownCatalog(publication ?? catalog)
+  const controllerOwner = catalog && controller ? ownOrcadController(catalog) : null
+  // Stop order after entry RPC/subscription cleanup: publication → controller → original Catalog Pool.
+  const publication = catalog && ops ? ownOrcadOpsPublication(controllerOwner ?? catalog) : null
+  const owner = publication ?? controllerOwner ?? catalog
+  ownCatalog(owner && controllerOwner ? Object.freeze({ readConfig: owner.readConfig, stop: owner.stop.bind(owner),
+    controllerSnapshot: controllerOwner.controllerSnapshot.bind(controllerOwner) }) : owner)
   const opsHttp = await prepareOrcadOps(ops, catalog?.readConfig)
   if (opsHttp && publication) { await publication.startPublication(opsHttp) }
+  if (controller && controllerOwner) { await controllerOwner.startController(controller) }
   return catalog ? Object.freeze({ durableCatalogRead: catalog.readConfig, ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
 }
 
