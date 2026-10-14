@@ -137,7 +137,7 @@ test('actual PG: structured output/outbox/DONE commit, replay/conflict and rejec
     const claim = await enqueueClaim(bad, 1, body, [bad.sessions[invalid === 'foreign-target' ? 1 : 0]])
     assert.equal((await processRuntimeEvent(pool, claim, structuredOutputEventHandler)).status, 'RETRY')
     assert.equal((await pool.query('SELECT count(*) FROM durable_runtime.session_events WHERE session_id=ANY($1::uuid[])', [bad.sessions])).rows[0].count, '0')
-    assert.equal((await pool.query('SELECT count(*) FROM durable_runtime.outbox_events WHERE aggregate_id=ANY($1::text[])', [bad.sessions])).rows[0].count, '0')
+    assert.equal((await pool.query('SELECT count(*) FROM durable_runtime.outbox_events WHERE aggregate_id=ANY($1::uuid[])', [bad.sessions])).rows[0].count, '0')
     assert.equal((await pool.query("SELECT count(*) FROM durable_runtime.rpc_receipts WHERE session_scope=$1 AND method='runtime-event.process'", [`runtime-event:${claim.eventId}`])).rows[0].count, '0')
     const state = await pool.query('SELECT state,last_error FROM durable_runtime.runtime_event_queue WHERE event_id=$1', [claim.eventId])
     assert.equal(state.rows[0].state, 'RETRY')
