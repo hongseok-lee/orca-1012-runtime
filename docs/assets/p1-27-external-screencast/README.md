@@ -1,55 +1,92 @@
-# External Chromium source 제출 증거
+# External Chromium의 page별 wire 연결과 최초 검증 기록
 
-제품 source의 고정 base는 `e12f94346756f5edb35ef9afad2083cfb706301c`입니다.
-이 제출은 source와 최초 제품 adapter 실행용 fixture를 작성한 단계입니다.
-시험, type/lint, build, install, 제품 호출, live 서버 반영은 실행하지 않았습니다.
+고정 base는 `e12f94346756f5edb35ef9afad2083cfb706301c`이며 검증한 제품 source는
+`2d9ab47e41ff3ba4d520feea4947a4979c7b75e3`입니다. 제품 8개 파일과 fixture 4개 파일을 소유합니다.
+이 기록은 보존된 원자료에서 작성했으며 문서 마무리 중 source 수정, 재실행, 추가 캡처 및 rebase는 하지 않았습니다.
 
-첨부 JPEG 3개는 2026-10-14 11:11:19.990–22.694 UTC에 Root가 수락한
-독립 Target/CDP probe의 원 그림입니다. 재실행하거나 변환하지 않았습니다.
-파일별 hash와 관측 범위는 [provenance](probe-provenance.json)에 기록했습니다.
-제품 source가 기존 wire나 앱에 연결됐다는 성공 증거로 쓰지 않습니다.
+## 실제 변경과 Root 교정
 
-![독립 probe의 PAGE A](first-a.jpg)
-![독립 probe의 PAGE B](first-b.jpg)
-![독립 probe의 PAGE A2](return-a2.jpg)
+새로 만든 논리 page만 고유 bootstrap marker와 정확한 native tab/Target/browser generation으로 결합합니다.
+기존 사용자의 탭을 덮거나 URL/title/index로 Target를 추정하지 않습니다.
+Flatten CDP session의 frame routing과 frame ACK token을 구분하고 기존 wire encoder와 image metadata를 사용합니다.
+같은 page의 viewer는 하나의 stream/budget을 공유하며 ready 전 최신 frame, 느린 viewer별 최신 frame,
+paired device 교체 및 incumbent viewport owner 의미를 유지합니다.
 
-제품은 새로 만든 논리 page만 고유 bootstrap marker로 Target에 결합합니다.
-기존 live page, 사용자 인증, navigation/history를 결합 용도로 변경하지 않습니다.
-CDP browser endpoint와 Target/session 값은 public tab 응답이나 로그에 내보내지 않습니다.
-동일 page viewer는 하나의 target stream과 budget을 공유하며 viewer별 최신 frame을 보관합니다.
-기존 encoder, decoder, RPC schema, RuntimeBrowserScreencastController는 수정하지 않았습니다.
+Root 리뷰에 따라 늦은 subscriber 실패는 캡처한 옛 record만 정리합니다.
+일반 CDP 명령에는 closed/generation/transport 검사를 적용하고 opening/update를 drain한 뒤 정확 session을 정리합니다.
+일반 select/goto/close/requestedPageId 재사용과 stream start는 공통 exact Target 검사를 사용합니다.
+Metrics 시도는 요청 전에 기록하여 ACK 보류 중 stop에도 cleanup clear/detach를 시도합니다.
+Common wire/schema/앱/Electron provider/인증/PG는 변경하지 않았습니다.
 
-`src/main/orcad/external-chromium-screencast-fixture.ts`는 import만으로 실행하지 않습니다.
-Root가 source와 fixture를 검토하고 최초 실행을 배분한 뒤에만
-`runExternalChromiumScreencastFixture`를 명시적으로 호출합니다.
-입력은 새 `/tmp/orca-external-wire-` 소유 디렉터리, 기존 binary 경로, 지정된 launch 조건,
-`pages-and-viewers` 또는 `changed-generation` 경계입니다.
-Home/profile/socket은 새 소유 경로를 사용하고 기존 live/config/paired state는 소비하지 않습니다.
+## 실행 횟수와 static 원 실패
 
-Fixture는 실제 ExternalChromiumBrowserProcess command로 같은 URL의 A/B page를 만들고
-기존 decoder로 JPEG를 확인합니다. 두 viewer의 ready/flush, 느린 viewer 최신 frame,
-한 viewer 종료 뒤 다른 viewer 계속, 정확 target close 뒤 다른 page 계속을 확인하도록 작성했습니다.
-`changed-generation` 경계는 fixture 소유 browser만 종료·교체하고 옛 public page의
-재구독 실패와 추가 frame 채택 0을 확인하도록 작성했습니다. 기존 live browser에는 쓰지 않습니다.
-Fixture의 DOM/rAF 표식은 credential 없는 소유 시험 문서에만 적용하며 제품 stream은 주입하지 않습니다.
-새 JPEG와 JSON은 fixture의 private 소유 폴더에 남기며 실패 후 조건 완화나 재실행을 하지 않습니다.
+| 구분 | 실제 횟수 | 원 결과 |
+| --- | ---: | --- |
+| Scoped type | 2 | 최초 exit 1, 교정 후 exit 0 |
+| Scoped lint | 3 | 최초 exit 1, `--fix` exit 1, 교정 후 exit 0 |
+| Controlled job | 1 | callback 8개 진입, 8개 통과 |
+| Actual `pages-and-viewers` | 1 | Node exit 0, 지정 assertion 완료 |
+| Actual `changed-generation` | 1 | Node exit 0, 지정 assertion 완료, 마지막 close timeout 별도 기록 |
+| 성공한 standalone probe 재실행 | 0 | 기존 원자료를 재사용 |
 
-현재 이 fixture의 native eval 응답 형식, 실제 decoder 수용, viewer/viewport/budget 경합,
-transport/reconnect 종료는 미실행입니다. Browser generation 거절과 target 소멸은
-상위 의미의 거절을 확인하는 fixture이며 모든 내부 branch의 실행 증거를 대신하지 않습니다.
-실제 source 검증과 image marker 판정, 제품 연결 범위 수락은 Root가 별도로 결정합니다.
-자동 인증·중앙 BrowserTab PG 영속성·Catalog resolver·live Chrome 활성화는 이번 변경에 포함되지 않습니다.
+최초 type의 TS5102/TS5090은 TS7 설정 준비 실패였습니다. 이 시점의 제품 type는 미확인이었습니다.
+격리 설정의 `baseUrl` 제거와 `paths` 상대화 후 scoped type의 소유/외부 진단은 모두 0이었습니다.
+최초 lint의 87개 진단은 괄호 84개, type-only import 2개 및 동등한 await ternary 1개였습니다.
+Root는 설정 diff와 의미가 같은 source 표현 diff 전문을 수락했습니다. 교정 후 lint는 12개 파일에서 오류/경고 0이었습니다.
+원 실패 로그와 교정 로그의 hash는 [검증 provenance](actual-adapter/validation-provenance.json)에 보존했습니다.
+성공한 static이나 callback을 반복하지 않았습니다.
 
-Root가 source 리뷰에서 지정한 세 교정을 별도 commit으로 보존했습니다.
-늦은 budget/viewport 거절은 captured stream만 종료하고 새 page stream을 조회하지 않습니다.
-정상 CDP command는 stop/browser generation/실제 transport identity로 차단하며,
-opening과 update 종료를 기다린 후 별도 cleanup 경로로 정확 stop/clear/detach를 보냅니다.
-일반 select/goto/close/기존 publicPageId 재호출과 stream start는 공통 Target binding 검사를 사용합니다.
-Target가 없거나 endpoint generation이 바뀌면 old mapping을 제거하며 다른 page를 추측하지 않습니다.
+Controlled 8개는 늦은 budget/viewport 거절 2개, Target binding 거절 3개와 opening/update/metrics stop 경합 3개입니다.
+Supervisor PID 20532와 Vitest PID 20544는 원 readback에서 부재였습니다.
+Controlled stream 및 loopback CDP peer의 결과이며 실제 Chrome 증거와 구분합니다.
 
-교정의 지연 실패와 await/stop 경합을 노출하는 source fixture는
-`external-chromium-subscriber-cleanup.test.ts`, `external-chromium-target-stop.test.ts`,
-`external-chromium-target-binding.test.ts`입니다. 모두 미실행입니다.
-앞의 두 fixture는 controlled stream rejection 또는 loopback CDP peer로 소유권과 명령 순서를 확인하도록
-작성한 경합 fixture입니다. 실제 Chromium·제품 wire 성공을 대신하는 자료가 아닙니다.
-공통 Target boundary fixture도 negative source 경계이며 실제 browser generation 실행 증거로 확대하지 않습니다.
+## 실제 제품 adapter와 원 JPEG
+
+기존 native binary SHA256 `c249a948cb6a60df94320e319c372a5e679466ca8ea2cc4e69bac4fcc7c270f3`,
+기존 Chromium/Node/cache를 사용했습니다. 소유한 자격증명 없는 loopback 문서와 고유 HOME/profile을 사용했고
+입력의 짧은 socket 경로는 각각 70 bytes였습니다. 신규 설치·다운로드·전체 legacy 복사·live/auth/PG 변경은 없었습니다.
+
+`pages-and-viewers`는 2026-10-14 12:14:37.095–45.423 UTC에 helper PID 2767로 실행했습니다.
+실제 제품 command로 같은 URL의 서로 다른 page를 만들고 기존 binary wire decoder로 서로 다른 JPEG를 추출했습니다.
+두 viewer의 ready/flush, 느린 viewer 최신 frame, 한 viewer stop 후 다른 viewer 계속,
+정확 Target close 뒤 다른 page 계속과 옛 page 재구독 거절을 확인했습니다.
+세 viewer의 accepted/refused 횟수는 각각 4/0, 3/2, 5/0입니다.
+Root가 아래 원 JPEG를 직접 열어 640 × 480 PRODUCT PAGE A/B 표식을 수락했습니다.
+변환하거나 다시 촬영하지 않았습니다.
+
+![실제 제품 adapter의 PRODUCT PAGE A](actual-adapter/product-a.jpg)
+![실제 제품 adapter의 PRODUCT PAGE B](actual-adapter/product-b.jpg)
+
+A는 14,238 bytes/SHA256 `246d664e15d706f4726689c90a20d9b0a06e812cf199dc45ca759c226d30e401`이며,
+B는 14,085 bytes/SHA256 `b74863f6af8a507ffcc63693b8b9a8dcbb44e26834050d408c1b736218d946bf`입니다.
+
+`changed-generation`은 12:17:12.749–26.684 UTC에 helper PID 3045로 실행했습니다.
+소유 browser 교체 후 옛 public page 재구독 거절과 기존 subscriber의 추가 frame 채택 0을 확인했습니다.
+Target 소멸이 먼저 mapping을 제거할 수 있으므로 모든 내부 generation mismatch branch나 정상 reconnect의 증거로 확대하지 않습니다.
+
+## 종료 결과와 남은 한계
+
+첫 actual의 native CLI 44개는 모두 exit 0이었고 마지막 exact session close PID 3012가 `closed: true`를 반환했습니다.
+원 readback의 known PID 45개는 부재였습니다.
+두 번째 actual의 native CLI 32개 중 31개는 exit 0이었으며 known PID 33개는 원 readback에서 부재였습니다.
+
+두 번째 actual의 앞선 close PID 3276과 replacement `finally.stop`의 close PID 3434는 각각 exit 0 및 `closed: true`였습니다.
+이와 별도로 원 process.stop의 마지막 duplicate close PID 3437은 12:17:21.682–26.684 UTC에
+5초 timeout 후 SIGTERM으로 종료했습니다. `exitCode`는 null이고 stdout/stderr는 각각 0 bytes이며 close 응답은 없습니다.
+`BrowserSession.stop`이 close 오류를 catch하므로 fixture의 Node exit 0과 이 cleanup 실패를 따로 보존합니다.
+전체 cleanup PASS를 주장하지 않습니다. Known PID 부재는 daemon/Chrome 전체 PID의 독립 종료 검증이 아닙니다.
+추가 조회·kill·재시도는 하지 않았으며 heavy 슬롯은 반환한 상태입니다.
+
+Fixture의 ready/flush caller를 실행한 결과이며 전체 RuntimeBrowserScreencastController·앱·네트워크·encrypted RPC 통합은 미검증입니다.
+Background 지속 repaint, 자동 인증, 중앙 BrowserTab PG 영속성, Catalog resolver, live backend Chrome 활성화,
+native iPhone 및 HA도 미검증입니다. 최종 제품 수용과 merge는 Root 판단으로 남습니다.
+
+## 기존 독립 probe 자료
+
+아래 3개 그림은 11:11:19.990–22.694 UTC에 Root가 수락한 독립 Target/CDP probe의 원 JPEG입니다.
+이번 제품 adapter 그림과 별도로 보존합니다. 원 stale-paint 실패도 비공개 원자료에 불변 보존했습니다.
+[기존 probe provenance](probe-provenance.json)는 변경하지 않았습니다.
+
+![독립 probe PAGE A](first-a.jpg)
+![독립 probe PAGE B](first-b.jpg)
+![독립 probe PAGE A2](return-a2.jpg)
