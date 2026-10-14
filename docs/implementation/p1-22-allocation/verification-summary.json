@@ -600,5 +600,20 @@
     ],
     "ownedProcessesActive": 0,
     "heavyReturned": true
+  },
+  "fixtureMetadataVsActualExecution": {
+    "rawMetadataUnchanged": true,
+    "rawBaseline": "7aa2f3177768b1dfaf25d122b3348bdb28f9eace",
+    "rawPolicyCode": "8857ea44614867f6c2410dad6bf8b79e65585ac9",
+    "rawDb019OriginalCode": "730850ee335c41290af38ea8825484b5f4cc0b6f",
+    "actualComposite": {
+      "main": "21a4dc313ab8ba354371f7ae80ba52a7ca699228",
+      "db": "02c5d3dc18947d0c6a962cd9dd62a886fd6ebd7f",
+      "policyPublication": "8bd832f5da200ddf1773cf69e2e8043b8f4be407",
+      "product": "55d23ef1c4da93c5e1bc5d992c4677fd2d1f8966",
+      "fixturePrevious": "e131eb6fd088c334024857293cc93d8ebb3b49e1",
+      "fixtureFocused": "a2b9d54bd42824db7f740390e2cd7b4b7dedcab3"
+    },
+    "qualification": "원 JSON은 기존 hardcoded metadata이며 실제 실행 사본의 전체 pin은 manifest가 나타냅니다."
   }
 }
