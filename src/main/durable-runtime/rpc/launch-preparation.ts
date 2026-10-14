@@ -1,6 +1,7 @@
 import { randomUUID, randomInt } from 'node:crypto'
 import { posix } from 'node:path'
 import type { Repo } from '../../../shared/repo-types.ts'
+import type { WorktreeMeta } from '../../../shared/worktree/meta-types.ts'
 import type { RuntimeWorktreeRecord } from '../../../shared/runtime-worktree-contracts.ts'
 import type { RuntimeMobileSessionTerminalClientTab } from '../../../shared/runtime-mobile-session-tab-contracts.ts'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -70,11 +71,15 @@ function launchTail(
     scope: JSON.stringify(['catalog-launch-v1', config.datasetName, config.hostId, workspace.repoId, unitId]) }) as UnitIntentAuthority
   const original = call.original as Record<string, unknown>
   const launchRequest = { ...original, server: { agentHomePath: posix.join(repo.agentHomeRoot, agentId) } }
-  return captureCatalogLaunch({ workspace, tab: { id: tabId, publicId, parentTabId, leafId, terminalHandle, uiOrder, payload },
+  const fields: Omit<PreparedCatalogLaunch, symbol> = { workspace, tab: { id: tabId, publicId, parentTabId, leafId, terminalHandle, uiOrder, payload },
     sessionId, agent: { id: agentId, provider: selectedProvider, create: true }, unit: { id: unitId, create: unit === null, authority },
     storage: { id: logicalId('storage-binding', unit?.bindingId ?? randomUUID()), createUnverified: unit === null,
       backendId: repo.storage.backendId, exportId: repo.storage.exportId, canonicalDirectory: repo.storage.canonicalDirectory },
-    launchRequest, policy: config.launch!.policy } as PreparedCatalogLaunch)
+    launchRequest, policy: config.launch!.policy }
+  // All fields are checked against the actual launch structure above. Only
+  // this authenticated server issuer connects its private brand; core capture
+  // still performs the existing deep freeze and runtime relationship checks.
+  return captureCatalogLaunch(fields as PreparedCatalogLaunch)
 }
 
 /** Read-only inputs from registered PG metadata; no Git/FS/SSH/PTY/provider calls. */
@@ -95,7 +100,8 @@ export function prepareCatalogWorktreeLaunch(
   if (!catalogLaunchContains(launch.storage.canonicalDirectory, reservedPath)) { throw new CatalogError('CATALOG_LAUNCH_CONFIGURATION') }
   const label = resolveWorktreeCreateDisplayNameRequest(params.displayName, params.displayNameKind, name,
     params.cliProvenanceRequest !== undefined, generatedName)
-  const meta = { instanceId: workspaceId, hostId: config.hostId, comment: params.comment ?? '',
+  const meta: WorktreeMeta = { displayName: '', isArchived: false, isUnread: false, isPinned: false,
+    sortOrder: 0, lastActivityAt: 0, instanceId: workspaceId, hostId: config.hostId, comment: params.comment ?? '',
     ...resolveWorktreeCreateDisplayNameMeta(label.value, reservedName, label.kind, { requestedName: name, sanitizedName: reservedName }),
     linkedIssue: params.linkedIssue ?? null, linkedPR: params.linkedPR ?? null, linkedLinearIssue: params.linkedLinearIssue ?? null,
     linkedLinearIssueWorkspaceId: params.linkedLinearIssueWorkspaceId ?? null,
@@ -111,9 +117,13 @@ export function prepareCatalogWorktreeLaunch(
   const projected = folder ? mergeRuntimeFolderWorkspace(repo, getRuntimeFolderWorkspaceInstanceId(repo, workspaceId), meta)
     : mergeWorktree(repo.id, git, meta)
   const identity = createWorktreeIdentity({ worktreeId: projected.id, executionHostId: config.hostId, instanceId: workspaceId })
-  const payload = captureCatalogParsed({ ...projected, identity, parentWorktreeId: null, childWorktreeIds: [], lineage: null, git }) as RuntimeWorktreeRecord
+  const payload: RuntimeWorktreeRecord = { ...projected, identity, parentWorktreeId: null, childWorktreeIds: [], lineage: null, git }
+  // The complete legacy DTO was structurally checked above. This boundary
+  // connects its frozen readonly arrays to that incumbent mutable DTO type;
+  // the captured object remains deeply frozen and is not mutated here.
+  const capturedPayload = captureCatalogParsed(payload) as unknown as RuntimeWorktreeRecord
   return launchTail(config, call, launch, { id: workspaceId, publicId: payload.id, kind: folder ? 'REPO_FOLDER' : 'GIT',
-    repoId: repo.id, projectGroupId: null, reservedPath, reservedName, generatedName, nameChoice, payload, aliases: [] }, null, 0)
+    repoId: repo.id, projectGroupId: null, reservedPath, reservedName, generatedName, nameChoice, payload: capturedPayload, aliases: [] }, null, 0)
 }
 
 export function prepareCatalogTerminalLaunch(

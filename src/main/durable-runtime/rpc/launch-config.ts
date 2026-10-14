@@ -19,7 +19,8 @@ function record(value: unknown, keys: readonly string[]): Record<string, unknown
   return value as Record<string, unknown>
 }
 function text(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.trim() !== value || /[\x00-\x1f\x7f]/.test(value)) { invalid() }
+  if (typeof value !== 'string' || !value || value.trim() !== value ||
+      Array.from(value).some(character => character.charCodeAt(0) <= 0x1f || character.charCodeAt(0) === 0x7f)) { invalid() }
   return value
 }
 /** Logical POSIX containment only. No symlink resolution, filesystem access or grant. */
