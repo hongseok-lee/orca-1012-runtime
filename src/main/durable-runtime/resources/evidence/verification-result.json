@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "verifiedCodeHead": "e1b578313e8ef3ed23141128c2ae8543fbfdf201",
+  "commonBase": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "fixture": {
+    "distinctTests": 27,
+    "classificationCases": 7,
+    "originalOtherCases": 15,
+    "snapshotDigestCases": 1,
+    "originalProvenanceCorrectionCases": 4,
+    "pass": 27,
+    "fail": 0,
+    "skipped": 0,
+    "runs": 1,
+    "fileConcurrency": 1,
+    "reporter": "Node spec"
+  },
+  "typecheck": {
+    "initialExitCode": 1,
+    "initialCause": "readonly JSON object/array narrowing in one fixture",
+    "correctedExitCode": 0
+  },
+  "lint": {
+    "initialErrors": 102,
+    "initialWarnings": 0,
+    "mechanicalRemainingErrors": 3,
+    "correctedRemainingErrors": 1,
+    "finalFocusedSampleErrors": 0,
+    "finalCoverage": "other 11 files clear in corrected run; final sample helper clear in focused run",
+    "lastThreads": 1
+  },
+  "backendSample": {
+    "collectionCount": 1,
+    "status": "OBSERVED",
+    "logicalBinding": null,
+    "automaticGrowthCandidate": false,
+    "workloadKind": "DEV",
+    "podUIDSha256": "3ef8c47406d25a932a8888aef41b150789d9c33ad444dca2b9736a4d32599623",
+    "observedAt": "2026-10-13T12:18:25.987Z",
+    "productionAuthenticationConnected": false
+  },
+  "cgroup": {
+    "actualBackendCgroupRead": false,
+    "fixtureAllowlist": [
+      "memory.events.local",
+      "memory.peak",
+      "memory.max"
+    ],
+    "fixtureMissingAndPermissionAndResetBoundaryVerified": true
+  },
+  "productionGates": {
+    "actualAgentOOM": false,
+    "physicalFencing": false,
+    "newRWGrant": false,
+    "incidentPGHandlerIntegration": false,
+    "originalResourcePlacementTransportConnected": false
+  },
+  "heavySlotReturned": true
+}

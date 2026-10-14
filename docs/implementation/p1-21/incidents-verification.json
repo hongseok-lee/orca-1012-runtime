@@ -1,0 +1,234 @@
+{
+  "상태": "최초 PG 7개 중 6개가 통과하고 1개가 실패했습니다. 한정 교정 후 실패한 P112 사례 1개만 통과했으며 distinct 7개를 확인했습니다. 최초 실패와 교정 이력을 보존합니다.",
+  "recordedAt": "2026-10-13T13:18:46.696782+00:00",
+  "verificationBase": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "firstSource": "32ea8374bc55e52515de33871349d89eae4b6099",
+  "reviewedProductSource": "dffb4aa434eca28973fb83cbb89ee21242961796",
+  "correctionSource": "31bcb302550c75385e623925ed8a00e8e8452135",
+  "evidenceSource": "f07c504260cf3bd91071c8409b8c3b00c1ee990b",
+  "db015Source": "9eaae10abd99f518737b518f09b633b955eae731",
+  "firstRun": {
+    "tests": 7,
+    "pass": 6,
+    "fail": 1,
+    "skip": 0,
+    "cases": [
+      {
+        "name": "동시 동일 원 종료는 하나의 incident로 합류하며 원 receipt가 재생된다",
+        "passed": true
+      },
+      {
+        "name": "lastState 반복과 같은 원 eviction/OOM은 합류하며 unresolved 원문은 proof로만 연결된다",
+        "passed": true
+      },
+      {
+        "name": "다른 container와 새 attempt/incarnation의 종료 identity는 분리된다",
+        "passed": true
+      },
+      {
+        "name": "source 원문·alias 충돌과 receipt 직전 실패는 전체 rollback하며 첫 await snapshot을 유지한다",
+        "passed": true
+      },
+      {
+        "name": "stale epoch의 이력은 보존하고 현재 Unit의 phase·pointer·desired·기한은 변경하지 않는다",
+        "passed": true
+      },
+      {
+        "name": "원 deadline은 추가 source·정책 변경에도 불변이며 만료 audit/outbox는 한 번만 남는다",
+        "passed": true
+      },
+      {
+        "name": "실제 P112 original row는 같은 TX에서 기록되며 handler 실패 때 incident 변경은 rollback한다",
+        "passed": false,
+        "errorCode": "FIXTURE_ASSERTION_OR_FAILURE"
+      }
+    ]
+  },
+  "focusedCorrection": {
+    "tests": 1,
+    "pass": 1,
+    "fail": 0,
+    "skip": 0,
+    "cases": [
+      {
+        "name": "실제 P112 original row는 같은 TX에서 기록되며 handler 실패 때 incident 변경은 rollback한다",
+        "passed": true
+      }
+    ]
+  },
+  "distinctCasesConfirmed": 7,
+  "successfulCaseExecutions": 7,
+  "failedCaseExecutions": 1,
+  "previousSuccessfulCasesRepeated": 0,
+  "typecheck": {
+    "initialExit": 1,
+    "initialDiagnostics": 2,
+    "correctionExit": 0,
+    "failure": "Fixture의 assert 이후 중복 UNCERTAIN 비교에서 TS2367이 발생했습니다. 중복 비교 한 줄만 제거했습니다."
+  },
+  "lint": {
+    "initialExit": 1,
+    "initialErrors": 1,
+    "correctionExit": 0,
+    "failure": "Store의 동일 SQL 분기를 prefer-ternary 규칙에 맞춰 표현만 교정했습니다."
+  },
+  "firstPgFailure": {
+    "case": "실제 P112 original row의 같은 TX 처리",
+    "assertion": "RETRY !== DONE",
+    "actualQueueErrorCode": "INCIDENT_EVENT_RECORD_CONFLICT",
+    "sqlType": "bigint",
+    "driverType": "string",
+    "driverValue": "1",
+    "p112NumberValue": 1,
+    "correction": "공통 P112와 같은 Number 표현을 handler snapshot에서 사용해 원 PG 재조회 digest를 대조합니다. 공용 source와 schema는 변경하지 않았습니다."
+  },
+  "concernProvenance": "BIGINT/Number digest 우려는 queue worker가 fixture 준비 중 최초 보고했고 bridge가 root에 전달했습니다. Root의 새 발견이나 제품 교정 지시가 아니었습니다. 첫 실제 PG에서 원 실패를 관찰한 뒤 좁게 교정했습니다.",
+  "migrations": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd"
+    },
+    {
+      "version": "014-durable-catalog.sql",
+      "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2"
+    },
+    {
+      "version": "015-failure-evidence.sql",
+      "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "actual-pg-initial.tap",
+      "bytes": 3138,
+      "sha256": "c22aabba04ea5e558cc3d218d21db6498f93bf382ab7e47c5b20140540b4eb57"
+    },
+    {
+      "name": "actual-pg-initial-results.json",
+      "bytes": 4216,
+      "sha256": "74ef2a982cb4a4f1ca2364b535226c8c76cb7aa2621d922a1f24e2d3820c5b2c"
+    },
+    {
+      "name": "actual-pg-focused.tap",
+      "bytes": 775,
+      "sha256": "24ccb7d1743fa97589d78ff7d0a755588a8477fa741525e6942c12000c084fa6"
+    },
+    {
+      "name": "actual-pg-focused-results.json",
+      "bytes": 3378,
+      "sha256": "6a98370f6a22e7d3039066f5a77090f30d55abe7fe2b9ed8675e8e037535d95b"
+    },
+    {
+      "name": "type-initial.log",
+      "bytes": 421,
+      "sha256": "3344e8830b7290a267c8187ae2b048336ce9c7dd08bb2d8154ae6c7e55aa32cc"
+    },
+    {
+      "name": "type-correction.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "lint-initial.log",
+      "bytes": 1670,
+      "sha256": "422dd734512335fec0d64f7ecc3c583cf64b7701c144d1331dabdb5f5a3e8f57"
+    },
+    {
+      "name": "lint-correction.log",
+      "bytes": 93,
+      "sha256": "f121958ceacd2a825bafe393995fcef777184cb045231249c05a03a8bcd52bc2"
+    },
+    {
+      "name": "bigint-initial-observation.json",
+      "bytes": 165,
+      "sha256": "95ea1ba2468d8356f25c1d08a6044968790a7ee98e0cc84066cf6c166d233bdb"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 24577,
+      "sha256": "eaff5a0ff8c2575a1b74caac1aa1f32938835558eb135023361fec41345fa870"
+    },
+    {
+      "name": "source-manifest-correction.json",
+      "bytes": 24939,
+      "sha256": "ae45ef60aa6a2a7b2f203b1f906267c5557535a31f366379bf1284b4934c548c"
+    },
+    {
+      "name": "actual-pg.initial.mjs",
+      "bytes": 111674,
+      "sha256": "298c4984281c48b59a8990bc5ea3a9b78e3e20584f8d16655e1794a6f0c34ab0"
+    },
+    {
+      "name": "actual-pg.correction.mjs",
+      "bytes": 111649,
+      "sha256": "ada46db4125f2f3a0ee3161563122f22ce227ac99db8cdb62ccfa6d7452631b5"
+    }
+  ],
+  "capture": {
+    "count": 0,
+    "status": "Client owner의 별도 root 배분 전이며 이 worker는 촬영하지 않았습니다."
+  },
+  "remainingGates": [
+    "실제 collector와 producer 인증 연결",
+    "실제 Agent OOM과 물리 격리",
+    "P122/P123 자원 정책과 operation/reservation 합류",
+    "실제 provider와 HA/fencing",
+    "첫 결과 PNG와 최종 dependency/base 대조 및 root 수락"
+  ],
+  "collectorAuthenticationVerified": false,
+  "actualAgentOomVerified": false,
+  "physicalIsolationVerified": false,
+  "resourceActionExecuted": false,
+  "providerExecuted": false,
+  "physicalHaFencingVerified": false,
+  "dev015Applied": false,
+  "faultScope": "동일 TX의 handler 예외와 실제 receipt INSERT 전 driver hook입니다. 공유 PG/Pod/Node 장애는 주입하지 않습니다."
+}

@@ -1,0 +1,95 @@
+{
+  "lifecycleRevision": "02bfba1aa971d9449cad41103211e8a3d3503451",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/lifecycle/controller.ts",
+      "bytes": 13487,
+      "sha256": "782b30cc88af8b95662c3c1ff8d0175e74fa5acccf89cee8833539f2097050c0"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/core.test.mts",
+      "bytes": 23807,
+      "sha256": "dffddc2b38ff5a3e2747dbb2fc8c31b76136c74c2cb5063b2acc874a9eac0c49"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/due.ts",
+      "bytes": 1289,
+      "sha256": "0c949a936a4596fe5b4e1a91d2ad7cb1c16e83ec2840b2b07f68b8efcedaccd4"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/intent.ts",
+      "bytes": 9436,
+      "sha256": "e77c340841fee1b76696361a42e8811ea1dc81e39a6c3ab6674b0cd416d8d989"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/locks.ts",
+      "bytes": 1610,
+      "sha256": "81fe5f65f8a4d14af3fb41b08f7d955f421bfe94c521b6dc12f21abe52a9d506"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/observation.ts",
+      "bytes": 6541,
+      "sha256": "be24ae76c0b9ecf1828fdb43546e6553b0a48681ee3f39c687f3c7bdba1c9d37"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/pending.ts",
+      "bytes": 4942,
+      "sha256": "de255dda9d6cfd2673456f14daaf234d50cfb73658ca148e57d9aaf3a9ccb7fa"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/projection.ts",
+      "bytes": 2880,
+      "sha256": "8e75a13966bb72afaa3c9f7f3b3b3cacbca1107d3fa6a1f60ab486cedf4460f3"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/reconcile-request.ts",
+      "bytes": 955,
+      "sha256": "37ec13377cd193c6cfd1a5d24a0ccf0e42b7534a560b7d203a581ffff4f3a40f"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/request-snapshot.test.mts",
+      "bytes": 5518,
+      "sha256": "1b39b0e12429a6b49aa7da3add492539ec604791ad39a676bc677f5a126ee345"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/request.ts",
+      "bytes": 879,
+      "sha256": "5797065225668c0079dfb0bf3f93f8d19cd4f233c9e9bc0e8a7c5c8cdb9fd2f0"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/sleep-member-cleanup.test.mts",
+      "bytes": 2850,
+      "sha256": "2f853e0054c6770f245acec950588e82fead0dc8a67d1681adedc1be301410b5"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/sleep.ts",
+      "bytes": 8539,
+      "sha256": "de957e7c9c81827c2f2bcd832dccb28741ad2b87c1b93de1de96a7c3e9db5a50"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/tsconfig.json",
+      "bytes": 282,
+      "sha256": "563703de075750c6adfbf769225f23ea5328484db7403daca4355f4b9ffb7c85"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/types.ts",
+      "bytes": 2766,
+      "sha256": "5f785c32973be2ae3ff9971494e7d0537fbbf26bb85989631e42ad1fdaebb761"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/verification-fixtures.mts",
+      "bytes": 5550,
+      "sha256": "8c7203d09b9cad03147d257482f5218c3fba4e7d391ea428f9861d289ad9e7a4"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/watch.test.mts",
+      "bytes": 6466,
+      "sha256": "b35190555f64cc1e4cc6541bc40101a28522091855280a9f3cb9dc28cba5c521"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/watch.ts",
+      "bytes": 8660,
+      "sha256": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5"
+    }
+  ]
+}

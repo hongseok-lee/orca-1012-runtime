@@ -1,0 +1,261 @@
+{
+  "sourceRevision": "24b0c4d0ad2a12c99aa2c6c52cc6656c74a218c0",
+  "schemaRevision": "7a560c6f77cd8bbbd9f67c1c597da75964f6c8c4",
+  "gatewayRevision": "9052837192bba831a4f0b444e02e51da57c13709",
+  "scope": "isolated SQL/module boundaries; synthetic authority/proof/callback; no actual provider/public RPC/auth/fencing/native",
+  "cases": [
+    {
+      "name": "stage seals and resolves atomically; immutable delivery binding and replay grant no execution",
+      "passed": true
+    },
+    {
+      "name": "cancel wins overlapping Session locks; combined command and Message claim rejected with callback zero",
+      "passed": true
+    },
+    {
+      "name": "claim wins overlapping locks; Stop remains REQUESTED until original stop proof and receipt stays original",
+      "passed": true
+    },
+    {
+      "name": "pre-effect duplicate Stop preserves bundle; late ACK conflicts and another attempt cannot affect new input",
+      "passed": true
+    },
+    {
+      "name": "stale context rejects joint claim; fresh delivery keeps original stage and execution gates reject QUIESCING",
+      "passed": true
+    },
+    {
+      "name": "new stage and joint claim roll back as whole transactions before observed COMMIT",
+      "passed": true
+    },
+    {
+      "name": "UNKNOWN cancel and queue FAILED context are immutable quoted facts; query and history never wake",
+      "passed": true
+    },
+    {
+      "name": "context proof exact retry is one original row; old binding proof retained but never current satisfaction",
+      "passed": true
+    },
+    {
+      "name": "termination before Stop and late completion belong to original delivery with observed proof only",
+      "passed": true
+    },
+    {
+      "name": "Catalog outer receipt and Tab tombstone compose cancel core once; rollback and original membership guard",
+      "passed": true
+    },
+    {
+      "name": "caller mutation during SQL scope pause cannot replace stage predecessor, claim target or context payload",
+      "passed": true
+    }
+  ],
+  "reviewedPreFormatRevision": "a1f44e80d6a6d90655b765fbbeaad359841dcf18",
+  "verificationBaseRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "sourceSha256": {
+    "src/main/durable-runtime/context/delivery.ts": "0726fcb9988fc2d3234d4d90d1eab804ae661482025f283611ac56c9bafd815f",
+    "src/main/durable-runtime/context/frame.ts": "18c23fec64fb009a2e8ac980e01b445bdd7b0462efd45aedf5fdde4eb660e5b2",
+    "src/main/durable-runtime/context/index.ts": "0e1c3e0aaa3046c7250d1115c6fada145516d9abcf2e473289037a7c50abd882",
+    "src/main/durable-runtime/context/types.ts": "aa26fe9ab9958e3bc0a2c18c97e9a6b0c1ed9dc26d68713cf273bf563350f202",
+    "src/main/durable-runtime/input/append.ts": "1731f0f1800f60e336e402785be2def7238ccc8ca6d454c6e678e37ea6cdd434",
+    "src/main/durable-runtime/input/attachments.test.mts": "93e5a0a5a705c75e703dbbb05ede2392b4bb4c03848187919524134dac9c2863",
+    "src/main/durable-runtime/input/authority.ts": "9ef387758c5264ba089a459e93e04676429afcec113fd43423af23ecd0138cf6",
+    "src/main/durable-runtime/input/cancel-interrupted.test.mts": "06fa97ffcb4fae2cb5c28ff4bde60018b1d9dfdffdc1fc5e9090a294b30fd876",
+    "src/main/durable-runtime/input/cancel-types.ts": "295328d10e873384ee7c04b27296518c5e0589357284a7d98ad391387e534615",
+    "src/main/durable-runtime/input/cancel.ts": "9f03715fe48273d8910abc46b33a394e26633df2ea83c1ef1ead9ae09f30c5ed",
+    "src/main/durable-runtime/input/canonical.ts": "1e96b9cae2404c2efb437b834c57924d2984d0aa54f96cd6d377a1b472e376b6",
+    "src/main/durable-runtime/input/composition.ts": "128a473ad4b172dd8eda82ff7188c605d0e35af532e2df968d516fceb01b2591",
+    "src/main/durable-runtime/input/effect-claim.ts": "f0fa74fe41e9ba0c37becfec356ecee88c716eb7cc9d6c0b55c0819cdfde3ba7",
+    "src/main/durable-runtime/input/execution-fixtures.mts": "d7f428600c29b86930e1bacffc9cc21bbee869e996212dd548fa76c8400efad0",
+    "src/main/durable-runtime/input/execution.test.mts": "3868ed8adeb8323411d45eff8bdd6be5eb34a75daa5b127868798f6985fe2450",
+    "src/main/durable-runtime/input/execution.ts": "a673f63baf291df4da0fdaf8bba8cbb3711b4bfa360dc16244e13d1fac2fd3a2",
+    "src/main/durable-runtime/input/index.ts": "a73686e8aed786ac65919123cba123d136ac35ee418834c921d3bd59e9f9cdc6",
+    "src/main/durable-runtime/input/intake.test.mts": "6d7c769f3cfd08df5424494085c8684a99a9b4f265cc539404f1e12e25ce2cf1",
+    "src/main/durable-runtime/input/intake.ts": "1f9533a59ce439271bef576960fc80df22cf298ab67ad5bf11dfebdcb7a047cc",
+    "src/main/durable-runtime/input/observation-types.ts": "325c3fa86091c8cfa4d4fe80f72f0df9149f44471242c9406d84149b63e308e8",
+    "src/main/durable-runtime/input/observe.ts": "c4c83608461337596696068c86ead7279a907d4a4d5b0fab485e8070941a71f4",
+    "src/main/durable-runtime/input/prepare-cancel-interrupted.mts": "eb46231a6f90f48632c789a57178904ba630bc1e39869a0a9dd4db871490efba",
+    "src/main/durable-runtime/input/prepare-execution-verification.mts": "eb162021f284e6e50ece29d5b4647f4eb9560b8caf757172d854f48d8e44e91f",
+    "src/main/durable-runtime/input/prepare-verification.mts": "b182994c1fb992ad4b29d8b018991f623fc96fe20a5d1f072b5b12cc7608c698",
+    "src/main/durable-runtime/input/seal.ts": "f367879807e63e4987902ae5ce6735a62a728a560d11bae07de98f8e98acdf01",
+    "src/main/durable-runtime/input/stage-binding.ts": "b858038642da22c6dcc5eaa9429c4e3fc66abc81b74f6be5dd9904b32d3e6451",
+    "src/main/durable-runtime/input/stage.ts": "f735783e44447c93262cf46c00aba6492893c263025b07fba1a470d6313c6a32",
+    "src/main/durable-runtime/input/types.ts": "e88cd450ae308c6c116540e11784dd42bac15ba44e8794ca1dbf2a42c851403f",
+    "src/main/durable-runtime/input/verification-fixtures.mts": "5b1f65334e6efba3af8a82e42544b868124ff4a158e4768a160382e00ec9bf4b"
+  },
+  "schemaChain": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd"
+    }
+  ],
+  "firstRun": {
+    "tests": 11,
+    "pass": 11,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "startedAt": "2026-10-13T12:17:22.776Z",
+    "finishedAt": "2026-10-13T12:17:25.266Z",
+    "fileConcurrency": 1
+  },
+  "tools": {
+    "node": "24.15.0",
+    "typescript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "oxfmt": "0.65.0"
+  },
+  "validation": {
+    "originalTypecheckExitCode": 0,
+    "originalLintExitCode": 1,
+    "originalLintCause": "curly와 prefer-template 형식 진단",
+    "correctionSyntaxErrorExitCode": 2,
+    "correctionSyntaxErrorFile": "input/execution-fixtures.mts:119",
+    "correctionExecutedInPG": false,
+    "finalTypecheckExitCode": 0,
+    "finalLintExitCode": 0,
+    "finalFormatExitCode": 0,
+    "formatChangedFiles": [
+      "src/main/durable-runtime/context/frame.ts",
+      "src/main/durable-runtime/input/effect-claim.ts",
+      "src/main/durable-runtime/input/execution-fixtures.mts",
+      "src/main/durable-runtime/input/execution.test.mts",
+      "src/main/durable-runtime/input/stage-binding.ts",
+      "src/main/durable-runtime/input/stage.ts"
+    ]
+  },
+  "artifacts": [
+    {
+      "name": "first-execution-context-private.log",
+      "bytes": 3481,
+      "sha256": "4d7fb0b3d311a02b019141253be6c56a5e7b386c32d182d762596a5dd3580649",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "first-pg-results.json",
+      "bytes": 2013,
+      "sha256": "9baa2f4e96d7503bad9c5cecae8daad5ae5a6b0acf7280a870d94611918f0b75",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "typecheck-private.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "lint-private.log",
+      "bytes": 13283,
+      "sha256": "4c03be128769e538446ba4f69b614470799e2a1159fad21a486ee3fcd83e7838",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "typecheck-corrected-private.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "lint-focused-final-private.log",
+      "bytes": 93,
+      "sha256": "76f7af812bb97e349e8af37ac87d352d58e6956d896a24343877742910995f51",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "format-focused-final-private.log",
+      "bytes": 46,
+      "sha256": "686f1fd3b4c3fb021375699f2dd54c5f3d3aeffa01fc2b14579509f72210bc04",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "prepare-owned-db-private.log",
+      "bytes": 1918,
+      "sha256": "cb7c4eadf20520000404306ddb9e41abc64f160ad5713a9b8a75d7d807e30b54",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "first-validation-status.json",
+      "bytes": 1449,
+      "sha256": "20f608977f255a2a0b278178de4c45bfb41bfc599a41d60382b2d25eee76b012",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "pg-first-after-lint-job.json",
+      "bytes": 263,
+      "sha256": "e3e9790f81e9153585e5edd260008115c8e6073d750b63732257406f9a1ad4a6",
+      "remoteLocalBytesMatched": true
+    },
+    {
+      "name": "lint-corrected-source.json",
+      "bytes": 742,
+      "sha256": "8e26bfb389f61d756e89b4053268f367b21a5b66339f80b0cc455d038723faa9",
+      "remoteLocalBytesMatched": true
+    }
+  ],
+  "historicalInterruptedFocused": {
+    "sourceRevision": "9756b3dbd78f75128b526a2bae7adcdd6671f0c4",
+    "pass": 1,
+    "repeated": false,
+    "includedInFirstRun": false
+  },
+  "prerequisiteRelation": {
+    "P103HeldContractReference": "cf0fbca42aaf79122ed1d5ac4caf32431628b75c",
+    "P103BaseRelation": "main의 held-lock 의미 계약을 소비한다. cf0 선행과 서식 및 동등 조건 표현의 차이가 있으므로 blob 동일성으로 표시하지 않는다.",
+    "gatewayBaseFilesEquivalent": true,
+    "schema013OnlyInOwnedValidationDB": true
+  },
+  "runtimeActivated": false,
+  "providerProofsSynthetic": true,
+  "publicRPCValidated": false,
+  "nativeIPhoneValidated": false,
+  "physicalFencingValidated": false,
+  "heavySeatReturnedAt": "2026-10-13T12:17:25.286Z"
+}

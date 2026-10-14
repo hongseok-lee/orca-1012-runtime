@@ -2,42 +2,11 @@ import { CLAUDE_DEFAULT_SETTING_SOURCES } from './claude-structured-launch-resol
 import type { ClaudeAuthDiagnostic } from './claude-structured-session-state'
 import { AgentSessionAcquisitionRefusal } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
 
-export type ClaudeInitObservation = {
-  providerSessionId: string
-  uuid: string | null
-  /** The resolved model id the CLI reports it is running; only `system/init` carries it. */
-  model: string | null
-  message: Record<string, unknown>
-}
+import { readClaudeFrameString, type ClaudeInitObservation } from './claude-init-observation'
+export { readClaudeFrameString, readClaudeInit, type ClaudeInitObservation } from './claude-init-observation'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-export function readClaudeFrameString(source: Record<string, unknown>, key: string): string | null {
-  const value = source[key]
-  return typeof value === 'string' && value.length > 0 ? value : null
-}
-
-export function readClaudeInit(message: Record<string, unknown>): ClaudeInitObservation | null {
-  const hookName = readClaudeFrameString(message, 'hook_name')
-  const isInit = message.type === 'system' && message.subtype === 'init'
-  const isSessionStart =
-    message.type === 'system' &&
-    (message.subtype === 'hook_started' || message.subtype === 'hook_response') &&
-    hookName?.startsWith('SessionStart:') === true
-  if (!isInit && !isSessionStart) {
-    return null
-  }
-  const providerSessionId = readClaudeFrameString(message, 'session_id')
-  return providerSessionId
-    ? {
-        providerSessionId,
-        uuid: isInit ? readClaudeFrameString(message, 'uuid') : null,
-        model: isInit ? readClaudeFrameString(message, 'model') : null,
-        message
-      }
-    : null
 }
 
 export function readClaudeModels(initialization: unknown): unknown[] {
