@@ -151,7 +151,7 @@ export function createControllerWorker(pool: Pool, input: ControllerWorkerPolicy
       try {
         await Promise.all([acquiring, renewing, passing])
         // No new callback can enter after closing. Late pass/transport replies stay in this old owner.
-        await Promise.allSettled([...calls])
+        await Promise.allSettled(calls)
         if (confirmedLease && instance) {
           lastRelease = Object.freeze(await releaseControllerLease(pool, instance, confirmedLease))
           if (lastRelease.status !== 'RELEASED') {
