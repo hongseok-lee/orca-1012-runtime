@@ -92,7 +92,7 @@ export class ExternalChromiumBrowserProcess {
     method: string,
     args: unknown[]
   ): Promise<unknown> {
-    if (!this.available) throw new BrowserError('browser_unavailable', 'Browser process is unavailable.')
+    if (!this.available) {throw new BrowserError('browser_unavailable', 'Browser process is unavailable.')}
     const params = (args[0] ?? {}) as Record<string, unknown>
     if (method === 'browserTabCreate') {
       return this.tabs.createTab(host, params)

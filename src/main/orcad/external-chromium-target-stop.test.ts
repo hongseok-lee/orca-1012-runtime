@@ -14,7 +14,7 @@ describe('external target stop command fence', () => {
       const server = new WebSocketServer({ port: 0, host: '127.0.0.1' })
       await new Promise<void>(resolve => server.once('listening', resolve))
       const address = server.address()
-      if (typeof address === 'string' || !address) throw new Error('Missing controlled peer port')
+      if (typeof address === 'string' || !address) {throw new Error('Missing controlled peer port')}
       const methods: string[] = []
       const requests: z.infer<typeof Request>[] = []
       let release!: () => void
@@ -43,7 +43,7 @@ describe('external target stop command fence', () => {
       }, { format: 'jpeg', quality: 70, maxWidth: 640, maxHeight: 480, everyNthFrame: 1,
         minFrameIntervalMs: 0, viewportWidth: 640, viewportHeight: 480, onFrame: () => true })
       let work: Promise<void>
-      if (boundary !== 'updates') work = stream.start()
+      if (boundary !== 'updates') {work = stream.start()}
       else {
         await stream.start()
         work = stream.updateFrameBudget({ quality: 50, maxWidth: 640, maxHeight: 480,

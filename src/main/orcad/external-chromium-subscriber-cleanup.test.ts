@@ -25,7 +25,7 @@ vi.mock('./external-chromium-target-screencast', () => ({
     updateViewport() { return this.update('viewport') }
     updateFrameBudget() { return this.update('budget') }
     private update(kind: string): Promise<void> {
-      if (controlled.boundary !== kind || controlled.streams[0] !== this.state) return Promise.resolve()
+      if (controlled.boundary !== kind || controlled.streams[0] !== this.state) {return Promise.resolve()}
       controlled.boundary = null
       return new Promise((_resolve, reject) => { this.state.reject = reject })
     }

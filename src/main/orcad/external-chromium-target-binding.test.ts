@@ -18,7 +18,7 @@ describe('external target command boundary', () => {
       await expect(binding.select(page)).rejects.toMatchObject({ code: 'browser_tab_closed' })
       expect(select).not.toHaveBeenCalled()
       expect(retire).toHaveBeenCalledWith(page)
-      if (boundary === 'target-absent') expect(target).toHaveBeenCalledWith(page.targetId, page.browserGeneration)
+      if (boundary === 'target-absent') {expect(target).toHaveBeenCalledWith(page.targetId, page.browserGeneration)}
     })
   }
   it('does not reconnect or infer target loss from unverifiable transport after a failed start', async () => {

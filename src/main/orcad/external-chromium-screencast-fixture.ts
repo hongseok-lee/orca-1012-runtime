@@ -53,10 +53,10 @@ function collectViewer() {
     counts: () => ({ accepted, refused }),
     frame: async (epoch: number) => {
       const eligible = () => latest && (latest.metadata.timestamp ?? 0) >= epoch
-      if (!eligible()) await new Promise<void>((resolve, reject) => {
+      if (!eligible()) {await new Promise<void>((resolve, reject) => {
         const timer = setTimeout(() => { waiter = null; reject(new Error('PRODUCT_FRAME_TIMEOUT')) }, 8000)
         waiter = () => { if (eligible()) { clearTimeout(timer); waiter = null; resolve() } }
-      })
+      })}
       assert(latest)
       return latest
     }
@@ -66,7 +66,7 @@ function collectViewer() {
 export async function runExternalChromiumScreencastFixture(input: ExternalScreencastFixtureInput) {
   assert(/^\/tmp\/orca-external-wire-[A-Za-z0-9-]+$/.test(input.directory))
   await mkdir(input.directory, { mode: 0o700 })
-  for (const name of ['home', 'sock', 'tmp']) await mkdir(join(input.directory, name), { mode: 0o700 })
+  for (const name of ['home', 'sock', 'tmp']) {await mkdir(join(input.directory, name), { mode: 0o700 })}
   const environment: NodeJS.ProcessEnv = {
     PATH: '/usr/local/bin:/usr/bin:/bin', LANG: 'C.UTF-8', HOME: join(input.directory, 'home'),
     XDG_CONFIG_HOME: join(input.directory, 'home', '.config'),
@@ -85,7 +85,7 @@ export async function runExternalChromiumScreencastFixture(input: ExternalScreen
   const stopOwned = () => stopping ??= process.stop()
   const evidence: Record<string, unknown> = { startedAt: new Date().toISOString(), boundary: input.boundary,
     status: '미완료', interpretation: '실제 adapter 최초 경계의 결과이며 standalone probe 재실행이 아닙니다.' }
-  const overallTimer = setTimeout(() => { for (const subscription of subscriptions) subscription.session.stop(); void stopOwned() }, 100000)
+  const overallTimer = setTimeout(() => { for (const subscription of subscriptions) {subscription.session.stop();} void stopOwned() }, 100000)
   try {
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
     const address = server.address()
@@ -181,7 +181,7 @@ export async function runExternalChromiumScreencastFixture(input: ExternalScreen
     throw error
   } finally {
     clearTimeout(overallTimer)
-    for (const subscription of subscriptions) subscription.session.stop()
+    for (const subscription of subscriptions) {subscription.session.stop()}
     await stopOwned()
     server.closeAllConnections()
     await new Promise<void>(resolve => server.close(() => resolve()))

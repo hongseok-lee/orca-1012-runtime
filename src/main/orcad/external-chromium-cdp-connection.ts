@@ -26,12 +26,12 @@ export function externalCdpError(): BrowserError {
   return new BrowserError('browser_screencast_unavailable', 'The owned browser CDP transport is unavailable.')
 }
 export function validateExternalBrowserEndpoint(value: unknown): string {
-  if (typeof value !== 'string' || value.trim() !== value || value.includes('?') || value.includes('#')) throw externalCdpError()
+  if (typeof value !== 'string' || value.trim() !== value || value.includes('?') || value.includes('#')) {throw externalCdpError()}
   try {
     const url = new URL(value)
     if (url.protocol !== 'ws:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)
       || !url.port || url.username || url.password || url.search || url.hash
-      || !/^\/devtools\/browser\/[A-Za-z0-9-]+$/.test(url.pathname)) throw externalCdpError()
+      || !/^\/devtools\/browser\/[A-Za-z0-9-]+$/.test(url.pathname)) {throw externalCdpError()}
     return url.href
   } catch { throw externalCdpError() }
 }
@@ -50,11 +50,11 @@ export class ExternalChromiumCdpConnection {
   private rejectOpening: ((error: Error) => void) | null = null
 
   get generation(): string {
-    if (!this.generationValue) throw externalCdpError()
+    if (!this.generationValue) {throw externalCdpError()}
     return this.generationValue
   }
   get transportIdentity(): number {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) throw externalCdpError()
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {throw externalCdpError()}
     return this.transport
   }
   ownsTransport(identity: number, generation: string): boolean {
@@ -74,11 +74,11 @@ export class ExternalChromiumCdpConnection {
   }
   async connect(rawEndpoint: unknown): Promise<void> {
     const endpoint = validateExternalBrowserEndpoint(rawEndpoint)
-    if (this.connecting) await this.connecting
-    if (endpoint === this.endpoint && this.socket?.readyState === WebSocket.OPEN) return
+    if (this.connecting) {await this.connecting}
+    if (endpoint === this.endpoint && this.socket?.readyState === WebSocket.OPEN) {return}
     if (this.endpoint && endpoint !== this.endpoint) {
       this.close()
-      for (const listener of this.generations) listener()
+      for (const listener of this.generations) {listener()}
     }
     this.endpoint = endpoint
     this.generationValue = createHash('sha256').update(endpoint).digest('hex')
@@ -90,7 +90,7 @@ export class ExternalChromiumCdpConnection {
       this.close()
       throw externalCdpError()
     } finally {
-      if (this.connecting === connecting) this.connecting = null
+      if (this.connecting === connecting) {this.connecting = null}
     }
   }
   private open(endpoint: string): Promise<void> {
@@ -101,40 +101,40 @@ export class ExternalChromiumCdpConnection {
       this.rejectOpening = reject
       let opened = false
       const fail = (): void => {
-        if (this.socket !== socket) return
+        if (this.socket !== socket) {return}
         this.failSocket(socket)
-        if (!opened) reject(externalCdpError())
+        if (!opened) {reject(externalCdpError())}
       }
       socket.on('error', fail)
       socket.on('close', fail)
       socket.once('open', () => {
-        if (this.socket !== socket) return
+        if (this.socket !== socket) {return}
         opened = true
         this.rejectOpening = null
         resolve()
       })
       socket.on('message', (bytes) => {
-        if (this.socket !== socket) return
+        if (this.socket !== socket) {return}
         let event: ExternalCdpEvent
         try { event = Envelope.parse(JSON.parse(bytes.toString())) } catch { fail(); return }
         if (event.id !== undefined) {
           const command = this.pending.get(event.id)
-          if (!command) return
+          if (!command) {return}
           this.pending.delete(event.id)
           clearTimeout(command.timer)
           if (event.error !== undefined || event.sessionId !== command.sessionId) {
             command.reject(externalCdpError())
-          } else command.resolve(event.result)
+          } else {command.resolve(event.result)}
           return
         }
-        for (const listener of this.events) listener(event)
+        for (const listener of this.events) {listener(event)}
       })
     })
   }
   command(method: string, params: Record<string, unknown> = {}, sessionId?: string, transportIdentity?: number): Promise<unknown> {
     const socket = this.socket
     if (!socket || socket.readyState !== WebSocket.OPEN ||
-      (transportIdentity !== undefined && transportIdentity !== this.transport)) return Promise.reject(externalCdpError())
+      (transportIdentity !== undefined && transportIdentity !== this.transport)) {return Promise.reject(externalCdpError())}
     const id = this.nextId++
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -144,21 +144,21 @@ export class ExternalChromiumCdpConnection {
       }, 8000)
       this.pending.set(id, { resolve, reject, timer, sessionId })
       socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }), (error) => {
-        if (error) this.failSocket(socket)
+        if (error) {this.failSocket(socket)}
       })
     })
   }
   cancelSession(sessionId: string, transportIdentity?: number): void {
-    if (transportIdentity !== undefined && transportIdentity !== this.transport) return
+    if (transportIdentity !== undefined && transportIdentity !== this.transport) {return}
     for (const [id, command] of this.pending) {
-      if (command.sessionId !== sessionId) continue
+      if (command.sessionId !== sessionId) {continue}
       clearTimeout(command.timer)
       this.pending.delete(id)
       command.reject(externalCdpError())
     }
   }
   private failSocket(socket: WebSocket): void {
-    if (this.socket !== socket) return
+    if (this.socket !== socket) {return}
     this.socket = null
     this.rejectOpening?.(externalCdpError())
     this.rejectOpening = null
@@ -170,36 +170,36 @@ export class ExternalChromiumCdpConnection {
     socket.removeAllListeners()
     socket.on('error', () => {})
     socket.terminate()
-    for (const listener of this.failures) listener()
+    for (const listener of this.failures) {listener()}
   }
   close(): void {
-    if (this.socket) this.failSocket(this.socket)
+    if (this.socket) {this.failSocket(this.socket)}
   }
   async exactMarkerTarget(marker: string): Promise<string> {
     const targets = Targets.parse(await this.command('Target.getTargets')).targetInfos
       .filter((target) => target.type === 'page' && target.url === marker)
-    if (targets.length !== 1) throw externalCdpError()
+    if (targets.length !== 1) {throw externalCdpError()}
     return targets[0].targetId
   }
   async hasTarget(targetId: string, generation: string): Promise<boolean> {
-    if (generation !== this.generation) return false
+    if (generation !== this.generation) {return false}
     const targets = Targets.parse(await this.command('Target.getTargets')).targetInfos
     return generation === this.generation && targets.some(target => target.type === 'page' && target.targetId === targetId)
   }
   async attach(targetId: string, generation: string, assertActive: () => void = () => {}): Promise<string> {
     assertActive()
     const transportIdentity = this.transportIdentity
-    if (generation !== this.generation) throw externalCdpError()
+    if (generation !== this.generation) {throw externalCdpError()}
     const targets = Targets.parse(await this.command('Target.getTargets', {}, undefined, transportIdentity)).targetInfos
     assertActive()
-    if (!this.ownsTransport(transportIdentity, generation)) throw externalCdpError()
+    if (!this.ownsTransport(transportIdentity, generation)) {throw externalCdpError()}
     if (!targets.some((target) => target.type === 'page' && target.targetId === targetId)) {
       throw externalCdpError()
     }
     const attached = Attached.parse(await this.command('Target.attachToTarget', { targetId, flatten: true }, undefined, transportIdentity))
     try {
       assertActive()
-      if (!this.ownsTransport(transportIdentity, generation)) throw externalCdpError()
+      if (!this.ownsTransport(transportIdentity, generation)) {throw externalCdpError()}
     } catch {
       if (this.ownsTransport(transportIdentity, generation)) {
         await this.command('Target.detachFromTarget', { sessionId: attached.sessionId }, undefined, transportIdentity).catch(() => {})
