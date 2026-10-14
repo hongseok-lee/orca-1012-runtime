@@ -1,7 +1,10 @@
+import type { BrowserTabInfo } from '../../shared/runtime-types'
 import type { AgentBrowserTab } from './external-chromium-browser-session'
 
 export type ExternalChromiumPageRecord = {
   agentPageId: string
+  targetId: string
+  browserGeneration: string
   publicPageId: string
   worktreeId?: string
 }
@@ -10,7 +13,7 @@ export function externalChromiumTabInfo(
   page: ExternalChromiumPageRecord,
   tab: AgentBrowserTab,
   index: number
-): Record<string, unknown> {
+): BrowserTabInfo {
   return {
     browserPageId: page.publicPageId,
     index,

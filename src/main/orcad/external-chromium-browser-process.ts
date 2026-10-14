@@ -19,6 +19,14 @@ import {
   type ExternalChromiumPageRecord as PageRecord
 } from './external-chromium-tab-projection'
 import { ExternalChromiumTabRegistry } from './external-chromium-tab-registry'
+import { ExternalChromiumScreencastSubscribers } from './external-chromium-screencast-subscribers'
+import { Screencast } from '../../shared/rpc-contract/browser-params'
+import type { BrowserScreencastResult } from '../../shared/runtime-types'
+const ScreencastViewer = z.object({
+  sendBinary: z.custom<(bytes: Uint8Array<ArrayBufferLike>) => boolean | void>(v => typeof v === 'function'),
+  emit: z.custom<(event: BrowserScreencastResult) => void>(v => typeof v === 'function').optional(),
+  pairedDeviceId: z.string().optional()
+})
 const AgentBrowserSnapshot = z.object({
   refs: z
     .record(z.string(), z.object({ name: z.string().optional(), role: z.string().optional() }))
@@ -29,12 +37,14 @@ const AgentBrowserSnapshot = z.object({
 export class ExternalChromiumBrowserProcess {
   private readonly session: ExternalChromiumBrowserSession
   private readonly tabs: ExternalChromiumTabRegistry
+  private readonly screencasts: ExternalChromiumScreencastSubscribers
   private queue: Promise<void> = Promise.resolve()
   private available = false
 
-  constructor(agentBrowserPath: string, launch: ExternalChromiumLaunch, statePath: string) {
-    this.session = new ExternalChromiumBrowserSession(agentBrowserPath, launch, statePath)
-    this.tabs = new ExternalChromiumTabRegistry(this.session)
+  constructor(agentBrowserPath: string, launch: ExternalChromiumLaunch, statePath: string, environment: NodeJS.ProcessEnv = process.env) {
+    this.session = new ExternalChromiumBrowserSession(agentBrowserPath, launch, statePath, environment)
+    this.screencasts = new ExternalChromiumScreencastSubscribers(this.session.cdp)
+    this.tabs = new ExternalChromiumTabRegistry(this.session, page => this.screencasts.stopPage(page))
   }
 
   async start(): Promise<void> {
@@ -62,6 +72,7 @@ export class ExternalChromiumBrowserProcess {
   async stop(): Promise<void> {
     this.available = false
     await this.enqueue(async () => {
+      await this.screencasts.stopAll()
       await this.session.stop()
       this.tabs.clear()
     })
@@ -81,6 +92,7 @@ export class ExternalChromiumBrowserProcess {
     method: string,
     args: unknown[]
   ): Promise<unknown> {
+    if (!this.available) throw new BrowserError('browser_unavailable', 'Browser process is unavailable.')
     const params = (args[0] ?? {}) as Record<string, unknown>
     if (method === 'browserTabCreate') {
       return this.tabs.createTab(host, params)
@@ -120,10 +132,16 @@ export class ExternalChromiumBrowserProcess {
       }
     }
     if (method === 'browserScreencast') {
-      throw new BrowserError(
-        'browser_screencast_unavailable',
-        'This browser provider does not offer screencast.'
-      )
+      const screencastParams = Screencast.parse(args[0])
+      const stream = ScreencastViewer.parse(args[1])
+      const page = await this.tabs.resolveTargetPage(host, params)
+      await this.session.connectCdp()
+      // connect may invalidate every mapping when the browser generation changes.
+      if (await this.tabs.resolveTargetPage(host, params) !== page) {
+        throw new BrowserError('browser_tab_closed', 'The owned browser target is unavailable.')
+      }
+      const tab = await this.tabs.describePage(page)
+      return this.screencasts.start(page, screencastParams, stream, tab)
     }
     if (method === 'browserProceedCertificate') {
       throw new BrowserError(

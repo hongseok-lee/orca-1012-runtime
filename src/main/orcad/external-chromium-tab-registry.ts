@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
+import type { BrowserTabInfo } from '../../shared/runtime-types'
 import type { RuntimeBrowserCommandHost } from '../runtime/orca-runtime-browser'
 import { BrowserError } from '../browser/browser-error'
+import { externalCdpError } from './external-chromium-cdp-connection'
 import { normalizeBrowserNavigationUrl } from '../../shared/browser-url'
 import type { ExternalChromiumBrowserSession } from './external-chromium-browser-session'
 import {
@@ -16,13 +18,25 @@ export class ExternalChromiumTabRegistry {
   private readonly activePageIdByWorktree = new Map<string, string>()
   private initialAgentPageId: string | null = null
 
-  constructor(private readonly session: ExternalChromiumBrowserSession) {}
+  constructor(
+    private readonly session: ExternalChromiumBrowserSession,
+    private readonly stopPage: (pageId: string) => Promise<void>
+  ) {
+    session.cdp.onGenerationChanged(() => this.clear())
+    session.cdp.onEvent((event) => {
+      if (event.method !== 'Target.targetDestroyed') return
+      for (const page of this.pagesByPublicId.values()) {
+        if (page.targetId === event.params?.targetId) this.deletePage(page)
+      }
+    })
+  }
 
   initialize(agentPageId: string): void {
-    this.initialAgentPageId = agentPageId
+    this.initialAgentPageId = this.session.freshStartupPageId === agentPageId ? agentPageId : null
   }
 
   clear(): void {
+    for (const page of this.pagesByPublicId.values()) void this.stopPage(page.publicPageId)
     this.pagesByPublicId.clear()
     this.pagesByAgentId.clear()
     this.activePageIdByWorktree.clear()
@@ -60,17 +74,32 @@ export class ExternalChromiumTabRegistry {
         `Unsupported browser URL: ${String(params.url ?? '')}`
       )
     }
-    let agentPageId: string
-    if (this.initialAgentPageId) {
-      agentPageId = this.initialAgentPageId
-      this.initialAgentPageId = null
+    const marker = `about:blank#orca-target-${randomUUID()}`
+    let agentPageId: string | null = null
+    const publicPageId = requestedPageId ?? randomUUID()
+    let page: ExternalChromiumPageRecord
+    try {
+      if (this.initialAgentPageId) {
+        agentPageId = this.initialAgentPageId
+        this.initialAgentPageId = null
+        await this.session.selectPage(agentPageId)
+        await this.session.run(['open', marker])
+      } else {
+        agentPageId = AgentBrowserCreatedTab.parse(await this.session.run(['tab', 'new', marker])).tabId
+      }
+      const nativeMarkers = (await this.session.readTabs()).filter(tab => tab.url === marker)
+      if (nativeMarkers.length !== 1 || nativeMarkers[0].tabId !== agentPageId) throw externalCdpError()
+      await this.session.connectCdp()
+      const targetId = await this.session.cdp.exactMarkerTarget(marker)
+      page = { agentPageId, publicPageId, worktreeId, targetId,
+        browserGeneration: this.session.cdp.generation }
       await this.session.selectPage(agentPageId)
       await this.session.run(['open', url])
-    } else {
-      agentPageId = AgentBrowserCreatedTab.parse(await this.session.run(['tab', 'new', url])).tabId
+      if (!await this.session.cdp.hasTarget(targetId, page.browserGeneration)) throw externalCdpError()
+    } catch (error) {
+      if (agentPageId) await this.session.run(['tab', 'close', agentPageId]).catch(() => {})
+      throw error
     }
-    const publicPageId = requestedPageId ?? randomUUID()
-    const page = { agentPageId, publicPageId, worktreeId }
     this.pagesByPublicId.set(publicPageId, page)
     this.pagesByAgentId.set(agentPageId, page)
     this.setActivePage(page)
@@ -177,6 +206,7 @@ export class ExternalChromiumTabRegistry {
       }
       return { closed: false }
     }
+    await this.stopPage(page.publicPageId)
     await this.session.run(['tab', 'close', page.agentPageId])
     this.deletePage(page)
     if (page.worktreeId) {
@@ -200,7 +230,7 @@ export class ExternalChromiumTabRegistry {
     return page
   }
 
-  async describePage(page: ExternalChromiumPageRecord): Promise<Record<string, unknown>> {
+  async describePage(page: ExternalChromiumPageRecord): Promise<BrowserTabInfo> {
     const tabs = await this.session.readTabs()
     const scopedTabs = tabs.filter(
       (tab) => this.pagesByAgentId.get(tab.tabId)?.worktreeId === page.worktreeId
@@ -230,6 +260,7 @@ export class ExternalChromiumTabRegistry {
   }
 
   private deletePage(page: ExternalChromiumPageRecord): void {
+    void this.stopPage(page.publicPageId)
     this.pagesByPublicId.delete(page.publicPageId)
     this.pagesByAgentId.delete(page.agentPageId)
     const key = page.worktreeId ?? ''
