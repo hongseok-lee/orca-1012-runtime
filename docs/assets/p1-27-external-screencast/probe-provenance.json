@@ -1,0 +1,32 @@
+{
+  "evidenceKind": "standalone-owned-target-CDP-probe",
+  "startedAt": "2026-10-14T11:11:19.990Z",
+  "endedAt": "2026-10-14T11:11:22.694Z",
+  "elapsedMs": 2704.61684,
+  "actualExitCode": 0,
+  "helperSHA256": "880519fd54d7ea61dd9d011d53a53253e4af14ed169d7581afb6e8addc129318",
+  "nativeBinarySHA256": "c249a948cb6a60df94320e319c372a5e679466ca8ea2cc4e69bac4fcc7c270f3",
+  "nativeBinaryBytes": 11547624,
+  "installedPackageVersion": "0.27.0",
+  "chromiumPath": "/ms-playwright/chromium-1217/chrome-linux64/chrome",
+  "observed": "같은 URL의 서로 다른 Target/CDP session에 PAGE A/B/A2가 대응했습니다. Frame 8개의 routing과 ACK, stop 2개와 detach 2개를 관측했습니다.",
+  "images": [
+    {
+      "path": "first-a.jpg",
+      "bytes": 13068,
+      "sha256": "263c1792aa17ff47b39e27a7a1f421a064e25e68cc383f582dd2ab6611caf9c6"
+    },
+    {
+      "path": "first-b.jpg",
+      "bytes": 12716,
+      "sha256": "f283d2bac71b840f1869a23938d94aa88c8dfe8a99f07be41a451e46e6458085"
+    },
+    {
+      "path": "return-a2.jpg",
+      "bytes": 14713,
+      "sha256": "d6e768080fcefdb5cc738fcfd0d4b56a27557b1bf3d176f2b2418a7e51e739df"
+    }
+  ],
+  "preservedFailure": "이전 최초 target probe의 first-a/first-b는 PROBE OWNED DOCUMENT, return-a2는 PAGE A였습니다. 그 원 실패와 JPEG는 비공개 운영 증거에 불변 보존했습니다.",
+  "qualification": "이 그림은 standalone probe의 원 JPEG입니다. 이번 제품 source revision의 기존 wire·앱·native 기기·자동 인증·영속 BrowserTab·HA 성공을 증명하지 않습니다. Daemon 및 Chromium 전체 PID의 독립 종료는 미검증입니다."
+}
