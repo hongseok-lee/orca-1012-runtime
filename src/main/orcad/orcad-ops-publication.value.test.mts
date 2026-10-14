@@ -28,13 +28,11 @@ await test('unset and invalid Ops allocate no publisher; unstarted and failed-st
     try {
       assert.equal(owner.readConfig.pool, pool)
       assert.equal(owner.lastResult, null); assert.equal(owner.lastFailure, null)
-      if (boundary === 'invalid-ops') {
-        await assert.rejects(prepareOrcadOps({ ...configured(), pollIntervalMs: 0 }, owner.readConfig),
+      await (boundary === 'invalid-ops'
+        ? assert.rejects(prepareOrcadOps({ ...configured(), pollIntervalMs: 0 }, owner.readConfig),
           error => error instanceof OrcadOpsConfigurationError && error.code === 'OPS_STARTUP_CONFIG')
-      } else {
         // The original worker rejects this interval before creating a timer or connecting; no alternate implementation.
-        await assert.rejects(owner.startPublication({ streamId: OPS_REPLAY_STREAM, pollIntervalMs: 2147483648 }), unavailable)
-      }
+        : assert.rejects(owner.startPublication({ streamId: OPS_REPLAY_STREAM, pollIntervalMs: 2147483648 }), unavailable))
       await stopOrcadRuntimeWithDurableCatalog({ stopRpc: async () => { order.push('rpc') },
         stopAgentControlAdapter: () => {}, stopDaemon: async () => {}, uninstallObservedStatusIdentity: () => {},
         uninstallHookStatusRepublish: () => {}, stopAgentHookServer: () => {}, stopDurableCatalog: () => {
