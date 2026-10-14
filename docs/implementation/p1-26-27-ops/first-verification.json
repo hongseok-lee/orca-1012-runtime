@@ -1,0 +1,121 @@
+{
+  "pgSourcePin": "3f13bc952392302de59b13ed1add81e1408d53bd",
+  "apiStaticCorrectionPin": "13da77014fa533f5ce0e61505cc7a62160f0f6d5",
+  "helperSourcePin": "285b4a71e472c7be12cfdcfa98c876202ebdecf6",
+  "base": "47c9a5dfa617d32dbcf43a6eda6320e853f360e1",
+  "pg": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "repeated": false
+  },
+  "schema": {
+    "migrations": 18,
+    "preparations": 1,
+    "repeated": false
+  },
+  "ownedApiType": {
+    "rootFiles": 18,
+    "ownedDiagnostics": 0,
+    "compilerCliExit": 1,
+    "outsideCurrentScopeDiagnostics": 25,
+    "outsideDiagnosticsUnchanged": true,
+    "fullTypePass": false,
+    "runtimeWiringRootsExcluded": true
+  },
+  "ownedApiLint": {
+    "files": 18,
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0
+  },
+  "helperStatic": {
+    "files": 2,
+    "typeExit": 0,
+    "lintExit": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "maxLinesComparison": {
+    "originalMainPhysicalLines": 355,
+    "beforeExtractionPhysicalLines": 370,
+    "beforeExtractionActualLintLines": 307,
+    "configuredMaximum": 300,
+    "originalMainActualLintExit": 0,
+    "beforeExtractionActualLintExit": 1,
+    "afterExtractionActualLintExit": 0,
+    "rootAttributionAccepted": false
+  },
+  "newScreenshots": 0,
+  "reusedUiImages": [
+    {
+      "view": "desktop",
+      "assetPin": "bedd88c7ba91b6593ecdd783584220f435b184d9",
+      "imagePath": "src/main/durable-runtime/ops-ui/evidence/first-browser/ui-desktop-first.png",
+      "provenancePath": "src/main/durable-runtime/ops-ui/evidence/first-browser/ui-desktop-first-provenance.json",
+      "sourcePin": "2b7fd5a681fa592d45d2b69d30ff88d1e1566892",
+      "apiContractPin": "93c93be939cc8a68c131941c8b981494d6c6ac3f",
+      "capturedAt": "2026-10-14T02:13:23.014Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1200
+      },
+      "DPR": 1,
+      "fullPage": false,
+      "sha256": "61d913051e45c379774f27682577736fb688ab6e6b983988d77994bb5408143e",
+      "caption": "이미 수락된 synthetic DTO 소비 화면입니다. API 실제 권한과 PG 검증 증거는 별도 최초 9개 TAP입니다.",
+      "newCapture": false
+    },
+    {
+      "view": "mobile",
+      "assetPin": "bedd88c7ba91b6593ecdd783584220f435b184d9",
+      "imagePath": "src/main/durable-runtime/ops-ui/evidence/first-browser/ui-mobile-first.png",
+      "provenancePath": "src/main/durable-runtime/ops-ui/evidence/first-browser/ui-mobile-first-provenance.json",
+      "sourcePin": "2b7fd5a681fa592d45d2b69d30ff88d1e1566892",
+      "apiContractPin": "93c93be939cc8a68c131941c8b981494d6c6ac3f",
+      "capturedAt": "2026-10-14T02:13:23.299Z",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "DPR": 1,
+      "fullPage": true,
+      "sha256": "0097f1c9ae7c10dda0f60a312b97b5d941ba1e7e4a8b26c11f16a04fa2e129a6",
+      "caption": "이미 수락된 synthetic DTO 소비 화면입니다. API 실제 권한과 PG 검증 증거는 별도 최초 9개 TAP입니다.",
+      "newCapture": false
+    }
+  ],
+  "rawLogHashes": [
+    {
+      "file": "first-pg-http.log",
+      "sha256": "80d6089611b53b83f318788b1c7388cabd1ef684024a2b89a08c5b1241e8a21b"
+    },
+    {
+      "file": "first-typecheck.log",
+      "sha256": "3d5f58170deff71adc6640145ae41dcbdebdc054a326456a89cb633b3ce5e25d"
+    },
+    {
+      "file": "first-lint.log",
+      "sha256": "00d019128f9db833044b595c91f811ab21417ebe55f41a131da90f0eba756b27"
+    },
+    {
+      "file": "corrected-type-cli-private.log",
+      "sha256": "01788b030accdc2b67711f979203b0fa75df955e1d0b4523d52210fdab9cd7cd"
+    },
+    {
+      "file": "lint-private.log",
+      "sha256": "846f1db04edadcb48c7331728921614108fd2310f241dc1dfbe9e9a949122169"
+    },
+    {
+      "file": "baseline-runtime-lint-private.log",
+      "sha256": "a14c20cf2ea90ab474a2fcf88ebc893ed692fc72bb61e48a25ccc92a6e6d82db"
+    },
+    {
+      "file": "type-private.log",
+      "sha256": "157599dc7217e2640ed7207e4fe91c11fd592edff10afd676b8c82ec264f58b6"
+    }
+  ],
+  "limits": "Runtime/startup에 활성화하지 않았고 전체 compiler CLI는 범위 밖 25개 진단으로 exit 1입니다. 소유 API type 진단 0과 helper type exit 0을 전체 제품 type PASS로 바꾸어 표시하지 않습니다. 원인 귀속의 최종 수용과 merge는 Root가 합니다."
+}

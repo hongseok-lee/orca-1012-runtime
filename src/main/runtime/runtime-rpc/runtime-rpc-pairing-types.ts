@@ -1,3 +1,4 @@
+import type { RuntimeOpsHttpConfig } from '../../durable-runtime/ops/runtime-config.ts'
 import type { DurableCatalogReadConfig } from '../../durable-runtime/rpc/config.ts'
 import type { OrcaRuntimeService } from '../orca-runtime'
 import type { RpcAnyMethodDeclaration } from '../rpc/core'
@@ -60,6 +61,8 @@ export type OrcaRuntimeRpcServerOptions = {
   methods?: readonly RpcAnyMethodDeclaration[]
   // Explicit server composition; absent preserves the existing runtime path.
   durableCatalogRead?: DurableCatalogReadConfig
+  // Explicit opt-in; runtime verifies existing paired keys and supplies server scope.
+  opsHttp?: RuntimeOpsHttpConfig
 }
 
 export type PairingOfferUnavailableReason =

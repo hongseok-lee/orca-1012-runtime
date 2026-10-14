@@ -1,13 +1,17 @@
 import type { Pool } from 'pg'
 import type { RuntimeUnitId } from '../../../shared/durable-runtime/identity.ts'
-import { DurableDatabaseError, withDurableTransaction } from '../db/connection.ts'
+import { DurableDatabaseError, withDurableTransaction, type DurableTransaction } from '../db/connection.ts'
 import type { LifecycleOperation, MemberProjection, UnitProjection } from './types.ts'
 
 /** One read-only SQL snapshot. No locks, receipts, activity/wake updates or UI
  * enum inputs; absent telemetry remains unverifiable rather than READY/idle. */
 export async function readUnitProjection(pool: Pool, id: RuntimeUnitId): Promise<UnitProjection> {
-  return withDurableTransaction(pool, async tx => {
-    const result = await tx.query<{ projection: UnitProjection }>(`SELECT jsonb_build_object(
+  return withDurableTransaction(pool, tx => readUnitProjectionInTransaction(tx, id))
+}
+
+/** The caller owns isolation and lifetime; preserve the existing SQL and missing-row contract. */
+export async function readUnitProjectionInTransaction(tx: DurableTransaction, id: RuntimeUnitId): Promise<UnitProjection> {
+  const result = await tx.query<{ projection: UnitProjection }>(`SELECT jsonb_build_object(
       'unit', to_jsonb(u) || jsonb_build_object('intent_revision',u.intent_revision::text,
         'execution_epoch',u.execution_epoch::text,'revision',u.revision::text),
       'attempt', CASE WHEN a.id IS NULL THEN NULL ELSE jsonb_build_object('id',a.id,'podUid',a.pod_uid,'status',a.status) END,
@@ -27,13 +31,12 @@ export async function readUnitProjection(pool: Pool, id: RuntimeUnitId): Promise
         'step_revision',o.step_revision::text,'revision',o.revision::text) ORDER BY o.id)
         FROM durable_runtime.operations o WHERE o.runtime_unit_id=u.id AND o.result IS NULL),'[]'::jsonb)
       ) AS projection FROM durable_runtime.runtime_units u LEFT JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id WHERE u.id=$1`, [id])
-    if (!result.rows[0]) {
-      throw new DurableDatabaseError('LIFECYCLE_UNIT_MISSING')
-    }
-    // jsonb timestamps are ISO strings. Preserve exact stored values instead of
-    // inventing freshness or current physical status from a query's success.
-    return result.rows[0].projection
-  })
+  if (!result.rows[0]) {
+    throw new DurableDatabaseError('LIFECYCLE_UNIT_MISSING')
+  }
+  // jsonb timestamps are ISO strings. Preserve exact stored values instead of
+  // inventing freshness or current physical status from a query's success.
+  return result.rows[0].projection
 }
 
 export type { LifecycleOperation, MemberProjection }

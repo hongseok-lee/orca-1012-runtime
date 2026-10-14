@@ -1,9 +1,10 @@
+import type { OpsHttpHandler } from '../../durable-runtime/ops/types.ts'
 // WebSocket transport letting mobile clients reach the Orca runtime over LAN (wss:// with TLS, else ws://); auth is per-device tokens, independent of transport encryption.
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https'
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http'
 import { WebSocketServer, type WebSocket } from 'ws'
 import type { RpcTransport } from './transport'
-import { createStaticWebClientHandler } from './static-web-client-handler'
+import { createWebSocketHttpHandler } from './ws-http-handler'
 import { RemoteRuntimeServerHeartbeat } from './remote-runtime-server-heartbeat'
 
 const MAX_WS_MESSAGE_BYTES = 1024 * 1024
@@ -37,6 +38,8 @@ export type WebSocketTransportOptions = {
   preAuthTimeoutMs?: number
   // Why: the pairing server can also serve the browser client, avoiding a second static server.
   staticRoot?: string
+  // Optional ops composition on the same listener; other URLs keep the static path.
+  httpHandler?: OpsHttpHandler
   // Why: devices paired while the fallback port was active point at it, so it must bind first on later launches or those pairings strand (STA-1511).
   fallbackPort?: number
   // Why: serve --port clients dial the pinned port; prefer it first so a stale fallback can't steal the pin (issue #8535). Default keeps fallback-first (STA-1511).
@@ -50,6 +53,7 @@ export class WebSocketTransport implements RpcTransport {
   private readonly tlsKey: string | undefined
   private readonly heartbeat: RemoteRuntimeServerHeartbeat
   private readonly preAuthTimeoutMs: number
+  private readonly httpHandler: OpsHttpHandler | undefined
   private readonly staticRoot: string | undefined
   private readonly fallbackPort: number | undefined
   private readonly preferPinnedPort: boolean
@@ -73,6 +77,7 @@ export class WebSocketTransport implements RpcTransport {
     heartbeatNow,
     preAuthTimeoutMs,
     staticRoot,
+    httpHandler,
     fallbackPort,
     preferPinnedPort
   }: WebSocketTransportOptions) {
@@ -87,6 +92,7 @@ export class WebSocketTransport implements RpcTransport {
     )
     this.preAuthTimeoutMs = preAuthTimeoutMs ?? PRE_AUTH_TIMEOUT_MS
     this.staticRoot = staticRoot
+    this.httpHandler = httpHandler
     this.fallbackPort = fallbackPort
     this.preferPinnedPort = preferPinnedPort === true
   }
@@ -171,9 +177,7 @@ export class WebSocketTransport implements RpcTransport {
   }
 
   private createHttpServer(): HttpServer | HttpsServer {
-    const requestListener = this.staticRoot
-      ? createStaticWebClientHandler(this.staticRoot)
-      : undefined
+    const requestListener = createWebSocketHttpHandler(this.staticRoot, this.httpHandler)
     return this.tlsCert && this.tlsKey
       ? createHttpsServer({ cert: this.tlsCert, key: this.tlsKey }, requestListener)
       : createHttpServer(requestListener)
@@ -227,6 +231,8 @@ export class WebSocketTransport implements RpcTransport {
     this.httpServer = null
     this.heartbeat.stop()
     this.heartbeatConnections.clear()
+    // Finish owned unary/stream responses before HTTP close waits for connections.
+    await this.httpHandler?.stop()
 
     if (wss) {
       for (const client of wss.clients) {
