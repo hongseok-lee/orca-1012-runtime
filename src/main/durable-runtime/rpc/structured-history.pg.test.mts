@@ -140,7 +140,7 @@ test('PG1 실제 공개 adapter·Catalog·alias·RR reader·projector·history �
     await tx.query("UPDATE durable_runtime.tabs SET lifecycle='CLOSED',closed_at=clock_timestamp() WHERE session_id=$1", [sessionId])
   })
   const before = await storedState(pool, sessionId)
-  const transactions: Array<{ statements: string[]; released: number }> = []
+  const transactions: { statements: string[]; released: number }[] = []
   const entered = deferred<void>(), resume = deferred<void>()
   let gateConnect = false
   const observedPool = new Proxy(pool, { get(target, property) {
