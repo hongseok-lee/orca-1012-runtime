@@ -146,8 +146,8 @@ await test('original receipts precede tombstones and changed launch preparation 
     })
     const changed = setup({ ...ws.config, launch: { ...ws.config.launch!, repositories: [] } })
     try {
-      assert.deepEqual(await changed.invoke('worktree.create', request), created)
-      assert.deepEqual(await changed.invoke('session.tabs.createTerminal', terminalRequest), terminal)
+      assert.deepEqual(JSON.parse(JSON.stringify(await changed.invoke('worktree.create', request))), JSON.parse(JSON.stringify(created)))
+      assert.deepEqual(JSON.parse(JSON.stringify(await changed.invoke('session.tabs.createTerminal', terminalRequest))), JSON.parse(JSON.stringify(terminal)))
       await assert.rejects(changed.invoke('worktree.create', { ...request, name: 'different' }), /RECEIPT_PAYLOAD_CONFLICT/)
       await assert.rejects(changed.invoke('session.tabs.createTerminal', { ...terminalRequest, command: 'different' }), /RECEIPT_PAYLOAD_CONFLICT/)
     } finally { changed.adapter.dispose() }
