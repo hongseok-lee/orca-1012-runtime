@@ -93,4 +93,3 @@ Client 후속 범위는 같은 Expo Web의 원 private browser state/정상 인�
 이 합류는 startup/운영 화면의 실제 연결을 위한 단계다. 중앙 Browser 실행/screencast·자동 인증 전달·Expo 및 native 기기·G03 provider/G04 old writer/G05·Active/Standby 전체 HA는 아직 완료가 아니다. U-01 추가 자동 계속 계약과 Phase2는 변경하지 않는다. TTL 리퍼는 제외한다. 동결 template 및 보호 백업은 사용/변경하지 않는다.
 
 매 단계 끝에서 원 사용자 지시를 다시 출력하고 구현 작업목록을 읽는다. 실제 결과는 실행 현황·PR 최신 description/comment/head·지속 메모리에 기록한다.
-
