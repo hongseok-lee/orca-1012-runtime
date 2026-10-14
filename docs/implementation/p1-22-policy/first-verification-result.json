@@ -1,0 +1,60 @@
+{
+  "결과": "최초 순수 fixture 21건과 scoped typecheck 및 lint가 교정 없이 통과했습니다.",
+  "authority": "DATA_ONLY",
+  "executedSourceSHA": "0ac75cf2527d8fa782eccffb5932fc27ecf9e0b6",
+  "earlyAPISHA": "ee38c315c340cb14f289838db133d4302bddcb81",
+  "branchBaseSHA": "b7c6fa1bd9fab9d43a394907c2c4ae63c0e84bef",
+  "commonInputSHA": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "evidenceDependencySHA": "8214d2635ba44af68a361154baea6346e9cca918",
+  "fixture": {
+    "tests": 21,
+    "pass": 21,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0,
+    "runtimeExecutions": 1,
+    "fileConcurrency": 1
+  },
+  "type": {
+    "exitCode": 0,
+    "executions": 1
+  },
+  "lint": {
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0,
+    "files": 10,
+    "threads": 1,
+    "executions": 1
+  },
+  "finishedAt": "2026-10-13T13:54:58.502Z",
+  "byteEquivalence": {
+    "status": "BYTE_EQUIVALENT",
+    "files": 24,
+    "node": "v24.15.0",
+    "sourceSHA": "0ac75cf2527d8fa782eccffb5932fc27ecf9e0b6"
+  },
+  "nodeVersion": "v24.15.0",
+  "tools": {
+    "typescript": "7.0.2",
+    "esbuild": "0.25.12",
+    "oxlint": "1.80.0",
+    "typesNode": "25.9.5"
+  },
+  "originalLogsSHA256": {
+    "fixture-first.tap": "09abd2327988dfcce853f67ea286a6abf220ba9f9fb6f2a349d27ec842567d54",
+    "transform-first.log": "c2c103eda9b3c87f3f8576e3e651b48b36284ae1ac4112c3cd7226274fab0801",
+    "equivalence-first.json": "b3506c3f92209d902d4b895bfa202034832083ff33851872dfd83042171dc15a",
+    "lint-first.log": "f13c43cdc88eacc54496e94d166a87bd8cb30eb20dd1a7842d66c8ab625cba32",
+    "status.json": "06bf1a1dc3f70e9dbf3e706792a9eb27396e833aa983c713b2e435173e26c552",
+    "type-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "equivalence-first.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "actualMinimumAdmissionVerified": false,
+  "actualGrowthApplied": false,
+  "PGReservationsVerified": false,
+  "executionAuthorityGranted": false,
+  "screenshots": 0,
+  "unconnected": "실제 minimum·CPU:RAM·quota·Agent admission과 PG profile/reservation/operation writer, P1-23 controller 및 policy activation은 미연결입니다."
+}

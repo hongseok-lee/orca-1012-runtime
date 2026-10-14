@@ -33,6 +33,9 @@ export class RpcStreamingDispatcher {
     reply: (response: string) => void,
     options?: RpcDispatchStreamingOptions
   ): Promise<void> {
+    // Capture authenticated options before unary compatibility routing can await.
+    options = options === undefined ? undefined : { ...options,
+      clientCapabilities: options.clientCapabilities === undefined ? undefined : Object.freeze([...options.clientCapabilities]) }
     const { runtime, registry, orchestrationMutations, legacyOrchestration, meta } =
       this.dependencies
     const envelopeMeta = meta()
@@ -164,6 +167,8 @@ export class RpcStreamingDispatcher {
           connectionId: options?.connectionId,
           clientId: options?.clientId,
           pairedDeviceId: options?.pairedDeviceId,
+          authenticatedCallerFingerprint: options?.authenticatedCallerFingerprint,
+          reportSubscriptionError: error => reply(JSON.stringify(mapDispatcherError(request, envelopeMeta, error))),
           clientKind: options?.clientKind,
           clientCapabilities: options?.clientCapabilities,
           updateClientCapabilities: options?.updateClientCapabilities,

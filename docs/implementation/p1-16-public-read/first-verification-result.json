@@ -1,0 +1,62 @@
+{
+  "pg": {
+    "source": "d0e55595d198f2c0123884c6fe47a5088eefbf2f",
+    "written": 11,
+    "executed": 11,
+    "passed": 11,
+    "failed": 0,
+    "reruns": 0
+  },
+  "values": {
+    "source": "e1822db1dd8d3716189f93725fcec13956d4c4f8",
+    "written": 6,
+    "executed": 6,
+    "passed": 6,
+    "failed": 0,
+    "loader_attempts_without_case_entry": 2,
+    "case_executions": 1
+  },
+  "distinct_passed": 17,
+  "initial_type": {
+    "exit": 1,
+    "owned": 6,
+    "external": 34
+  },
+  "latest_type": {
+    "whole_exit": 1,
+    "owned": 0,
+    "external": 25,
+    "whole_success": false,
+    "repeat_launched_before_root_review_6149135871": true,
+    "repeat_finished_before_stop_check": true,
+    "further_whole_type_runs": 0
+  },
+  "initial_lint": {
+    "exit": 1,
+    "errors": 514,
+    "included_generated_bundles": true
+  },
+  "scoped_lint": {
+    "exit": 0,
+    "warnings": 0,
+    "errors": 0,
+    "files": 18,
+    "generated_bundles_included": false
+  },
+  "schema014": "521a9ba96393a4d4383e5b6f42ceb234dff15d97",
+  "base": "c2304c4ef606bb3cf292363c7f123b7a83a8e1e6",
+  "catalog": "9ca02f1d2d6f467f02f62b475a7c983906e48fb5",
+  "limitations": "실제 paired 인증, 공개 API 활성화, provider, physical fencing, 새 RW 및 HA는 미검증입니다. 전체 type 종료 코드 1과 외부 25개 진단은 남아 있습니다.",
+  "log_digests": {
+    "prepare-initial-private.log": "ccbbb56250059e29a267bb6426965cdb887908bbd009a639641a5f6711c58f51",
+    "transform-focused-initial-private.log": "f3933d692cdc080a25196d12d77b7401c1c10256e27cd8f953e503b13d1cd384",
+    "initial-tests-private.tap": "6c2a137e2c06381bec106c8102644a0852687f913cb81e57f79888b1d1a0f2ed",
+    "initial-type-private.log": "e1d8b549732ec7c89a1f7915441390e612d849e23a43eaa441b27481399ac62f",
+    "initial-lint-private.log": "fd8b23216d742f1695436635a3d1efde2e8b23c0bab43e7384689d950e29f7b4",
+    "value-commonjs-transform-private.log": "cfd8bd0a6a362e8c891acee743127db4c1afbf25fa0d357f37e015ae011ab4fd",
+    "value-commonjs-wrapped-transform-private.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "first-values-private.tap": "638449407dca729c87720c53f4e918431bd71cd3678d24dc49eac69a596917a7",
+    "focused-type-private.log": "01788b030accdc2b67711f979203b0fa75df955e1d0b4523d52210fdab9cd7cd",
+    "scoped-lint-private.log": "e94c375e0a1a87b68d3ca00c4eb0c285a469d59f1669285c4fc723ec90214cd0"
+  }
+}

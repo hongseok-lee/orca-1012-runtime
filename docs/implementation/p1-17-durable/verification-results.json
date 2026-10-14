@@ -1,0 +1,84 @@
+{
+  "qualification": "원제품 저장 경계의 합성 fixture 결과입니다. 실제 상위 인증 issuer, 공개 RPC, provider, native 앱 또는 HA 합격이 아닙니다.",
+  "productPin": "c44b439cf7489eee72833abb5afb47847bcf844e",
+  "fixtureCorrectionPin": "fc21fc0f4b5d1a5da5b454a133cdead1ff5dc2bf",
+  "firstExecutedFixturePin": "7ddbc97667ae2dcea81ae2faa2c7f581fc640312",
+  "actualVerificationBase": "ebd86a1e48fe8209853a56e93c92b6a087f37a1a",
+  "ownerInputs": {
+    "schema017": "a24db99ed3184bb9cbd3b7fe70f8c85bfea8bf37",
+    "CatalogActualEntry": "17cca6af7bb8fad1285921b399660a1a6806cad0",
+    "CatalogContract": "a6f44683052838ec714a52256f894f6330de2e41",
+    "InputEntry": "4d1cabbc93ea33289a708196951b8d2a92a1bfdf",
+    "utility": "3338b67c580d54ab1546ff7db74c2089e76d78fc",
+    "EvidenceJsonType": "250bc7eafc93c92df1ed3771da7d63d9dc4922cf"
+  },
+  "priorCompositeManifestSHA256": "93d10af5c9f2baa21c77721adeef619309d825ba31e0ec7c14c3f5ce0b7b1ede",
+  "actualA24WholeRowsInputPreserved": true,
+  "firstScopedType": {
+    "exitCode": 1,
+    "missingCatalogImports": 12,
+    "missingRuntimeEvidence": 1,
+    "fixtureNarrowing": 3
+  },
+  "firstScopedLint": {
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "correctedScopedType": {
+    "exitCode": 0,
+    "laterWholeTypeRepeated": false
+  },
+  "loaderFailure": {
+    "errorCode": "ENOENT",
+    "actualNewCasesEntered": 0,
+    "rawLogSHA256": "08ebd980b69be4ed6e3f2dea42a876d333beb282f4d4ac3a9a3b0ca081c1ed19",
+    "bundleBytesUnchangedOnLayoutCorrection": true
+  },
+  "firstActualPG": {
+    "passed": 7,
+    "failed": 2,
+    "skipped": 0,
+    "actualCases": 9
+  },
+  "firstRawTAPSHA256": "b8bd0e6887254682ce1ad9a10b304c2f34524ddd41ef8bd7e09a9d1f57ad665b",
+  "focusedPG": {
+    "startedAt": "2026-10-13T15:33:50.793Z",
+    "finishedAt": "2026-10-13T15:33:53.525Z",
+    "actualCallbacks": [
+      4,
+      6
+    ],
+    "actualPass": 2,
+    "actualFail": 0,
+    "actualSkip": 7,
+    "NodeReportedPass": 3,
+    "parentWrapperPass": 1,
+    "exitCode": 0,
+    "explicitSkippedOtherCallbacks": true,
+    "parentPatternUsed": false
+  },
+  "focusedFixtureLint": {
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "sourceFixtureSHA256": "e1c0dcc20b5e6e2584256d3ac3ceeb9327d4f8d26aa7c3d867406f923a6051be",
+  "executionOnlyFixtureSHA256": "9cd8ca3d05180c395f8a1778240d5dee78c83c569181e30d447aa3378ca7e5f5",
+  "focusedBundleSHA256": "f5fb229dedb9fa4d1929fc74d5f7d05cd42c18a02ff8db50bde7bdb71c3f8500",
+  "focusedRawTAPSHA256": "e96aa6889bb3be980dc272f3b27db550955caa0f1bfea21f90767fbf3ae365dd",
+  "product6Unchanged": true,
+  "distinctCasesWithPassingEvidence": 9,
+  "successful7Repeated": false,
+  "DBReprepared": false,
+  "migrationRepeated": false,
+  "oldProvider19Repeated": false,
+  "utility8Repeated": false,
+  "installation": false,
+  "recapture": false,
+  "runtimeRestart": false,
+  "ownedPIDsCompleted": true,
+  "heavyReturned": true,
+  "rawLogs": "원 로그와 실행 metadata는 비공개 소유 증거에 보존했습니다. 원 실패를 덮어쓰지 않았습니다.",
+  "limitations": "기존 합성 입력의 결과이며 최신 main 입력으로 새 검증됐다고 주장하지 않습니다. 최초 durable 보고 PNG, 실제 상위 resolver/public handler/provider/P120/앱/HA는 아직 미연결입니다."
+}

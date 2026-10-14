@@ -98,8 +98,9 @@ export class RpcDispatcher {
           connectionId: options?.connectionId,
           requestId: request.id,
           clientId: options?.clientId,
+          pairedDeviceId: options?.pairedDeviceId,
           clientKind: options?.clientKind,
-          clientCapabilities: options?.clientCapabilities,
+          clientCapabilities: options?.clientCapabilities === undefined ? undefined : Object.freeze([...options.clientCapabilities]),
           updateClientCapabilities: options?.updateClientCapabilities,
           orchestrationCapability: request.orchestrationCapability,
           authenticatedCallerFingerprint: options?.authenticatedCallerFingerprint
