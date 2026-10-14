@@ -1,3 +1,4 @@
+import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogCreationFacade, createCatalogRpc } from './creation.ts'
 import type { CatalogCreationMethod } from './launch-preparation.ts'
 import type { RpcContext, RpcAnyMethodDeclaration } from '../../runtime/rpc/core.ts'
@@ -14,12 +15,14 @@ export class DurableCatalogReadAdapter {
   private readonly subscriptions: CatalogReadSubscriptions
   private readonly metadata: ReturnType<typeof createCatalogMetadataFacade>
   private readonly creation: ReturnType<typeof createCatalogCreationFacade>
+  private readonly structured: ReturnType<typeof createCatalogStructuredRpc>
   private disposed = false
   constructor(config: DurableCatalogReadConfig) {
     this.config = captureDurableCatalogReadConfig(config)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
     this.metadata = createCatalogMetadataFacade(this.config)
     this.creation = createCatalogCreationFacade(this.config)
+    this.structured = createCatalogStructuredRpc(this.config)
   }
   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
   async read(method: string, params: unknown, context: RpcContext): Promise<unknown> {
@@ -43,6 +46,12 @@ export class DurableCatalogReadAdapter {
     try {
       this.requireOpen()
       return await createCatalogRpc(this.config, this.creation, method as CatalogCreationMethod, params, context)
+    } catch (error) { throw catalogReadFailure(error) }
+  }
+  async createStructured(method: string, params: unknown, context: RpcContext): Promise<unknown> {
+    try {
+      this.requireOpen()
+      return await this.structured(method as CatalogStructuredCreateMethod, params, context)
     } catch (error) { throw catalogReadFailure(error) }
   }
   async unsubscribe(method: string, params: unknown, context: RpcContext): Promise<unknown> {
