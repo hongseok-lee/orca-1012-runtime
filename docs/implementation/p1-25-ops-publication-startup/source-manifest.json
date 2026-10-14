@@ -1,0 +1,62 @@
+{
+  "base": "7318c47388d6ed9861a0e1f13c7351a6273c0f5f",
+  "dependencyOriginal": "cc399b66696aaf50c45d02d613c885a8d61e6fdb",
+  "dependencyLocal": "bed615de1a2a9bbe53f7103945aea2b8e4633658",
+  "productSource": "95afac216e4e2b022ebacf61496db9ea683aed59",
+  "fixtureSource": "a101e22611ac016e72b09418c756646d1d27a8ba",
+  "files": [
+    {
+      "path": "src/main/orcad/orcad-ops.ts",
+      "role": "Backend 소유 변경",
+      "sha256": "c43ea1f54ad96042f4995ec176d8615afddf59ca8ca9894bae9b5752c7556d24",
+      "bytes": 5649
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-publication.ts",
+      "role": "Backend 소유 변경",
+      "sha256": "d1ee1b7f8ab304d9b8642a9b5a6cfcd1b24c954e38352d56783b4e9bf7687f56",
+      "bytes": 3246
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-publication.value.test.mts",
+      "role": "Backend 소유 변경",
+      "sha256": "ce3f7b58dfb7ec28d8a4c8616dfda1c759ceafd319d9290285250323a0788f5c",
+      "bytes": 3447
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-publication.pg.test.mts",
+      "role": "Backend 소유 변경",
+      "sha256": "0a742c7f86f45ad6cafd58345d0aed666869397ad39cb08b4b03f5249e245f01",
+      "bytes": 8276
+    },
+    {
+      "path": "src/main/durable-runtime/replay/claim.ts",
+      "role": "Queue 의존성 원 bytes",
+      "sha256": "cd6818b4639d9ee32e5c9bc8e9a43ff3b39768a8a413fd35be06df8cf6ae701b",
+      "bytes": 3480
+    },
+    {
+      "path": "src/main/durable-runtime/replay/worker.ts",
+      "role": "Queue 의존성 원 bytes",
+      "sha256": "fd094cfa63227ff34f5014a74af1769574b9ef4318c1de1bbb47078b54daac88",
+      "bytes": 8141
+    },
+    {
+      "path": "src/main/durable-runtime/replay/index.ts",
+      "role": "Queue 의존성 원 bytes",
+      "sha256": "5ba4fb46dc1da2e0c54cf8c9330f8fb357cf0338bd85fbe34fdaa02dd7ecad71",
+      "bytes": 613
+    }
+  ],
+  "executions": {
+    "test": 0,
+    "type": 0,
+    "lint": 0,
+    "PG": 0,
+    "build": 0,
+    "install": 0,
+    "live": 0,
+    "capture": 0
+  },
+  "qualification": "Source와 fixture 작성 제출이며 실행 결과는 미확보입니다."
+}
