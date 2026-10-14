@@ -1,0 +1,69 @@
+{
+  "evidenceKind": "후속 PG 저장 관계 확인",
+  "originalCaptureProvenanceUnchanged": true,
+  "uiResultSha256": "f49ecf0068fda8dec63d0395f7b8954e717a6a0f5db893f54d1b7ad18c267f7b",
+  "pgResultSha256": "9fb6f0bd255b1cbbcafe0676cf730d7fbc2673ae060ed131a11f39e8fe8fe834",
+  "queryControl": {
+    "startedAt": "2026-10-14T15:37:56.648506+00:00",
+    "endedAt": "2026-10-14T15:37:57.518588+00:00",
+    "exit": 0
+  },
+  "pgSnapshot": {
+    "startedAt": "2026-10-14T15:37:57.170Z",
+    "endedAt": "2026-10-14T15:37:57.447Z",
+    "readOnly": true,
+    "completed": true
+  },
+  "workspaceName": "pearlfish",
+  "storedRelations": {
+    "internalWorkspaceId": "096f5595-63e6-45ec-a8d8-35d7589427ce",
+    "runtimeUnitId": "6cc49676-3ed6-46ea-ab6e-a4356ece2335",
+    "sessionId": "7476ccf9-2245-481a-861a-74fd14a7c71f",
+    "terminalTabId": "e68de663-fd8b-4192-bf7d-b90c0e35b088",
+    "exactUiPublicIdMatchesUniqueWorkspace": true,
+    "publicIdEqualsInternalUuid": false,
+    "opsUnitIdMatches": true,
+    "workspaceMetadataUnitMatchesSessionMember": true,
+    "sessionWorkspaceMatches": true,
+    "tabWorkspaceAndSessionMatch": true
+  },
+  "receiptObservation": {
+    "method": "worktree.create",
+    "committedAt": "2026-10-14T13:33:04.270Z",
+    "responsePublicIdMatchesStoredWorkspace": true,
+    "terminalHandlesMatchStoredTab": true,
+    "matchingInternalTabConfirmed": true,
+    "separateCreateTerminalReceiptObserved": false,
+    "scope": "이번 snapshot에서 해당 저장 관계로 조회된 receipt만 포함합니다. 전체 이력이나 UI 내부 재시도 부재를 증명하지 않습니다.",
+    "pairedPrincipalMatchObserved": false,
+    "uiRequestIdentityObserved": false
+  },
+  "setupDecision": {
+    "workspaceCreate": "inherit",
+    "tabLaunch": "inherit"
+  },
+  "executionObservation": {
+    "unitPhase": "ABSENT",
+    "bindingAccessState": "UNVERIFIED",
+    "activeAttemptPresent": false,
+    "snapshotCounts": {
+      "attempts": 0,
+      "execution_grants": 0,
+      "storage_write_grants": 0,
+      "storage_mounts": 0
+    },
+    "relatedOutboxCount": 4,
+    "relatedOutboxUnpublishedCount": 4
+  },
+  "qualification": {
+    "storedRelationConfirmed": true,
+    "authenticatedUiRequestReceiptIdentityConfirmed": false,
+    "terminalExecutionProof": false,
+    "providerExecutionProof": false,
+    "physicalFencingProof": false,
+    "nativeDeviceProof": false,
+    "automaticAuthProof": false,
+    "centralBrowserProof": false
+  },
+  "scope": "Root가 수락한 기존 읽기 전용 결과의 공개용 투영입니다. 원 UI 촬영과 별도 후속 관측이며 원 결과·인증·principal·request key·payload hash·운영 절대 경로를 포함하지 않습니다."
+}

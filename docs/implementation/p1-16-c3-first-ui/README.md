@@ -36,9 +36,26 @@ Ops 화면은 2026-10-14 13:33:05.709 UTC에 촬영했습니다. Unit 조회·�
 
 Dialog로 한정한 focus 진단은 focus 1회 뒤 `Keyboard.default.metrics is not a function`을 원 message/stack으로 보존했습니다. Root가 고정 Client source의 `mobile/src/components/mounted-bottom-drawer.tsx:162` 및 fillAvailable sheet와 대조해 웹 제약으로 확인했습니다. 앱 수정이나 polyfill 없이 Root가 OPTIONAL name/source를 비우고 기본 Blank Terminal을 유지하는 자동 이름 경로를 배분했습니다. 최종 실제 이름은 `pearlfish`이며 처음 계획한 fixed name을 사용한 성공이 아닙니다. 위 진단은 모두 Create 0회이며 최종 UI 제출만 1회입니다.
 
-## 남은 판정
+## 후속 PG 저장 관계 확인
 
-공개 Worktree ID와 Ops 내부 Workspace UUID/Unit의 상관은 `correlationPending=true` / `sameUnitQualified=false`입니다. 이 PR 시점에 DB 상관 확인은 0회이며, 단일 Unit 조회나 ID 문자열 일부가 같다는 이유로 동일 Unit을 확정하지 않습니다. Root가 원 receipt와 PG metadata를 별도로 읽고 판정합니다.
+촬영 당시 공개 Worktree ID와 Ops 내부 Workspace UUID/Unit의 상관은 `correlationPending=true` / `sameUnitQualified=false`였으며 DB 확인 전이었습니다. 두 capture provenance의 해당 값과 원 촬영 시각은 그대로 보존합니다. 아래는 Root가 별도로 읽고 hash 대조 후 수락한 읽기 전용 PG 결과의 후속 기록입니다. 이번 문서 갱신에서 PG를 다시 조회하지 않았습니다.
+
+PG snapshot은 2026-10-14 15:37:57.170–15:37:57.447 UTC에 관측됐습니다. 원 조회 제어는 15:37:56.648506–15:37:57.518588 UTC이며 exit 0입니다. 실제 UI 결과 SHA256은 `f49ecf0068fda8dec63d0395f7b8954e717a6a0f5db893f54d1b7ad18c267f7b`, 별도 PG 결과 SHA256은 `9fb6f0bd255b1cbbcafe0676cf730d7fbc2673ae060ed131a11f39e8fe8fe834`입니다.
+
+| 확인된 저장 관계 | 후속 PG 관측 |
+|---|---|
+| UI 공개 Worktree ID | 원 UI 입력의 정확한 public ID와 일치하는 Workspace 1개이며 이름은 `pearlfish`입니다. 공개 ID와 내부 UUID는 서로 다른 값입니다. |
+| 내부 Workspace | `096f5595-63e6-45ec-a8d8-35d7589427ce` |
+| Workspace metadata와 Session member의 Unit | 둘 다 `6cc49676-3ed6-46ea-ab6e-a4356ece2335`이며 원 Ops Unit ID와 일치합니다. |
+| Session | `7476ccf9-2245-481a-861a-74fd14a7c71f`이며 위 내부 Workspace에 속합니다. |
+| Terminal Tab | `e68de663-fd8b-4192-bf7d-b90c0e35b088`이며 위 Workspace와 Session에 속합니다. |
+| `worktree.create` receipt | 2026-10-14 13:33:04.270 UTC commit입니다. 응답의 공개 ID와 저장 Workspace가 일치하고 Terminal handle은 위 Tab과 일치합니다. |
+
+Workspace 생성 요청과 Tab launch 요청의 `setupDecision`은 모두 `inherit`입니다. 이번 snapshot의 해당 관계 조회에서는 별도 `session.tabs.createTerminal` receipt가 관측되지 않았습니다. 이 부재를 전체 이력이나 UI의 내부 재시도 부재로 확대하지 않습니다. Paired principal 일치와 원 UI request identity는 미관측이므로 동일 인증 주체·정확한 UI 요청의 receipt라는 판정은 남아 있습니다.
+
+Unit phase는 `ABSENT`, binding access state는 `UNVERIFIED`, active attempt는 없습니다. Snapshot의 attempt·execution grant·storage write grant·storage mount는 각각 0개입니다. 해당 관계 조회에 포함된 outbox 4개는 모두 미publish입니다. 저장 관계 확인은 Terminal 실행이나 provider·물리 fencing 성공 증거가 아닙니다. 세부 확인 값과 남은 한계는 [별도 PG 후속 provenance](pg-correlation-followup-provenance.json)에 기록했습니다.
+
+## 남은 판정
 
 현재 `controllerConnected=false`이며 Terminal 실행/출력, provider/attempt/RW 연결, native 기기, 자동 인증 전달, 중앙 Browser, Active/Standby 전체 HA의 성공을 주장하지 않습니다. 기존 paired state와 개발 서버를 유지했으며 추가 pairing·Metro/서버 재시작·설치·source sync·재촬영은 없습니다. 기존 비밀 없는 화면 2장의 공개 승인과 제품 기능 전체의 완료 판정은 별개입니다.
 
