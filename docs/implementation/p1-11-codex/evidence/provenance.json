@@ -1,0 +1,25 @@
+{
+  "kind": "원격 browser가 저장된 실제 fixture 결과를 렌더링한 최초 보고 캡처입니다.",
+  "actualUrl": "about:blank (setContent)",
+  "capturedAt": "2026-10-13T11:39:21.615Z",
+  "browser": "147.0.7727.15",
+  "playwright": "1.59.1",
+  "viewport": {
+    "width": 1120,
+    "height": 1420
+  },
+  "deviceScaleFactor": 1,
+  "heading": "P1-11 Codex ownership 교정의 첫 focused 검증 결과",
+  "headings": [
+    "새 3개와 수정 1개가 첫 실행에서 통과했습니다.",
+    "타입과 lint는 통과했고 원 실패를 보존했습니다.",
+    "수락·UNKNOWN·취소의 증거를 분리했습니다.",
+    "실제 provider와 영속 합류는 미확인입니다."
+  ],
+  "freshUnauthenticatedContext": true,
+  "inputSha256": "8aaf00e755650efde29a399f86dcb3eca91a2147b7138d8ac72522542235b44a",
+  "pngSha256": "d5c403eab097f79c8bdc3ac69c0fa6ea75ed65ad7ac4a0831345ce949e6aa287",
+  "testedCodeRevision": "bba7df814e7b51f050df8b7673c7b5d2bf5e393b",
+  "finalStyleRevision": "ea060b01eb7b070fdc960472e5fa29c9f40c5cf0",
+  "boundary": "제품 UI·실제 계정 provider·native iPhone 증거가 아닙니다. 시험을 재실행하지 않았습니다."
+}

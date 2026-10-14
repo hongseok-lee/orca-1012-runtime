@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: initial policy is immutable and uses exact documented values
+ok 1 - initial policy is immutable and uses exact documented values
+  ---
+  duration_ms: 2.798703
+  type: 'test'
+  ...
+# Subtest: integer arithmetic preserves huge bytes, rejects lossy and invalid input
+ok 2 - integer arithmetic preserves huge bytes, rejects lossy and invalid input
+  ---
+  duration_ms: 0.651203
+  type: 'test'
+  ...
+# Subtest: exact minimum endpoints and full downsize ladder reach 256 Mi and 52 Mi
+ok 3 - exact minimum endpoints and full downsize ladder reach 256 Mi and 52 Mi
+  ---
+  duration_ms: 5.212867
+  type: 'test'
+  ...
+# Subtest: growth uses 2R without peak; valid peak can skip steps; stale peak is not substituted
+ok 4 - growth uses 2R without peak; valid peak can skip steps; stale peak is not substituted
+  ---
+  duration_ms: 1.034085
+  type: 'test'
+  ...
+# Subtest: actual PR26 classifier positive with missing gVisor counters remains a data-only candidate
+ok 5 - actual PR26 classifier positive with missing gVisor counters remains a data-only candidate
+  ---
+  duration_ms: 4.026118
+  type: 'test'
+  ...
+# Subtest: other classifications, old targets, conflicts and dev scope cannot trigger growth
+ok 6 - other classifications, old targets, conflicts and dev scope cannot trigger growth
+  ---
+  duration_ms: 0.865891
+  type: 'test'
+  ...
+# Subtest: missing admission/minimum/config evidence is never an admitted result
+ok 7 - missing admission/minimum/config evidence is never an admitted result
+  ---
+  duration_ms: 0.36545
+  type: 'test'
+  ...
+# Subtest: cap truncation requires known endpoint and cannot force an unverified profile
+ok 8 - cap truncation requires known endpoint and cannot force an unverified profile
+  ---
+  duration_ms: 0.424784
+  type: 'test'
+  ...
+# Subtest: episode, rolling and replacement counters are finite, original and unchanged
+ok 9 - episode, rolling and replacement counters are finite, original and unchanged
+  ---
+  duration_ms: 0.767854
+  type: 'test'
+  ...
+# Subtest: capacity wait and unobserved single-writer remain separate from cap or budget exhaustion
+ok 10 - capacity wait and unobserved single-writer remain separate from cap or budget exhaustion
+  ---
+  duration_ms: 0.606382
+  type: 'test'
+  ...
+# Subtest: only new Agent selects minimum; existing wake retains last approved size
+ok 11 - only new Agent selects minimum; existing wake retains last approved size
+  ---
+  duration_ms: 0.725616
+  type: 'test'
+  ...
+# Subtest: episode stability needs resolved work and actual OOM-free activity, never idle or Ready
+ok 12 - episode stability needs resolved work and actual OOM-free activity, never idle or Ready
+  ---
+  duration_ms: 3.824958
+  type: 'test'
+  ...
+# Subtest: per-interval metric coverage 95 percent and max gap 60 seconds are exact boundaries
+ok 13 - per-interval metric coverage 95 percent and max gap 60 seconds are exact boundaries
+  ---
+  duration_ms: 0.355272
+  type: 'test'
+  ...
+# Subtest: missing metrics, stale cumulative peak and overlapping activity cannot inflate evidence
+ok 14 - missing metrics, stale cumulative peak and overlapping activity cannot inflate evidence
+  ---
+  duration_ms: 0.465478
+  type: 'test'
+  ...
+# Subtest: fresh unused profile windows and OOM/downsize/failure protections are required
+ok 15 - fresh unused profile windows and OOM/downsize/failure protections are required
+  ---
+  duration_ms: 0.507177
+  type: 'test'
+  ...
+# Subtest: pending input, turn, tool, writer, recovery and unsafe boundary defer application
+ok 16 - pending input, turn, tool, writer, recovery and unsafe boundary defer application
+  ---
+  duration_ms: 0.634952
+  type: 'test'
+  ...
+# Subtest: representative peak and cold start floor can stop rounding without forcing reduction
+ok 17 - representative peak and cold start floor can stop rounding without forcing reduction
+  ---
+  duration_ms: 0.60494
+  type: 'test'
+  ...
+# Subtest: one rollback outside exhausted growth budget preserves protection; additional growth uses normal budget
+ok 18 - one rollback outside exhausted growth budget preserves protection; additional growth uses normal budget
+  ---
+  duration_ms: 0.960516
+  type: 'test'
+  ...
+# Subtest: rollback cannot bypass capacity, cap, single-writer or unknown previous profile
+ok 19 - rollback cannot bypass capacity, cap, single-writer or unknown previous profile
+  ---
+  duration_ms: 0.495176
+  type: 'test'
+  ...
+# Subtest: admission compares actual requests, limits, Spot and isolation without opening an execution gate
+ok 20 - admission compares actual requests, limits, Spot and isolation without opening an execution gate
+  ---
+  duration_ms: 1.502434
+  type: 'test'
+  ...
+# Subtest: init/sidecar demand, overhead and old/new overlap are distinct integer projections
+ok 21 - init/sidecar demand, overhead and old/new overlap are distinct integer projections
+  ---
+  duration_ms: 0.804556
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 176.94611

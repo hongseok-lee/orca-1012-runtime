@@ -1,0 +1,18 @@
+{
+  "결과": "Root가 원 PNG를 직접 열고 최초 관측 결과 heading 및 21건 PASS·0건 실패·0건 skip을 수용했습니다.",
+  "basis": "현재 Root의 명시적 PNG 수용·asset-only 게시 위임",
+  "capturedAt": "2026-10-13T14:32:35.327Z",
+  "targetSHA": "6cf175499b5ce2fd0349ab0e3f8f679db3a2e1e6",
+  "sourceSHA": "0ac75cf2527d8fa782eccffb5932fc27ecf9e0b6",
+  "originalArtifactSHA256": "f6699742c4a71b5e069731d663540bf98002d6476099d32cfbb4febcf2784ada",
+  "originalProvenanceSHA256": "d0dcf87b2634dd64dec29a1fb824d8c702c9e12409ffb2ba38a9cd3aa9ff9bbb",
+  "caption": "P1-22·P1-24 최초 순수 fixture 21건의 실제 browser 보고 화면",
+  "fixtureResult": {
+    "pass": 21,
+    "fail": 0,
+    "skip": 0
+  },
+  "scope": "교정 전 6cf 문서·원 21건의 최초 보고 화면이며 8857 focused 실행의 화면이 아닙니다.",
+  "newCapture": false,
+  "imageEdited": false
+}

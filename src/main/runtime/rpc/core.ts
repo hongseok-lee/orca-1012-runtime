@@ -65,6 +65,8 @@ export type RpcContext = {
   runtime: OrcaRuntimeService
   // Why: lets long-poll handlers release immediately on client disconnect instead of running down timeoutMs. See design doc §3.1.
   signal?: AbortSignal
+  // Server-owned sink for a PG subscription failure after the initial handler returns.
+  reportSubscriptionError?: (error: unknown) => void
   // Why: per-WebSocket key so the server reaps a closing socket's subscriptions without touching sibling sockets sharing the deviceToken.
   connectionId?: string
   // Why: shared-control multiplexes many logical streams over one socket; the frame id lets handlers register cleanup per logical stream.

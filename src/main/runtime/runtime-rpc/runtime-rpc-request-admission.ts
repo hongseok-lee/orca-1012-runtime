@@ -1,3 +1,4 @@
+import { fingerprintAuthenticatedPairingCredential } from '../rpc/orchestration-mutation-executor'
 import type { RuntimeMetadata } from '../../../shared/runtime-bootstrap'
 import { writeRuntimeMetadata } from '../runtime-metadata'
 import type { RpcMessageContext } from '../rpc/transport'
@@ -36,7 +37,9 @@ export class RuntimeRpcRequestAdmission extends RuntimeRpcBinaryRouting {
 
     try {
       return await this.dispatcher.dispatch(request, {
-        signal: longPoll ? context?.signal : undefined
+        signal: longPoll ? context?.signal : undefined,
+        // parseAndAuth already validated this exact server credential.
+        authenticatedCallerFingerprint: fingerprintAuthenticatedPairingCredential(this.authToken)
       })
     } finally {
       this.releaseLongPoll(longPoll)
