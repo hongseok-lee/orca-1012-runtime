@@ -18,7 +18,7 @@ export type OpsUnit = {
   phase: string
   observed: 'ABSENT' | 'unverifiable' | 'PRESENT_UNVERIFIED'
   observedAt: OpsTime
-  attempt: { id: OpsId; podUid: string; status: string; node: string | null; spot: boolean | null } | null
+  attempt: { id: OpsId; podUid: string | null; status: string; node: string | null; spot: boolean | null } | null
   resources: {
     desired: OpsResourceQuantity | null
     admitted: OpsResourceQuantity | null
@@ -37,7 +37,7 @@ export type OpsUnit = {
 export type OpsUnitList = { units: OpsUnit[]; observedAt: OpsTime }
 export type OpsSession = { id: OpsId; lifecycle: string; revision: OpsCounter }
 export type OpsTab = { id: OpsId; workspaceId: OpsId; sessionId: OpsId | null; kind: string; terminalHandle: string | null; lifecycle: string; revision: OpsCounter }
-export type OpsIncident = { id: OpsId; runtimeUnitId: OpsId; state: string; classification: string | null; revision: OpsCounter; observedAt: OpsTime }
+export type OpsIncident = { id: OpsId; runtimeUnitId: OpsId; state: string | null; classification: string | null; revision: OpsCounter | null; observedAt: OpsTime }
 export type OpsOperation = {
   id: OpsId; runtimeUnitId: OpsId; kind: string; step: string
   revision: OpsCounter; stepRevision: OpsCounter; intentRevision: OpsCounter
