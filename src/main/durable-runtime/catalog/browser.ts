@@ -20,7 +20,7 @@ export type PreparedCatalogBrowserLaunch = {
 
 export function captureCatalogBrowserLaunch(input: PreparedCatalogBrowserLaunch): PreparedCatalogBrowserLaunch {
   const captured = captureCatalogParsed(input)
-  if (typeof captured.browserPageId !== 'string' || !captured.browserPageId) {
+  if (typeof captured.tabId !== 'string' || typeof captured.browserPageId !== 'string' || !captured.browserPageId) {
     throw new CatalogError('CATALOG_BROWSER_PAGE_ID')
   }
   return Object.freeze({ tabId: logicalId('tab', captured.tabId), browserPageId: captured.browserPageId })
