@@ -1,0 +1,57 @@
+{
+  "status": "새 3개와 수정 1개는 첫 실행에서 PASS이며 스타일 및 fixture guard 교정 뒤 scoped 타입/lint도 PASS입니다. 실제 inference/auth/PG/spool 합격이 아닙니다.",
+  "testedCodeRevision": "bba7df814e7b51f050df8b7673c7b5d2bf5e393b",
+  "testedOwnerHead": "5215c27dc40121c9d2be01c7641605aaf2df7ef7",
+  "finalStyleRevision": "ea060b01eb7b070fdc960472e5fa29c9f40c5cf0",
+  "verificationMain": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "sharedRevision": "39e3e7ce1ed3a571d67094b298168934efb81aa1",
+  "contextTypesRevision": "6a61748f2de23db95d176acf0ecc728851988b66",
+  "sourceInputsSha256": "5e4fc059aa8d4977991f3f3b70e239d0b096727a391eb704f41b4b26a313af74",
+  "firstStartedAt": "2026-10-13T11:32:21.510Z",
+  "firstCompletedAt": "2026-10-13T11:32:25.966Z",
+  "newBoundaries": {
+    "tests": 3,
+    "pass": 3,
+    "fail": 0,
+    "skipped": 0
+  },
+  "changedOldTarget": {
+    "tests": 1,
+    "pass": 1,
+    "fail": 0,
+    "skipped": 0
+  },
+  "typecheck": "PASS",
+  "lint": "PASS",
+  "node": "v24.15.0",
+  "typescript": "7.0.2",
+  "esbuild": "0.25.12",
+  "oxlint": "1.80.0",
+  "firstLintFailure": "configured lint에서 curly 58건과 기존 fixture의 unsafe optional chaining 1건으로 실패했습니다. 원 로그와 source/test hash를 보존했습니다.",
+  "limitedCorrection": "Codex 소유 단일문 if의 중괄호와 기존 fixture의 wire 존재 guard만 교정했습니다. 의미가 같은 focused 4개를 재실행하지 않고 lint만 해당 실패를 교정해 확인했습니다. 변경된 타입은 scoped tsc로 확인했습니다.",
+  "historicalSuites": "기존 protocol 9개·driver 11개·hash focused 1개·native wrapper 1개 전체는 반복하지 않았습니다.",
+  "noRuntimeQualification": "permit은 합성 callback이고 실제 COMMIT/소유권/writer grant를 인증하지 않습니다. 실제 provider credential/inference/cold resume/data URL wire, PG receipt/spool/ACK와 writer fencing은 미연결입니다.",
+  "busyBoundary": "BUSY/UNVERIFIABLE는 exact 연결의 effect 범위이며 독립 입력의 durable 접수 금지 정책이 아닙니다.",
+  "captureHeading": "P1-11 Codex ownership 교정의 첫 focused 검증 결과",
+  "rawLogHashes": {
+    "recovery-first-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "recovery-first-lint.log": "7396571c78049813868d5e9f3c9cd174c394e6cfaf1d645e2a7136c2fef1b640",
+    "recovery-first-ownership.log": "36cb317212703660ce336e1353f5f5e56b8eaa113195ef7c67fe54340676d551",
+    "recovery-first-old-target.log": "a09827b657ae0bc8dc6a95b9314811dd108ddc88c0e26e67661977b148268a6d"
+  },
+  "finalLogHashes": {
+    "recovery-final-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "recovery-final-lint.log": "f0b3f74d1f706ddbbcbf2a167cea524f13f342392c2469b9a89a87406064a612",
+    "recovery-lint-curly-fix.log": "79826dfbf295c56ced79389e623fcab5711d1457d3730c9de151ff7937b94e17"
+  },
+  "finalOwnerSourceHashes": {
+    "driver.test.mts": "2c6e00597898d2a9209b8d1970a73239d0e829f9f71f0bda42083f73766a7665",
+    "driver.ts": "7305d2a464a169e4ab4228bfc3c11c6398d241af70824a8d0db0558cee6ea2f3",
+    "native-transport.test.mts": "a4ab2d4a43d9afdf888e89ca6ecdb0bb370342cc323621365b78f8a11bc816d2",
+    "native-transport.ts": "70ec82efa4452b3e55d1664da0f890c8c49ce3bcf357638fc07da11472f7fbdb",
+    "ownership-boundaries.test.mts": "f00385503b1111c5be25b7a3a660613955ff28c3b0cf1696b9b4ced260ede456",
+    "protocol.test.mts": "7fc622571fa1fc4f2fc4eedc9b3ea1b601852ab5c0438a5bf5dea849e0d41d60",
+    "protocol.ts": "fe8a3fc2303558fbfae5da429032bb7f8afd37451a72769a5ce4bb04197c4541",
+    "tsconfig.json": "f279c9ebd8c365350e50956b3800fea64a558d06bf18d66115792fa1ad291f2a"
+  }
+}

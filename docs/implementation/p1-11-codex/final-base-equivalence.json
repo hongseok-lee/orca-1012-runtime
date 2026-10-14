@@ -1,0 +1,36 @@
+{
+  "status": "Root 지정 main으로 final rebase를 한 번 완료했고 소유 제품 / native hook / fixture / 원 증거를 보존했습니다.",
+  "originalHead": "e1972b728e85b44966acc9e481d3fbe08337a247",
+  "finalBase": "ebd86a1e48fe8209853a56e93c92b6a087f37a1a",
+  "rebasedSourceHead": "f1358ca510cfd5b38ade3511c6726062b08e4f4e",
+  "ownedAndNativeEquality": {
+    "files": 313,
+    "allEqual": true
+  },
+  "originalEvidenceEquality": {
+    "allEqual": true,
+    "pngSha256": "d5c403eab097f79c8bdc3ac69c0fa6ea75ed65ad7ac4a0831345ce949e6aa287"
+  },
+  "sharedPredecessorChange": "Root가 합류한 PR21 shared contracts에 optional providerRef / nativeEventId 두 필드가 추가됐습니다. Effect boundary / recovery renderer는 원 byte와 같고 Codex가 shared를 수정하지 않았습니다.",
+  "sharedEqualsFinalMain": true,
+  "originalDistinctSuccess": {
+    "tests": 25,
+    "protocol": 9,
+    "driver": 11,
+    "wireHashFocused": 1,
+    "nativeWrapper": 1,
+    "newOwnershipBoundaries": 3,
+    "note": "합성 서로 다른 25개입니다. 첫 focused의 영향받은 옛 target 1개는 기존 driver 11개에 포함되며 distinct 개수를 늘리지 않습니다."
+  },
+  "recoveredFocused": {
+    "new": 3,
+    "changedExistingOldTarget": 1,
+    "pass": 4,
+    "fail": 0,
+    "skip": 0,
+    "rerun": false
+  },
+  "firstTypeAndLintReused": true,
+  "noReinstallBuildCaptureOrRuntimeSync": true,
+  "remaining": "실제 inference/auth/native resume/PG receipt/spool/writer grant/fencing은 미확인입니다. Root만 수용과 merge를 결정합니다."
+}

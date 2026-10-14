@@ -1,0 +1,125 @@
+{
+  "recordedAt": "2026-10-13T12:36:24.344Z",
+  "scope": "ACTUAL_PG_CONTROLLER_LEASE_AND_ORIGINAL_MODULE_FIXTURES",
+  "sourceRevision": "6f8c720245470e94a025ff58c4bfff11d0fef6d7",
+  "mainRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "lifecycleRevision": "02bfba1aa971d9449cad41103211e8a3d3503451",
+  "migrations": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469"
+    }
+  ],
+  "cases": [
+    {
+      "name": "simultaneous process owners elect exactly one winner; live duplicate does not change term or journal",
+      "passed": true
+    },
+    {
+      "name": "post-lock DB clock admits expired takeover with term plus one; application clock skew does not decide expiry",
+      "passed": true
+    },
+    {
+      "name": "stale revision, expired renewal and late old-owner release cannot alter the successor lease",
+      "passed": true
+    },
+    {
+      "name": "actual acquisition COMMIT followed by driver response loss leaves scheduling and watch execution at zero",
+      "passed": true
+    },
+    {
+      "name": "DB renewal failure revokes local scheduling; a concurrent stop cannot be undone by a late successful reply",
+      "passed": true
+    },
+    {
+      "name": "real lease takeover preserves original operation, executing command, queue third attempt and PG deadlines",
+      "passed": true
+    },
+    {
+      "name": "a hung external inventory is cancelled within caller budget without blocking an independent DB renewal",
+      "passed": true
+    },
+    {
+      "name": "a healthy renewal across a pass gate and its visible COMMIT revision window preserves one inventory effect",
+      "passed": true
+    },
+    {
+      "name": "nested inventory mutation after the first await cannot replace the captured methods, receiver or sink",
+      "passed": true
+    }
+  ],
+  "commitLossMode": "driver hook rejects after the actual COMMIT reply",
+  "authenticationVerified": false,
+  "physicalFencingVerified": false,
+  "providerVerified": false,
+  "deployedHA": false,
+  "publicRpcIntegrated": false,
+  "nativeIphoneVerified": false,
+  "reviewedSourceRevision": "bd5f14cd79220b5257181f3d64e97e91b9ac99df",
+  "branchBaseRevision": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "verifiedSourceRevision": "6f8c720245470e94a025ff58c4bfff11d0fef6d7",
+  "verification": {
+    "postgresCases": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "typeExit": 0,
+    "lintExit": 0
+  },
+  "initialLint": {
+    "errors": 54,
+    "rules": {
+      "eslint(curly)": 53,
+      "unicorn(no-useless-promise-resolve-reject)": 1
+    },
+    "correction": "owner-scoped syntax only"
+  },
+  "testSha256": "967e9bfa54d07696f5914ae5a4053eef8dae285f360e484a58de114504831625",
+  "testBundleSha256": "7c99066d4bb7caabf471d409fa860942a74289831d9b8bd0d0850334cc9d7db4",
+  "schemaScope": "main001-012 in isolated owned PostgreSQL database; no dev013-016 application"
+}
