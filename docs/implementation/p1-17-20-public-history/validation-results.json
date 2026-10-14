@@ -1,0 +1,348 @@
+{
+  "validatedSourcePin": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+  "sourceBase": "e9ae59dc075adc9e3bde624ad00da1c116e71db8",
+  "value": {
+    "sourcePin": "e86a867391d2cc887dd9cd4866f8c8b975413dbf",
+    "pass": 1,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "repeatedAfterPass": false,
+    "final49InputsUnchanged": true
+  },
+  "PG": {
+    "sourcePin": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+    "pass": 1,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "exit": 0,
+    "startedAt": "2026-10-14T18:16:48.203Z",
+    "finishedAt": "2026-10-14T18:16:50.952Z",
+    "originalTAPSha256": "3c6949e999fed1d3e03b79360f4c2a54bb6fccf8c79bdc84184d2f52a4946a61"
+  },
+  "lint": {
+    "firstOwned8Exit": 0,
+    "finalChangedFixtureExit": 0
+  },
+  "type": {
+    "executed": false,
+    "PASSClaim": false
+  },
+  "schema": {
+    "firstApplicationCount": 1,
+    "versions": "001–019",
+    "repeatApplicationCount": 0,
+    "ledgerChecksumAndAppliedAtUnchanged": true,
+    "priorFailedSeedPreserved": true
+  },
+  "corrections": [
+    {
+      "kind": "product",
+      "sourcePin": "cd2c01ddf68d8d7c552a464dd262730bdc3b87cf",
+      "change": "Session에는 없는 s.dataset_name 조건만 제거하고 실제 Workspace/Agent dataset 검사와 Session 연결을 유지했습니다."
+    },
+    {
+      "kind": "fixture",
+      "sourcePin": "11f8e9c13adc3a2202bd09814f4dd053f9dc26aa",
+      "change": "빈 repository allowlist와 launch.repositories를 함께 빈 배열로 맞췄습니다. assertions는 바꾸지 않았습니다."
+    },
+    {
+      "kind": "fixture",
+      "sourcePin": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+      "change": "wrong-host 설정과 read 함수의 값을 실제 형식 runtime:foreign-host로 맞췄습니다. host 거절 assertions는 바꾸지 않았습니다."
+    }
+  ],
+  "runs": [
+    {
+      "phase": "preparation-001",
+      "sourcePin": "e86a867391d2cc887dd9cd4866f8c8b975413dbf",
+      "startedAt": "2026-10-14T17:22:37.770Z",
+      "finishedAt": "2026-10-14T17:22:38.031Z",
+      "outcome": "PREPARATION_FAILURE",
+      "checks": [
+        {
+          "name": "prepare",
+          "startedAt": "2026-10-14T17:22:37.786Z",
+          "finishedAt": "2026-10-14T17:22:38.029Z",
+          "exit": 1,
+          "rawSha256": "2170451ac246d90059404e4cd902b89dd77502df7883bf49697af2a32732a3b2"
+        }
+      ]
+    },
+    {
+      "phase": "preparation-002",
+      "sourcePin": "e86a867391d2cc887dd9cd4866f8c8b975413dbf",
+      "startedAt": "2026-10-14T17:25:02.845Z",
+      "finishedAt": "2026-10-14T17:25:04.333Z",
+      "outcome": "PREPARATION_FAILURE",
+      "checks": [
+        {
+          "name": "prepare",
+          "startedAt": "2026-10-14T17:25:02.864Z",
+          "finishedAt": "2026-10-14T17:25:04.330Z",
+          "exit": 1,
+          "rawSha256": "c4d3f89b3226f781fcce69f43008f661e36e72e8128f11bed45f728c3cf14ac8"
+        }
+      ]
+    },
+    {
+      "phase": "first-value-schema-PG",
+      "sourcePin": "e86a867391d2cc887dd9cd4866f8c8b975413dbf",
+      "startedAt": "2026-10-14T17:38:17.431Z",
+      "finishedAt": "2026-10-14T17:38:20.879Z",
+      "outcome": "SCHEMA_HELPER_PREPARATION_FAILURE",
+      "checks": [
+        {
+          "name": "owned-lint",
+          "startedAt": "2026-10-14T17:38:17.460Z",
+          "finishedAt": "2026-10-14T17:38:18.010Z",
+          "exit": 0,
+          "rawSha256": "2b2b4470f1e84f98977c7dbce8975cfe1bea5eb13bf28e3f2f0a29779769f3cd"
+        },
+        {
+          "name": "value-first",
+          "startedAt": "2026-10-14T17:38:18.014Z",
+          "finishedAt": "2026-10-14T17:38:20.727Z",
+          "exit": 0,
+          "rawSha256": "8e79efa33381b8f5d2a1229aa7b46518d0d0c8dfe8c9cd837a81737ed3b4aa20"
+        },
+        {
+          "name": "schema-helper-preparation",
+          "startedAt": "2026-10-14T17:38:20.731Z",
+          "finishedAt": "2026-10-14T17:38:20.878Z",
+          "exit": 1,
+          "rawSha256": "5aabbe2e72435cad989ce7ff37ed74c9c2d12504d71df3c34e3c54555af93a4a"
+        }
+      ]
+    },
+    {
+      "phase": "first-PG",
+      "sourcePin": "e86a867391d2cc887dd9cd4866f8c8b975413dbf",
+      "startedAt": "2026-10-14T17:39:44.157Z",
+      "finishedAt": "2026-10-14T17:39:50.170Z",
+      "outcome": "PG_FIRST_FAILURE",
+      "checks": [
+        {
+          "name": "schema-helper-preparation",
+          "startedAt": "2026-10-14T17:39:44.176Z",
+          "finishedAt": "2026-10-14T17:39:44.395Z",
+          "exit": 0,
+          "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "schema-first",
+          "startedAt": "2026-10-14T17:39:44.400Z",
+          "finishedAt": "2026-10-14T17:39:45.986Z",
+          "exit": 0,
+          "rawSha256": "a1080de24913c70918f2dd6f41d5c92b5305e40c821042373dc9748dab819b21"
+        },
+        {
+          "name": "pg-first",
+          "startedAt": "2026-10-14T17:39:45.989Z",
+          "finishedAt": "2026-10-14T17:39:49.933Z",
+          "exit": 1,
+          "rawSha256": "126349e7acca5c92ad89856a3600e255ab22a38b41cb0c4eef57f276a9adc7b1"
+        }
+      ]
+    },
+    {
+      "phase": "SQL-corrected-PG",
+      "sourcePin": "cd2c01ddf68d8d7c552a464dd262730bdc3b87cf",
+      "startedAt": "2026-10-14T17:55:01.272Z",
+      "finishedAt": "2026-10-14T17:55:07.712Z",
+      "outcome": "PG_CORRECTED_FAILURE",
+      "checks": [
+        {
+          "name": "prepare-delta",
+          "startedAt": "2026-10-14T17:55:01.522Z",
+          "finishedAt": "2026-10-14T17:55:03.383Z",
+          "exit": 0,
+          "rawSha256": "a58fc30e907c1abbb78424b6c49bbab77bbcfb1940dd3caaa91b7dbbb55ebc81"
+        },
+        {
+          "name": "changed-lint",
+          "startedAt": "2026-10-14T17:55:03.390Z",
+          "finishedAt": "2026-10-14T17:55:03.681Z",
+          "exit": 0,
+          "rawSha256": "9dfc66e3602e86dbff5cdf53f9a3656cd1ce01d721a2cbff82f85c01657b93a8"
+        },
+        {
+          "name": "pg",
+          "startedAt": "2026-10-14T17:55:03.839Z",
+          "finishedAt": "2026-10-14T17:55:07.684Z",
+          "exit": 1,
+          "rawSha256": "ec103f8d0e17e126e7c2631b30295177f9aba36af72ea2a4c97730c19d4a2d84"
+        }
+      ]
+    },
+    {
+      "phase": "denied-launch-corrected-PG",
+      "sourcePin": "11f8e9c13adc3a2202bd09814f4dd053f9dc26aa",
+      "startedAt": "2026-10-14T18:11:48.136Z",
+      "finishedAt": "2026-10-14T18:11:53.874Z",
+      "outcome": "PG_CORRECTED_FAILURE",
+      "checks": [
+        {
+          "name": "prepare-delta",
+          "startedAt": "2026-10-14T18:11:48.536Z",
+          "finishedAt": "2026-10-14T18:11:50.455Z",
+          "exit": 0,
+          "rawSha256": "2d27fad90a4c684e45d662aeb45e2fe74772ea149ea5682637aacfab6ddd57b5"
+        },
+        {
+          "name": "changed-lint",
+          "startedAt": "2026-10-14T18:11:50.461Z",
+          "finishedAt": "2026-10-14T18:11:50.730Z",
+          "exit": 0,
+          "rawSha256": "42a340bd6f2f996e2f1b0bd4d0b31527ece5fb246fd947f4a9acca44e91f27c2"
+        },
+        {
+          "name": "pg",
+          "startedAt": "2026-10-14T18:11:50.875Z",
+          "finishedAt": "2026-10-14T18:11:53.853Z",
+          "exit": 1,
+          "rawSha256": "7ef59034d5f6be21e3d8e0625964046db990cdd900ea93ca340f9687bbde6655"
+        }
+      ]
+    },
+    {
+      "phase": "wrong-host-corrected-PG",
+      "sourcePin": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+      "startedAt": "2026-10-14T18:16:42.618Z",
+      "finishedAt": "2026-10-14T18:16:50.967Z",
+      "outcome": "PG_CORRECTED_COMPLETE",
+      "checks": [
+        {
+          "name": "prepare-delta",
+          "startedAt": "2026-10-14T18:16:42.929Z",
+          "finishedAt": "2026-10-14T18:16:46.937Z",
+          "exit": 0,
+          "rawSha256": "0f1a390cbe11a573ccd7747eb759a69c6d9655b2f0b4c56f830120dc2a015334"
+        },
+        {
+          "name": "changed-lint",
+          "startedAt": "2026-10-14T18:16:46.971Z",
+          "finishedAt": "2026-10-14T18:16:47.834Z",
+          "exit": 0,
+          "rawSha256": "4d05ab7879b887fc49d453e4f151df55f2ace49ea8e00a7692e1f2a3de0797dd"
+        },
+        {
+          "name": "pg",
+          "startedAt": "2026-10-14T18:16:48.203Z",
+          "finishedAt": "2026-10-14T18:16:50.952Z",
+          "exit": 0,
+          "rawSha256": "3c6949e999fed1d3e03b79360f4c2a54bb6fccf8c79bdc84184d2f52a4946a61"
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/value-first.tap",
+      "originalSha256": "8e79efa33381b8f5d2a1229aa7b46518d0d0c8dfe8c9cd837a81737ed3b4aa20",
+      "publicSha256": "8e79efa33381b8f5d2a1229aa7b46518d0d0c8dfe8c9cd837a81737ed3b4aa20",
+      "publicBytes": 348,
+      "pathGeneralized": false
+    },
+    {
+      "path": "evidence/pg-001-column-failure.tap",
+      "originalSha256": "126349e7acca5c92ad89856a3600e255ab22a38b41cb0c4eef57f276a9adc7b1",
+      "publicSha256": "d79239c97318d56bb208e0d9844a5a67f5e4c3bba135d6131b51976ef8359e9d",
+      "publicBytes": 1277,
+      "pathGeneralized": true
+    },
+    {
+      "path": "evidence/pg-002-denied-launch-failure.tap",
+      "originalSha256": "ec103f8d0e17e126e7c2631b30295177f9aba36af72ea2a4c97730c19d4a2d84",
+      "publicSha256": "03bfcc0207dd3840d6f48987e07add04552f421a78c367d226566bc6e1f75a83",
+      "publicBytes": 1682,
+      "pathGeneralized": true
+    },
+    {
+      "path": "evidence/pg-003-wrong-host-failure.tap",
+      "originalSha256": "7ef59034d5f6be21e3d8e0625964046db990cdd900ea93ca340f9687bbde6655",
+      "publicSha256": "58d40ca47b020a74f072e8240fce9a5000852bebaaa65657da54046b36dd7f0d",
+      "publicBytes": 1529,
+      "pathGeneralized": true
+    },
+    {
+      "path": "evidence/pg-004-pass.tap",
+      "originalSha256": "3c6949e999fed1d3e03b79360f4c2a54bb6fccf8c79bdc84184d2f52a4946a61",
+      "publicSha256": "3c6949e999fed1d3e03b79360f4c2a54bb6fccf8c79bdc84184d2f52a4946a61",
+      "publicBytes": 716,
+      "pathGeneralized": false
+    },
+    {
+      "path": "evidence/owned-first-lint.log",
+      "originalSha256": "2b2b4470f1e84f98977c7dbce8975cfe1bea5eb13bf28e3f2f0a29779769f3cd",
+      "publicSha256": "2b2b4470f1e84f98977c7dbce8975cfe1bea5eb13bf28e3f2f0a29779769f3cd",
+      "publicBytes": 92,
+      "pathGeneralized": false
+    },
+    {
+      "path": "evidence/changed-final-fixture-lint.log",
+      "originalSha256": "4d05ab7879b887fc49d453e4f151df55f2ace49ea8e00a7692e1f2a3de0797dd",
+      "publicSha256": "4d05ab7879b887fc49d453e4f151df55f2ace49ea8e00a7692e1f2a3de0797dd",
+      "publicBytes": 91,
+      "pathGeneralized": false
+    },
+    {
+      "path": "evidence/preparation-001-missing-output.log",
+      "originalSha256": "2170451ac246d90059404e4cd902b89dd77502df7883bf49697af2a32732a3b2",
+      "publicSha256": "9e63a715861593afdc816a464d288d40caed4bf4245f31c5c264490582dde18b",
+      "publicBytes": 3444,
+      "pathGeneralized": true
+    },
+    {
+      "path": "evidence/preparation-002-missing-input.log",
+      "originalSha256": "c4d3f89b3226f781fcce69f43008f661e36e72e8128f11bed45f728c3cf14ac8",
+      "publicSha256": "65d477a1788dfe47ea375153c0a3e8360c1f4785e897fa1639783b2fb66ee7d0",
+      "publicBytes": 1620,
+      "pathGeneralized": true
+    },
+    {
+      "path": "evidence/schema-helper-escape-failure.log",
+      "originalSha256": "5aabbe2e72435cad989ce7ff37ed74c9c2d12504d71df3c34e3c54555af93a4a",
+      "publicSha256": "3b883411135bbd15fa6805afbaf1cb8a802cab84e5a9e1929cc32106067b5942",
+      "publicBytes": 1563,
+      "pathGeneralized": true
+    }
+  ],
+  "knownValidationJobsTerminated": true,
+  "limitations": [
+    "scoped type는 실행하지 않았습니다.",
+    "provider body와 인증 context는 synthetic fixture이며 실제 CLI/기기 pairing/auth 실증이 아닙니다.",
+    "live/native history/reconnect/subscribe/provider/HA 전체 지원 완료 판정이 아닙니다.",
+    "문서 정리 후 성공 lint/value/PG/SQL을 반복하지 않았습니다."
+  ],
+  "rawEvidenceGeneralization": "원 자료는 비공개로 보존했습니다. 공개 TAP의 운영 절대경로는 일반화했고 원본/공개 SHA-256을 각각 기록했습니다.",
+  "finalAlignment": {
+    "fixedMain": "276d043ff91d5f3597119a6fd2d21b7f4994b113",
+    "validatedSourcePin": "dd0196e3511b61b9f591cfc1238ec67b0781ab98",
+    "ownedBlobModeUnchanged": true,
+    "ownedObjects": [
+      "100644 blob 2df3f23bfbc7c2ccef3a922e708dd3f6482b97e5\tsrc/main/durable-runtime/output/read.ts",
+      "100644 blob 3390cd7c576c68e36706f5d281f63cfaf5776728\tsrc/main/durable-runtime/output/structured-history-page.ts",
+      "100644 blob 22cbd0b9d425048423dddaa3122e919ab835a260\tsrc/main/durable-runtime/output/structured-history.test.mts",
+      "100644 blob 4f3448d7468b3f046e920fb3956576a3e61399b3\tsrc/main/durable-runtime/output/structured-history.ts",
+      "100644 blob 4239ce469c7495b01ebf04afd1763efd795e5e4f\tsrc/main/durable-runtime/rpc/public.ts",
+      "100644 blob 99fca7759b72cf963f4c00583f339d29878280f2\tsrc/main/durable-runtime/rpc/registry.ts",
+      "100644 blob e40cde4b9f3a5469ed09c5b75d1666b4b325cc8e\tsrc/main/durable-runtime/rpc/structured-history.pg.test.mts",
+      "100644 blob 20b3841cf5d6ac252afe2eab658d9d29ead8632b\tsrc/main/durable-runtime/rpc/structured-history.ts"
+    ],
+    "changedRuntimeInputs": [
+      "src/main/durable-runtime/catalog/entries.ts",
+      "src/main/durable-runtime/catalog/wire.ts"
+    ],
+    "acceptedAdditivePR": 65,
+    "acceptedAddedFiles": [
+      "src/main/durable-runtime/catalog/browser.pg.test.mts",
+      "src/main/durable-runtime/catalog/browser.ts",
+      "src/main/durable-runtime/catalog/browser.value.test.mts"
+    ],
+    "originalInputManifestRetained": true,
+    "newValidationExecutions": 0,
+    "mergeOwner": "Root"
+  }
+}
