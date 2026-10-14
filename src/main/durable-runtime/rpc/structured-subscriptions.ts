@@ -15,15 +15,9 @@ import { captureCatalogParsed } from '../catalog/immutable.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
 import { CatalogReadError, catalogReadFailure } from './config.ts'
 import { SharedSessionHeadHints } from './session-head-hints.ts'
+import { createCatalogStructuredHistoryReaderOwner, type StructuredHistoryReadInput } from './structured-history.ts'
 
-/** Captured transport policy, not a PG scope/authority or a caller-selected DB identity. */
-export type StructuredHistoryReadInput = Readonly<{
-  sessionId: string
-  authenticatedCallerFingerprint: string
-  clientKind: RpcContext['clientKind']
-  clientCapabilities: RpcContext['clientCapabilities']
-  structuredNativeChatEnabled: boolean
-}>
+export type { StructuredHistoryReadInput } from './structured-history.ts'
 export type CapturedStructuredHistoryReader = (request: AgentSessionHistoryRequest) => Promise<AgentSessionHistoryResult>
 export type StructuredHistoryReaderOwner = {
   capture(input: StructuredHistoryReadInput): CapturedStructuredHistoryReader
@@ -37,11 +31,12 @@ type Subscription = {
 }
 
 /**
- * Internal composition boundary. PR67's captured RR reader is supplied by its owner after merge.
- * No fallback reader, copied history implementation, native host or public registry is installed here.
+ * Uses PR67's extracted captured RR reader. The optional owner is an internal composition seam.
+ * No fallback history implementation, native host or public registry is installed here.
  */
 export function createCatalogStructuredSubscriptions(
-  config: CapturedCatalogReadConfig, historyOwner: StructuredHistoryReaderOwner
+  config: CapturedCatalogReadConfig,
+  historyOwner: StructuredHistoryReaderOwner = createCatalogStructuredHistoryReaderOwner(config)
 ) {
   const captureReader = historyOwner.capture.bind(historyOwner)
   const hints = SharedSessionHeadHints.for(config)
@@ -80,6 +75,7 @@ export function createCatalogStructuredSubscriptions(
     const id = structuredAgentSessionSubscriptionId(context, input.sessionId)
     const base = structuredAgentSessionSubscriptionBase(context, input.sessionId)
     const read = captureReader(Object.freeze({ sessionId: input.sessionId,
+      runtime: caller.runtime,
       authenticatedCallerFingerprint: caller.fingerprint, clientKind: caller.clientKind,
       clientCapabilities: caller.clientCapabilities, structuredNativeChatEnabled: caller.structuredNativeChatEnabled }))
     subscriptions.get(id)?.close()

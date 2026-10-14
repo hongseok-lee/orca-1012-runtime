@@ -1,5 +1,5 @@
 import type { RpcContext } from '../../runtime/rpc/core.ts'
-import type { AgentSessionHistoryRequest } from '../../../shared/agent-session-wire'
+import type { AgentSessionHistoryRequest, AgentSessionHistoryResult } from '../../../shared/agent-session-wire'
 import type { CatalogHeadRow, CatalogRepositoryRow, CatalogProjectGroupRow, CatalogUiStateRow } from '../db/rows.ts'
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
 import { DurableTransaction, safeDatabaseError } from '../db/connection.ts'
@@ -21,25 +21,33 @@ import { validateCatalogSnapshot } from './read.ts'
 import { CatalogReadError, type CapturedCatalogReadConfig } from './config.ts'
 
 export const CATALOG_STRUCTURED_HISTORY_METHODS = Object.freeze(['agentSession.history'] as const)
-/** Sole upper issuer: authenticated context + actual permitted PG alias, never request claims. */
-export function createCatalogStructuredHistoryRpc(config: CapturedCatalogReadConfig) {
+export type StructuredHistoryReadInput = Readonly<Pick<RpcContext,
+  'runtime' | 'authenticatedCallerFingerprint' | 'clientKind' | 'clientCapabilities'> & {
+  structuredNativeChatEnabled: boolean
+  sessionId?: string
+}>
+/** Same upper authority issuer and RR body as history; a stream captures policy once. */
+export function createCatalogStructuredHistoryReaderOwner(config: CapturedCatalogReadConfig) {
   const connect = config.pool.connect.bind(config.pool)
-  return async (params: unknown, context: RpcContext) => {
-    const fingerprint = context.authenticatedCallerFingerprint, clientKind = context.clientKind
-    const capabilities = Object.freeze([...(context.clientCapabilities ?? [])])
-    const structuredEnabled = isStructuredNativeChatEnabled(context.runtime)
+  return { capture(input: StructuredHistoryReadInput) {
+    const fingerprint = input.authenticatedCallerFingerprint, clientKind = input.clientKind
+    const capabilities = Object.freeze([...(input.clientCapabilities ?? [])])
+    const structuredEnabled = input.structuredNativeChatEnabled
+    const selectedSession = input.sessionId
     const policy = Object.freeze({ clientKind, clientCapabilities: capabilities, structuredNativeChatEnabled: structuredEnabled })
-    const call = captureCatalogReadContext(config, { runtime: context.runtime, authenticatedCallerFingerprint: fingerprint,
+    const call = captureCatalogReadContext(config, { runtime: input.runtime, authenticatedCallerFingerprint: fingerprint,
       clientKind, clientCapabilities: capabilities })
     if (!supportsStructuredAgentSessions(policy)) { throw new CatalogReadError('structured_agent_session_unsupported') }
     if (typeof fingerprint !== 'string') { throw new CatalogReadError('CATALOG_AUTHENTICATED_CALLER_REQUIRED') }
     const principal = fingerprintAttachmentPrincipal(fingerprint)
+    return async (params: unknown): Promise<AgentSessionHistoryResult> => {
     const prepared = prepareStructuredWire('agentSession.history', params, capabilities)
     if (!prepared.ok || prepared.value.target.kind !== 'SESSION') { throw new CatalogReadError('STRUCTURED_HISTORY_UNREADABLE') }
     // Already strict-schema parsed; reconstruct only the real history request.
     const wire = prepared.value.params, direction = wire.direction
     if (direction !== 'tail' && direction !== 'before' && direction !== 'after') { throw new CatalogReadError('STRUCTURED_HISTORY_UNREADABLE') }
     const publicSessionId = prepared.value.target.publicSessionId
+    if (selectedSession !== undefined && publicSessionId !== selectedSession) { throw new CatalogReadError('STRUCTURED_HISTORY_ALIAS_SCOPE') }
     let cursor: AgentSessionHistoryRequest['cursor']
     if (wire.cursor !== undefined) {
       const value = jsonValue(wire.cursor)
@@ -105,5 +113,18 @@ export function createCatalogStructuredHistoryRpc(config: CapturedCatalogReadCon
       if (!committed) { try { await client.query('ROLLBACK') } catch { destroy = true } }
       throw error
     } finally { tx.close(); client.release(destroy) }
+    }
+  } }
+}
+
+/** Original unary surface: capture before await, identical decoder, scope and result. */
+export function createCatalogStructuredHistoryRpc(config: CapturedCatalogReadConfig) {
+  const owner = createCatalogStructuredHistoryReaderOwner(config)
+  return async (params: unknown, context: RpcContext) => {
+    const fingerprint = context.authenticatedCallerFingerprint, clientKind = context.clientKind
+    const capabilities = Object.freeze([...(context.clientCapabilities ?? [])])
+    const structuredNativeChatEnabled = isStructuredNativeChatEnabled(context.runtime)
+    return owner.capture({ runtime: context.runtime, authenticatedCallerFingerprint: fingerprint,
+      clientKind, clientCapabilities: capabilities, structuredNativeChatEnabled })(params)
   }
 }
