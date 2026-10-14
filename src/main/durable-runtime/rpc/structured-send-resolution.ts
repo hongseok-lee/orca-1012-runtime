@@ -1,9 +1,10 @@
 import type { Pool } from 'pg'
 import { DurableTransaction } from '../db/connection.ts'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
-import { captureCatalogJson } from '../catalog/immutable.ts'
+import { getRepoExecutionHostId, getWorktreeExecutionHostId } from '../../../shared/execution-host.ts'
 import { resolveCatalogWorkspace } from '../catalog/read.ts'
 import { parseCatalogRepo, parseCatalogWorkspace } from '../catalog/payload.ts'
+import { projectCatalogWorktree } from '../catalog/projection.ts'
 import type { CatalogAuthority } from '../catalog/authority.ts'
 import type { CatalogRepositoryRow } from '../db/rows.ts'
 import { readCommittedAttachment } from '../attachments/store.ts'
@@ -57,16 +58,15 @@ export async function resolveCatalogStructuredSend(
         ('projectGroupId' in payload && payload.projectGroupId !== workspace.project_group_id)) {
       throw new CatalogReadError('STRUCTURED_SEND_TARGET_SCOPE')
     }
-    let repositoryHost: string | undefined
+    let repository: ReturnType<typeof parseCatalogRepo> | undefined
     if (workspace.repo_id !== null) {
-      const repository = (await tx.query<CatalogRepositoryRow>(
+      const storedRepository = (await tx.query<CatalogRepositoryRow>(
         'SELECT * FROM durable_runtime.catalog_repositories WHERE id=$1', [workspace.repo_id])).rows[0]
-      if (!repository) { throw new CatalogReadError('CATALOG_REPOSITORY_UNAVAILABLE') }
-      repositoryHost = parseCatalogRepo(repository).executionHostId ?? 'local'
-      if (repositoryHost !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
+      if (!storedRepository) { throw new CatalogReadError('CATALOG_REPOSITORY_UNAVAILABLE') }
+      repository = parseCatalogRepo(storedRepository)
+      if (getRepoExecutionHostId(repository) !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
     }
-    const raw = captureCatalogJson(workspace.payload), fields = jsonObject(raw)
-    const effectiveHost = fields.hostId ?? fields.executionHostId ?? repositoryHost ?? 'local'
+    const effectiveHost = getWorktreeExecutionHostId(projectCatalogWorktree(workspace), repository)
     if (effectiveHost !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
     const eligibility = checkStructuredCapabilities(wire, { provider: row.provider,
       methods: { 'agentSession.send': { implemented: true, ready: true } } })
