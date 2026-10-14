@@ -1,0 +1,86 @@
+{
+  "기록": "제품 source와 값 1개·PG 1개 fixture source 및 Draft 제출입니다. 실행·type·lint·PG 검증 결과가 아닙니다.",
+  "base": "b518275e8c7e66390754eda8c7ab3ed3fde73a1f",
+  "productPin": "a01469422b417c7bf6f3c3544837b1f156e5cff3",
+  "fixturePin": "4e6f3b33c59f9457384fe4a386a6518348dde8a5",
+  "files": [
+    {
+      "path": "src/main/orcad/orcad-controller-config.ts",
+      "bytes": 9423,
+      "sha256": "3d655c09e64a070bdaed214e745953afbef6da70eac7216b3d9d0bc9507583ba",
+      "gitBlob": "f5b952c5e9a26b8714606b2705f5755e31928c79"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller.ts",
+      "bytes": 9397,
+      "sha256": "2e8849a1f715fbe9f5d9b21ac56949b9fee9a77ec9243efe812b22101b6db45c",
+      "gitBlob": "b737e25dcab3644f3078166749b837fbe9b8da26"
+    },
+    {
+      "path": "src/main/durable-runtime/ha/pass.ts",
+      "bytes": 13767,
+      "sha256": "93a820075a9a11f50f473cc7c1259fe0dbc23e9db250a4702e4a0b211a9708fd",
+      "gitBlob": "a9ac6182e8413b2be62ad9bd236f25c85273686e"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller-structured-output.value.test.mts",
+      "bytes": 4259,
+      "sha256": "3f3a51ea2b82e6d8cafaa1d68dba9d791420d9f1bf6f3fc1567213fba254f11f",
+      "gitBlob": "3d97880fa2ef7cedcf8c915c8e52ab8e451334fa"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller-structured-output.pg.test.mts",
+      "bytes": 14559,
+      "sha256": "e51958c5163c2ca2282ee45034b143d16669c0f16b34676d98aad1086eaf15f2",
+      "gitBlob": "2ec431ab997c8d8cfeb658d3d14ca9eaf1c62a8b"
+    }
+  ],
+  "queueDependency": {
+    "PR": 62,
+    "productPin": "98b45ebb94f8e3b10dbfbbdd13079f88202408b5",
+    "referencePin": "7b9762aa3e412c0c0b154d32fb0ed871969e92f6",
+    "files": [
+      {
+        "path": "src/main/durable-runtime/events/structured-output.ts",
+        "pin": "7b9762aa3e412c0c0b154d32fb0ed871969e92f6",
+        "gitBlob": "2aa64a58cfb4a8f0259190ccbaa7cf3387aee6d8",
+        "sha256": "0a2d68edf82fa83ad6f46882000d6d41c28404be1f5c316662dc4f989ee5d3cd",
+        "bytes": 3742,
+        "sourceOnlyReadDependency": true,
+        "copiedOrModified": false,
+        "presentInFixedBase": false
+      },
+      {
+        "path": "src/main/durable-runtime/output/structured-provider-event.ts",
+        "pin": "7b9762aa3e412c0c0b154d32fb0ed871969e92f6",
+        "gitBlob": "e69054db423900a1a67fa6c4e4470486373e778f",
+        "sha256": "c9bcae884dcb56e3dc1dad81d72682a90420e9ce384ed9886c95c31eb5d7c02f",
+        "bytes": 5118,
+        "sourceOnlyReadDependency": true,
+        "copiedOrModified": false,
+        "presentInFixedBase": false
+      }
+    ],
+    "status": "검증·합류 대기입니다. 최초 실행과 최종 정렬은 PR62 수락 뒤 Root가 배분합니다."
+  },
+  "publicContractSha256": "58a370cfe086c54a304bfe576cca5cefebe66e62715bc6aa9b78004d4887685e",
+  "privateRootContractSha256": "5eac6f25d89a36178400e561176b108d142a9e96ad5cf9f9785f3c4da8f014d4",
+  "approvedPublicCommonSha256": "5e040a2c8d8d9c9465a5d8359a6767c36210826f01b128ee2f19e55638ad8e01",
+  "rootSpecifiedCallbacks": {
+    "value": 1,
+    "integrationPG": 1
+  },
+  "executions": {
+    "callback": 0,
+    "type": 0,
+    "lint": 0,
+    "PG": 0,
+    "remoteRuntime": 0,
+    "installation": 0,
+    "productBuild": 0,
+    "liveSourceSync": 0,
+    "watchRestart": 0
+  },
+  "controllerConnected": false,
+  "physicalExecutionOrWorkloadAuthenticationProven": false
+}
