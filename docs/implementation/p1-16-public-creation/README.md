@@ -59,3 +59,9 @@ private `launch` 형식은 다음과 같습니다. 아래 값은 전부 합성 �
 기존 lock 순서·원 receipt·intent·outbox·FK/UNIQUE/writer guard·공통 atomic/DDL은 그대로입니다. 같은 binding을 공유하는 논리 Unit은 동일한 보수적 실제 저장 범위를 참조할 뿐, 동시 RW 권한이나 물리 병렬 실행을 얻지 않습니다. 가짜 디렉터리나 새 binding으로 기존 writer를 우회하지 않습니다.
 
 기존 PG 파일 끝에 callback 1개만 추가했습니다. 서로 다른 이름/key의 두 Workspace를 `Promise.all`로 예약하여 Workspace/Unit/Session은 별개이고 binding/membership은 같은 실제 id임을 비교합니다. 이어 추가 Workspace 예약으로 exact tuple의 binding이 여전히 하나이고 원 행 전체가 불변임을 비교합니다. attempts·storage/execution grants·verification 증가 0과 원 물리 runtime 호출 0도 확인하도록 작성했습니다. 기존 값 1개·PG 4개 본문은 변경하지 않았습니다. 현재 작성 수는 값 1개·PG 5개이며 진입/PASS/FAIL/SKIP의 실제 결과는 아직 없습니다. 시험·type/lint·build·설치·live 변경은 계속 0회입니다. Root source 리뷰 뒤 최초 실행 배분을 기다립니다.
+
+## 최초 static 원결과와 Root 지정 교정
+
+Source `16c39d7f1a60ccf5c974c6b0cee9dadb1755491a`의 최초 type는 종료 코드 1, 소유 제품 오류 3개와 외부 오류 25개였습니다. 최초 lint도 종료 코드 1, 제어문자 정규식 오류 1개였습니다. 값/PG/schema는 미진입입니다. [원 실패와 준비 오류 기록](first-static-failure.md)을 보존합니다.
+
+Root 검토에 따른 두 제품 파일의 교정 pin은 `486d499c59d37013ba07eb58d60358d070d54f13`입니다. `WorktreeMeta`의 지정 기본값을 원 label metadata 계산 전에 명시하고, 완성한 실제 DTO의 타입을 선언한 뒤 기존 deep capture/freeze와 private brand 연결 경계를 구분했습니다. 제어문자 거절 범위는 char-code 검사로 동일하게 유지합니다. 교정 후 type/lint·값/PG/schema·build·live 변경은 아직 실행하지 않았습니다. 기존 stage/manifest/helper도 다시 준비하거나 실행하지 않았습니다.

@@ -35,3 +35,19 @@ Catalog worker의 소유를 `src/main/durable-runtime/catalog/runtime-launch.ts`
 이 설정의 canonicalDirectory는 현재 하나의 보수적인 실제 쓰기 범위다. 이를 공유하는 논리 Workspace/Unit은 같은 binding을 참조할 수 있지만 동시 RW가 허용되는 것은 아니다. 새 binding id 또는 가짜 경로를 만들어 기존 writer를 우회하지 않는다. 이 경계는 물리 실행 활성화·홈/checkout별 세분화·여러 Agent의 실제 병렬 실행 증거가 아니다. 후속 물리 배치에서는 실제 mount와 디렉터리 범위를 별도로 확정해야 한다.
 
 먼저 위 한정 제품 diff를 제출하고 기존 PG fixture에 최초 callback 1개만 추가한다. 같은 실제 tuple에 서로 다른 이름/key의 Workspace 두 개를 실제 PG에서 동시에 예약하여 논리 Unit/Session은 각각 별개, canonical binding은 정확히 하나, membership은 그 원 id를 참조하며 grant/attempt/proof 생성0임을 확인한다. 이어 기존 binding의 원 상태/epoch/proof 등 모든 값이 추가 예약으로 바뀌지 않음을 대조한다. 기존 PG3의 두번째 Git Workspace도 이제 같은 binding을 재사용해야 한다. 원4/값1과 이 신규1은 아직 실행하지 않았다. Root가 수정 source를 읽은 뒤 정확 첫 실행을 배분한다. 현재 새 실행/live 변경0을 유지한다.
+
+## 2026-10-14 10:56 최초 한정 실행
+
+Root는 b17a095de4a8c5aa23a42b32154e0007daecb850의 core21줄 변경과 새 동시 PG callback36줄을 전문 검토했다. Exact tuple 선택·원 상태 무변경·실제id membership과 기존 false 경계 유지를 수락한다. 게시16c39d7f1a60ccf5c974c6b0cee9dadb1755491a의 제품9/fixture2를 고정하고 기존 Catalog worker에 최초 값1/실제PG5, 해당11파일 scoped type/lint만 위임한다. 새 소유 DB orca_p116_creation_ 접두사에 SQL001019를 한 번 준비하며 원 dev/C1·기존 verification DB 변경0이다.
+
+이미 보존한 metadata 검증 stage/cache와 실제 import 근거를 재사용하고 이번 실제 import closure의 누락·차이만 전송한다. 전체 legacy 후보 복사/압축/재해시, TypeScript의 존재하지 않는 JS 경로 추측, 새 설치/제품 build/live sync/사진/원 성공 suite 반복은 하지 않는다. 실제 source·SQL manifest에 고정 pin/Gitblob/SHA를 기록한다. Scoped type의 소유/기존 외부 진단과 실제 compiler exit를 분리한다. 원 raw 로그는 보존하되 전체 listFiles를 보고서에 출력하지 않는다.
+
+Heavy1/전체2 상한이다. 첫 오류·TAP·callback 진입 수·실제 PID/시각·ledger를 보존한다. 원 의미·assertion·제품이 바뀌지 않는 fixture의 명백한 type-only/동등 lint 교정은 원 실패와 정확 diff를 보존하고 변경파일만 확인한 뒤 아직 미진입하거나 실패한 callback에 한해 진행할 수 있다. Product 의미/SQL/fixture 기대값을 바꾸는 교정은 root에 먼저 근거를 반환한다. 성공 callback 재실행0, 후속 단계의 범위는 root가 판단한다.
+
+## 2026-10-14 11:08 최초 static 실패의 한정 교정
+
+첫 type는 소유 제품3/기존 외부25, lint는 launch-config.ts 제어문자 정규식1로 실패했다. 값/PG/schema 진입0이며 원 로그와 종료 PID18571/18583/18686을 보존한다. 준비 중 이미 부재를 확인한 TypeScript JS API를 다시 읽은 실패는 반복 시행착오로 기록한다. 확인된 native bin/tsc와 기존 esbuild collector만 재사용하며 같은 탐색을 다시 하지 않는다.
+
+Root는 원 진단, launch-preparation/config, captureCatalogLaunch/immutable, WorktreeMeta와 실제 두 merge 함수·displayName helper를 읽었다. Catalog는 소유 두 제품 파일만 다음과 같이 교정하고 먼저 정확 diff를 제출한다. WorktreeMeta에 displayName 빈 문자열과 isArchived/isUnread/isPinned false, sortOrder/lastActivityAt 0을 원 displayName 계산 전에 제공한다. 이는 두 기존 merge 함수가 누락값에 적용하는 값과 같으며 현재 시각·실제 실행 성공을 만들지 않는다. 완성한 meta와 payload는 각각 실제 WorktreeMeta/RuntimeWorktreeRecord 구조로 타입 검사한다. Deep capture/freeze를 유지하되 readonly 배열을 mutable legacy DTO로 연결하는 타입 경계만 명시하고 DTO 필드를 넓은 단언으로 감추지 않는다. PreparedCatalogLaunch의 비공개 brand 발급 단언은 인증·서버 설정을 거친 현재 issuer 한 곳에만 두며, 실제 captureCatalogLaunch 검증과 내부 필드 구조 검사를 보존한다. Brand/공통 core API/권한 검증은 약화하지 않는다.
+
+제어문자 U+0000–001F/007F 거절은 동등 char-code 판정으로 바꾸거나 의도를 설명한 해당 한 줄 lint 예외로 보존한다. 문자 범위를 줄이거나 입력 허용을 넓히지 않는다. SQL/기대값/기타 제품 변경은 없다. 아직 교정 후 실행 허가는 아니며 root가 diff를 읽은 뒤 변경파일 static 및 미진입 첫6개만 이어갈 예정이다. 전체 stage/manifest/설치/schema를 다시 준비하지 않는다.
