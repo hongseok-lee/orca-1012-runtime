@@ -23,3 +23,9 @@ SSE의 existing actor는 그대로이며 매 events poll의 service wrapper가 �
 제품 diff와 작은 fixture를 먼저 제출한다. 값 경계는 기본 explicit/명시 catalog의 capture, 잘못된 옵션·accessor 거절·후속 caller mutation 분리를 다룬다. 실제 PG 경계는 한 startup 이후 등록 권한 안에 실제 Catalog mutation으로 만든 새 Workspace/Unit이 다음 서비스 호출에 보이는 점, 다른 repo/다른 dataset/입력 actor scope는 숨김 또는 거절, tombstone anchor 유지, DB 실패가 성공 빈 목록으로 바뀌지 않는 점을 좁게 다룬다. 기존 createPgOpsServices/HTTP 인증·cursor 전체 성공 suite는 반복하지 않는다. 새 UI 확인은 live 합류 후 처음 생긴 Workspace 화면에서 수행한다. 정확 callback 수와 실행 범위는 root가 fixture를 읽고 정한다.
 
 지금 시험·type/lint·DB/schema·sync·설치·build·restart·config 변경0이다. 기존 원 source/cache와 actual import 근거를 재사용하고 전체 legacy 재복사/재해시·TS JS API 탐색을 하지 않는다. PR에는 공개 명세 전문·변경·원 결과·실제 화면 provenance 및 아직미검증 한계를 기록한다. 기획·선택·수용기준 변경은 root 전담이고 worker는 위 구현과 결과 기록만 수행한다. Native9 재사용+root/bridge11, heavy2 상한·frozen 접근0·보호backup 보존·TTL 제외·빠른개발/단계종료/메모리 규칙을 유지한다.
+
+## 2026-10-14 11:54 root source 리뷰와 최초 검증 배분
+
+Root가 제품 a4ee7280의 세 파일과 fixture100e9e42 값2/PG1 전문, 실제 Ops actor/scope와 Catalog helper를 읽었다. PR57 head4eaf9151의 제품은 조기 pin과 같다. 원 정적 actor 확인 후 원 서버 Catalog 권한만 합쳐 호출별 scope를 만들고 read-only snapshot의 dataset·workspace FK·tombstone anchor를 확인하는 구현을 첫 검증 대상으로 수락한다. Auth verifier·HTTP schema·기존 서비스 접근 검사·Pool 소유권을 유지한다.
+
+기존 Codex/API worker에 소유 제품3/fixture2의 scoped type/lint와 아직 실행하지 않은 값2/PG1만 한 번 배분한다. PG는 새 소유 orca_ops_catalog_scope_* DB의001019 schema만 처음1회 준비하고 dev PG 데이터는 변경하지 않는다. 기존 실제 import/cache/source를 재사용해 변경5와 실제 새 dependency 차이만 전송한다. TS native bin/tsc 및 기존 esbuild/도구만 사용하고 전체 legacy 복사·설치·전체기존 suite·사진·live sync/restart는0이다. 원 실패·compiler 외부진단·PID종료와 heavy 반환을 분리 기록한다. Generator 필요 시 원 callback body를 유지하고 하나의 부모 안에 필요한 setup/hook을 두며 부모를 제품 개수에 합산하지 않는다. 최초 오류가 범위/의미 변경을 요구하면 원 증거와 좁은 diff를 root에 먼저 제출한다. 이 배분이 앞 절의 미실행 상태를 갱신하며 live 활성화나 merge를 의미하지 않는다.

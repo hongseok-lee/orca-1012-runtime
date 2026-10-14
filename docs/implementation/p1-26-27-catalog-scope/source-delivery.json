@@ -6,23 +6,59 @@
       "path": "src/main/orcad/orcad-ops-catalog-scope.pg.test.mts",
       "sha256": "2e2155e0ed7ef161280532925221031b2d12ff7e0e00d72a36b5c0c6f62d059d",
       "bytes": 11550,
-      "executions": 0
+      "executions": 1
     },
     {
       "path": "src/main/orcad/orcad-ops-catalog-scope.value.test.mts",
       "sha256": "5939028d85afd5bf9a9bbf2216ac2061731066280569502645ae07b26d1abbcc",
       "bytes": 3011,
-      "executions": 0
+      "executions": 1
     }
   ],
-  "rootDispatchSourceSHA256": "60bd5df60df5fd17f9f4da4cb3e084cb89a81f98f6d210f482a69945c2899a8b",
-  "rootDispatchPublicSHA256": "60bd5df60df5fd17f9f4da4cb3e084cb89a81f98f6d210f482a69945c2899a8b",
-  "testsExecuted": 0,
-  "typeExecuted": 0,
-  "lintExecuted": 0,
-  "PGExecuted": 0,
-  "schemaPrepared": 0,
+  "rootDispatchSourceSHA256": "06c6df478540168d7bf300ef287ca3d51ef3126dcf49c0a206f348ea86846c9d",
+  "rootDispatchPublicSHA256": "06c6df478540168d7bf300ef287ca3d51ef3126dcf49c0a206f348ea86846c9d",
+  "testsExecuted": 3,
+  "typeExecuted": 1,
+  "lintExecuted": 1,
+  "PGExecuted": 1,
+  "schemaPrepared": 1,
   "runtimeUpdated": 0,
   "captures": 0,
-  "qualification": "Source와 미실행 fixture 납품이며 최초 검증과 실제 화면 증거는 아직 없습니다."
+  "qualification": "승인된 최초 callback 3개는 통과했으나 전체 타입 검사는 exit 1입니다. Live 활성화·실제 화면·전체 기능 완료는 아직입니다.",
+  "sourceDeliveryInitiallyUnexecuted": true,
+  "validationSourcePin": "4eaf9151b3dd525f1b2a32eb1113219cc46a8172",
+  "fixturePin": "100e9e421b9bea87e2344794205b51300c260e63",
+  "firstValidation": {
+    "value": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skip": 0,
+      "tapSHA256": "8b96e62fea84bca2437e43df912c76651c234d164ce4cc1ad3cdfaa2f228e626"
+    },
+    "PG": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skip": 0,
+      "tapSHA256": "8169aa2f4d41742ef9cf25cd1198b079687df32fd03de3e094dd8dde3c67ae32"
+    },
+    "ownedTypeDiagnostics": 0,
+    "outsideTypeDiagnostics": 31,
+    "fullCompilerExit": 1,
+    "scopedTypeStepExit": 0,
+    "lintExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "ownedTypeRoots": 5,
+    "outsideMissingTypes": {
+      "path": "src/main/durable-runtime/notifications/types.ts",
+      "diagnostics": 6
+    },
+    "sourceHashMismatch": 0,
+    "devMutation": 0,
+    "callbackRepeated": false,
+    "parentCallbacksAdded": 0,
+    "fixtureBodyChanged": false
+  }
 }
