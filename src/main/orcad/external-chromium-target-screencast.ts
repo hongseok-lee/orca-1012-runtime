@@ -17,6 +17,7 @@ export class ExternalChromiumTargetScreencast {
   readonly done: Promise<void>
   private resolveDone!: () => void
   private sessionId: string | null = null
+  private readonly transportIdentity: number
   private closed = false
   private started = false
   private metricsApplied = false
@@ -35,6 +36,7 @@ export class ExternalChromiumTargetScreencast {
     private readonly page: ExternalChromiumPageRecord,
     private readonly options: BrowserScreencastOptions
   ) {
+    this.transportIdentity = connection.transportIdentity
     this.done = new Promise((resolve) => { this.resolveDone = resolve })
     this.removeFailure = connection.onFailure(() => this.fail())
     this.removeEvent = connection.onEvent((event) => {
@@ -62,7 +64,8 @@ export class ExternalChromiumTargetScreencast {
   }
   private async open(): Promise<void> {
     try {
-      this.sessionId = await this.connection.attach(this.page.targetId, this.page.browserGeneration)
+      this.assertOpen()
+      this.sessionId = await this.connection.attach(this.page.targetId, this.page.browserGeneration, () => this.assertOpen())
       this.assertOpen()
       await this.command('Page.enable')
       await this.applyViewport()
@@ -75,11 +78,12 @@ export class ExternalChromiumTargetScreencast {
     }
   }
   private assertOpen(): void {
-    if (this.closed || this.connection.generation !== this.page.browserGeneration) throw externalCdpError()
+    if (this.closed || !this.connection.ownsTransport(this.transportIdentity, this.page.browserGeneration)) throw externalCdpError()
   }
   private command(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    this.assertOpen()
     if (!this.sessionId) return Promise.reject(externalCdpError())
-    return this.connection.command(method, params, this.sessionId)
+    return this.connection.command(method, params, this.sessionId, this.transportIdentity)
   }
   private captureParams(): Record<string, unknown> {
     const { format, quality, maxWidth, maxHeight, everyNthFrame } = this.options
@@ -111,7 +115,7 @@ export class ExternalChromiumTargetScreencast {
       }
     } catch { this.fail() }
     // ACK uses the frame token in params and the bound session in the envelope.
-    void this.command('Page.screencastFrameAck', { sessionId: ackToken }).catch(() => this.fail())
+    if (!this.closed) void this.command('Page.screencastFrameAck', { sessionId: ackToken }).catch(() => this.fail())
   }
   private schedule(): void {
     if (this.timer || this.closed) return
@@ -162,18 +166,26 @@ export class ExternalChromiumTargetScreencast {
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
     this.pending = null
-    if (this.sessionId) this.connection.cancelSession(this.sessionId)
+    if (this.sessionId) this.connection.cancelSession(this.sessionId, this.transportIdentity)
     this.cleanup = this.finish()
     void this.cleanup.catch(() => {}).finally(() => this.resolveDone())
   }
+  private cleanupCommand(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    if (!this.sessionId || !this.connection.ownsTransport(this.transportIdentity, this.page.browserGeneration)) {
+      return Promise.reject(externalCdpError())
+    }
+    return this.connection.command(method, params, this.sessionId, this.transportIdentity)
+  }
   private async finish(): Promise<void> {
     // An attach already in flight can finish after stop; detach that exact session too.
-    await this.opening?.catch(() => {})
+    await Promise.all([this.opening?.catch(() => {}), this.updates.catch(() => {})])
     const sessionId = this.sessionId
     if (!sessionId) return
-    if (this.started) await this.command('Page.stopScreencast').catch(() => {})
-    if (this.metricsApplied) await this.command('Emulation.clearDeviceMetricsOverride').catch(() => {})
-    this.connection.cancelSession(sessionId)
-    await this.connection.command('Target.detachFromTarget', { sessionId }).catch(() => {})
+    if (this.started) await this.cleanupCommand('Page.stopScreencast').catch(() => {})
+    if (this.metricsApplied) await this.cleanupCommand('Emulation.clearDeviceMetricsOverride').catch(() => {})
+    this.connection.cancelSession(sessionId, this.transportIdentity)
+    if (this.connection.ownsTransport(this.transportIdentity, this.page.browserGeneration)) {
+      await this.connection.command('Target.detachFromTarget', { sessionId }, undefined, this.transportIdentity).catch(() => {})
+    }
   }
 }
