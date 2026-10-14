@@ -127,7 +127,7 @@ await test('PG 예약 뒤 합성 중앙 Browser create, 원행 보존과 closed/
           }
           return result
         }
-      })
+      } })
     }
   })
   const replayPage = randomUUID()
