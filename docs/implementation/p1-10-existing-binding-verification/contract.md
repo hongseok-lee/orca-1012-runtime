@@ -1,4 +1,4 @@
-> Root 계약 전문의 공개 일반화 사본입니다. 비공개 운영 판정 링크와 실제 DB identity만 일반화했습니다. private 원본 SHA256: `984e21a8c50d7ef73287932f477a634013aef53455561ed4ebf73cbefe0df72e`.
+> Root 계약 전문의 공개 일반화 사본입니다. 비공개 운영 판정 링크·운영 DB identity·원자료 경로만 일반화했습니다. private 원본 SHA256: `ec6c7a93b73c53e93ada60b8e786416197a7d26a9e0ac1ec007371e15ff2cc3d`.
 
 # P1-10 — 기존 UNVERIFIED binding의 첫 directory 검증 반영
 
@@ -29,3 +29,25 @@ Fixture는 단일 top-level callback 안에서 기존 격리 PG ledger21을 사�
 지금은 source/fixture·조기 pin/exactdiff·DraftPR, heavy0이다. PG/lint/type/실제 시험/새 PNG/live migration/NFS/provider/설치/build0이다. Root source 검토 뒤 기존 remote cache의 owned lint/type와 새 focused PG callback 최초1회만 배분한다. Same Pool의 DB/system/OID/dataset·기존 ledger21 identity를 첫 seed 전에 guard하고 실제 기존 row 보존·원 TAP/입력 hash/cleanup을 기록한다. 대상은 기존 격리 Root가 고정한 기존 격리 DB/OID/system이며 liveorca_dev는0이다. 기존 행/schema reset/drop/delete는 허용하지 않는다.
 
 본문에 이 명세 전문과 P1-10/승인 public COMMON·변경·미검증을 담는다. 운영 DB identity·원 경로·UID는 공개 일반화하고 보존 원본은 그대로 둔다. 물리 directory/mount/namespace pin/provider/RW/HA 합격은 아니다. 새 usage/credits/stream 원오류만 실제 시각/문구로 보고한다. 기존9 worker/총11·새fork0·동결template/backup/TTL보호를 유지하고 worker는 계획 MD/메모리를 수정하지 않는다.
+
+## 12:50 Root source 수락·최초 검증 배분
+
+Root가 early25e86fcffe776998469374e78d2569f8e11ceb0d의 helper102줄과 Store 연결, a30d2601587d31f0c35bb761ac2d4ae4394d93d2의 fixture332줄 전문을 읽고 기존 Store/connection/SQL001·006·021과 대조했다. Session→Unit→domain→binding row lock, lock 대기 뒤 별도 history 읽기, initial CAS/동일proof 재생, immutable input/evidence/pin, callerTX 안 사건과 childFK 대기 조건을 source 수준에서 수락한다. SQL001–021·register/attach/authority는 그대로다. 실제 검증 합격은 아직 아니다.
+
+같은 DB worker에 heavy1로 최초 검증을 배분한다. 기존 remote backend cache와 reviewed runner 방식을 재사용하며 소유3파일 lint1, 좁은 strict type1, 새 PG fixture top callback1만 실행한다. Type closure·ESBuild 실행 closure와 actual 입력 hash/원 TAP/exit/시간/job/PID·cleanup을 보존한다. 새 fixture의 module 입력·원 SQL21 checksum은 source pin과 같아야 한다. 새 build/image/install·전체 suite·이전 성공 PR98 시험·새 migration apply는0이다.
+
+PG는 기존 Root가 고정한 기존 격리 DB/OID/system/ledger21/승인된 dataset을 그대로 쓴다. Same Pool identity와 ledger 전체 checksum을 첫 seed 전에 확인하고 불일치 시 seed0에서 멈춘다. 기존18표의 모든 row hash는 보존 확인하고 새 fixture UUID의 상태/역사만 추가한다. DELETE/reset/drop/기존row갱신/liveorca_dev는0이다. Fixture가 검사하는 root 입력 guard와 raw identity는 private에 보존하고 공개본은 일반화한다.
+
+Store의 상속 lint26은 PR98 원 진단과 비교해 동일 진단이면 그대로 기록하고, 새3파일 변경에서 유입된 진단과 분리한다. 상속 진단만으로 성공검증을 반복하거나 기존 코드를 정리하지 않는다. 최초 새 lint/type 실패는 원 로그를 보존하고 소유3파일의 명확한 import/type/fixture 구문 교정만 허용한다. 제품 의미·SQL·테스트 기대값 변경은 Root에 원 실패와 delta를 먼저 보고한다. 이미 통과한 검증은 반복하지 않고 교정 파일 lint와 미완료 단계만 계속한다. PG 실패 뒤 같은 callback 전체를 자동 재실행하지 않는다.
+
+Draft PR 본문은 현재 source/명세/미검증을 먼저 갱신하고 최초 결과를 회수한다. PNG/live/NFS/provider/물리authority 시험은 이 배분에 포함하지 않는다. 결과 뒤 최초 정제 보고 PNG와 최종 공개자료는 별도로 배분한다. 새 usage/credits/stream 오류는 실제 turn/job과 구분해 보고한다.
+
+## 13:01 최초 결과 수락·공개 증거와 PNG
+
+Root가 affc182389e1bce9e433335080b00581ab5621f2의 원 TAP/runner delta/actualtype13·PG8·SQL21/생성wrapper/DB전후/종료기록을 읽고 Git와 대조했다. Control40301은12:55:24.864–30.013 종료, lint40315 exit1(상속26·새0), type40334 exit0/진단0, PG40401/실제40407 callback1 PASS(skip0,부모wrapper포함TAP2)다. SamePool seed전 실제 동일 Pool backend PID의exact DB/system/OID/dataset, ledger21 불변, 원18표181행보존/후256행을 수락한다. Authority는합성이며 실제filesystem/provider/물리수명은미검증이다. Source3는 a30d2601과동일하고SQLapply/live0·knownchild부재/heavy0이다.
+
+Rootaudit121개모두일치: 비공개 Root 원자료 감사 기록, SHA cfc32c2ae7b463440bf81392ffd59cdacc97601f09a2397f39e94a95f900409c. 최초Rootaudit의lint baseLines를현재main기준으로읽었던불일치1은원자료그대로보존했다. 실제classifier의baseline은9339d745이며그bytes와현재main의같은statement/현재줄을별도로대조해해소했다. Publicprovenance에는baselinepin을명시하고전체lint통과로쓰지않는다. Raw TAP SHAace3f500a713e3e27a9e64649b6ec77de9188d69824d2ed5f1d1723fa655e852.
+
+같은DB worker는 제품/fixture를변경하지않고 결과·원hash·sourcepin·수용한명세전문/COMMON·미검증을 PR101 본문과 공개evidence로 정리한다. 기존remote Playwright와정제한오프라인보고화면으로 최초PNG1만캡처한다(heavy1). 앱UI/native/실제physicalproof사진으로표시하지않고raw운영주소/UID/DB identity/credential은공개하지않는다. 원파일을수정하지않으며정제본과원hash를연결한다. CapturePID/시간·실제PNGbytes/차원/cleanup을남긴다. 기존PG/type/lint/성공suite/새설치/build/live/UI제품시험반복0이다.
+
+현재mainc0ccca17을유지한최종head·bodyhash·소유파일목록·검증입력불변·필수Foundation CI 결과를제출한다. 지금선제rebase0이며다른PR의merge에따른정렬은Root가별도로배분한다. 최종필수CI를skip-ci로우회하지않고Root가PNG/최신PR을읽은후수락/merge한다.

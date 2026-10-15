@@ -1,0 +1,302 @@
+{
+  "baselinePin": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "baselineFileSHA256": "125a5d08c7ef0cd60ef87b83c461c535491480d60fdb4bc25c8c9af7d64ce82a",
+  "currentValidationSourcePin": "affc182389e1bce9e433335080b00581ab5621f2",
+  "wholeExit": 1,
+  "inherited": [
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 27,
+      "column": 73,
+      "statement": "if (typeof value !== 'string' || !value || /[\\x00-\\x1f]/.test(value)) deny('STORAGE_EVIDENCE_REF');",
+      "baseLines": [
+        28
+      ]
+    },
+    {
+      "rule": "eslint(no-control-regex)",
+      "message": "Unexpected control characters",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 27,
+      "column": 48,
+      "statement": "if (typeof value !== 'string' || !value || /[\\x00-\\x1f]/.test(value)) deny('STORAGE_EVIDENCE_REF');",
+      "baseLines": [
+        28
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 55,
+      "column": 88,
+      "statement": "if (found.rowCount !== 1 || found.rows[0].revision !== scope.expectedUnitRevision) deny('STORAGE_UNIT_STALE');",
+      "baseLines": [
+        55
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 64,
+      "column": 75,
+      "statement": "if (!evidence || evidence.evidenceRef !== input.directoryEvidenceRef) deny('STORAGE_DIRECTORY_UNVERIFIED');",
+      "baseLines": [
+        64
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 65,
+      "column": 44,
+      "statement": "if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');",
+      "baseLines": [
+        65,
+        72
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 75,
+      "column": 44,
+      "statement": "if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');",
+      "baseLines": [
+        65,
+        72
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 117,
+      "column": 31,
+      "statement": "if (first.rowCount !== 1) deny('STORAGE_BINDING_MISSING');",
+      "baseLines": [
+        84
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 126,
+      "column": 7,
+      "statement": "deny('STORAGE_BINDING_STALE');",
+      "baseLines": [
+        93
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 132,
+      "column": 63,
+      "statement": "if (member.rowCount !== 1 || !member.rows[0].incarnation) deny('STORAGE_TARGET_STALE');",
+      "baseLines": [
+        99
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 137,
+      "column": 37,
+      "statement": "if (operation.rowCount !== 1) deny('STORAGE_OPERATION_STALE');",
+      "baseLines": [
+        104
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 143,
+      "column": 33,
+      "statement": "if (session.rowCount !== 1) deny('STORAGE_SESSION_CLOSED');",
+      "baseLines": [
+        110
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 148,
+      "column": 32,
+      "statement": "if (result.rowCount !== 1) deny('STORAGE_EXECUTION_NOT_CURRENT');",
+      "baseLines": [
+        115
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 155,
+      "column": 56,
+      "statement": "if (binding.rowCount !== 1 || unit.rowCount !== 1) deny('STORAGE_CAS');",
+      "baseLines": [
+        122
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 156,
+      "column": 27,
+      "statement": "if (target.operation) await tx.query(`UPDATE durable_runtime.operations SET retry_at=clock_timestamp(),result=$2::jsonb,revision=revision+1",
+      "baseLines": [
+        123
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 172,
+      "column": 32,
+      "statement": "if (!b.identity_proof_ref) return null;",
+      "baseLines": [
+        139
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 175,
+      "column": 101,
+      "statement": "if (!held || held.evidenceRef !== b.identity_proof_ref || !matchesBinding(held.candidate, b)) return null;",
+      "baseLines": [
+        142
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 182,
+      "column": 32,
+      "statement": "if (result.rowCount !== 1) deny('STORAGE_CAS');",
+      "baseLines": [
+        149
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 188,
+      "column": 31,
+      "statement": "if (!(this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');",
+      "baseLines": [
+        155,
+        171
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 195,
+      "column": 28,
+      "statement": "if (conflict.rowCount) return this.blocked(tx, target, b, 'WRITER_HELD');",
+      "baseLines": [
+        162
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 204,
+      "column": 31,
+      "statement": "if (!(this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');",
+      "baseLines": [
+        155,
+        171
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 215,
+      "column": 32,
+      "statement": "if (result.rowCount !== 1) deny('STORAGE_GRANT_STALE');",
+      "baseLines": [
+        182
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 227,
+      "column": 24,
+      "statement": "if (target.writer) await this.currentExecution(tx, target, true);",
+      "baseLines": [
+        194
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 242,
+      "column": 7,
+      "statement": "return this.blocked(tx, target, b, 'MOUNT_UNVERIFIED');",
+      "baseLines": [
+        209
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 253,
+      "column": 31,
+      "statement": "if (row.rowCount !== 1) deny('STORAGE_MOUNT_STALE');",
+      "baseLines": [
+        220
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 276,
+      "column": 29,
+      "statement": "if (!this.directory(b)) return this.blocked(tx, target, b, 'DIRECTORY_PIN_INVALID');",
+      "baseLines": [
+        243
+      ]
+    },
+    {
+      "rule": "eslint(curly)",
+      "message": "Expected { after 'if' condition.",
+      "file": "src/main/durable-runtime/storage/store.ts",
+      "line": 292,
+      "column": 7,
+      "statement": "return this.blocked(tx, target, b, 'COMPUTE_STOP_UNCONFIRMED');",
+      "baseLines": [
+        259
+      ]
+    }
+  ],
+  "unexpected": [],
+  "valid": true,
+  "wholeLintPass": false,
+  "meaning": "baseLines는 지정한 이전 baseline의 행 번호입니다. Root가 현재 main의 같은 statement와 현재 행을 별도로 대조해 수락했습니다."
+}

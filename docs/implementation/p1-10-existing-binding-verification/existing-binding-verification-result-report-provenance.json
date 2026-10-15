@@ -1,0 +1,54 @@
+{
+  "kind": "OFFLINE_EXISTING_BINDING_VERIFICATION_RESULT_REPORT",
+  "sourcePin": "affc182389e1bce9e433335080b00581ab5621f2",
+  "rawValidationSHA256": {
+    "pg.tap": "ace3f500a713e3e27a9e64649b6ec77de9188d69824d2ed5f1d1723fa655e852",
+    "type.log": "f01e32e96f8f5ae83a4abc26df487db2b1221046089a6a99881c08b5db2288d4",
+    "lint.log": "ce75a2b67de2b574259fba183e8826890606b509cbd107c12400399aaf8b0a84"
+  },
+  "startedAt": "2026-10-15T13:02:50.158Z",
+  "capturedAt": "2026-10-15T13:02:52.311Z",
+  "pid": 9235,
+  "viewport": {
+    "width": 1200,
+    "height": 1100
+  },
+  "deviceScaleFactor": 1,
+  "productUICaptured": false,
+  "nativeIPhone": false,
+  "liveAppOpened": false,
+  "authStateLoaded": false,
+  "contextOffline": true,
+  "requestCount": 0,
+  "rawCredentialOrOperatorPathIncluded": false,
+  "screenshotSHA256": "f4202e129bc1f2ee99ac3cc32ef5e9cb3559751296b9200e5a5bd92fdf3076bc",
+  "screenshotBytes": 218273,
+  "reportHTMLSHA256": "a59d542c1eb7d7ee4b8ad52f22c66bd6c82b1c0f42245577cb424a42979d6995",
+  "cleanup": {
+    "at": "2026-10-15T13:02:52.361Z",
+    "pid": 9235,
+    "contextClosed": true,
+    "browserClosed": true,
+    "ownedChildren": [
+      {
+        "pid": 9252,
+        "state": "ABSENT"
+      }
+    ],
+    "requestCount": 0,
+    "exit": 0
+  },
+  "knownPIDs": {
+    "at": "2026-10-15T13:03:23.045Z",
+    "pids": [
+      {
+        "pid": 9235,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 9252,
+        "state": "ABSENT"
+      }
+    ]
+  }
+}

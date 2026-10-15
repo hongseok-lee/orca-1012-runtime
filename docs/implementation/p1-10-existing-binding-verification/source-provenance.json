@@ -1,7 +1,7 @@
 {
   "at": "2026-10-15T12:47:02.807385+00:00",
   "base": "c0ccca1735dfd652765e36cb8cd0171bde10d00b",
-  "head": "a30d2601587d31f0c35bb761ac2d4ae4394d93d2",
+  "head": "affc182389e1bce9e433335080b00581ab5621f2",
   "earlyProductPin": "25e86fcffe776998469374e78d2569f8e11ceb0d",
   "files": {
     "src/main/durable-runtime/storage/store.ts": {
@@ -33,12 +33,16 @@
   "fixtureUsesExistingLedger21WithoutApply": true,
   "fixtureOnlySyntheticAuthority": true,
   "execution": {
-    "PG": 0,
-    "SQL": 0,
-    "lint": 0,
-    "type": 0,
-    "test": 0,
-    "PNG": 0,
+    "lint": 1,
+    "lintWholeExit": 1,
+    "inheritedLintDiagnostics": 26,
+    "newLintDiagnostics": 0,
+    "type": 1,
+    "typeWholeExit": 0,
+    "PGCallbacks": 1,
+    "PGWholeExit": 0,
+    "SQLApply": 0,
+    "PNG": 1,
     "live": 0,
     "NFS": 0,
     "provider": 0,
@@ -47,9 +51,13 @@
     "heavy": 0
   },
   "usageLimitCreditsStream": "미관측",
-  "sourceOnly": true,
-  "rootContractPrivateSHA256": "984e21a8c50d7ef73287932f477a634013aef53455561ed4ebf73cbefe0df72e",
-  "rootContractPublicSHA256": "69c36902160f76b7a9bfccbc393077af8764b25e999149e2a7a17717c7f95db8",
-  "fixtureExecution": "미실행",
-  "preparedEvidenceIsPhysicalLifetimeProof": false
+  "sourceOnly": false,
+  "rootContractPrivateSHA256": "ec6c7a93b73c53e93ada60b8e786416197a7d26a9e0ac1ec007371e15ff2cc3d",
+  "rootContractPublicSHA256": "c788bbf5ca0f77c8518770c47c5f3195fdd63d4227d297c218ea784ce0d93746",
+  "fixtureExecution": "최초 PG callback 1개 PASS; 부모 wrapper는 제품 callback 수에 합산하지 않습니다.",
+  "preparedEvidenceIsPhysicalLifetimeProof": false,
+  "validatedSourcePin": "affc182389e1bce9e433335080b00581ab5621f2",
+  "fixtureExecuted": true,
+  "lintBaselinePin": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "rebaseCount": 0
 }

@@ -1,0 +1,100 @@
+{
+  "sourcePin": "affc182389e1bce9e433335080b00581ab5621f2",
+  "reviewedSourcePin": "a30d2601587d31f0c35bb761ac2d4ae4394d93d2",
+  "lint": {
+    "wholeExit": 1,
+    "inheritedDiagnostics": 26,
+    "newDiagnostics": 0,
+    "fullLintPassClaimed": false,
+    "suppression": 0
+  },
+  "lintBaseline": {
+    "baselinePin": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+    "baselineFile": "src/main/durable-runtime/storage/store.ts",
+    "baselineFileSHA256": "125a5d08c7ef0cd60ef87b83c461c535491480d60fdb4bc25c8c9af7d64ce82a",
+    "classifierCapturedFileMatchesNamedBaseline": true,
+    "currentProductBase": "c0ccca1735dfd652765e36cb8cd0171bde10d00b",
+    "classificationMeaning": "baseLines는 지정한 이전 baseline의 행 번호입니다. Root가 현재 main의 같은 statement와 현재 행을 별도로 대조해 수락했습니다."
+  },
+  "type": {
+    "wholeExit": 0,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0,
+    "sourceInputs": 13,
+    "externalPaths": 210,
+    "mismatches": [],
+    "outside": [],
+    "reusedPriorInputs": 10,
+    "measuredNewInputs": 3,
+    "strict": true,
+    "configRawSHA256": "fcdee33c1fc1c530a00fb04d3c2c7d4c20bfc59118bd2f2a965a49058e6fefd9"
+  },
+  "PG": {
+    "wholeExit": 0,
+    "productCallbacks": 1,
+    "parentProductCallbackCount": 0,
+    "rawTAPTestsIncludingParent": 2,
+    "passIncludingParent": 2,
+    "fail": 0,
+    "actualRuntimePID": 40407,
+    "sourceInputs": 8,
+    "mismatches": [],
+    "wrapper": {
+      "sourceSha256": "0083c189233cc862d87ae3c9ff2c4a6d29fe0271d731b0604e0975a928693e8f",
+      "originalBodySha256": "fc62822fe19157507e29e583527763fa3fc580c8b2b86b2ba03f575031cbfa13",
+      "wrapperSha256": "524056f0d4a4ba23dcb908b9cc73f18fd01f19d6ee29b10eaf36836e40dfc6a5",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    },
+    "syntheticAuthority": true,
+    "physicalOrProviderAuthenticationClaimed": false
+  },
+  "database": {
+    "ledgerRows": 21,
+    "ledger21Unchanged": true,
+    "schemaApplied": false,
+    "comparisonTables": 18,
+    "originalRowCount": 181,
+    "afterRowCount": 256,
+    "originalRowsPreserved": true,
+    "allDatabaseTablesPreservedClaimed": false
+  },
+  "samePoolIdentityBeforeSeedGuardMatched": true,
+  "rawOperationalIdentityPublished": false,
+  "actualSQLInputs": 21,
+  "actualUniqueTypePGSQLPathCount": 34,
+  "originalEvidenceSHA256": {
+    "pg.tap": "ace3f500a713e3e27a9e64649b6ec77de9188d69824d2ed5f1d1723fa655e852",
+    "pg.metafile.json": "0af1d643f62199e34dc35019069d771464110150a3917d86da6289b122d8ac50",
+    "pg.actual-inputs.json": "c0e8748cbd185767b49887bbbe76257f6a819ae921de640936883551ebf45cd2",
+    "pg.generated.cts": "524056f0d4a4ba23dcb908b9cc73f18fd01f19d6ee29b10eaf36836e40dfc6a5",
+    "pg.cjs": "139f5712f935430b4c000e2187d607e3bb8bdb9f1dee69e29addc2eb69be2bcc",
+    "actual-type-inputs.json": "d0486303a4261364c02a24e1b426cc419f650250714bcc0cd5312afde26754c5",
+    "actual-sql-inputs.json": "44885430b8a358c46107f1ab213bde0a70b021d16d2d7902ab2426c28f5c6a36",
+    "input-manifest.json": "9ad7552f9b0d8615d15853a0a1d841ef70d2a12d775dc18a1d6c4a5399fb6ece",
+    "lint.log": "ce75a2b67de2b574259fba183e8826890606b509cbd107c12400399aaf8b0a84",
+    "type.log": "f01e32e96f8f5ae83a4abc26df487db2b1221046089a6a99881c08b5db2288d4",
+    "before-pg.json": "4c62b968c1356ba4bdd934e9a99c7b85a01a73510f9a8da772479da6b103f78f",
+    "database-end.json": "d341c341949347a2527a9744ed1ac1c8399e9a684de67f86602f0b8365708bae",
+    "run-state.json": "7ab7e058bc15dbdd9535c0245467df25c75eaf4fc0cc1bced0db2524a0b528e2",
+    "known-pid-cleanup.json": "e8dfcbd280a16ce5a8a2fbdca8a25b85624a2181c69d76a0ea60517db6cf4168"
+  },
+  "reportPNG": {
+    "count": 1,
+    "kind": "OFFLINE_RESULT_REPORT",
+    "productUI": false,
+    "sha256": "f4202e129bc1f2ee99ac3cc32ef5e9cb3559751296b9200e5a5bd92fdf3076bc",
+    "networkRequests": 0,
+    "cleanup": true
+  },
+  "successfulValidationRepeated": 0,
+  "schemaApply": 0,
+  "live": 0,
+  "NFS": 0,
+  "provider": 0,
+  "install": 0,
+  "imageOrProductBuild": 0,
+  "heavy": 0,
+  "usageLimitCreditsStream": "이번 turn에서 usage limit·credits·stream 중단 원오류는 미관측입니다."
+}

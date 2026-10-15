@@ -1,0 +1,28 @@
+# 공개 정제본: seed 전 운영 DB/system/OID/dataset/backend PID 원값 1행을 생략했습니다. 원 TAP hash는 verification.json에 보존합니다.
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":40407,"at":"2026-10-15T12:55:29.167Z"}
+# (node:40407) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# {"phase":"EXISTING_BINDING_VERIFICATION_CASES","callbackCount":1,"cases":["original-primary-and-additional-ID-tuple-epoch-retained","exact-proof-replay-no-row-time-event-revision","wrong-proof-tuple-membership-revision-closed-session-refused","prepared-immutable-evidence-and-live-pin-required","outer-rollback-proof-and-events-together","first-await-input-capture","pin-invalidated-during-domain-lock-wait","two-transactions-one-first-mutation-and-event","prior-epoch-writer-seal-grant-mount-state-never-refreshed","binding-row-lock-serializes-child-FK-until-caller-commit","original-ID-unit-tab-ledger-and-old-rows-retained"],"syntheticAuthority":true,"live":false,"originalTablesCompared":18,"ledgerRows":21}
+# Subtest: Root approved existing binding verification PG callback 1
+    # Subtest: Existing binding: first prepared proof, exact replay, transaction and FK boundaries
+    ok 1 - Existing binding: first prepared proof, exact replay, transaction and FK boundaries
+      ---
+      duration_ms: 632.432188
+      type: 'test'
+      ...
+    1..1
+ok 1 - Root approved existing binding verification PG callback 1
+  ---
+  duration_ms: 635.078588
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 890.799087
