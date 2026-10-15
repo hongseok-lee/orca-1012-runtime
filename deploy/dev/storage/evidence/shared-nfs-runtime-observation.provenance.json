@@ -1,0 +1,125 @@
+{
+  "capturedAt": "2026-10-15T19:53:29.593Z",
+  "routePattern": "/h/:paired-host/session/:worktree",
+  "queryKeys": [
+    "name"
+  ],
+  "rawExpoURLRecorded": false,
+  "validatedProductSourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+  "liveCompositeSourcePin": "b19f82b424100b9e5a74f99fe5d1dac9b26bce27",
+  "appliedManifestSHA256": "3a4eff2106cf846837b4435909c0b92f2adaf395886ff99e658dfe23fbae933e",
+  "opsMobileDetailSourcePin": "ba5b58931fe054e3054ff04481bd41cd5422b4ee",
+  "opsMobileDetailSourceSHA256": "4f70c4b50c6c071edfa51cd57b413277dac8380459087fa0892c547a6495baab",
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "clientFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+  "clientFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "phoneClicks": 1,
+  "summaryTaps": 0,
+  "upDrags": 0,
+  "detailTaps": 0,
+  "state": "detail",
+  "freshViewer": {
+    "at": "2026-10-15T19:53:21.398Z",
+    "newBrowser": true,
+    "newContext": true,
+    "newPage": true,
+    "browserContextCount": 1,
+    "contextPageCount": 1,
+    "previousViewerPageReused": false,
+    "moduleFrameCache": "module-local Map; not restored from storageState",
+    "freshnessBasis": "Root source review plus this new browser/context/page first visible frame",
+    "encryptedPayloadDecoded": false,
+    "webSocketCountsProvePageIdentity": false
+  },
+  "firstVisibleFrameObservedAt": "2026-10-15T19:53:27.109Z",
+  "artifactSHA256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+  "artifactBytes": 146837,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuthQualified": false,
+  "failureEvidence": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "schemaVersion": 1,
+  "rootVisualAccepted": true,
+  "originalProvenanceSha256": "00e8ee4334980e0c63b38490b711310840d353311ef330101b6cbf6f4d185e98",
+  "clientHandoffSha256": "32305343106147162259a5b0a17a5794aa78d3ed4616cdd4c1a9e1f0159f83a5",
+  "rootVisualAcceptanceSha256": "3f356373ba530efa52aaf2bd3bdde2ebd21dcc1f56676d4b1cf2e6de84f0e8d4",
+  "originalUnedited": true,
+  "newCapture": true,
+  "sameBytesAsHistoricalPng": true,
+  "freshnessBoundary": "이번 새 viewer/job의 캡처 시각과 원 frame/provenance를 보존합니다. 같은 pixels/hash만으로 새 stream이나 page identity를 증명하지 않습니다.",
+  "visible": [
+    "same Unit detail",
+    "RUNNING / ABSENT",
+    "Pod 없음",
+    "한글",
+    "가시 로딩/오류 없음"
+  ],
+  "notObserved": [
+    "below-fold Session/Tab/mount",
+    "native iPhone",
+    "shared RW itself"
+  ],
+  "backendExpoMetadataAllMatch": true,
+  "metadataReads": {
+    "backendPodGet": 1,
+    "backendMetadataBatch": 1,
+    "expoPodGet": 1,
+    "expoMetadataBatch": 1
+  },
+  "sourceClosureBoundary": "실제 합성 source와 적용 manifest 범위만 증명하며 전체 checkout/전체 runtime closure 일치는 미증명입니다.",
+  "counters": {
+    "phoneClicks": 1,
+    "summaryTaps": 0,
+    "upDrags": 0,
+    "detailTaps": 0,
+    "captureCounts": {
+      "coordinate": 0,
+      "expanded": 0,
+      "detail": 1
+    },
+    "browserOpenClicks": 0,
+    "manualKeyInputs": 0,
+    "reloadClicks": 0,
+    "directRpcCalls": 0,
+    "nativeCdpInputCalls": 0,
+    "actualOpsCommands": 0,
+    "runtimeErrors": []
+  },
+  "cleanup": {
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true,
+    "supervisorState": "completed",
+    "exit": 0,
+    "signal": null,
+    "additionalPIDReaudit": 0,
+    "heavyAfter": 0
+  },
+  "limitations": [
+    "이번 결과는 공용 NFS 적용 뒤 기존 Expo browser의 연결/표시 관측입니다. 공용 RW 자체의 화면 증거가 아닙니다.",
+    "원 15초 timeout과 같은 child의 지연 완료를 즉시 연속성 PASS로 바꾸지 않습니다.",
+    "Native iPhone·현재 PG 불변·전체 Session/Tab/mount·모든 filehandle·RO·old writer fencing·HA 합격이 아닙니다.",
+    "기존 PG 상관 근거는 역사 자료이며 이번 PG 재측정이 아닙니다."
+  ],
+  "harnessVsProduct": "관측 harness의 새 browser/context/page 1개와 제품 Browser/Tab 추가 0을 구별합니다.",
+  "originalServerFailure": {
+    "originalImmediate15SecondContinuityPassed": false,
+    "originalExecutorExit": 1,
+    "originalMarkerSupervisorExit": 124,
+    "sameOriginalMarkerChildLateCompleted": true,
+    "elapsedSeconds": 123.108,
+    "rerunRollbackOrSignals": 0,
+    "blockedSyscallIdentified": false,
+    "source": "수락된 root-server-acceptance.json을 참조하며 이 worker가 marker를 재실행하지 않았습니다."
+  }
+}

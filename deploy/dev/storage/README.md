@@ -59,7 +59,7 @@ Root의 [확정 계약](../../../docs/plans/orca-1012-shared-rw-scope.md)에 따
 
 Exports는 기존 `/x`와 `/exports/runtime-domains` 두 줄을 유지하고 정확한 `/exports/shared/${DATASET} (rw,root_squash,insecure)`만 추가합니다. Backing root나 shared 부모 전체는 export하지 않습니다. Renderer는 검증된 DATASET을 exports literal block에 먼저 치환한 최종 bytes의 SHA256을 annotation에 넣고 기존 helper immutable ConfigMap/base64/full hash 전달을 유지합니다. Leaf ensure/inspect의 입력·행동·raw schema는 변경하지 않습니다. Bootstrap createdPaths에는 실제 새 공용 부모/dataset이 추가될 수 있지만 별도 writer grant/proof/pin은 없습니다.
 
-이번 변경은 서버 초기화/export **source 준비만**입니다. 실제 bootstrap·적용·rollout·공용 두 Agent RW·공용→보호 범위 우회 거절과 production Agent `/shared` mount 연결은 미검증입니다. 기존 sharedDirectories는 checkout symlink 기능이며 새 접근 정책이 아닙니다. Root squashing이나 동일 UID의 mode만으로 격리/old writer fencing을 주장하지 않으며 보호 binding의 단일 writer 제약을 우회하지 않습니다. 기존 보호 leaf·Store/SQL·이미지·PV/PVC·Service·resource/security와 원 환경은 유지합니다.
+PR107 당시 변경은 서버 초기화/export source 준비였으며, 후속 [실제 적용과 한정 관측 결과](evidence/shared-nfs-rollout.md)에서 shared 부모·dataset 0770 적용을 확인했습니다. Marker-after는 최초 15초 timeout/executor exit 1 뒤 같은 원 job이 123.108초 지연 완료했으므로 즉시 연속성 PASS는 아닙니다. 현재 Client 새 화면과 두 consumer의 공용 파일 쓰기/fsync/상호 읽기·private marker 불변은 수락됐습니다. Hardlink EXDEV 및 symlink open ENOENT는 해당 mount topology의 한정 관측이며 전체 우회 격리 합격은 아닙니다. Production Agent `/shared` mount 연결은 미완료입니다. 기존 sharedDirectories는 checkout symlink 기능이며 새 접근 정책이 아닙니다. Root squashing이나 동일 UID의 mode만으로 격리/old writer fencing을 주장하지 않으며 보호 binding의 단일 writer 제약을 우회하지 않습니다. 기존 보호 leaf·Store/SQL·이미지·PV/PVC·Service·resource/security와 원 환경은 유지합니다.
 
 ## Protected managed namespace and create-only leaves
 

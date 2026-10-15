@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "kind": "shared-nfs-server-rollout-and-qualified-consumer-publication",
+  "sourceMain": "99623a5977f1bd43c9895a5317bc8566162df1e9",
+  "rootServerAcceptedUtc": "2026-10-15T19:50:23.566171+00:00",
+  "acceptanceScope": "Root가 서버 namespace/0770, 두 consumer의 한정 공용 RW 관측 및 현재 Client 화면을 수락했습니다. 최초 즉시 연속성 실패와 미완료 범위는 유지합니다.",
+  "serverExecution": {
+    "attempts": 1,
+    "startedUtc": "2026-10-15T19:45:54.473746+00:00",
+    "endedUtc": "2026-10-15T19:46:27.539729+00:00",
+    "executorExit": 1,
+    "firstFailureUtc": "2026-10-15T19:46:27.437368+00:00",
+    "firstFailureMessage": "COMMAND_FAILED_OR_UNCERTAIN:kernel-marker-after",
+    "helperConfigMapCreates": 1,
+    "exportsCas": 1,
+    "templateCas": 1,
+    "automaticRetryRollbackSignals": 0,
+    "newOwnedNfsPodReadyObservedUtc": "2026-10-15T19:46:10.557222+00:00",
+    "newPodRestartCount": 0,
+    "initExit": 0,
+    "samePinnedImageResourcesSecurity": true,
+    "sameProtectedBackingPvValidated": true,
+    "mountedHelperSha256": "0dc99bbc9afbdbb7035045363fbb446f73ded0a334797e56a42219864ccb114e",
+    "mountedExportsSha256": "f27e521d0620a1cec23f5aa5ee76bcd46f30c6c44a2254a4ce957844d7542d6f",
+    "fixedRenderSha256": "06033165529ce599fb552a658ccd8880edc324f2d97f99b407e2972d70d0bddb",
+    "initBootstrap": {
+      "created": true,
+      "createdPathCount": 2,
+      "createdLogicalPaths": [
+        "/exports/shared",
+        "/exports/shared/<dataset>"
+      ]
+    },
+    "mainBootstrap": {
+      "created": false,
+      "createdPathCount": 0
+    },
+    "sharedMetadata": {
+      "parent": {
+        "uid": 0,
+        "gid": 0,
+        "mode": "0755"
+      },
+      "dataset": {
+        "uid": 0,
+        "gid": 1000,
+        "mode": "0770"
+      },
+      "sameBackingDevice": true
+    },
+    "existingProtectedAndLegacyMetadataPreserved": true
+  },
+  "legacyMarkerBefore": {
+    "completedUtc": "2026-10-15T19:45:58.027Z",
+    "fsyncReadback": true,
+    "bytes": 18,
+    "sha256": "453b4745ab947cfe30d057db52d864d1d8a2cf9bbe0ecf66a61ac8ae311375a0"
+  },
+  "legacyMarkerAfter": {
+    "supervisorDeadlineSeconds": 15,
+    "supervisorDeadlineUtc": "2026-10-15T19:46:27.410Z",
+    "supervisorExit": 124,
+    "immediateContinuityPassed": false,
+    "originalExecutorExitPreserved": 1,
+    "sameOriginalChildLateCompleted": true,
+    "samePidAndStartticksConfirmedPrivately": true,
+    "childStartedUtc": "2026-10-15T19:46:12.450Z",
+    "childCompletedUtc": "2026-10-15T19:48:15.558Z",
+    "elapsedSeconds": 123.108,
+    "childCompletionExit": 0,
+    "sameMarkerPathInodeBytesHashOwnerMode": true,
+    "markerBytes": 18,
+    "markerSha256": "453b4745ab947cfe30d057db52d864d1d8a2cf9bbe0ecf66a61ac8ae311375a0",
+    "fsyncReadback": true,
+    "ownedReadbackUtc": "2026-10-15T19:48:34.507Z",
+    "childStateAtReadback": "Z",
+    "supervisorAbsentAtReadback": true,
+    "newMarkerJobRerun": 0,
+    "signalsRollback": 0,
+    "syscallCausingDelay": "not measured",
+    "overallImmediateContinuityPass": false
+  },
+  "twoConsumerQualification": {
+    "status": "Root가 A/B/A 최초 각 1회 결과를 수락했습니다.",
+    "rootAcceptedUtc": "2026-10-15T20:05:25Z",
+    "evidence": "shared-rw-qualification.json",
+    "eachStageExit": 0,
+    "mutualHashReadsAndPrivateMarkersUnchanged": true,
+    "hardlinks": "EXDEV",
+    "bSymlinkWriteOnlyOpen": "ENOENT",
+    "completeIsolationProof": false
+  },
+  "clientObservation": {
+    "status": "Root가 현재 원본 PNG를 직접 보고 수락했습니다.",
+    "capturedUtc": "2026-10-15T19:53:29.593Z",
+    "pngSha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+    "pngBytes": 146837,
+    "provenance": "shared-nfs-runtime-observation.provenance.json",
+    "newCapture": true,
+    "sameBytesAsHistoricalPng": true,
+    "metadataAllMatch": true,
+    "sharedRwItselfQualifiedByImage": false
+  },
+  "publicationScope": {
+    "infraClusterGetExecApply": 0,
+    "productSourceChange": 0,
+    "newTestsCaptureBuild": 0,
+    "heavy": 0
+  },
+  "unverified": [
+    "immediate 15-second kernel continuity",
+    "which syscall waited",
+    "production Agent shared mount generator/controller",
+    "authenticated physical authority and old writer fencing",
+    "HA/native provider lifecycle",
+    "arbitrary alias/raw NFS/administrator bypass isolation",
+    "same-file concurrent overwrite or locking policy"
+  ]
+}
