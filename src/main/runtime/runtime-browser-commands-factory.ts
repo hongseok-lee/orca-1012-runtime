@@ -28,6 +28,8 @@ export type RuntimeBrowserCommandsFactory = (
 export type RuntimeBrowserCommandsFactoryOptions = {
   /** The provider owns browser pages without a renderer window. */
   headless?: boolean
+  /** The provider explicitly implements the existing browser screencast path. */
+  screencast?: boolean
   /** Live health probe; failure must remove advertised capability. */
   isAvailable?: () => boolean
 }
@@ -55,6 +57,10 @@ export function runtimeBrowserCommandsFactoryIsAvailable(): boolean {
 
 export function runtimeBrowserCommandsFactoryIsHeadless(): boolean {
   return runtimeBrowserCommandsFactoryIsAvailable() && currentOptions.headless === true
+}
+
+export function runtimeBrowserCommandsFactorySupportsScreencast(): boolean {
+  return runtimeBrowserCommandsFactoryIsAvailable() && currentOptions.screencast === true
 }
 
 export type RuntimeBrowserUnavailableCause = {

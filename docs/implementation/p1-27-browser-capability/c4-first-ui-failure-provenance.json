@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-10-15T03:26:13.698Z",
+  "routePattern": "/h/:paired-host/session/:worktree",
+  "queryKeys": [
+    "name"
+  ],
+  "rawURLRecorded": false,
+  "serverSourcePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+  "appliedManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "artifactSHA256": "fcb6ace7428b97415a5fdb85ddbc2ac341c0d40a94b9204bac763f54cc3e7499",
+  "artifactBytes": 63044,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuth": false,
+  "providerExecutionQualified": false,
+  "actualBrowserPixels": false,
+  "failureEvidence": true,
+  "requestKey": null,
+  "PGId": null,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15"
+}
