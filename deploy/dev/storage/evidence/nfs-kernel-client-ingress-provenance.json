@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "kind": "sanitized-operational-evidence-provenance",
+  "generatedUtc": "2026-10-15T12:02:16.601290+00:00",
+  "resultPath": "deploy/dev/storage/evidence/nfs-kernel-client-ingress.json",
+  "resultSha256": "9637d3b44a239ef739f7fa3edb33ca4ccbb87a9af262db4d767de6ba97df8335",
+  "verifiedContentCommit": "71322405349552ea7f164e700879bd649fa737c0",
+  "verifiedExecutionCheckoutCommit": "24aa4659f475da06488306ddada304aeebad91da",
+  "publicationBase": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "rebasedPolicyRendererIoBytesUnchanged": true,
+  "incomingPr96FilesPreserved": true,
+  "sourceHashes": [
+    {
+      "path": "deploy/dev/storage/templates/25-nfs-kernel-clients.yaml.in",
+      "sha256": "1b3252b0e9518d1c947236e797f3dd10825ddc993d3915a632598b7f93fe6615"
+    },
+    {
+      "path": "deploy/dev/storage/tools/render_storage.py",
+      "sha256": "773fd7bea16ab8a743237866099ad49aba3a9ef6c494439bbe06ac516ae570c1"
+    },
+    {
+      "path": "deploy/dev/storage/tools/storage_deployment_io.py",
+      "sha256": "3e8d889652f4aafc7463bff391697174a86a2206e68840c5e62a2443d1a17a1c"
+    }
+  ],
+  "privateEvidence": [
+    {
+      "logicalName": "render-comparison.json",
+      "sha256": "e838f0648044e95e9006fc63fba41b1a7ce8faa60a0d8263bb17e38a55f2c2c1",
+      "bytes": 2704
+    },
+    {
+      "logicalName": "renderer-phase-completed.json",
+      "sha256": "6324fd065f8f0908074d576cc959cc1eba460f920e54d5de093092ff9cc2d827",
+      "bytes": 1921
+    },
+    {
+      "logicalName": "policy-server-dryrun.stdout",
+      "sha256": "5f08da22cf66dcea06771466bdce76042e24b96da877c733c0a7c924c81f9ca9",
+      "bytes": 1086
+    },
+    {
+      "logicalName": "dryrun-comparison.json",
+      "sha256": "1827d0c5c5b4fdf21ac08dfc52dbfc1e947022073c92426b383016b8dfd2589d",
+      "bytes": 1066
+    },
+    {
+      "logicalName": "preflight-facts.json",
+      "sha256": "f3a526baa7a3509aa1c3128a09499376e213ed83591deca67171b0bafab58f2d",
+      "bytes": 1731
+    },
+    {
+      "logicalName": "before-helper.stdout",
+      "sha256": "b48c314268df9bef3df2f15622cbd51743e1eb760f5a9307ad546da004aca171",
+      "bytes": 1913
+    },
+    {
+      "logicalName": "before-helper-query.json",
+      "sha256": "fa71dc706daf84381f8808cf243d8559f90893e6f6bd606af7828188d1011270",
+      "bytes": 6029
+    },
+    {
+      "logicalName": "after-helper.stdout",
+      "sha256": "56c64e006acaaa9cff66825c86890418a937e0f16997cbd142dd3efb1218e329",
+      "bytes": 1928
+    },
+    {
+      "logicalName": "after-helper-query.json",
+      "sha256": "5cf5e94a39972a396941b28b772d10f285cfa3e710d9e6e73ad30e358f798778",
+      "bytes": 6438
+    },
+    {
+      "logicalName": "policy-create.stdout",
+      "sha256": "e808d238af153598df1c68916ef5ba1cf2ac1222ad350bc3707fa207204a027c",
+      "bytes": 1136
+    },
+    {
+      "logicalName": "final-pods.stdout",
+      "sha256": "1dcb0505257f3dcbb6b41552109ff6e188300c26e161f95040e004cf6f23bbdf",
+      "bytes": 498
+    },
+    {
+      "logicalName": "tcp-kernel-marker-helper.js",
+      "sha256": "0111f5c8c6517f7a9b232c2f8e7d85461faa5adb76f5e112d68fae9033c92f51",
+      "bytes": 5245
+    },
+    {
+      "logicalName": "before-input.json",
+      "sha256": "9f9d8919f7fafc4b854da118946ea6ae8c04a096d89621481a9c3091b6033bf9",
+      "bytes": 148
+    },
+    {
+      "logicalName": "after-input.json",
+      "sha256": "3d5c061217c43c4d12447d7bc0fd5ebb8b5aee5085d6c68e0a6902f15af16284",
+      "bytes": 690
+    },
+    {
+      "logicalName": "tcp-and-marker-results.json",
+      "sha256": "3911ab951116bd660f9c964b6e41e8d34f0d01688e24d11fa3499e1fb5f8c7ab",
+      "bytes": 2831
+    }
+  ],
+  "redacted": [
+    "operational IP addresses and CIDRs",
+    "Pod/node/policy UIDs and resource versions",
+    "private kubeconfig/context/project/image reference",
+    "operator paths and marker prefix",
+    "raw argv/input/log contents",
+    "whole private handoff"
+  ],
+  "reportScreenshot": {
+    "status": "captured",
+    "kind": "sanitized-operational-report",
+    "productUiEvidence": false,
+    "path": "deploy/dev/storage/evidence/nfs-kernel-client-ingress.png",
+    "sha256": "941c0c459fd0b20515fd70f525c459b4d233e5d07cbeab158429937ef9390fc7",
+    "bytes": 163871,
+    "width": 1280,
+    "height": 1080,
+    "viewport": {
+      "width": 1280,
+      "height": 1080
+    },
+    "deviceScaleFactor": 1,
+    "browserVersion": "147.0.7727.15",
+    "startedUtc": "2026-10-15T12:00:57.077Z",
+    "completedUtc": "2026-10-15T12:00:58.253Z",
+    "htmlSha256": "d1696d11e39be71d78ccc641b1eb1e4c76df6becc1a6edbb4318450e9ec2369f",
+    "captureSourceSha256": "45f2401531baf6460feccecc2f61ccee5d20b099d410b57ff216959c9c9b5f72",
+    "screenshotCalls": 1,
+    "applicationRequests": 0,
+    "newNetworkKernelChecks": 0,
+    "pairedProfileReused": false,
+    "contextClosed": true,
+    "browserClosed": true,
+    "ownedLauncherNodeBrowserAbsent": true,
+    "remoteLocalPublicCopyHashesMatch": true,
+    "footerRetainsQualificationLimits": true,
+    "captureApiExit": 0
+  },
+  "ci": {
+    "status": "reported-in-pr-final-check",
+    "skipCiForFinalHead": false,
+    "requiredFinalCheckCount": 1
+  },
+  "newRuntimeExecutionDuringPublication": 0,
+  "reportCaptureCount": 1
+}
