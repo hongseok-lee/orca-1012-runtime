@@ -1,0 +1,33 @@
+{
+  "capturedAt": "2026-10-15T04:20:35.506Z",
+  "routePattern": "/h/:paired-host/session/:worktree",
+  "queryKeys": [
+    "name"
+  ],
+  "rawURLRecorded": false,
+  "serverSourcePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+  "appliedManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "clientFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+  "clientFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "artifactSHA256": "662aa5cb69bf95fcb10bd7c6f8d3ac974880ba6aecc22ca40eee7157f121004a",
+  "artifactBytes": 16436,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuth": false,
+  "providerExecutionQualified": false,
+  "actualBrowserPixels": true,
+  "failureEvidence": false,
+  "requestKey": null,
+  "PGId": null,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15"
+}
