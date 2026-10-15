@@ -56,6 +56,7 @@ test('공개 cancel handler는 strict wire·cleanup 정책·동기 capture와 re
       return { rows: [{ payload_hash: inputPayloadHash({ turnId }), response: saved,
         committed_at: new Date('2026-10-15T00:00:00Z'), intake_at: null }], rowCount: 1 }
     }
+    if (sql === 'COMMIT') { return { command: 'COMMIT', rows: [], rowCount: 0 } }
     return { rows: [], rowCount: 0 }
   }, release() { assert.equal(this,client); releases++ } }
   const owner = { async connect() { assert.equal(this,owner); connects++; if (wait) { await gate.promise }; return client },
