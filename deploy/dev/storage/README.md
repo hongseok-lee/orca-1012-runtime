@@ -47,6 +47,32 @@ gcloud container clusters create-auto "$CLUSTER_NAME" \
 
 Before creation, successfully list clusters across locations in the designated project and inspect any same-name cluster; never overwrite it. Observe the exact create operation to completion. Obtain credentials into the dedicated private kubeconfig without changing a management context. No existing network, IAM, API, NAT, firewall, or infrastructure Terraform changes are included here.
 
+## Protected managed namespace and create-only leaves
+
+The NFS template retains `/x (rw,no_root_squash,insecure)` and adds the sibling export `/exports/runtime-domains (rw,root_squash,insecure)` on the same backing SSD filesystem. `/exports`, the managed root, and each dataset parent must be root-owned `0:0/0755`; a leaf alone is `1000:1000/0700`. Managed leaf IDs are independent canonical lowercase UUIDs. An Agent or Session does not acquire a global one-to-one leaf relationship. This source neither moves existing data nor changes existing directory permissions.
+
+`tools/managed_storage.sh` runs under BusyBox `/bin/sh` as UID 0 and accepts only these operations:
+
+```text
+bootstrap DATASET
+ensure-leaf EXPECTED_POD_UID DATASET LEAF_UUID
+inspect-leaf EXPECTED_POD_UID DATASET LEAF_UUID
+```
+
+The backing root, owners, and modes are fixed inside the helper. Dataset names must be canonical DNS-1123 labels of 1–63 characters; expected Pod UID and leaf ID must match the complete lowercase UUID form. Additional arguments and path-like or injected inputs are rejected without reflecting invalid values. All commands require a valid `ORCA_NFS_POD_UID`; ensure/inspect also require equality with the caller's expected UID. The Deployment provides this environment value through the Downward API. The equality check is a Pod-incarnation execution guard, not authentication or a physical authority proof.
+
+Before work, the helper checks the backing root's directory type, absence of symlinks, exact realpath, and `0:0/0755` metadata. Managed parents and leaves must also match their required owner/mode and backing device. Existing incompatible or partial directories are rejected without repair, rename, delete, or ownership/permission changes. Creation uses exclusive `mkdir`, and only a successful creator sets its new directory's owner/mode. A mkdir loser checks the resulting directory once and fails if the winner is not observably complete. It never retries internally.
+
+Startup calls bootstrap before the unchanged `unfsd` command. Existing `/exports/x`, `agents`, `dev`, and `test-homes` roots are checked as `1000:1000/0755` and left unchanged. On a fresh missing `/exports/x`, the helper initializes its children while the new parent is still `0:0/0700`, then publishes that new parent's final owner/mode. If an already workload-writable `/exports/x` is missing a required child, bootstrap refuses that incomplete state: it cannot safely perform root path-based initialization through that mutable parent. This conservative failure needs operator review; it does not silently reconstruct or repair existing data.
+
+New managed root/dataset paths are created only by bootstrap. Ensure only creates the requested leaf under already protected parents. A newly created path triggers one `/bin/busybox sync -f /exports` followed by final metadata checks; inspect and existing-path reuse perform no sync or writes. BusyBox 1.36.1's permitted help read confirms `-f` means the underlying filesystem, but no actual helper or durability qualification has yet run. A crash can leave an incomplete path for operator judgment. Matching raw metadata does not independently attest a past creation's durability.
+
+The versioned output is raw JSON containing operation, dataset, leaf ID, Pod UID, `created`, newly created paths, and backing/managed/parent/leaf path-device-inode-owner-mode metadata. It contains no token, Verified brand, physical pin, or writer grant. Collection authentication, server/client device correspondence, and authority lifetime through COMMIT/ROLLBACK remain separate contracts. Workloads must later receive only their authorized leaf mount, retain non-root/drop-ALL/no-host-networking constraints, and use the NFS ingress boundary. Root squashing alone does not establish read-only isolation or stop old writers.
+
+The renderer embeds the exact helper bytes as ConfigMap `binaryData` with `immutable: true`, under `nfs-managed-storage-<first 16 SHA256 hex characters>`. It does not substitute or execute the shell content. The tools volume is read-only and the file is invoked via `/bin/sh`, without a new image or package. Full exports/helper SHA256 annotations on the Pod template make changes rollout inputs. The existing read-only `/etc/exports` subPath remains; changing ConfigMap contents does not deliver new bytes to the running process. Old helper ConfigMaps are not automatically removed.
+
+This change is source-only. Bootstrap, leaf creation, rendering, sync, admission, rollout, and new Node kernel mounts have not been executed for this helper. A separately assigned rollout must account for interruption and recovery of existing NFS clients; uninterrupted service is not promised. Existing PG/backend/Expo data and source-watch remain protected, and this source is not acceptance of namespace authority, native provider behavior, old-writer fencing, or HA.
+
 ## Optional NFS kernel-client ingress boundary
 
 `25-nfs-kernel-clients.yaml.in` selects the NFS Pods by both `app.kubernetes.io/name=orca-dev-nfs` and the exact dataset label in the chosen namespace. It permits ingress on TCP 2049 from one operator-verified node primary IPv4 subnet. It adds no egress rule, Pod/namespace peer selector, external Service, or host-network exception. Both existing NFS and MOUNT services use TCP 2049.
