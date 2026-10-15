@@ -92,6 +92,60 @@ test('actual Browser process/registry compose page sessions before navigation wi
       { opsAuth: f.attempt('publication-failure').capability }))
     assert.equal(f.authority.findPageSession({ browserPageId: 'publication-failure', worktreePublicId: 'synthetic-worktree' }), null)
   })
+  await t.test('the first exact page caller survives auth disposal and same-generation transport reconnect', async t => {
+    const f = fixture(); t.after(f.stop)
+    const first = f.attempt('reconnecting-page')
+    await f.commands.browserTabCreate({ page: 'reconnecting-page', worktree: 'synthetic-worktree', activate: false },
+      { opsAuth: first.capability })
+    const oldSession = f.authority.findPageSession({ browserPageId: 'reconnecting-page', worktreePublicId: 'synthetic-worktree' })
+    assert.ok(oldSession)
+    const generation = f.session.cdp.generation, targetIds = Array.from(f.session.cdp.targets.keys())
+    f.session.cdp.fixtureTransport++
+    // A socket failure clears credentials only; the native page/target/generation survive.
+    for (const failed of Array.from(f.session.cdp.failed)) { failed() }
+    f.session.cdp.sessions.clear() // Old fake transport's attach sessions no longer exist.
+    assert.equal(f.authority.findPageSession({ browserPageId: 'reconnecting-page', worktreePublicId: 'synthetic-worktree' }), null)
+    assert.throws(() => oldSession.readBearer(), { code: 'OPS_BROWSER_SESSION_CLOSED' })
+    assert.equal(f.session.cdp.generation, generation)
+    assert.deepEqual(Array.from(f.session.cdp.targets.keys()), targetIds)
+    const beforeIssues = f.issues(), beforeAttach = f.session.cdp.calls.filter(call => call.method === 'Target.attachToTarget').length
+    const foreign = f.attempt('reconnecting-page', 'b'.repeat(64))
+    await assert.rejects(f.commands.browserTabCreate({ page: 'reconnecting-page', worktree: 'synthetic-worktree', activate: false },
+      { opsAuth: foreign.capability }), { code: 'browser_ops_auth_unavailable' })
+    assert.equal(f.issues(), beforeIssues)
+    assert.equal(f.session.cdp.calls.filter(call => call.method === 'Target.attachToTarget').length, beforeAttach)
+    const reissue = f.attempt('reconnecting-page')
+    await f.commands.browserTabCreate({ page: 'reconnecting-page', worktree: 'synthetic-worktree', activate: false },
+      { opsAuth: reissue.capability })
+    const replacement = f.authority.findPageSession({ browserPageId: 'reconnecting-page', worktreePublicId: 'synthetic-worktree' })
+    assert.ok(replacement); assert.notEqual(replacement, oldSession)
+    assert.equal(replacement.authenticatedCallerFingerprint, fingerprint)
+    assert.equal(f.issues(), beforeIssues + 1)
+    await first.disposeCreated() // Late cleanup of the old owner must not revoke the replacement.
+    assert.equal(f.authority.findPageSession({ browserPageId: 'reconnecting-page', worktreePublicId: 'synthetic-worktree' }), replacement)
+    assert.ok(f.authority.authenticateBearer(replacement.readBearer()))
+    assert.equal(f.session.cdp.sessions.size, 1)
+  })
+  await t.test('a new PageRecord/generation has its own binding and old cleanup cannot remove its session', async t => {
+    const f = fixture(); t.after(f.stop)
+    const old = f.attempt('replacement-public-page')
+    await f.commands.browserTabCreate({ page: 'replacement-public-page', worktree: 'synthetic-worktree', activate: false },
+      { opsAuth: old.capability })
+    await f.commands.browserTabClose({ page: 'replacement-public-page', worktree: 'synthetic-worktree' })
+    f.session.cdp.fixtureGeneration = 'new-native-generation'
+    f.session.cdp.fixtureTransport++
+    for (const changed of Array.from(f.session.cdp.changed)) { changed() }
+    const replacement = f.attempt('replacement-public-page', 'b'.repeat(64))
+    await f.commands.browserTabCreate({ page: 'replacement-public-page', worktree: 'synthetic-worktree', activate: false },
+      { opsAuth: replacement.capability })
+    const session = f.authority.findPageSession({ browserPageId: 'replacement-public-page', worktreePublicId: 'synthetic-worktree' })
+    assert.ok(session); assert.equal(session.authenticatedCallerFingerprint, 'b'.repeat(64))
+    await old.disposeCreated()
+    assert.equal(f.authority.findPageSession({ browserPageId: 'replacement-public-page', worktreePublicId: 'synthetic-worktree' }), session)
+    assert.ok(f.authority.authenticateBearer(session.readBearer()))
+    assert.ok(f.session.cdp.targets.has('target-agent-2'))
+    assert.equal(f.session.cdp.sessions.size, 1)
+  })
   await t.test('clear/stop during attach revoke the pending unpublished session and late attach is closed', async () => {
     for (const boundary of ['clear', 'stop'] as const) {
       const f = fixture(), gate = deferred<void>(); f.session.cdp.attachGate = gate

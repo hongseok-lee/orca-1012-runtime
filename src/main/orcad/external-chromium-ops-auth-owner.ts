@@ -5,6 +5,14 @@ import type { ExternalChromiumOpsAuthHandle, ExternalChromiumOpsAuthInput } from
 import type { ExternalChromiumPageRecord } from './external-chromium-tab-projection'
 
 type Connection = ExternalChromiumOpsAuthInput['connection'] & Readonly<{ transportIdentity: number }>
+type PageBinding = Readonly<{
+  publicPageId: string
+  targetId: string
+  browserGeneration: string
+  origin: string
+  fingerprint: string
+  worktreePublicId: string
+}>
 type Owner = {
   page: ExternalChromiumPageRecord
   expected: ExternalChromiumOpsAuthInput['page']
@@ -21,6 +29,9 @@ type Owner = {
 /** Tracks unpublished/in-flight pages too. Keys are exact native page objects, never just public IDs. */
 export class ExternalChromiumOpsAuthOwners {
   private readonly entries = new Map<ExternalChromiumPageRecord, Owner>()
+  // Credential/transport owners are replaceable; a surviving exact native page keeps its first caller.
+  // Weak keys release this metadata with the PageRecord without a public-ID registry or persistence.
+  private readonly bindings = new WeakMap<ExternalChromiumPageRecord, PageBinding>()
   private readonly closing = new Set<Promise<void>>()
   private stopped = false
   constructor(private readonly connection: Connection,
@@ -44,6 +55,19 @@ export class ExternalChromiumOpsAuthOwners {
     if (this.stopped || capability.browserPageId !== page.publicPageId || capability.worktreePublicId !== page.worktreeId) {
       throw browserOpsAuthUnavailable()
     }
+    const binding = this.bindings.get(page)
+    if (binding && (binding.publicPageId !== page.publicPageId || binding.targetId !== page.targetId ||
+        binding.browserGeneration !== page.browserGeneration || binding.origin !== capability.origin ||
+        binding.fingerprint !== capability.authenticatedCallerFingerprint || binding.worktreePublicId !== page.worktreeId)) {
+      throw browserOpsAuthUnavailable()
+    }
+    const transportIdentity = this.connection.transportIdentity
+    if (!this.connection.ownsTransport(transportIdentity, page.browserGeneration)) { throw browserOpsAuthUnavailable() }
+    if (!binding) {
+      this.bindings.set(page, Object.freeze({ publicPageId: page.publicPageId, targetId: page.targetId,
+        browserGeneration: page.browserGeneration, origin: capability.origin,
+        fingerprint: capability.authenticatedCallerFingerprint, worktreePublicId: capability.worktreePublicId }))
+    }
     const previous = this.entries.get(page)
     if (previous) {
       if (previous.fingerprint !== capability.authenticatedCallerFingerprint || previous.origin !== capability.origin ||
@@ -53,7 +77,7 @@ export class ExternalChromiumOpsAuthOwners {
       return false // Replays acquire no cleanup ownership over this earlier normal session.
     }
     const owner: Owner = { page, expected: Object.freeze({ publicPageId: page.publicPageId, targetId: page.targetId,
-      browserGeneration: page.browserGeneration, transportIdentity: this.connection.transportIdentity }),
+      browserGeneration: page.browserGeneration, transportIdentity }),
     origin: capability.origin, fingerprint: capability.authenticatedCallerFingerprint,
     worktreePublicId: capability.worktreePublicId, closed: false, release: null,
     interceptor: null, installing: null, disposal: null }
