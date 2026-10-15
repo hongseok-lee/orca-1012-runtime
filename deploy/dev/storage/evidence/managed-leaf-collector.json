@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "kind": "managed-leaf-collector-public-result",
+  "documentationBase": "9ba7a0a3a74036ccf9fd9a1fd06d9443867bcc72",
+  "acceptedProductHead": "10e0e87565e094749a6923ff6580345301d4b724",
+  "executionSourcePin": "aa512be7896a1bacd501dd375b947d23aa3b8063",
+  "source9": [
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-config.ts",
+      "bytes": 2955,
+      "sha256": "bade097ecb6f34426095bc8d6df88aee5936ce7b51ff947879e5f175b1521f9c"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-exec.ts",
+      "bytes": 6522,
+      "sha256": "ae55ac8a278b96a8d31c4e85c9bd146978d7e4a83b019e1857a051041259c1fe"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-fixtures.mts",
+      "bytes": 7156,
+      "sha256": "966ec7fbcb66c791300bb6e9784f6ac870c910178449f25644791450ce5156d1"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-output.ts",
+      "bytes": 4552,
+      "sha256": "0dc0a6ea07275a82c08b526035791e0a069437036215f16d42ba983b2904640d"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-pod.ts",
+      "bytes": 5907,
+      "sha256": "7a3bd7f12c6a62362e4d2afdee5bc2a21f420de4a4f1b612fb9534c0dfba4ca1"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-resources.ts",
+      "bytes": 3429,
+      "sha256": "1186f0a2c8cae608f91767fb3dd1c9b02af2f7cccaf3887f46a2bc8a711e1ac0"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-types.ts",
+      "bytes": 2961,
+      "sha256": "e5c0409b245924cf10516bddd4d8d22b5daaea695cff32ed98ad6592b51f3797"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector.test.mts",
+      "bytes": 13048,
+      "sha256": "7d15ddfe3bb99a5e84c1c2b43c4ede818dbf215aa4d6c32acde198dd1705256d"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector.ts",
+      "bytes": 6132,
+      "sha256": "0bd156be3afc3869a4610544cffe69450be7823011dc4eb0a720c18750185e5f"
+    }
+  ],
+  "source9BytesPreserved": true,
+  "syntheticVerification": {
+    "sourcePin": "aa512be7896a1bacd501dd375b947d23aa3b8063",
+    "finishedAt": "2026-10-15T15:04:57.113Z",
+    "changedExecFileLintExit": 0,
+    "strictTypeExit": 0,
+    "typeSourceFiles": 18,
+    "typeExternalFiles": 196,
+    "valueSourceFiles": 17,
+    "sourceMismatches": 0,
+    "sourceMissing": 0,
+    "topCallbacks": 1,
+    "subcases": 10,
+    "tests": 11,
+    "pass": 11,
+    "fail": 0,
+    "skip": 0,
+    "tapSha256": "c31a2e1c3f09b16eeecc9773ddec5eb9247d31b8cc75b28d2160efe99b5d94ed",
+    "firstFailuresPreserved": [
+      {
+        "phase": "owned-lint",
+        "sourcePin": "49e747b49c33e3950b5368009614a94d0a5e13ee",
+        "diagnostics": 3,
+        "correctionPin": "fc7711aef395b95850ca9909867288d6d59a373f",
+        "correction": "indexOf의 -1 비교 2개와 동일 문자열의 template 표현 1개만 교정했습니다."
+      },
+      {
+        "phase": "owned-type",
+        "sourcePin": "fc7711aef395b95850ca9909867288d6d59a373f",
+        "diagnostic": "managed-leaf-collector-exec.ts(111,39): error TS2322: Type 'boolean' is not assignable to type 'Agent'.",
+        "correctionPin": "aa512be7896a1bacd501dd375b947d23aa3b8063",
+        "correction": "agent:false 값을 유지하고 단일 field의 ClientOptions['agent'] assertion과 이유 주석만 적용했습니다."
+      }
+    ]
+  },
+  "actual": {
+    "controllerPID": 1205098,
+    "remoteCollectorPID": 40964,
+    "UID": 1000,
+    "node": "v24.15.0",
+    "wsVersion": "8.21.3",
+    "startedAt": "2026-10-15T15:13:28.025476+00:00",
+    "moduleStartedAt": "2026-10-15T15:13:31.567Z",
+    "moduleFinishedAt": "2026-10-15T15:13:32.166Z",
+    "finishedAt": "2026-10-15T15:13:32.198174+00:00",
+    "launcherExit": 0,
+    "collectorExit": 0,
+    "firstPhase": "BACKEND_UID",
+    "finalPhase": "ACTUAL_OBSERVATION_COMPLETE",
+    "collectorCalls": 1,
+    "actualRequestCounts": {
+      "GET": 5,
+      "WSS": 1
+    },
+    "http": [
+      {
+        "phase": "POD_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      },
+      {
+        "phase": "PVC_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      },
+      {
+        "phase": "PV_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      },
+      {
+        "phase": "HELPER_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      },
+      {
+        "phase": "FINAL_POD_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      }
+    ],
+    "ws": [
+      {
+        "method": "GET",
+        "pathMatches": true,
+        "proposedProtocol": "v5.channel.k8s.io",
+        "negotiatedProtocol": "v5.channel.k8s.io",
+        "status": 101,
+        "tlsAuthorized": true,
+        "closed": true,
+        "closeCode": 1000
+      }
+    ],
+    "diagnosticsComplete": true,
+    "historicalLeafComparison": {
+      "deviceMatches": true,
+      "inodeMatches": true,
+      "usedAsCollectorInput": false
+    },
+    "cleanup": {
+      "remoteCompletionObserved": true,
+      "remoteCompletionUnconfirmed": false,
+      "ownedChildActive": false,
+      "allLocalChildrenExited": true,
+      "traceRemoved": true,
+      "observedSocketsClosed": true,
+      "heavy": 0,
+      "sourceStagePreserved": true,
+      "PodOrServiceCleanup": false
+    },
+    "stderr": {
+      "bytes": 178,
+      "experimentalWarningPresent": true,
+      "rawSaved": true
+    },
+    "stderrQualification": "178 B의 collector stderr에서 ExperimentalWarning이 관측됐으며 exit 0의 실제 관측 결과와 구분했다. gcloud/kubectl의 원 민감 stderr는 기존 보호 pipe 정책에 따라 저장하지 않았다.",
+    "actionsNotPerformed": {
+      "retry": 0,
+      "fallback": 0,
+      "namespaceWrites": 0,
+      "ensureOrBootstrap": 0,
+      "markerReadOrWrite": 0,
+      "PG": 0,
+      "newPodOrNode": 0,
+      "Compute": 0,
+      "sourceWatchOrRuntimeRestart": 0,
+      "Metro": 0,
+      "newTestsOrTypeOrLint": 0,
+      "install": 0,
+      "separateBuild": 0,
+      "newPNG": 0
+    },
+    "limitations": [
+      "결과는 AUTHENTICATED_MANAGED_LEAF_OBSERVATION 및 server canonical candidate이며 namespacePin:false다.",
+      "StorageEvidenceAuthority, lifetime pin, mount RO authority, writer grant, physical fence, SQL COMMIT 또는 HA 합격을 발급하지 않는다.",
+      "추가 원격 조회·서비스 변경·재실행을 수행하지 않았다."
+    ],
+    "explicitOperatorTokenReads": 1,
+    "actualInputChangedFields": [
+      "rootApprovedExecution",
+      "rootApprovalRef",
+      "focusedVerificationAccepted"
+    ]
+  },
+  "runtimeSourceFiles": [
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-config.ts",
+      "bytes": 2955,
+      "sha256": "bade097ecb6f34426095bc8d6df88aee5936ce7b51ff947879e5f175b1521f9c",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-exec.ts",
+      "bytes": 6522,
+      "sha256": "ae55ac8a278b96a8d31c4e85c9bd146978d7e4a83b019e1857a051041259c1fe",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-output.ts",
+      "bytes": 4552,
+      "sha256": "0dc0a6ea07275a82c08b526035791e0a069437036215f16d42ba983b2904640d",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-pod.ts",
+      "bytes": 5907,
+      "sha256": "7a3bd7f12c6a62362e4d2afdee5bc2a21f420de4a4f1b612fb9534c0dfba4ca1",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-resources.ts",
+      "bytes": 3429,
+      "sha256": "1186f0a2c8cae608f91767fb3dd1c9b02af2f7cccaf3887f46a2bc8a711e1ac0",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-types.ts",
+      "bytes": 2961,
+      "sha256": "e5c0409b245924cf10516bddd4d8d22b5daaea695cff32ed98ad6592b51f3797",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector.ts",
+      "bytes": 6132,
+      "sha256": "0bd156be3afc3869a4610544cffe69450be7823011dc4eb0a720c18750185e5f",
+      "mode": "100644",
+      "ownedProduct": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "bytes": 5525,
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+      "mode": "100644",
+      "ownedProduct": false
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-canonical.ts",
+      "bytes": 1944,
+      "sha256": "4b12167177322b89f43326cbf87bd06b5edc6c64ff85bd123cd72d37620e3e79",
+      "mode": "100644",
+      "ownedProduct": false
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+      "bytes": 5290,
+      "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835",
+      "mode": "100644",
+      "ownedProduct": false
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "bytes": 2786,
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb",
+      "mode": "100644",
+      "ownedProduct": false
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-projection.ts",
+      "bytes": 7495,
+      "sha256": "07fffcc8d51d8fa62267cb63009d90520663ab64fe4907d2f7c0e1fea2269632",
+      "mode": "100644",
+      "ownedProduct": false
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+      "bytes": 3952,
+      "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0",
+      "mode": "100644",
+      "ownedProduct": false
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "mode": "100644",
+      "ownedProduct": false
+    }
+  ],
+  "scopeValidation": {
+    "fixedInternalOriginAndCA": true,
+    "exactPodPVC_PV_HelperIdentity": true,
+    "podReadyAndNotDeleting": true,
+    "samePodUIDContainerImageRestartAfterExec": true,
+    "containerRestartCount": 0,
+    "helperImmutableAndSHA256Matched": true,
+    "helperSHA256": "461fec8939a173a6f42c5ae65e5da28297433ede0c779626ebbf41b2723cf67d",
+    "exportsSHA256MatchedBeforeAndAfter": true,
+    "serverMountinfoUnchanged": true,
+    "helperInspectCalls": 1,
+    "created": false,
+    "createdPaths": [],
+    "protectedParentOwner": "0:0",
+    "protectedParentMode": "0755",
+    "leafOwner": "1000:1000",
+    "leafMode": "0700",
+    "csiDriver": "pd.csi.storage.gke.io"
+  },
+  "observation": {
+    "kind": "AUTHENTICATED_MANAGED_LEAF_OBSERVATION",
+    "namespace": "<development-namespace>",
+    "dataset": "<development-dataset>",
+    "leafId": "<managed-leaf-uuid>",
+    "candidate": {
+      "domain": {
+        "backendId": "<verified-block-backend>",
+        "exportId": "managed-runtime-domains",
+        "pvUid": "<nfs-pv-uid>"
+      },
+      "canonicalDirectory": "/<development-dataset>/<managed-leaf-uuid>",
+      "identityProjection": "Pod/container/generation identities are retained only in accepted private evidence.",
+      "metadataNamespace": "NFS server block filesystem; no client stat is substituted.",
+      "device": "66317",
+      "inode": "1179651"
+    },
+    "observedAt": "2026-10-15T15:13:32.166Z",
+    "evidenceDigest": "2c057b440b407e8a5bfeb5ea3a20bd47d1aff7095120190e3ee2234ac4314fd9",
+    "reference": "managed-leaf-observation:sha256:2c057b440b407e8a5bfeb5ea3a20bd47d1aff7095120190e3ee2234ac4314fd9",
+    "namespacePin": false
+  },
+  "historicalUI": {
+    "pr": 102,
+    "path": "managed-nfs-rollout-expo.png",
+    "capturedAt": "2026-10-15T14:06:37.253Z",
+    "sha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+    "bytes": 146837,
+    "meaning": "Collector 실행 전 기존 개발 UI의 연속성 증거이며 collector 또는 새 UI 시험 화면이 아닙니다.",
+    "newCaptureOrPNG": 0
+  },
+  "publicationNewExecutions": 0
+}
