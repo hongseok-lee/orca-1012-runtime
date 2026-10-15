@@ -62,6 +62,7 @@ def main():
     if export_block is None:
         raise ValueError("NFS exports literal block is missing.")
     exports = "".join(line[4:] for line in export_block[1].splitlines(keepends=True))
+    exports = substitute(exports, values)
     helper = Path(__file__).with_name("managed_storage.sh").read_bytes()
     helper_hash = hashlib.sha256(helper).hexdigest()
     values.update({

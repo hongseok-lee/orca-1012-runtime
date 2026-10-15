@@ -53,6 +53,14 @@ Root의 [확정 계약](../../../docs/plans/orca-1012-shared-rw-scope.md)에 따
 
 향후 공용 서버 경로 `/exports/shared/<dataset>`와 Agent mount `/shared`는 보호 범위의 형제로 분리하며, 기존 `/x` 전체를 공용 RW로 노출하거나 PGDATA/WAL·인증/제어 자료를 포함하지 않습니다. 이 문서 변경은 실제 export/디렉터리/Pod/mount를 생성하지 않습니다. 두 Agent의 공용 RW와 공용→보호 범위 우회 거절은 아직 미검증이며, 기존 managed leaf RW/RO 관측을 공용 구현 완료나 old writer fencing/HA 합격으로 확대하지 않습니다.
 
+### 별도 공용 namespace의 서버 source 준비
+
+공용 서버 source는 기존 보호 범위와 별개인 `/exports/shared`를 `0:0/0755`, `/exports/shared/<dataset>`을 `0:1000/2770`으로 초기화합니다. UID/GID 1000 Agent 여러 개의 group RW와 setgid 협업을 위한 설정이며 root 소유 부모·dataset 자체의 identity는 보존합니다. 기존 `bootstrap DATASET`만 non-symlink/realpath/device/owner/mode를 사전 검사하고, root-only exclusive mkdir에 성공한 새 경로만 최종 권한으로 공개합니다. 기존 경로는 chmod/chown/삭제/rename/repair하지 않으며 mutable dataset 안의 docs/handoffs/artifacts를 순회·생성·수리하지 않습니다. 새 생성이 있을 때만 기존 filesystem sync를 사용합니다.
+
+Exports는 기존 `/x`와 `/exports/runtime-domains` 두 줄을 유지하고 정확한 `/exports/shared/${DATASET} (rw,root_squash,insecure)`만 추가합니다. Backing root나 shared 부모 전체는 export하지 않습니다. Renderer는 검증된 DATASET을 exports literal block에 먼저 치환한 최종 bytes의 SHA256을 annotation에 넣고 기존 helper immutable ConfigMap/base64/full hash 전달을 유지합니다. Leaf ensure/inspect의 입력·행동·raw schema는 변경하지 않습니다. Bootstrap createdPaths에는 실제 새 공용 부모/dataset이 추가될 수 있지만 별도 writer grant/proof/pin은 없습니다.
+
+이번 변경은 서버 초기화/export **source 준비만**입니다. 실제 bootstrap·적용·rollout·공용 두 Agent RW·공용→보호 범위 우회 거절과 production Agent `/shared` mount 연결은 미검증입니다. 기존 sharedDirectories는 checkout symlink 기능이며 새 접근 정책이 아닙니다. Root squashing이나 동일 UID의 mode만으로 격리/old writer fencing을 주장하지 않으며 보호 binding의 단일 writer 제약을 우회하지 않습니다. 기존 보호 leaf·Store/SQL·이미지·PV/PVC·Service·resource/security와 원 환경은 유지합니다.
+
 ## Protected managed namespace and create-only leaves
 
 The NFS template retains `/x (rw,no_root_squash,insecure)` and adds the sibling export `/exports/runtime-domains (rw,root_squash,insecure)` on the same backing SSD filesystem. `/exports`, the managed root, and each dataset parent must be root-owned `0:0/0755`; a leaf alone is `1000:1000/0700`. Managed leaf IDs are independent canonical lowercase UUIDs. An Agent or Session does not acquire a global one-to-one leaf relationship. This source neither moves existing data nor changes existing directory permissions.

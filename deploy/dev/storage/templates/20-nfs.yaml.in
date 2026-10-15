@@ -23,6 +23,7 @@ data:
   exports: |
     /x (rw,no_root_squash,insecure)
     /exports/runtime-domains (rw,root_squash,insecure)
+    /exports/shared/${DATASET} (rw,root_squash,insecure)
 ---
 apiVersion: v1
 kind: ConfigMap
