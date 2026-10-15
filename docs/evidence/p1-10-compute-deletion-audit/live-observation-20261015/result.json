@@ -1,0 +1,149 @@
+{
+  "kind": "actual-authenticated-cloud-logging-read-observation",
+  "productSourcePin": "ba99c4619f9b71f25d2f383e3f56fe4c6e4aa7f7",
+  "sourceFiles": [
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+      "bytes": 2563,
+      "sha256": "3d7e1739f228ec33c3dcd6fda056c4ef11d1ceb6c1eef424731067632cdbc500",
+      "treeEntry": "100644 blob b57dae25dd429e8e3cb1ae229c1dbbdd2009963b\tsrc/main/durable-runtime/runtime/compute-deletion-audit.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-types.ts",
+      "bytes": 3571,
+      "sha256": "82da4d8631c98f58a9d80c9e6606f7ee9fd1f7fc4725e2fff11f62e5319ab753",
+      "treeEntry": "100644 blob 85b59737fc57b92859683d7e15727729af4c07c9\tsrc/main/durable-runtime/runtime/compute-deletion-audit-types.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-input.ts",
+      "bytes": 4035,
+      "sha256": "5cef86e655cc91d4cc81ec328fc89c550550a456f1d4cdebc2239e7003889bf1",
+      "treeEntry": "100644 blob df9062802c65e3cc0a2d5cac106687114ed75d14\tsrc/main/durable-runtime/runtime/compute-deletion-audit-input.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+      "bytes": 5815,
+      "sha256": "2ede59949d46295603f754b81024749932cfbdbcef5aa6ec8ecb90e0fb6f7487",
+      "treeEntry": "100644 blob e695c64e31c7e2afeb42bc2c97d6a4b8372dba47\tsrc/main/durable-runtime/runtime/compute-deletion-audit-parser.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-projection.ts",
+      "bytes": 4061,
+      "sha256": "e22831d688c092466c509d2b73104f340fd0925f45cd1ecf31f24145f4a8da45",
+      "treeEntry": "100644 blob 3d7f3c54b9b92ce22b1613a8b49b47d984dcde85\tsrc/main/durable-runtime/runtime/compute-deletion-audit-projection.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport.ts",
+      "bytes": 7153,
+      "sha256": "1879b7e71427d5a0d48b3023e3ac704da7f6d16a5a16b77a4e53c7ff0a22bbeb",
+      "treeEntry": "100644 blob 5a3339453d3ec6ea7a02cc87f22abd3b073e0f0e\tsrc/main/durable-runtime/runtime/compute-deletion-audit-transport.ts"
+    }
+  ],
+  "observationInput": {
+    "scope": {
+      "projectId": "<qualification-project>",
+      "projectNumber": "<qualification-project-number>",
+      "zone": "<qualification-zone>",
+      "instanceName": "<qualification-instance-name>",
+      "numericInstanceId": "<qualification-instance-id>"
+    },
+    "startTime": "2026-10-14T11:33:35Z",
+    "endTime": "2026-10-14T11:34:30Z",
+    "publicInputIsGeneralizedNotExecutable": true
+  },
+  "actualResultGeneralized": {
+    "ok": true,
+    "observation": {
+      "status": "DELETE_OPERATION_COMPLETED",
+      "identity": {
+        "projectId": "<qualification-project>",
+        "projectNumber": "<qualification-project-number>",
+        "zone": "<qualification-zone>",
+        "instanceName": "<qualification-instance-name>",
+        "numericInstanceId": "<qualification-instance-id>"
+      },
+      "operationId": "<qualification-delete-operation>",
+      "producer": "compute.googleapis.com",
+      "first": {
+        "insertId": "<first-audit-insert-id>",
+        "timestamp": "2026-10-14T11:33:41.188288Z"
+      },
+      "last": {
+        "insertId": "<last-audit-insert-id>",
+        "timestamp": "2026-10-14T11:34:20.377841Z"
+      },
+      "evidenceDigest": "97a9e6b0252249b6054219ac6a34e7fd1e08d300df682e63edd12122a0c4915e"
+    }
+  },
+  "comparisonWithOriginalPrivateProjection": {
+    "originalProjectionSha256": "83b8bfffd2aafe64940691f21eaa9ae05960e106c23d96de4f65805a0c433ad0",
+    "completedReturned": true,
+    "identityMatchesExactScope": true,
+    "operationMatchesOriginal": true,
+    "producerMatchesOriginal": true,
+    "firstInsertIdMatches": true,
+    "lastInsertIdMatches": true,
+    "firstTimestampMatches": true,
+    "lastTimestampMatches": true,
+    "numericTargetMatchesOriginal": true
+  },
+  "execution": {
+    "startedAt": "2026-10-15T04:50:00.580Z",
+    "finishedAt": "2026-10-15T04:50:07.600Z",
+    "callerPid": 33380,
+    "callerExit": 0,
+    "observeCalls": 1,
+    "nativeRequestStarts": 1,
+    "nativeResponseEvents": 1,
+    "unexpectedNativeRequests": 0,
+    "httpStatus": 200,
+    "tlsSocketAuthorized": true,
+    "fixtureSeamInjected": false,
+    "timeoutMs": 30000,
+    "retry": 0,
+    "pagination": 0,
+    "pageSize": 100
+  },
+  "credentialHandling": {
+    "currentOperatorAuthSupplierInvocations": 1,
+    "tokenTransport": "protected stdin pipe only",
+    "newLoginImpersonationIamKeyChange": 0,
+    "tokenInWorkerArgvEnvironmentOrArtifacts": false,
+    "callerLogAllowlistedMetadataOnly": true,
+    "rawApiBodyOrPrincipalCollected": false
+  },
+  "provenance": {
+    "privateContractSha256": "42d08bbe3c8ec8004b95a383364be3bbeb16c8559a53283a3f83e0fec51cf67d",
+    "privateProductResultSha256": "fb07720a23cec442d415a853a41cd69100cdd6e7755cc489c89266dfbb0afdfb",
+    "actualMetafileSha256": "01f1b8a2f619bb12fbe2b5149b340197239e72d3669945c69f8c68e110e76820",
+    "actualInputs": 7,
+    "mergedProductInputs": 6,
+    "callerSourceSha256": "e5771e87ff4bc0dee7d24c1278c57c143002751b2f6a5a2384e8d2cf78b2cf0a",
+    "bundleSha256": "9015881ee3e104dda5f40fa1f9e4565d3edc55235f5d29295bc439378d4aa43d"
+  },
+  "report": {
+    "png": "live-observation-report.png",
+    "sha256": "63a27d91a0936817a7d0e6e38015549595995d4404dce30234774f5e9ded59ec",
+    "bytes": 141518,
+    "width": 1280,
+    "height": 1080,
+    "captureFinishedAt": "2026-10-15T04:52:52.089Z",
+    "screenshotCalls": 1,
+    "reportContextOffline": true,
+    "reportPageRequests": 0,
+    "pairedProfileReused": false,
+    "browserClosed": true
+  },
+  "boundaries": {
+    "pastQualificationVmOnly": true,
+    "productAttemptProvider": false,
+    "computePodNodeCreateDeleteDrain": 0,
+    "pgWrites": 0,
+    "liveSourceConfigOrWatchChange": 0,
+    "workloadAuthenticationPgAttemptMappingDirectoryPinAccepted": false,
+    "proofPermitOrNewWriterActivation": 0,
+    "haIntegrationAccepted": false,
+    "priorFixtureTypeBuildRepeated": 0
+  },
+  "publicRedaction": "Environment-specific GCP IDs and private paths are generalized; private originals and hashes remain distinct."
+}
