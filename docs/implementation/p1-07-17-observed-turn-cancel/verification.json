@@ -138,7 +138,6 @@
   "typeExecuted": 0,
   "wholeInstallOrBuild": 0,
   "liveChanged": 0,
-  "additionalAlignment": 0,
   "cleanup": {
     "activeJobs": 0,
     "heavyOccupied": false,
@@ -155,5 +154,10 @@
     "실제 앱 화면을 촬영하지 않았고 기존 화면을 이번 core의 증거로 재사용하지 않았습니다.",
     "합성 stopped 참조는 실제 Compute/Storage fencing 또는 제품 proof 발급 경로가 아닙니다."
   ],
-  "modelServiceErrorObservation": "이번 공개 자료 준비 turn에서 새로운 usage limit/credits/stream 중단 원오류는 미관측입니다."
+  "modelServiceErrorObservation": "이번 공개 자료 준비 turn에서 새로운 usage limit/credits/stream 중단 원오류는 미관측입니다.",
+  "additionalAlignmentDuringVerifiedRun": 0,
+  "finalPublicationAlignmentCount": 1,
+  "finalPublicationBase": "1c1dc82442e96fa6855752d393581eb8208d9d8f",
+  "finalPublicationAlignedSource": "469a1fb0b2865a90127fdfaa2aacd2ecdbce1370",
+  "postAlignmentProductTestsRepeated": 0
 }

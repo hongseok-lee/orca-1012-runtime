@@ -1,0 +1,40 @@
+{
+  "verifiedSourcePin": "4b43633990303e44075b1a8db55f5499930cbd95",
+  "verificationBase": "44d6c4957ad3731c63a5a603bf63e03906b05411",
+  "previousPublicationHead": "600a463aad58f5c6247e8086d0e4f6f51c981a53",
+  "finalBase": "1c1dc82442e96fa6855752d393581eb8208d9d8f",
+  "alignedSourcePin": "469a1fb0b2865a90127fdfaa2aacd2ecdbce1370",
+  "owned4": [
+    {
+      "path": "src/main/durable-runtime/input/cancel.ts",
+      "verifiedEntry": "100644 blob 48a85bf0f5ca778cd5da58ba5f27e77f9ae52c02\tsrc/main/durable-runtime/input/cancel.ts",
+      "alignedEntry": "100644 blob 48a85bf0f5ca778cd5da58ba5f27e77f9ae52c02\tsrc/main/durable-runtime/input/cancel.ts",
+      "same": true
+    },
+    {
+      "path": "src/main/durable-runtime/input/cancel-types.ts",
+      "verifiedEntry": "100644 blob 71d28e20964417285c63ee3308693bebb04b1a0e\tsrc/main/durable-runtime/input/cancel-types.ts",
+      "alignedEntry": "100644 blob 71d28e20964417285c63ee3308693bebb04b1a0e\tsrc/main/durable-runtime/input/cancel-types.ts",
+      "same": true
+    },
+    {
+      "path": "src/main/durable-runtime/input/cancel-record.ts",
+      "verifiedEntry": "100644 blob 1daf80f192547c518bbcfaedac44d6ee1a89c055\tsrc/main/durable-runtime/input/cancel-record.ts",
+      "alignedEntry": "100644 blob 1daf80f192547c518bbcfaedac44d6ee1a89c055\tsrc/main/durable-runtime/input/cancel-record.ts",
+      "same": true
+    },
+    {
+      "path": "src/main/durable-runtime/input/observed-turn-cancel.pg.test.mts",
+      "verifiedEntry": "100644 blob fd9bbc82e81afd59aada4c21e9f233c523e50608\tsrc/main/durable-runtime/input/observed-turn-cancel.pg.test.mts",
+      "alignedEntry": "100644 blob fd9bbc82e81afd59aada4c21e9f233c523e50608\tsrc/main/durable-runtime/input/observed-turn-cancel.pg.test.mts",
+      "same": true
+    }
+  ],
+  "actualRuntimeInputs": 32,
+  "actualRuntimeDelta": [],
+  "outsideOwnedSourceDelta": [],
+  "finalAlignmentCount": 1,
+  "productTestsRepeatedAfterAlignment": 0,
+  "originalRuntimeManifestSHA256": "80379645ef68ce57969feebdb7b90579ddf8feb17e0afcef2e6f182ab4094524",
+  "scope": "Root 지정 main 정렬의 source 동일성 기록이며 새 제품 검증 결과가 아닙니다."
+}

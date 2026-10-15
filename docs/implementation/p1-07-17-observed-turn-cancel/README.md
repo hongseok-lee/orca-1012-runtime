@@ -2,7 +2,7 @@
 
 같은 Message에 여러 delivery가 있어도 요청한 native turn의 원 관측 tuple만 취소 intent에 고정하는 내부 transaction core다. PR74 reader로 원 Session/Message/delivery/Unit/attempt/epoch/Pod/provider/native Session/native turn을 내부 확정한다. 최신 delivery나 다른 delivery 때문에 SETTLED가 된 Message 상태를 원 turn 완료로 사용하지 않는다. 새 경로의 terminal 판정은 reader가 검증한 ORIGINAL_EXECUTION SETTLED/INTERRUPTED provenance로 통일했다.
 
-검증 source pin은 `4b43633990303e44075b1a8db55f5499930cbd95`, base는 `44d6c4957ad3731c63a5a603bf63e03906b05411`이다. 이후 문서 commit은 제품 검증 pin과 구분하며 Root의 최종 정렬 지시 전에는 추가 정렬하지 않는다. [소유 파일 4개의 blob·mode·hash](owned-source.json)와 [실제 runtime 입력 32개](runtime-inputs.json)를 고정했다. Helper 분리 때 기존 공개 함수 3개의 원문과 helper body hash가 동일했다. 제품 3개는 수락된 `28b8f1fe`와 같고 마지막 교정은 fixture revision 표현 1행이다.
+검증 source pin은 `4b43633990303e44075b1a8db55f5499930cbd95`, base는 `44d6c4957ad3731c63a5a603bf63e03906b05411`이다. Root가 PR72 병합 뒤 지정한 main `1c1dc82442e96fa6855752d393581eb8208d9d8f`로 최종 정렬을 한 번 수행했다. 정렬 source pin `469a1fb0b2865a90127fdfaa2aacd2ecdbce1370`의 제품4 blob/mode와 실제 runtime32 입력은 검증 pin과 같으며 의존 delta는 0이다. 성공 시험은 재실행하지 않았다. 이후 문서 commit은 제품 검증 pin과 구분하고 [최종 정렬 기록](publication-alignment.json)을 별도로 보존한다. [소유 파일 4개의 blob·mode·hash](owned-source.json)와 [실제 runtime 입력 32개](runtime-inputs.json)를 고정했다. Helper 분리 때 기존 공개 함수 3개의 원문과 helper body hash가 동일했다. 제품 3개는 수락된 `28b8f1fe`와 같고 마지막 교정은 fixture revision 표현 1행이다.
 
 | 단계 | 원 결과와 후속 처리 |
 |---|---|
