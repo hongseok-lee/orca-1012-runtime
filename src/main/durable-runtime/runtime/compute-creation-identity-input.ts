@@ -27,7 +27,8 @@ export function snapshotCreationInput(input: ComputeCreationIdentityInput):
     const startTime = input.startTime, endTime = input.endTime
     const fields = [...Object.values(scope), startTime, endTime]
     // JS `$` permits a trailing newline. Reject whitespace/control before shared validation.
-    if (fields.some(value => typeof value !== 'string' || /[\s\x00-\x1f\x7f]/.test(value)) ||
+    if (fields.some(value => typeof value !== 'string' || /\s/.test(value) ||
+        Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) ||
         !canonicalCreationUint64(scope.numericInstanceId)) {
       return null
     }

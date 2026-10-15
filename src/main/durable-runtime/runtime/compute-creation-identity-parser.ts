@@ -11,7 +11,7 @@ import { freezeAuditValue } from './compute-deletion-audit-types'
 
 function validOpaque(value: string | null): boolean {
   return value !== null && value.length > 0 && value.trim() === value &&
-    !/[\x00-\x1f\x7f]/.test(value)
+    !Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
 }
 
 function timestamp(value: string | null): bigint | null {

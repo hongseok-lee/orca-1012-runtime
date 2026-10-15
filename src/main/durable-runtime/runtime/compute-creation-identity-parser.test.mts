@@ -52,7 +52,7 @@ test('creation input captures canonical scope and rejects overflow, separators a
     const input = { ...creationInput, scope: { ...creationInput.scope, [field]: invalid } }
     assert.deepEqual(observeComputeCreationIdentityPage(input, {}), { ok: false, error: { code: 'INVALID_INPUT' } })
   }
-  for (const startTime of ['2026-02-30T00:00:00Z', '2026-10-13T10:46:00Z', creationInput.startTime + '\n']) {
+  for (const startTime of ['2026-02-30T00:00:00Z', '2026-10-13T10:46:00Z', `${creationInput.startTime}\n`]) {
     assert.deepEqual(observeComputeCreationIdentityPage({ ...creationInput, startTime }, {}), {
       ok: false, error: { code: 'INVALID_INPUT' }
     })
@@ -82,7 +82,7 @@ test('creation rejects identity replacement, missing labels/type, wrong method a
     e => { e[0].protoPayload.response!.zone += '/other' },
     e => { e[1].operation.last = 'true' },
     e => { e[1].insertId = '' },
-    e => { e[1].timestamp = creationInput.endTime + '\n' }
+    e => { e[1].timestamp = `${creationInput.endTime}\n` }
   ]
   for (const change of changes) { rejected(change) }
   for (const index of [0, 1]) {
