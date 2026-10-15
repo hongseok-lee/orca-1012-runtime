@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "kind": "managed-nfs-rollout-evidence-provenance",
+  "sourceMain": "26b56a95bd614592b4b0297b7239554b2dbd092c",
+  "originalArtifactsPreserved": true,
+  "redaction": "Operational addresses, Kubernetes UIDs, runtime paths and full preimages are omitted. Hashes identify retained private evidence without publishing its contents.",
+  "acceptedPrivateEvidenceHashes": {
+    "rolloutHandoff": "6b8b2b6352195a87380b2df23f18b9b08d3c64b41a6f0c65210977e2e2c4f0e3",
+    "rolloutFacts": "5bd9470910d3ac68afcb61048504f04f901c34fc574a45ecd3eec86584361aaa",
+    "catalogBefore": "e3a85dc9fa1f155d31f3c2253893e7f7df704578b82baf4bed94784e9b499e4a",
+    "catalogAfter": "98ac6fe5f9d530c1bf031e3ca2687755aa7549640e96a1d49f729212d0ac9001",
+    "leafHandoff": "2f8fe21301f0d76d864d9a79ba1c57b7b62018244c0cd20b485a4117329fbdaf",
+    "ensureRawStdout": "07cf137d0aee3fd697979ca453133e3a4e5146ad8cb68bd747bc64d117ccbe6f",
+    "inspectRawStdout": "a82f0bd825a7e83de2b7f9b8f366809003299526ad6f2ef41be8dc3afa3227c1"
+  },
+  "actualMutationInputHashes": {
+    "helperCreate": "49056c2e0eab85c91e1401049b319f9196da948e09b993c34056bb2fce2c9149",
+    "exportsCas": "e5825da4ce9c205a9f67655b0b7f81f68e529a9776392385621b4478f4870173",
+    "templateCas": "9a6916af9235bfd7a0e3a260a74e3332d8fe2dd5b699df43c500bf89ee48236d"
+  },
+  "sourceSelectedBytesNotWholeCheckout": true,
+  "acceptedClientHandoffSha256": "8559be0f556e7542b209f169150753e7be7dcabb620210ed36eee06df8e70aec",
+  "rootVisualAcceptance": true,
+  "currentPngSha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+  "currentPngCapturedAt": "2026-10-15T14:06:37.253Z",
+  "currentPngSameBytesAsHistoricalButSeparateProvenance": true
+}
