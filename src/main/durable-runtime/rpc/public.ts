@@ -2,6 +2,7 @@ import { createCatalogBrowserCreateRpc } from './browser-create.ts'
 import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
 import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
+import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
 import { createCatalogStructuredSendRpc } from './structured-send.ts'
 import { createCatalogCreationFacade, createCatalogRpc } from './creation.ts'
 import type { CatalogCreationMethod } from './launch-preparation.ts'
@@ -21,6 +22,7 @@ export class DurableCatalogReadAdapter {
   private readonly creation: ReturnType<typeof createCatalogCreationFacade>
   private readonly structured: ReturnType<typeof createCatalogStructuredRpc>
   private readonly structuredHistory: ReturnType<typeof createCatalogStructuredHistoryRpc>
+  private readonly structuredSubscriptions: ReturnType<typeof createCatalogStructuredSubscriptions>
   private readonly browserCreate: ReturnType<typeof createCatalogBrowserCreateRpc>
   private readonly structuredSend: ReturnType<typeof createCatalogStructuredSendRpc>
   private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
@@ -33,6 +35,7 @@ export class DurableCatalogReadAdapter {
     this.creation = createCatalogCreationFacade(this.config)
     this.structured = createCatalogStructuredRpc(this.config)
     this.structuredHistory = createCatalogStructuredHistoryRpc(this.config)
+    this.structuredSubscriptions = createCatalogStructuredSubscriptions(this.config)
     this.browserCreate = createCatalogBrowserCreateRpc(this.config)
     this.structuredSend = createCatalogStructuredSendRpc(this.config)
   }
@@ -89,6 +92,18 @@ export class DurableCatalogReadAdapter {
     try { this.requireOpen(); return await this.browserCreate(params, context) }
     catch (error) { throw catalogReadFailure(error) }
   }
+  async subscribeStructured(params: unknown, context: RpcContext, emit: (frame: unknown) => void): Promise<void> {
+    try { this.requireOpen(); await this.structuredSubscriptions.subscribe(params, context, emit) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
+  async unsubscribeStructured(params: unknown, context: RpcContext): Promise<unknown> {
+    try { this.requireOpen(); return this.structuredSubscriptions.unsubscribe(params, context) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
   private requireOpen(): void { if (this.disposed) { throw new CatalogReadError('CATALOG_ADAPTER_DISPOSED') } }
-  dispose(): void { if (!this.disposed) { this.disposed = true; this.subscriptions.dispose() } }
+  dispose(): void {
+    if (this.disposed) { return }
+    this.disposed = true
+    try { this.subscriptions.dispose() } finally { this.structuredSubscriptions.dispose() }
+  }
 }
