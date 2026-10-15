@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "kind": "managed-leaf-readonly-public-projection-provenance",
+  "documentationBase": "50cb467a5d539bfd187de04414edba7915dace38",
+  "rootAcceptanceContract": "2026-10-15 14:48 UTC",
+  "originalPrivateEvidenceUnmodified": true,
+  "privateAndPublicHashesHaveDifferentMeaning": true,
+  "acceptedPrivateWorkerHandoffSha256": "d87cfb50e9b19b355781baae565206d8912c8edc65462462537d4be61f497fcb",
+  "rootAuditSha256": "ffe2ee40da004869d712ec69d2182d8efb697849066a6b5ebf092cfe1c8443dc",
+  "privateOriginalHashes": {
+    "dryrun.stdout.json": "97d5b9377e841fd79b4af7007e2031da142c3d88816ac52a9ff5adbcd8c7fe82",
+    "create.stdout": "76f348f261f0a6a475865d8466385ce4cd07a3c1eb9dae152e87537c95291e68",
+    "bound-actual-resources.json": "1ce2313ff2e4e3116ed0f6f4cecad84d5dff2922c244ac45a6a1f5db69ae3848",
+    "actual-node.json": "0f5842301ea86a04e69ef087be9018be520f668392fb86a67e8c3b082a41fa88",
+    "node-colocation.json": "c1dbe7ec01961e2faf462cf9faf84e276be4038cc02dc7a4cab9254ff029f862",
+    "placement-and-spec-gate.json": "cd8a0a43a9167b4ec7e3db1c98948f687f8f718d730891254ea690763ef90e9c",
+    "placement-and-spec-gate.corrected.json": "c06b86690f29229a8e73008c6762cf47e746b13b7810093cc577d0a4b579aee7",
+    "binding-comparison-correction.json": "f5ea8362813fcec2345e5f9444da987d21c0e9731bc54bda20259f70a7c2e974",
+    "local-comparison.exact-code.diff": "e7858fbcf8764e2534180ad012335ec2d5771e118ca1673f04706ad72ff4dc5b",
+    "probe-input.actual.json": "65897902332ee67fc1d0b0c7027e75407ebb2c38e0fa9836c4a1588328d5a7f4",
+    "probe.stdout.json": "746809791f442940cb3611d05197e8de475a174d3c7305a9d73029027fb9cb47",
+    "tcp.stdout.json": "d4e7ab62f267bead149ecce2831696bcc156dece95be73372769565a4125d8fe",
+    "heavy-return.json": "0fb0d2fceb5bfb355763e7e441a35c76afe35db87369f67abd6323df641ad98d",
+    "facts.json": "8ad496a1a2be0efaa58b02bed8d81bb9cf033a40b3ef137278ce534f99d54477",
+    "REPORT.ko.md": "32630cdb7c6bb11de679fbeaa25f9abba7c4b3dcf7fba80f2d8e1e0933b0ef3a"
+  },
+  "publicProjectionSha256": {
+    "managed-leaf-readonly.json": "f85fedd6f02d997592cdb42426096f7b408323e2ab06573f2e19c790b9150f3b",
+    "managed-leaf-readonly.md": "f268117d660910c6505c871b2b36920a95be8a3c9567ee2c21edd1839da20de7"
+  },
+  "historicalPng": {
+    "pr": 102,
+    "gitRef": "50cb467a5d539bfd187de04414edba7915dace38",
+    "path": "managed-nfs-rollout-expo.png",
+    "pngSha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+    "capturedAt": "2026-10-15T14:06:37.253Z",
+    "meaning": "RO execution preceded by accepted development UI continuity evidence; not an RO visual test.",
+    "newCaptureOrPngFile": 0
+  },
+  "generalizationRules": [
+    "Operational Pod/PV/PVC/Node identities and addresses are omitted.",
+    "Private paths, providerID, numeric instance annotation, full input/preimage/argv are not published.",
+    "Configured UID/GID and mode, source symbols, UTC and evidence hashes retain their original meaning.",
+    "Existing PR102 image is referenced as pre-RO history with original bytes; no new image is generated."
+  ],
+  "newRemoteOrProductExecution": 0
+}

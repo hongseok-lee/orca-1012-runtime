@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "kind": "managed-leaf-first-readonly-mount-observation",
+  "documentationBase": "50cb467a5d539bfd187de04414edba7915dace38",
+  "rootAcceptanceContract": "2026-10-15 14:48 UTC",
+  "source": {
+    "sourceFilesManifestSha256": "ed3d0bed534563b538a7b7506fd0999f6f7fc3e0625f05445b83c90c90765710",
+    "resourcesListSha256": "4e3740ad51d1dfe46c36af0952ff9efdd451832d09be55fb2c7fde3d1ffe562c",
+    "probeSha256": "53ddd8a0fa695330a669ed27c74eb8f58fcfaece1db75a8c471963b3cc626ee3",
+    "sourceUnchanged": true,
+    "falseInputPreserved": true
+  },
+  "admissionAndCreate": {
+    "dryrunCalls": 1,
+    "dryrunStartedUtc": "2026-10-15T14:32:43.940305+00:00",
+    "dryrunEndedUtc": "2026-10-15T14:32:44.534266+00:00",
+    "dryrunExit": 0,
+    "createBatches": 1,
+    "createStartedUtc": "2026-10-15T14:33:20.989420+00:00",
+    "createEndedUtc": "2026-10-15T14:33:21.399762+00:00",
+    "createExit": 0,
+    "actualResourcesCreated": 3,
+    "actualUidsNotDryrunUidsUsed": true,
+    "boundReadyObservedUtc": "2026-10-15T14:36:35.215633+00:00",
+    "pvPvcBoundAndMutualUidChecked": true,
+    "exactLeafOnlyNoSubPath": true,
+    "readonlyFields": {
+      "pvNfsReadOnly": true,
+      "podPvcReadOnly": true,
+      "volumeMountReadOnly": true
+    },
+    "requests": {
+      "cpu": "500m",
+      "memory": "512Mi",
+      "ephemeral-storage": "6Gi"
+    },
+    "limits": {
+      "ephemeral-storage": "6Gi"
+    },
+    "cpuMemoryLimitsOmitted": true,
+    "tmpDiskEmptyDir": "1Gi",
+    "security": {
+      "runAsUser": 1000,
+      "runAsGroup": 1000,
+      "runAsNonRoot": true,
+      "dropCapabilities": [
+        "ALL"
+      ],
+      "readOnlyRootFilesystem": true,
+      "automountServiceAccountToken": false,
+      "hostNetwork": false,
+      "initSidecarEphemeralAdded": false
+    },
+    "restartPolicy": "Never",
+    "podRestartCount": 0
+  },
+  "localComparisonCorrection": {
+    "originalAccepted": false,
+    "originalFalsePredicate": "pvSpecAfterBinding",
+    "cause": "The original local comparison excluded claimRef uid/resourceVersion but did not exclude controller-supplied apiVersion/kind.",
+    "explicitlyCheckedBeforeExcluding": {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "uidMatchesActualPvc": true,
+      "resourceVersionIsNumericString": true
+    },
+    "excludedBindingFieldsOnly": [
+      "apiVersion",
+      "kind",
+      "uid",
+      "resourceVersion"
+    ],
+    "originalFailurePreserved": true,
+    "correctedAllSpecChecksAccepted": true,
+    "manifestProbePolicyChanged": false,
+    "extraRemoteCallsOrRetries": 0,
+    "classification": "local-comparison-preparation-error; not a product RO failure or usage interruption"
+  },
+  "placement": {
+    "spotLabel": true,
+    "amd64": true,
+    "differentFromExistingRwNode": true,
+    "otherOrdinaryWorkloadsAtObservation": 0,
+    "systemDaemonSetCount": 12,
+    "nodeMetadataObservedOnce": true,
+    "allNamespacePodMetadataOnExactNodeObservedOnce": true,
+    "computeDirectGets": 0,
+    "numericInstanceAnnotationIsComputeLivenessEvidence": false,
+    "futureIsolationOrFaultAuthority": false
+  },
+  "probe": {
+    "calls": 1,
+    "startedUtc": "2026-10-15T14:39:12.671066+00:00",
+    "endedUtc": "2026-10-15T14:39:13.299574+00:00",
+    "kubectlAndChildExit": 0,
+    "outcome": "FIRST_READONLY_MOUNT_OBSERVED",
+    "supervisorDeadlineSeconds": 20,
+    "supervisorTimedOut": false,
+    "uid": 1000,
+    "gid": 1000,
+    "filesystem": "nfs",
+    "vfsMountOptions": [
+      "ro",
+      "relatime"
+    ],
+    "nfsVersion": 3,
+    "sameExactLeafSource": true,
+    "actualPodUidTmpMountGuard": true,
+    "existingLeafHomeProjectMarkerLstatRealpathReadHash": true,
+    "writeOpenAttempts": 1,
+    "writeOpenFlags": [
+      "O_WRONLY",
+      "O_NOFOLLOW"
+    ],
+    "writeOpenErrorCode": "EROFS",
+    "otherErrorsNotReclassified": true,
+    "oTruncOCreatUsed": false,
+    "writeFsyncCreateChmodChownRenameLinkDeleteCalls": 0,
+    "markerBeforeAfter": {
+      "sameClientDeviceInode": true,
+      "sameBytesHash": true,
+      "bytes": 62,
+      "sha256": "f96d47c63e82bff2fce067dc09ce9e2e9b5b77014499704adfa653a0229ed7b4"
+    },
+    "serverEvidence": {
+      "kind": "historical leaf inspect",
+      "startedUtc": "2026-10-15T13:57:51.146539+00:00",
+      "endedUtc": "2026-10-15T13:57:51.555255+00:00",
+      "newServerHelperCalls": 0,
+      "clientServerMetadataNamespacesAndTimesDistinct": true,
+      "authorityFromRawNumbers": false
+    }
+  },
+  "directPodTcp": {
+    "calls": 1,
+    "afterSuccessfulRoAndMarkerCheck": true,
+    "startedUtc": "2026-10-15T14:39:13.602Z",
+    "endedUtc": "2026-10-15T14:39:16.607Z",
+    "deadlineSeconds": 3,
+    "servicePort": 2049,
+    "outcome": "TIMED_OUT",
+    "payloadBytes": 0,
+    "rpcMountPayloads": 0,
+    "socketDestroyed": true,
+    "retry": 0
+  },
+  "cleanup": {
+    "observedUtc": "2026-10-15T14:39:49.369396+00:00",
+    "ownedSupervisorProbeTcpAbsent": true,
+    "sameRoPodReady": true,
+    "restartCount": 0,
+    "activeOwnedJobs": 0,
+    "rwAndRoResourcesLeafMarkerRetained": true,
+    "deleteRepairFaultRestartOtherSignals": 0
+  },
+  "historicalUiReference": {
+    "pr": 102,
+    "gitRef": "50cb467a5d539bfd187de04414edba7915dace38",
+    "path": "managed-nfs-rollout-expo.png",
+    "pngSha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+    "capturedAt": "2026-10-15T14:06:37.253Z",
+    "meaning": "RO execution preceded by accepted development UI continuity evidence; not an RO visual test.",
+    "newCaptureOrPngFile": 0
+  },
+  "publicationCounts": {
+    "clusterCalls": 0,
+    "newProductTests": 0,
+    "newProbeTcpOrRoExecution": 0,
+    "newPng": 0,
+    "pgBuildInstall": 0,
+    "heavy": 0
+  },
+  "unverified": [
+    "multiple RO consumers as a whole",
+    "production grant or authenticated directory authority",
+    "physical pin and SQL COMMIT/ROLLBACK authority lifetime",
+    "old writer fencing",
+    "HA",
+    "native profile/provider lifecycle",
+    "Compute liveness or fault authorization"
+  ]
+}
