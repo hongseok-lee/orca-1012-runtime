@@ -4,6 +4,7 @@ import type {
   RuntimeBrowserCommands
 } from '../runtime/orca-runtime-browser'
 import { BrowserError } from '../browser/browser-error'
+import { captureBrowserTabCreateCaller } from '../runtime/browser-ops-auth-capability'
 import {
   ExternalChromiumBrowserSession,
   type ExternalChromiumLaunch
@@ -67,10 +68,7 @@ export class ExternalChromiumBrowserProcess {
           return (params: unknown, caller?: Parameters<RuntimeBrowserCommands['browserTabCreate']>[1]) => {
             // Capture before enqueue: callers may reuse their mutable request/context while queued.
             const capturedParams = BrowserTabCreateParams.parse(params ?? {})
-            const capturedCaller = {
-              pairedDeviceId: caller?.pairedDeviceId,
-              clientKind: caller?.clientKind
-            }
+            const capturedCaller = captureBrowserTabCreateCaller(caller)
             return this.enqueue(() => this.invoke(host, property, [capturedParams, capturedCaller]))
           }
         }
@@ -84,7 +82,9 @@ export class ExternalChromiumBrowserProcess {
 
   async stop(): Promise<void> {
     this.available = false
+    const authStopped = this.tabs.stopOpsAuth()
     await this.enqueue(async () => {
+      await authStopped
       await this.screencasts.stopAll()
       await this.session.stop()
       this.tabs.clear()
@@ -121,7 +121,7 @@ export class ExternalChromiumBrowserProcess {
         ...(caller?.pairedDeviceId !== undefined ? {
           caller: { clientNavigationId: caller.pairedDeviceId, navigation: focus.navigation }
         } : {})
-      } : undefined)
+      } : undefined, caller?.opsAuth)
     }
     if (method === 'browserTabList') {
       return this.tabs.listTabs(host, params)

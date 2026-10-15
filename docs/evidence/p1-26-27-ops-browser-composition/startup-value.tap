@@ -1,0 +1,42 @@
+TAP version 13
+# {"phase":"ACTUAL_FIXTURE_PROCESS","pid":35291,"at":"2026-10-15T06:44:55.693Z"}
+# Subtest: Ops Browser composition preserves authenticated capture, HTTP authority and startup ownership
+    # Subtest: one authority connects the bounded issuer and actual HTTP verifier; explicit invalid auth is not replaced
+    ok 1 - one authority connects the bounded issuer and actual HTTP verifier; explicit invalid auth is not replaced
+      ---
+      duration_ms: 12.98294
+      type: 'test'
+      ...
+    # Subtest: early startup stop prevents a late authority and borrowed owner stops once
+    ok 2 - early startup stop prevents a late authority and borrowed owner stops once
+      ---
+      duration_ms: 2.23285
+      type: 'test'
+      ...
+    # Subtest: private config rejects accessors without invoking them and snapshots issuer/verifier receivers
+    ok 3 - private config rejects accessors without invoking them and snapshots issuer/verifier receivers
+      ---
+      duration_ms: 2.475634
+      type: 'test'
+      ...
+    # Subtest: the authenticated fingerprint is read once and PG/native failure before OPEN issues no session
+    ok 4 - the authenticated fingerprint is read once and PG/native failure before OPEN issues no session
+      ---
+      duration_ms: 12.234922
+      type: 'test'
+      ...
+    1..4
+ok 1 - Ops Browser composition preserves authenticated capture, HTTP authority and startup ownership
+  ---
+  duration_ms: 33.165318
+  type: 'test'
+  ...
+1..1
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2652.563753

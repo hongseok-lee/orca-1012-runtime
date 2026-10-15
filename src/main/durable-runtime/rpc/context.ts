@@ -8,6 +8,10 @@ import { CatalogReadError } from './config.ts'
 /** This internal context is created by the authenticated transport. Params and
  * raw clientId/token never participate in this server-owned namespace scope. */
 export function captureCatalogReadContext(config: CapturedCatalogReadConfig, input: RpcContext): CatalogCallContext {
+  return captureCatalogAuthenticatedContext(config, input).context
+}
+/** The same single authenticated fingerprint read serves Catalog authority and the private Browser capability. */
+export function captureCatalogAuthenticatedContext(config: CapturedCatalogReadConfig, input: RpcContext) {
   const fingerprint = input.authenticatedCallerFingerprint
   if (typeof fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(fingerprint)) {
     throw new CatalogReadError('CATALOG_AUTHENTICATED_CALLER_REQUIRED')
@@ -17,7 +21,9 @@ export function captureCatalogReadContext(config: CapturedCatalogReadConfig, inp
     principalId: JSON.stringify(['catalog-host-fingerprint-v1', config.datasetName, config.hostId, fingerprint]),
     repositoryIds: config.repositoryIds, projectGroupIds: config.projectGroupIds, workspacePublicIds: config.workspacePublicIds
   }) as CatalogAuthority
-  const capabilities = input.clientCapabilities === undefined ? [] : [...input.clientCapabilities]
+  const inputCapabilities = input.clientCapabilities
+  const capabilities = inputCapabilities === undefined ? [] : [...inputCapabilities]
   if (capabilities.some(value => typeof value !== 'string' || !value)) { throw new CatalogReadError('CATALOG_CLIENT_CAPABILITIES') }
-  return Object.freeze({ authority, capabilities: Object.freeze(capabilities) as readonly RuntimeCapability[] })
+  const context: CatalogCallContext = Object.freeze({ authority, capabilities: Object.freeze(capabilities) as readonly RuntimeCapability[] })
+  return Object.freeze({ context, authenticatedCallerFingerprint: fingerprint })
 }

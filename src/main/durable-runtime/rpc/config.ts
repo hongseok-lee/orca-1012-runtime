@@ -1,6 +1,8 @@
 import type { Pool } from 'pg'
 import { captureCatalogClipboardConfig, type CatalogClipboardConfig } from './clipboard-config.ts'
 import { captureCatalogLaunchConfig, type CatalogLaunchConfig } from './launch-config.ts'
+import { captureCatalogBrowserOpsAuth } from './browser-ops-auth-config.ts'
+import type { BrowserOpsAuthIssuer } from '../../runtime/browser-ops-auth-capability.ts'
 import type { ExecutionHostId } from '../../../shared/execution-host.ts'
 import { normalizeExecutionHostId } from '../../../shared/execution-host.ts'
 
@@ -15,6 +17,7 @@ export type DurableCatalogReadConfig = {
   readonly workspacePublicIds: readonly string[]
   readonly attachments?: CatalogClipboardConfig
   readonly launch?: CatalogLaunchConfig
+  readonly browserOpsAuth?: BrowserOpsAuthIssuer
   readonly pollIntervalMs?: number
 }
 export type CapturedCatalogReadConfig = Omit<DurableCatalogReadConfig, 'readHostIdentity' | 'pollIntervalMs'> & {
@@ -53,7 +56,11 @@ export function captureDurableCatalogReadConfig(input: DurableCatalogReadConfig)
   const launchDescriptor = Object.getOwnPropertyDescriptor(input, 'launch')
   if (launchDescriptor !== undefined && !('value' in launchDescriptor)) { throw new CatalogReadError('CATALOG_SERVER_CONFIG') }
   const launch = captureCatalogLaunchConfig(launchDescriptor?.value, repositoryIds)
+  let browserOpsAuth: BrowserOpsAuthIssuer | undefined
+  try { browserOpsAuth = captureCatalogBrowserOpsAuth(Object.getOwnPropertyDescriptor(input, 'browserOpsAuth')) }
+  catch { throw new CatalogReadError('CATALOG_SERVER_CONFIG') }
   const config = Object.freeze({ pool, datasetName, hostId, pollIntervalMs, assertCurrentHost,
+    ...(browserOpsAuth === undefined ? {} : { browserOpsAuth }),
     ...(launch === undefined ? {} : { launch }),
     ...(attachments === undefined ? {} : { attachments }),
     repositoryIds, projectGroupIds: ids(input.projectGroupIds), workspacePublicIds: ids(input.workspacePublicIds) })

@@ -10,6 +10,7 @@ import { ownOrcadOpsPublication } from './orcad-ops-publication.ts'
 import { captureOrcadControllerConfig, readOrcadControllerConfig, invalidOrcadControllerConfig,
   type OrcadControllerConfig } from './orcad-controller-config.ts'
 import { ownOrcadController, type OrcadControllerSnapshot } from './orcad-controller.ts'
+import { createOrcadOpsBrowserSessionOwner } from './orcad-ops-browser-session-owner.ts'
 
 // The entry consumes one composition surface; Catalog retains its existing Pool ownership and exit class.
 export { OrcadDurableCatalogConfigurationError } from './orcad-durable-catalog.ts'
@@ -39,12 +40,28 @@ export async function prepareOrcadStartup(
   // Stop order after entry RPC/subscription cleanup: publication → controller → original Catalog Pool.
   const publication = catalog && ops ? ownOrcadOpsPublication(controllerOwner ?? catalog) : null
   const owner = publication ?? controllerOwner ?? catalog
-  ownCatalog(owner && controllerOwner ? Object.freeze({ readConfig: owner.readConfig, stop: owner.stop.bind(owner),
-    controllerSnapshot: controllerOwner.controllerSnapshot.bind(controllerOwner) }) : owner)
-  const opsHttp = await prepareOrcadOps(ops, catalog?.readConfig)
-  if (opsHttp && publication) { await publication.startPublication(opsHttp) }
-  if (controller && controllerOwner) { await controllerOwner.startController(controller) }
-  return catalog ? Object.freeze({ durableCatalogRead: catalog.readConfig, ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
+  const browserSessions = createOrcadOpsBrowserSessionOwner(owner)
+  // Register before Ops validation. This closure also owns an authority created later.
+  ownCatalog(owner ? Object.freeze({ readConfig: owner.readConfig, stop: browserSessions.stop,
+    ...(controllerOwner ? { controllerSnapshot: controllerOwner.controllerSnapshot.bind(controllerOwner) } : {}) }) : null)
+  try {
+    browserSessions.assertOpen()
+    let opsHttp = await prepareOrcadOps(ops, catalog?.readConfig)
+    browserSessions.assertOpen()
+    let readConfig = catalog?.readConfig
+    if (opsHttp && readConfig) {
+      const composition = browserSessions.connect(opsHttp)
+      readConfig = Object.freeze({ ...readConfig, browserOpsAuth: composition.browserOpsAuth })
+      opsHttp = composition.opsHttp
+    }
+    if (opsHttp && publication) { await publication.startPublication(opsHttp) }
+    if (controller && controllerOwner) { await controllerOwner.startController(controller) }
+    browserSessions.assertOpen()
+    return readConfig ? Object.freeze({ durableCatalogRead: readConfig, ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
+  } catch (error) {
+    await browserSessions.stop().catch(() => {})
+    throw error
+  }
 }
 
 /** Borrow the validated Catalog owner; neither allocate nor close a Pool/listener here. */

@@ -1,5 +1,6 @@
 import { createOpsHttpHandler } from '../../durable-runtime/ops/handler.ts'
 import { createDeviceRegistryOpsVerifier } from '../../durable-runtime/ops/auth.ts'
+import { createRuntimeOpsBearerVerifier } from '../../durable-runtime/ops/runtime-config.ts'
 import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap'
 import { watchRuntimeMetadataOwnership } from '../runtime-metadata-ownership-watch'
 import type { RpcTransport } from '../rpc/transport'
@@ -177,7 +178,8 @@ export class RuntimeRpcLifecycle extends RuntimeRpcWebSocketDispatch {
       port: options.port,
       staticRoot: this.webClientRoot,
       ...(this.opsHttp ? { httpHandler: createOpsHttpHandler({ ...this.opsHttp,
-        authenticateBearer: createDeviceRegistryOpsVerifier(deviceRegistry, this.opsHttp.scope) }) } : {}),
+        authenticateBearer: createRuntimeOpsBearerVerifier(this.opsHttp,
+          createDeviceRegistryOpsVerifier(deviceRegistry, this.opsHttp.scope)) }) } : {}),
       ...(options.fallbackPort !== undefined ? { fallbackPort: options.fallbackPort } : {}),
       ...(options.preferPinnedPort ? { preferPinnedPort: true } : {})
     })
