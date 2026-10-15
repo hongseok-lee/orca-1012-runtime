@@ -87,7 +87,7 @@ test('invalid config/input fails before credentials; request extra keys cannot c
       ok: false, error: { code: 'INVALID_CONFIGURATION' }
     })
   }
-  for (const timeoutMs of [0, -1, NaN, Infinity, 2_147_483_648]) {
+  for (const timeoutMs of [0, -1, Number.NaN, Infinity, 2_147_483_648]) {
     assert.deepEqual(await createComputeInstanceIdentityClient({ ...base, timeoutMs }).observe(fixtureInput), {
       ok: false, error: { code: 'INVALID_CONFIGURATION' }
     })
