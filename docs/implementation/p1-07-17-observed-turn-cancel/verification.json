@@ -1,0 +1,163 @@
+{
+  "scope": "합성 authority/proof를 사용하는 실제 PostgreSQL 내부 취소 transaction과 fixture outer receipt 검증입니다.",
+  "verifiedSourcePin": "4b43633990303e44075b1a8db55f5499930cbd95",
+  "base": "44d6c4957ad3731c63a5a603bf63e03906b05411",
+  "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/75#issuecomment-6182530142",
+  "history": [
+    {
+      "phase": "first-owned-lint",
+      "pin": "6ccd811bac7d051d2356a2d74edf47d1fe826ab9",
+      "exit": 1,
+      "diagnostic": "eslint(max-lines)",
+      "physicalLines": 398,
+      "reportedLines": 377,
+      "maximum": 300,
+      "rawLogSHA256": "6f3efe123b0980a852a45d050b5c957de9baccc0e8dbda83cbcba7da5abb4317",
+      "PGEntered": false
+    },
+    {
+      "phase": "changed-product-lint2",
+      "pin": "28b8f1fe7d39eb8e88d5f491592ac3c48a8c8fb6",
+      "exit": 0,
+      "rawLogSHA256": "50e5a7bd710b5707dedb2b2e3b9ca1880efad94dd7d658b48d29566034f3f2e1",
+      "correction": "Root가 지정한 helper·row type의 원문 동일 이동만 적용했습니다."
+    },
+    {
+      "phase": "first-PG",
+      "pin": "28b8f1fe7d39eb8e88d5f491592ac3c48a8c8fb6",
+      "exit": 1,
+      "code": "23514",
+      "rawTAP_SHA256": "405747820cecaba70390d73cf4e71c9ec2ad2e48503915f30f9ec0198be7bcac",
+      "cancelCoreEntered": false,
+      "causeSourceAnalysis": "ACTIVE fixture grant가 남아 있는 Unit owner 전환을 기존 SQL002 guard가 거절한 위치입니다.",
+      "unsanitizedConstraintMessagePreserved": false
+    },
+    {
+      "phase": "changed-fixture-lint1",
+      "pin": "73df831841b3949b0d2776f97064220520db2572",
+      "exit": 0,
+      "rawLogSHA256": "0ffc72b60f1af3f9870678635e151f5bb01b48bcc8f3afc3deacee2ec1ebd7ca",
+      "correction": "현재 B와 과거 A 경계를 유지하도록 새 fixture grant의 합성 전환을 유효하게 작성했습니다."
+    },
+    {
+      "phase": "second-PG",
+      "pin": "73df831841b3949b0d2776f97064220520db2572",
+      "exit": 1,
+      "code": "ERR_ASSERTION",
+      "actual": "3",
+      "expected": 3,
+      "rawTAP_SHA256": "6acdd0e2812fecad9683f38ce41f2c7c5108cf4881d321075112e70df4c4a55b",
+      "cancelCoreEntered": true,
+      "causeSourceAnalysis": "문자열 bigint와 JSON number의 작은 revision 표현 비교에서 실패했습니다."
+    },
+    {
+      "phase": "approved-revision-correction",
+      "pin": "4b43633990303e44075b1a8db55f5499930cbd95",
+      "correction": "String(messageBefore.revision) 한 줄만 적용했습니다. 제품·seed·다른 assertion은 불변입니다.",
+      "changedLintRepeated": 0
+    },
+    {
+      "phase": "corrected-PG",
+      "pin": "4b43633990303e44075b1a8db55f5499930cbd95",
+      "exit": 0,
+      "rawTAP_SHA256": "b76c1ab28d0562b6e10e9cdd5279b15c6534d105270b089530db2dafa1825283",
+      "productCallbacks": 1,
+      "parentProductCallbacks": 0
+    }
+  ],
+  "TAP": {
+    "tests": 2,
+    "pass": 2,
+    "fail": 0
+  },
+  "productCallbacks": 1,
+  "parentProductCallbacks": 0,
+  "actualRuntimeImports": 32,
+  "metafileInputsIncludingGeneratedWrapper": 33,
+  "actualGitMismatchCount": 0,
+  "wrapperBodyMatchesVerifiedSource": true,
+  "pgZodExternal": true,
+  "metafileSavedBeforeGuard": true,
+  "databaseIdentityVerified": true,
+  "sameOwnedDatabaseRetained": true,
+  "originalTables": 72,
+  "originalRows": 414,
+  "originalRowsPreserved": true,
+  "includesAllPriorFailedSeeds": true,
+  "originalRowComparison": "실행 전 전체 행과 실행 후 PostgreSQL JSONB equality join count를 비교했습니다.",
+  "ledgerRows": 19,
+  "ledgerHash": "d7e5cbb19d5555d29719acbb3e5ad469f0a6cfac2ed6b7c97bf9ee3bb9224a14",
+  "ledgerUnchanged": true,
+  "schemaAppliedThisPR": 0,
+  "resetDelete": 0,
+  "newUUIDSeedOnly": true,
+  "actualChecks": {
+    "fixture-delta": {
+      "pid": 30254,
+      "startedAt": "2026-10-15T01:46:28.548Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-15T01:46:28.654Z",
+      "sha256": "92ab5e14c2641d05811c7f6c5c408bfaf11a581d627c577dfdc7764c28b4a9f8"
+    },
+    "fixture-bundle": {
+      "pid": 30261,
+      "startedAt": "2026-10-15T01:46:28.661Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-15T01:46:28.890Z",
+      "sha256": "a1f1e12a8fedd57b0735c28845b0ee5ba60753a290ab7bca2b1ae64cbab099ce"
+    },
+    "before-read": {
+      "pid": 30274,
+      "startedAt": "2026-10-15T01:46:28.894Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-15T01:46:29.507Z",
+      "sha256": "2065a53c5b52fa1588a6785d9a956be94531117986567878a7374661ccc8911a"
+    },
+    "PG-callback": {
+      "pid": 30285,
+      "startedAt": "2026-10-15T01:46:29.511Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-15T01:46:32.473Z",
+      "sha256": "b76c1ab28d0562b6e10e9cdd5279b15c6534d105270b089530db2dafa1825283"
+    },
+    "after-read": {
+      "pid": 30302,
+      "startedAt": "2026-10-15T01:46:32.476Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-15T01:46:32.989Z",
+      "sha256": "e9522d44cb6061233edc033d535ee87bd51b1ed53c86c173a07478a96d12e19d"
+    }
+  },
+  "actualTestPID": 30291,
+  "successfulLintRepeated": 0,
+  "typeExecuted": 0,
+  "wholeInstallOrBuild": 0,
+  "liveChanged": 0,
+  "cleanup": {
+    "activeJobs": 0,
+    "heavyOccupied": false,
+    "knownChildrenAbsent": true,
+    "supervisorExitedZombie": true
+  },
+  "unadoptedProposals": [
+    "statement·SQL 줄 압축 후보는 채택하지 않았습니다.",
+    "Unit owner 전환 삭제 제안은 과거 A/current B 경계를 줄이므로 채택하지 않았습니다."
+  ],
+  "limits": [
+    "합성 관측/proof를 사용하는 내부 transaction core와 receipt fixture의 통과입니다.",
+    "공개 cancel wrapper/native provider/실제 fencing/앱 화면/HA 합격은 아닙니다.",
+    "실제 앱 화면을 촬영하지 않았고 기존 화면을 이번 core의 증거로 재사용하지 않았습니다.",
+    "합성 stopped 참조는 실제 Compute/Storage fencing 또는 제품 proof 발급 경로가 아닙니다."
+  ],
+  "modelServiceErrorObservation": "이번 공개 자료 준비 turn에서 새로운 usage limit/credits/stream 중단 원오류는 미관측입니다.",
+  "additionalAlignmentDuringVerifiedRun": 0,
+  "finalPublicationAlignmentCount": 1,
+  "finalPublicationBase": "1c1dc82442e96fa6855752d393581eb8208d9d8f",
+  "finalPublicationAlignedSource": "469a1fb0b2865a90127fdfaa2aacd2ecdbce1370",
+  "postAlignmentProductTestsRepeated": 0
+}

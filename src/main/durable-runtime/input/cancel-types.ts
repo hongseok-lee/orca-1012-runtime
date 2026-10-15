@@ -28,3 +28,13 @@ export type CancelInterruptStatus =
   | 'CONFIRMED'
   | 'UNKNOWN'
   | 'ALREADY_SETTLED'
+
+/** Transaction input only; the target is resolved internally from immutable observations. */
+export type ObservedTurnCancelRequest = {
+  readonly authority: InputAuthority
+  readonly provider: 'claude' | 'codex'
+  readonly nativeTurnId: string
+  readonly method: string
+  readonly operationKey: string
+  readonly originalPayload: JsonValue
+}
