@@ -1,0 +1,61 @@
+{
+  "artifact": "expanded.png",
+  "artifactSHA256": "f27184b2e35fd9bcad212faee4e8c432d65e4a30840dc1111d3ef800df5abb27",
+  "artifactBytes": 134664,
+  "capturedAt": "2026-10-15T11:20:29.045Z",
+  "imagePixels": {
+    "width": 390,
+    "height": 844
+  },
+  "originalPNGBytesUnchanged": true,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "source": {
+    "opsMobileDetailSourcePin": "ba5b58931fe054e3054ff04481bd41cd5422b4ee",
+    "opsMobileDetailSourceSHA256": "4f70c4b50c6c071edfa51cd57b413277dac8380459087fa0892c547a6495baab",
+    "liveCompositePin": "b19f82b424100b9e5a74f99fe5d1dac9b26bce27",
+    "liveCompositeTree": "00e8def8458560a4ac2e6c41295b08ea0e239e05",
+    "appliedManifestActualRawSHA256": "3a4eff2106cf846837b4435909c0b92f2adaf395886ff99e658dfe23fbae933e"
+  },
+  "wholeCheckoutOrRuntimeClosureProven": false,
+  "actualReviewer": "delegated Sol6.1 Client",
+  "reviewMethod": "Client가 현재 PNG를 view_image로 판독했습니다.",
+  "rootPreapprovedEveryStageImage": false,
+  "rootFinalVisualReview": {
+    "contractSection": "2026-10-15 11:28 UTC",
+    "accepted": true,
+    "acceptedScope": "summary 바로 뒤 상세 버튼이 보입니다.",
+    "sessionTabMountBelowFoldVerified": false,
+    "nativeIPhoneVerified": false,
+    "fullP127OrHAVerified": false
+  },
+  "counters": {
+    "summaryTaps": 1,
+    "upDrags": 0,
+    "detailTaps": 1,
+    "captureCounts": {
+      "coordinate": 1,
+      "expanded": 1,
+      "detail": 1
+    },
+    "phoneClicks": 1,
+    "browserOpenClicks": 0,
+    "manualKeyInputs": 0,
+    "reloadClicks": 0,
+    "directRpcCalls": 0,
+    "nativeCdpInputCalls": 0,
+    "actualOpsCommands": 0,
+    "runtimeErrors": []
+  },
+  "cleanup": {
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true,
+    "heavyAfter": 0
+  },
+  "sourceHandoffSHA256": "a80555db01b8b124aa2bacf09da62a0dc7656423e6baaed345edf658d51127a4",
+  "originalDetailGetSuccessEstablished": false,
+  "originalDetailDataLoadedEstablished": false,
+  "frameObservationLimit": "이 job의 detail 최종 PNG는 loading이므로 클릭 완료와 GET/render 완료는 다릅니다."
+}
