@@ -93,6 +93,10 @@ G03는 14:03:37 UTC에 정확히 결합된 PV/PVC/Pod를 1 batch로 생성했고
 
 14:08:44 probe 1회에서 UID/GID 1000의 정확한 leaf kernel mount와 새 home/project·고유 62 B marker의 exclusive 생성/fsync/readback이 성공했습니다. 같은 Pod의 14:09:39–42 직접 Service TCP 1회는 3초 내 timeout, payload 0이었습니다. 소유 child는 종료했고 자원/leaf를 보존했습니다. [상세 결과](evidence/managed-nfs-rollout.md)는 server/client metadata namespace·관측 시각과 남은 authority/RO/old writer/HA 경계를 분리합니다. 이 결과만으로 production binding, 미래 Node 격리 또는 Compute fault 권한을 발급하지 않습니다.
 
+### 같은 leaf의 최초 RO 관측
+
+[RO 정제 결과](evidence/managed-leaf-readonly.md)와 [JSON/provenance](evidence/managed-leaf-readonly-provenance.json)에 14:48 Root 수락의 VFS ro·open 1회 EROFS·write 0·기존 marker 불변·직접 TCP timeout 및 원 비교 실패→로컬 교정을 구분했습니다. PR102의 14:06 PNG는 RO 이전 UI 이력으로만 참조하며 다수 RO 전체/production authority/old writer fencing/HA 합격은 아닙니다.
+
 ## Optional NFS kernel-client ingress boundary
 
 `25-nfs-kernel-clients.yaml.in` selects the NFS Pods by both `app.kubernetes.io/name=orca-dev-nfs` and the exact dataset label in the chosen namespace. It permits ingress on TCP 2049 from one operator-verified node primary IPv4 subnet. It adds no egress rule, Pod/namespace peer selector, external Service, or host-network exception. Both existing NFS and MOUNT services use TCP 2049.
