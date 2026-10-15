@@ -192,7 +192,7 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   assert.equal(result.target.deliveryAttemptId,a)
   assert.equal(result.target.attemptId,f.attemptId)
   assert.equal(result.target.executionEpoch,'1')
-  assert.equal(result.targetMessageRevision,messageBefore.revision)
+  assert.equal(result.targetMessageRevision,String(messageBefore.revision))
   const stored = await inspect(pool,result.operationId)
   const exact = {
     deliveryAttemptId: a, runtimeUnitId: f.context.runtimeUnitId, attemptId: f.attemptId,
