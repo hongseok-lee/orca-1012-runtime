@@ -174,8 +174,7 @@ async function startOrcadRuntime(
   const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog })
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
-      headless: browserProvider !== null,
-      screencast: browserProvider?.kind === 'chromium',
+      headless: browserProvider !== null, screencast: browserProvider?.kind === 'chromium',
       ...(browserProvider ? { isAvailable: () => browserProvider.isAvailable() } : {})
     }
   )
