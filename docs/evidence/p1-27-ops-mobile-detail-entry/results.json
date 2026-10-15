@@ -1,0 +1,185 @@
+{
+  "source": {
+    "base": "a8874fd1952f010f2da1ed4a43352510394cfbed",
+    "validatedSourcePin": "ba5b58931fe054e3054ff04481bd41cd5422b4ee",
+    "earlySourcePin": "216944872792a5b8722e29567417ce06a35ce8ae",
+    "ownedFile": "src/main/durable-runtime/ops-ui/client-view.ts",
+    "sourceBlob": "4ca9495e196d99e1679d3d64795130f43601f821",
+    "sourceSHA256": "4f70c4b50c6c071edfa51cd57b413277dac8380459087fa0892c547a6495baab",
+    "mobileChildOrder": [
+      "summary",
+      "more button",
+      "unitFacts",
+      "actions"
+    ],
+    "sourceFilesChanged": 1,
+    "changedLines": 2,
+    "liveCompositePin": "b19f82b424100b9e5a74f99fe5d1dac9b26bce27",
+    "liveCompositeTree": "00e8def8458560a4ac2e6c41295b08ea0e239e05",
+    "source1OnlyComposite": true,
+    "wholeRuntimeClosureProven": false
+  },
+  "runs": [
+    {
+      "phase": "initial-coordinate-review-timeout",
+      "execution": {
+        "name": "ops-mobile-detail-entry-once",
+        "supervisorPID": 8416,
+        "childPID": 8423,
+        "startedAt": "2026-10-15T11:15:00.242Z",
+        "finishedAt": "2026-10-15T11:16:11.037Z",
+        "state": "failed",
+        "exitCode": 1,
+        "signal": null
+      },
+      "handoffSHA256": "c657a2677adeadbab72c18a764019beff856f013c64a94e74952b9f8ca40757c",
+      "errorCode": "ROOT_CURRENT_IMAGE_REVIEW_NOT_RECEIVED_WITHIN_BOUND",
+      "reviewWaitStartedAt": "2026-10-15T11:15:10.784Z",
+      "maximumReviewWaitMs": 60000,
+      "lateLocalReviewMtimeUTC": "2026-10-15T11:16:23.223267+00:00",
+      "lateReviewCopiedToRemote": false,
+      "lateReviewUsedByHelper": false,
+      "productFailureEstablished": false,
+      "usageFailureEstablished": false,
+      "summaryTaps": 0,
+      "detailTaps": 0,
+      "upDrags": 0,
+      "cleanup": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "originalPrivateStateUnchanged": true,
+        "heavyAfter": 0
+      }
+    },
+    {
+      "phase": "delegated-click-completed-loading-detail",
+      "execution": {
+        "name": "ops-mobile-detail-entry-delegated-once",
+        "supervisorPID": 8565,
+        "childPID": 8572,
+        "startedAt": "2026-10-15T11:19:53.924Z",
+        "finishedAt": "2026-10-15T11:21:03.759Z",
+        "state": "completed",
+        "exitCode": 0,
+        "signal": null
+      },
+      "handoffSHA256": "a80555db01b8b124aa2bacf09da62a0dc7656423e6baaed345edf658d51127a4",
+      "actualReviewer": "delegated Sol6.1 Client",
+      "rootPreapprovedEveryStageImage": false,
+      "counters": {
+        "summaryTaps": 1,
+        "upDrags": 0,
+        "detailTaps": 1,
+        "captureCounts": {
+          "coordinate": 1,
+          "expanded": 1,
+          "detail": 1
+        },
+        "phoneClicks": 1,
+        "browserOpenClicks": 0,
+        "manualKeyInputs": 0,
+        "reloadClicks": 0,
+        "directRpcCalls": 0,
+        "nativeCdpInputCalls": 0,
+        "actualOpsCommands": 0,
+        "runtimeErrors": []
+      },
+      "expandedPublishedPNG": "expanded.png",
+      "loadingPNG": {
+        "sha256": "bd78f653c6b2a9e690d9e40c147595de7fdd5c9eed2fdb3e2a1f8ff33c39b769",
+        "bytes": 121066,
+        "capturedAt": "2026-10-15T11:21:03.573Z"
+      },
+      "loadingOriginalPreservedPrivately": true,
+      "loadingPNGPublished": false,
+      "detailGetSuccessEstablished": false,
+      "detailDataLoadedEstablished": false,
+      "cleanup": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "originalPrivateStateUnchanged": true,
+        "heavyAfter": 0
+      }
+    },
+    {
+      "phase": "same-open-detail-followup-observation",
+      "execution": {
+        "name": "ops-mobile-detail-entry-observe-once",
+        "supervisorPID": 8736,
+        "childPID": 8743,
+        "startedAt": "2026-10-15T11:24:51.668Z",
+        "finishedAt": "2026-10-15T11:25:01.864Z",
+        "state": "completed",
+        "exitCode": 0,
+        "signal": null
+      },
+      "handoffSHA256": "7948393a18e9513006860a38b8791cb40c206e74a64cabda95d2dfc3f84946ef",
+      "counters": {
+        "summaryTaps": 0,
+        "upDrags": 0,
+        "detailTaps": 0,
+        "captureCounts": {
+          "coordinate": 0,
+          "expanded": 0,
+          "detail": 1
+        },
+        "phoneClicks": 1,
+        "browserOpenClicks": 0,
+        "manualKeyInputs": 0,
+        "reloadClicks": 0,
+        "directRpcCalls": 0,
+        "nativeCdpInputCalls": 0,
+        "actualOpsCommands": 0,
+        "runtimeErrors": []
+      },
+      "publishedPNG": "detail-loaded.png",
+      "renderGraceMsRequested": 1100,
+      "actualRenderObservationSeconds": 1.11,
+      "loadingStillVisible": false,
+      "unitDetailFactsVisible": true,
+      "sessionTabMountSectionsVisible": false,
+      "networkHTTPStatusMeasured": false,
+      "PGInvarianceMeasuredInThisRun": false,
+      "originalRootFinalAcceptancePending": true,
+      "cleanup": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "originalPrivateStateUnchanged": true,
+        "heavyAfter": 0
+      }
+    }
+  ],
+  "rootAcceptance": {
+    "contractSection": "2026-10-15 11:28 UTC",
+    "readImagesSHA256": [
+      "f27184b2e35fd9bcad212faee4e8c432d65e4a30840dc1111d3ef800df5abb27",
+      "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0"
+    ],
+    "acceptedScope": "모바일 summary 바로 뒤 상세 버튼 위치와 drag 없는 상세 진입, 같은 Unit의 loaded 기본 정보 표시입니다.",
+    "excluded": [
+      "아래 Session/Tab/mount section 시각 확인",
+      "긴 dialog 아래쪽 배치와 닫기 줄바꿈 교정",
+      "실물 iPhone",
+      "전체 P1-27",
+      "전체 HA"
+    ],
+    "rootReviewIsSeparateFromOriginalPendingFlags": true
+  },
+  "publication": {
+    "newCaptures": 0,
+    "newUIRuns": 0,
+    "newPGQueries": 0,
+    "newLintTypeSuiteRuns": 0,
+    "newBuildInstallLiveChanges": 0,
+    "sourceChangesAfterAcceptance": 0,
+    "heavy": 0
+  },
+  "before": {
+    "PR": 93,
+    "sourcePin": "be4d8f2cbcf9bcf3767ffae1cf9814ef3282e1c8",
+    "artifactPath": "docs/evidence/p1-16-26-27-browser-stream-recovery/live-expanded.png",
+    "artifactSHA256": "f02aa969df15049e1e1e4cb2fa9fd4938ed0b2b528480ef616fd1aae2078b5d3",
+    "detailTaps": 0,
+    "claimedAsAfter": false
+  }
+}
