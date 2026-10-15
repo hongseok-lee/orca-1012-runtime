@@ -140,7 +140,8 @@ export async function runDurableTransaction<T>(
     await tx.query("COMMIT");
     outcome = { ok: true, settlement: "COMMITTED", commitOutcome: "ACKNOWLEDGED", value, cleanupFailed: false };
   } catch (error) {
-    let settlement: DurableTransactionFailure["settlement"] = "ROLLED_BACK";
+    const firstError = safeDatabaseError(error);
+    let settlement: "ROLLED_BACK" | "UNCONFIRMED" = "ROLLED_BACK";
     try {
       await client.query("ROLLBACK");
     } catch {
@@ -148,7 +149,7 @@ export async function runDurableTransaction<T>(
       settlement = "UNCONFIRMED";
     }
     outcome = { ok: false, settlement, commitOutcome: commitAttempted ? "UNKNOWN" : "NOT_ATTEMPTED",
-      error: safeDatabaseError(error), cleanupFailed: false };
+      error: firstError, cleanupFailed: false };
   } finally {
     tx.close();
     try {
