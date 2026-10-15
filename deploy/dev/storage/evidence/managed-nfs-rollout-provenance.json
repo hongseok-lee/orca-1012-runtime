@@ -23,5 +23,20 @@
   "rootVisualAcceptance": true,
   "currentPngSha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
   "currentPngCapturedAt": "2026-10-15T14:06:37.253Z",
-  "currentPngSameBytesAsHistoricalButSeparateProvenance": true
+  "currentPngSameBytesAsHistoricalButSeparateProvenance": true,
+  "acceptedG03WorkerResultSha256": "bae41fac428bacbb4d343f7c5ddd2b9f88000f3bd6bedc5bd674e30e5834115b",
+  "g03RawEvidenceHashes": {
+    "create.stdout.json": "b601ea09fc680f14eaf5e070afbafe6ce62fbcdbe9f09488221f1c39ed8b644a",
+    "actual-vs-dryrun.json": "f8163393254509f212fa4ad806b305561f9fcbdfbbce1d0dcb54d6dd79c9e4a5",
+    "bound-actual-resources.stdout.json": "6cde63dfd54145cb8f494a3219dc28f1d8313689f849a7871bfa777fffac3631",
+    "actual-node.json": "ec2fd5e4392642a7df83c723ce80474fc94d1c03126450b5e5d2f4df5f924de4",
+    "node-colocation.json": "7e698c8e11a312f431fb18020df16250ec0596d74a05d5ff9d53507f90560176",
+    "probe-input.actual.json": "5a109c0f9d571ac42215744682669bfd14fa4283a42989c2351057dd8f7d80b1",
+    "probe.stdout.json": "4bcc817b4283a6f85a0a9b9c302da9cd2be6550432aec30782883e7efbe998ec",
+    "tcp-result.json": "ad7ce1923ed307a7d60c7f7c6e04408225ac3d1fe0b5603d9882e03475339107",
+    "heavy-return.json": "626013a25e339b98c4b00558df9626e8e6fe7ed71dd99dacf3096f21d698737f",
+    "facts.json": "ca0077282adb5dd4ed6b2e240c6a2b2566ebd9d8ac9d0ed8a52e5d27e9948e10",
+    "REPORT.ko.md": "7dd815d082ddd38e46e07e9615607d24af338d3d6f64cc7710673101bdf0a49e"
+  },
+  "g03FirstMountIncludedAfterRoot1415Acceptance": true
 }

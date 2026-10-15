@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "managed-nfs-rollout-and-fixed-leaf-first-result",
-  "snapshotUtc": "2026-10-15T14:09:28.454842+00:00",
+  "snapshotUtc": "2026-10-15T14:20:57.154639+00:00",
   "sourceMain": "26b56a95bd614592b4b0297b7239554b2dbd092c",
   "productSourceChangedInPublication": false,
   "reusedRendered20Sha256": "490a23c89fea284804f6b1793ebcb445e3f613d22c1dc2b5cb5f394f05e4279a",
@@ -115,8 +115,84 @@
     "captureCallsByInfra": 0
   },
   "separateG03FirstMount": {
-    "status": "pending-separate-G03-result",
-    "includedInAcceptedScope": false
+    "status": "root-accepted-first-kernel-mount-on-separate-node",
+    "sourceManifestSha256": "c6b1709b810715cbe2a56a9be75740f704148f20133b5aaf085a509a52119b48",
+    "pinnedSourceUnchanged": true,
+    "exactAbsentTargetsGuard": true,
+    "createBatchAttempts": 1,
+    "resourcesCreated": 3,
+    "createStartedUtc": "2026-10-15T14:03:37.181628+00:00",
+    "createEndedUtc": "2026-10-15T14:03:37.703827+00:00",
+    "createExit": 0,
+    "actualSpecMatchesAcceptedDryRun": true,
+    "pvPvcBoundAndCrossReferencesExact": true,
+    "podReadyUtc": "2026-10-15T14:07:09Z",
+    "podRestartCount": 0,
+    "requests": {
+      "cpu": "500m",
+      "memory": "512Mi"
+    },
+    "cpuMemoryLimitsOmitted": true,
+    "exactLeafOnlyNoSubPath": true,
+    "node": {
+      "kubernetesCreatedUtc": "2026-10-15T14:04:34Z",
+      "kubernetesRegisteredAfterPodApi": true,
+      "spotLabel": true,
+      "otherOrdinaryWorkloadsAtObservation": 0,
+      "systemDaemonSetCount": 12,
+      "computeDirectGets": 0,
+      "numericInstanceAnnotationIsAuthenticatedComputeEvidence": false,
+      "futureIsolationOrFaultAuthorized": false
+    },
+    "probe": {
+      "calls": 1,
+      "startedUtc": "2026-10-15T14:08:44.095030Z",
+      "endedUtc": "2026-10-15T14:08:44.562647Z",
+      "exit": 0,
+      "uid": 1000,
+      "gid": 1000,
+      "filesystem": "nfs",
+      "mountOptionsObserved": [
+        "rw",
+        "vers=3",
+        "hard",
+        "nolock",
+        "proto=tcp",
+        "port=2049"
+      ],
+      "exactActualPodEmptyDir": true,
+      "clientLeafIdentitySameBeforeAfter": true,
+      "newHomeProjectInsideLeafOnly": true,
+      "markerExclusiveCreate": true,
+      "markerBytes": 62,
+      "markerSha256": "f96d47c63e82bff2fce067dc09ce9e2e9b5b77014499704adfa653a0229ed7b4",
+      "markerFsyncReadback": true,
+      "serverInspectObservedUtc": "2026-10-15T13:57:51Z",
+      "serverClientMetadataNamespacesAndObservationTimesDistinct": true,
+      "identityOrAuthorityNotInferredFromEqualInode": true,
+      "existingFileOverwriteDeleteChmodChownRecursiveScan": 0
+    },
+    "directPodTcp": {
+      "attempts": 1,
+      "startedUtc": "2026-10-15T14:09:39.251Z",
+      "endedUtc": "2026-10-15T14:09:42.262Z",
+      "deadlineSeconds": 3,
+      "outcome": "TIMED_OUT",
+      "payloadBytes": 0,
+      "socketDestroyed": true,
+      "rpcMountPayloads": 0,
+      "automaticRetry": 0
+    },
+    "cleanup": {
+      "observedUtc": "2026-10-15T14:10:42.383515+00:00",
+      "ownedSupervisorProbeTcpAbsent": true,
+      "activeOwnedJobs": 0,
+      "resourcesAndLeafRetained": true,
+      "deletedResources": 0,
+      "otherProcessSignals": 0,
+      "physicalAuthorityProductionBindingRoHaClaimed": false
+    },
+    "rootAcceptanceContract": "2026-10-15 14:15 UTC"
   },
   "publicationScope": {
     "remoteExecution": 0,
@@ -130,12 +206,12 @@
   },
   "unverified": [
     "fresh PV initialization",
-    "first kernel mount from a fresh Node in this publication",
     "all old handles and all consumers",
     "continuous availability",
     "physical pin and authenticated directory authority",
     "authority lifetime through SQL COMMIT/ROLLBACK",
     "RO/old writer fencing/HA",
-    "native iPhone/Mac"
+    "native iPhone/Mac",
+    "other nodes, paths, providers and future isolation beyond this one qualification"
   ]
 }
