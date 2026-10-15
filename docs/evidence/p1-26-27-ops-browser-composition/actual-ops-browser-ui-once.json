@@ -1,0 +1,136 @@
+{
+  "validatedProductSourcePin": "1cc2af6f6722a6654a8b29bf758bb8f05822dc74",
+  "liveCompositeSourcePin": "b64d27670bb31808b38f14ce64e08d47b941052a",
+  "appliedManifestSHA256": "fb29b917961594bd9701acd6f419e564878221b8d00761daccd37599ed222f83",
+  "ExpoBaseline": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "ExpoFrameOverlayPin": "3817fb489ff9539aa1c0187170e842bed539c691",
+  "ExpoFrameOverlayManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+  "helperSHA256": "869d341b15069d12f5cc45da725678add26f27a74a5c8238456affb43c15e181",
+  "launcherSHA256": "2825571aefaa39dd73fa0c6d291ed041051cd9b519023cd6c01ac8bcf5c1d3cc",
+  "actualInputSHA256": "b85e72b5a9a63124eac991a4faea370312e56ceba051703df828e21d5a2928d4",
+  "actualInputDiffSHA256": "4b7db35cda42d3bcda4ac74ec595a8b71295f3b2683b557c9f9452a5459ebae4",
+  "startedAt": "2026-10-15T07:33:27.226Z",
+  "finishedAt": "2026-10-15T07:33:35.527Z",
+  "helperPID": 6792,
+  "supervisorStartedAt": "2026-10-15T07:33:24.767Z",
+  "supervisorFinishedAt": "2026-10-15T07:33:35.550Z",
+  "helperExit": 0,
+  "helperExitMeaning": "Frame 관측·단일 PNG 완료이며 인증 성공이나 로딩 완료 판정이 아닙니다.",
+  "opsURL": "http://127.0.0.1:16768/ops/",
+  "clicks": {
+    "workspaceOpenClicks": 1,
+    "newTabClicks": 1,
+    "browserMenuClicks": 1,
+    "browserURLFills": 1,
+    "browserOpenClicks": 1,
+    "manualKeyInputs": 0,
+    "existingTabSelections": 0,
+    "tabCloseClicks": 0,
+    "reloadClicks": 0,
+    "terminalChatSendActions": 0,
+    "directRpcCalls": 0,
+    "nativeCdpInputCalls": 0,
+    "helperResubmissions": 0
+  },
+  "frameObservations": [
+    {
+      "kind": "ops-browser-created",
+      "at": "2026-10-15T07:33:35.318Z",
+      "address": "http://127.0.0.1:16768/ops/",
+      "frames": [
+        {
+          "uriSHA256": "26ee96272a3aede223dffda7179831924b2d8d2379e002af5adab5b64ecd9e2f",
+          "decoded": true,
+          "naturalWidth": 390,
+          "naturalHeight": 176,
+          "matchingBackgroundSurface": true,
+          "layerOpacity": 1,
+          "effectiveOpacity": 1,
+          "hidden": false,
+          "renderedWidth": 390,
+          "renderedHeight": 175.796875
+        },
+        {
+          "uriSHA256": "26ee96272a3aede223dffda7179831924b2d8d2379e002af5adab5b64ecd9e2f",
+          "decoded": true,
+          "naturalWidth": 390,
+          "naturalHeight": 176,
+          "matchingBackgroundSurface": true,
+          "layerOpacity": 0,
+          "effectiveOpacity": 0,
+          "hidden": false,
+          "renderedWidth": 390,
+          "renderedHeight": 175.796875
+        }
+      ],
+      "visibleDecodedCount": 1,
+      "freshStreamNotProvenByImageHash": true,
+      "expectedOpsURL": "http://127.0.0.1:16768/ops/",
+      "observedFullBrowserId": null,
+      "frameWaitFailure": null,
+      "alertCount": 0,
+      "uncaughtOverlayCount": 0
+    }
+  ],
+  "runtimeErrorCount": 0,
+  "runtimeErrors": [],
+  "consoleCounts": {
+    "info": 1,
+    "warning": 5,
+    "log": 18
+  },
+  "newFullBrowserPageId": null,
+  "fullPageIdentityDerivedFromSuffix": false,
+  "PNG": {
+    "repositoryPath": "docs/evidence/p1-26-27-ops-browser-composition/actual-ops-browser-ui-once.png",
+    "sha256": "c5a2009a14a5e3b161c5d6635a361488db067dbf95df39eedf36b0ab6d30b32b",
+    "bytes": 44950,
+    "capturedAt": "2026-10-15T07:33:35.354Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "isExpoWeb": true,
+    "nativeIPhone": false,
+    "edited": false,
+    "captureAttempts": 1
+  },
+  "automaticAuthQualified": false,
+  "rootImageReviewPending": false,
+  "cleanup": {
+    "ownContextClosed": true,
+    "ownBrowserClosed": true,
+    "originalPairingStateUnchanged": true,
+    "MetroPIDUnchanged": true,
+    "MetroRestart": 0,
+    "podUIDsUnchanged": true,
+    "ownHelperExited": true,
+    "supervisorExited": true,
+    "centralBrowserClosed": false,
+    "existingTabClosed": false
+  },
+  "PGRead": 0,
+  "additionalTestSuite": 0,
+  "install": 0,
+  "productBuild": 0,
+  "serviceOrMetroRestart": 0,
+  "automaticRetry": 0,
+  "heavyActive": 0,
+  "usageCreditsStream": "이번 실제 UI turn에서 usage limit/credits/stream 중단 원오류는 미관측입니다.",
+  "privacy": "요청 Authorization/토큰/auth state/전체 network body/PG 원행/운영 절대경로를 게시하지 않습니다.",
+  "rootVisualReview": {
+    "imageSHA256": "c5a2009a14a5e3b161c5d6635a361488db067dbf95df39eedf36b0ab6d30b32b",
+    "actualOpsUIVisible": true,
+    "UnitCountVisible": 1,
+    "manualKeyInputs": 0,
+    "loadingOverlayVisible": false,
+    "desktopContentRenderedSize": {
+      "width": 390,
+      "height": 176
+    },
+    "KoreanTofuObserved": true,
+    "detailReadabilityAccepted": false,
+    "qualification": "Root가 실제 Ops/Unit 1 데이터와 수동 키 입력 0회를 확인했습니다. Desktop 축소와 한글 tofu로 상세 가독성은 수락하지 않았습니다. 전체 Ops UI 완료나 native iPhone 성공이 아닙니다.",
+    "followupExecution": "같은 기존 Ops Tab 후속은 Root의 별도 구체 계약을 따릅니다."
+  }
+}
