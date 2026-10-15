@@ -33,7 +33,7 @@ await test('PG 1개: 실제 bound hold/release는 Pod0 논리 Session과 현재 
   const tables = (await pool.query("SELECT tablename FROM pg_tables WHERE schemaname='durable_runtime' ORDER BY tablename")).rows.map(row => row.tablename as string)
   assert.ok(tables.every(table => /^[a-z_]+$/.test(table)))
   const snapshotSQL = tables.map(table => `SELECT '${table}' AS table_name,
-    COALESCE(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb)::text AS body FROM durable_runtime."${table}" t`).join(' UNION ALL ')
+    COALESCE(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb)::text AS body FROM durable_runtime."${table}" t`).join(' UNION ALL ') + ' ORDER BY table_name'
   async function snapshot() {
     return (await pool.query(snapshotSQL)).rows.map(row => ({ table: row.table_name,
       sha256: createHash('sha256').update(row.body).digest('hex') }))
