@@ -85,7 +85,7 @@ export function compositionTransaction(context: GatewayContext, beforeFirstQuery
     } else if (sql.includes('SELECT controller_scope')) {
       assert.deepEqual(values, [operationId, unitId])
       rows = [{ controller_scope: scope }]
-    } else if (sql.includes('FROM durable_runtime.controller_leases')) {
+    } else if (sql.startsWith('SELECT scope FROM durable_runtime.controller_leases')) {
       assert.equal(values[0], scope)
       if (values.length === 3) {
         assert.deepEqual(values, [scope, owner, term])
