@@ -56,7 +56,7 @@ export function createCatalogStructuredHistoryReaderOwner(config: CapturedCatalo
         !Number.isSafeInteger(value.sequence) || value.sequence < 0) { throw new CatalogReadError('STRUCTURED_HISTORY_UNREADABLE') }
       cursor = { epoch: value.epoch, sequence: value.sequence }
     }
-    const request = captureCatalogParsed({ sessionId: publicSessionId, direction,
+    const request = captureCatalogParsed<AgentSessionHistoryRequest>({ sessionId: publicSessionId, direction,
       ...(cursor ? { cursor } : {}), ...(typeof wire.limit === 'number' ? { limit: wire.limit } : {}) })
     const client = await connect().catch(error => { throw safeDatabaseError(error) })
     const tx = new DurableTransaction(client)

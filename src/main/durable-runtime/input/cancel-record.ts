@@ -119,7 +119,7 @@ export async function recordCancelIntent(
   await appendAudit(tx, {
     actorId: request.authority.principal,
     sessionId: request.authority.sessionId,
-    runtimeUnitId: unit,
+    runtimeUnitId: unit ?? undefined,
     kind: 'CANCEL_INTENT',
     previousState: { messageState: row.intake_status },
     nextState: facts,
