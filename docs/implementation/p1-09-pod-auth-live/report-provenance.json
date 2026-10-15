@@ -1,0 +1,50 @@
+{
+  "kind": "OFFLINE_VERIFICATION_REPORT",
+  "pid": 6245,
+  "startedAt": "2026-10-15T06:00:50.147Z",
+  "phase": "OFFLINE_REPORT_COMPLETE",
+  "sourcePin": "e10ac0f9b104d8c8bf7cd9815654618d8aad4659",
+  "htmlSHA256": "1da41c384dab66db91205cecd725219c30a0694a2634aefc960a3a4cc9172dc4",
+  "productUI": false,
+  "actualKubernetesAPI": false,
+  "authStateLoaded": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "node": "v24.14.1",
+  "capturedAt": "2026-10-15T06:00:50.525Z",
+  "PNGSHA256": "df8157dd5b46843337143a73c09efc8adf15d851d3c5f5034b89a92d78870eae",
+  "PNGBytes": 213281,
+  "viewport": {
+    "width": 1280,
+    "height": 1600
+  },
+  "DPR": 1,
+  "networkRequests": 0,
+  "externalRequestsBlocked": true,
+  "exit": 0,
+  "contextClosed": true,
+  "browserClosed": true,
+  "finishedAt": "2026-10-15T06:00:50.741Z",
+  "supervisorPID": 6238,
+  "runnerStartedAt": "2026-10-15T06:00:48.002Z",
+  "runnerFinishedAt": "2026-10-15T06:00:50.763Z",
+  "runnerExit": 0,
+  "screenshotCount": 1,
+  "syntheticReport": true,
+  "nativeIPhone": false,
+  "pairingOrLiveStateLoaded": false,
+  "verificationRepeatedForCapture": false,
+  "actualResultsDisplayedWithoutNewAPICalls": true,
+  "knownCaptureProcesses": [
+    {
+      "PID": 6238,
+      "state": "Z"
+    },
+    {
+      "PID": 6245,
+      "state": "ABSENT"
+    }
+  ],
+  "captureHelperSHA256": "29c932351c8755e46f6372bc013d4ac176f62bb07eacb429eece28c75876e2a3",
+  "captureInputSHA256": "579b0bfbf498835e8b6ea5a5492e9764da00520c01e2dd871a8d52e3eaa11615"
+}
