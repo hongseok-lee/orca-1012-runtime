@@ -1,0 +1,753 @@
+{
+  "sourcePin": "3f5149f16093029c9bc73f736a7d7af33f5e396c",
+  "base": "44d6c4957ad3731c63a5a603bf63e03906b05411",
+  "acceptedScope": "모듈·합성 공개 배선과 실제 격리 PG의 한정 검증입니다.",
+  "lint": {
+    "files": 4,
+    "exit": 0,
+    "pid": 29711,
+    "startedAt": "2026-10-15T01:31:27.005Z",
+    "finishedAt": "2026-10-15T01:31:27.597Z"
+  },
+  "value": {
+    "callbacks": 1,
+    "passCount": 1,
+    "TAPPassIncludingParentWrapper": 2,
+    "exit": 0,
+    "pid": 29738,
+    "startedAt": "2026-10-15T01:31:28.574Z",
+    "finishedAt": "2026-10-15T01:31:30.751Z"
+  },
+  "PG": {
+    "callbacks": 1,
+    "passCount": 1,
+    "TAPPassIncludingParentWrapper": 2,
+    "exit": 0,
+    "supervisorPid": 29998,
+    "pid": 30009,
+    "testChildPid": 30015,
+    "startedAt": "2026-10-15T01:36:21.433Z",
+    "finishedAt": "2026-10-15T01:36:24.440Z",
+    "phase": "FIRST_WIRING_COMPLETE"
+  },
+  "database": {
+    "identity": {
+      "database": "orca_public_structured_subscribe_20261014",
+      "oid": "84739",
+      "system": "7696101282789175327"
+    },
+    "dataset": [
+      {
+        "dataset_name": "orca-1012-dev-v1"
+      }
+    ],
+    "ledgerCount": 19,
+    "ledgerUnchanged": true,
+    "tablesMeasured": 73,
+    "originalRowCount": 62,
+    "allOriginalRowHashesPreserved": false,
+    "changedOriginalHashesByTable": {
+      "catalog_heads": 2
+    },
+    "qualification": "PG fixture가 명시한 기존 UUID seed 17개 테이블 보존 assertion은 통과했습니다. Parent의 73개 테이블 전수 행 hash 기록에서는 새 등록이 갱신한 catalog_heads 원행 hash 2개가 달라졌습니다. 이를 전부 불변이라고 표시하지 않으며 Root가 원 before/end 자료로 판단합니다.",
+    "resetDeleteDDL": 0,
+    "ledgerBefore": [
+      {
+        "version": "001-catalog.sql",
+        "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+        "applied_at": "2026-10-14T19:20:05.198Z"
+      },
+      {
+        "version": "002-execution-storage.sql",
+        "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+        "applied_at": "2026-10-14T19:20:05.272Z"
+      },
+      {
+        "version": "003-operations-resources.sql",
+        "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+        "applied_at": "2026-10-14T19:20:05.335Z"
+      },
+      {
+        "version": "004-input-context.sql",
+        "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+        "applied_at": "2026-10-14T19:20:05.427Z"
+      },
+      {
+        "version": "005-events-replay.sql",
+        "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+        "applied_at": "2026-10-14T19:20:05.518Z"
+      },
+      {
+        "version": "006-snapshot-seals.sql",
+        "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+        "applied_at": "2026-10-14T19:20:05.551Z"
+      },
+      {
+        "version": "007-storage-epoch-cancel-guards.sql",
+        "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+        "applied_at": "2026-10-14T19:20:05.554Z"
+      },
+      {
+        "version": "008-attachment-store.sql",
+        "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+        "applied_at": "2026-10-14T19:20:05.591Z"
+      },
+      {
+        "version": "009-atomic-journal-outbox.sql",
+        "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+        "applied_at": "2026-10-14T19:20:05.597Z"
+      },
+      {
+        "version": "010-runtime-command-ledger.sql",
+        "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+        "applied_at": "2026-10-14T19:20:05.617Z"
+      },
+      {
+        "version": "011-runtime-event-producers.sql",
+        "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+        "applied_at": "2026-10-14T19:20:05.634Z"
+      },
+      {
+        "version": "012-input-merge-boundary.sql",
+        "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+        "applied_at": "2026-10-14T19:20:05.637Z"
+      },
+      {
+        "version": "013-context-deliveries.sql",
+        "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+        "applied_at": "2026-10-14T19:20:05.649Z"
+      },
+      {
+        "version": "014-durable-catalog.sql",
+        "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+        "applied_at": "2026-10-14T19:20:05.694Z"
+      },
+      {
+        "version": "015-failure-evidence.sql",
+        "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+        "applied_at": "2026-10-14T19:20:05.732Z"
+      },
+      {
+        "version": "016-observation-episodes.sql",
+        "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+        "applied_at": "2026-10-14T19:20:05.759Z"
+      },
+      {
+        "version": "017-structured-session-wire.sql",
+        "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+        "applied_at": "2026-10-14T19:20:05.777Z"
+      },
+      {
+        "version": "018-terminal-input-floor.sql",
+        "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+        "applied_at": "2026-10-14T19:20:05.788Z"
+      },
+      {
+        "version": "019-durable-resource-allocation.sql",
+        "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+        "applied_at": "2026-10-14T19:20:05.848Z"
+      }
+    ],
+    "ledgerAfter": [
+      {
+        "version": "001-catalog.sql",
+        "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+        "applied_at": "2026-10-14T19:20:05.198Z"
+      },
+      {
+        "version": "002-execution-storage.sql",
+        "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+        "applied_at": "2026-10-14T19:20:05.272Z"
+      },
+      {
+        "version": "003-operations-resources.sql",
+        "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+        "applied_at": "2026-10-14T19:20:05.335Z"
+      },
+      {
+        "version": "004-input-context.sql",
+        "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+        "applied_at": "2026-10-14T19:20:05.427Z"
+      },
+      {
+        "version": "005-events-replay.sql",
+        "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+        "applied_at": "2026-10-14T19:20:05.518Z"
+      },
+      {
+        "version": "006-snapshot-seals.sql",
+        "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+        "applied_at": "2026-10-14T19:20:05.551Z"
+      },
+      {
+        "version": "007-storage-epoch-cancel-guards.sql",
+        "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+        "applied_at": "2026-10-14T19:20:05.554Z"
+      },
+      {
+        "version": "008-attachment-store.sql",
+        "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+        "applied_at": "2026-10-14T19:20:05.591Z"
+      },
+      {
+        "version": "009-atomic-journal-outbox.sql",
+        "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+        "applied_at": "2026-10-14T19:20:05.597Z"
+      },
+      {
+        "version": "010-runtime-command-ledger.sql",
+        "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+        "applied_at": "2026-10-14T19:20:05.617Z"
+      },
+      {
+        "version": "011-runtime-event-producers.sql",
+        "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+        "applied_at": "2026-10-14T19:20:05.634Z"
+      },
+      {
+        "version": "012-input-merge-boundary.sql",
+        "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+        "applied_at": "2026-10-14T19:20:05.637Z"
+      },
+      {
+        "version": "013-context-deliveries.sql",
+        "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+        "applied_at": "2026-10-14T19:20:05.649Z"
+      },
+      {
+        "version": "014-durable-catalog.sql",
+        "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+        "applied_at": "2026-10-14T19:20:05.694Z"
+      },
+      {
+        "version": "015-failure-evidence.sql",
+        "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+        "applied_at": "2026-10-14T19:20:05.732Z"
+      },
+      {
+        "version": "016-observation-episodes.sql",
+        "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+        "applied_at": "2026-10-14T19:20:05.759Z"
+      },
+      {
+        "version": "017-structured-session-wire.sql",
+        "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+        "applied_at": "2026-10-14T19:20:05.777Z"
+      },
+      {
+        "version": "018-terminal-input-floor.sql",
+        "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+        "applied_at": "2026-10-14T19:20:05.788Z"
+      },
+      {
+        "version": "019-durable-resource-allocation.sql",
+        "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+        "applied_at": "2026-10-14T19:20:05.848Z"
+      }
+    ],
+    "rowHashComparisonByTable": [
+      {
+        "table": "agents",
+        "originalCount": 2,
+        "originalHashesStillPresent": 2,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "attachment_aliases",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "attachment_blobs",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "attachment_upload_chunks",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "attachment_uploads",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "attempts",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "cancel_intents",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "catalog_heads",
+        "originalCount": 3,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 2
+      },
+      {
+        "table": "catalog_name_reservations",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "catalog_project_groups",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "catalog_repositories",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "catalog_tab_metadata",
+        "originalCount": 2,
+        "originalHashesStillPresent": 2,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "catalog_ui_state",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "catalog_workspace_metadata",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "controller_leases",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "dataset_metadata",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "delivery_attempts",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "execution_grants",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "failure_incident_aliases",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "failure_incident_observations",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "failure_incident_state",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "failure_incidents",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "failure_observations",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "input_attachments",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "input_components",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "legacy_drafts",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "memory_rightsizing_state",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "messages",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "notifications",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "observation_challenges",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "observation_episodes",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "operations",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "outbox_events",
+        "originalCount": 5,
+        "originalHashesStillPresent": 5,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "provider_context_deliveries",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "recovery_episodes",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "replay_events",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "replay_stream_heads",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_budget_scopes",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_growth_ledger",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_operation_plans",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_policy_versions",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_profiles",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_reservation_accounting",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_reservations",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "resource_unit_state",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "rpc_receipts",
+        "originalCount": 3,
+        "originalHashesStillPresent": 3,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_audit_events",
+        "originalCount": 5,
+        "originalHashesStillPresent": 5,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_command_history",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_commands",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_event_attempt_history",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_event_failure_contexts",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_event_producers",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_event_queue",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_event_targets",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_members",
+        "originalCount": 2,
+        "originalHashesStillPresent": 2,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "runtime_units",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "schema_migrations",
+        "originalCount": 19,
+        "originalHashesStillPresent": 19,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "session_context_records",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "session_events",
+        "originalCount": 4,
+        "originalHashesStillPresent": 4,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "sessions",
+        "originalCount": 2,
+        "originalHashesStillPresent": 2,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "snapshot_manifests",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "snapshot_session_watermarks",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "storage_bindings",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "storage_domains",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "storage_mounts",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "storage_seals",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "storage_write_grants",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "structured_session_aliases",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "structured_submissions",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "tabs",
+        "originalCount": 2,
+        "originalHashesStillPresent": 2,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "terminal_input_floors",
+        "originalCount": 0,
+        "originalHashesStillPresent": 0,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "workspace_aliases",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      },
+      {
+        "table": "workspaces",
+        "originalCount": 1,
+        "originalHashesStillPresent": 1,
+        "changedOriginalHashCount": 0
+      }
+    ]
+  },
+  "initialFailure": {
+    "phase": "EXISTING_PG_BEFORE_SEED",
+    "error": "SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string",
+    "finishedAt": "2026-10-15T01:31:33.022Z",
+    "PGCallbackEntered": false
+  },
+  "proceduralFailure": {
+    "error": "AssertionError",
+    "cause": "actual-inputs.json의 hash를 pg-actual-inputs.json에 대응했습니다.",
+    "impact": "실패한 사전 handoff와 guard 뒤에도 dependent launch가 계속됐습니다. 이 작업 제어 절차 오류를 원 PG 결과와 구분합니다.",
+    "verificationTiming": "AFTER_EXECUTION",
+    "postrunAt": "2026-10-15T01:37:36.220Z",
+    "sixArtifactMismatches": 0,
+    "originalPreparationSourceGuardPassed": true,
+    "correctiveBoundary": "이후 guard와 mutation/launch는 순차 호출하고 실패 시 다음 작업을 실행하지 않습니다."
+  },
+  "continuation": {
+    "기록": "기존 성공 FQDN과 동일한 parent/child credential-file 환경을 복원했습니다. credential 값·파일 경로는 공개하지 않습니다.",
+    "helperDiffSha256": "30be4806c7fc64b83b8bc19b8b5eec8b918e5a5c890fcfda5d1858e18028e4e3",
+    "schemaExecutions": 0,
+    "lintValuePrepareRepeated": 0
+  },
+  "historicalModule": {
+    "sourcePin": "f32be78ff4bccd67ad2511643cc4fc0af43883e0",
+    "valueCallbacksPassed": 1,
+    "PGCallbacksPassed": 1,
+    "runtimeUnion": 1606,
+    "SQL19": 19,
+    "repeatedInWiringRun": false
+  },
+  "historicalPreparationFailures": [
+    "최초 모듈 lint의 no-useless-spread 2개는 Root가 승인한 Array.from(subscriptions.values()) 교정 뒤 변경 lint만 확인했습니다.",
+    "모듈 PG 준비의 누락 shared 입력은 승인된 고정 src/shared archive 1회로 보완했습니다.",
+    "제안 배선의 kind 오류 문자열과 queryCaptures === 1 단정은 Root 계약 정정에 따라 source 단계에서 교정했습니다."
+  ],
+  "successfulProductChecksRepeatedInFinalization": 0,
+  "typeExecuted": false,
+  "liveChanged": false,
+  "newScreenshots": 0,
+  "limitations": [
+    "실제 pairing/provider inference/HA/native iPhone/전체 P1-17·20 수용은 이번 결과가 아닙니다.",
+    "73개 테이블 원행 hash 관측은 key별 값 또는 정확한 revision 증가량을 증명하지 않습니다.",
+    "Continuation의 재사용 hash 대조는 실행 후이며 사전 guard 성공으로 소급하지 않습니다.",
+    "C4 실제 UI 화면은 별도 후속이며 C3 화면을 새 구독 성공으로 사용하지 않습니다."
+  ],
+  "knownChildReadback": {
+    "at": "2026-10-15T01:37:36.220Z",
+    "knownPids": [
+      {
+        "pid": 29998,
+        "state": "Z"
+      },
+      {
+        "pid": 30009,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 30015,
+        "state": "ABSENT"
+      }
+    ],
+    "activeKnownJobs": 0,
+    "heavy": 0
+  }
+}

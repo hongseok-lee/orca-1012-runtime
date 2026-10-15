@@ -51,6 +51,14 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.createStructured(method.name, params, context) }
     }
+    if (method.name === 'agentSession.subscribe') {
+      if (!('stream' in method && method.stream)) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext, emit: (result: unknown) => void) => adapter.subscribeStructured(params, context, emit) }
+    }
+    if (method.name === 'agentSession.unsubscribe') {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext) => adapter.unsubscribeStructured(params, context) }
+    }
     if (CATALOG_STRUCTURED_HISTORY_METHODS.some(name => name === method.name)) {
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.history(params, context) }

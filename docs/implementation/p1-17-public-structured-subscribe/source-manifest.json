@@ -1,0 +1,74 @@
+{
+  "기록": "실제 공개 배선 제품 pin의 소유 9개 파일입니다. 최종화 문서 commit과 실행 제품 pin을 구분합니다.",
+  "productPin": "3f5149f16093029c9bc73f736a7d7af33f5e396c",
+  "base": "44d6c4957ad3731c63a5a603bf63e03906b05411",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/rpc/public.ts",
+      "mode": "100644",
+      "gitBlob": "fa9e42c23a952654ba313b6be004a0bbcb9f2f21",
+      "sha256": "b37b7e1d9b772873fb81219dd9acbdeb827ddcf79ea2aa61437adc9128aa0bd2",
+      "bytes": 6673
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/registry.ts",
+      "mode": "100644",
+      "gitBlob": "ce7bb7a475139d289a1b9a2716d074a932861d02",
+      "sha256": "35b369c61cfa4783dffbf0b6194d07c1b5fa293baccaf4d74611bce0d845f96c",
+      "bytes": 5790
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/session-head-hints.ts",
+      "mode": "100644",
+      "gitBlob": "46abb2009e872ce618000e3fc026db995e8947ae",
+      "sha256": "2fe49195e995c54fbc1f0287aa0eb51fc5b16b92edc433a62b5fa663e53f4b7b",
+      "bytes": 4827
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-history.ts",
+      "mode": "100644",
+      "gitBlob": "380ad387f87589b7e58b84bf1475f68815b403c5",
+      "sha256": "34b7476c69e40f85b726c06222014241f8cc0a208782b7ab24815ae27ebf3add",
+      "bytes": 10209
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions.ts",
+      "mode": "100644",
+      "gitBlob": "30447448bd7cc2636b591365da4146cc75a66232",
+      "sha256": "8419790334f262c345c08d3f46171db68afc99e460cc75ae0d1c3418ee7af71e",
+      "bytes": 10479
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions.value.test.mts",
+      "mode": "100644",
+      "gitBlob": "2e90bca28165b0a2f78fc42b2ad959ca8a5e7034",
+      "sha256": "9ba932f2a000bb13961721c8c7bb3158f6ae42f985c73dbc3efbe4556014fe10",
+      "bytes": 8367
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions.pg.test.mts",
+      "mode": "100644",
+      "gitBlob": "0184707ddcb390dac3eece94b133c8635ea8d88f",
+      "sha256": "1293951448a10edb230d98ae3a4b37efff7c5460412a15edc4ba03ae2dc9235e",
+      "bytes": 13477
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions-wiring.value.test.mts",
+      "mode": "100644",
+      "gitBlob": "8817230dd763df484ecf03ba6285513310b49a33",
+      "sha256": "6f3b6a028533e486b8ab218de84ca4c4a764ed23a9fcdda6edb38abccd22877f",
+      "bytes": 7352
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-subscriptions-wiring.pg.test.mts",
+      "mode": "100644",
+      "gitBlob": "a0248ef6346a6ae4386d8da83dfe2169ec9d7dda",
+      "sha256": "f0c108240b63cb668b8ebf646d42c247ee50f0e947a7953b95b70dad4294a1ba",
+      "bytes": 14354
+    }
+  ],
+  "publicRegistryConnected": true,
+  "approvedPublicCommonSha256": "5e040a2c8d8d9c9465a5d8359a6767c36210826f01b128ee2f19e55638ad8e01",
+  "rootContractPublicSha256": "e7b4917844074bde218c1fa699aea3028cc5d9aed5919d14505e91c5ffbc8948",
+  "historyRrBodyByteUnchanged": true
+}
