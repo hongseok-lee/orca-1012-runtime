@@ -1,0 +1,26 @@
+diff --git a/src/main/durable-runtime/input/cancel-record.ts b/src/main/durable-runtime/input/cancel-record.ts
+index 1daf80f1..6101e454 100644
+--- a/src/main/durable-runtime/input/cancel-record.ts
++++ b/src/main/durable-runtime/input/cancel-record.ts
+@@ -119,7 +119,7 @@ export async function recordCancelIntent(
+   await appendAudit(tx, {
+     actorId: request.authority.principal,
+     sessionId: request.authority.sessionId,
+-    runtimeUnitId: unit,
++    runtimeUnitId: unit ?? undefined,
+     kind: 'CANCEL_INTENT',
+     previousState: { messageState: row.intake_status },
+     nextState: facts,
+diff --git a/src/main/durable-runtime/rpc/structured-history.ts b/src/main/durable-runtime/rpc/structured-history.ts
+index 380ad387..bc942765 100644
+--- a/src/main/durable-runtime/rpc/structured-history.ts
++++ b/src/main/durable-runtime/rpc/structured-history.ts
+@@ -56,7 +56,7 @@ export function createCatalogStructuredHistoryReaderOwner(config: CapturedCatalo
+         !Number.isSafeInteger(value.sequence) || value.sequence < 0) { throw new CatalogReadError('STRUCTURED_HISTORY_UNREADABLE') }
+       cursor = { epoch: value.epoch, sequence: value.sequence }
+     }
+-    const request = captureCatalogParsed({ sessionId: publicSessionId, direction,
++    const request = captureCatalogParsed<AgentSessionHistoryRequest>({ sessionId: publicSessionId, direction,
+       ...(cursor ? { cursor } : {}), ...(typeof wire.limit === 'number' ? { limit: wire.limit } : {}) })
+     const client = await connect().catch(error => { throw safeDatabaseError(error) })
+     const tx = new DurableTransaction(client)

@@ -1,0 +1,32 @@
+{
+  "owned": [],
+  "external": [
+    "src/main/github/project-view/project-view-config.ts(145,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-config.ts(157,11): error TS7022: 'view' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-config.ts(161,54): error TS7006: Parameter 'f' implicitly has an 'any' type.",
+    "src/main/github/project-view/project-view-config.ts(163,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(64,11): error TS7022: 'afterVar' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(65,11): error TS7022: 'query' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(83,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(117,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(129,11): error TS7022: 'afterVar' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(130,11): error TS7022: 'query' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(150,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/github/project-view/project-view-discovery.ts(190,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/ipc/ssh-connect-flow.ts(131,7): error TS7034: Variable 'conn' implicitly has type 'any' in some locations where its type cannot be determined.",
+    "src/main/ipc/ssh-connect-flow.ts(187,5): error TS7005: Variable 'conn' implicitly has an 'any' type.",
+    "src/main/memory/hydrate-local-pty-registry.ts(266,19): error TS2339: Property 'listSessions' does not exist on type 'DaemonPtyAdapter | DaemonPtyRouter | DegradedDaemonPtyProvider'.",
+    "src/main/persistence/tracking-repos/repo-worktree-pruning.ts(112,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Partial<Record<ExecutionHostId, WorkspaceSessionState>>'.",
+    "src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(226,11): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+    "src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(250,47): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+    "src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(265,43): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+    "src/main/runtime/runtime-worktree-lineage-controller.ts(112,13): error TS7022: 'lineage' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+    "src/main/source-control/hosted-review-creation-blocking.ts(70,10): error TS7053: Element implicitly has an 'any' type because expression of type 'NonNullable<HostedReviewCreationBlockedReason>' can't be used to index type '{ auth_required: { ok: false; code: \"auth_required\"; error: string; }; unsupported_provider: { ok: false; code: \"unsupported_provider\"; error: string; }; dirty: { ok: false; code: \"validation\"; error: string; }; ... 6 more ...; base_not_on_remote: { ...; }; }'."
+  ],
+  "unexpected": [],
+  "ownedCount": 0,
+  "externalCount": 21,
+  "wholeExit": 1,
+  "originalTwoDiagnosticsAbsent": true,
+  "originalPR93FailurePreserved": true
+}

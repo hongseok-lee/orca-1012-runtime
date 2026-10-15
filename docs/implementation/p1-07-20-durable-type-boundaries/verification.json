@@ -1,0 +1,97 @@
+{
+  "sourcePin": "cb81f6854f0c0fadb5d98671779266dea41647c3",
+  "base": "110d091538dedea4bfcd2b959e8dbc91c99b51e0",
+  "lint": {
+    "ownedFiles": 2,
+    "exit": 0,
+    "PID": 38527,
+    "startedAt": "2026-10-15T09:44:28.803Z",
+    "endedAt": "2026-10-15T09:44:29.069Z",
+    "rawSHA256": "f5ee8c8c7946889b9a4909b963e9f85a46266d5e6712dd65c9d8ff03c14711c8"
+  },
+  "type": {
+    "strict": true,
+    "entryFiles": [
+      "src/main/durable-runtime/input/cancel-record.ts",
+      "src/main/durable-runtime/rpc/structured-history.ts"
+    ],
+    "supportGlobal": "src/types/build-constants.d.ts",
+    "runs": 1,
+    "wholeExit": 1,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 21,
+    "unexpectedDiagnostics": 0,
+    "targetedOriginalDiagnosticsAbsent": true,
+    "PID": 38539,
+    "nativeChildPID": "미관측",
+    "startedAt": "2026-10-15T09:44:29.072Z",
+    "endedAt": "2026-10-15T09:45:10.329Z",
+    "rawListFilesLogSHA256": "10a8fd41cfdbab3fe1d4f89b7b69bb34b0d48a30a357fc9cf1bb584af37b8c8a",
+    "rawConfigSHA256": "aa565ea9d119f7b326bdfd6db86a1a01528813a751177f63380aff4c5a41caa4",
+    "publicConfigGeneralization": "기존 typeRoots 절대경로만 일반화한 설명용 사본입니다. native TS7 CLI를 사용했고 compiler API를 import하지 않았습니다."
+  },
+  "inputs": {
+    "source": 4724,
+    "externalPaths": 722,
+    "sourceReused": 4722,
+    "sourceMeasured": 2,
+    "fixedGitMismatch": 0,
+    "outside": 0,
+    "PR93SourceDependenciesInPreparation": "source/registry/browser-create-state의 PR93 변경 3개는 별도 stage에서 fixed main bytes로 맞췄습니다. 최종 실제 type readset에서 새로 측정한 입력은 소유 2개입니다. 원 PR93 stage/증거는 바꾸지 않았습니다."
+  },
+  "priorFailure": {
+    "PR": 93,
+    "sourcePin": "cf475953df439ebe7032214965fff12b0414ee44",
+    "wholeExit": 1,
+    "externalDiagnostics": 23,
+    "ownedBrowserFixtureDiagnostics": 2,
+    "rawLogSHA256": "aaa891afcb904bca6d24867fa1f43e7975097a8ec42c3638d3c8ffa7f44aa34c",
+    "unchanged": true,
+    "limit": "이 별도 scoped 실행으로 원 PR93 type 실패나 전체 프로젝트 type 결과를 성공으로 소급하지 않습니다."
+  },
+  "semanticBoundary": {
+    "cancel": "unit가 null일 때 optional AuditTransition 값은 undefined이고 기존 callee의 input.runtimeUnitId ?? null로 같은 SQL NULL을 전달합니다.",
+    "history": "이미 검증한 direction union을 기존 generic에 명시합니다. runtime capture/request/schema/권한/SQL은 바꾸지 않습니다.",
+    "runtimeTests": 0,
+    "PG": 0,
+    "fullBuild": 0,
+    "install": 0,
+    "live": 0
+  },
+  "preparationFailure": {
+    "localWorktree": "--no-checkout 뒤 index가 초기화되지 않아 대상 파일 읽기/add가 실패했고 후속 commit이 빈 tree를 기록했습니다. Push 전에 오류 commit을 별도 ref에 보존하고 이 task branch/index/소유 2파일만 복구했습니다.",
+    "recoveredSourceBaseGuard": "fixed base 대비 M 2개·삭제 파일 0개·비소유 tree 불변·clean을 Root가 확인한 뒤 원격 검증을 시작했습니다.",
+    "otherWorktreeReset": 0,
+    "invalidCommitPushed": false
+  },
+  "cleanup": {
+    "knownPIDs": {
+      "at": "2026-10-15T09:45:54.446Z",
+      "pids": [
+        {
+          "pid": 38513,
+          "state": "Z"
+        },
+        {
+          "pid": 38520,
+          "state": "ABSENT"
+        },
+        {
+          "pid": 38527,
+          "state": "ABSENT"
+        },
+        {
+          "pid": 38539,
+          "state": "ABSENT"
+        },
+        {
+          "pid": 38648,
+          "state": "ABSENT"
+        }
+      ]
+    },
+    "heavy": 0,
+    "scope": "알려진 CLI PID의 종료만 확인했습니다. native compiler 하위 PID 자체는 관측하지 못했습니다."
+  },
+  "usageLimitCreditsStream": "이번 turn에서 usage limit·credits·stream 중단 원오류는 미관측입니다."
+}
