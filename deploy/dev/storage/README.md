@@ -47,6 +47,12 @@ gcloud container clusters create-auto "$CLUSTER_NAME" \
 
 Before creation, successfully list clusters across locations in the designated project and inspect any same-name cluster; never overwrite it. Observe the exact create operation to completion. Obtain credentials into the dedicated private kubeconfig without changing a management context. No existing network, IAM, API, NAT, firewall, or infrastructure Terraform changes are included here.
 
+## 공용 RW와 Agent 실행 보호 범위
+
+Root의 [확정 계약](../../../docs/plans/orca-1012-shared-rw-scope.md)에 따라 공용 문서·인계·산출물 공간은 권한 있는 여러 Agent의 RW를 허용합니다. Agent 홈·provider 상태·보호된 checkout은 alias/symlink/상하위 중첩을 포함한 같은 실제 쓰기 범위의 활성 RW 최대 1개와 여러 RO를 유지합니다. 이를 NFS 전체 writer 하나로 합치지 않습니다.
+
+향후 공용 서버 경로 `/exports/shared/<dataset>`와 Agent mount `/shared`는 보호 범위의 형제로 분리하며, 기존 `/x` 전체를 공용 RW로 노출하거나 PGDATA/WAL·인증/제어 자료를 포함하지 않습니다. 이 문서 변경은 실제 export/디렉터리/Pod/mount를 생성하지 않습니다. 두 Agent의 공용 RW와 공용→보호 범위 우회 거절은 아직 미검증이며, 기존 managed leaf RW/RO 관측을 공용 구현 완료나 old writer fencing/HA 합격으로 확대하지 않습니다.
+
 ## Protected managed namespace and create-only leaves
 
 The NFS template retains `/x (rw,no_root_squash,insecure)` and adds the sibling export `/exports/runtime-domains (rw,root_squash,insecure)` on the same backing SSD filesystem. `/exports`, the managed root, and each dataset parent must be root-owned `0:0/0755`; a leaf alone is `1000:1000/0700`. Managed leaf IDs are independent canonical lowercase UUIDs. An Agent or Session does not acquire a global one-to-one leaf relationship. This source neither moves existing data nor changes existing directory permissions.
