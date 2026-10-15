@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { snapshotOpsActor } from './auth.ts'
-import type { OpsServerScope } from './auth.ts'
+import { snapshotOpsActor } from './actor.ts'
+import type { OpsServerScope } from './actor.ts'
 import type { OpsActor } from './types.ts'
 import { opsId } from './validation.ts'
 

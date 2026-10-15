@@ -1,17 +1,10 @@
 import type { DeviceRegistry } from '../../runtime/device-registry'
 import { fingerprintAuthenticatedPairingCredential } from '../../runtime/rpc/orchestration-mutation-executor'
-import { OpsHttpError } from './errors.ts'
-import { opsId } from './validation.ts'
-import type { OpsActor, OpsHttpConfig } from './types.ts'
-export type OpsServerScope = Readonly<{ datasetName: string; namespaceId: string; workspaceIds: readonly string[] }>
-export function snapshotOpsActor(actor: OpsActor): OpsActor {
-  if (!actor.principalId || !actor.authorizationRef || !actor.datasetName || !actor.namespaceId || !Array.isArray(actor.workspaceIds)) {
-    throw new OpsHttpError(503, 'invalid_authentication_context', 'The server authentication context is unavailable.')
-  }
-  return Object.freeze({ principalId: actor.principalId, authorizationRef: actor.authorizationRef,
-    datasetName: actor.datasetName, namespaceId: actor.namespaceId,
-    workspaceIds: Object.freeze([...new Set(actor.workspaceIds.map(opsId))].sort()) })
-}
+import { snapshotOpsActor } from './actor.ts'
+import type { OpsServerScope } from './actor.ts'
+import type { OpsHttpConfig } from './types.ts'
+export { snapshotOpsActor } from './actor.ts'
+export type { OpsServerScope } from './actor.ts'
 /** Startup passes its existing registry and server-selected namespace, never client identity fields. */
 export function createDeviceRegistryOpsVerifier(
   registry: Pick<DeviceRegistry, 'validateToken'>,
