@@ -55,6 +55,9 @@ function entryIssue(entry: ProjectedAuditEntry, input: ComputeDeletionAuditInput
   if ((entry.operation.first || entry.operation.last) && !entry.audit.statusOk) {
     return 'STATUS_NOT_OK'
   }
+  if (entry.responseShape.errorPresent) {
+    return 'STATUS_NOT_OK'
+  }
   if (entry.operation.first && !firstTargetMatches(entry, input)) {
     return 'IDENTITY_MISMATCH'
   }

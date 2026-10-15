@@ -1,0 +1,56 @@
+{
+  "kind": "OFFLINE_VERIFICATION_REPORT",
+  "pid": 7808,
+  "startedAt": "2026-10-15T09:37:09.583Z",
+  "phase": "OFFLINE_REPORT_COMPLETE",
+  "sourcePin": "d24a0fb32bca98b5cd0ec9bd89ae0495fd4e818b",
+  "htmlSHA256": "31338ea47834388bf6937e9855782f6fd4ce648e12a67ec475903594a993a36c",
+  "productUI": false,
+  "actualKubernetesAPI": false,
+  "authStateLoaded": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "node": "v24.14.1",
+  "capturedAt": "2026-10-15T09:37:09.942Z",
+  "PNGSHA256": "15c5da0d475ef4ec16f89fddd7bb6f0f41e87941492d19a395059e2ae914fcbc",
+  "PNGBytes": 238720,
+  "viewport": {
+    "width": 1280,
+    "height": 1600
+  },
+  "DPR": 1,
+  "networkRequests": 0,
+  "externalRequestsBlocked": true,
+  "exit": 0,
+  "contextClosed": true,
+  "browserClosed": true,
+  "finishedAt": "2026-10-15T09:37:10.192Z",
+  "scope": "기존 원격 Browser 도구로 정적 HTML을 렌더한 실제 오프라인 결과 보고 PNG 1개입니다. 실제 제품 UI나 Cloud API 성공 화면이 아닙니다.",
+  "supervisor": {
+    "supervisorPID": 7801,
+    "childPID": 7808,
+    "startedAt": "2026-10-15T09:37:07.703Z",
+    "finishedAt": "2026-10-15T09:37:10.212Z",
+    "state": "completed",
+    "exitCode": 0,
+    "signal": null
+  },
+  "knownOwnedProcesses": {
+    "at": "2026-10-15T09:38:04.362Z",
+    "pids": [
+      {
+        "pid": 7801,
+        "state": "Z"
+      },
+      {
+        "pid": 7808,
+        "state": "ABSENT"
+      }
+    ]
+  },
+  "helperSHA256": "29c932351c8755e46f6372bc013d4ac176f62bb07eacb429eece28c75876e2a3",
+  "inputSHA256": "aba5e87cf10a76002f35c8631b2f3e90d9813fe44e1b8acc84513abcf012558e",
+  "captureCount": 1,
+  "sourceTestsRepeated": 0,
+  "privateEvidence": "원 HTML·PNG·helper·입력·상태·private stdout·프로세스 종료를 비공개 운영 증거에 보존했습니다."
+}
