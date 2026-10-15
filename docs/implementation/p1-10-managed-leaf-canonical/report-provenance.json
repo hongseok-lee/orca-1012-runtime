@@ -1,0 +1,16 @@
+{
+  "kind": "OFFLINE_VERIFICATION_REPORT_PREPARATION",
+  "sourcePin": "9e097febcb248752a4ce89d0aa197d0621aaf678",
+  "productUI": false,
+  "htmlSha256": "3540913c49231c8a8cee1dd3352afeca192c9bebafb7e3f25b435f5875d960f6",
+  "verificationSha256": "9a7560fc2c0b8ac473c0b8976f095c452431b90a18b4212b17e43a2c33de8aaf",
+  "tapSha256": "e20e8f2d1462fd6df76e0be91a5533d8097f48bf31d19a71de19379db239efe9",
+  "capture": {
+    "status": "NOT_RUN_ROOT_SLOT_PENDING",
+    "count": 0,
+    "png": null
+  },
+  "testsRepeated": 0,
+  "scope": "새 PNG는 아직 촬영하지 않았다. 원 검증 결과의 정적 보고 입력만 준비했다. 실제 physical Verified evidence, namespace pin, SQL writer 및 HA는 미검증이다.",
+  "privateEvidence": "원 config/helper/전체 listFiles/metafile/TAP/PID/exit/cleanup은 비공개 운영 증거에 보존했다."
+}

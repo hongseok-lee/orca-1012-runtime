@@ -1,0 +1,177 @@
+{
+  "sourcePin": "9e097febcb248752a4ce89d0aa197d0621aaf678",
+  "base": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "scope": "합성 raw 관측의 managed leaf 정규화만 검증했다.",
+  "node": "v24.15.0",
+  "tools": {
+    "typescript": "7.0.2",
+    "oxlint": "1.80.0",
+    "esbuild": "0.25.12"
+  },
+  "startedAt": "2026-10-15T11:57:17.192Z",
+  "finishedAt": "2026-10-15T11:57:19.372Z",
+  "supervisorPid": 40124,
+  "exit": 0,
+  "phases": [
+    {
+      "name": "owned-lint",
+      "pid": 40131,
+      "startedAt": "2026-10-15T11:57:17.209Z",
+      "finishedAt": "2026-10-15T11:57:17.751Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "019108eba2dfc87c8375f551bdf6e1c61a8a2c532f2406ab88f8a54f96ad3e20"
+    },
+    {
+      "name": "owned-type",
+      "pid": 40143,
+      "startedAt": "2026-10-15T11:57:17.756Z",
+      "finishedAt": "2026-10-15T11:57:18.884Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "690f6474464d19dd9393d6dc187fb09c8b1804d60e74403b5677ba645f732941"
+    },
+    {
+      "name": "prepare-value",
+      "pid": 40190,
+      "startedAt": "2026-10-15T11:57:18.897Z",
+      "finishedAt": "2026-10-15T11:57:19.092Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "4776e0acc0e6c9868072653c736f06e89428743971429faa8a51d3e4184b5b5c"
+    },
+    {
+      "name": "value",
+      "pid": 40203,
+      "startedAt": "2026-10-15T11:57:19.096Z",
+      "finishedAt": "2026-10-15T11:57:19.372Z",
+      "exit": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "lint": {
+    "ownedFiles": 2,
+    "errors": 0,
+    "warnings": 0,
+    "exit": 0
+  },
+  "type": {
+    "entryFiles": 2,
+    "sourceInputs": 4,
+    "externalInputs": 194,
+    "diagnostics": 0,
+    "exit": 0,
+    "strict": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2023"
+  },
+  "value": {
+    "callbacks": 1,
+    "pass": 1,
+    "skip": 0,
+    "actualPid": 40209,
+    "actualSourceInputs": 4,
+    "fixtureBodyUnchanged": true,
+    "bundleSha256": "6cd116ec855b7848f48b7eaf930635f6301769a9cdb4df8d5de42296b74d986e",
+    "metafileSha256": "89e0734787d80a6039c0817e0426b984e6ae258c4997261a01c391110bd2a32d"
+  },
+  "cleanup": {
+    "at": "2026-10-15T11:57:55.979Z",
+    "phase": "MANAGED_LEAF_FIRST_COMPLETE",
+    "exit": 0,
+    "heavy": 0,
+    "processes": [
+      {
+        "pid": 40124,
+        "state": "Z",
+        "parent": "1",
+        "startTicks": "17734157"
+      },
+      {
+        "pid": 40131,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 40143,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 40190,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 40203,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 40209,
+        "state": "ABSENT"
+      }
+    ]
+  },
+  "rootAcceptance": {
+    "auditItems": 30,
+    "mismatches": 0,
+    "auditSha256Prefix": "1c4425a5",
+    "contractSection": "2026-10-15 12:02 UTC"
+  },
+  "artifacts": {
+    "owned-lint.log": {
+      "bytes": 92,
+      "sha256": "019108eba2dfc87c8375f551bdf6e1c61a8a2c532f2406ab88f8a54f96ad3e20"
+    },
+    "owned-type.log": {
+      "bytes": 26044,
+      "sha256": "690f6474464d19dd9393d6dc187fb09c8b1804d60e74403b5677ba645f732941"
+    },
+    "type-diagnostics.txt": {
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "actual-type-inputs.json": {
+      "bytes": 27895,
+      "sha256": "03b9ee6fb0fd1314f362b463361caa4235b610a5c35299b8c86c633bca985e61"
+    },
+    "prepare-value.log": {
+      "bytes": 87,
+      "sha256": "4776e0acc0e6c9868072653c736f06e89428743971429faa8a51d3e4184b5b5c"
+    },
+    "value.tap": {
+      "bytes": 441,
+      "sha256": "e20e8f2d1462fd6df76e0be91a5533d8097f48bf31d19a71de19379db239efe9"
+    },
+    "value.metafile.json": {
+      "bytes": 2647,
+      "sha256": "89e0734787d80a6039c0817e0426b984e6ae258c4997261a01c391110bd2a32d"
+    },
+    "value.actual-inputs.json": {
+      "bytes": 1068,
+      "sha256": "8bbd38534e044edc77320a8be31338d8f68a6c892c4e28d4cd898b8ac2724712"
+    },
+    "value-entries.jsonl": {
+      "bytes": 635,
+      "sha256": "281e562ebef76a7c3a0e52b9c84cf331e8b2c6a47a145a516769116dabe93db4"
+    },
+    "run-state.json": {
+      "bytes": 3227,
+      "sha256": "d042a5ec198d822407f7eea7a1fac3b3e71d329aafe6636ee39f5b2166ae16aa"
+    },
+    "known-children.json": {
+      "bytes": 519,
+      "sha256": "cc2062fe2072de00cb7e13cdafb65249e8bfde050db183c1e0ec8893f2c41712"
+    }
+  },
+  "notExecuted": [
+    "기존 parser suite",
+    "PG",
+    "NFS",
+    "live 제품 변경",
+    "설치",
+    "전체 build",
+    "UI",
+    "PNG"
+  ],
+  "limits": "Raw normalization/합성 입력만 검증했다. 실제 directory 수집·인증·namespace pin·Verified evidence·SQL writer/HA는 미검증이다."
+}
