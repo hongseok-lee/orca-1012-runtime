@@ -23,6 +23,17 @@ CREATE TRIGGER runtime_member_primary_storage_binding AFTER INSERT ON runtime_me
 CREATE TRIGGER retain_runtime_member_storage_bindings BEFORE UPDATE OR DELETE ON runtime_member_storage_bindings
   FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
 
+CREATE FUNCTION keep_runtime_member_primary_storage_binding() RETURNS trigger LANGUAGE plpgsql
+SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
+BEGIN
+  IF NEW.storage_binding_id IS DISTINCT FROM OLD.storage_binding_id THEN
+    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Primary storage binding is immutable';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER runtime_member_primary_storage_binding_guard BEFORE UPDATE OF storage_binding_id ON runtime_members
+  FOR EACH ROW EXECUTE FUNCTION keep_runtime_member_primary_storage_binding();
+
 -- Preserve 007's domain write gate, post-gate epoch read, immutable grants and
 -- parent/child conflict checks; membership now includes every attached binding.
 CREATE OR REPLACE FUNCTION guard_storage_writer() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
