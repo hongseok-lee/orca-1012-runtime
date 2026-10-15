@@ -1,0 +1,280 @@
+{
+  "validatedSourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+  "firstFailurePin": "cf475953df439ebe7032214965fff12b0414ee44",
+  "sourceChangesAfterRootReview": "두 fixture의 synthetic emit 2행만 기존 end/subscriptionId 형식으로 교정했습니다. 제품/SQL/auth/assertion bytes는 불변입니다.",
+  "rootAcceptedCorrectionDiffSHA256": "e674e154c3d64c2a85f68078535a90590120533de42724f2ce5cd9b11f0f82b1",
+  "appliedGitDiffSHA256": "fc8366b361b0ed3b53c85c3aa08725a31de29b1d64bd4b90faf9db3bd3e0581a",
+  "originalFailure": {
+    "ownedProductDiagnostics": 0,
+    "ownedFixtureDiagnostics": 2,
+    "externalDiagnostics": 23,
+    "wholeTypeExit": 1,
+    "code": "TS2322",
+    "cause": "두 fixture가 기존 BrowserScreencastResult union에 없는 synthetic-stream-frame 이벤트를 사용했습니다.",
+    "valueAndPGEntered": false,
+    "automaticRetry": 0
+  },
+  "lint": {
+    "firstChangedFiles": 7,
+    "firstExit": 0,
+    "correctionChangedFiles": 2,
+    "correctionExit": 0,
+    "successfulLint7Repeated": 0
+  },
+  "scopedType": {
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 23,
+    "wholeExit": 1,
+    "wholePass": false,
+    "baselineClaim": false,
+    "actualInputs": 4780,
+    "reusedPriorGuard": 4778,
+    "newOrChangedMeasured": 2,
+    "outside": [],
+    "mismatches": [],
+    "rawLogSHA256": "e598c416c45a6ba0a58070aec98ebdd65961de4fe0996a9f9bc4151069a8205e",
+    "manifestSHA256": "2a2ea2f48aa81b0c99d34a324d68a2e4948e219c2ee1920171a1aa1b4806bf11",
+    "actualInputsMeaning": "node_modules를 제외한 실제 전이 source 입력입니다.",
+    "sourceInputsExcludingNodeModules": 4780,
+    "separateExternalNodeModulesListFiles": 722,
+    "totalObservedListFiles": 5502,
+    "outsideMeaning": "node_modules를 제외한 source 경로가 승인 stage 밖으로 벗어난 경우만 outside로 분류합니다. 외부 node_modules 722개와 별개입니다."
+  },
+  "newValue": {
+    "productParentCallbacks": 1,
+    "subcases": 9,
+    "TAPTests": 10,
+    "TAPPass": 10,
+    "exit": 0,
+    "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/value.tap",
+    "sha256": "fa1aaa74ee36e2598026a4ae25bd21fe5070085d5bfad2fff61a393ef4b2f7d1",
+    "actualFixtureProcess": [
+      {
+        "phase": "ACTUAL_FIXTURE_PROCESS",
+        "pid": 38403,
+        "at": "2026-10-15T09:33:45.901Z"
+      }
+    ],
+    "actualInputs": 380,
+    "mismatches": [],
+    "bundleSHA256": "ad46ea5cc7bcdb330c46e5c1e47259bcaeb990edcaf84aff9e0852f0691971cb",
+    "metafileSHA256": "6829a4d5df516e912d276141ca108931ab44ca18533269246dd69a1ec610dd6e",
+    "TAPSummary": [
+      "# tests 10",
+      "# pass 10",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# todo 0"
+    ]
+  },
+  "newPG": {
+    "callbacks": 1,
+    "TAPTests": 1,
+    "TAPPass": 1,
+    "exit": 0,
+    "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/pg.tap",
+    "sha256": "cc3e83ca9c137ad50100ca87b8ef81d3c07ecf05f34abbbcd3b83fbb795911e8",
+    "actualFixtureProcess": [
+      {
+        "phase": "ACTUAL_FIXTURE_PROCESS",
+        "pid": 38421,
+        "at": "2026-10-15T09:33:49.550Z"
+      }
+    ],
+    "actualInputs": 1653,
+    "mismatches": [],
+    "bundleSHA256": "042ab8d9b7c0ba30d481e917fbde296fc02e950dffd3e9ee1cb0e531d303de26",
+    "metafileSHA256": "339783432d06a5f21e44358c3346773da781e97894af1dd029edca6aafe329e3",
+    "TAPSummary": [
+      "# tests 1",
+      "# pass 1",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# todo 0"
+    ]
+  },
+  "PGPreservation": {
+    "identityBefore": {
+      "database": "orca_public_browser_20261014",
+      "oid": "86613",
+      "system_identifier": "7696101282789175327",
+      "dataset": "orca-1012-dev-v1",
+      "backend_pid": 275897,
+      "utc": "2026-10-15T09:33:49.220Z"
+    },
+    "identityAfter": {
+      "database": "orca_public_browser_20261014",
+      "oid": "86613",
+      "system_identifier": "7696101282789175327",
+      "dataset": "orca-1012-dev-v1",
+      "backend_pid": 275900,
+      "utc": "2026-10-15T09:33:50.817Z"
+    },
+    "ledger19ChecksumAppliedAtUnchanged": true,
+    "originalTables": 15,
+    "originalRows": 45,
+    "afterRowsIncludingNewFixtureSetup": 52,
+    "originalRowsPreserved": true,
+    "rowCounts": {
+      "agents": {
+        "before": 0,
+        "after": 0
+      },
+      "workspaces": {
+        "before": 3,
+        "after": 4
+      },
+      "sessions": {
+        "before": 0,
+        "after": 0
+      },
+      "runtime_units": {
+        "before": 0,
+        "after": 0
+      },
+      "operations": {
+        "before": 0,
+        "after": 0
+      },
+      "attempts": {
+        "before": 0,
+        "after": 0
+      },
+      "execution_grants": {
+        "before": 0,
+        "after": 0
+      },
+      "storage_bindings": {
+        "before": 0,
+        "after": 0
+      },
+      "storage_write_grants": {
+        "before": 0,
+        "after": 0
+      },
+      "storage_mounts": {
+        "before": 0,
+        "after": 0
+      },
+      "catalog_project_groups": {
+        "before": 3,
+        "after": 4
+      },
+      "catalog_workspace_metadata": {
+        "before": 3,
+        "after": 4
+      },
+      "tabs": {
+        "before": 10,
+        "after": 12
+      },
+      "catalog_tab_metadata": {
+        "before": 10,
+        "after": 12
+      },
+      "rpc_receipts": {
+        "before": 16,
+        "after": 16
+      }
+    },
+    "setupAfterRecoveryStreamNegativeSnapshotEqual": true,
+    "schemaApplied": 0,
+    "resetDelete": 0
+  },
+  "runtimeGuard": {
+    "metafilesSavedBeforeGuard": true,
+    "PGAndZodExternal": true,
+    "allActualRuntimeInputsComparedToFixedGit": true,
+    "mismatches": 0
+  },
+  "runtimeScope": "기존 실제 Browser registry/process와 원 dispatcher/adapter/handler에 명시적 synthetic native/CDP/stream doubles를 사용했습니다. PG는 실제 격리 DB입니다.",
+  "cleanup": {
+    "controlPID": 38222,
+    "finishedAt": "2026-10-15T09:33:50.838Z",
+    "knownPids": [
+      {
+        "pid": 38222,
+        "state": "Z",
+        "exitCodeRaw": "0\n"
+      },
+      {
+        "pid": 38229,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38236,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38248,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38363,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38370,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38377,
+        "state": "Z",
+        "exitCodeRaw": "0\n"
+      },
+      {
+        "pid": 38383,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38390,
+        "state": "Z",
+        "exitCodeRaw": "0\n"
+      },
+      {
+        "pid": 38397,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38403,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38415,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 38421,
+        "state": "ABSENT"
+      }
+    ],
+    "activeHeavy": 0,
+    "knownProcessObservationLimit": "control·직접 관측 자식·실제 fixture PID 범위입니다."
+  },
+  "repetitions": {
+    "PR91SuccessSuite": 0,
+    "install": 0,
+    "fullBuild": 0,
+    "liveSync": 0,
+    "serviceRestart": 0,
+    "MetroRestart": 0,
+    "Chrome": 0,
+    "PNG": 0
+  },
+  "limitations": [
+    "Native/CDP/stream은 명시적 synthetic doubles이며 실제 Chrome·native iPhone 증거가 아닙니다.",
+    "실제 backend source sync·같은 Expo 탭 재연결·한글 glyph·상세 가독성은 아직 미실행입니다.",
+    "살아 있는 page의 auth-only transport 복구·원 history/state·HA 전체 완료를 주장하지 않습니다.",
+    "known process 종료 대조는 이 control·직접 관측 자식과 TAP 실제 fixture PID 범위입니다."
+  ],
+  "usageCreditsStream": "이번 turn에서 usage limit/credits/stream 원오류는 미관측입니다.",
+  "privacy": "Credential/Authorization/auth state/전체 network body/PG 원행/운영 절대경로를 게시하지 않습니다.",
+  "rootAcceptance": {
+    "sourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+    "rawAuditChecksMatched": 45,
+    "newValueAndPGAccepted": true,
+    "actualUIRecoveryAccepted": false
+  }
+}

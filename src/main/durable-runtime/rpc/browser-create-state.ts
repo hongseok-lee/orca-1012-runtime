@@ -35,7 +35,7 @@ export function validateCatalogBrowserRequest(input: unknown) {
 
 /** Authenticated resolver/PG data, including tombstones; never a request authority cast. */
 export async function readCatalogBrowserState(
-  config: CapturedCatalogReadConfig, call: PreparedCatalogCall<'browser.tabCreate'>,
+  config: CapturedCatalogReadConfig, call: Pick<PreparedCatalogCall<'browser.tabCreate'>, 'context'>,
   selector: string, page?: string
 ): Promise<{ workspace: CatalogWorkspace; tab?: CatalogTab }> {
   config.assertCurrentHost()

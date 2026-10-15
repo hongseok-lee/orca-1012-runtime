@@ -1,4 +1,5 @@
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
+import { createCatalogBrowserStreamRecovery } from './browser-stream-recovery.ts'
 import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
 import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
@@ -8,7 +9,7 @@ import { createCatalogStructuredCancelRpc } from './structured-cancel.ts'
 import { createCatalogStructuredHolds } from './structured-holds.ts'
 import { createCatalogCreationFacade, createCatalogRpc } from './creation.ts'
 import type { CatalogCreationMethod } from './launch-preparation.ts'
-import type { RpcContext, RpcAnyMethodDeclaration } from '../../runtime/rpc/core.ts'
+import type { RpcContext, RpcAnyMethodDeclaration, RpcStreamingMethodDeclaration } from '../../runtime/rpc/core.ts'
 import type { CatalogMethod } from '../catalog/wire.ts'
 import { captureDurableCatalogReadConfig, catalogReadFailure, CatalogReadError } from './config.ts'
 import type { DurableCatalogReadConfig, CapturedCatalogReadConfig } from './config.ts'
@@ -26,6 +27,7 @@ export class DurableCatalogReadAdapter {
   private readonly structuredHistory: ReturnType<typeof createCatalogStructuredHistoryRpc>
   private readonly structuredSubscriptions: ReturnType<typeof createCatalogStructuredSubscriptions>
   private readonly browserCreate: ReturnType<typeof createCatalogBrowserCreateRpc>
+  private readonly browserStream: ReturnType<typeof createCatalogBrowserStreamRecovery>
   private readonly structuredSend: ReturnType<typeof createCatalogStructuredSendRpc>
   private readonly structuredCancel: ReturnType<typeof createCatalogStructuredCancelRpc>
   private readonly structuredHolds: ReturnType<typeof createCatalogStructuredHolds>
@@ -41,6 +43,7 @@ export class DurableCatalogReadAdapter {
     this.structuredHistory = createCatalogStructuredHistoryRpc(this.config)
     this.structuredSubscriptions = createCatalogStructuredSubscriptions(this.config)
     this.browserCreate = createCatalogBrowserCreateRpc(this.config)
+    this.browserStream = createCatalogBrowserStreamRecovery(this.config, () => this.requireOpen())
     this.structuredSend = createCatalogStructuredSendRpc(this.config)
     this.structuredCancel = createCatalogStructuredCancelRpc(this.config)
     this.structuredHolds = createCatalogStructuredHolds(this.config)
@@ -110,6 +113,11 @@ export class DurableCatalogReadAdapter {
     try { this.requireOpen(); return await this.browserCreate(params, context) }
     catch (error) { throw catalogReadFailure(error) }
   }
+  async streamBrowser(params: unknown, context: RpcContext, emit: (frame: unknown) => void,
+    original: RpcStreamingMethodDeclaration['handler']): Promise<void> {
+    this.requireOpen()
+    await this.browserStream.subscribe(params, context, emit, original)
+  }
   async subscribeStructured(params: unknown, context: RpcContext, emit: (frame: unknown) => void): Promise<void> {
     try { this.requireOpen(); await this.structuredSubscriptions.subscribe(params, context, emit) }
     catch (error) { throw catalogReadFailure(error) }
@@ -122,6 +130,7 @@ export class DurableCatalogReadAdapter {
   dispose(): void {
     if (this.disposed) { return }
     this.disposed = true
+    this.browserStream.dispose()
     try { this.subscriptions.dispose() } finally {
       try { this.structuredSubscriptions.dispose() } finally { this.structuredHolds.dispose() }
     }

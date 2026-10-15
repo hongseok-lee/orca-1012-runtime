@@ -1,0 +1,75 @@
+{
+  "capturedAt": "2026-10-15T10:17:11.424Z",
+  "routePattern": "/h/:paired-host/session/:worktree",
+  "queryKeys": [
+    "name"
+  ],
+  "rawExpoURLRecorded": false,
+  "validatedProductSourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+  "liveCompositeSourcePin": "b2e344cc24973a55c2c062fe345a33851f790c5b",
+  "appliedManifestSHA256": "2ed22632b854b80e3d0c5c4b63c63a9a20f09bed42ad607a6d4c33e62d790d22",
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "clientFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+  "clientFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "opsURL": "http://127.0.0.1:16768/ops/",
+  "observedBrowserPageId": null,
+  "targetPublicBrowserPageId": "842c7768-d0d9-4466-8313-129aae49edf2",
+  "targetPageIdSource": "Root PG read-only correlation",
+  "phoneClicks": 1,
+  "phoneModeObservations": [
+    {
+      "phase": "before",
+      "at": "2026-10-15T10:17:10.193Z",
+      "selected": null,
+      "ariaDisabled": null,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "phase": "after",
+      "at": "2026-10-15T10:17:10.282Z",
+      "selected": null,
+      "ariaDisabled": null,
+      "enabled": true,
+      "visible": true
+    }
+  ],
+  "freshViewer": {
+    "at": "2026-10-15T10:17:03.447Z",
+    "newBrowser": true,
+    "newContext": true,
+    "newPage": true,
+    "browserContextCount": 1,
+    "contextPageCount": 1,
+    "previousViewerPageReused": false,
+    "moduleFrameCache": "module-local Map; not restored from storageState",
+    "freshnessBasis": "Root source review plus this new browser/context/page first visible frame",
+    "encryptedPayloadDecoded": false,
+    "webSocketCountsProvePageIdentity": false
+  },
+  "firstVisibleFrameObservedAt": "2026-10-15T10:17:10.119Z",
+  "sameVisibleFrameHashAfterPhone": false,
+  "frameHashChangeRequired": false,
+  "artifactSHA256": "564f876611b40102080d4a950b0b54645fa0b067bbe865829cb395b6bc53f98c",
+  "artifactBytes": 113795,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuthQualified": false,
+  "rootImageReviewPending": true,
+  "failureEvidence": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "rawProvenanceSHA256": "3b2a16b53c545aab883d992d188020ba37c2b372f0ddb2446656ad45db230d37",
+  "rootVisualReview": {
+    "result": "Root가 원 이미지를 직접 보고 한글·모바일 가독성·Unit 1을 수락했습니다.",
+    "separateFromOriginalFlags": true
+  }
+}

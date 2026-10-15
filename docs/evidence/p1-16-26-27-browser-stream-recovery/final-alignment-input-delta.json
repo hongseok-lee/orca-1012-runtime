@@ -1,0 +1,199 @@
+{
+  "validatedSource": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+  "previousBase": "110d091538dedea4bfcd2b959e8dbc91c99b51e0",
+  "previousPublishedHead": "370c9c29608c60cd75bacad2d350aa945dcd7f09",
+  "targetBase": "cced8008f57b9901c3570894bda3009be606d94f",
+  "oneAlignmentAuthorized": true,
+  "ownedFiles": [
+    {
+      "path": "src/main/durable-runtime/rpc/browser-create-state.ts",
+      "mode": "100644",
+      "blob": "6fabc1efe7bf013be157d43d6e6cae7bb9d1d6ab",
+      "sha256": "75adb35661a9c6f0c353867cbfb32524322349763441ee2720061952c86b73a2",
+      "bytes": 6360,
+      "matchesValidatedSource": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-stream-recovery-fixtures.ts",
+      "mode": "100644",
+      "blob": "e82c829c743719fe97c6a16fe07614ea0beb0d86",
+      "sha256": "1698771d767f6ad94b2e7d5b425c1a870d758cbcd0a653f7101705fb5d9933d3",
+      "bytes": 6636,
+      "matchesValidatedSource": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-stream-recovery.pg.test.mts",
+      "mode": "100644",
+      "blob": "c941a4a6929c6938f7c9ed7fdc377c75eff74b3a",
+      "sha256": "0325757feee3a4255c8b5f7beedca499e0b3f2a14099ea94a45ab3c8a03cb041",
+      "bytes": 8964,
+      "matchesValidatedSource": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-stream-recovery.ts",
+      "mode": "100644",
+      "blob": "6a71215ced0e0433d992e175081531b69a56e29d",
+      "sha256": "38189dcab94eba1c0542be13a69b0024275a0802744ea5fb1cbf77f4da13ebbb",
+      "bytes": 7749,
+      "matchesValidatedSource": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-stream-recovery.value.test.mts",
+      "mode": "100644",
+      "blob": "b301352141b67a1e88218588ccfddf8d718a61ab",
+      "sha256": "a1a2a34df963d0ba941d971d495f8cdbcc52d9ba15cd5545a6b86c944930bf83",
+      "bytes": 15142,
+      "matchesValidatedSource": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/public.ts",
+      "mode": "100644",
+      "blob": "4466e64c567ba30bb95b560e75006eb2b31cea44",
+      "sha256": "639e6d8cc294befd4c9348f65cb48d889d09eeb38fb3380edd2653a452dcbf69",
+      "bytes": 8469,
+      "matchesValidatedSource": true
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/registry.ts",
+      "mode": "100644",
+      "blob": "180eba97d802532c54b8456040c4903534f0b8a3",
+      "sha256": "526164d43a1c265a87d2688106a2657f2800f878dbaf7b333c148e94f313c5f8",
+      "bytes": 6857,
+      "matchesValidatedSource": true
+    }
+  ],
+  "productCount": 4,
+  "fixtureCount": 3,
+  "incomingSourcePaths": [
+    "src/main/durable-runtime/input/cancel-record.ts",
+    "src/main/durable-runtime/rpc/structured-history.ts",
+    "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+    "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence-budget.ts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence-fixtures.mts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence-input.ts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence-reader.ts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence-types.ts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence.pg.test.mjs",
+    "src/main/durable-runtime/runtime/compute-stop-evidence.ts",
+    "src/main/durable-runtime/runtime/compute-stop-evidence.value.test.mts"
+  ],
+  "actualInputComparisons": [
+    {
+      "phase": "value",
+      "validatedActualInputCount": 380,
+      "originalManifestSHA256": "c118df1d5397bd1cf22bff3a72ca0805ff8b649b5fdd1d25d6e9ce5339ec7466",
+      "incomingChangedActualInputs": [
+        {
+          "path": "src/main/durable-runtime/input/cancel-record.ts",
+          "actualInput": true,
+          "incomingModeAndBlob": "100644 blob 6101e45494b6b1ddee2c11f668517a83677e855e\tsrc/main/durable-runtime/input/cancel-record.ts",
+          "validatedBlob": "1daf80f192547c518bbcfaedac44d6ee1a89c055",
+          "validatedSHA256": "78aefb7bb20d4e83c2e93232b6632d65a59747c53d736b7cee0ca1d491cf6e7e",
+          "incomingSHA256": "de440d4cbf4d2241f2f0135c4cbf678102add3fc805b302d32824d4f6d7e3827",
+          "bytesDiffer": true
+        },
+        {
+          "path": "src/main/durable-runtime/rpc/structured-history.ts",
+          "actualInput": true,
+          "incomingModeAndBlob": "100644 blob bc942765a08938189ceb75ce0a47ba7e1d4b599a\tsrc/main/durable-runtime/rpc/structured-history.ts",
+          "validatedBlob": "380ad387f87589b7e58b84bf1475f68815b403c5",
+          "validatedSHA256": "34b7476c69e40f85b726c06222014241f8cc0a208782b7ab24815ae27ebf3add",
+          "incomingSHA256": "da85de8337d881d7312faad065bec11f6b92db4b06021ff1a5087320737e9e31",
+          "bytesDiffer": true
+        }
+      ],
+      "incomingChangedPathsNotInOriginalInputList": [
+        "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+        "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-budget.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-fixtures.mts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-input.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-reader.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-types.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.pg.test.mjs",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.value.test.mts"
+      ],
+      "newClosureCollected": false
+    },
+    {
+      "phase": "PG",
+      "validatedActualInputCount": 1653,
+      "originalManifestSHA256": "dfad47e334d99690c9a5fd4e45b51859cd46cb881228c91d83997e672a72a3bd",
+      "incomingChangedActualInputs": [
+        {
+          "path": "src/main/durable-runtime/input/cancel-record.ts",
+          "actualInput": true,
+          "incomingModeAndBlob": "100644 blob 6101e45494b6b1ddee2c11f668517a83677e855e\tsrc/main/durable-runtime/input/cancel-record.ts",
+          "validatedBlob": "1daf80f192547c518bbcfaedac44d6ee1a89c055",
+          "validatedSHA256": "78aefb7bb20d4e83c2e93232b6632d65a59747c53d736b7cee0ca1d491cf6e7e",
+          "incomingSHA256": "de440d4cbf4d2241f2f0135c4cbf678102add3fc805b302d32824d4f6d7e3827",
+          "bytesDiffer": true
+        },
+        {
+          "path": "src/main/durable-runtime/rpc/structured-history.ts",
+          "actualInput": true,
+          "incomingModeAndBlob": "100644 blob bc942765a08938189ceb75ce0a47ba7e1d4b599a\tsrc/main/durable-runtime/rpc/structured-history.ts",
+          "validatedBlob": "380ad387f87589b7e58b84bf1475f68815b403c5",
+          "validatedSHA256": "34b7476c69e40f85b726c06222014241f8cc0a208782b7ab24815ae27ebf3add",
+          "incomingSHA256": "da85de8337d881d7312faad065bec11f6b92db4b06021ff1a5087320737e9e31",
+          "bytesDiffer": true
+        }
+      ],
+      "incomingChangedPathsNotInOriginalInputList": [
+        "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+        "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-budget.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-fixtures.mts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-input.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-reader.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-types.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.pg.test.mjs",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.value.test.mts"
+      ],
+      "newClosureCollected": false
+    },
+    {
+      "phase": "type-source",
+      "validatedActualInputCount": 4780,
+      "originalManifestSHA256": "2a2ea2f48aa81b0c99d34a324d68a2e4948e219c2ee1920171a1aa1b4806bf11",
+      "incomingChangedActualInputs": [
+        {
+          "path": "src/main/durable-runtime/input/cancel-record.ts",
+          "actualInput": true,
+          "incomingModeAndBlob": "100644 blob 6101e45494b6b1ddee2c11f668517a83677e855e\tsrc/main/durable-runtime/input/cancel-record.ts",
+          "validatedBlob": "1daf80f192547c518bbcfaedac44d6ee1a89c055",
+          "validatedSHA256": "78aefb7bb20d4e83c2e93232b6632d65a59747c53d736b7cee0ca1d491cf6e7e",
+          "incomingSHA256": "de440d4cbf4d2241f2f0135c4cbf678102add3fc805b302d32824d4f6d7e3827",
+          "bytesDiffer": true
+        },
+        {
+          "path": "src/main/durable-runtime/rpc/structured-history.ts",
+          "actualInput": true,
+          "incomingModeAndBlob": "100644 blob bc942765a08938189ceb75ce0a47ba7e1d4b599a\tsrc/main/durable-runtime/rpc/structured-history.ts",
+          "validatedBlob": "380ad387f87589b7e58b84bf1475f68815b403c5",
+          "validatedSHA256": "34b7476c69e40f85b726c06222014241f8cc0a208782b7ab24815ae27ebf3add",
+          "incomingSHA256": "da85de8337d881d7312faad065bec11f6b92db4b06021ff1a5087320737e9e31",
+          "bytesDiffer": true
+        }
+      ],
+      "incomingChangedPathsNotInOriginalInputList": [
+        "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+        "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-budget.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-fixtures.mts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-input.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-reader.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence-types.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.pg.test.mjs",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.ts",
+        "src/main/durable-runtime/runtime/compute-stop-evidence.value.test.mts"
+      ],
+      "newClosureCollected": false
+    }
+  ],
+  "verificationLimit": "기존 actual 입력목록과 incoming 변경 경로를 대조했습니다. 새 closure·type·값·PG를 실행하지 않았으며 변경된 외부 입력을 원 검증과 동일하다고 보고하지 않습니다.",
+  "newValidationRuns": 0
+}
