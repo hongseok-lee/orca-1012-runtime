@@ -56,7 +56,7 @@ test('production URL/method/TLS are fixed; config, input and suppliers are snaps
 test('token rejection and invalid token become stable AUTH_FAILED without raw errors', async () => {
   for (const supplier of [
     async () => { throw new Error(privateSentinel) },
-    async () => 'invalid\r\n' + privateSentinel
+    async () => `invalid\r\n${privateSentinel}`
   ]) {
     const wire = auditWire()
     const client = createComputeDeletionAuditClient({

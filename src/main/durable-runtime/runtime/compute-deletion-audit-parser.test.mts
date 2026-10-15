@@ -104,8 +104,8 @@ test('project ID, project number, VM identity and resource labels are independen
 
 test('canonical Compute origin/path is required; no query, fragment, userinfo or lookalike host', () => {
   for (const transform of [
-    (s: string) => s + '?credential=' + privateSentinel,
-    (s: string) => s + '#fragment',
+    (s: string) => `${s}?credential=${privateSentinel}`,
+    (s: string) => `${s}#fragment`,
     (s: string) => s.replace('www.googleapis.com', 'www.googleapis.com.invalid'),
     (s: string) => s.replace('https://', 'https://user@'),
     (s: string) => s.replace('audit-fixture-project', '123456789012'),
