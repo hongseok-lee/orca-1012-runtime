@@ -50,7 +50,10 @@ export function compositionDoubles(control: { pod?: PodCall; creation?: Creation
     calls.push({ kind: 'creation', input, signal })
     return control.creation ? control.creation(input, signal) : compositionCreation(input)
   } }
-  const configuration = { ...compositionScope, timeoutMs: 1000, podAuthenticator: pod, creationObserver: creation }
+  const configuration: { -readonly [K in keyof ExecutionTargetCompositionConfiguration]:
+    ExecutionTargetCompositionConfiguration[K] } = {
+    ...compositionScope, timeoutMs: 1000, podAuthenticator: pod, creationObserver: creation
+  }
   return { configuration, calls, pod, creation }
 }
 
