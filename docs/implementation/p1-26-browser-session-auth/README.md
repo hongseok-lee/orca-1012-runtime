@@ -26,6 +26,10 @@ Root의 05:04 의존성 조정에 따라 기존 `snapshotOpsActor`와 `OpsServer
 
 ## 미연결 경계와 화면
 
-실제 RPC 인증, Catalog PG 예약, CDP interceptor, HTTP verifier, Ops UI 자동 접속 및 HA 보존은 미구현·미검증입니다. 이 모듈의 value 통과는 그 연결이나 제품/native UI 합격이 아닙니다. PG/live/API/Browser 실행은 0이며 기존 전체 auth/HTTP suite도 반복하지 않았습니다.
+실제 RPC 인증, Catalog PG 예약, CDP interceptor, HTTP verifier, Ops UI 자동 접속 및 HA 보존은 미구현·미검증입니다. 이 모듈의 value 통과는 그 연결이나 제품/native UI 합격이 아닙니다. PG/live/API/실제 Browser 접속 실행은 0이며 기존 전체 auth/HTTP suite도 반복하지 않았습니다.
 
-보고 PNG는 Root의 별도 browser 슬롯 배분 전 작성하지 않았습니다. 기존 실제 화면을 이 기능의 성공 화면으로 표시하지 않습니다. 이번 turn에서 usage limit·credits·stream 중단은 미관측이며 소유 child 종료와 heavy 반환을 기록했습니다. 최종 범위·수락·merge는 Root가 담당합니다.
+Root의 별도 browser 슬롯 배분 뒤 원격 Playwright의 새 offline context에서 value 결과 보고 PNG를 한 번 캡처했습니다. 보고 프로세스 PID는 6112이며 2026-10-15 05:20:00.534–05:20:02.781 UTC, exit 0입니다. 이 PNG는 원 Node TAP을 요약한 오프라인 보고이고 실제 Ops 인증/API·제품 UI·native iPhone 캡처가 아닙니다. 실제 앱이나 auth state를 열지 않았고 원 bearer·credential·운영 경로를 넣지 않았습니다.
+
+![실제 독립 value 결과의 오프라인 보고이며 제품 UI가 아닙니다.](value-result-report.png)
+
+[캡처 provenance](value-result-report-provenance.json)에 원 TAP/검증 source/HTML/PNG hash를 연결했습니다. 기존 실제 화면을 이 기능의 성공 화면으로 표시하거나 반복 촬영하지 않았습니다. 이번 turn에서 usage limit·credits·stream 중단은 미관측이며 소유 child 종료와 heavy 반환을 기록했습니다. 최종 범위·수락·merge는 Root가 담당합니다.

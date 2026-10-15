@@ -131,7 +131,18 @@
   "knownChildProcessesEnded": true,
   "PG": false,
   "liveAPI": false,
-  "Browser": false,
-  "reportPNG": "Root의 별도 슬롯 배분 대기이며 아직 작성하지 않았습니다.",
-  "usageCreditsStream": "이번 turn에서 usage limit·credits·stream 중단은 미관측입니다."
+  "reportPNG": {
+    "kind": "ISOLATED_OPS_PAGE_SESSION_VALUE_RESULT_REPORT",
+    "file": "value-result-report.png",
+    "provenance": "value-result-report-provenance.json",
+    "pid": 6112,
+    "startedAt": "2026-10-15T05:20:00.534Z",
+    "capturedAt": "2026-10-15T05:20:02.781Z",
+    "screenshotSHA256": "bbaf8e3fb0c4098976c56bc2e00a117f68db28fd77be6259d078f7aa99540e00",
+    "productUICaptured": false,
+    "liveAppOpened": false,
+    "nativeIPhone": false
+  },
+  "usageCreditsStream": "이번 turn에서 usage limit·credits·stream 중단은 미관측입니다.",
+  "liveBrowser": false
 }

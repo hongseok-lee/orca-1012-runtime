@@ -1,0 +1,20 @@
+{
+  "kind": "ISOLATED_OPS_PAGE_SESSION_VALUE_RESULT_REPORT",
+  "sourcePin": "f6033c1f752a0295b3955d439243895fca43ad4a",
+  "rawTAPSHA256": "eca02daeb55af75cdbfd5bbd958e564f0653415a0065628c88b0fa836e8815f1",
+  "startedAt": "2026-10-15T05:20:00.534Z",
+  "capturedAt": "2026-10-15T05:20:02.781Z",
+  "pid": 6112,
+  "viewport": {
+    "width": 1200,
+    "height": 1100
+  },
+  "deviceScaleFactor": 1,
+  "productUICaptured": false,
+  "nativeIPhone": false,
+  "liveAppOpened": false,
+  "rawCredentialOrOperatorPathIncluded": false,
+  "screenshotSHA256": "bbaf8e3fb0c4098976c56bc2e00a117f68db28fd77be6259d078f7aa99540e00",
+  "screenshotBytes": 182353,
+  "reportHTMLSHA256": "16b20f8c614b1b448959f0d21f7095f6b2ff4ddb544cfea6b3c73f9bb08608d4"
+}
