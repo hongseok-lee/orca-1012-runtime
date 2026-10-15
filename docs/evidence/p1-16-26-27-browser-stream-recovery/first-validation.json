@@ -33,7 +33,12 @@
     "outside": [],
     "mismatches": [],
     "rawLogSHA256": "e598c416c45a6ba0a58070aec98ebdd65961de4fe0996a9f9bc4151069a8205e",
-    "manifestSHA256": "2a2ea2f48aa81b0c99d34a324d68a2e4948e219c2ee1920171a1aa1b4806bf11"
+    "manifestSHA256": "2a2ea2f48aa81b0c99d34a324d68a2e4948e219c2ee1920171a1aa1b4806bf11",
+    "actualInputsMeaning": "node_modules를 제외한 실제 전이 source 입력입니다.",
+    "sourceInputsExcludingNodeModules": 4780,
+    "separateExternalNodeModulesListFiles": 722,
+    "totalObservedListFiles": 5502,
+    "outsideMeaning": "node_modules를 제외한 source 경로가 승인 stage 밖으로 벗어난 경우만 outside로 분류합니다. 외부 node_modules 722개와 별개입니다."
   },
   "newValue": {
     "productParentCallbacks": 1,
@@ -265,5 +270,11 @@
     "known process 종료 대조는 이 control·직접 관측 자식과 TAP 실제 fixture PID 범위입니다."
   ],
   "usageCreditsStream": "이번 turn에서 usage limit/credits/stream 원오류는 미관측입니다.",
-  "privacy": "Credential/Authorization/auth state/전체 network body/PG 원행/운영 절대경로를 게시하지 않습니다."
+  "privacy": "Credential/Authorization/auth state/전체 network body/PG 원행/운영 절대경로를 게시하지 않습니다.",
+  "rootAcceptance": {
+    "sourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+    "rawAuditChecksMatched": 45,
+    "newValueAndPGAccepted": true,
+    "actualUIRecoveryAccepted": false
+  }
 }
