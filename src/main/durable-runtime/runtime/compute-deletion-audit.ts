@@ -31,11 +31,11 @@ export function observeComputeDeletionAuditPage(
 /** Trusted composition injects a token supplier; callers cannot choose a URL or raw filter. */
 export function createComputeDeletionAuditClient(config: ComputeAuditTransportConfiguration):
   Readonly<{
-    observe(input: ComputeDeletionAuditInput, signal?: AbortSignal): Promise<ComputeDeletionAuditResult>
+    observe(input: ComputeDeletionAuditInput, signal?: AbortSignal, absoluteDeadline?: number): Promise<ComputeDeletionAuditResult>
   }> {
   const transport = snapshotAuditTransport(config)
   return Object.freeze({
-    async observe(input: ComputeDeletionAuditInput, signal?: AbortSignal):
+    async observe(input: ComputeDeletionAuditInput, signal?: AbortSignal, absoluteDeadline?: number):
       Promise<ComputeDeletionAuditResult> {
       // Copy all identity/time fields and construct the entire body before the first await.
       const copied = snapshotAuditInput(input)
@@ -45,7 +45,7 @@ export function createComputeDeletionAuditClient(config: ComputeAuditTransportCo
       if (!transport) {
         return auditError('INVALID_CONFIGURATION')
       }
-      const deadline = performance.now() + transport.timeoutMs
+      const deadline = Math.min(performance.now() + transport.timeoutMs, absoluteDeadline ?? Infinity)
       const stopped = (): ComputeDeletionAuditResult | null => {
         if (signal?.aborted) {
           return auditError('ABORTED')

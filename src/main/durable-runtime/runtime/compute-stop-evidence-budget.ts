@@ -2,7 +2,7 @@ import { performance } from 'node:perf_hooks'
 import { ComputeStopEvidenceError } from './compute-stop-evidence-types.ts'
 
 export class ComputeStopBudget {
-  private readonly deadline: number
+  readonly deadline: number
   private readonly cancellation = new AbortController()
   private readonly timer: ReturnType<typeof setTimeout>
   private readonly abort = (): void => this.cancellation.abort()

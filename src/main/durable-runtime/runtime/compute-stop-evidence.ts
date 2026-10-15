@@ -31,7 +31,7 @@ export function createComputeStopEvidence(configuration: ComputeStopEvidenceConf
         budget.check()
         const auditInput = capturedTargetAuditInput(config, input, target)
         budget.check()
-        const result = await budget.wait(() => config.observe(auditInput, budget.signal))
+        const result = await budget.wait(() => config.observe(auditInput, budget.signal, budget.deadline))
         budget.check()
         const owner = issueComputeStopOwner(config.datasetName, target, auditInput, result, signal)
         try { budget.check(); return owner } catch (error) { owner.release(); throw error }
@@ -81,7 +81,7 @@ function issueComputeStopOwner(datasetName: string, target: ExecutionTargetRecor
     disposition: 'DELETED_NO_REENTRY' }) as VerifiedPermanentComputeStop
   let released = false
   const alive = (): boolean => !released && !signal.aborted
-  return Object.freeze({ reference,
+  const owner: PreparedComputeStopEvidence = { reference,
     executionTarget(attemptId, podUid, incarnation, epoch) {
       return alive() && attemptId === target.attemptId && podUid === target.podUid &&
         incarnation === target.incarnation && epoch === target.executionEpoch ? executionTarget : null
@@ -90,5 +90,6 @@ function issueComputeStopOwner(datasetName: string, target: ExecutionTargetRecor
     permanentComputeStop: candidate => alive() && candidate === reference ? stopped : null,
     computeStopPinValid: held => alive() && held === stopped,
     release() { released = true }
-  })
+  }
+  return Object.freeze(owner)
 }
