@@ -1,0 +1,122 @@
+{
+  "sourcePin": "cb81f6854f0c0fadb5d98671779266dea41647c3",
+  "base": "110d091538dedea4bfcd2b959e8dbc91c99b51e0",
+  "ownedEntries": [
+    "100644 blob 6101e45494b6b1ddee2c11f668517a83677e855e\tsrc/main/durable-runtime/input/cancel-record.ts",
+    "100644 blob bc942765a08938189ceb75ce0a47ba7e1d4b599a\tsrc/main/durable-runtime/rpc/structured-history.ts"
+  ],
+  "ownedPaths": [
+    "src/main/durable-runtime/input/cancel-record.ts",
+    "src/main/durable-runtime/rpc/structured-history.ts"
+  ],
+  "productDiffSHA256": "070b4a2a43a23eca1999c4b1911719dba7c46b476e8d7c56d0ca8f57c2a658ce",
+  "deletedProductFiles": 0,
+  "nonOwnedProductTreeUnchanged": true,
+  "bodyCOMMONSHA256": "8c8122bcd2333b94937ed83f5ba8a095a08fb18771dac25040c3e2379d31704d",
+  "contractSHA256": "31464afe779e669baf09a54826908fa76b1f6d0083c926e09ddb6037477e5791",
+  "rawTypeLogSHA256": "10a8fd41cfdbab3fe1d4f89b7b69bb34b0d48a30a357fc9cf1bb584af37b8c8a",
+  "rawTypeManifestSHA256": "396ed14ffb3eb1c8f3e2dee445dc7baee6be48d3da1733fcb3d0a991d5408119",
+  "originalPR93TypeLogSHA256": "aaa891afcb904bca6d24867fa1f43e7975097a8ec42c3638d3c8ffa7f44aa34c",
+  "report": {
+    "kind": "OFFLINE_DURABLE_TYPE_BOUNDARIES_RESULT_REPORT",
+    "sourcePin": "cb81f6854f0c0fadb5d98671779266dea41647c3",
+    "PNG_SHA256": "24c1b05ff73d00b2be3fad740d68f3c4ec9a3daa7e5e31fc760edca82c1966b5",
+    "PNGBytes": 181631,
+    "width": 1200,
+    "height": 1100,
+    "count": 1,
+    "visuallyReviewed": true,
+    "productUI": false,
+    "externalRequests": 0,
+    "authStateLoaded": false,
+    "cleanup": {
+      "at": "2026-10-15T09:48:29.126Z",
+      "pid": 7924,
+      "contextClosed": true,
+      "browserClosed": true,
+      "ownedChildren": [
+        {
+          "pid": 7941,
+          "state": "ABSENT"
+        }
+      ],
+      "requestCount": 0,
+      "exit": 0
+    },
+    "knownPIDs": {
+      "at": "2026-10-15T09:48:45.057Z",
+      "pids": [
+        {
+          "pid": 7924,
+          "state": "ABSENT"
+        },
+        {
+          "pid": 7941,
+          "state": "ABSENT"
+        }
+      ]
+    }
+  },
+  "verificationRepeated": 0,
+  "publicArtifacts": {
+    "durable-type-result-report.png": {
+      "bytes": 181631,
+      "sha256": "24c1b05ff73d00b2be3fad740d68f3c4ec9a3daa7e5e31fc760edca82c1966b5"
+    },
+    "durable-type-result-report-provenance.json": {
+      "bytes": 1263,
+      "sha256": "b138f3735ede99e63aea0a71047eb2fc78c60b799d6447b2dff636e78518c877"
+    },
+    "report.html": {
+      "bytes": 3682,
+      "sha256": "49ac2f4af31546b29439acc040e826b08635cd7a82a08200cf63f2bea41927dd"
+    },
+    "scoped-type-config.json": {
+      "bytes": 806,
+      "sha256": "48e8bfa4b72bc3c298b03510052809b64f2b637ae6c6e5b7a36a479cf9e20189"
+    },
+    "verification.json": {
+      "bytes": 3911,
+      "sha256": "debacf960260a5d5603796860356d6d78a0ee77ba8f85cc2c560ad29e679efae"
+    },
+    "type-classification.json": {
+      "bytes": 5016,
+      "sha256": "e9cd7b8314278d18ae4a429675c1add74c19f332b63957b62b1f52adc97da05e"
+    },
+    "README.md": {
+      "bytes": 3021,
+      "sha256": "f07721fdddf3e3daade1c27370a986954ea3037e57532ffd3c99ce5beae22bf4"
+    },
+    "type-inputs.json": {
+      "bytes": 1198496,
+      "sha256": "40f3195c86f01281a71e74c791efe9644ec5ba662bb1e130db09eab64d8e412e"
+    },
+    "contract.md": {
+      "bytes": 3267,
+      "sha256": "31464afe779e669baf09a54826908fa76b1f6d0083c926e09ddb6037477e5791"
+    },
+    "lint.txt": {
+      "bytes": 92,
+      "sha256": "f5ee8c8c7946889b9a4909b963e9f85a46266d5e6712dd65c9d8ff03c14711c8"
+    },
+    "original-durable-diagnostics.txt": {
+      "bytes": 492,
+      "sha256": "27cce2f5705e76e32d380b5cf0a9d674d093c9d3ca28151112322eb0b5a990fe"
+    },
+    "type-diagnostics.txt": {
+      "bytes": 4665,
+      "sha256": "6c152761f1c00c672b94b5ff49554decb50e345a05dce72bcf9ed596a5126765"
+    },
+    "product.diff": {
+      "bytes": 1603,
+      "sha256": "070b4a2a43a23eca1999c4b1911719dba7c46b476e8d7c56d0ca8f57c2a658ce"
+    }
+  },
+  "limits": [
+    "전체 type exit는 1이며 소유 진단 0·비소유 21입니다. 전체 type PASS가 아닙니다.",
+    "외부 package path는 기록했으나 이번 guard가 package bytes의 hash를 새로 검증했다고 주장하지 않습니다.",
+    "runtime value/PG/live 동작은 검증하지 않았습니다.",
+    "native compiler 하위 PID 자체는 미관측이며 알려진 CLI PID만 종료를 확인했습니다."
+  ],
+  "usageLimitCreditsStream": "이번 turn에서 usage limit·credits·stream 중단 원오류는 미관측입니다."
+}
