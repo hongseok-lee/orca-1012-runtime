@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import type { Image, View } from 'react-native'
+import type { BrowserFrameImageRef, BrowserFrameLayerRef } from './MobileBrowserFrameSurface'
 import {
   updateBrowserImageSource,
   updateBrowserLayerVisibility,
@@ -8,8 +8,8 @@ import {
 import { mobileBrowserPaneStyles as styles } from './mobile-browser-pane-styles'
 
 type BrowserLayerHandlersArgs = {
-  browserImageRefs: { current: [Image | null, Image | null] }
-  browserLayerRefs: { current: [View | null, View | null] }
+  browserImageRefs: { current: [BrowserFrameImageRef | null, BrowserFrameImageRef | null] }
+  browserLayerRefs: { current: [BrowserFrameLayerRef | null, BrowserFrameLayerRef | null] }
   frameUriRef: { current: string | null }
   pendingFrameLayerRef: { current: FrameLayer | null }
   visibleFrameLayerRef: { current: FrameLayer }
@@ -25,7 +25,7 @@ export function useMobileBrowserPaneLayers(args: BrowserLayerHandlersArgs) {
   } = args
 
   const setBrowserImageRef = useCallback(
-    (layer: FrameLayer, image: Image | null) => {
+    (layer: FrameLayer, image: BrowserFrameImageRef | null) => {
       browserImageRefs.current[layer] = image
       const currentFrameUri = frameUriRef.current
       if (image && currentFrameUri) {
@@ -36,7 +36,7 @@ export function useMobileBrowserPaneLayers(args: BrowserLayerHandlersArgs) {
   )
 
   const setBrowserLayerRef = useCallback(
-    (layer: FrameLayer, view: View | null) => {
+    (layer: FrameLayer, view: BrowserFrameLayerRef | null) => {
       browserLayerRefs.current[layer] = view
       updateBrowserLayerVisibility(browserLayerRefs.current, visibleFrameLayerRef.current)
     },
@@ -44,19 +44,19 @@ export function useMobileBrowserPaneLayers(args: BrowserLayerHandlersArgs) {
   )
 
   const setBrowserLayer0Ref = useCallback(
-    (view: View | null) => setBrowserLayerRef(0, view),
+    (view: BrowserFrameLayerRef | null) => setBrowserLayerRef(0, view),
     [setBrowserLayerRef]
   )
   const setBrowserLayer1Ref = useCallback(
-    (view: View | null) => setBrowserLayerRef(1, view),
+    (view: BrowserFrameLayerRef | null) => setBrowserLayerRef(1, view),
     [setBrowserLayerRef]
   )
   const setBrowserImageLayer0Ref = useCallback(
-    (image: Image | null) => setBrowserImageRef(0, image),
+    (image: BrowserFrameImageRef | null) => setBrowserImageRef(0, image),
     [setBrowserImageRef]
   )
   const setBrowserImageLayer1Ref = useCallback(
-    (image: Image | null) => setBrowserImageRef(1, image),
+    (image: BrowserFrameImageRef | null) => setBrowserImageRef(1, image),
     [setBrowserImageRef]
   )
 

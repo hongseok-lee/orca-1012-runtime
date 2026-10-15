@@ -1,5 +1,5 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react'
-import type { Image } from 'react-native'
+import type { BrowserFrameImageRef } from './MobileBrowserFrameSurface'
 import type {
   BrowserScreencastFrame,
   BrowserScreencastFrameMetadata
@@ -15,7 +15,7 @@ import {
 
 type PendingFrame = { frame: BrowserScreencastFrame; cacheKey: string }
 type BrowserFrameApplyArgs = {
-  browserImageRefs: { current: [Image | null, Image | null] }
+  browserImageRefs: { current: [BrowserFrameImageRef | null, BrowserFrameImageRef | null] }
   busyRef: { current: boolean }
   frameMetadataRef: { current: BrowserScreencastFrameMetadata | null }
   frameMountedRef: { current: boolean }

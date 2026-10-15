@@ -1,5 +1,6 @@
 import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react'
-import { PixelRatio, type Image, type View } from 'react-native'
+import { PixelRatio } from 'react-native'
+import type { BrowserFrameImageRef, BrowserFrameLayerRef } from './MobileBrowserFrameSurface'
 import type { RpcClient } from '../transport/rpc-client'
 import type {
   BrowserScreencastFrame,
@@ -35,8 +36,8 @@ type PendingFrame = { frame: BrowserScreencastFrame; cacheKey: string }
 
 type MobileBrowserStreamArgs = {
   appActive: boolean
-  browserImageRefs: { current: [Image | null, Image | null] }
-  browserLayerRefs: { current: [View | null, View | null] }
+  browserImageRefs: { current: [BrowserFrameImageRef | null, BrowserFrameImageRef | null] }
+  browserLayerRefs: { current: [BrowserFrameLayerRef | null, BrowserFrameLayerRef | null] }
   browserViewMode: MobileBrowserViewMode
   busyRef: { current: boolean }
   cacheKey: string | null

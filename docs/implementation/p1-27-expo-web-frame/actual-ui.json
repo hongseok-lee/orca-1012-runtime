@@ -1,0 +1,181 @@
+{
+  "scope": "실제 Expo Web의 기존 Browser 표시와 cached return 관측입니다. 안정적인 새 stream 재연결은 미측정입니다.",
+  "source": {
+    "originalClientBaseline": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "appliedPartialFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+    "appliedPartialFrameFiles": 7,
+    "appliedPartialFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+    "wholeCheckoutQualified": false,
+    "serverCompositeSourcePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "backendAppliedManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316"
+  },
+  "metro": {
+    "originalPID": 151,
+    "normalSIGTERMCount": 1,
+    "firstPreparationError": "SyntaxError: Unexpected end of JSON input",
+    "firstFailurePhase": "종료 owner JSON 파싱",
+    "firstSourceWriteCount": 0,
+    "firstNewStartCount": 0,
+    "concurrentWriteCauseConfirmed": false,
+    "originalEnvironmentRawBytesPreserved": false,
+    "environmentSemanticKeysCompared": 47,
+    "environmentSemanticSHA256": "a06e69f118b10fd7efdeab74e0afa6a15c6502b08dcf3c7ff141f4662dbee3ac",
+    "approvedContinuationSupervisorPID": 587,
+    "approvedContinuationChildPID": 594,
+    "continuationStartedAt": "2026-10-15T04:13:22.228Z",
+    "continuationFinishedAt": "2026-10-15T04:13:26.568Z",
+    "continuationExitCode": 0,
+    "additionalSIGTERMCount": 0,
+    "newMetroStartCount": 1,
+    "newMetroSupervisorPID": 608,
+    "newMetroPID": 615,
+    "newMetroStartTicks": "14119394",
+    "sourceReadbackCount": 14,
+    "sourceHashMismatches": 0,
+    "sourceScope": "승인된 제품 7개를 canonical과 mirror 두 경로에만 반영했습니다.",
+    "forwardPIDPreserved": 125,
+    "HTTPStatus": 200,
+    "HTTPObservedAt": "2026-10-15T04:13:26.559Z"
+  },
+  "ui": {
+    "supervisorPID": 5331,
+    "childPID": 5338,
+    "startedAt": "2026-10-15T04:20:21.537Z",
+    "finishedAt": "2026-10-15T04:20:35.674Z",
+    "exitCode": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "nativeIPhone": false,
+    "selectionSequence": [
+      "기존 Browser 선택 1회",
+      "기존 Terminal 선택 1회",
+      "같은 Browser 복귀 1회"
+    ],
+    "existingActivateRPCTriggered": true,
+    "wholeServerReadOnly": false,
+    "newBrowserOpenCount": 0,
+    "codexSelectionCount": 0,
+    "sendCount": 0,
+    "directRPCCount": 0,
+    "directPGQueryCount": 0,
+    "frames": [
+      {
+        "kind": "existing-browser-first",
+        "at": "2026-10-15T04:20:35.014Z",
+        "address": "about:blank",
+        "frames": [
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 1,
+            "effectiveOpacity": 1,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          },
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 0,
+            "effectiveOpacity": 0,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          }
+        ],
+        "visibleDecodedCount": 1,
+        "sameImageHashAllowed": true,
+        "observedFullBrowserId": null,
+        "alertCount": 0,
+        "uncaughtOverlayCount": 0
+      },
+      {
+        "kind": "existing-browser-return",
+        "at": "2026-10-15T04:20:35.476Z",
+        "address": "about:blank",
+        "frames": [
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 1,
+            "effectiveOpacity": 1,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          },
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 0,
+            "effectiveOpacity": 0,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          }
+        ],
+        "visibleDecodedCount": 1,
+        "sameImageHashAllowed": true,
+        "observedFullBrowserId": null,
+        "alertCount": 0,
+        "uncaughtOverlayCount": 0
+      }
+    ],
+    "runtimeErrors": [],
+    "firstDisplayObserved": true,
+    "cachedReturnDecodedObserved": true,
+    "returnLoadingOverlayObserved": true,
+    "stableFreshStreamReconnectQualified": false,
+    "requestKeyObserved": null,
+    "PGIdObserved": null,
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateAuthStateHashAndMtimeUnchanged": true,
+    "knownChildAfterCleanup": "ABSENT",
+    "knownSupervisorAfterCleanup": "Z",
+    "activeOwnedJobAfterCleanup": 0
+  },
+  "artifacts": [
+    {
+      "path": "existing-browser-first.png",
+      "SHA256": "d88d58698cc2e14eb6827f1b30bac74fd5c7e8e5c643d55369fa06baabb191f7",
+      "bytes": 15860
+    },
+    {
+      "path": "existing-browser-return.png",
+      "SHA256": "662aa5cb69bf95fcb10bd7c6f8d3ac974880ba6aecc22ca40eee7157f121004a",
+      "bytes": 16436
+    },
+    {
+      "path": "existing-browser-first-provenance.json",
+      "SHA256": "733fb841f44c72adbc0fa545415edb7653d24141751cdd1cdf3d94b692c09012",
+      "bytes": 1075
+    },
+    {
+      "path": "existing-browser-return-provenance.json",
+      "SHA256": "a4cde98c5156ee2adc0dac1b52eb5ce6c98f6a02ce49451a0d34afcf1232ced2",
+      "bytes": 1075
+    }
+  ],
+  "limits": [
+    "복귀 후 약 138ms의 관측에 loading overlay가 남아 새 stream 재개와 안정 상태 완료는 미측정입니다.",
+    "UI diagnostic suffix와 frame 수를 전체 RPC/PG identity 증명으로 확대하지 않습니다.",
+    "PNG 두 장의 frame URI hash 동일성은 blank 정지 화면과 양립하며 새 frame 도착을 증명하지 않습니다.",
+    "실제 Chrome의 앱 표시 관측이며 native 기기, provider/Chat, 자동 Ops 인증, HA 또는 P1-27 전체 수용 증거가 아닙니다.",
+    "최종 Git 정렬 뒤 UI, capture, Metro 재시작, lint, 회귀 fixture, type, build 또는 PG 시험을 반복하지 않았습니다."
+  ],
+  "usageCreditsStream": "이번 결과 정리 turn에서 usage limit/credits/stream 중단 원오류는 직접 관측되지 않았습니다."
+}

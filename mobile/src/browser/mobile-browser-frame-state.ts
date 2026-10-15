@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer'
-import type { GestureResponderEvent, Image, View } from 'react-native'
+import type { GestureResponderEvent } from 'react-native'
+import type { BrowserFrameImageRef, BrowserFrameLayerRef } from './MobileBrowserFrameSurface'
 import type { RpcFailure, RpcSuccess } from '../transport/types'
 import type {
   BrowserScreencastFrame,
@@ -89,7 +90,7 @@ export function cacheBrowserFrame(cacheKey: string | null, entry: BrowserFrameCa
 }
 
 export function updateBrowserLayerVisibility(
-  layers: [View | null, View | null],
+  layers: [BrowserFrameLayerRef | null, BrowserFrameLayerRef | null],
   visible: FrameLayer
 ): void {
   for (const [index, layer] of layers.entries()) {
@@ -97,7 +98,7 @@ export function updateBrowserLayerVisibility(
   }
 }
 
-export function updateBrowserImageSource(image: Image | null, uri: string): void {
+export function updateBrowserImageSource(image: BrowserFrameImageRef | null, uri: string): void {
   // Why: browser frames are large strings; mutating only the native Image
   // source avoids re-rendering the whole tab view for every streamed frame.
   const source = [{ uri }]
