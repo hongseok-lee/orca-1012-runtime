@@ -65,7 +65,7 @@ class FakeCdp {
     return () => { this.generations.delete(listener) }
   }
   emit(method: string, params: Record<string, unknown>, sessionId = 'owned-auth-session'): void {
-    for (const listener of [...this.events]) { listener({ method, params, sessionId }) }
+    for (const listener of Array.from(this.events)) { listener({ method, params, sessionId }) }
   }
   next(method: string): Promise<Call> {
     return new Promise(resolve => {
@@ -228,9 +228,9 @@ test('owned Ops request interception uses the real helper with a fake CDP transp
       const cdp = new FakeCdp(), config = input(cdp), handle = await createExternalChromiumOpsAuth(config)
       const before = cdp.calls.length
       if (boundary === 'transport') {
-        cdp.transport++; for (const listener of [...cdp.failures]) { listener() }
+        cdp.transport++; for (const listener of Array.from(cdp.failures)) { listener() }
       } else {
-        cdp.generation = 'replacement'; for (const listener of [...cdp.generations]) { listener() }
+        cdp.generation = 'replacement'; for (const listener of Array.from(cdp.generations)) { listener() }
       }
       await handle.dispose()
       assert.equal(cdp.calls.length, before); assert.equal(cdp.cancelled.length, 0)
