@@ -40,8 +40,14 @@ function invalid(): never {
   throw new DurableDatabaseError('EXECUTION_TARGET_INPUT_INVALID')
 }
 function text<T extends string>(value: T): T {
-  if (typeof value !== 'string' || value.length === 0 || value !== value.trim() || /[\x00-\x1f\x7f]/.test(value)) {
+  if (typeof value !== 'string' || value.length === 0 || value !== value.trim()) {
     invalid()
+  }
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) {
+      invalid()
+    }
   }
   return value
 }
