@@ -1,0 +1,28 @@
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":37866,"at":"2026-10-15T09:20:02.053Z"}
+# (node:37866) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# {"phase":"COMPUTE_STOP_IDENTITY_BEFORE_SEED","database":"orca_execution_targets_20261015","oid":"92238","system":"7696101282789175327","backend_pid":274312,"observed_at":"2026-10-15T09:20:02.240Z","ledgerRows":20,"originalRows":168}
+# {"phase":"COMPUTE_STOP_PG_CASES","callbackCount":1,"cases":["uncommitted-target-invisible-Cloud0","commit-visible-historical-target","read-only-connection-return-before-Audit","stable-reference-owner-pins-release-abort","ledger20-original-row-multisets-preserved"],"syntheticHTTPS":true,"schemaChanges":0,"phases":["CONNECT","BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY","SELECT dataset_name FROM durable_runtime.dataset_metadata","SELECT * FROM durable_runtime.execution_target_records\\n     WHERE attempt_id=$1 AND pod_uid=$2 AND incarnation=$3 AND execution_epoch=$4","ROLLBACK","RELEASE","CONNECT","BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY","SELECT dataset_name FROM durable_runtime.dataset_metadata","SELECT * FROM durable_runtime.execution_target_records\\n     WHERE attempt_id=$1 AND pod_uid=$2 AND incarnation=$3 AND execution_epoch=$4","COMMIT","RELEASE","AUDIT_TOKEN","CONNECT","BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY","SELECT dataset_name FROM durable_runtime.dataset_metadata","SELECT * FROM durable_runtime.execution_target_records\\n     WHERE attempt_id=$1 AND pod_uid=$2 AND incarnation=$3 AND execution_epoch=$4","COMMIT","RELEASE","AUDIT_TOKEN"]}
+# Subtest: Root approved compute stop callback 1
+    # Subtest: compute stop evidence: isolated PG callback 1
+    ok 1 - compute stop evidence: isolated PG callback 1
+      ---
+      duration_ms: 190.169973
+      type: 'test'
+      ...
+    1..1
+ok 1 - Root approved compute stop callback 1
+  ---
+  duration_ms: 192.637409
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 456.986058

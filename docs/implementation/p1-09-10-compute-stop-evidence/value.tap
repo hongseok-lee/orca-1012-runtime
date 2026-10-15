@@ -1,0 +1,67 @@
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":37831,"at":"2026-10-15T09:20:00.852Z"}
+# Subtest: Root approved compute stop callback 1
+    # Subtest: compute stop evidence: value callback 1, synthetic Pool and HTTPS only
+        # Subtest: stable frozen exact owner; clone, sibling, release and abort cannot retain pins
+        ok 1 - stable frozen exact owner; clone, sibling, release and abort cannot retain pins
+          ---
+          duration_ms: 33.554716
+          type: 'test'
+          ...
+        # Subtest: missing target, invalid dataset/scope/identity and malformed input never reach Cloud
+        ok 2 - missing target, invalid dataset/scope/identity and malformed input never reach Cloud
+          ---
+          duration_ms: 10.975752
+          type: 'test'
+          ...
+        # Subtest: complete matching deletion and time boundary are required; unsuccessful observations issue no owner
+        ok 3 - complete matching deletion and time boundary are required; unsuccessful observations issue no owner
+          ---
+          duration_ms: 29.580157
+          type: 'test'
+          ...
+        # Subtest: single getters and original Pool/token/HTTPS receivers survive caller mutation
+        ok 4 - single getters and original Pool/token/HTTPS receivers survive caller mutation
+          ---
+          duration_ms: 2.448662
+          type: 'test'
+          ...
+        # Subtest: late Pool and each SQL await are destroyed after abort; Cloud stays zero
+        ok 5 - late Pool and each SQL await are destroyed after abort; Cloud stays zero
+          ---
+          duration_ms: 9.261952
+          type: 'test'
+          ...
+        # Subtest: one deadline covers connect, synchronous SQL overrun and pending Audit/token; caller abort wins
+        ok 6 - one deadline covers connect, synchronous SQL overrun and pending Audit/token; caller abort wins
+          ---
+          duration_ms: 43.151209
+          type: 'test'
+          ...
+        # Subtest: PG budget consumption and synchronous token overrun cannot enter HTTPS before the timer fires
+        ok 7 - PG budget consumption and synchronous token overrun cannot enter HTTPS before the timer fires
+          ---
+          duration_ms: 96.600093
+          type: 'test'
+          ...
+        1..7
+    ok 1 - compute stop evidence: value callback 1, synthetic Pool and HTTPS only
+      ---
+      duration_ms: 229.132421
+      type: 'test'
+      ...
+    1..1
+ok 1 - Root approved compute stop callback 1
+  ---
+  duration_ms: 230.483715
+  type: 'test'
+  ...
+1..1
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 602.283591
