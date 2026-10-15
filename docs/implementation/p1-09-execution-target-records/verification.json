@@ -1,0 +1,226 @@
+{
+  "sourcePin": "61b1d27b22047cc2c71adbe3c951ebaecd2d7df5",
+  "base": "e07023c7005ced45466185ca8efc0e928cf8b06c",
+  "scope": "물리 실행 원 identity 저장 모듈과 격리 PostgreSQL fixture입니다. 실제 observer 인증·물리 종료·실제 provider·공개 RPC·HA 검증이 아닙니다.",
+  "results": {
+    "changedProductLint": {
+      "pin": "da2bba527a76dda34a1259fa1f9ed6fe522ba50f",
+      "exit": 0,
+      "pid": 32482
+    },
+    "changedFixtureLint": {
+      "pin": "61b1d27b22047cc2c71adbe3c951ebaecd2d7df5",
+      "exit": 0,
+      "pid": 32796
+    },
+    "scopedType": {
+      "pin": "da2bba527a76dda34a1259fa1f9ed6fe522ba50f",
+      "exit": 0,
+      "pid": 32623,
+      "files": [
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+          "bytes": 3357
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+          "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+          "bytes": 5248
+        },
+        {
+          "path": "src/main/durable-runtime/db/execution-target-record-rows.ts",
+          "sha256": "45b8353b4177d8e35d0b327cd775f250e0a63f334cc0176f37063f6818ca2fdb",
+          "bytes": 1035
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "sha256": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+          "bytes": 3803
+        },
+        {
+          "path": "src/main/durable-runtime/db/locks.ts",
+          "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+          "bytes": 2071
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/command-types.ts",
+          "sha256": "3081e24d2502e153708fca4b45b78eba1031b86351a43b1ef36732a2fc12b8fe",
+          "bytes": 2818
+        },
+        {
+          "path": "src/main/durable-runtime/db/atomic.ts",
+          "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+          "bytes": 9074
+        },
+        {
+          "path": "src/main/durable-runtime/db/observation-rows.ts",
+          "sha256": "0873b46a2213790944fbc8ca7ea23926fad40656f4f9db67cc47f783a1933c13",
+          "bytes": 1439
+        },
+        {
+          "path": "src/main/durable-runtime/resources/evidence/types.ts",
+          "sha256": "89f9830c495218e5c8fc9b33b77d5931914d45d5db736847784f32b684216349",
+          "bytes": 5854
+        },
+        {
+          "path": "src/main/durable-runtime/db/structured-session-rows.ts",
+          "sha256": "15bd86d1c65d6584228bdabdbd0aa90b4da64bbb95553dab49fb8ece5d351329",
+          "bytes": 1022
+        },
+        {
+          "path": "src/main/durable-runtime/db/terminal-input-rows.ts",
+          "sha256": "167d108ad093ce69d27257c60245b2140d515d997c23aba4656e9fe6bf67a1d4",
+          "bytes": 880
+        },
+        {
+          "path": "src/main/durable-runtime/db/failure-evidence-rows.ts",
+          "sha256": "2687026d2d25b0b7d30be3b1089bf213931e40645b17133578b96610637d5c11",
+          "bytes": 2374
+        },
+        {
+          "path": "src/main/durable-runtime/db/resource-allocation-rows.ts",
+          "sha256": "1d4f77efb305f7b2504f1f5eb33c13817300520dfac7ad548950a7d796044948",
+          "bytes": 3101
+        },
+        {
+          "path": "src/main/durable-runtime/db/rows.ts",
+          "sha256": "0288d809820312eeabb0ca995ef5a356d6a39e33d170e47741f4140910836263",
+          "bytes": 7855
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/types.ts",
+          "sha256": "383e7f09f7d70e097c81c0f69155745274ca8ff76c6765419376ff4c1c7399b3",
+          "bytes": 3895
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+          "bytes": 5150
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/execution-target-records.ts",
+          "sha256": "5bc2d2b2ada5cf72f4edcb104034cb5923de9e2d6e3df6f5e98324c0a69d712c",
+          "bytes": 9908
+        }
+      ],
+      "sourceTreeCount": 1,
+      "identityModuleCount": 1
+    },
+    "schema": {
+      "appliedOnce": 20,
+      "original001019BytesUnchanged": true,
+      "ledgerChecksumsAppliedAtUnchangedAfterFixture": true,
+      "systemDatabaseDatasetBeforeDDLGuard": true,
+      "samePoolIdentityBeforeSeedGuard": true
+    },
+    "pg": {
+      "sourcePin": "61b1d27b22047cc2c71adbe3c951ebaecd2d7df5",
+      "actualTestPid": 32832,
+      "runnerPid": 32826,
+      "startedAt": "2026-10-15T04:16:28.236Z",
+      "finishedAt": "2026-10-15T04:16:29.442Z",
+      "exit": 0,
+      "productCallbacks": 1,
+      "tapParentPlusChild": 2,
+      "distinctCaseGroups": 7,
+      "rawTAPSHA256": "c0da12dd9726598bfed9133b5a9560486a4dc5b4942137ec5e2e7721f19e5a2b",
+      "originalSeedRowsPreserved": true,
+      "originalSeedRows": {
+        "dataset_metadata": 1,
+        "runtime_units": 3,
+        "resource_profiles": 3,
+        "attempts": 3,
+        "operations": 3,
+        "controller_leases": 3,
+        "execution_target_records": 3
+      },
+      "qualification": "합성 controller/evidence 참조를 사용합니다. 원기록 반환은 실행 grant·provider permit·ComputeStoppedProof가 아닙니다."
+    }
+  },
+  "originalFailures": [
+    {
+      "phase": "git index 준비",
+      "error": "Out of diskspace",
+      "corrected": "소유 task index의 준비 경로만 교정했습니다. 기존 보호 자료 삭제와 Git 설정 변경은 없습니다."
+    },
+    {
+      "phase": "first lint",
+      "pin": "5f5c94af34d49de1489e2c59bdb64d3b68ee387d",
+      "exit": 1,
+      "diagnostic": "eslint(no-control-regex)",
+      "rawLogSHA256": "fd0df05d16811bc9fcdcfc489c9b6cc2b64a3e2555d20756834718a08dd6d0e9",
+      "corrected": "기존 inventoryOpaque와 같은 charCodeAt C0/DEL 판정을 사용했습니다. suppression은 추가하지 않았습니다."
+    },
+    {
+      "phase": "first scoped type",
+      "pin": "da2bba527a76dda34a1259fa1f9ed6fe522ba50f",
+      "exit": 1,
+      "diagnostic": "db/rows.ts31의 직접 type 재수출 resource-allocation-rows.ts 입력 누락 TS2307",
+      "rawLogSHA256": "6a11e808d4e47dc1e089609562e6f9064bb522789a3e9c91032084f31ec62b74",
+      "corrected": "Root가 읽은 동일 pin의 누락 파일 1개 3101 bytes만 준비했습니다. 제품 타입 실패와 구분합니다."
+    },
+    {
+      "phase": "first PG",
+      "pin": "da2bba527a76dda34a1259fa1f9ed6fe522ba50f",
+      "exit": 1,
+      "actualTestPid": 32732,
+      "startedAt": "2026-10-15T04:13:41.692Z",
+      "finishedAt": "2026-10-15T04:13:42.333Z",
+      "error": "fixture의 attempt Unit 교체가 기대 23503 대신 기존 UNIQUE(Unit,epoch)23505를 먼저 만났습니다.",
+      "rawTAPSHA256": "33aca791bdc3079eb2d3cab347b5a22e5a8e15bdb1857ddae354e1621a8aebd6",
+      "corrected": "Root가 승인한 새 빈 Unit/profile을 FK case의 목적지로 사용했습니다. 제품/SQL/assert 기대값은 불변입니다.",
+      "limitation": "원 constraint 이름은 sanitizer 이전에 보존되지 않았습니다. Root의 source/schema 대조 분석과 실제 rawTAP의 오류 코드를 구분합니다."
+    }
+  ],
+  "runtimeInputs": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+      "bytes": 3803
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+      "bytes": 5150
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/execution-target-records.ts",
+      "sha256": "5bc2d2b2ada5cf72f4edcb104034cb5923de9e2d6e3df6f5e98324c0a69d712c",
+      "bytes": 9908
+    }
+  ],
+  "runtimeMismatches": [],
+  "wrapper": {
+    "sourceSha256": "f35df38704f590e1f8e91789abb31e0291b394b565116f87bfd3a3a4772bb5a7",
+    "originalBodySha256": "8dd4926f8d9d9eabac871fba78beb6b98a3680d6f325601f709b15c3f93c1ced",
+    "wrapperSha256": "5253f8f25e0dbde01252048dd17ec00c758fdd6d77277910d0281401cba9822f",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "artifactSHA256": {
+    "pg.tap": "c0da12dd9726598bfed9133b5a9560486a4dc5b4942137ec5e2e7721f19e5a2b",
+    "actual-inputs.json": "65647dcc66465463b9f38a8aa03ae374e7bd37e5eb739f4e49b77cd8f0ce02c7",
+    "pg.metafile.json": "de0f4140fc5bd384a3faee87904612a917bc60253ad5b08ec005d723680323c8",
+    "pg.generated.cts": "5253f8f25e0dbde01252048dd17ec00c758fdd6d77277910d0281401cba9822f",
+    "pg.cjs": "8ea93fd292a5422f3b47cbc36b0767a2f08463f92b7d6d57e7cfc844cb6d461d",
+    "before-pg.json": "e498a659706dcd0e948325cafcc89959b13f41a64c2e662fa43c696aa62d2973",
+    "database-end.json": "62e1bc81ba6539993766fd7d7e7fa6ed6eecb7e718e55d31a6757f9d3d99a809"
+  },
+  "knownChildProcessesEnded": true,
+  "heavyAfterVerification": 0,
+  "usageCreditsStream": "이번 turn에서 usage limit·credits·stream 중단은 미관측입니다.",
+  "liveUIProviderCloudMutation": false,
+  "screenshot": "Root의 heavy 슬롯 배분 대기입니다. 허용된 PG 결과 보고 화면만 한 번 캡처하며 제품 UI 성공으로 표시하지 않습니다."
+}
