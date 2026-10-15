@@ -64,7 +64,7 @@ export function createManagedLeafCollector(caller: ManagedLeafCollectorConfig,
       const helper = await get(`${namespace}/configmaps/${encodeURIComponent(config.helperConfigMapName)}`)
       const storage = projectManagedLeafStorage(pvc, pv, helper, config)
       check()
-      const stdout = await collectManagedLeafExec(open, config, leafId, reviewer, controller.signal, deadline - performance.now())
+      const stdout = await collectManagedLeafExec(open, config, leafId, reviewer, controller.signal, deadline)
       check()
       const finalPod = projectManagedLeafPod(await get(podPath), config)
       if (managedLeafPodIncarnation(pod) !== managedLeafPodIncarnation(finalPod)) { throw new ManagedLeafCollectorError('POD_CHANGED') }

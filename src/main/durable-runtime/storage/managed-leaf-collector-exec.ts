@@ -1,4 +1,5 @@
 import { TextDecoder } from 'node:util'
+import { performance } from 'node:perf_hooks'
 import { ManagedLeafCollectorError } from './managed-leaf-collector-types.ts'
 import type { ManagedLeafCollectorConfig, ManagedLeafCollectorDependencies, ManagedLeafSocket } from './managed-leaf-collector-types.ts'
 
@@ -34,7 +35,7 @@ export function managedLeafExecUrl(config: ManagedLeafCollectorConfig, leafId: s
 /** V5 close frames half-close streams; normal socket close supplies EOF for remaining streams. */
 export function collectManagedLeafExec(open: ManagedLeafCollectorDependencies['openWebSocket'],
   config: ManagedLeafCollectorConfig, leafId: string, reviewer: string, signal: AbortSignal,
-  remainingMs: number): Promise<string> {
+  absoluteDeadline: number): Promise<string> {
   return new Promise((resolve, reject) => {
     let socket: ManagedLeafSocket | undefined, settled = false, handshake = false
     const streams = new Map([1, 2, 3].map(id => [id, { decoder: new TextDecoder('utf-8', { fatal: true }), text: '', closed: false }]))
@@ -42,7 +43,7 @@ export function collectManagedLeafExec(open: ManagedLeafCollectorDependencies['o
       signal.removeEventListener('abort', aborted)
       socket?.off('open', opened).off('message', message).off('unexpected-response', unexpected)
     }
-    function fail(code: 'EXEC_PROTOCOL' | 'EXEC_FAILED' | 'NETWORK_FAILED' | 'ABORTED'): void {
+    function fail(code: 'EXEC_PROTOCOL' | 'EXEC_FAILED' | 'NETWORK_FAILED' | 'ABORTED' | 'TIMEOUT'): void {
       if (settled) { return }
       settled = true
       removeActive()
@@ -103,8 +104,11 @@ export function collectManagedLeafExec(open: ManagedLeafCollectorDependencies['o
     signal.addEventListener('abort', aborted, { once: true })
     if (signal.aborted) { aborted(); return }
     try {
-      socket = open(managedLeafExecUrl(config, leafId), 'v5.channel.k8s.io', {
-        ca: Buffer.from(config.ca), rejectUnauthorized: true, agent: false, followRedirects: false,
+      const url = managedLeafExecUrl(config, leafId), ca = Buffer.from(config.ca)
+      const remainingMs = absoluteDeadline - performance.now()
+      if (!Number.isFinite(remainingMs) || remainingMs <= 0) { fail('TIMEOUT'); return }
+      socket = open(url, 'v5.channel.k8s.io', {
+        ca, rejectUnauthorized: true, agent: false, followRedirects: false,
         handshakeTimeout: Math.max(1, Math.ceil(remainingMs)), perMessageDeflate: false,
         headers: { Authorization: `Bearer ${reviewer}` },
       })
