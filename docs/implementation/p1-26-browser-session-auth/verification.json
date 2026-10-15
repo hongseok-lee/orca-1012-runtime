@@ -1,0 +1,148 @@
+{
+  "sourcePin": "f6033c1f752a0295b3955d439243895fca43ad4a",
+  "base": "5729dae86e4494d453d3d13b055a84982344b64f",
+  "scope": "독립 메모리 세션 authority와 합성 caller fixture입니다. 실제 RPC 인증·Catalog 예약·CDP interceptor·HTTP verifier·Ops UI 자동 접속 연결은 없습니다.",
+  "implementation": {
+    "bearerEntropyBits": 256,
+    "lookupKey": "SHA256 digest",
+    "rawBearerStorage": "handle closure/server memory only",
+    "metadata": [
+      "authenticatedCallerFingerprint",
+      "browserPageId",
+      "worktreePublicId"
+    ],
+    "actorFingerprintMeaning": "pairing-sha256 / ops-pairing-sha256",
+    "scopeOwner": "factory composition server scope",
+    "TTLAdded": false,
+    "cookieAdded": false,
+    "PGAuthenticationTableAdded": false,
+    "actorFunctionBodyMovedVerbatim": true,
+    "actorFunctionAndScopeSHA256": "17ae417f111b1a6f6f1aa57d0ccc97965c9019ad853c3a452926a76ea41411e7",
+    "existingVerifierBodyUnchanged": true,
+    "existingVerifierBodySHA256": "47d0c36f1a4b38971f8bc0b164ca7b724bef36954b9a35577c32d1a8c76faf62"
+  },
+  "results": {
+    "changedProductFixtureLint": {
+      "sourcePin": "76af0050259a1bdb10b9cd4b216d3ab17e34347e",
+      "pid": 33594,
+      "exit": 0
+    },
+    "changedFixtureLint": {
+      "sourcePin": "f6033c1f752a0295b3955d439243895fca43ad4a",
+      "pid": 33952,
+      "exit": 0
+    },
+    "scopedType": {
+      "sourcePin": "76af0050259a1bdb10b9cd4b216d3ab17e34347e",
+      "pid": 33608,
+      "exit": 0,
+      "actualSourceFiles": 11,
+      "identityModuleCount": 1,
+      "fullAuthRuntimeGraphIncluded": false,
+      "postTypeFixtureChange": "Root가 승인한 secondActor capture·같은 actor strict reference 비교만 바뀌었으며 성공 type는 반복하지 않았습니다. 제품3 bytes는 불변입니다."
+    },
+    "value": {
+      "sourcePin": "f6033c1f752a0295b3955d439243895fca43ad4a",
+      "actualTestPID": 33985,
+      "runnerPID": 33979,
+      "startedAt": "2026-10-15T05:14:31.707Z",
+      "finishedAt": "2026-10-15T05:14:31.961Z",
+      "exit": 0,
+      "productCallbacks": 1,
+      "tapParentPlusChild": 2,
+      "distinctCaseGroups": 7,
+      "rawTAPSHA256": "eca02daeb55af75cdbfd5bbd958e564f0653415a0065628c88b0fa836e8815f1",
+      "rawBearerNamespaceOccurrencesInTAP": 0,
+      "authenticationIssuerVerified": false
+    }
+  },
+  "originalFailures": [
+    {
+      "phase": "first lint",
+      "sourcePin": "bd254d5eed30c5e15185a6fb0df4e6c451b5459f",
+      "pid": 33477,
+      "exit": 1,
+      "diagnostics": [
+        "unicorn(no-useless-spread)",
+        "eslint(no-useless-call)",
+        "eslint(prefer-template) ×4"
+      ],
+      "rawLogSHA256": "7c7ac0c19d294c5c08d082424999133b2c18e4ccbf8181d31cfc41af290f16ab",
+      "correction": "동일 Map snapshot 식을 먼저 const로 평가하고 동일 receiver/args 및 문자열 표현만 교정했습니다. suppression/조건/assert/actor·verifier 본문은 불변입니다."
+    },
+    {
+      "phase": "first value",
+      "sourcePin": "76af0050259a1bdb10b9cd4b216d3ab17e34347e",
+      "runnerPID": 33680,
+      "actualTestChildPIDObserved": false,
+      "startedAt": "2026-10-15T05:09:05.545Z",
+      "finishedAt": "2026-10-15T05:09:05.785Z",
+      "exit": 1,
+      "error": "두 번째 page actor를 첫 번째 page의 별도 actor object와 strict reference 비교한 fixture 오류입니다.",
+      "rawTAPSHA256": "a8dbec5159a181c329cf71df758ae4159ce6f710132389c672ed6e56941cd17e",
+      "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/85#issuecomment-6184956330",
+      "correction": "두 번째 page 최초 actor를 capture하고 기존 deepEqual 및 dispose 뒤 그 actor에 대한 strictEqual을 유지했습니다. 제품3은 불변입니다."
+    }
+  ],
+  "runtimeInputs": [
+    {
+      "path": "src/main/durable-runtime/ops/errors.ts",
+      "sha256": "b429bad1f981d1a1b08d5b339042a9534aca3f04b304dd5d3b7648c0bd3d9e2b",
+      "bytes": 1399
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/ops/validation.ts",
+      "sha256": "5610b767639259962741ef6ed4608d79b8c201826488e12aaeac195941c06a46",
+      "bytes": 2917
+    },
+    {
+      "path": "src/main/durable-runtime/ops/actor.ts",
+      "sha256": "86674cd37f32bfcb8fa7f3fe3d0a59343c27ad3c5a7943817bf9133cb7a6e590",
+      "bytes": 821
+    },
+    {
+      "path": "src/main/durable-runtime/ops/browser-session-auth.ts",
+      "sha256": "14254e08f416b39a9fa36583f9954dc502f37fbb951fb9e47aa3e171f30b491f",
+      "bytes": 6949
+    }
+  ],
+  "runtimeMismatches": [],
+  "wrapper": {
+    "sourceSha256": "b0613bbe5bcabe47af9bfea4db1b114a11923618cd0425e7a71bd341ebfc10f2",
+    "originalBodySha256": "e0c89761d4403b372795259baafbfbbbd512d151c49d77b4a97584538443bc19",
+    "wrapperSha256": "c4138451139ed8fe21f7307165a7d4196cf27f1f97a4233ae5ece385a55d5531",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "artifactSHA256": {
+    "value.tap": "eca02daeb55af75cdbfd5bbd958e564f0653415a0065628c88b0fa836e8815f1",
+    "actual-inputs.json": "4ae0c9f6262af6c690c8ad555bfcf593ef91aca9e933f9ba7f2fdd391e684f14",
+    "value.metafile.json": "3615dbbc4601fdf8875b4a2d85fb76f5b0c78ca0209ece6e32cbd8d376e1b929",
+    "value.generated.cts": "c4138451139ed8fe21f7307165a7d4196cf27f1f97a4233ae5ece385a55d5531",
+    "value.cjs": "3416fb4bd505bb6816f03f33bc7e5e11b8fe7b53b5c7293ec0db0ba15205b054"
+  },
+  "heavyAfterVerification": 0,
+  "knownChildProcessesEnded": true,
+  "PG": false,
+  "liveAPI": false,
+  "reportPNG": {
+    "kind": "ISOLATED_OPS_PAGE_SESSION_VALUE_RESULT_REPORT",
+    "file": "value-result-report.png",
+    "provenance": "value-result-report-provenance.json",
+    "pid": 6112,
+    "startedAt": "2026-10-15T05:20:00.534Z",
+    "capturedAt": "2026-10-15T05:20:02.781Z",
+    "screenshotSHA256": "bbaf8e3fb0c4098976c56bc2e00a117f68db28fd77be6259d078f7aa99540e00",
+    "productUICaptured": false,
+    "liveAppOpened": false,
+    "nativeIPhone": false
+  },
+  "usageCreditsStream": "이번 turn에서 usage limit·credits·stream 중단은 미관측입니다.",
+  "liveBrowser": false
+}

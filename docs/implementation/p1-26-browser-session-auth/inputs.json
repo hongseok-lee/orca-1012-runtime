@@ -1,0 +1,101 @@
+{
+  "validatedValueSourcePin": "f6033c1f752a0295b3955d439243895fca43ad4a",
+  "runtime5": [
+    {
+      "path": "src/main/durable-runtime/ops/errors.ts",
+      "sha256": "b429bad1f981d1a1b08d5b339042a9534aca3f04b304dd5d3b7648c0bd3d9e2b",
+      "bytes": 1399
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/ops/validation.ts",
+      "sha256": "5610b767639259962741ef6ed4608d79b8c201826488e12aaeac195941c06a46",
+      "bytes": 2917
+    },
+    {
+      "path": "src/main/durable-runtime/ops/actor.ts",
+      "sha256": "86674cd37f32bfcb8fa7f3fe3d0a59343c27ad3c5a7943817bf9133cb7a6e590",
+      "bytes": 821
+    },
+    {
+      "path": "src/main/durable-runtime/ops/browser-session-auth.ts",
+      "sha256": "14254e08f416b39a9fa36583f9954dc502f37fbb951fb9e47aa3e171f30b491f",
+      "bytes": 6949
+    }
+  ],
+  "fixtureSHA256": "b0613bbe5bcabe47af9bfea4db1b114a11923618cd0425e7a71bd341ebfc10f2",
+  "originalCallbackBodySHA256": "e0c89761d4403b372795259baafbfbbbd512d151c49d77b4a97584538443bc19",
+  "wrapperSHA256": "c4138451139ed8fe21f7307165a7d4196cf27f1f97a4233ae5ece385a55d5531",
+  "typeSourcePin": "76af0050259a1bdb10b9cd4b216d3ab17e34347e",
+  "type11": [
+    {
+      "path": "src/main/durable-runtime/ops/errors.ts",
+      "sha256": "b429bad1f981d1a1b08d5b339042a9534aca3f04b304dd5d3b7648c0bd3d9e2b",
+      "bytes": 1399
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+      "bytes": 3803
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "bytes": 9074
+    },
+    {
+      "path": "src/main/durable-runtime/ops/contract.ts",
+      "sha256": "3060fb59a9bab017970b623d2eedc4ed0d1002a797f6ac2b4810f476501b9b74",
+      "bytes": 4526
+    },
+    {
+      "path": "src/main/durable-runtime/ops/validation.ts",
+      "sha256": "5610b767639259962741ef6ed4608d79b8c201826488e12aaeac195941c06a46",
+      "bytes": 2917
+    },
+    {
+      "path": "src/main/durable-runtime/ops/types.ts",
+      "sha256": "159a3932190890943da224a66933bc172c4d20607484d67ac385fe611a273ad3",
+      "bytes": 1828
+    },
+    {
+      "path": "src/main/durable-runtime/ops/actor.ts",
+      "sha256": "86674cd37f32bfcb8fa7f3fe3d0a59343c27ad3c5a7943817bf9133cb7a6e590",
+      "bytes": 821
+    },
+    {
+      "path": "src/main/durable-runtime/ops/browser-session-auth.ts",
+      "sha256": "14254e08f416b39a9fa36583f9954dc502f37fbb951fb9e47aa3e171f30b491f",
+      "bytes": 6949
+    },
+    {
+      "path": "src/main/durable-runtime/ops/browser-session-auth.value.test.mts",
+      "sha256": "718b73921d26d04aeff26af2a73faf6c3c14946e3c54cf2d3ba16f2026e2636b",
+      "bytes": 9250
+    }
+  ],
+  "typeFixtureChangeAfterMeasuredRun": "Root가 승인한 secondActor capture·같은 actor strict reference 비교만 바뀌었으며 성공 type는 반복하지 않았습니다. 제품3 bytes는 불변입니다.",
+  "actorExtraction": {
+    "scopeAndSnapshotBodySHA256": "17ae417f111b1a6f6f1aa57d0ccc97965c9019ad853c3a452926a76ea41411e7",
+    "existingVerifierBodySHA256": "47d0c36f1a4b38971f8bc0b164ca7b724bef36954b9a35577c32d1a8c76faf62",
+    "verifierBodyUnchanged": true,
+    "sameAuthExportsPreserved": [
+      "snapshotOpsActor",
+      "OpsServerScope"
+    ]
+  }
+}
