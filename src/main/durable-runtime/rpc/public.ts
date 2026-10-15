@@ -4,6 +4,7 @@ import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from '
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
 import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
 import { createCatalogStructuredSendRpc } from './structured-send.ts'
+import { createCatalogStructuredCancelRpc } from './structured-cancel.ts'
 import { createCatalogCreationFacade, createCatalogRpc } from './creation.ts'
 import type { CatalogCreationMethod } from './launch-preparation.ts'
 import type { RpcContext, RpcAnyMethodDeclaration } from '../../runtime/rpc/core.ts'
@@ -25,6 +26,7 @@ export class DurableCatalogReadAdapter {
   private readonly structuredSubscriptions: ReturnType<typeof createCatalogStructuredSubscriptions>
   private readonly browserCreate: ReturnType<typeof createCatalogBrowserCreateRpc>
   private readonly structuredSend: ReturnType<typeof createCatalogStructuredSendRpc>
+  private readonly structuredCancel: ReturnType<typeof createCatalogStructuredCancelRpc>
   private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
   private disposed = false
   constructor(config: DurableCatalogReadConfig) {
@@ -38,6 +40,7 @@ export class DurableCatalogReadAdapter {
     this.structuredSubscriptions = createCatalogStructuredSubscriptions(this.config)
     this.browserCreate = createCatalogBrowserCreateRpc(this.config)
     this.structuredSend = createCatalogStructuredSendRpc(this.config)
+    this.structuredCancel = createCatalogStructuredCancelRpc(this.config)
   }
   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
   async read(method: string, params: unknown, context: RpcContext): Promise<unknown> {
@@ -86,6 +89,10 @@ export class DurableCatalogReadAdapter {
   }
   async sendStructured(params: unknown, context: RpcContext): Promise<unknown> {
     try { this.requireOpen(); return await this.structuredSend(params, context) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
+  async cancelStructured(params: unknown, context: RpcContext): Promise<unknown> {
+    try { this.requireOpen(); return await this.structuredCancel(params, context) }
     catch (error) { throw catalogReadFailure(error) }
   }
   async createBrowser(params: unknown, context: RpcContext): Promise<{ browserPageId: string }> {

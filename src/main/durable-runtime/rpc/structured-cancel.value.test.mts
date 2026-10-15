@@ -2,8 +2,10 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { test } from 'node:test'
 import type { Pool } from 'pg'
-import { createCatalogStructuredCancelRpc } from './structured-cancel.ts'
-import { captureDurableCatalogReadConfig } from './config.ts'
+import { eraseRpcMethods, isStreamingMethod, type RpcAnyMethodDeclaration, type RpcContext } from '../../runtime/rpc/core.ts'
+import { STRUCTURED_AGENT_SESSION_METHODS } from '../../runtime/rpc/methods/structured-agent-session.ts'
+import { CancelParams } from '../../runtime/rpc/methods/structured-agent-session-schemas.ts'
+import { DurableCatalogReadAdapter } from './public.ts'
 import { fixtureConfig, fixtureRuntime, fixtureContext, deferred } from './fixture-support.mts'
 import { fingerprintAttachmentPrincipal } from '../attachments/types.ts'
 import { inputPayloadHash } from '../input/canonical.ts'
@@ -15,7 +17,7 @@ if (process.env.ORCA_PUBLIC_STRUCTURED_CANCEL_APPROVED !== 'root-source-reviewed
 }
 
 // Fake SQL/receipt below observes the real handler's capture only, not PG/auth/provider qualification.
-test('공개 cancel handler는 strict wire·cleanup 정책·동기 capture와 receipt-first 반환을 보존합니다', async () => {
+test('공개 cancel handler는 strict wire·cleanup 정책·동기 capture와 receipt-first 반환을 보존합니다', async t => {
   const publicSessionId = `structured_${randomUUID().replaceAll('-', '_')}`
   const sessionId = randomUUID(), workspaceId = randomUUID(), publicId = `synthetic-cancel-${randomUUID()}`
   const turnId = `synthetic-turn-${randomUUID()}`, fingerprint = 'a'.repeat(64)
@@ -63,9 +65,31 @@ test('공개 cancel handler는 strict wire·cleanup 정책·동기 capture와 re
     async query() { assert.equal(this,owner); throw new Error('Unexpected direct Pool query') },
     end() { ends++ } }
   const pool = owner as unknown as Pool
-  const config = { ...captureDurableCatalogReadConfig({ ...fixtureConfig(pool), projectGroupIds: ['allowed-group'] }),
-    projectGroupIds: ['allowed-group'] }
-  const run = createCatalogStructuredCancelRpc(config), native = fixtureRuntime()
+  const config = { ...fixtureConfig(pool), projectGroupIds: ['allowed-group'],
+    readHostIdentity() { assert.equal(this,config); return 'local' as const } }
+  const adapter = new DurableCatalogReadAdapter(config)
+  t.after(() => adapter.dispose())
+  const declarations = eraseRpcMethods(STRUCTURED_AGENT_SESSION_METHODS)
+  const originalCancel = declarations.find(method => method.name === 'agentSession.cancel')
+  assert.ok(originalCancel && !isStreamingMethod(originalCancel))
+  assert.equal(originalCancel.params,CancelParams)
+  const originalHandler = originalCancel.handler
+  const methods = adapter.bind(declarations), secondBinding = adapter.bind(declarations)
+  const cancel = methods.find(method => method.name === 'agentSession.cancel')
+  assert.ok(cancel && !isStreamingMethod(cancel))
+  assert.notEqual(cancel,originalCancel)
+  assert.equal(cancel.params,CancelParams); assert.notEqual(cancel.handler,originalHandler)
+  assert.equal(declarations.find(method => method.name === 'agentSession.cancel'),originalCancel)
+  assert.equal(originalCancel.handler,originalHandler); assert.equal(originalCancel.params,CancelParams)
+  assert.equal(secondBinding.find(method => method.name === 'agentSession.cancel')?.params,CancelParams)
+  const originalOptions = declarations.find(method => method.name === 'agentSession.options')
+  assert.ok(originalOptions)
+  assert.equal(methods.find(method => method.name === 'agentSession.options'),originalOptions)
+  const wrongStream = { ...originalCancel, stream: true } as unknown as RpcAnyMethodDeclaration
+  assert.throws(() => adapter.bind([wrongStream]),/CATALOG_REGISTRY_KIND/)
+  assert.equal(connects,0); assert.equal(releases,0); assert.equal(ends,0); assert.deepEqual(seen,[])
+  const run = async (request: unknown, callContext: RpcContext) => cancel.handler(request as never,callContext)
+  const native = fixtureRuntime()
   const context = fixtureContext(native.runtime,{ clientCapabilities: [STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY] })
   const params = { turnId, envelope: { sessionId: publicSessionId, clientOperationId: 'capture-original', expectedRuntimeFence: 1,
     payloadFingerprint: computeAgentSessionPayloadFingerprint({ method: 'agentSession.cancel', sessionId: publicSessionId, fields: { turnId } }) } }
@@ -90,7 +114,7 @@ test('공개 cancel handler는 strict wire·cleanup 정책·동기 capture와 re
   params.envelope.expectedRuntimeFence = 2
   Object.assign(context,{ authenticatedCallerFingerprint: 'b'.repeat(64), clientKind: 'runtime', clientCapabilities: [] })
   config.projectGroupIds.length = 0
-  Object.assign(config,{ datasetName: 'changed', hostId: 'foreign', assertCurrentHost() { throw new Error('Replaced host method') } })
+  Object.assign(config,{ datasetName: 'changed', hostId: 'foreign', readHostIdentity() { throw new Error('Replaced host method') } })
   owner.connect = async () => { throw new Error('Replaced connect method') }
   owner.query = async () => { throw new Error('Replaced query method') }
   gate.resolve()
@@ -100,4 +124,7 @@ test('공개 cancel handler는 strict wire·cleanup 정책·동기 capture와 re
   assert.ok(seen.every(item => !/\b(?:INSERT|UPDATE|DELETE)\b/.test(item.sql)))
   assert.equal(Object.isFrozen(owner),false,'borrowed Pool remains owned by the caller')
   assert.deepEqual(native.unexpected,[])
+  adapter.dispose(); adapter.dispose()
+  await assert.rejects(run(params,context),/CATALOG_ADAPTER_DISPOSED/)
+  assert.equal(ends,0,'adapter disposal does not end the borrowed Pool')
 })

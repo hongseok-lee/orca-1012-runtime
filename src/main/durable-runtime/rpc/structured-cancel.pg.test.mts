@@ -12,8 +12,9 @@ import { inputPayloadHash } from '../input/canonical.ts'
 import { executionFixture, inExecution, fixed, type ExecutionFixture } from '../input/execution-fixtures.mts'
 import { observeInputDeliveryInTransaction } from '../input/observe.ts'
 import type { InputDeliveryObservation } from '../input/observation-types.ts'
-import { createCatalogStructuredCancelRpc } from './structured-cancel.ts'
-import { captureDurableCatalogReadConfig } from './config.ts'
+import { eraseRpcMethods, isStreamingMethod } from '../../runtime/rpc/core.ts'
+import { STRUCTURED_AGENT_SESSION_METHODS } from '../../runtime/rpc/methods/structured-agent-session.ts'
+import { DurableCatalogReadAdapter } from './public.ts'
 import { fixtureConfig, fixtureRuntime, fixtureContext } from './fixture-support.mts'
 
 async function seed(pool: Pool) {
@@ -92,7 +93,8 @@ await test('PG1 actual cancel handler는 원 turn·receipt-first·권한과 기�
   assert.ok(database && database.startsWith('orca_')); assert.notEqual(database,'orca_dev'); assert.equal(process.env.PGDATABASE,database)
   assert.match(oid ?? '',/^[1-9][0-9]*$/); assert.notEqual(oid,'90361','PR75 DB is not this fixture execution database')
   const pool = createDurablePool({ database, max: 3 })
-  t.after(async () => { await pool.end() })
+  const adapters: DurableCatalogReadAdapter[] = []
+  t.after(async () => { for (const adapter of adapters) { adapter.dispose() }; await pool.end() })
   const actual = (await pool.query(`SELECT current_database() AS database,(SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
     (SELECT system_identifier::text FROM pg_control_system()) AS system,pg_backend_pid() AS backend_pid,
     (SELECT jsonb_agg(dataset_name ORDER BY dataset_name) FROM durable_runtime.dataset_metadata) AS datasets`)).rows[0]
@@ -105,13 +107,18 @@ await test('PG1 actual cancel handler는 원 turn·receipt-first·권한과 기�
   publicAlias.set(f.authority.sessionId,publicSessionId)
   const native = fixtureRuntime(), config = { ...fixtureConfig(pool), repositoryIds: [state.repoId] }
   const context = fixtureContext(native.runtime,{ clientCapabilities: [STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY] })
-  const handler = createCatalogStructuredCancelRpc(captureDurableCatalogReadConfig(config))
+  const declarations = eraseRpcMethods(STRUCTURED_AGENT_SESSION_METHODS)
+  const adapter = new DurableCatalogReadAdapter(config)
+  adapters.push(adapter)
+  const cancel = adapter.bind(declarations).find(method => method.name === 'agentSession.cancel')
+  assert.ok(cancel && !isStreamingMethod(cancel))
+  const handler = cancel.handler
   function params(turnId: string, key = `synthetic-cancel:${randomUUID()}`, extra: { scope?: 'background-tasks'; taskId?: string } = {}, fence = 1) {
     const fields = { turnId, ...extra }
     return { ...fields, envelope: { sessionId: publicSessionId, clientOperationId: key, expectedRuntimeFence: fence,
       payloadFingerprint: computeAgentSessionPayloadFingerprint({ method: 'agentSession.cancel', sessionId: publicSessionId, fields }) } }
   }
-  const invoke = (request: unknown, run = handler) => run(request,context) as Promise<AgentSessionMutationResult<AgentSessionCancelResult>>
+  const invoke = (request: unknown, run = handler) => run(request as never,context) as Promise<AgentSessionMutationResult<AgentSessionCancelResult>>
   const turnA = `${namespace}-A`, turnB = `${namespace}-B`, a = await delivery(pool,f), b = await delivery(pool,f)
   await observe(pool,f,a,turnA,'ADMITTED'); await observe(pool,f,b,turnB,'SETTLED')
   const before = await snapshot(pool,f), unchangedB = before.deliveries.find((row: { id: string }) => row.id === b)
@@ -144,9 +151,17 @@ await test('PG1 actual cancel handler는 원 turn·receipt-first·권한과 기�
   }
   await noMutation(params(turnB,original.envelope.clientOperationId),handler,/RECEIPT_PAYLOAD_CONFLICT/)
   await noMutation(params(turnA,undefined,{ scope: 'background-tasks', taskId: `${namespace}-task` }),handler,/STRUCTURED_BACKGROUND_CANCEL_NOT_CONNECTED/)
-  const denied = createCatalogStructuredCancelRpc(captureDurableCatalogReadConfig({ ...config, repositoryIds: [] }))
+  const deniedAdapter = new DurableCatalogReadAdapter({ ...config, repositoryIds: [] })
+  adapters.push(deniedAdapter)
+  const deniedCancel = deniedAdapter.bind(declarations).find(method => method.name === 'agentSession.cancel')
+  assert.ok(deniedCancel && !isStreamingMethod(deniedCancel))
+  const denied = deniedCancel.handler
   await noMutation(params(turnA),denied,/selector_not_found/)
-  const wrongDataset = createCatalogStructuredCancelRpc(captureDurableCatalogReadConfig({ ...config, datasetName: 'synthetic-other-dataset' }))
+  const wrongDatasetAdapter = new DurableCatalogReadAdapter({ ...config, datasetName: 'synthetic-other-dataset' })
+  adapters.push(wrongDatasetAdapter)
+  const wrongDatasetCancel = wrongDatasetAdapter.bind(declarations).find(method => method.name === 'agentSession.cancel')
+  assert.ok(wrongDatasetCancel && !isStreamingMethod(wrongDatasetCancel))
+  const wrongDataset = wrongDatasetCancel.handler
   await noMutation(params(turnA),wrongDataset,/CATALOG_DATASET_MISMATCH/)
   await pool.query('UPDATE durable_runtime.catalog_repositories SET payload=$2 WHERE id=$1',[state.repoId,{ ...state.repo, executionHostId: 'runtime:synthetic-foreign' }])
   await noMutation(params(turnA),handler,/CATALOG_REGISTRATION_HOST_MISMATCH/)
