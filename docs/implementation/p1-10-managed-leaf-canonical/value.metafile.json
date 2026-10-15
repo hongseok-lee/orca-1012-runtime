@@ -1,0 +1,100 @@
+{
+  "inputs": {
+    "src/main/durable-runtime/storage/canonical.ts": {
+      "bytes": 5525,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/shared/durable-runtime/identity.ts": {
+      "bytes": 3357,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/storage/managed-leaf-canonical.ts": {
+      "bytes": 1944,
+      "imports": [
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/storage/canonical.ts",
+          "kind": "import-statement",
+          "original": "./canonical.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/storage/managed-leaf-canonical.test.mts": {
+      "bytes": 5324,
+      "imports": [
+        {
+          "path": "node:assert/strict",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:test",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/storage/canonical.ts",
+          "kind": "import-statement",
+          "original": "./canonical.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/storage/managed-leaf-canonical.ts",
+          "kind": "import-statement",
+          "original": "./managed-leaf-canonical.ts"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "../value.cjs": {
+      "imports": [
+        {
+          "path": "node:assert/strict",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:test",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "src/main/durable-runtime/storage/managed-leaf-canonical.test.mts",
+      "inputs": {
+        "src/main/durable-runtime/storage/managed-leaf-canonical.test.mts": {
+          "bytesInOutput": 5582
+        },
+        "src/main/durable-runtime/storage/canonical.ts": {
+          "bytesInOutput": 3779
+        },
+        "src/shared/durable-runtime/identity.ts": {
+          "bytesInOutput": 240
+        },
+        "src/main/durable-runtime/storage/managed-leaf-canonical.ts": {
+          "bytesInOutput": 1407
+        }
+      },
+      "bytes": 12567
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "sourcePin": "9e097febcb248752a4ce89d0aa197d0621aaf678",
+  "base": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "owned": [
+    "src/main/durable-runtime/storage/managed-leaf-canonical.ts",
+    "src/main/durable-runtime/storage/managed-leaf-canonical.test.mts"
+  ],
+  "sourceClosure": [
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-canonical.ts",
+      "sha256": "4b12167177322b89f43326cbf87bd06b5edc6c64ff85bd123cd72d37620e3e79",
+      "bytes": 1944,
+      "matches": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-canonical.test.mts",
+      "sha256": "5bdaf2827fd262698d3f9db4d2a5d076e04505d241dc406dfb980e059b90ddb2",
+      "bytes": 5324,
+      "matches": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+      "bytes": 5525,
+      "matches": true
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357,
+      "matches": true
+    }
+  ],
+  "type": {
+    "entryFiles": [
+      "src/main/durable-runtime/storage/managed-leaf-canonical.ts",
+      "src/main/durable-runtime/storage/managed-leaf-canonical.test.mts"
+    ],
+    "compilerOptions": {
+      "target": "ES2023",
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "strict": true,
+      "noEmit": true,
+      "allowImportingTsExtensions": true,
+      "skipLibCheck": true,
+      "types": [
+        "node"
+      ],
+      "esModuleInterop": true
+    },
+    "borrowedNodeTypes": true,
+    "sourceCount": 4,
+    "externalCount": 194,
+    "rawConfigSha256": "02413605e3df0fcb2cea6c3f2927037eab4b59e5d2c70ba615fdb190c29d3926"
+  },
+  "runtime": {
+    "sourceCount": 4,
+    "metafile": "value.metafile.json",
+    "metafileSha256": "89e0734787d80a6039c0817e0426b984e6ae258c4997261a01c391110bd2a32d",
+    "bundleSha256": "6cd116ec855b7848f48b7eaf930635f6301769a9cdb4df8d5de42296b74d986e",
+    "fixtureBodyUnchanged": true,
+    "rawHelperSha256": "542073a8c2e224b59a60e48e3f04cb74b6a252ed69e3d1cc50d4a1343313003f"
+  },
+  "context": {
+    "packageJsonSha256": "9793ff6351cb46cc05f13ecb10a5e706d6d1e3507de1d610b51000463b30f5f8",
+    "lintConfigSha256": "c9937ad53bdaa27b1289b9e46ecd55d13151f3e1f619a78e35c88363b585096e"
+  },
+  "method": "Source inputs are pinned Git bytes. Native tsc --listFiles and the saved esbuild metafile each contain exactly four product/fixture files. Private cache paths are omitted; original logs and configuration are preserved in private operator evidence."
+}
