@@ -1,7 +1,6 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   Text,
   TextInput,
@@ -13,6 +12,12 @@ import {
 import { ArrowUp, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
 import { MobileBrowserAddressField } from './MobileBrowserAddressField'
+import {
+  MobileBrowserFrameImage,
+  MobileBrowserFrameLayer,
+  type BrowserFrameImageRef,
+  type BrowserFrameLayerRef
+} from './MobileBrowserFrameSurface'
 import { MobileBrowserKeyRow } from './MobileBrowserKeyRow'
 import {
   MobileBrowserPointerModifiers,
@@ -34,7 +39,7 @@ type MobileBrowserPaneViewProps = {
   addressFocused: boolean
   addressValue: string
   bottomInset: number
-  browserLayerRef: (layer: FrameLayer) => (view: View | null) => void
+  browserLayerRef: (layer: FrameLayer) => (view: BrowserFrameLayerRef | null) => void
   browserViewMode: MobileBrowserViewMode
   busy: boolean
   controlsDisabled: boolean
@@ -43,7 +48,7 @@ type MobileBrowserPaneViewProps = {
   frameGeometry: BrowserFrameGeometry | null
   frameLayerErrorHandler: (layer: FrameLayer) => () => void
   frameLayerLoadHandler: (layer: FrameLayer) => () => void
-  frameLayerRef: (layer: FrameLayer) => (image: Image | null) => void
+  frameLayerRef: (layer: FrameLayer) => (image: BrowserFrameImageRef | null) => void
   frameLayerStyle: (layer: FrameLayer) => StyleProp<ViewStyle>
   goBack: () => void
   goForward: () => void
@@ -189,13 +194,13 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
                   ]}
                 >
                   {([0, 1] as const).map((layer) => (
-                    <View
+                    <MobileBrowserFrameLayer
                       key={layer}
                       ref={browserLayerRef(layer)}
                       pointerEvents="none"
                       style={frameLayerStyle(layer)}
                     >
-                      <Image
+                      <MobileBrowserFrameImage
                         ref={frameLayerRef(layer)}
                         source={renderedFrameSource}
                         resizeMode="stretch"
@@ -210,19 +215,19 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
                           }
                         ]}
                       />
-                    </View>
+                    </MobileBrowserFrameLayer>
                   ))}
                 </View>
               </View>
             ) : (
               ([0, 1] as const).map((layer) => (
-                <View
+                <MobileBrowserFrameLayer
                   key={layer}
                   ref={browserLayerRef(layer)}
                   pointerEvents="none"
                   style={frameLayerStyle(layer)}
                 >
-                  <Image
+                  <MobileBrowserFrameImage
                     ref={frameLayerRef(layer)}
                     source={renderedFrameSource}
                     resizeMode="contain"
@@ -231,7 +236,7 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
                     onError={frameLayerErrorHandler(layer)}
                     style={styles.browserImageFill}
                   />
-                </View>
+                </MobileBrowserFrameLayer>
               ))
             )}
           </View>
