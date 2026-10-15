@@ -1,0 +1,28 @@
+{
+  "kind": "OFFLINE_VERIFICATION_REPORT",
+  "pid": 6016,
+  "startedAt": "2026-10-15T05:18:21.402Z",
+  "phase": "OFFLINE_REPORT_COMPLETE",
+  "sourcePin": "19779a9652af05212fb53f2d2c4843fd887ae622",
+  "htmlSHA256": "60c432d91eae646f078118ca76969da87858f835079aee99a8fce4fb4093ea5a",
+  "productUI": false,
+  "actualKubernetesAPI": false,
+  "authStateLoaded": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "node": "v24.14.1",
+  "capturedAt": "2026-10-15T05:18:21.721Z",
+  "PNGSHA256": "1f6d6b07b0e33c29c0f4bd9c2c92606987fb9f2621fa65a9c0b1cea75d74008d",
+  "PNGBytes": 299616,
+  "viewport": {
+    "width": 1280,
+    "height": 1600
+  },
+  "DPR": 1,
+  "networkRequests": 0,
+  "externalRequestsBlocked": true,
+  "exit": 0,
+  "contextClosed": true,
+  "browserClosed": true,
+  "finishedAt": "2026-10-15T05:18:21.934Z"
+}

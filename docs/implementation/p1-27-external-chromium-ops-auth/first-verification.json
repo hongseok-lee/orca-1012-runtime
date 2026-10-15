@@ -1,0 +1,187 @@
+{
+  "validatedSourcePin": "152a8dd64e7a2695e4f1cdfb05e0cf7ba73709d7",
+  "alignedSourcePin": "19779a9652af05212fb53f2d2c4843fd887ae622",
+  "basePin": "e3ceda2d258153271b526ebda0db74bf51886ffd",
+  "alignmentCount": 1,
+  "ownedSourceModeBlobMismatches": [],
+  "actualRuntimeTypeModeBlobMismatches": [],
+  "scope": "독립 helper와 fake CDP fixture의 최초 검증입니다. 실제 Chromium/Ops 자동 인증 수용이 아닙니다.",
+  "originalLint": {
+    "PID": 33534,
+    "startedAt": "2026-10-15T05:08:33.081Z",
+    "finishedAt": "2026-10-15T05:08:33.430Z",
+    "exit": 1,
+    "rule": "unicorn(no-useless-spread)",
+    "diagnosticCount": 3,
+    "logSHA256": "9ea60f67aa657d6ea79425fdca199af5f709d1212c87e6c3c45f6e7f6209083c",
+    "fixtureOnly": true
+  },
+  "correction": {
+    "meaning": "세 listener Set의 snapshot 의미를 유지하는 Array.from 표현으로만 교정했습니다. callback/assertion·제품 2개·규칙은 바꾸지 않았습니다.",
+    "exactDiffSHA256": "ff4835124c8c0e94f2acd9b40fb4185c36a7f098f759e67b771f4dccb44fdee9",
+    "originalFixtureSHA256": "c5a2788294964b56806f20db12f9982366026c09b4608c0c737a00eb4d284a85",
+    "correctedFixtureSHA256": "9e2f43ea5471be253d6380d9f170fa381594dffd2becba58d46399862807c0a2"
+  },
+  "firstValidation": {
+    "node": "v24.15.0",
+    "controlPID": 33746,
+    "jobs": [
+      {
+        "phase": "lint-correction",
+        "pid": 33753,
+        "startedAt": "2026-10-15T05:09:45.160Z",
+        "finishedAt": "2026-10-15T05:09:45.558Z",
+        "exit": 0,
+        "signal": null,
+        "childExited": true,
+        "logSHA256": "be1f4d94c3a7e13cbc7a45875a2158280602842fa0778516b360664db65f449e"
+      },
+      {
+        "phase": "type",
+        "pid": 33765,
+        "startedAt": "2026-10-15T05:09:45.563Z",
+        "finishedAt": "2026-10-15T05:09:46.952Z",
+        "exit": 0,
+        "signal": null,
+        "childExited": true,
+        "logSHA256": "ab789d76b643060c15f2d01034541a95165899239c06d64adfa79a5cb296b562"
+      },
+      {
+        "phase": "bundle",
+        "pid": 33841,
+        "startedAt": "2026-10-15T05:09:46.959Z",
+        "finishedAt": "2026-10-15T05:09:47.147Z",
+        "exit": 0,
+        "signal": null,
+        "childExited": true,
+        "logSHA256": "04805b801a99afde97967559e6d93a47f20be2683387e6d91dfabbd236f94054"
+      },
+      {
+        "phase": "fixture",
+        "pid": 33854,
+        "startedAt": "2026-10-15T05:09:47.152Z",
+        "finishedAt": "2026-10-15T05:09:47.583Z",
+        "exit": 0,
+        "signal": null,
+        "childExited": true,
+        "logSHA256": "9f02ce7d3acfc7d5138f44c5d6f083f66906c904afea4dcdbc468e701533dc6c"
+      }
+    ],
+    "parentCallbackCount": 1,
+    "subcaseCount": 15,
+    "TAPTests": 16,
+    "pass": 16,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "rawTAPSHA256": "9f02ce7d3acfc7d5138f44c5d6f083f66906c904afea4dcdbc468e701533dc6c",
+    "subcases": [
+      "one exact main-frame API request gets one override; cleanup owns only its session",
+      "foreign origin/port/path, userinfo, iframe/worker, redirect and response stage continue untouched",
+      "every casing of a preexisting Authorization header, including empty, is preserved",
+      "about:blank stays inactive until an Ops document commits and deactivates on departure",
+      "same-document path changes and navigation start invalidate eligibility",
+      "navigation during a frame observation cannot borrow the old document authority",
+      "an unobserved loader replacement fails closed before reading a bearer",
+      "a synchronous bearer read cannot race a navigation into adding a credential",
+      "dispose releases a paused request once without waiting for an outstanding observation",
+      "transport/generation changes release the bearer and never clean up a replacement transport",
+      "target destruction disposes only the owned session and bearer",
+      "input values and method receivers are captured before the first await",
+      "installation/continue errors are stable, secret-free and never retried",
+      "invalid origin and missing/invalid bearer cannot create automatic authority",
+      "a late attach after target failure is detached without enabling Fetch or leaking owner errors"
+    ],
+    "separateNodeTestChildPIDRecorded": false
+  },
+  "inputs": {
+    "actualRuntime": [
+      {
+        "path": "src/main/browser/browser-error.ts",
+        "sha256": "278bc5bad5d83b60f490992f0d87edcca0bf18e248462b036ee70412098c2213",
+        "bytes": 516
+      },
+      {
+        "path": "src/main/orcad/external-chromium-ops-auth.ts",
+        "sha256": "6d55c123e1c9064500aff8477c66e5e7242e63f7ce3bfd1104ce7fc1cec8a92b",
+        "bytes": 13546
+      },
+      {
+        "path": "src/main/orcad/external-chromium-ops-auth.value.test.mts",
+        "sha256": "9e2f43ea5471be253d6380d9f170fa381594dffd2becba58d46399862807c0a2",
+        "bytes": 18559
+      }
+    ],
+    "runtimeMismatches": [],
+    "actualTypeSource": [
+      {
+        "path": "src/main/browser/browser-error.ts",
+        "sha256": "278bc5bad5d83b60f490992f0d87edcca0bf18e248462b036ee70412098c2213"
+      },
+      {
+        "path": "src/main/orcad/external-chromium-cdp-connection.ts",
+        "sha256": "fae7f5f97df8d93244c95ed53f1e764f9995a7cf0c494ca31e5ef3ec72e0b0a2"
+      },
+      {
+        "path": "src/main/orcad/external-chromium-ops-auth-types.ts",
+        "sha256": "05ae4d9975e2b395fa2caac482df1d369b8ec6f209c16d54bc3f041304487ed3"
+      },
+      {
+        "path": "src/main/orcad/external-chromium-ops-auth.ts",
+        "sha256": "6d55c123e1c9064500aff8477c66e5e7242e63f7ce3bfd1104ce7fc1cec8a92b"
+      },
+      {
+        "path": "src/main/orcad/external-chromium-ops-auth.value.test.mts",
+        "sha256": "9e2f43ea5471be253d6380d9f170fa381594dffd2becba58d46399862807c0a2"
+      }
+    ],
+    "typeSourceMismatches": [],
+    "metafilePreservedBeforeGuard": true,
+    "metafileSHA256": "146a6938cc61bec0d2f88d60aec2e5a21222d21c6a5332580907e147261e506f",
+    "fixtureBundleSHA256": "dbf53461be62981467f830d89e1b9b52fde012ff06e7d459bc942da4759d10a3",
+    "typeWholeListPreservedPrivately": true
+  },
+  "cleanup": {
+    "observedAt": "2026-10-15T05:10:26.201Z",
+    "knownChildPIDs": [
+      33534,
+      33753,
+      33765,
+      33841,
+      33854
+    ],
+    "knownChildState": "ABSENT",
+    "supervisorPIDs": [
+      33527,
+      33746
+    ],
+    "supervisorState": "Z",
+    "heavyReturned": true
+  },
+  "offlineReport": {
+    "PNG": "verification-report.png",
+    "PNGSHA256": "1f6d6b07b0e33c29c0f4bd9c2c92606987fb9f2621fa65a9c0b1cea75d74008d",
+    "provenance": "verification-report-provenance.json",
+    "productUI": false,
+    "authStateLoaded": false,
+    "externalNetworkRequests": 0,
+    "preparationError": "OCI exec에서 잘못된 Node 경로로 process 시작 전에 실패했습니다. result/PNG 부재와 실제 Node 경로를 확인한 뒤 같은 미진입 capture만 실행했습니다.",
+    "preparationPathCorrectionOnly": true,
+    "captureStartedCount": 1
+  },
+  "unconnected": [
+    "서버의 bearer session 발급 모듈과의 합류",
+    "기존 Catalog Browser create/restore caller 설치",
+    "Ops UI의 bearer 없는 자동 연결과 수동 인증 폼 fallback",
+    "실제 Chromium의 request header 설치·redirect/worker/iframe 격리 실측",
+    "실제 iPhone/Mac·전체 P1-27·HA 수용"
+  ],
+  "zeroExecutions": [
+    "성공 lint/type/fixture 반복",
+    "실제 제품 Browser/CDP",
+    "제품 HTTP/API/PG",
+    "live source 반영/Metro 또는 서버 restart",
+    "설치/product build/운영 UI 캡처"
+  ],
+  "usageCreditsStream": "이번 turn의 usage limit/credits/stream 중단 원오류는 직접 미관측입니다."
+}
