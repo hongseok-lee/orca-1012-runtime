@@ -9,7 +9,7 @@ This directory reproduces the storage part of the root [foundation PR specificat
 
 Neither server specifies a CPU limit. PostgreSQL's StatefulSet keeps PVCs on deletion and scale-down. Both CSI StorageClasses use `WaitForFirstConsumer`, `ext4`, and `Retain`. The RWX PV refers to the NFS export; its 50Gi capacity does not allocate another disk. PGDATA and pg_wal use the PostgreSQL block filesystem, separate from Agent/dev homes.
 
-The four templates are Namespace/StorageClasses (`00`), PostgreSQL (`10`), NFS (`20`), and the static RWX PV/PVC (`30`). PostgreSQL uses the pinned official public image shown in its template. **`UNFS_IMAGE` is a required operator-selected `repository@sha256:<64 lowercase hex>` input.** Use the previously validated userspace unfs3 image with its longsocket fix and compatible `unfsd` command. This directory neither builds an image nor substitutes an unverified image.
+The four foundation templates are Namespace/StorageClasses (`00`), PostgreSQL (`10`), NFS (`20`), and the static RWX PV/PVC (`30`). An optional NFS ingress policy (`25`) is described below. PostgreSQL uses the pinned official public image shown in its template. **`UNFS_IMAGE` is a required operator-selected `repository@sha256:<64 lowercase hex>` input.** Use the previously validated userspace unfs3 image with its longsocket fix and compatible `unfsd` command. This directory neither builds an image nor substitutes an unverified image.
 
 ## Private rendering and explicit target
 
@@ -46,6 +46,18 @@ gcloud container clusters create-auto "$CLUSTER_NAME" \
 ```
 
 Before creation, successfully list clusters across locations in the designated project and inspect any same-name cluster; never overwrite it. Observe the exact create operation to completion. Obtain credentials into the dedicated private kubeconfig without changing a management context. No existing network, IAM, API, NAT, firewall, or infrastructure Terraform changes are included here.
+
+## Optional NFS kernel-client ingress boundary
+
+`25-nfs-kernel-clients.yaml.in` selects the NFS Pods by both `app.kubernetes.io/name=orca-dev-nfs` and the exact dataset label in the chosen namespace. It permits ingress on TCP 2049 from one operator-verified node primary IPv4 subnet. It adds no egress rule, Pod/namespace peer selector, external Service, or host-network exception. Both existing NFS and MOUNT services use TCP 2049.
+
+After root review, the operator can include the optional policy in a fresh private render by adding `--nfs-node-cidr "$NFS_NODE_CIDR"` to the rendering command above. Omitting the option produces no `25` file and preserves the existing foundation outputs and required inputs. The option accepts only a strict, canonical IPv4 CIDR with a nonzero prefix length; IPv6, `/0`, host bits, noncanonical netmask notation, and injected text are rejected. It reuses the exclusive mode-0600 output rule. The renderer does not query or authenticate subnet ownership, dataplane behavior, or access denial. Use a verified narrow node primary subnet, not a Pod/Service CIDR or an inferred NAT range.
+
+This boundary is specific to GKE Dataplane V2 (`ADVANCED_DATAPATH`). [GKE documents that `ipBlock` rules do not include Pod traffic in Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/network-policy#ipblock_behavior_in_gke_dataplane_v2). The reviewed development metadata has intra-node visibility enabled, a ClusterIP NFS Service on TCP 2049, and NoSNAT declarations covering the NFS Pod and Service destinations. These declarations are prerequisites, not packet observations. This policy has not yet qualified preservation of existing kernel NFS access or denial of userspace NFS requests. Do not generalize it to another CNI or treat `secure` export options as per-request NFS source-port enforcement.
+
+NetworkPolicy permissions are additive: another policy selecting the NFS Pods can widen ingress beyond this rule. All workload provider Pods must prohibit host networking and node proxies; every provider, init, sidecar, and ephemeral container must run as non-root and drop `ALL` capabilities without privileged access. Revisit this boundary if any allowed workload gains those privileges or networking paths, the node subnet or SNAT behavior changes, or NFS is exposed through an external Service. These are deployment conditions; this optional template does not enforce the workload security settings.
+
+Nodes and kernel-originated traffic are trusted by this boundary. It does not defend against a compromised host or trusted administrator. Namespace/leaf permissions, actual mount mode, and old Compute termination remain separate conditions. Source preparation is not access-denial qualification, a directory authority pin, or completed writer fencing. Rendering, server dry-run, policy creation, and first network/kernel qualification require their separate root dispatch; the existing PG/backend/Expo connections must be preserved.
 
 ## Runtime Secret and admission
 

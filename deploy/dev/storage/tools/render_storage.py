@@ -16,6 +16,13 @@ def image_reference(value):
     return value
 
 
+def node_ipv4_cidr(value):
+    network = ipaddress.IPv4Network(value, strict=True)
+    if network.prefixlen == 0 or str(network) != value:
+        raise ValueError("NFS node subnet must be a canonical IPv4 CIDR other than /0.")
+    return str(network)
+
+
 def substitute(text, values):
     tokens = set(re.findall(r"\$\{([A-Z_]+)\}", text))
     missing = tokens - values.keys()
@@ -34,6 +41,7 @@ def main():
     parser.add_argument("--unfs-image", required=True, type=image_reference)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--nfs-service-ip", type=ipaddress.IPv4Address)
+    parser.add_argument("--nfs-node-cidr", type=node_ipv4_cidr)
     args = parser.parse_args()
     values = {
         "NAMESPACE": args.namespace, "DATASET": args.dataset,
@@ -43,9 +51,13 @@ def main():
     }
     if args.nfs_service_ip:
         values["NFS_SERVICE_IP"] = str(args.nfs_service_ip)
+    if args.nfs_node_cidr:
+        values["NFS_NODE_CIDR"] = args.nfs_node_cidr
     templates = Path(__file__).resolve().parents[1] / "templates"
     selected = sorted(templates.glob("*.yaml.in"))
     for source in selected:
+        if source.name == "25-nfs-kernel-clients.yaml.in" and not args.nfs_node_cidr:
+            continue
         if source.name.startswith("30-") and not args.nfs_service_ip:
             continue
         rendered = substitute(source.read_text(encoding="utf-8"), values)

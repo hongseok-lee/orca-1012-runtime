@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nfs-kernel-clients
+  namespace: ${NAMESPACE}
+  labels:
+    orca.dev/dataset: ${DATASET}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: orca-dev-nfs
+      orca.dev/dataset: ${DATASET}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: ${NFS_NODE_CIDR}
+    ports:
+    - protocol: TCP
+      port: 2049
