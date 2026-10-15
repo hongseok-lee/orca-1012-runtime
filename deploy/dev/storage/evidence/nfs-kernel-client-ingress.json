@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "kind": "nfs-kernel-client-ingress-bounded-observation",
+  "observedSource": {
+    "contentCommit": "71322405349552ea7f164e700879bd649fa737c0",
+    "executionCheckoutCommit": "24aa4659f475da06488306ddada304aeebad91da",
+    "liveCheckoutShaProven": false
+  },
+  "window": {
+    "startedUtc": "2026-10-15T11:46:09.329632+00:00",
+    "completedUtc": "2026-10-15T11:50:19.123838+00:00"
+  },
+  "scope": "기존 개발 Pod 하나의 새 userspace TCP 연결과 기존 kernel NFS mount의 소유 marker만 확인했습니다.",
+  "renderer": {
+    "withoutOption": {
+      "executions": 1,
+      "exit": 0,
+      "outputCount": 4
+    },
+    "withOption": {
+      "executions": 1,
+      "exit": 0,
+      "outputCount": 5
+    },
+    "existingFourOutputsIdentical": true,
+    "onlyAddedOutput": "25-nfs-kernel-clients.yaml",
+    "fileMode": "0600",
+    "directoryMode": "0700",
+    "invalidCliInputs": [
+      {
+        "case": "prefix-zero",
+        "executions": 1,
+        "exit": 2
+      },
+      {
+        "case": "ipv6",
+        "executions": 1,
+        "exit": 2
+      },
+      {
+        "case": "host-bits",
+        "executions": 1,
+        "exit": 2
+      },
+      {
+        "case": "noncanonical-netmask",
+        "executions": 1,
+        "exit": 2
+      },
+      {
+        "case": "injected-text",
+        "executions": 1,
+        "exit": 2
+      }
+    ]
+  },
+  "policy": {
+    "name": "nfs-kernel-clients",
+    "targetNamespace": "<development-namespace>",
+    "targetLabels": {
+      "app.kubernetes.io/name": "orca-dev-nfs",
+      "orca.dev/dataset": "<development-dataset>"
+    },
+    "peerKind": "ipBlock",
+    "peerCount": 1,
+    "cidr": "<verified-node-primary-ipv4-subnet>",
+    "protocol": "TCP",
+    "port": 2049,
+    "serverDryrunCount": 1,
+    "serverDryrunSpecMatched": true,
+    "selectedIngressPoliciesBefore": 0,
+    "sameNameAbsentBefore": true,
+    "createCount": 1,
+    "createdUtc": "2026-10-15T11:50:09Z",
+    "uidAndResourceVersion": "recorded-in-private-evidence",
+    "retained": true,
+    "rollbackCount": 0,
+    "propagationAllowanceSeconds": 5
+  },
+  "tcpObservations": [
+    {
+      "phase": "before",
+      "destination": "Service",
+      "port": 2049,
+      "status": "CONNECTED",
+      "errorCode": null,
+      "startedUtc": "2026-10-15T11:48:55.306Z",
+      "endedUtc": "2026-10-15T11:48:55.311Z",
+      "connectionCount": 1,
+      "applicationPayloadBytes": 0
+    },
+    {
+      "phase": "before",
+      "destination": "Pod",
+      "port": 2049,
+      "status": "CONNECTED",
+      "errorCode": null,
+      "startedUtc": "2026-10-15T11:48:55.308Z",
+      "endedUtc": "2026-10-15T11:48:55.314Z",
+      "connectionCount": 1,
+      "applicationPayloadBytes": 0
+    },
+    {
+      "phase": "after",
+      "destination": "Service",
+      "port": 2049,
+      "status": "TIMEOUT",
+      "errorCode": "ETIMEDOUT",
+      "startedUtc": "2026-10-15T11:50:15.824Z",
+      "endedUtc": "2026-10-15T11:50:18.828Z",
+      "connectionCount": 1,
+      "applicationPayloadBytes": 0
+    },
+    {
+      "phase": "after",
+      "destination": "Pod",
+      "port": 2049,
+      "status": "TIMEOUT",
+      "errorCode": "ETIMEDOUT",
+      "startedUtc": "2026-10-15T11:50:15.825Z",
+      "endedUtc": "2026-10-15T11:50:18.830Z",
+      "connectionCount": 1,
+      "applicationPayloadBytes": 0
+    }
+  ],
+  "kernelMarker": {
+    "fileCount": 1,
+    "directoryCount": 1,
+    "sameDirectoryInode": true,
+    "sameFileInode": true,
+    "uid": 1000,
+    "fileMode": "0600",
+    "directoryMode": "0700",
+    "before": {
+      "sha256": "21eeefe86a307560eab0f0d2fb2e024bd9e57ab804eabc83734d7ab93c443232",
+      "bytes": 19,
+      "utc": "2026-10-15T11:48:55.339Z",
+      "fsync": true,
+      "readback": true
+    },
+    "after": {
+      "sha256": "453b4745ab947cfe30d057db52d864d1d8a2cf9bbe0ecf66a61ac8ae311375a0",
+      "bytes": 18,
+      "utc": "2026-10-15T11:50:15.843Z",
+      "fsync": true,
+      "readback": true
+    }
+  },
+  "finalPodMetadata": [
+    {
+      "role": "nfs",
+      "uidUnchanged": true,
+      "phase": "Running",
+      "ready": true,
+      "restartCounts": [
+        0
+      ],
+      "containersReady": [
+        true
+      ]
+    },
+    {
+      "role": "backend",
+      "uidUnchanged": true,
+      "phase": "Running",
+      "ready": true,
+      "restartCounts": [
+        0
+      ],
+      "containersReady": [
+        true
+      ]
+    },
+    {
+      "role": "expo",
+      "uidUnchanged": true,
+      "phase": "Running",
+      "ready": true,
+      "restartCounts": [
+        0,
+        0
+      ],
+      "containersReady": [
+        true,
+        true
+      ]
+    }
+  ],
+  "executionLimits": {
+    "perTcpTimeoutMs": 3000,
+    "nodeHelperDeadlineMs": 14000,
+    "remoteHelpers": 2,
+    "beforeExit": 0,
+    "afterExit": 0,
+    "rpcPayloadCount": 0,
+    "newPodCount": 0,
+    "newNodeCount": 0,
+    "runtimeSourceSyncCount": 0,
+    "serviceSignalRestartCount": 0,
+    "pgQueryDdlCount": 0,
+    "fullSuiteBuildInstallCount": 0,
+    "heavyReleased": true
+  },
+  "unqualified": {
+    "freshNodeKernelMount": true,
+    "allReadOnlyPaths": true,
+    "managedLeafAuthorityPin": true,
+    "oldWriterPhysicalFencing": true,
+    "highAvailability": true
+  },
+  "limits": [
+    "확인 범위는 같은 기존 개발 Pod의 새 TCP 연결 2개와 기존 kernel mount입니다.",
+    "기존 연결은 conntrack으로 유지될 수 있으므로 새 Node의 최초 mount를 증명하지 않습니다.",
+    "Dataplane V2·NoSNAT·trusted node 전제를 다른 CNI나 hostNetwork provider로 일반화하지 않습니다."
+  ]
+}
