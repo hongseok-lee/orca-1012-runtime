@@ -1,0 +1,65 @@
+{
+  "productPin": "9060e5ce93136573261647120c504ea975a58d92",
+  "base": "556f98b4158bb57b066bf636107ad2fc05a7c09b",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/rpc/structured-cancel.ts",
+      "mode": "100644",
+      "blob": "b6a1add455b6acfd7426eef4fd294805975d768c",
+      "sha256": "f9e11bab1a40ad815b51f769c45ffcfdcf6ed3e9f9c2d859c8b451c27789445b",
+      "bytes": 3663
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-cancel-resolution.ts",
+      "mode": "100644",
+      "blob": "6226bba5b6e77d4f1f83344da832def1c768207c",
+      "sha256": "a64bfa89c4b8f5fa91d1f7d27f2be6e2cfd29e639b8926269621dc9205be9354",
+      "bytes": 4909
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-cancel.ts",
+      "mode": "100644",
+      "blob": "6e4c4fa39f1758e1bc08b230791c324933d27a24",
+      "sha256": "b0fd397bee820bd4817948e5d350b73c6fab081dce280e8a5b7009aa483d02b4",
+      "bytes": 6205
+    },
+    {
+      "path": "src/main/durable-runtime/structured/durable-common.ts",
+      "mode": "100644",
+      "blob": "a23dfc4329de465180098f989e4288b064ab7fbf",
+      "sha256": "e73c330dfdfc0e7d62e0a8d45534fc2d7996af1208ee6a06d104c43ab5504c8b",
+      "bytes": 2374
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/public.ts",
+      "mode": "100644",
+      "blob": "99018f88ef37c84aadf0bc5c5cacd28b8eb2a77c",
+      "sha256": "9c2d776b1741fd4dc7701c07bdf674f0ba98d4b66569c7a9d0636ddfb4251afb",
+      "bytes": 7135
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/registry.ts",
+      "mode": "100644",
+      "blob": "a30dad8b901590b4098c907b5bd66fad14be838b",
+      "sha256": "fc58a829b84e82ac67a9cf29dd37eca30e9e9e231cab2ccfe2a61bec96ff12c0",
+      "bytes": 6067
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-cancel.value.test.mts",
+      "mode": "100644",
+      "blob": "cfd225e0389dbe1ab9877b4cf4055c0cd6cbdbca",
+      "sha256": "debb75be57c43a6a01d0b2329d546c3363bd983b2464168bd1f58a67ecd840af",
+      "bytes": 9561
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/structured-cancel.pg.test.mts",
+      "mode": "100644",
+      "blob": "0bc8e9bf9c983a2f472723ea7d1e7fa4ed8afd25",
+      "sha256": "c4e22a36c8fda5256b2536b62a6c1c8e4e4606f85f46aa848540452814e410a2",
+      "bytes": 16596
+    }
+  ],
+  "core4UnchangedFromHandlerPin": "70fcd2edcd86fdeb900c23d799cc7528f19c41cf",
+  "publicWiringMatchesAcceptedProposalSha256": "1012f232abbbf6e8420bde6008e83011759e30615754ca7a198bdb0520009c73",
+  "approvedPublicCommonSha256": "5e040a2c8d8d9c9465a5d8359a6767c36210826f01b128ee2f19e55638ad8e01"
+}
