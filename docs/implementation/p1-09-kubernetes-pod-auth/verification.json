@@ -1,0 +1,170 @@
+{
+  "기록": "Root가 수락한 첫 검증의 정제 결과입니다. 제품 UI나 실제 Kubernetes 인증 결과가 아닙니다.",
+  "verifiedSourcePin": "2a0c0d1d8abdb15caf7934088840abd310290184",
+  "originalBase": "94e8f3dd181852bd16d5eb10e05ac141c9008ce0",
+  "alignedBase": "5729dae86e4494d453d3d13b055a84982344b64f",
+  "alignedSourceHead": "3534bbfc5e9fcf2dce2a64a99aa219adae66c097",
+  "source7ModeBlobBytesMismatches": 0,
+  "typeInputs10Mismatches": 0,
+  "lint": {
+    "files": 7,
+    "exit": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "type": {
+    "inputs": 10,
+    "exit": 0,
+    "diagnostics": 0
+  },
+  "fixtures": [
+    {
+      "phase": "projection",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "phase": "transport",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    }
+  ],
+  "supervisor": {
+    "PID": 33188,
+    "startedAt": "2026-10-15T04:47:58.247Z",
+    "finishedAt": "2026-10-15T04:48:00.566Z"
+  },
+  "runners": [
+    {
+      "phase": "lint",
+      "pid": 33195,
+      "startedAt": "2026-10-15T04:47:58.258Z",
+      "finishedAt": "2026-10-15T04:47:58.649Z",
+      "exit": 0,
+      "logSha256": "606498802e685baec8c26f60310ddae7bfadc9a254570bb98e43e9a29b6d3889"
+    },
+    {
+      "phase": "type",
+      "pid": 33207,
+      "startedAt": "2026-10-15T04:47:58.653Z",
+      "finishedAt": "2026-10-15T04:47:59.720Z",
+      "exit": 0,
+      "logSha256": "018153da86240392efe1a0aa210d0e6010a88e57d52bbee1750824e8d05ac61a"
+    },
+    {
+      "phase": "projection",
+      "pid": 33264,
+      "startedAt": "2026-10-15T04:47:59.726Z",
+      "finishedAt": "2026-10-15T04:48:00.103Z",
+      "exit": 0,
+      "logSha256": "cb55c66e528172ab309d769786e0a07ab6bc119d323fdb62d999170d0626b46c"
+    },
+    {
+      "phase": "transport",
+      "pid": 33278,
+      "startedAt": "2026-10-15T04:48:00.106Z",
+      "finishedAt": "2026-10-15T04:48:00.563Z",
+      "exit": 0,
+      "logSha256": "13f01774b50953362d5a8b9730cfd7252e7f7fc214c6cf503b705530b8020bb0"
+    }
+  ],
+  "separateTestSubprocessPIDObserved": false,
+  "sourceInputs": [
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-fixtures.mts",
+      "sha256": "ba134dacea911c09020ee4c8f1a28fdf60ac40427fb4a34e9a3564b7b0a1ec82"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/watch.ts",
+      "sha256": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+      "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-projection.ts",
+      "sha256": "07fffcc8d51d8fa62267cb63009d90520663ab64fe4907d2f7c0e1fea2269632"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+      "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth.ts",
+      "sha256": "6061ba7114c6086393407411b3aaea8f0a05cd8fd3c5f39f8106312fdba85524"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-projection.test.mts",
+      "sha256": "3350f73d2a0c9e77368ea1bca6081ba83d93e5ad6c973e703aee779380d5b51c"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.test.mts",
+      "sha256": "0cec0e44a63455b89b54ad7f462467ee4025a7c787f5c8bc6357408209b0c2aa"
+    }
+  ],
+  "rawEvidence": {
+    "files": 17,
+    "artifactManifestSHA256": "7c6720346ee601dbe684175695384bb9948d902109f4a1e2ebb804e67b66ac83",
+    "wholePrivateArtifactsPublished": false
+  },
+  "metafile": {
+    "generated": false,
+    "reason": "Native Node strip-types runner and tsc --noEmit; no esbuild bundle or collector was executed."
+  },
+  "cleanup": {
+    "observedAt": "2026-10-15T04:48:28.414Z",
+    "knownProcesses": [
+      {
+        "pid": 33188,
+        "state": "Z"
+      },
+      {
+        "pid": 33195,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 33207,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 33264,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 33278,
+        "state": "ABSENT"
+      }
+    ],
+    "activeKnownJobs": 0,
+    "heavy": 0
+  },
+  "report": {
+    "kind": "OFFLINE_VERIFICATION_REPORT",
+    "productUI": false,
+    "actualKubernetesAPI": false,
+    "screenshot": "report.png",
+    "provenance": "report-provenance.json",
+    "sha256": "78b7c7cad55e78f6cbbcc75d91f2992727165a344ea517385f724e3934fa93b0",
+    "bytes": 197080,
+    "provenanceSHA256": "cc09e52bcf3ca619c6d139d1803511d5a8c270da86081cf92f8b85eef93a94f3"
+  },
+  "limits": [
+    "모의 HTTPS transport의 TLS 옵션과 오류 분류를 검증했습니다. 실제 TLS handshake·클러스터 TokenReview 성공은 미검증입니다.",
+    "기대 identity의 PG 출처·attempt/incarnation/producer binding·실제 배포 caller는 연결하지 않았습니다.",
+    "Node providerID/instance ID는 Kubernetes 관측이며 Compute 인증·종료·mount pin 증거가 아닙니다.",
+    "RuntimePort identity brand·ComputeStoppedProof·ProviderEffectPermit 발급과 새 writer 허용은 0회입니다.",
+    "실제 API/UI/PG/Cloud/RBAC/Pod/live·설치/전체 build·성공 검증 반복은 0회입니다.",
+    "33264/33278은 test runner PID입니다. 별도 test subprocess PID는 관측하지 않았습니다."
+  ]
+}
