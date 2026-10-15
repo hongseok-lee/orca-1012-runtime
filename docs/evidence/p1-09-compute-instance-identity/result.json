@@ -1,0 +1,328 @@
+{
+  "kind": "synthetic-compute-instance-identity-scoped-verification",
+  "sourcePin": "54037042b4f8d67686258a90b867a1420306eecf",
+  "base": "e3ceda2d258153271b526ebda0db74bf51886ffd",
+  "execution": {
+    "startedAt": "2026-10-15T05:58:36.111Z",
+    "finishedAt": "2026-10-15T05:58:39.945Z",
+    "controllerPid": 34408,
+    "heavyAfterCompletion": 0,
+    "checks": {
+      "changed-lint": {
+        "pid": 34415,
+        "startedAt": "2026-10-15T05:58:36.127Z",
+        "finishedAt": "2026-10-15T05:58:36.943Z",
+        "exit": 0,
+        "sha256": "08a1fa06ae4a16c10fd44d1ae39fa943290c716be997152206469dcb38e9bada",
+        "bytes": 92,
+        "observedChildren": []
+      },
+      "owned-type": {
+        "pid": 34429,
+        "startedAt": "2026-10-15T05:58:36.951Z",
+        "finishedAt": "2026-10-15T05:58:38.859Z",
+        "exit": 0,
+        "sha256": "c2b28d6be33d8862a8ff19552174f81018b57a0807def19af1e42963ac4be541",
+        "bytes": 25135,
+        "observedChildren": []
+      },
+      "bundle-projection": {
+        "pid": 34467,
+        "startedAt": "2026-10-15T05:58:38.866Z",
+        "finishedAt": "2026-10-15T05:58:39.099Z",
+        "exit": 0,
+        "sha256": "0f387377e78deb2c439a5d7692e01c5f0797fc7390ae7549136ad26d024ef5eb",
+        "bytes": 60,
+        "observedChildren": [
+          {
+            "pid": 34475,
+            "ppid": 34467,
+            "starttime": "15582357",
+            "observedAt": "2026-10-15T05:58:39.088Z"
+          }
+        ]
+      },
+      "projection-fixture": {
+        "pid": 34481,
+        "startedAt": "2026-10-15T05:58:39.105Z",
+        "finishedAt": "2026-10-15T05:58:39.337Z",
+        "exit": 0,
+        "sha256": "1b9ba62ef7c693bee580090378ccab95138d5bba6b97c0aaa3ff8595a947ca42",
+        "bytes": 1806,
+        "observedChildren": [
+          {
+            "pid": 34487,
+            "ppid": 34481,
+            "starttime": "15582370",
+            "observedAt": "2026-10-15T05:58:39.193Z"
+          }
+        ],
+        "subtests": 7
+      },
+      "bundle-transport": {
+        "pid": 34494,
+        "startedAt": "2026-10-15T05:58:39.344Z",
+        "finishedAt": "2026-10-15T05:58:39.562Z",
+        "exit": 0,
+        "sha256": "eee7a3fc96686ec38adf894768d6bb34039a454d66f0ae342e30fca4066a6739",
+        "bytes": 59,
+        "observedChildren": [
+          {
+            "pid": 34502,
+            "ppid": 34494,
+            "starttime": "15582403",
+            "observedAt": "2026-10-15T05:58:39.550Z"
+          }
+        ]
+      },
+      "transport-fixture": {
+        "pid": 34508,
+        "startedAt": "2026-10-15T05:58:39.568Z",
+        "finishedAt": "2026-10-15T05:58:39.944Z",
+        "exit": 0,
+        "sha256": "321b775297ea10b3780a36104156e77061acc1cc5567f83416791772c916e5d3",
+        "bytes": 3040,
+        "observedChildren": [
+          {
+            "pid": 34514,
+            "ppid": 34508,
+            "starttime": "15582417",
+            "observedAt": "2026-10-15T05:58:39.657Z"
+          }
+        ],
+        "subtests": 11
+      }
+    }
+  },
+  "outcome": {
+    "changedLintFiles": 2,
+    "changedLintExit": 0,
+    "typeExit": 0,
+    "typeDiagnostics": 0,
+    "projection": {
+      "tests": 7,
+      "pass": 7,
+      "fail": 0
+    },
+    "transport": {
+      "tests": 11,
+      "pass": 11,
+      "fail": 0
+    }
+  },
+  "originalFailures": [
+    {
+      "sourcePin": "2d6716542ae5f135d8472e95e454efef23112c37",
+      "check": "owned-lint",
+      "exit": 1,
+      "pid": 34137,
+      "diagnostic": "unicorn(prefer-number-properties): global NaN",
+      "sha256": "ad6c2b78e520668b9bccae2d358eb0cc6957f783bfa3588be99f4e57346df918",
+      "correction": "NaN → Number.NaN"
+    },
+    {
+      "sourcePin": "220f5871c03ccfcedd45eafd738984169841478e",
+      "check": "owned-type",
+      "exit": 1,
+      "pid": 34231,
+      "diagnostic": "TS2352 at compute-instance-identity-transport.test.mts:233: throwing getter inferred as void",
+      "sha256": "75983cd876ce898f31b768c4ac566bf9fe8b564671d851f2e12efa36f1b1ecf8",
+      "correction": "Getter return annotation string; original throw and assertions retained."
+    }
+  ],
+  "deadlineRegression": {
+    "clock": "node:perf_hooks performance.now monotonic absolute deadline",
+    "newCallbacks": 1,
+    "originalAssertionsRetained": true,
+    "results": [
+      {
+        "boundary": "supplier",
+        "elapsedMs": 25.118817000000007,
+        "timeoutMs": 5,
+        "timerDispatched": false,
+        "requests": 0
+      },
+      {
+        "boundary": "response-end",
+        "elapsedMs": 25.079140999999993,
+        "timeoutMs": 5,
+        "timerDispatched": false,
+        "requests": 1
+      }
+    ],
+    "interpretation": "Timer marker had not run in either case. Supplier overrun caused TIMEOUT/request 0; response-end overrun rejected completion after request 1 had started within the deadline."
+  },
+  "readsets": {
+    "ownedSourceFiles": 9,
+    "runtimeProjectionInputs": 5,
+    "runtimeTransportInputs": 8,
+    "typeInputs": 193,
+    "ownedTypeInputs": 9,
+    "externalCachedTypeInputs": 184,
+    "wholeCheckoutIdentityProven": false,
+    "wholeProductTypecheck": false
+  },
+  "processTermination": [
+    {
+      "pid": 34408,
+      "state": "Z",
+      "ppid": 1,
+      "starttime": "15582055",
+      "rawWaitStatus": 0
+    },
+    {
+      "pid": 34415,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34429,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34467,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34475,
+      "state": "Z",
+      "ppid": 1,
+      "starttime": "15582357",
+      "rawWaitStatus": 0
+    },
+    {
+      "pid": 34481,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34487,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34494,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34502,
+      "state": "Z",
+      "ppid": 1,
+      "starttime": "15582403",
+      "rawWaitStatus": 0
+    },
+    {
+      "pid": 34508,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 34514,
+      "state": "ABSENT"
+    }
+  ],
+  "rootSourceAcceptance": {
+    "comment": "https://github.com/hongseok-lee/orca-1012-runtime/pull/87#issuecomment-6185834988",
+    "commentCreatedAt": "2026-10-15T06:18:42Z",
+    "auditChecks": 51,
+    "mismatches": 0,
+    "mergeAccepted": false
+  },
+  "boundaries": {
+    "actualComputeRequests": 0,
+    "actualTlsHandshakeQualified": false,
+    "autopilotDirectGetQualified": false,
+    "notFoundIsStopProof": false,
+    "productMandatoryGetDependencyAccepted": false,
+    "podOriginalTargetOrPgMappingAccepted": false,
+    "stopProofOrWriterPermitIssued": false,
+    "cloudResourceMutation": 0,
+    "pgCalls": 0,
+    "liveSourceConfigWatchChanges": 0,
+    "install": 0,
+    "wholeProductBuild": 0,
+    "fixtureTransforms": 2,
+    "repeatOfPreviouslyPassingUnrelatedChecks": 0
+  },
+  "report": {
+    "html": "verification-report.html",
+    "htmlSha256": "2e5ff621e4b4e821da9236fea38dc913260e6cd476d78283652235187d3ab749",
+    "kind": "static-offline-fixture-report",
+    "capturePerformed": true,
+    "png": "verification-report.png",
+    "pngSha256": "320b87dacdbc281bb87a269636499029f3173fc47c6e52411082a63ae3b7a350",
+    "pngBytes": 156913,
+    "width": 1280,
+    "height": 1080,
+    "captureStartedAt": "2026-10-15T06:28:23.185Z",
+    "captureFinishedAt": "2026-10-15T06:28:24.160Z",
+    "screenshotCalls": 1,
+    "browserCreated": 1,
+    "contextCreated": 1,
+    "pageCreated": 1,
+    "contextOffline": true,
+    "applicationRequests": 0,
+    "authStorageStateLoaded": false,
+    "pairedProfileReused": false,
+    "contextClosed": true,
+    "browserClosed": true,
+    "capturePid": 6383,
+    "browserChildPids": [
+      6395
+    ],
+    "launcherExit": 0,
+    "processesAfterExit": [
+      {
+        "pid": 6371,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 6383,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 6395,
+        "state": "ABSENT"
+      }
+    ],
+    "actualProductUiScreenshot": false,
+    "htmlReflectsPreparationSnapshotAt": "2026-10-15T06:21:00Z"
+  },
+  "serviceErrorsObserved": {
+    "usageLimit": false,
+    "credits": false,
+    "streamInterruption": false
+  },
+  "reportPreparationFailure": {
+    "diagnostic": "REPORT_OWNER_OR_DUPLICATE_CAPTURE_GUARD",
+    "exit": 1,
+    "browserPageScreenshotCalls": 0,
+    "newRootExisted": false,
+    "newLogsExisted": false,
+    "cause": "Launcher still referenced an earlier report log directory.",
+    "correction": "Only the owned new log path was corrected after preserving the original source/error and checking new-path absence.",
+    "sameCaptureRepeated": false
+  },
+  "publicationBaseSpecifiedByRoot": "74e80cb529f8604e4dfb6fd8912fa4d51ac1de21",
+  "publication": {
+    "alignedBase": "74e80cb529f8604e4dfb6fd8912fa4d51ac1de21",
+    "originalVerificationSourcePin": "54037042b4f8d67686258a90b867a1420306eecf",
+    "finalHeadLocation": "PR87 head and private final audit handoff; not embedded in its own commit",
+    "sourceFilesCompared": 9,
+    "sourceBytesAndGitModesUnchanged": true,
+    "runtimeInputComparisons": {
+      "projection": {
+        "count": 5,
+        "unchanged": true
+      },
+      "transport": {
+        "count": 8,
+        "unchanged": true
+      }
+    },
+    "ownedTypeInputsCompared": 9,
+    "externalTypeReadsetPreserved": 184,
+    "externalCacheReinstalledOrRewritten": false,
+    "lintConfigurationAndPluginsCompared": 6,
+    "lintConfigBytesAndGitModesUnchanged": true,
+    "rebaseOperations": 1,
+    "testsOrApiRepeatedForAlignment": 0,
+    "wholeLiveCheckoutGitShaProven": false
+  }
+}
