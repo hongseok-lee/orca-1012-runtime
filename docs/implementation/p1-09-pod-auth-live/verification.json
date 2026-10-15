@@ -1,0 +1,186 @@
+{
+  "kind": "SANITIZED_ACTUAL_POD_AUTHENTICATION_REPORT",
+  "date": "2026-10-15",
+  "sourcePin": "e10ac0f9b104d8c8bf7cd9815654618d8aad4659",
+  "reportBasePin": "c6cb0b9d88389e3325f5a459bdf5eb75f85f0ffd",
+  "productSourceChanged": false,
+  "evidenceReexecutedForReport": false,
+  "firstPublicRoute": {
+    "controllerPID": 1032732,
+    "helperPID": 34047,
+    "moduleStartedAt": "2026-10-15T05:23:33.182Z",
+    "moduleFinishedAt": "2026-10-15T05:24:03.188Z",
+    "moduleOutcome": "TIMEOUT",
+    "moduleExit": 1,
+    "nativeRequestsStarted": {
+      "TokenReviewPOST": 1,
+      "PodGET": 0,
+      "NodeGET": 0
+    },
+    "http": [
+      {
+        "phase": "TOKEN_REVIEW",
+        "method": "POST",
+        "pathMatches": true,
+        "status": null,
+        "tlsAuthorized": null
+      }
+    ],
+    "apiServerReceiptOrAuthenticationProven": false,
+    "qualificationPodUID": "cba426b6-4d19-495b-b0a4-4a130380a399",
+    "cleanup": {
+      "uidPrecondition": "cba426b6-4d19-495b-b0a4-4a130380a399",
+      "deleteExit": 0,
+      "deleteRequestedOnce": true,
+      "originalUIDAbsent": true,
+      "oldWriterProof": false
+    },
+    "cleanupFinishedAt": "2026-10-15T05:24:32.290859+00:00"
+  },
+  "internalConnectionDiagnostic": {
+    "PID": 34073,
+    "requestCount": 1,
+    "method": "GET",
+    "path": "/version",
+    "authorization": false,
+    "cookie": false,
+    "requestBody": false,
+    "rawResponseRetained": false,
+    "status": 401,
+    "tlsAuthorized": true,
+    "requestStartedAt": "2026-10-15T05:32:31.860Z",
+    "requestFinishedAt": "2026-10-15T05:32:31.894Z",
+    "exit": 0,
+    "requestDestroyed": true,
+    "responseDestroyed": true
+  },
+  "internalPodAuthentication": {
+    "controllerPID": 1043071,
+    "controllerStartedAt": "2026-10-15T05:52:46.778076+00:00",
+    "controllerFinishedAt": "2026-10-15T05:54:25.627493+00:00",
+    "controllerExit": 0,
+    "finalControllerPhase": "OWNED_DELETE_OBSERVE",
+    "finalPhaseQualification": "Cleanup가 최종 phase를 기록하므로 exit/moduleOutcome/cleanup을 함께 읽습니다.",
+    "helperPID": 34351,
+    "moduleStartedAt": "2026-10-15T05:53:56.052Z",
+    "moduleFinishedAt": "2026-10-15T05:53:56.249Z",
+    "moduleOutcome": "AUTHENTICATED",
+    "moduleExit": 0,
+    "diagnosticsComplete": true,
+    "nativeDefaultHttps": true,
+    "http": [
+      {
+        "phase": "TOKEN_REVIEW",
+        "method": "POST",
+        "pathMatches": true,
+        "status": 201,
+        "tlsAuthorized": true
+      },
+      {
+        "phase": "POD_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      },
+      {
+        "phase": "NODE_GET",
+        "method": "GET",
+        "pathMatches": true,
+        "status": 200,
+        "tlsAuthorized": true
+      }
+    ],
+    "requestCount": 3,
+    "qualification": {
+      "namespace": "orca-dev",
+      "dataset": "orca-auth-qualification-20261015",
+      "audience": "orca-runtime",
+      "serviceAccount": {
+        "name": "default",
+        "uid": "fa94579c-9476-44dd-8c5b-abf2d2bea4c8"
+      },
+      "pod": {
+        "name": "p109-auth-dc7e5d1a",
+        "uid": "fe9fdd6d-f744-47b4-8478-419e88d6e8c2",
+        "resourceVersion": "1792043629272127019",
+        "runtimeUnitId": "6cb3c352-f48f-4b53-8574-2f4c13b8d02a",
+        "operationId": "f5bf92fa-ccd8-46a1-a1f1-ca371c69cfbf",
+        "executionEpoch": "1",
+        "specHash": "23a34a4053c02bc8ae58a9da3b4cec5d8c841c4619134215d64ef44d40fdbdf0"
+      },
+      "node": {
+        "uid": "c0e1bfc4-7b7a-4f58-b33a-c3b7b0d226a7",
+        "resourceVersion": "1792043635196255014",
+        "observationSource": "KUBERNETES_API",
+        "instanceId": "5673551603752096986",
+        "instanceIdAuthority": "Kubernetes Node annotation의 관측이며 Compute control-plane 확인이 아닙니다."
+      },
+      "evidenceDigest": "67e2bf80feca77c858848a2212f1809c299eb1cf2701d368976b76a90dda646b"
+    },
+    "CAHash": "81aa1b987c29622bb265b20ba63d4403f509ccc64eef1ad68e7539bbc7497ff6",
+    "internalOriginHash": "a8f8cd27b8c05bcae44577c150c6404e9b7b0f79e6006cc859218f86a6ad3ff6",
+    "managementOriginDiffers": true,
+    "sameCAConfigIdentity": true,
+    "counts": {
+      "dryRunCalls": 1,
+      "createCalls": 1,
+      "moduleCalls": 1,
+      "explicitOperatorTokenReads": 1,
+      "projectedTokenReads": 1,
+      "deleteCalls": 1
+    },
+    "cleanup": {
+      "uidPrecondition": "fe9fdd6d-f744-47b4-8478-419e88d6e8c2",
+      "deleteExit": 0,
+      "deleteRequestedOnce": true,
+      "originalUIDAbsent": true,
+      "oldWriterProof": false
+    },
+    "knownLocalChildrenExited": true,
+    "knownLocalProcessesAbsent": true,
+    "remoteHelperTerminalExitObservedViaExec": true,
+    "remoteHelperProcAbsenceNotProbedAgain": true,
+    "runtimeBrandOrPermitIssued": false,
+    "PG": 0,
+    "Cloud": 0
+  },
+  "source7": [
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth.ts",
+      "sha256": "6061ba7114c6086393407411b3aaea8f0a05cd8fd3c5f39f8106312fdba85524"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-projection.ts",
+      "sha256": "07fffcc8d51d8fa62267cb63009d90520663ab64fe4907d2f7c0e1fea2269632"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+      "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+      "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/watch.ts",
+      "sha256": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154"
+    }
+  ],
+  "limits": [
+    "실제 모듈과 Kubernetes authentication qualification만 통과했습니다.",
+    "실제 제품 attempt/producer의 PG binding과 배포 caller 통합은 미검증입니다.",
+    "Numeric instance ID는 Kubernetes 관측이며 Compute identity 신뢰/종료 증명이 아닙니다.",
+    "VerifiedWorkloadIdentity, ComputeStoppedProof, permit, writer fencing, HA 및 native iPhone 합격이 아닙니다.",
+    "보고 캡처에서는 API/auth/Pod/기존 성공 검증/설치/빌드/live 변경을 반복하지 않습니다."
+  ],
+  "privateEvidencePublished": false
+}

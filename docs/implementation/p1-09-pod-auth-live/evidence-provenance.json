@@ -1,0 +1,84 @@
+{
+  "kind": "PUBLIC_EVIDENCE_PROVENANCE",
+  "sourcePin": "e10ac0f9b104d8c8bf7cd9815654618d8aad4659",
+  "reportBasePin": "c6cb0b9d88389e3325f5a459bdf5eb75f85f0ffd",
+  "privateOriginalsRetained": true,
+  "rawControllerHelperInputsTokensConfigBodiesPublished": false,
+  "evidence": [
+    {
+      "label": "첫 public 경로 TIMEOUT과 UID cleanup 원 인계",
+      "sha256": "f8b3d096560462301539a78575f415bd3f7d2ceb56b86c58060442f45b2e6f35"
+    },
+    {
+      "label": "내부 GET/version TLS/401 원 인계",
+      "sha256": "ef2cd935c09449589381f9074af347e4d607f4572204138284cde0aa5464a1c5"
+    },
+    {
+      "label": "내부 실제 Pod 인증과 UID cleanup 원 인계",
+      "sha256": "5b858cd04b9fa5bffc6bc2153c21dbde9891a205416dbae3abb15e7a9099b91d"
+    },
+    {
+      "label": "내부 실제 최종 상태 원 자료",
+      "sha256": "56a55d4001c6d78a8dd45de649ed824133339f9a2a43adcd44b75db0c6809488"
+    }
+  ],
+  "sanitizedResultSHA256": "0a0507ed84f14e3e2e860c9482e18ed88cb2e8e7639da9efa139b846aa33d727",
+  "contractExports": [
+    {
+      "document": "orca-1012-dispatch-p1-09-pod-auth-live-preparation.md",
+      "privateOriginalSHA256": "6c8449df5677a90b7d1ce3c032c331f90f17bb2c2c3914a5f292fdd30d83d5de",
+      "publicCopySHA256": "9d2d10092e351438dc9eb0fa37edd49b8ecf617d7160dcd0f254a3ac387467a7",
+      "generalized": [
+        "private evidence/workspace paths",
+        "private registry address",
+        "qualification context",
+        "internal API origin"
+      ]
+    },
+    {
+      "document": "orca-1012-dispatch-p1-09-pod-auth-live-once.md",
+      "privateOriginalSHA256": "2c7f5656145aaa0e386f3f0905135707bb2b27e7aaf91ff56fd155429888eb1a",
+      "publicCopySHA256": "0e98e21c1cf975240193703aa16c3f35c26e804f8e36b362ac7ecaac514b3a58",
+      "generalized": [
+        "private evidence/workspace paths",
+        "private registry address",
+        "qualification context",
+        "internal API origin"
+      ]
+    },
+    {
+      "document": "orca-1012-dispatch-p1-09-pod-auth-network-diagnostic.md",
+      "privateOriginalSHA256": "e1e42f23e91d33bdeabe519f9e4e68da8ea72b77d7265218e59fac9a75cb6bce",
+      "publicCopySHA256": "ec2f6236e704c6aa13553243452b5ee2ac8e8d13c598c9f7011ee1067937e30f",
+      "generalized": [
+        "private evidence/workspace paths",
+        "private registry address",
+        "qualification context",
+        "internal API origin"
+      ]
+    },
+    {
+      "document": "orca-1012-dispatch-p1-09-pod-auth-internal-once.md",
+      "privateOriginalSHA256": "98c615424b753437f67e3e08c74a1e4c27ba782af29e410ea7e4e82aff3772a0",
+      "publicCopySHA256": "c7648a105d2b61c87ec2fee779cb4b7d4f43ab94ed627a29447f0f55bc0cad49",
+      "generalized": [
+        "private evidence/workspace paths",
+        "private registry address",
+        "qualification context",
+        "internal API origin"
+      ]
+    },
+    {
+      "document": "orca-1012-dispatch-p1-09-pod-auth-report.md",
+      "privateOriginalSHA256": "88b27c6abc68d382d5923d94809ac923812f33be91b80e402ad4243735f3986b",
+      "publicCopySHA256": "98e4cb56d6ee0c632bf510df4efb6f7a5a60c01dc092cc8f00fcc1241b8b778e",
+      "generalized": [
+        "private evidence/workspace paths",
+        "private registry address",
+        "qualification context",
+        "internal API origin"
+      ]
+    }
+  ],
+  "qualificationNodeNameProviderURLAndProjectGeneralized": true
+}
