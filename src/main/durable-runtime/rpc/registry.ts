@@ -81,6 +81,12 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.createBrowser(params, context) }
     }
+    if (method.name === 'browser.screencast') {
+      if (!('stream' in method && method.stream)) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      const original = method.handler.bind(method)
+      return { ...method, handler: (params: never, context: RpcContext, emit: (result: unknown) => void) =>
+        adapter.streamBrowser(params, context, emit, original) }
+    }
     if (isCatalogMethodNotConnected(method.name)) {
       return { ...method, handler: () => { throw new CatalogReadError('CATALOG_METHOD_NOT_CONNECTED') } }
     }
