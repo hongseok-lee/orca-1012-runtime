@@ -41,7 +41,11 @@ type Subscription = {
 const mounted: ReactTestRenderer[] = []
 let sequence = 0
 afterEach(() => {
-  act(() => { for (const renderer of mounted.splice(0)) renderer.unmount() })
+  act(() => {
+    for (const renderer of mounted.splice(0)) {
+      renderer.unmount()
+    }
+  })
   vi.useRealTimers()
   platform.os = 'web'
 })
@@ -103,7 +107,9 @@ async function mount(client: RpcClient, id: string, nativeCalls?: { type: unknow
   })
   mounted.push(renderer)
   const viewport = renderer.root.findAllByType('View').find(node => typeof node.props.onLayout === 'function')
-  if (!viewport) throw new Error('Viewport with onLayout not found')
+  if (!viewport) {
+    throw new Error('Viewport with onLayout not found')
+  }
   act(() => { viewport.props.onLayout({ nativeEvent: { layout: { width: 360, height: 640 } } }) })
   return renderer
 }
