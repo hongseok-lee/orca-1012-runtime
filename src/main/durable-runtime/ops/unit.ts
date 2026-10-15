@@ -29,7 +29,7 @@ export async function projectOpsUnit(tx: DurableTransaction, actor: OpsActor, id
   const mounts = await tx.query<{ id: string; access_state: string; epoch: string; writer_attempt_id: string | null;
     grant_state: string | null; grant_attempt_id: string | null; grant_epoch: string | null; revoked_at: Date | null }>(`SELECT DISTINCT b.id,b.access_state,b.epoch,b.writer_attempt_id,
       g.state AS grant_state,g.attempt_id AS grant_attempt_id,g.storage_epoch AS grant_epoch,g.revoked_at
-      FROM durable_runtime.runtime_members m JOIN durable_runtime.sessions s ON s.id=m.session_id
+      FROM durable_runtime.runtime_member_storage_bindings m JOIN durable_runtime.sessions s ON s.id=m.session_id
       JOIN durable_runtime.workspaces w ON w.id=s.workspace_id JOIN durable_runtime.storage_bindings b ON b.id=m.storage_binding_id
       LEFT JOIN LATERAL(SELECT state,attempt_id,storage_epoch,revoked_at FROM durable_runtime.storage_write_grants
         WHERE storage_binding_id=b.id ORDER BY granted_at DESC,id DESC LIMIT 1) g ON true

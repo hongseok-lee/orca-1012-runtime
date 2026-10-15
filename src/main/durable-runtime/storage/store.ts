@@ -66,6 +66,9 @@ export class StorageStore {
     const c = evidence.candidate;
     await lockAggregates(tx, { sessionIds: [input.sessionId], runtimeUnitIds: [input.unitId] });
     await this.unit(tx, input);
+    const member = await tx.query<{ runtime_unit_id: string }>(
+      'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1', [input.sessionId]);
+    if (member.rows[0] && member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
     await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [c.domain.backendId, c.domain.exportId]);
     await lockAggregates(tx, { storageDomains: [{ backendId: c.domain.backendId, exportId: c.domain.exportId }] });
     // Local validity only, after lock waits. No stat/cloud/K8s callback in tx.
@@ -74,10 +77,44 @@ export class StorageStore {
       (id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
       VALUES($1,$2,$3,$4,$5,clock_timestamp(),'VERIFIED') RETURNING *`,
       [input.bindingId, c.domain.backendId, c.domain.exportId, c.canonicalDirectory, evidence.evidenceRef]);
-    await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
-      [input.unitId, input.sessionId, input.bindingId]);
+    if (member.rows[0]) {
+      await tx.query('INSERT INTO durable_runtime.runtime_member_storage_bindings(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
+        [input.unitId, input.sessionId, input.bindingId]);
+    } else {
+      // The 021 INSERT trigger records this primary binding in the same tx.
+      await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
+        [input.unitId, input.sessionId, input.bindingId]);
+    }
     await this.event(tx, input, row.rows[0], 'STORAGE_BINDING_REGISTERED');
     return row.rows[0];
+  }
+  /** Association only: existing primary/proof/epoch/writer state is untouched. */
+  async attachBinding(tx: DurableTransaction, original: StorageScope & {
+    bindingId: StorageBindingId;
+  }): Promise<Binding> {
+    const input = Object.freeze({
+      sessionId: logicalId('session', original.sessionId), unitId: logicalId('runtime-unit', original.unitId),
+      bindingId: logicalId('storage-binding', original.bindingId),
+      expectedUnitRevision: counter('row:runtime-unit', original.expectedUnitRevision), actorId: original.actorId
+    });
+    const query = tx.query.bind(tx);
+    await lockAggregates(tx, { sessionIds: [input.sessionId], runtimeUnitIds: [input.unitId] });
+    await this.unit(tx, input);
+    const member = await query<{ runtime_unit_id: string }>(
+      'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1', [input.sessionId]);
+    if (member.rowCount !== 1) deny('STORAGE_MEMBER_MISSING');
+    if (member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
+    const first = await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId]);
+    if (first.rowCount !== 1) deny('STORAGE_BINDING_MISSING');
+    await lockAggregates(tx, { storageDomains: [{ backendId: first.rows[0].backend_id, exportId: first.rows[0].export_id }] });
+    const binding = (await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId])).rows[0];
+    if (!binding) deny('STORAGE_BINDING_MISSING');
+    const inserted = await query(`INSERT INTO durable_runtime.runtime_member_storage_bindings
+      (runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)
+      ON CONFLICT(runtime_unit_id,session_id,storage_binding_id) DO NOTHING RETURNING storage_binding_id`,
+      [input.unitId, input.sessionId, input.bindingId]);
+    if (inserted.rowCount) await this.event(tx, input, binding, 'STORAGE_BINDING_ATTACHED');
+    return binding;
   }
   private async lock(tx: DurableTransaction, target: StorageTarget): Promise<Locked> {
     const first = await tx.query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [target.bindingId]);
@@ -92,9 +129,9 @@ export class StorageStore {
     if (binding.revision !== target.expectedBindingRevision || binding.epoch !== target.storageEpoch)
       deny('STORAGE_BINDING_STALE');
     const member = await tx.query(`SELECT a.incarnation FROM durable_runtime.attempts a
-      JOIN durable_runtime.runtime_members m ON m.runtime_unit_id=a.runtime_unit_id
       WHERE a.id=$1 AND a.runtime_unit_id=$2 AND a.execution_epoch=$3 AND a.pod_uid=$4
-      AND m.session_id=$5 AND m.storage_binding_id=$6`,
+      AND EXISTS(SELECT 1 FROM durable_runtime.runtime_member_storage_bindings m
+        WHERE m.runtime_unit_id=a.runtime_unit_id AND m.session_id=$5 AND m.storage_binding_id=$6)`,
       [target.attemptId, target.unitId, target.executionEpoch, target.podUid, target.sessionId, target.bindingId]);
     if (member.rowCount !== 1 || !member.rows[0].incarnation) deny('STORAGE_TARGET_STALE');
     if (target.operation) {
