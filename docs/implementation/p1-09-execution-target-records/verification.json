@@ -222,5 +222,15 @@
   "heavyAfterVerification": 0,
   "usageCreditsStream": "이번 turn에서 usage limit·credits·stream 중단은 미관측입니다.",
   "liveUIProviderCloudMutation": false,
-  "screenshot": "Root의 heavy 슬롯 배분 대기입니다. 허용된 PG 결과 보고 화면만 한 번 캡처하며 제품 UI 성공으로 표시하지 않습니다."
+  "screenshot": {
+    "kind": "ISOLATED_POSTGRESQL_RESULT_REPORT_SCREENSHOT",
+    "path": "pg-result-report.png",
+    "provenance": "pg-result-report-provenance.json",
+    "sha256": "0ff519c52666ddc879e7a526ae1f52bfa1aa42e75acd709ef8effccf3d07c7f9",
+    "capturedAt": "2026-10-15T04:24:05.764Z",
+    "pid": 5459,
+    "productUICaptured": false,
+    "liveAppOpened": false,
+    "nativeIPhone": false
+  }
 }

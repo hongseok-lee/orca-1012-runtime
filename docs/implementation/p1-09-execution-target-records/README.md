@@ -21,6 +21,10 @@
 
 ## 화면과 미완료 범위
 
-이 변경은 저장 계층이며 제품 UI를 변경하지 않습니다. 허용된 최초 PG 결과 보고 화면 캡처는 Root의 heavy 슬롯 배분을 기다립니다. 기존 C4 Expo Web 실패를 이 기능의 성공 화면으로 재표시하거나 새 live 화면을 반복 촬영하지 않습니다.
+이 변경은 저장 계층이며 제품 UI를 변경하지 않습니다. Root가 배분한 슬롯에서 기존 원격 browser의 Playwright로 오프라인 PG 결과 보고 화면을 한 번 캡처했습니다. 실제 보고 프로세스 PID는 5459이며 2026-10-15 04:24:03.074–04:24:05.764 UTC에 실행했습니다. 새 context는 offline이며 실제 앱을 열거나 인증/저장 상태를 읽지 않았습니다. 이 PNG는 원 TAP을 요약한 보고 화면이고 제품 UI·native iPhone 합격 화면이 아닙니다. 기존 C4 실패는 그대로 보존하며 새 live 화면을 반복 촬영하지 않았습니다.
+
+![실제 격리 PG 결과의 보고 화면이며 제품 UI가 아닙니다.](pg-result-report.png)
+
+[캡처 provenance](pg-result-report-provenance.json)에 검증 source와 원 TAP SHA, 보고 HTML SHA 및 PNG SHA를 연결했습니다.
 
 합성 controller/evidence 참조를 사용하는 검증입니다. 실제 observer/authentication issuer, Kubernetes/Compute 원 응답 인증, provider, 공개 RPC, native iPhone, 실제 물리 종료·NFS writer fencing·HA 검증은 수행하지 않았습니다. 같은 Node/VM에 여러 원기록이 있다는 이유로 배치 정책을 판정하지 않습니다. 이 원기록의 저장 성공은 실행 권한이나 실제 종료 증거가 아닙니다. 최종 수락/merge는 Root가 담당합니다.
