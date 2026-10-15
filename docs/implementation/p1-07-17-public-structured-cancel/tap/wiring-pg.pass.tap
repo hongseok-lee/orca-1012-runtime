@@ -1,0 +1,27 @@
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":31249,"at":"2026-10-15T02:32:59.532Z"}
+# (node:31249) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: Root 승인 pg callback 1개
+    # Subtest: PG1 actual cancel handler는 원 turn·receipt-first·권한과 기존 wire 완료 의미를 보존합니다
+    ok 1 - PG1 actual cancel handler는 원 turn·receipt-first·권한과 기존 wire 완료 의미를 보존합니다
+      ---
+      duration_ms: 746.237731
+      type: 'test'
+      ...
+    # {"phase":"before-seed","database":"orca_public_structured_subscribe_20261014","oid":"84739","system":"7696101282789175327","backend_pid":227794,"datasets":["orca-1012-dev-v1"]}
+    1..1
+ok 1 - Root 승인 pg callback 1개
+  ---
+  duration_ms: 749.056943
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2628.346572

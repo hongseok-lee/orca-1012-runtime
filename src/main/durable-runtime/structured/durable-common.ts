@@ -8,7 +8,7 @@ import { resolveStructuredAuthority, type ResolvedStructuredAuthority } from './
 import { snapshotStructuredJson, type JsonSnapshot } from './snapshot.ts'
 import type { DurableStructuredCall } from './durable-types.ts'
 
-export function prepareDurableStructuredCall(call: DurableStructuredCall, method: 'agentSession.create' | 'agentSession.send') {
+export function prepareDurableStructuredCall(call: DurableStructuredCall, method: 'agentSession.create' | 'agentSession.send' | 'agentSession.cancel') {
   const wire = prepareStructuredWire(method, call.params, call.capabilities)
   if (!wire.ok) {
     throw new DurableDatabaseError(wire.refusal.code)

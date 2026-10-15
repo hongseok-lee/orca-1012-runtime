@@ -1,0 +1,307 @@
+{
+  "기록": "원 비공개 증거의 논리 파일명과 hash입니다. 운영 로그 본문·절대경로·credential은 게시하지 않습니다.",
+  "files": [
+    {
+      "artifact": "original-evidence/actual-inputs.json",
+      "sha256": "2fe460a5e71ac1235d3116390c7b48375a896a5b0ab49d7b86960a297414c667",
+      "bytes": 114647
+    },
+    {
+      "artifact": "original-evidence/bundles/value.cjs",
+      "sha256": "acb831bf4bcc05b9be9ad37f7e7b838386ddf761026d61ee207fe68b49d00000",
+      "bytes": 833549
+    },
+    {
+      "artifact": "original-evidence/bundles/value.cjs.metafile.json",
+      "sha256": "4a2757c1ce5cf072a2e0c8e884d323fa4877f6e3ea84860bfb0030ce10310875",
+      "bytes": 320154
+    },
+    {
+      "artifact": "original-evidence/control-error.log",
+      "sha256": "d19aacb0723d0cdf2182f3b95743ea29e08e39f1069f511848780170595c839e",
+      "bytes": 304
+    },
+    {
+      "artifact": "original-evidence/entry-reporter.mjs",
+      "sha256": "1602cd02f33fe619974bde80fc814a510670de4b83901cc7964d5448ce15ff8c",
+      "bytes": 317
+    },
+    {
+      "artifact": "original-evidence/exit.json",
+      "sha256": "53f7c0531ab40e988863834f0827f8ba70a83848341c1aace0edfde3f90ab204",
+      "bytes": 84
+    },
+    {
+      "artifact": "original-evidence/failure-known-pid-facts.json",
+      "sha256": "62e2762a271dd78dccea412dbe387854906dad8647762c4d8c7b2be00ec2cd65",
+      "bytes": 4180
+    },
+    {
+      "artifact": "original-evidence/input-manifest.json",
+      "sha256": "285feddff0895b913625bee8534596f8ad0be964c5c878fd96e12ef7677b9f4e",
+      "bytes": 8530
+    },
+    {
+      "artifact": "original-evidence/launch.json",
+      "sha256": "8177d190058542e0fdef738550874c6a3596930155da20c88d3fbf376b0db302",
+      "bytes": 168
+    },
+    {
+      "artifact": "original-evidence/owned-lint.log",
+      "sha256": "71dc71d8506a36296133396f8a1805111f3a4b298f733f00825cef25868e13e8",
+      "bytes": 92
+    },
+    {
+      "artifact": "original-evidence/prepare-cancel.mjs",
+      "sha256": "4ccff6412ccd2703eba3215b57383c38bc3ee0d117ba84fb796ee83ed47f9e15",
+      "bytes": 6531
+    },
+    {
+      "artifact": "original-evidence/prepare-pg.log",
+      "sha256": "8f6d29292f10318d552b8b19b310e75bd1478ec26f8e8181f6efcd920d4b47e2",
+      "bytes": 794
+    },
+    {
+      "artifact": "original-evidence/prepare-value.log",
+      "sha256": "d7037acaf44398d6ce2f4598b63e00236bfa32a29a481b066c843787a47c8611",
+      "bytes": 89
+    },
+    {
+      "artifact": "original-evidence/prepared-value.json",
+      "sha256": "32622fe7d9d71cf35152f247f2053b131494e67a9486283b9564c5a989fcf24c",
+      "bytes": 715
+    },
+    {
+      "artifact": "original-evidence/run-cancel.mjs",
+      "sha256": "7063ab17760e5ca23c37923cce47761b7a2fd7033db63d3b312cde0d497ef492",
+      "bytes": 6663
+    },
+    {
+      "artifact": "original-evidence/run-state.json",
+      "sha256": "30aa18ceb91ef8d7b13f5ea1a4531b0a405e0fed1a4b43bfd5c261f4d526cf59",
+      "bytes": 4284
+    },
+    {
+      "artifact": "original-evidence/stage.log",
+      "sha256": "fec6b47faa1aa88a0447592a5f4fba1bdd93b220ae5bb2b8974980da8a97e0e3",
+      "bytes": 97
+    },
+    {
+      "artifact": "original-evidence/supervisor.log",
+      "sha256": "a9811228789855e9b7d7301f1ca3e06f6a723dd9c8dadfac1b45d9eb90e35dde",
+      "bytes": 517
+    },
+    {
+      "artifact": "original-evidence/value-actual-inputs.json",
+      "sha256": "52dc644009736dce3e040462f4ad916a9f2f1a79e60cc382598702c56303d09f",
+      "bytes": 110053
+    },
+    {
+      "artifact": "original-evidence/value-entries.jsonl",
+      "sha256": "452e54a95b5c5283332504ad5585c92fe19270aae881bed8ec987520cc6b82f9",
+      "bytes": 737
+    },
+    {
+      "artifact": "original-evidence/value.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "artifact": "original-evidence/value.tap",
+      "sha256": "9229658dd55a15bd29a741eb3e4d487f2e00ebf6c393d955cdea47ab139b59bd",
+      "bytes": 490
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/actual-identity-pg-continuation.json",
+      "sha256": "8121fa9adbad9ee3941cd3b523694d239e386fdaaf9f3e97302d5f38604eb202",
+      "bytes": 251
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/actual-inputs.json",
+      "sha256": "45a88836c87173fbd7c18acaffeb2f3188d95c2f22e73123f42ed4ae6ed6d1b6",
+      "bytes": 117524
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/bundles/pg.cjs",
+      "sha256": "c75bc3b7ea3bda0fc81be6c5a0cb4286f6c2fd03c162c16382abea966b53a93b",
+      "bytes": 857240
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/bundles/pg.cjs.metafile.json",
+      "sha256": "ae0475aa2f6c01027cd1ec976e4817bbb36b6e1844ed702bc1fe778622d2e151",
+      "bytes": 336758
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/continuation-known-pid-facts.json",
+      "sha256": "78fe16c5137edb7fe254f77261c79f2d6b4a64b20c209426eb26c9641900ba75",
+      "bytes": 6675
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/continuation-prelaunch-guard.json",
+      "sha256": "fbb7d7bef88ab7335929787d12575f77a1e583c0058e8f01f1813eab2cced1b0",
+      "bytes": 269
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/existing-db-before-pg-continuation.json",
+      "sha256": "eca7695065541b91eb7878f1bc15126bf3a7a766c5919331ca1bb7dfd14ca6c1",
+      "bytes": 17284
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/existing-db-end-pg-continuation.json",
+      "sha256": "ef89caa833ecd208f0a980057a2c115750df9c09a52a338c0cb257c5d31d9dd1",
+      "bytes": 23106
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/exit-pg-continuation.json",
+      "sha256": "c1092c8768868661f4029e2da78cb4cd545978f47aefc578bb37dcab1b305834",
+      "bytes": 97
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/launch-pg-continuation.json",
+      "sha256": "f8c191995b9bd2edeccf156ae9cd872bca19d02a9d5e26850f528e1e5457ebd9",
+      "bytes": 168
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/launch-pg-continuation.mjs",
+      "sha256": "eaad0d9067b4a0f9df7191fa263a7ef367db1c1b552c2808562b1ffe28aefda1",
+      "bytes": 804
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/pg-actual-inputs.json",
+      "sha256": "ab54917dc4ca4f93782a00c662571faba9f60c9fbdab3a970ec8514279e4bc49",
+      "bytes": 112676
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/pg-continuation.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/pg-pg-continuation-entries.jsonl",
+      "sha256": "2daa9d445be359d486b423628459fe46bc41ba2cafc4bbb70023cdc79fac8ee9",
+      "bytes": 1059
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/pg-pg-continuation.tap",
+      "sha256": "3ce76841ea0f36ad30e3acef121c1cdeb4f41f125434cdbe5a63bab2ac3d14a9",
+      "bytes": 1197
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/prepare-cancel-pg-continuation.mjs",
+      "sha256": "9f159040fc73296149722427e025e652e27e7020155ed7e1676168be5864264f",
+      "bytes": 6538
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/prepare-pg-continuation.log",
+      "sha256": "118a0880a0fdfc9ea8b77f2ccbab8e449a98c4f95e97239e2ea94d208cda1887",
+      "bytes": 89
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/prepared-pg.json",
+      "sha256": "bc3a42fa9d35956c8d557879d4b85723d7265b3c73a6b613739bc9a846dfd1e9",
+      "bytes": 727
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/run-cancel-pg-continuation.mjs",
+      "sha256": "e5e9cf8d5aeb1e31f50de1d1543938d6329278e77a38e165be260d56e1f82f06",
+      "bytes": 6569
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/run-state-pg-continuation.json",
+      "sha256": "792e7e081e64764651a3864290af6336c19509b6aea6ad02a5bfbe70a552fe36",
+      "bytes": 2001
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/source/src/main/durable-runtime/rpc/.cancel-wiring-first-pg.cts",
+      "sha256": "a64df80cff58fad778180fd83fceafef381b74028a55699b079a528d03f97e64",
+      "bytes": 16699
+    },
+    {
+      "artifact": "pg-continuation/original-evidence/supervisor-pg-continuation.log",
+      "sha256": "e30db8212c5424d74f90c8debe78934a688f5f2f6ff98d7de3135e62b11cdcea",
+      "bytes": 715
+    },
+    {
+      "artifact": "independent-handler/run-state.json",
+      "sha256": "f608669fb4126f3411df4b44b4ee5e4dd3e41b43dfb0ecd3801fb9cce77a35ca",
+      "bytes": 4137
+    },
+    {
+      "artifact": "independent-handler/value.tap",
+      "sha256": "bae8bff6ded780bb11efcffa9eb65482f8f0f1307a2fc33582d85daa4e78e76f",
+      "bytes": 492
+    },
+    {
+      "artifact": "independent-handler/pg.tap",
+      "sha256": "ebfb8ddb5c4796330c0a5a3e92e1d89aa7eee0f06b197e53fb7e61a19e27f72e",
+      "bytes": 1197
+    },
+    {
+      "artifact": "independent-handler/value-actual-inputs.json",
+      "sha256": "5221db9756f503588c93120f1dbd89e99065abce2444c7917c29733d9d9348e5",
+      "bytes": 43677
+    },
+    {
+      "artifact": "independent-handler/pg-actual-inputs.json",
+      "sha256": "d83a3409bade77af49ba61b98cb4eac9f67f03e8828ec328fba23ec59c0ffcf0",
+      "bytes": 46766
+    },
+    {
+      "artifact": "independent-handler/actual-inputs.json",
+      "sha256": "fcad1bdbe8df2acca40b5d5dc9a2a6c3463a49c9ea7a68c1d43f8f5c41f85049",
+      "bytes": 51614
+    },
+    {
+      "artifact": "independent-handler/bundles/value.cjs",
+      "sha256": "4e7c4fb41aae59e1f9623c86adca61e422cebab8bc7aa568aac82dff1d844782",
+      "bytes": 323278
+    },
+    {
+      "artifact": "independent-handler/bundles/pg.cjs",
+      "sha256": "71bbbe23ff4a2578b140c39a4d421980e7a5e7cd22e6148c8ef3202e72045c19",
+      "bytes": 358216
+    },
+    {
+      "artifact": "independent-handler/bundles/value.cjs.metafile.json",
+      "sha256": "e3487d63c13d4971fdaeab7e732d6e2a571f187f941ed056093c7508eb2bfe9c",
+      "bytes": 112521
+    },
+    {
+      "artifact": "independent-handler/bundles/pg.cjs.metafile.json",
+      "sha256": "3566ca06d965124ea41011e722f7aa62f9e7b25865495bd678f6fe5dad9eb229",
+      "bytes": 131394
+    },
+    {
+      "artifact": "independent-handler/known-pids-ended.json",
+      "sha256": "b7d2881734d6ca871717c290dd7fff70ba29cae75cfeffa308659ef3744fa55c",
+      "bytes": 519
+    },
+    {
+      "artifact": "independent-handler/actual-identity.json",
+      "sha256": "0d40f3b578614773bd493f6dd7db8e53add7eaa2643a8a0d3aa6db22373f30e4",
+      "bytes": 251
+    },
+    {
+      "artifact": "independent-handler/existing-db-before.json",
+      "sha256": "3eb047426087379ef8d146ee10080a91673f26caaf9421b95904ed2ccd968d63",
+      "bytes": 13700
+    },
+    {
+      "artifact": "independent-handler/existing-db-end.json",
+      "sha256": "2733074f035df6ce232ba9da4971829ae1c351faffbaa88a7bab16496b8d0af9",
+      "bytes": 19554
+    },
+    {
+      "artifact": "handler-first-failure/value.tap",
+      "sha256": "26441a645a26cb060b1d9f7b3b662951dc5ce79b3fb9804d10ce888cb31cc89c"
+    },
+    {
+      "artifact": "handler-fixture-COMMIT-correction.diff",
+      "sha256": "f5d6d49387db9fa098e99b512cb2e92cbbf450ced07c34c97d961fd0f534ef5f"
+    },
+    {
+      "artifact": "wiring-PG-prepare-continuation.diff",
+      "sha256": "488b5e62fa8b89f08b989c11056d48626158ecb9d449ed6f49a86de31c827758"
+    }
+  ]
+}

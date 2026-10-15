@@ -1,0 +1,746 @@
+{
+  "기록": "Root가 원 증거를 직접 대조해 수락한 공개 adapter.bind 경계 결과입니다. 독립 handler 이력과 wiring 결과를 구분합니다.",
+  "productPin": "9060e5ce93136573261647120c504ea975a58d92",
+  "base": "556f98b4158bb57b066bf636107ad2fc05a7c09b",
+  "changedLint": {
+    "files": 4,
+    "exit": 0,
+    "pid": 31075,
+    "logSha256": "71dc71d8506a36296133396f8a1805111f3a4b298f733f00825cef25868e13e8"
+  },
+  "wiringValue": {
+    "callbacks": 1,
+    "TAPpass": 1,
+    "fail": 0,
+    "exit": 0,
+    "runnerPID": 31102,
+    "actualTestPID": 31108,
+    "startedAt": "2026-10-15T02:28:52.601Z",
+    "finishedAt": "2026-10-15T02:28:54.781Z",
+    "TAPSha256": "9229658dd55a15bd29a741eb3e4d487f2e00ebf6c393d955cdea47ab139b59bd",
+    "actualInputs": 460,
+    "sourceBodyUnchanged": true,
+    "originalFixtureSha256": "debb75be57c43a6a01d0b2329d546c3363bd983b2464168bd1f58a67ecd840af"
+  },
+  "wiringPG": {
+    "callbacks": 1,
+    "passCount": 1,
+    "parentWrapperCount": 1,
+    "TAPpassIncludingParent": 2,
+    "fail": 0,
+    "runnerPID": 31243,
+    "actualTestPID": 31249,
+    "startedAt": "2026-10-15T02:32:59.343Z",
+    "finishedAt": "2026-10-15T02:33:02.074Z",
+    "exit": 0,
+    "TAPsha256": "3ce76841ea0f36ad30e3acef121c1cdeb4f41f125434cdbe5a63bab2ac3d14a9"
+  },
+  "database": {
+    "parentGuardIdentity": {
+      "database": "orca_public_structured_subscribe_20261014",
+      "oid": "84739",
+      "system": "7696101282789175327",
+      "backend_pid": 227792,
+      "observed_at": "2026-10-15T02:32:59.241Z"
+    },
+    "callbackIdentity": {
+      "phase": "before-seed",
+      "database": "orca_public_structured_subscribe_20261014",
+      "oid": "84739",
+      "system": "7696101282789175327",
+      "backend_pid": 227794,
+      "datasets": [
+        "orca-1012-dev-v1"
+      ]
+    },
+    "dataset": [
+      {
+        "dataset_name": "orca-1012-dev-v1"
+      }
+    ],
+    "tableCount": 73,
+    "originalRows": 147,
+    "originalRowHashesPreserved": true,
+    "originalRowMultisetPreserved": true,
+    "ledgerCount": 19,
+    "ledgerUnchanged": true,
+    "ledgerCanonicalSha256": "31bad60beb952ac9b88e8ae659861eac5e2916c88893ce5cb8fc998b63234707",
+    "beforeAt": "2026-10-15T02:32:59.339Z",
+    "afterAt": "2026-10-15T02:33:02.143Z",
+    "qualification": "02:32:59 UTC 실행 직전 현재 전체 원행147개를 기준으로 보존했습니다. 과거99개만 현재 전체로 가정하지 않았습니다.",
+    "SQLApply": 0,
+    "DDL": 0,
+    "resetDelete": 0
+  },
+  "ledgerBefore": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "applied_at": "2026-10-14T19:20:05.198Z"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "applied_at": "2026-10-14T19:20:05.272Z"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "applied_at": "2026-10-14T19:20:05.335Z"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "applied_at": "2026-10-14T19:20:05.427Z"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "applied_at": "2026-10-14T19:20:05.518Z"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "applied_at": "2026-10-14T19:20:05.551Z"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "applied_at": "2026-10-14T19:20:05.554Z"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "applied_at": "2026-10-14T19:20:05.591Z"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "applied_at": "2026-10-14T19:20:05.597Z"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "applied_at": "2026-10-14T19:20:05.617Z"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "applied_at": "2026-10-14T19:20:05.634Z"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "applied_at": "2026-10-14T19:20:05.637Z"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "applied_at": "2026-10-14T19:20:05.649Z"
+    },
+    {
+      "version": "014-durable-catalog.sql",
+      "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "applied_at": "2026-10-14T19:20:05.694Z"
+    },
+    {
+      "version": "015-failure-evidence.sql",
+      "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "applied_at": "2026-10-14T19:20:05.732Z"
+    },
+    {
+      "version": "016-observation-episodes.sql",
+      "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+      "applied_at": "2026-10-14T19:20:05.759Z"
+    },
+    {
+      "version": "017-structured-session-wire.sql",
+      "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+      "applied_at": "2026-10-14T19:20:05.777Z"
+    },
+    {
+      "version": "018-terminal-input-floor.sql",
+      "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+      "applied_at": "2026-10-14T19:20:05.788Z"
+    },
+    {
+      "version": "019-durable-resource-allocation.sql",
+      "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+      "applied_at": "2026-10-14T19:20:05.848Z"
+    }
+  ],
+  "ledgerAfter": [
+    {
+      "version": "001-catalog.sql",
+      "checksum": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "applied_at": "2026-10-14T19:20:05.198Z"
+    },
+    {
+      "version": "002-execution-storage.sql",
+      "checksum": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "applied_at": "2026-10-14T19:20:05.272Z"
+    },
+    {
+      "version": "003-operations-resources.sql",
+      "checksum": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "applied_at": "2026-10-14T19:20:05.335Z"
+    },
+    {
+      "version": "004-input-context.sql",
+      "checksum": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "applied_at": "2026-10-14T19:20:05.427Z"
+    },
+    {
+      "version": "005-events-replay.sql",
+      "checksum": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "applied_at": "2026-10-14T19:20:05.518Z"
+    },
+    {
+      "version": "006-snapshot-seals.sql",
+      "checksum": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "applied_at": "2026-10-14T19:20:05.551Z"
+    },
+    {
+      "version": "007-storage-epoch-cancel-guards.sql",
+      "checksum": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "applied_at": "2026-10-14T19:20:05.554Z"
+    },
+    {
+      "version": "008-attachment-store.sql",
+      "checksum": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "applied_at": "2026-10-14T19:20:05.591Z"
+    },
+    {
+      "version": "009-atomic-journal-outbox.sql",
+      "checksum": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "applied_at": "2026-10-14T19:20:05.597Z"
+    },
+    {
+      "version": "010-runtime-command-ledger.sql",
+      "checksum": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "applied_at": "2026-10-14T19:20:05.617Z"
+    },
+    {
+      "version": "011-runtime-event-producers.sql",
+      "checksum": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "applied_at": "2026-10-14T19:20:05.634Z"
+    },
+    {
+      "version": "012-input-merge-boundary.sql",
+      "checksum": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "applied_at": "2026-10-14T19:20:05.637Z"
+    },
+    {
+      "version": "013-context-deliveries.sql",
+      "checksum": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "applied_at": "2026-10-14T19:20:05.649Z"
+    },
+    {
+      "version": "014-durable-catalog.sql",
+      "checksum": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "applied_at": "2026-10-14T19:20:05.694Z"
+    },
+    {
+      "version": "015-failure-evidence.sql",
+      "checksum": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "applied_at": "2026-10-14T19:20:05.732Z"
+    },
+    {
+      "version": "016-observation-episodes.sql",
+      "checksum": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+      "applied_at": "2026-10-14T19:20:05.759Z"
+    },
+    {
+      "version": "017-structured-session-wire.sql",
+      "checksum": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+      "applied_at": "2026-10-14T19:20:05.777Z"
+    },
+    {
+      "version": "018-terminal-input-floor.sql",
+      "checksum": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+      "applied_at": "2026-10-14T19:20:05.788Z"
+    },
+    {
+      "version": "019-durable-resource-allocation.sql",
+      "checksum": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+      "applied_at": "2026-10-14T19:20:05.848Z"
+    }
+  ],
+  "rowPreservationByTable": [
+    {
+      "table": "agents",
+      "originalRows": 5,
+      "preserved": true
+    },
+    {
+      "table": "attachment_aliases",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "attachment_blobs",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "attachment_upload_chunks",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "attachment_uploads",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "attempts",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "cancel_intents",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "catalog_heads",
+      "originalRows": 4,
+      "preserved": true
+    },
+    {
+      "table": "catalog_name_reservations",
+      "originalRows": 2,
+      "preserved": true
+    },
+    {
+      "table": "catalog_project_groups",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "catalog_repositories",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "catalog_tab_metadata",
+      "originalRows": 4,
+      "preserved": true
+    },
+    {
+      "table": "catalog_ui_state",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "catalog_workspace_metadata",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "controller_leases",
+      "originalRows": 2,
+      "preserved": true
+    },
+    {
+      "table": "dataset_metadata",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "delivery_attempts",
+      "originalRows": 2,
+      "preserved": true
+    },
+    {
+      "table": "execution_grants",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "failure_incident_aliases",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "failure_incident_observations",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "failure_incident_state",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "failure_incidents",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "failure_observations",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "input_attachments",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "input_components",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "legacy_drafts",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "memory_rightsizing_state",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "messages",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "notifications",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "observation_challenges",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "observation_episodes",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "operations",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "outbox_events",
+      "originalRows": 12,
+      "preserved": true
+    },
+    {
+      "table": "provider_context_deliveries",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "recovery_episodes",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "replay_events",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "replay_stream_heads",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_budget_scopes",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_growth_ledger",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_operation_plans",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_policy_versions",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_profiles",
+      "originalRows": 1,
+      "preserved": true
+    },
+    {
+      "table": "resource_reservation_accounting",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_reservations",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "resource_unit_state",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "rpc_receipts",
+      "originalRows": 10,
+      "preserved": true
+    },
+    {
+      "table": "runtime_audit_events",
+      "originalRows": 16,
+      "preserved": true
+    },
+    {
+      "table": "runtime_command_history",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_commands",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_event_attempt_history",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_event_failure_contexts",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_event_producers",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_event_queue",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_event_targets",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "runtime_members",
+      "originalRows": 5,
+      "preserved": true
+    },
+    {
+      "table": "runtime_units",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "schema_migrations",
+      "originalRows": 19,
+      "preserved": true
+    },
+    {
+      "table": "session_context_records",
+      "originalRows": 6,
+      "preserved": true
+    },
+    {
+      "table": "session_events",
+      "originalRows": 14,
+      "preserved": true
+    },
+    {
+      "table": "sessions",
+      "originalRows": 5,
+      "preserved": true
+    },
+    {
+      "table": "snapshot_manifests",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "snapshot_session_watermarks",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "storage_bindings",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "storage_domains",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "storage_mounts",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "storage_seals",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "storage_write_grants",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "structured_session_aliases",
+      "originalRows": 3,
+      "preserved": true
+    },
+    {
+      "table": "structured_submissions",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "tabs",
+      "originalRows": 5,
+      "preserved": true
+    },
+    {
+      "table": "terminal_input_floors",
+      "originalRows": 0,
+      "preserved": true
+    },
+    {
+      "table": "workspace_aliases",
+      "originalRows": 2,
+      "preserved": true
+    },
+    {
+      "table": "workspaces",
+      "originalRows": 3,
+      "preserved": true
+    }
+  ],
+  "runtimeCounts": {
+    "value": 460,
+    "PG": 471,
+    "union": 472,
+    "SQL": 19
+  },
+  "originalBodyAndWrapper": {
+    "kind": "pg",
+    "source": "src/main/durable-runtime/rpc/structured-cancel.pg.test.mts",
+    "sourceSha256": "c4e22a36c8fda5256b2536b62a6c1c8e4e4606f85f46aa848540452814e410a2",
+    "assertBodySha256": "34f41d59ae458daa19f2a0ebdcc07f13f1bb31fe2606d27a1da0454b63371880",
+    "wrapperSha256": "a64df80cff58fad778180fd83fceafef381b74028a55699b079a528d03f97e64"
+  },
+  "historicalHandler": {
+    "sourcePin": "70fcd2edcd86fdeb900c23d799cc7528f19c41cf",
+    "lint": {
+      "sourcePin": "400e94ab3737be048c961ef822c26dee1be1d273",
+      "exit": 0,
+      "repeated": false
+    },
+    "valueCallbacks": 1,
+    "PGCallbacks": 1,
+    "TAPparentCountExcluded": true,
+    "valueInputs": 186,
+    "PGInputs": 199,
+    "union": 200,
+    "originalRows": 99,
+    "ledger": 19,
+    "originalRowsPreserved": true,
+    "ledgerPreserved": true,
+    "repeatedInWiring": false
+  },
+  "handlerFirstFailure": {
+    "sourcePin": "400e94ab3737be048c961ef822c26dee1be1d273",
+    "error": "Durable database operation failed (TX_NOT_COMMITTED)",
+    "code": "TX_NOT_COMMITTED",
+    "valueCallbacks": 1,
+    "valueExit": 1,
+    "PGCallbacks": 0,
+    "correction": "Fake client의 COMMIT 응답에 command: COMMIT을 반환하는 한 줄만 추가했습니다. 제품 commit 검증과 기존 assertions는 보존했습니다.",
+    "correctionPin": "70fcd2edcd86fdeb900c23d799cc7528f19c41cf",
+    "rawTAPsha256": "26441a645a26cb060b1d9f7b3b662951dc5ce79b3fb9804d10ce888cb31cc89c",
+    "sanitizedTAPsha256": "a7891c91817e8fc9d50f8bc02f4bfc212fc5cf6e6d2ce6b494d351ab601a023b",
+    "sanitization": "비공개 stage 절대경로만 <verification-stage>로 치환했습니다."
+  },
+  "wiringPreparationFailure": {
+    "code": "EEXIST",
+    "phase": "prepare-pg_FAILURE",
+    "pid": 31119,
+    "exit": 1,
+    "startedAt": "2026-10-15T02:28:54.785Z",
+    "finishedAt": "2026-10-15T02:28:54.893Z",
+    "cause": "상속된 .cancel-first-pg.cts symlink에 wx 쓰기를 시도했습니다.",
+    "PGCallbackEntered": false,
+    "DBGuardEntered": false,
+    "rawLogSha256": "8f6d29292f10318d552b8b19b310e75bd1478ec26f8e8181f6efcd920d4b47e2",
+    "correction": "새 .cancel-wiring-first-pg.cts basename 1줄과 전용 control/log를 사용하고 원 symlink·실패 자료를 보존했습니다.",
+    "continuationDiffSha256": "488b5e62fa8b89f08b989c11056d48626158ecb9d449ed6f49a86de31c827758"
+  },
+  "prelaunchGuard": {
+    "at": "2026-10-15T02:32:48.629Z",
+    "phase": "CONTINUATION_PRELAUNCH_GUARD_PASS",
+    "sourcePin": "9060e5ce93136573261647120c504ea975a58d92",
+    "reuseFiles": 21,
+    "controls": 3,
+    "sourceFiles": 8,
+    "originalGeneratedRetained": true,
+    "PGArtifactsAbsent": true
+  },
+  "postrunReuse": {
+    "at": "2026-10-15T02:34:37.268Z",
+    "files": 29,
+    "mismatches": 0,
+    "qualification": "원 actual-inputs.json은 value-only manifest에서 PG를 합친 union으로 갱신했으며 원본은 이전 raw 증거에 보존했습니다. 다른 원 파일과 source8은 그대로입니다."
+  },
+  "knownChildren": [
+    {
+      "pid": 31219,
+      "state": "Z"
+    },
+    {
+      "pid": 31226,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 31243,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 31249,
+      "state": "ABSENT"
+    }
+  ],
+  "knownChildrenObservedAt": "2026-10-15T02:33:32.805Z",
+  "heavy": 0,
+  "newProductOrFixtureChangesInContinuation": 0,
+  "successfulStageLintValueRepeated": 0,
+  "type": 0,
+  "schema": 0,
+  "install": 0,
+  "wholeBuild": 0,
+  "live": 0,
+  "C4Changed": false,
+  "newScreenshots": 0,
+  "limits": [
+    "합성 provider 관측/proof이며 실제 production 인증 issuer·provider Stop 성공을 증명하지 않습니다.",
+    "실제 provider/native/HA/Expo UI 및 전체 P1-07/17 완료는 미확인입니다.",
+    "현재 C4 pin에는 이 취소 변경이 포함되지 않아 screenshot이 없습니다.",
+    "최종화는 docs만 변경하며 기존 성공 시험을 반복하지 않습니다."
+  ]
+}
