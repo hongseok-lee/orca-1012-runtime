@@ -81,9 +81,10 @@ export function captureCompositionContext(original: GatewayContext): GatewayCont
     const controller = original.controller
     const scope = inventoryOpaque(controller.scope), owner = inventoryOpaque(controller.owner)
     const term = counter('controller-term', inventoryOpaque(controller.term))
-    // Preserve the caller-provided controller type; do not issue an authentication brand.
+    // Snapshot only the existing trusted context's validated scalars. This type
+    // conversion neither authenticates a new controller nor issues a new brand.
     return Object.freeze({ runtimeUnitId, operationId,
-      controller: Object.freeze({ ...controller, scope, owner, term }) })
+      controller: Object.freeze({ scope, owner, term }) as GatewayContext['controller'] })
   } catch {
     throw new ExecutionTargetCompositionError('CONTEXT_INVALID')
   }
