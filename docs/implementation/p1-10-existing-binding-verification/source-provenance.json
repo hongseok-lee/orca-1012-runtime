@@ -1,0 +1,55 @@
+{
+  "at": "2026-10-15T12:47:02.807385+00:00",
+  "base": "c0ccca1735dfd652765e36cb8cd0171bde10d00b",
+  "head": "a30d2601587d31f0c35bb761ac2d4ae4394d93d2",
+  "earlyProductPin": "25e86fcffe776998469374e78d2569f8e11ceb0d",
+  "files": {
+    "src/main/durable-runtime/storage/store.ts": {
+      "bytes": 24123,
+      "lines": 309,
+      "sha256": "d8bc3dc1696ab6e78c08993193ef21362110e744fc5a565e50c0f7f51019401f"
+    },
+    "src/main/durable-runtime/storage/binding-verification.ts": {
+      "bytes": 6428,
+      "lines": 102,
+      "sha256": "25d74495545f81be0e846994d439fa441098acd9db67e01c25f3bf7bbc6b4fe2"
+    },
+    "src/main/durable-runtime/storage/binding-verification.pg.test.mts": {
+      "bytes": 24419,
+      "lines": 332,
+      "sha256": "0083c189233cc862d87ae3c9ff2c4a6d29fe0271d731b0604e0975a928693e8f"
+    }
+  },
+  "exactDiffSHA256": "78eb250c9297f6bb3a0c91b23c309750d9458181e593559f705bab7c64767a90",
+  "owned3": [
+    "100644 blob 0d50bf35b9a8edb4d340aa5676cc36b59aaa1606\tsrc/main/durable-runtime/storage/binding-verification.pg.test.mts",
+    "100644 blob 221a63bf281ffadd9ee3b0d504deccc710bb5a85\tsrc/main/durable-runtime/storage/binding-verification.ts",
+    "100644 blob 539484b87cdf69a5f384c839eb7aefe08bc0629b\tsrc/main/durable-runtime/storage/store.ts"
+  ],
+  "fixtureTopLevelCallbacks": 1,
+  "productSinceEarlyUnchanged": true,
+  "schemaCanonicalAuthorityRegisterAttachUnchanged": true,
+  "fixtureSamePoolIdentityBeforeFirstSeed": true,
+  "fixtureUsesExistingLedger21WithoutApply": true,
+  "fixtureOnlySyntheticAuthority": true,
+  "execution": {
+    "PG": 0,
+    "SQL": 0,
+    "lint": 0,
+    "type": 0,
+    "test": 0,
+    "PNG": 0,
+    "live": 0,
+    "NFS": 0,
+    "provider": 0,
+    "install": 0,
+    "build": 0,
+    "heavy": 0
+  },
+  "usageLimitCreditsStream": "미관측",
+  "sourceOnly": true,
+  "rootContractPrivateSHA256": "984e21a8c50d7ef73287932f477a634013aef53455561ed4ebf73cbefe0df72e",
+  "rootContractPublicSHA256": "69c36902160f76b7a9bfccbc393077af8764b25e999149e2a7a17717c7f95db8",
+  "fixtureExecution": "미실행",
+  "preparedEvidenceIsPhysicalLifetimeProof": false
+}

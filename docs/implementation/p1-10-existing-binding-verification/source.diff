@@ -1,0 +1,472 @@
+diff --git a/src/main/durable-runtime/storage/binding-verification.pg.test.mts b/src/main/durable-runtime/storage/binding-verification.pg.test.mts
+new file mode 100644
+index 00000000..0d50bf35
+--- /dev/null
++++ b/src/main/durable-runtime/storage/binding-verification.pg.test.mts
+@@ -0,0 +1,332 @@
++import assert from 'node:assert/strict'
++import { createHash, randomUUID } from 'node:crypto'
++import { test } from 'node:test'
++import { setTimeout as pause } from 'node:timers/promises'
++import { createDurablePool, DurableDatabaseError, withDurableTransaction } from '../db/connection.ts'
++import type { DurableTransaction } from '../db/connection.ts'
++import { readMigrations } from '../db/migrate.ts'
++import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
++import type { StorageBindingId } from '../../../shared/durable-runtime/identity.ts'
++import { StorageStore } from './store.ts'
++import type { Binding, StorageScope } from './store.ts'
++import type { BindingVerificationInput } from './binding-verification.ts'
++import type { CanonicalCandidate } from './canonical.ts'
++import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence, VerifiedMountEvidence,
++  VerifiedPermanentComputeStop, ExecutionTarget } from './evidence.ts'
++
++// Root supplies exact existing isolated DB/system/OID and immutable SQL001–021
++// inputs at execution dispatch. No database selection, schema apply or reset.
++const database = process.env.ORCA_BINDING_VERIFICATION_DATABASE
++const oid = process.env.ORCA_BINDING_VERIFICATION_DATABASE_OID
++const system = process.env.ORCA_BINDING_VERIFICATION_SYSTEM
++const migrationsPath = process.env.ORCA_BINDING_VERIFICATION_MIGRATIONS
++if (process.env.ORCA_BINDING_VERIFICATION_APPROVED !== 'root-first-verification' ||
++    !database || !/^orca_[a-z0-9_]+$/.test(database) || database === 'orca_dev' ||
++    database !== process.env.PGDATABASE || !oid || !/^[1-9][0-9]*$/.test(oid) ||
++    !system || !/^[1-9][0-9]*$/.test(system) || !migrationsPath) {
++  throw new Error('Root-approved existing isolated DB/system/OID and migrations required')
++}
++const pool = createDurablePool({ database, max: 6, application_name: 'existing-binding-verification-first' })
++const hash = (text: string) => createHash('sha256').update(text).digest('hex')
++const rejectCode = (promise: Promise<unknown>, code: string) => assert.rejects(promise,
++  error => error instanceof DurableDatabaseError && error.code === code)
++const rowTables = ['agents', 'workspaces', 'sessions', 'tabs', 'runtime_units', 'runtime_members',
++  'runtime_member_storage_bindings', 'storage_domains', 'storage_bindings', 'resource_profiles',
++  'attempts', 'storage_write_grants', 'storage_mounts', 'snapshot_manifests', 'storage_seals',
++  'session_events', 'runtime_audit_events', 'outbox_events'] as const
++async function rowHashes() {
++  const result: Record<string, string[]> = {}
++  for (const table of rowTables) {
++    result[table] = (await pool.query<{ body: string }>(
++      `SELECT to_jsonb(t)::text AS body FROM durable_runtime.${table} t`)).rows.map(row => hash(row.body)).sort()
++  }
++  return result
++}
++function retained(before: Record<string, string[]>, after: Record<string, string[]>) {
++  for (const table of rowTables) {
++    const remaining = new Map<string, number>()
++    for (const value of after[table]) { remaining.set(value, (remaining.get(value) ?? 0) + 1) }
++    for (const value of before[table]) {
++      assert.ok((remaining.get(value) ?? 0) > 0, `original row missing in ${table}`)
++      remaining.set(value, (remaining.get(value) ?? 0) - 1)
++    }
++  }
++}
++async function identity() {
++  const value = (await pool.query<{ database: string; oid: string; system: string; backend_pid: number }>(
++    `SELECT current_database() AS database,(SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
++      (SELECT system_identifier::text FROM pg_control_system()) AS system,pg_backend_pid() AS backend_pid`)).rows[0]
++  assert.equal(value.database, database); assert.equal(value.oid, oid); assert.equal(value.system, system)
++  assert.deepEqual((await pool.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows,
++    [{ dataset_name: 'orca-1012-dev-v1' }])
++  return value
++}
++
++// Narrow reuse of the reviewed directory fixture. No production verifier/pin,
++// actual filesystem authentication or physical lifetime is qualified here.
++class FixtureAuthority implements StorageEvidenceAuthority {
++  directories = new Map<string, VerifiedDirectoryEvidence>()
++  invalid = new Set<string>()
++  throws = new Set<string>()
++  directory(reference: string) {
++    if (this.throws.has(reference)) { throw new Error('synthetic accessor failure') }
++    return this.directories.get(reference) ?? null
++  }
++  directoryPinValid(value: VerifiedDirectoryEvidence) {
++    return !this.invalid.has(value.evidenceRef) && this.directories.get(value.evidenceRef) === value
++  }
++  mount(_ref: string): VerifiedMountEvidence | null { return null }
++  mountPinValid(_held: VerifiedMountEvidence) { return false }
++  executionTarget(_attempt: string): ExecutionTarget | null { return null }
++  executionTargetPinValid(_held: ExecutionTarget) { return false }
++  permanentComputeStop(_ref: string): VerifiedPermanentComputeStop | null { return null }
++  computeStopPinValid(_held: VerifiedPermanentComputeStop) { return false }
++  issue(candidate: CanonicalCandidate, options: { mutableEvidence?: boolean; pin?: string; ref?: string } = {}) {
++    const ref = options.ref ?? `synthetic-existing-proof:${randomUUID()}`
++    const value = { evidenceRef: ref, topologyPinId: options.pin ?? `synthetic-pin:${randomUUID()}`, candidate }
++    // SAFETY: only this fixture supplies the branded synthetic evidence; this
++    // cast does not authenticate an observation or issue production authority.
++    const held = (options.mutableEvidence ? value : Object.freeze(value)) as VerifiedDirectoryEvidence
++    this.directories.set(ref, held)
++    return held
++  }
++}
++
++async function blockedBy(waiter: number, blocker: number) {
++  for (let i = 0; i < 100; i++) {
++    if ((await pool.query<{ blocked: boolean }>(
++      'SELECT $1::int=ANY(pg_blocking_pids($2::int)) AS blocked', [blocker, waiter])).rows[0].blocked) { return }
++    await pause(50)
++  }
++  throw new DurableDatabaseError('STORAGE_FIXTURE_LOCK_WAIT_NOT_OBSERVED')
++}
++const backendPid = async (tx: DurableTransaction) =>
++  (await tx.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows[0].pid
++const row = async (id: StorageBindingId) => (await pool.query<Binding & {
++  identity_verified_at: Date | null; seal_id: string | null
++}>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [id])).rows[0]
++async function history(id: StorageBindingId) {
++  return (await pool.query<{ journal: string; audit: string; outbox: string }>(`SELECT
++    (SELECT count(*)::text FROM durable_runtime.session_events WHERE body->>'bindingId'=$1) AS journal,
++    (SELECT count(*)::text FROM durable_runtime.runtime_audit_events WHERE next_state->>'bindingId'=$1) AS audit,
++    (SELECT count(*)::text FROM durable_runtime.outbox_events WHERE aggregate_id=$1::uuid) AS outbox`, [id])).rows[0]
++}
++
++await test('Existing binding: first prepared proof, exact replay, transaction and FK boundaries', async t => {
++  t.after(() => pool.end())
++  const firstIdentity = await identity()
++  const migrations = await readMigrations(migrationsPath)
++  assert.equal(migrations.length, 21)
++  const ledgerBefore = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
++  assert.deepEqual(ledgerBefore.map(x => [x.version, x.checksum]), migrations.map(x => [x.version, x.checksum]))
++  const originalRows = await rowHashes()
++  console.log(JSON.stringify({ phase: 'EXISTING_BINDING_IDENTITY_BEFORE_FIRST_SEED', ...firstIdentity,
++    dataset: 'orca-1012-dev-v1', ledgerRows: ledgerBefore.length, at: new Date().toISOString() }))
++  const authority = new FixtureAuthority(), store = new StorageStore(authority), namespace = randomUUID()
++  const backend = 'synthetic-existing-pv', exportId = `synthetic-existing-export:${namespace}`
++  const unit = logicalId('runtime-unit', randomUUID()), otherUnit = logicalId('runtime-unit', randomUUID())
++  const member = logicalId('session', randomUUID()), otherMember = logicalId('session', randomUUID())
++  const closedMember = logicalId('session', randomUUID()), secondMember = logicalId('session', randomUUID())
++  const agent = randomUUID(), workspace = randomUUID(), otherWorkspace = randomUUID(), tab = randomUUID()
++  const scope = (session = member, owner = unit): StorageScope => ({ sessionId: session, unitId: owner,
++    expectedUnitRevision: counter('row:runtime-unit', '0'), actorId: 'synthetic-existing-verifier' })
++  const candidate = (directory: string): CanonicalCandidate => Object.freeze({
++    domain: Object.freeze({ backendId: backend, exportId, pvUid: `synthetic-pv:${namespace}` }),
++    canonicalDirectory: directory, podUid: 'synthetic-directory-server', generation: 'synthetic-existing-1', device: '123', inode: '456'
++  })
++  async function addBinding(label: string, session = member, owner = unit, primary = false, initialRevision = '0') {
++    const id = logicalId('storage-binding', randomUUID()), c = candidate(`/synthetic-existing/${namespace}/${label}`)
++    await withDurableTransaction(pool, async tx => {
++      await tx.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state,revision)
++        VALUES($1,$2,$3,$4,'UNVERIFIED',$5)`, [id, backend, exportId, c.canonicalDirectory, initialRevision])
++      await tx.query(primary
++        ? 'INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)'
++        : 'INSERT INTO durable_runtime.runtime_member_storage_bindings(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [owner, session, id])
++    })
++    return { id, c, proof: authority.issue(c), initialRevision }
++  }
++  type Target = Awaited<ReturnType<typeof addBinding>>
++  const input = (target: Target, revision = target.initialRevision, session = member, owner = unit): BindingVerificationInput => ({
++    ...scope(session, owner), bindingId: target.id, expectedBindingRevision: counter('row:storage-binding', revision),
++    directoryEvidenceRef: target.proof.evidenceRef
++  })
++  const verify = (value: BindingVerificationInput) => withDurableTransaction(pool, tx => store.verifyBinding(tx, value))
++  await withDurableTransaction(pool, async tx => {
++    await tx.query("INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'synthetic')", [agent])
++    for (const id of [workspace, otherWorkspace]) {
++      await tx.query(`INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state)
++        VALUES($1,$2,'existing binding fixture','READY')`, [id, `synthetic-existing-workspace:${id}`])
++    }
++    for (const id of [unit, otherUnit]) { await tx.query("INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'RUNNING','ABSENT')", [id]) }
++    for (const id of [member, closedMember, secondMember, otherMember]) {
++      await tx.query(`INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,$4)`,
++        [id, agent, id === otherMember ? otherWorkspace : workspace, id === closedMember ? 'CLOSED' : 'OPEN'])
++    }
++    await tx.query("INSERT INTO durable_runtime.tabs(id,workspace_id,session_id,kind,ui_order,lifecycle) VALUES($1,$2,$3,'fixture',0,'OPEN')", [tab, workspace, member])
++    await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2)', [backend, exportId])
++  })
++  const primary = await addBinding('primary', member, unit, true)
++  await addBinding('other-primary', otherMember, otherUnit, true)
++  const closed = await addBinding('closed-primary', closedMember, unit, true)
++  await withDurableTransaction(pool, tx => tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [unit, secondMember, primary.id]))
++  const objectSnapshot = async () => ({
++    units: (await pool.query('SELECT * FROM durable_runtime.runtime_units WHERE id=ANY($1::uuid[]) ORDER BY id', [[unit, otherUnit]])).rows,
++    members: (await pool.query('SELECT * FROM durable_runtime.runtime_members WHERE runtime_unit_id=ANY($1::uuid[]) ORDER BY session_id', [[unit, otherUnit]])).rows,
++    tab: (await pool.query('SELECT * FROM durable_runtime.tabs WHERE id=$1', [tab])).rows,
++    ids: (await pool.query('SELECT id,agent_id,workspace_id FROM durable_runtime.sessions WHERE id=ANY($1::uuid[]) ORDER BY id', [[member, otherMember, closedMember, secondMember]])).rows
++  })
++  const objectsBefore = await objectSnapshot(), before = await row(primary.id), beforeHistory = await history(primary.id)
++  const verified = await verify(input(primary))
++  assert.equal(verified.id, primary.id); assert.equal(verified.identity_proof_ref, primary.proof.evidenceRef)
++  assert.equal(verified.access_state, 'VERIFIED'); assert.equal(verified.revision, '1')
++  const applied = await row(primary.id)
++  assert.ok(applied.identity_verified_at)
++  for (const field of ['backend_id', 'export_id', 'canonical_directory', 'epoch', 'writer_attempt_id', 'seal_id'] as const) { assert.deepEqual(applied[field], before[field]) }
++  assert.deepEqual(await history(primary.id), { journal: String(BigInt(beforeHistory.journal) + 1n),
++    audit: String(BigInt(beforeHistory.audit) + 1n), outbox: String(BigInt(beforeHistory.outbox) + 1n) })
++  const replayHistory = await history(primary.id)
++  await verify(input(primary, '0')); await verify(input(primary, '1'))
++  assert.deepEqual(await row(primary.id), applied); assert.deepEqual(await history(primary.id), replayHistory)
++  const differentProof = authority.issue(primary.c)
++  await rejectCode(verify({ ...input(primary, '1'), directoryEvidenceRef: differentProof.evidenceRef }), 'STORAGE_VERIFICATION_PROOF_MISMATCH')
++  await rejectCode(verify(input(primary, '2')), 'STORAGE_BINDING_STALE')
++  const elevated = await addBinding('elevated-revision', member, unit, false, '4')
++  await verify(input(elevated)); await verify(input(elevated, '5'))
++  await rejectCode(verify(input(elevated, '3')), 'STORAGE_BINDING_STALE')
++
++  const additional = await addBinding('additional-home')
++  await verify(input(additional)); assert.equal((await row(additional.id)).id, additional.id)
++  const rejected = await addBinding('rejected')
++  const rejectedBefore = await row(rejected.id), rejectedHistory = await history(rejected.id)
++  await rejectCode(verify(input(rejected, '1')), 'STORAGE_BINDING_STALE')
++  await rejectCode(verify({ ...input(rejected), expectedUnitRevision: counter('row:runtime-unit', '1') }), 'STORAGE_UNIT_STALE')
++  await rejectCode(verify(input(rejected, '0', otherMember, otherUnit)), 'STORAGE_MEMBER_MISSING')
++  await rejectCode(verify(input(closed, '0', closedMember)), 'STORAGE_SESSION_CLOSED')
++  await rejectCode(verify({ ...input(rejected), bindingId: logicalId('storage-binding', randomUUID()) }), 'STORAGE_MEMBER_MISSING')
++  for (const c of [Object.freeze({ ...rejected.c, canonicalDirectory: '/wrong-directory' }),
++    Object.freeze({ ...rejected.c, domain: Object.freeze({ ...rejected.c.domain, backendId: 'wrong-backend' }) }),
++    Object.freeze({ ...rejected.c, domain: Object.freeze({ ...rejected.c.domain, exportId: 'wrong-export' }) })]) {
++    await rejectCode(verify({ ...input(rejected), directoryEvidenceRef: authority.issue(c).evidenceRef }), 'STORAGE_DIRECTORY_MISMATCH')
++  }
++  await rejectCode(verify({ ...input(rejected), directoryEvidenceRef: '' }), 'STORAGE_EVIDENCE_REF')
++  await rejectCode(verify({ ...input(rejected), directoryEvidenceRef: 'synthetic-unissued-proof' }), 'STORAGE_DIRECTORY_UNVERIFIED')
++  authority.throws.add(rejected.proof.evidenceRef)
++  await rejectCode(verify(input(rejected)), 'STORAGE_DIRECTORY_UNVERIFIED'); authority.throws.clear()
++  const wrongRef = authority.issue(rejected.c)
++  authority.directories.set(rejected.proof.evidenceRef, wrongRef)
++  await rejectCode(verify(input(rejected)), 'STORAGE_DIRECTORY_UNVERIFIED')
++  authority.directories.set(rejected.proof.evidenceRef, rejected.proof)
++  for (const proof of [authority.issue({ ...rejected.c }), authority.issue(Object.freeze({ ...rejected.c, domain: { ...rejected.c.domain } })),
++    authority.issue(rejected.c, { mutableEvidence: true }), authority.issue(rejected.c, { pin: '' })]) {
++    await rejectCode(verify({ ...input(rejected), directoryEvidenceRef: proof.evidenceRef }), 'STORAGE_DIRECTORY_PIN_INVALID')
++  }
++  authority.invalid.add(rejected.proof.evidenceRef)
++  await rejectCode(verify(input(rejected)), 'STORAGE_DIRECTORY_PIN_INVALID'); authority.invalid.clear()
++  assert.deepEqual(await row(rejected.id), rejectedBefore); assert.deepEqual(await history(rejected.id), rejectedHistory)
++  // Exact replay still needs the current prepared authority/pin.
++  authority.invalid.add(primary.proof.evidenceRef)
++  await rejectCode(verify(input(primary)), 'STORAGE_DIRECTORY_PIN_INVALID'); authority.invalid.clear()
++  assert.deepEqual(await history(primary.id), replayHistory)
++
++  const rollback = await addBinding('outer-rollback'), rollbackBefore = await row(rollback.id)
++  await rejectCode(withDurableTransaction(pool, async tx => {
++    await store.verifyBinding(tx, input(rollback)); throw new DurableDatabaseError('STORAGE_FIXTURE_ROLLBACK')
++  }), 'STORAGE_FIXTURE_ROLLBACK')
++  assert.deepEqual(await row(rollback.id), rollbackBefore)
++  assert.deepEqual(await history(rollback.id), { journal: '0', audit: '0', outbox: '0' })
++  const captured = await addBinding('dto-capture')
++  const capturedResult = await withDurableTransaction(pool, async tx => {
++    const mutable = input(captured), pending = store.verifyBinding(tx, mutable)
++    Object.assign(mutable, { ...input(rejected, '100', otherMember, otherUnit), actorId: 'changed-after-first-await' })
++    return pending
++  })
++  assert.equal(capturedResult.id, captured.id)
++
++  const waiting = await addBinding('pin-invalid-during-domain-wait'), waitingBefore = await row(waiting.id)
++  const reached = Promise.withResolvers<number>()
++  let waitingVerification: Promise<Binding | null> = Promise.resolve(null)
++  await withDurableTransaction(pool, async holder => {
++    const holderPid = await backendPid(holder)
++    await holder.query('SELECT backend_id FROM durable_runtime.storage_domains WHERE backend_id=$1 AND export_id=$2 FOR UPDATE', [backend, exportId])
++    waitingVerification = withDurableTransaction(pool, async tx => {
++      reached.resolve(await backendPid(tx)); return store.verifyBinding(tx, input(waiting))
++    })
++    await blockedBy(await reached.promise, holderPid)
++    authority.invalid.add(waiting.proof.evidenceRef)
++  })
++  await rejectCode(waitingVerification, 'STORAGE_DIRECTORY_PIN_INVALID')
++  assert.deepEqual(await row(waiting.id), waitingBefore)
++  assert.deepEqual(await history(waiting.id), { journal: '0', audit: '0', outbox: '0' })
++  authority.invalid.clear()
++
++  const concurrent = await addBinding('concurrent-first-proof')
++  const concurrentResults = await Promise.all([verify(input(concurrent)), verify(input(concurrent))])
++  assert.equal(concurrentResults[0].revision, '1'); assert.equal(concurrentResults[1].revision, '1')
++  assert.deepEqual(await history(concurrent.id), { journal: '1', audit: '1', outbox: '1' })
++  assert.equal((await row(concurrent.id)).identity_proof_ref, concurrent.proof.evidenceRef)
++
++  // Fixture-owned prior state/history. No old row, trigger, constraint or schema is changed.
++  const attempt = logicalId('attempt', randomUUID()), pod = `synthetic-existing-pod:${namespace}`
++  await withDurableTransaction(pool, async tx => {
++    await tx.query('INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,0,\'{}\',0)', [unit])
++    await tx.query(`INSERT INTO durable_runtime.attempts(id,runtime_unit_id,execution_epoch,mode,pod_uid,incarnation,resource_profile_revision,effective_resources,status)
++      VALUES($1,$2,0,'COLD',$3,'synthetic-existing',0,'{}','READY')`, [attempt, unit, pod])
++  })
++  for (const label of ['epoch', 'writer', 'seal', 'grant', 'mount', 'blocked-state']) {
++    const used = await addBinding(`used-${label}`)
++    await withDurableTransaction(pool, async tx => {
++      if (label === 'epoch') { await tx.query('UPDATE durable_runtime.storage_bindings SET epoch=1 WHERE id=$1', [used.id]) }
++      if (label === 'writer') { await tx.query('UPDATE durable_runtime.storage_bindings SET writer_attempt_id=$2 WHERE id=$1', [used.id, attempt]) }
++      if (label === 'blocked-state') { await tx.query("UPDATE durable_runtime.storage_bindings SET access_state='BLOCKED' WHERE id=$1", [used.id]) }
++      if (label === 'grant') {
++        await tx.query(`INSERT INTO durable_runtime.storage_write_grants(id,storage_binding_id,attempt_id,storage_epoch,state,revoked_at,revocation_proof_ref)
++          VALUES($1,$2,$3,0,'REVOKED',clock_timestamp(),'synthetic-old-revocation')`, [randomUUID(), used.id, attempt])
++      }
++      if (label === 'mount') {
++        await tx.query(`INSERT INTO durable_runtime.storage_mounts(id,storage_binding_id,attempt_id,pod_uid,mode,desired_state,observed_state,grant_epoch)
++          VALUES($1,$2,$3,$4,'RO','ACTIVE','UNKNOWN',0)`, [randomUUID(), used.id, attempt, pod])
++      }
++      if (label === 'seal') {
++        const snapshot = randomUUID(), seal = randomUUID()
++        await tx.query(`INSERT INTO durable_runtime.snapshot_manifests(id,runtime_unit_id,checkpoint_id,snapshot_resource,source_attempt_id,source_execution_epoch,status,
++          provider_watermarks,spec_digest,compatibility,closed_tab_revision,capture_mode,restore_gate_contract_version)
++          VALUES($1,$2,$3,'synthetic-snapshot',$4,0,'PREPARING','{}','synthetic','{}',0,'QUIESCENT','synthetic')`, [snapshot, unit, randomUUID(), attempt])
++        await tx.query(`INSERT INTO durable_runtime.storage_seals(id,storage_binding_id,snapshot_id,storage_epoch,sealed_at,source_stopped_at,directory_mutation_seq,watch_coverage,evidence_ref)
++          VALUES($1,$2,$3,0,clock_timestamp(),clock_timestamp(),0,'{}','synthetic-seal')`, [seal, used.id, snapshot])
++        await tx.query('UPDATE durable_runtime.storage_bindings SET seal_id=$2 WHERE id=$1', [used.id, seal])
++      }
++    })
++    const old = await row(used.id)
++    await rejectCode(verify(input(used)), label === 'blocked-state' ? 'STORAGE_VERIFICATION_STATE' : 'STORAGE_BINDING_USED')
++    assert.deepEqual(await row(used.id), old); assert.deepEqual(await history(used.id), { journal: '0', audit: '0', outbox: '0' })
++  }
++
++  // Hold the verifier's caller TX after return. A direct new RO child FK insert
++  // must wait for that binding FOR UPDATE lock through the real COMMIT.
++  const fk = await addBinding('child-fk-serialization'), childPid = Promise.withResolvers<number>()
++  let childInsert: Promise<unknown> = Promise.resolve(null)
++  await withDurableTransaction(pool, async holder => {
++    const holderPid = await backendPid(holder)
++    await store.verifyBinding(holder, input(fk))
++    childInsert = withDurableTransaction(pool, async child => {
++      childPid.resolve(await backendPid(child))
++      await child.query(`INSERT INTO durable_runtime.storage_mounts(id,storage_binding_id,attempt_id,pod_uid,mode,desired_state,observed_state,grant_epoch)
++        VALUES($1,$2,$3,$4,'RO','ACTIVE','UNKNOWN',0)`, [randomUUID(), fk.id, attempt, pod])
++    })
++    await blockedBy(await childPid.promise, holderPid)
++  })
++  await childInsert
++  assert.deepEqual(await history(fk.id), { journal: '1', audit: '1', outbox: '1' })
++  await rejectCode(verify(input(fk)), 'STORAGE_BINDING_USED')
++  assert.deepEqual(await objectSnapshot(), objectsBefore)
++  assert.deepEqual((await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledgerBefore)
++  retained(originalRows, await rowHashes())
++  await identity()
++  console.log(JSON.stringify({ phase: 'EXISTING_BINDING_VERIFICATION_CASES', callbackCount: 1,
++    cases: ['original-primary-and-additional-ID-tuple-epoch-retained', 'exact-proof-replay-no-row-time-event-revision',
++      'wrong-proof-tuple-membership-revision-closed-session-refused', 'prepared-immutable-evidence-and-live-pin-required',
++      'outer-rollback-proof-and-events-together', 'first-await-input-capture', 'pin-invalidated-during-domain-lock-wait',
++      'two-transactions-one-first-mutation-and-event', 'prior-epoch-writer-seal-grant-mount-state-never-refreshed',
++      'binding-row-lock-serializes-child-FK-until-caller-commit', 'original-ID-unit-tab-ledger-and-old-rows-retained'],
++    syntheticAuthority: true, live: false, originalTablesCompared: rowTables.length, ledgerRows: ledgerBefore.length }))
++})
+diff --git a/src/main/durable-runtime/storage/binding-verification.ts b/src/main/durable-runtime/storage/binding-verification.ts
+new file mode 100644
+index 00000000..221a63bf
+--- /dev/null
++++ b/src/main/durable-runtime/storage/binding-verification.ts
+@@ -0,0 +1,102 @@
++import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts';
++import { lockAggregates } from '../db/locks.ts';
++import { counter, logicalId, type RowRevision } from '../../../shared/durable-runtime/identity.ts';
++import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence } from './evidence.ts';
++import type { Binding, StorageScope } from './store.ts';
++
++export type BindingVerificationInput = StorageScope & {
++  bindingId: Binding['id']; expectedBindingRevision: RowRevision<'storage-binding'>;
++  directoryEvidenceRef: string;
++};
++type VerificationRow = Binding & { identity_verified_at: Date | null; seal_id: string | null };
++type RecordVerification = (tx: DurableTransaction, scope: StorageScope, binding: Binding,
++  kind: 'STORAGE_BINDING_VERIFIED') => Promise<void>;
++
++function deny(code: string): never { throw new DurableDatabaseError(code); }
++function reference(value: string): string {
++  if (typeof value !== 'string' || !value || [...value].some(char => char.charCodeAt(0) < 32)) {
++    deny('STORAGE_EVIDENCE_REF');
++  }
++  return value;
++}
++
++/** Consumes prepared evidence only. Its owner retains the topology pin through
++ * the caller's actual COMMIT/ROLLBACK; these local checks do not prove lifetime. */
++export async function verifyBindingInTransaction(
++  tx: DurableTransaction, original: BindingVerificationInput, authority: StorageEvidenceAuthority,
++  pinValid: (evidence: VerifiedDirectoryEvidence) => boolean, record: RecordVerification,
++): Promise<Binding> {
++  const input = Object.freeze({
++    sessionId: logicalId('session', original.sessionId), unitId: logicalId('runtime-unit', original.unitId),
++    bindingId: logicalId('storage-binding', original.bindingId),
++    expectedUnitRevision: counter('row:runtime-unit', original.expectedUnitRevision),
++    expectedBindingRevision: counter('row:storage-binding', original.expectedBindingRevision),
++    directoryEvidenceRef: reference(original.directoryEvidenceRef), actorId: reference(original.actorId),
++  });
++  const query = tx.query.bind(tx), directory = authority.directory.bind(authority);
++  let held;
++  try { held = directory(input.directoryEvidenceRef); }
++  catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
++  if (!held || held.evidenceRef !== input.directoryEvidenceRef) { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
++  const evidence = held;
++  const checkPin = (): void => {
++    if (!pinValid(evidence)) { deny('STORAGE_DIRECTORY_PIN_INVALID'); }
++  };
++  checkPin();
++  const { backendId, exportId } = evidence.candidate.domain;
++  const canonicalDirectory = evidence.candidate.canonicalDirectory;
++  const matches = (binding: Binding): boolean => binding.backend_id === backendId &&
++    binding.export_id === exportId && binding.canonical_directory === canonicalDirectory;
++
++  await lockAggregates(tx, { sessionIds: [input.sessionId], runtimeUnitIds: [input.unitId] });
++  const scope = await query<{ lifecycle: string; revision: string; member: boolean }>(
++    `SELECT s.lifecycle,u.revision,EXISTS(SELECT 1 FROM durable_runtime.runtime_member_storage_bindings m
++      WHERE m.session_id=s.id AND m.runtime_unit_id=u.id AND m.storage_binding_id=$3) AS member
++     FROM durable_runtime.sessions s CROSS JOIN durable_runtime.runtime_units u WHERE s.id=$1 AND u.id=$2`,
++    [input.sessionId, input.unitId, input.bindingId]);
++  if (scope.rowCount !== 1 || !scope.rows[0].member) { deny('STORAGE_MEMBER_MISSING'); }
++  if (scope.rows[0].lifecycle !== 'OPEN') { deny('STORAGE_SESSION_CLOSED'); }
++  if (scope.rows[0].revision !== input.expectedUnitRevision) { deny('STORAGE_UNIT_STALE'); }
++  const first = await query<VerificationRow>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId]);
++  if (first.rowCount !== 1) { deny('STORAGE_BINDING_MISSING'); }
++  if (!matches(first.rows[0])) { deny('STORAGE_DIRECTORY_MISMATCH'); }
++  await lockAggregates(tx, { storageDomains: [{ backendId, exportId }] });
++  // Held through the caller's transaction. Child mount/grant FK inserts also
++  // serialize on this row. Read history in a NEW statement after a lock wait.
++  const locked = await query<VerificationRow>(
++    'SELECT * FROM durable_runtime.storage_bindings WHERE id=$1 FOR UPDATE', [input.bindingId]);
++  if (locked.rowCount !== 1) { deny('STORAGE_BINDING_MISSING'); }
++  const binding = locked.rows[0];
++  checkPin();
++  if (!matches(binding)) { deny('STORAGE_DIRECTORY_MISMATCH'); }
++  const history = await query<{ grants: boolean; mounts: boolean }>(
++    `SELECT EXISTS(SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1) AS grants,
++      EXISTS(SELECT 1 FROM durable_runtime.storage_mounts WHERE storage_binding_id=$1) AS mounts`, [input.bindingId]);
++  if (binding.epoch !== '0' || binding.writer_attempt_id !== null || binding.seal_id !== null ||
++      history.rows[0].grants || history.rows[0].mounts) { deny('STORAGE_BINDING_USED'); }
++  if (binding.access_state === 'VERIFIED') {
++    if (binding.identity_proof_ref !== input.directoryEvidenceRef || binding.identity_verified_at === null) {
++      deny('STORAGE_VERIFICATION_PROOF_MISMATCH');
++    }
++    if (input.expectedBindingRevision !== binding.revision &&
++        BigInt(input.expectedBindingRevision) !== BigInt(binding.revision) - 1n) { deny('STORAGE_BINDING_STALE'); }
++    checkPin();
++    return binding;
++  }
++  if (binding.access_state !== 'UNVERIFIED' || binding.identity_proof_ref !== null || binding.identity_verified_at !== null) {
++    deny('STORAGE_VERIFICATION_STATE');
++  }
++  if (binding.revision !== input.expectedBindingRevision) { deny('STORAGE_BINDING_STALE'); }
++  checkPin();
++  const updated = await query<Binding>(`UPDATE durable_runtime.storage_bindings
++    SET identity_proof_ref=$3,identity_verified_at=clock_timestamp(),access_state='VERIFIED',revision=revision+1
++    WHERE id=$1 AND revision=$2 AND access_state='UNVERIFIED' AND identity_proof_ref IS NULL
++      AND identity_verified_at IS NULL AND epoch=0 AND writer_attempt_id IS NULL AND seal_id IS NULL
++      AND NOT EXISTS(SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1)
++      AND NOT EXISTS(SELECT 1 FROM durable_runtime.storage_mounts WHERE storage_binding_id=$1) RETURNING *`,
++    [input.bindingId, input.expectedBindingRevision, input.directoryEvidenceRef]);
++  if (updated.rowCount !== 1) { deny('STORAGE_CAS'); }
++  checkPin();
++  await record(tx, input, updated.rows[0], 'STORAGE_BINDING_VERIFIED');
++  return updated.rows[0];
++}
+diff --git a/src/main/durable-runtime/storage/store.ts b/src/main/durable-runtime/storage/store.ts
+index 756cd762..539484b8 100644
+--- a/src/main/durable-runtime/storage/store.ts
++++ b/src/main/durable-runtime/storage/store.ts
+@@ -2,11 +2,10 @@ import { randomUUID } from 'node:crypto';
+ import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts';
+ import { lockAggregates } from '../db/locks.ts';
+ import { appendAudit, appendSessionEvent, enqueueOutbox } from '../journal/store.ts';
+-import { counter, logicalId, type SessionId, type RuntimeUnitId, type AttemptId,
+-  type OperationId, type StorageBindingId, type ExecutionEpoch, type StorageEpoch,
+-  type RowRevision } from '../../../shared/durable-runtime/identity.ts';
++import { counter, logicalId, type SessionId, type RuntimeUnitId, type AttemptId, type OperationId, type StorageBindingId, type ExecutionEpoch, type StorageEpoch, type RowRevision } from '../../../shared/durable-runtime/identity.ts';
+ import { sameDirectory, type CanonicalCandidate } from './canonical.ts';
+ import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence, ExecutionTarget } from './evidence.ts';
++import { verifyBindingInTransaction, type BindingVerificationInput } from './binding-verification.ts';
+ 
+ type State = 'RESERVED' | 'ACTIVE' | 'REVOKING' | 'REVOKED';
+ export type Binding = { id: StorageBindingId; backend_id: string; export_id: string;
+@@ -35,6 +34,7 @@ function matchesBinding(c: CanonicalCandidate, b: Binding): boolean {
+ // outside the transaction. No production verifier/pin or actuator is supplied.
+ export class StorageStore {
+   constructor(private readonly authority: StorageEvidenceAuthority) {}
++  verifyBinding(tx: DurableTransaction, input: BindingVerificationInput): Promise<Binding> { return verifyBindingInTransaction(tx, input, this.authority, this.directoryPinValid.bind(this), this.event.bind(this)); }
+   private async event(tx: DurableTransaction, scope: StorageScope, binding: Binding, kind: string,
+     detail: { grantId?: string; mountId?: string; state?: string; reason?: string } = {}): Promise<void> {
+     const event = { kind, bindingId: binding.id, revision: binding.revision, ...detail };
