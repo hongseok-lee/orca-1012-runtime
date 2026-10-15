@@ -1,0 +1,348 @@
+{
+  "validatedSourcePin": "1cc2af6f6722a6654a8b29bf758bb8f05822dc74",
+  "sourceTree": "f395d4566240986dc27af1ca479fe120ba9500ff",
+  "validationBasePin": "c6cb0b9d88389e3325f5a459bdf5eb75f85f0ffd",
+  "scope": "첫 개발 검증이며 실제 Browser/Ops UI 통합 및 전체 타입 합격은 아닙니다.",
+  "ownedFiles": [
+    {
+      "path": "src/main/durable-runtime/ops-ui/browser-auth-composition.value.test.mts",
+      "mode": "100644",
+      "blob": "22bb69f3f6e5fe4b1fbe5c51f8919869d988423c",
+      "sha256": "abd1cc3cd7cbfdf1c8a9dde625f6f538fe3d40094b9e74dcc471c63ad60a734c",
+      "bytes": 6074
+    },
+    {
+      "path": "src/main/durable-runtime/ops-ui/client.ts",
+      "mode": "100644",
+      "blob": "0c63e71f98ab0b7cb4650237c4c96b0320b205cf",
+      "sha256": "3beb8aea5c6eb1e46f48ea83c5da3a49a3de27d4fc077ffbc415e70ac048bafa",
+      "bytes": 22270
+    },
+    {
+      "path": "src/main/durable-runtime/ops/runtime-config.ts",
+      "mode": "100644",
+      "blob": "f4e8535a2011f2317acfd95d12c4955089424812",
+      "sha256": "eac6ecc37c5f3cd679cd2403255e38460f8a8aef78c0f097c05c9cf4bb393ac7",
+      "bytes": 1942
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-create.ts",
+      "mode": "100644",
+      "blob": "0b8c2a3447768e5edd2afe8eab5d593b38e8a22b",
+      "sha256": "4926acb0ba25a20921bcefa260fafa119961cb46802ce8a26f8858bde8baad16",
+      "bytes": 6053
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-ops-auth-composition.pg.test.mts",
+      "mode": "100644",
+      "blob": "a62f1a9bfcc1bb0621ce9e230511d8db7fb7ec50",
+      "sha256": "94742b3f14449a3f83a3edd4d8ea5a4c93dd33842c5e72940bd8856a385df670",
+      "bytes": 5939
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/browser-ops-auth-config.ts",
+      "mode": "100644",
+      "blob": "79e25f6fd75f1b87d2baa2b4bf2a5e3af2c261a7",
+      "sha256": "706e5c8bcd90cff2e13c79f1947639799928102e9c73570bee3890a9205c6857",
+      "bytes": 817
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/config.ts",
+      "mode": "100644",
+      "blob": "65509faff0e3a59f4c78bbb869f070a41f406f39",
+      "sha256": "7f86e7fd0b250fa28cc3234d2c33a01e4e1edf9b1d7e2c476b3322497efdfa3a",
+      "bytes": 4196
+    },
+    {
+      "path": "src/main/durable-runtime/rpc/context.ts",
+      "mode": "100644",
+      "blob": "597f22d6e3c2079515a4c75f13866e517022dd34",
+      "sha256": "be094b8a0c90711a35198f0c0e3b06104d2399b3f2724a551497e7f2931569e7",
+      "bytes": 1987
+    },
+    {
+      "path": "src/main/orcad/external-chromium-browser-process.ts",
+      "mode": "100644",
+      "blob": "264f759090692a11cf65dfcb6af1a28944d10d88",
+      "sha256": "3368d0168e2f2ec87755eb807f7f928a8ddc092fb504627f05b77278d67ecff4",
+      "bytes": 9057
+    },
+    {
+      "path": "src/main/orcad/external-chromium-ops-auth-owner.ts",
+      "mode": "100644",
+      "blob": "57b3bf396e143e05b57f8ce7c04eb134d237e748",
+      "sha256": "8fb7b076a1f1e3add33486aad24920d7a7ff4401aac936afb43afde2eece7a15",
+      "bytes": 7770
+    },
+    {
+      "path": "src/main/orcad/external-chromium-tab-registry.ts",
+      "mode": "100644",
+      "blob": "1039f58f19ff82fd9b1d39f487c1a3f052ecf9e0",
+      "sha256": "e09c8a3b315f94a36fc62361f20f4c95143cb23b1aedd2cc696c144394aba08a",
+      "bytes": 14035
+    },
+    {
+      "path": "src/main/orcad/ops-browser-composition-fixtures.ts",
+      "mode": "100644",
+      "blob": "76d31a530e7c5d400e84403a41d6ea25cb2cb1ca",
+      "sha256": "b65b43397850303568887b6b7ebde1b974fffab53ceed9c7c0d744640732306c",
+      "bytes": 5752
+    },
+    {
+      "path": "src/main/orcad/ops-browser-composition-native.value.test.mts",
+      "mode": "100644",
+      "blob": "1017977a14437fb266f87d2d16e2ab33094f4653",
+      "sha256": "9e1738bd339087cc7ffad75f0304e35b16700ac4cacbf214cc4dc01adea56145",
+      "bytes": 13356
+    },
+    {
+      "path": "src/main/orcad/ops-browser-composition.value.test.mts",
+      "mode": "100644",
+      "blob": "848ac064e4d4bdc235c538c923e0f3f99b8353a8",
+      "sha256": "d426c71b400d5df067b828d04b763964dbfcf95293bf263830cd58de8fdc857f",
+      "bytes": 7903
+    },
+    {
+      "path": "src/main/orcad/orcad-ops-browser-session-owner.ts",
+      "mode": "100644",
+      "blob": "ad8c8040f333e7e9b15e254844bb122035f46ba2",
+      "sha256": "9e1af3d2ad845791338b11258f23481cc9727ae0117cc4678055ed05f47c0321",
+      "bytes": 1441
+    },
+    {
+      "path": "src/main/orcad/orcad-ops.ts",
+      "mode": "100644",
+      "blob": "9f2461c22262f0e2f35c8f8206f9532c24d06b23",
+      "sha256": "8c8d4d87374e02982df82e9f8f47300376e79c981feedf20046523f433f7a02c",
+      "bytes": 7979
+    },
+    {
+      "path": "src/main/runtime/browser-ops-auth-capability.ts",
+      "mode": "100644",
+      "blob": "4be7b94eddc3644ba85c132b34251f92468d3c50",
+      "sha256": "c2c9193ae67a02edf9873ab1013013ccfffa312626615d525b4279a392df0abb",
+      "bytes": 4402
+    },
+    {
+      "path": "src/main/runtime/runtime-browser-commands-browser-tab-create.ts",
+      "mode": "100644",
+      "blob": "04261f9299007e96865b22a82746a4555b07e052",
+      "sha256": "84017045a3c429ae0d359a7e0bf1a59e9ee775cef99c84e50bf6bbb90709fd52",
+      "bytes": 8615
+    },
+    {
+      "path": "src/main/runtime/runtime-rpc/runtime-rpc-lifecycle.ts",
+      "mode": "100644",
+      "blob": "09c619fef572d5507807599d279aa727ad2ca0a1",
+      "sha256": "4aacada9de822d34d7b19198a4226a1e97db96d3c67b253be46a1c061e145112",
+      "bytes": 11832
+    }
+  ],
+  "lint": {
+    "firstOwnedFiles": 19,
+    "initialExit": 1,
+    "diagnostics": "max-lines 2건",
+    "formatCorrectionPin": "315bb1de9254305c781ade8d5b65b72ef6023819",
+    "changedFormatFiles": 2,
+    "changedFormatExit": 0,
+    "typeOnlyCorrectionPin": "1cc2af6f6722a6654a8b29bf758bb8f05822dc74",
+    "changedTypeAnnotationFiles": 2,
+    "changedTypeAnnotationExit": 0,
+    "successfulWholeLintRepeated": false
+  },
+  "values": {
+    "startup": {
+      "parent": 1,
+      "subcases": 4,
+      "pass": 5,
+      "actualPID": 35291,
+      "sourcePin": "315bb1de9254305c781ade8d5b65b72ef6023819"
+    },
+    "native": {
+      "parent": 1,
+      "subcases": 6,
+      "pass": 7,
+      "actualPID": 35424,
+      "sourcePin": "315bb1de9254305c781ade8d5b65b72ef6023819"
+    },
+    "ui": {
+      "parent": 1,
+      "subcases": 3,
+      "pass": 4,
+      "actualPID": 35451,
+      "sourcePin": "315bb1de9254305c781ade8d5b65b72ef6023819"
+    },
+    "rerun": 0
+  },
+  "PG": {
+    "sourcePin": "1cc2af6f6722a6654a8b29bf758bb8f05822dc74",
+    "callbackCount": 1,
+    "exit": 0,
+    "actualPID": 35947,
+    "actualStartedAt": "2026-10-15T06:57:02.628Z",
+    "databaseScope": "운영자가 승인한 기존 격리 Browser DB",
+    "ledgerBefore": 19,
+    "ledgerAfter": 19,
+    "ledgerUnchanged": true,
+    "schemaApplied": 0,
+    "originalRows": 36,
+    "rowsAfter": 45,
+    "allOriginalRowsPreserved": true,
+    "PGIdentityUnchanged": true,
+    "syntheticNativeReceiver": true,
+    "realChromeNavigation": false
+  },
+  "type": {
+    "sourcePin": "1cc2af6f6722a6654a8b29bf758bb8f05822dc74",
+    "entryCount": 19,
+    "additionalExistingDeclaration": "src/types/build-constants.d.ts",
+    "actualInputs": 4893,
+    "reusedPreviouslyGuardedInputs": 4746,
+    "measuredNewOrOwnedInputs": 147,
+    "inputOutside": 0,
+    "inputMismatches": 0,
+    "ownedDiagnostics": 0,
+    "otherDiagnostics": 23,
+    "wholeExit": 1,
+    "wholePass": false,
+    "baselineComparisonExecuted": false,
+    "diagnostics": [
+      "src/main/durable-runtime/input/cancel-record.ts(122,5): error TS2322: Type 'RuntimeUnitId | null' is not assignable to type 'string | undefined'.",
+      "src/main/durable-runtime/rpc/structured-history.ts(105,105): error TS2345: Argument of type '{ readonly sessionId: string; readonly direction: string; readonly cursor?: { readonly epoch: string; readonly sequence: number; } | undefined; readonly limit?: number | undefined; }' is not assignable to parameter of type 'AgentSessionHistoryRequest'.",
+      "src/main/github/project-view/project-view-config.ts(145,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-config.ts(157,11): error TS7022: 'view' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-config.ts(161,54): error TS7006: Parameter 'f' implicitly has an 'any' type.",
+      "src/main/github/project-view/project-view-config.ts(163,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(64,11): error TS7022: 'afterVar' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(65,11): error TS7022: 'query' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(83,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(117,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(129,11): error TS7022: 'afterVar' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(130,11): error TS7022: 'query' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(150,11): error TS7022: 'res' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/github/project-view/project-view-discovery.ts(190,11): error TS7022: 'pi' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/ipc/ssh-connect-flow.ts(131,7): error TS7034: Variable 'conn' implicitly has type 'any' in some locations where its type cannot be determined.",
+      "src/main/ipc/ssh-connect-flow.ts(187,5): error TS7005: Variable 'conn' implicitly has an 'any' type.",
+      "src/main/memory/hydrate-local-pty-registry.ts(266,19): error TS2339: Property 'listSessions' does not exist on type 'DaemonPtyAdapter | DaemonPtyRouter | DegradedDaemonPtyProvider'.",
+      "src/main/persistence/tracking-repos/repo-worktree-pruning.ts(112,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Partial<Record<ExecutionHostId, WorkspaceSessionState>>'.",
+      "src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(226,11): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+      "src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(250,47): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+      "src/main/runtime/rpc/methods/orchestration/federation/federated-worker-release-host.ts(265,43): error TS2345: Argument of type 'OrchestrationWorkerReadResult' is not assignable to parameter of type '{ status: { terminal: string; liveness: string; }; }'.",
+      "src/main/runtime/runtime-worktree-lineage-controller.ts(112,13): error TS7022: 'lineage' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.",
+      "src/main/source-control/hosted-review-creation-blocking.ts(70,10): error TS7053: Element implicitly has an 'any' type because expression of type 'NonNullable<HostedReviewCreationBlockedReason>' can't be used to index type '{ auth_required: { ok: false; code: \"auth_required\"; error: string; }; unsupported_provider: { ok: false; code: \"unsupported_provider\"; error: string; }; dirty: { ok: false; code: \"validation\"; error: string; }; ... 6 more ...; base_not_on_remote: { ...; }; }'."
+    ],
+    "originalFullTypeLogSHA256": "e2504dc86d9ca92dbb61abc4a681cb6d6a3457e7e0fa0d46dbfa67226bdc4550"
+  },
+  "inputArtifacts": [
+    {
+      "fixture": "startup",
+      "sourcePin": "315bb1de9254305c781ade8d5b65b72ef6023819",
+      "inputs": 226,
+      "mismatches": [],
+      "bundleSHA256": "18d26d708459d8f975bf19d7588265ea70750c26494fceec5b6a99d0a80e8f2c",
+      "metafileSHA256": "dcea2b701ce82ee9d3f5254de59da404df46dd38ae69077b7dd53d9ffb130d47",
+      "actualInputManifestSHA256": "e66d86f6a247c200023d6e6f08d0b34e13e59e8be336c466fab9961f9c90f465"
+    },
+    {
+      "fixture": "native",
+      "sourcePin": "315bb1de9254305c781ade8d5b65b72ef6023819",
+      "inputs": 101,
+      "mismatches": [],
+      "bundleSHA256": "ede3d1f7f44db3b35fba66309ca435e2a4386aa7ba56e217df5735bf56859c0d",
+      "metafileSHA256": "e328b5d95e39ad2a1154720163072385ae57dd427f0e93cf2db5d2dd882660c1",
+      "actualInputManifestSHA256": "e75468b36e857c38feefe1d1c547713d15022f1bd03ff1f2d318f205c56684d5"
+    },
+    {
+      "fixture": "ui",
+      "sourcePin": "315bb1de9254305c781ade8d5b65b72ef6023819",
+      "inputs": 5,
+      "mismatches": [],
+      "bundleSHA256": "e9b3af78d931d5a8b469146fec85a43ddfc84830418fda72d0830b9ffdc842dc",
+      "metafileSHA256": "38b49de5b1a505f424837d812de88ce3e98d95817c3e903cf66ece9fdc2195f6",
+      "actualInputManifestSHA256": "2f955ea678c5fa22e23b616e9e492ea7ec1a3834988d350782cca7351d011fd7"
+    },
+    {
+      "fixture": "pg",
+      "sourcePin": "1cc2af6f6722a6654a8b29bf758bb8f05822dc74",
+      "inputs": 204,
+      "mismatches": [],
+      "bundleSHA256": "a10d1a74a4584576da1c3c557694e19132a874ac23ac638add2524b5ed5ffcd4",
+      "metafileSHA256": "9870dec82c332e45e9b6038bbd85366e881cb3c4277ae119b90b193f9dbaacb2",
+      "actualInputManifestSHA256": "c21b0dcb4ba3e398a7434eb790413ab1113b52730f138ebb8dda29cfe3dc2428"
+    }
+  ],
+  "preparationHistory": [
+    {
+      "phase": "first-lint",
+      "error": "eslint(max-lines)",
+      "ownedFiles": 2,
+      "correction": "Root가 수락한 줄 배치만 변경하고 해당 2개 파일 lint만 확인했습니다."
+    },
+    {
+      "phase": "startup-bundle-preparation",
+      "error": "Could not resolve ./orcad-ops-config.ts",
+      "correction": "고정 Git의 누락 파일 1개만 보충했습니다."
+    },
+    {
+      "phase": "startup-input-guard",
+      "error": "ACTUAL_RUNTIME_INPUT_PIN_MISMATCH",
+      "files": [
+        "src/main/durable-runtime/ops/browser-session-auth.ts"
+      ],
+      "correction": "Root가 수락한 fixed Git blob으로 교체하고 원 cache bytes를 비공개 증거에 보존했습니다."
+    },
+    {
+      "phase": "native-bundle-preparation",
+      "error": "Could not resolve",
+      "uniqueMissingRoots": 6,
+      "fixedRuntimeClosure": 249,
+      "matchedCacheInputs": 242,
+      "missingFilesSupplied": 7,
+      "missingBytes": 46118
+    },
+    {
+      "phase": "type-input-guard",
+      "error": "TYPE_SOURCE_COHERENCE_GUARD_FAILED",
+      "files": [
+        "src/main/runtime/runtime-browser-commands-factory.ts",
+        "src/main/runtime/orca-runtime-get-status.ts"
+      ],
+      "correction": "Root가 수락한 기존 screencast 지원의 고정 Git bytes로 맞췄습니다."
+    },
+    {
+      "phase": "first-type",
+      "exit": 1,
+      "diagnostics": 114,
+      "ownedLocationDiagnostics": 89,
+      "otherLocationDiagnostics": 25,
+      "correction": "Root가 수락한 타입 표기 2줄을 적용했습니다. TS2307의 상대 import closure는 기존 관측 경계에서 새 입력 115개만 대조하여 누락 14개·76681 bytes를 보충했고 기존 build 상수 선언을 type config에 포함했습니다."
+    }
+  ],
+  "rawTAP": {
+    "startup-value.tap": {
+      "sha256": "01970d3026a58325c688089d2fbd6cd0814955d2de563e8c89f10c3c12c4bfcc",
+      "bytes": 1582
+    },
+    "native-value.tap": {
+      "sha256": "2678e2ba41530b52629fbd2eb3536319c1593e8a4457349a9b2f38fcf2374fac",
+      "bytes": 2121
+    },
+    "ui-value.tap": {
+      "sha256": "c3b224c8c70d227a5fe120ba0f7cbf010eec2aacaf394c99b1d55ba9a946ea0e",
+      "bytes": 1298
+    },
+    "composition-pg.tap": {
+      "sha256": "661022d547d06fb745c8ec11ae710c661b65e72de06807acf78d034d3315f9cf",
+      "bytes": 838
+    }
+  },
+  "limits": [
+    "실제 Ops UI 및 Browser 클릭/PNG는 후속 Root 위임으로 남습니다. 정적 보고 PNG를 만들지 않았습니다.",
+    "실제 CDP/Chrome/navigation 인증·native iPhone·HA/restart 인증 복구·물리 cleanup 전체는 이번 합성 fixture 결과로 주장하지 않습니다.",
+    "PG callback은 실제 PG 예약·commit·receipt·OPEN과 합성 native receiver를 연결합니다. 원 PG 행·운영 경로·인증 파일은 공개하지 않습니다.",
+    "type의 외부 23건에 대해 새 baseline 검증이나 외부 코드 수정을 하지 않았으며 전체 type PASS가 아닙니다.",
+    "공유 live source 적용은 별도 owner가 수행하며 이 PR에는 live sync/restart/API/UI 실행이 없습니다.",
+    "검증 입력 pin을 유지했고 최종 base 정렬은 Root 지시를 기다립니다."
+  ],
+  "usageCreditsStream": "이번 후속 검증·게시 turn에서 usage limit/credits/stream 중단 원오류는 미관측입니다."
+}
