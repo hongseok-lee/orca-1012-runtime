@@ -9,6 +9,7 @@ import type {
 /** No key/data is embedded; each serialized function keeps its own helpers in its closure. */
 function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createOpsUiPresentation): void {
   let key = ''
+  let mode: 'automatic' | 'manual' | 'disconnected' = 'automatic'
   let generation = 0
   let controller = new AbortController()
   let cursor: OpsReplayCursor | null = null
@@ -50,7 +51,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
     byId('operation-panel').hidden = true; operationId = null; operationUnitId = null; uncertainCommand = null; operationInFlight = false; readRetries.clear()
   }
   function disconnect(): void {
-    generation++; controller.abort(); invalidateDetail(); controller = new AbortController(); key = ''; clearData()
+    generation++; controller.abort(); invalidateDetail(); controller = new AbortController(); key = ''; mode = 'disconnected'; clearData()
     byId('auth-panel').hidden = false; byId('disconnect').hidden = true
     ;(byId('reload') as HTMLButtonElement).disabled = true
     ;(byId('unit-detail') as HTMLDialogElement).close()
@@ -80,7 +81,8 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
     }
   }
   async function api<T>(path: string, body?: string, signal = controller.signal): Promise<T> {
-    const headers: Record<string, string> = { Authorization: `Bearer ${key}`, Accept: 'application/json' }
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    if (mode === 'manual' && key) { headers.Authorization = `Bearer ${key}` }
     if (body !== undefined) { headers['Content-Type'] = 'application/json' }
     const response = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers, body, signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' })
     if (!response.ok) { throw await responseFailure(response) }
@@ -219,7 +221,9 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
   }
   async function stream(current: number, signal: AbortSignal): Promise<void> {
     if (!cursor) { return }
-    const response = await fetch(`${routes.stream}?after=${encodeURIComponent(after(cursor))}`, { headers: { Authorization: `Bearer ${key}`, Accept: 'text/event-stream' }, signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' })
+    const headers: Record<string, string> = { Accept: 'text/event-stream' }
+    if (mode === 'manual' && key) { headers.Authorization = `Bearer ${key}` }
+    const response = await fetch(`${routes.stream}?after=${encodeURIComponent(after(cursor))}`, { headers, signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' })
     if (!response.ok) { throw await responseFailure(response) }
     if (!response.body) { throw new Error('STREAM_FAILED') }
     const reader = response.body.getReader(), decoder = new TextDecoder()
@@ -251,7 +255,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
     } finally { await reader.cancel().catch(() => undefined); reader.releaseLock() }
   }
   async function load(): Promise<void> {
-    if (!key) { return }
+    if (mode === 'disconnected') { return }
     generation++; const current = generation
     controller.abort(); invalidateDetail(); operationInFlight = false
     controller = new AbortController(); const signal = controller.signal
@@ -285,6 +289,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
     event.preventDefault(); const input = byId('access-key') as HTMLInputElement, next = input.value
     input.value = ''; disconnect(); key = next; byId('auth-error').hidden = true
     if (!key) { return }
+    mode = 'manual'
     byId('auth-panel').hidden = true; byId('disconnect').hidden = false
     ;(byId('reload') as HTMLButtonElement).disabled = false; void load()
   })
@@ -302,7 +307,11 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
       const ids = new Set(notifications.map(n => n.id)); notifications.push(...page.notifications.filter(n => !ids.has(n.id))); nextNotification = page.nextAfterId; renderNotifications()
     }).catch(error => { if (current === generation) { errorState(error) } })
   })
-  window.addEventListener('pagehide', () => { generation++; controller.abort(); invalidateDetail(); key = '' }, { once: true })
+  window.addEventListener('pagehide', disconnect, { once: true })
+  // Exactly one initial automatic attempt. A 401 disconnects and leaves the manual form.
+  byId('auth-panel').hidden = true; byId('disconnect').hidden = false
+  ;(byId('reload') as HTMLButtonElement).disabled = false
+  void load()
 }
 
 export const opsUiClientSource = `(${bootOpsUi.toString()})(${JSON.stringify(OPS_ROUTES)}, ${createOpsUiPresentation.toString()});`

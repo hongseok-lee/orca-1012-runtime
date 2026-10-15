@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import type { RpcContext } from '../../runtime/rpc/core.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
-import { captureCatalogReadContext } from './context.ts'
+import { captureCatalogAuthenticatedContext } from './context.ts'
+import { captureCatalogBrowserOpsAuth } from './browser-ops-auth-config.ts'
+import { createBrowserOpsAuthAttempt } from '../../runtime/browser-ops-auth-capability.ts'
 import { prepareCatalogCall } from '../catalog/request.ts'
 import { reserveCatalogBrowserTab } from '../catalog/browser.ts'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -22,10 +24,12 @@ export function createCatalogBrowserCreateRpc(input: CapturedCatalogReadConfig) 
       return typeof value === 'function' ? value.bind(ownerPool) : value
     }
   })
-  const config = Object.freeze({ ...input, pool, assertCurrentHost })
+  const browserOpsAuth = captureCatalogBrowserOpsAuth(Object.getOwnPropertyDescriptor(input, 'browserOpsAuth'))
+  const config = Object.freeze({ ...input, pool, assertCurrentHost, browserOpsAuth })
   return async (params: unknown, context: RpcContext): Promise<{ browserPageId: string }> => {
     // No RpcContext, credential or mutable owner survives as a deferred argument.
-    const call = prepareCatalogCall('browser.tabCreate', params, captureCatalogReadContext(config, context))
+    const authenticated = captureCatalogAuthenticatedContext(config, context)
+    const call = prepareCatalogCall('browser.tabCreate', params, authenticated.context)
     const original = call.original
     if (!original || typeof original !== 'object' || Array.isArray(original)) {
       throw new CatalogError('CATALOG_PARAMS')
@@ -59,23 +63,35 @@ export function createCatalogBrowserCreateRpc(input: CapturedCatalogReadConfig) 
       throw new CatalogError('CATALOG_BROWSER_CLOSED_BEFORE_CREATE')
     }
     const materialize = catalogBrowserMaterialization(state.workspace, tab)
-    const result = await create({ ...materialize,
-      activate: call.params.activate, navigation: call.params.navigation,
-      targetGroupId: call.params.targetGroupId, waitForRegistration: call.params.waitForRegistration }, caller)
-    // A native error is propagated unchanged; its committed Tab/receipt are retained.
-    assertCurrentHost()
-    if (result.browserPageId !== launch.browserPageId) { throw new CatalogError('CATALOG_BROWSER_NATIVE_PAGE_MISMATCH') }
-    const current = await readCatalogBrowserState(config, call, `id:${initial.workspace.public_id}`, launch.browserPageId)
-    if (current.tab!.tab_id !== tab.tab_id || current.workspace.workspace_id !== state.workspace.workspace_id) {
-      throw new CatalogError('CATALOG_BROWSER_IDENTITY_CHANGED')
+    const auth = browserOpsAuth && createBrowserOpsAuthAttempt(browserOpsAuth, {
+      authenticatedCallerFingerprint: authenticated.authenticatedCallerFingerprint,
+      browserPageId: launch.browserPageId, worktreePublicId: state.workspace.public_id
+    })
+    try {
+      const result = await create({ ...materialize,
+        activate: call.params.activate, navigation: call.params.navigation,
+        targetGroupId: call.params.targetGroupId, waitForRegistration: call.params.waitForRegistration },
+        Object.freeze({ ...caller, ...(auth ? { opsAuth: auth.capability } : {}) }))
+      // A native error is propagated unchanged; its committed Tab/receipt are retained.
+      assertCurrentHost()
+      if (result.browserPageId !== launch.browserPageId) { throw new CatalogError('CATALOG_BROWSER_NATIVE_PAGE_MISMATCH') }
+      const current = await readCatalogBrowserState(config, call, `id:${initial.workspace.public_id}`, launch.browserPageId)
+      if (current.tab!.tab_id !== tab.tab_id || current.workspace.workspace_id !== state.workspace.workspace_id) {
+        throw new CatalogError('CATALOG_BROWSER_IDENTITY_CHANGED')
+      }
+      if (current.tab!.lifecycle !== 'OPEN' || current.workspace.deleted_at !== null) {
+        // The existing create/close wire exposes no generation token. A follow-up
+        // close could hit a replacement generation, so do not issue it blindly.
+        // Physical termination is unverified: return failure, never reopen/publish
+        // the tombstone or claim a successful caller selection after this race.
+        throw new CatalogError('CATALOG_BROWSER_CLOSED_DURING_CREATE_CLEANUP_UNVERIFIED')
+      }
+      return { browserPageId: launch.browserPageId }
+    } catch (error) {
+      // Only a newly installed owner registered by this invocation may be revoked.
+      // A replay which reused an earlier normal owner registers no cleanup here.
+      await auth?.disposeCreated()
+      throw error
     }
-    if (current.tab!.lifecycle !== 'OPEN' || current.workspace.deleted_at !== null) {
-      // The existing create/close wire exposes no generation token. A follow-up
-      // close could hit a replacement generation, so do not issue it blindly.
-      // Physical termination is unverified: return failure, never reopen/publish
-      // the tombstone or claim a successful caller selection after this race.
-      throw new CatalogError('CATALOG_BROWSER_CLOSED_DURING_CREATE_CLEANUP_UNVERIFIED')
-    }
-    return { browserPageId: launch.browserPageId }
   }
 }

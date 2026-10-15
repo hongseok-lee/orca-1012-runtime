@@ -17,6 +17,8 @@ import { browserNetworkExecutionHostKey } from '../browser/browser-network-execu
 import { waitForTabRegistration } from '../ipc/browser-tab-registration-wait'
 import { BROWSER_CLIENT_AUTOMATION_HOST_CAPABILITY } from '../../shared/browser-client-automation-protocol'
 import { BROWSER_HOST_WEBVIEW_CAPABILITY } from './browser-host-capability-selection'
+import type { BrowserTabCreateCaller } from './browser-ops-auth-capability'
+import { browserOpsAuthUnavailable } from './browser-ops-auth-capability'
 
 export class RuntimeBrowserCommandsWithBrowserTabCreate extends RuntimeBrowserCommandsWithBrowserSetHeaders {
   async browserTabCreate(
@@ -31,8 +33,10 @@ export class RuntimeBrowserCommandsWithBrowserTabCreate extends RuntimeBrowserCo
       targetGroupId?: string
       placement?: BrowserPageCreationPlacement
     },
-    caller?: { pairedDeviceId?: string; clientKind?: 'mobile' | 'runtime' }
+    caller?: BrowserTabCreateCaller
   ): Promise<{ browserPageId: string }> {
+    // The private capability requires the external target interceptor. Never silently ignore it in Electron.
+    if (caller?.opsAuth) { throw browserOpsAuthUnavailable() }
     const url = params.url ?? 'about:blank'
     const focus = resolveBrowserTabCreateFocus({
       activate: params.activate,

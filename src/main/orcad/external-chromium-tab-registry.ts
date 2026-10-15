@@ -7,6 +7,8 @@ import type { BrowserSessionTabSelectionOptions } from '../runtime/browser-tab-c
 import { BrowserError } from '../browser/browser-error'
 import { externalCdpError } from './external-chromium-cdp-connection'
 import { ExternalChromiumTargetBinding } from './external-chromium-target-binding'
+import { ExternalChromiumOpsAuthOwners } from './external-chromium-ops-auth-owner'
+import { captureBrowserTabCreateCaller, browserOpsAuthUnavailable, type BrowserOpsAuthCapability } from '../runtime/browser-ops-auth-capability'
 import { captureExternalChromiumTabPublication } from './external-chromium-tab-publication'
 import { normalizeBrowserNavigationUrl } from '../../shared/browser-url'
 import type { ExternalChromiumBrowserSession } from './external-chromium-browser-session'
@@ -22,17 +24,22 @@ export class ExternalChromiumTabRegistry {
   private readonly activePageIdByWorktree = new Map<string, string>()
   private readonly targets: ExternalChromiumTargetBinding
   private initialAgentPageId: string | null = null
+  private readonly opsAuth: ExternalChromiumOpsAuthOwners
+  private epoch = 0
 
   constructor(
     private readonly session: ExternalChromiumBrowserSession,
     private readonly stopPage: (pageId: string) => Promise<void>
   ) {
+    this.opsAuth = new ExternalChromiumOpsAuthOwners(session.cdp)
     this.targets = new ExternalChromiumTargetBinding(session,
       page => this.pagesByPublicId.get(page.publicPageId) === page,
       page => this.deletePage(page))
     session.cdp.onGenerationChanged(() => this.clear())
+    session.cdp.onFailure(() => { void this.opsAuth.clear() })
     session.cdp.onEvent((event) => {
       if (event.method !== 'Target.targetDestroyed') {return}
+      this.opsAuth.disposeTarget(event.params?.targetId)
       for (const page of this.pagesByPublicId.values()) {
         if (page.targetId === event.params?.targetId) {this.deletePage(page)}
       }
@@ -44,18 +51,25 @@ export class ExternalChromiumTabRegistry {
   }
 
   clear(): void {
+    this.epoch++
+    void this.opsAuth.clear()
     for (const page of this.pagesByPublicId.values()) {void this.stopPage(page.publicPageId)}
     this.pagesByPublicId.clear()
     this.pagesByAgentId.clear()
     this.activePageIdByWorktree.clear()
     this.initialAgentPageId = null
   }
+  stopOpsAuth(): Promise<void> { this.epoch++; return this.opsAuth.stop() }
 
   async createTab(
     host: RuntimeBrowserCommandHost,
     params: z.infer<typeof BrowserTabCreateParams>,
-    selection?: BrowserSessionTabSelectionOptions
+    selection?: BrowserSessionTabSelectionOptions,
+    inputAuth?: BrowserOpsAuthCapability
   ): Promise<unknown> {
+    const opsAuth = captureBrowserTabCreateCaller(inputAuth ? { opsAuth: inputAuth } : undefined).opsAuth
+    const epoch = this.epoch
+    const assertAuthEpoch = () => { if (opsAuth && epoch !== this.epoch) { throw browserOpsAuthUnavailable() } }
     const publish = captureExternalChromiumTabPublication(host, this.session,
       this.pagesByPublicId, this.pagesByAgentId, this.activePageIdByWorktree)
     if (params.placement?.kind === 'client') {
@@ -71,6 +85,7 @@ export class ExternalChromiumTabRegistry {
       )
     }
     const worktreeId = await this.resolveWorktreeId(host, params.worktree)
+    assertAuthEpoch()
     const requestedPageId =
       typeof params.page === 'string' && params.page.length > 0 ? params.page : undefined
     const existing = requestedPageId ? this.pagesByPublicId.get(requestedPageId) : undefined
@@ -82,7 +97,15 @@ export class ExternalChromiumTabRegistry {
         )
       }
       await this.targets.assertCurrent(existing)
-      await publish(existing, existing, selection)
+      assertAuthEpoch()
+      const acquired = await this.opsAuth.ensure(existing, opsAuth)
+      try {
+        if (opsAuth) { this.opsAuth.assertCurrent(existing) }
+        await publish(existing, existing, selection)
+      } catch (error) {
+        if (acquired) { await this.opsAuth.disposePage(existing) }
+        throw error
+      }
       return { browserPageId: existing.publicPageId }
     }
     const url = normalizeBrowserNavigationUrl(String(params.url ?? 'about:blank'))
@@ -95,7 +118,8 @@ export class ExternalChromiumTabRegistry {
     const marker = `about:blank#orca-target-${randomUUID()}`
     let agentPageId: string | null = null
     const publicPageId = requestedPageId ?? randomUUID()
-    let page: ExternalChromiumPageRecord
+    let page: ExternalChromiumPageRecord | undefined
+    let acquired = false
     try {
       if (this.initialAgentPageId) {
         agentPageId = this.initialAgentPageId
@@ -111,19 +135,34 @@ export class ExternalChromiumTabRegistry {
       const targetId = await this.session.cdp.exactMarkerTarget(marker)
       page = { agentPageId, publicPageId, worktreeId, targetId,
         browserGeneration: this.session.cdp.generation }
+      assertAuthEpoch()
+      acquired = await this.opsAuth.ensure(page, opsAuth)
       await this.session.selectPage(agentPageId)
+      if (opsAuth) { this.opsAuth.assertCurrent(page) }
       await this.session.run(['open', url])
+      assertAuthEpoch()
+      if (opsAuth) { this.opsAuth.assertCurrent(page) }
       if (!await this.session.cdp.hasTarget(targetId, page.browserGeneration)) {throw externalCdpError()}
     } catch (error) {
+      if (page && acquired) { await this.opsAuth.disposePage(page) }
       if (!agentPageId) {
         const owned = await this.session.readTabs().then(tabs => tabs.filter(tab => tab.url === marker)).catch(() => [])
         if (owned.length === 1) {agentPageId = owned[0].tabId}
       }
-      if (agentPageId) {await this.session.run(['tab', 'close', agentPageId]).catch(() => {})}
+      // Auth failures revoke their exact owner; no generation-blind physical cleanup is added.
+      if (agentPageId && !opsAuth) {await this.session.run(['tab', 'close', agentPageId]).catch(() => {})}
       throw error
     }
     // PG rejection leaves the native page unregistered. No generation-blind close.
-    await publish(page, undefined, selection)
+    if (!page) { throw externalCdpError() }
+    try {
+      assertAuthEpoch()
+      if (opsAuth) { this.opsAuth.assertCurrent(page) }
+      await publish(page, undefined, selection)
+    } catch (error) {
+      if (acquired) { await this.opsAuth.disposePage(page) }
+      throw error
+    }
     return { browserPageId: publicPageId }
   }
 
@@ -220,6 +259,7 @@ export class ExternalChromiumTabRegistry {
       return { closed: false }
     }
     await this.targets.assertCurrent(page)
+    await this.opsAuth.disposePage(page)
     await this.stopPage(page.publicPageId)
     await this.targets.assertCurrent(page)
     await this.session.run(['tab', 'close', page.agentPageId])
@@ -283,6 +323,7 @@ export class ExternalChromiumTabRegistry {
 
   private deletePage(page: ExternalChromiumPageRecord): void {
     if (this.pagesByPublicId.get(page.publicPageId) !== page) {return}
+    void this.opsAuth.disposePage(page)
     void this.stopPage(page.publicPageId)
     this.pagesByPublicId.delete(page.publicPageId)
     this.pagesByAgentId.delete(page.agentPageId)
