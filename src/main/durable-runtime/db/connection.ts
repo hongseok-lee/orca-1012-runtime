@@ -106,7 +106,7 @@ export class DurableTransaction {
 export type DurableTransactionFailure = Readonly<{
   ok: false;
   settlement: "NOT_STARTED" | "ROLLED_BACK" | "UNCONFIRMED";
-  commitOutcome: "NOT_ATTEMPTED" | "UNKNOWN";
+  commitOutcome: "NOT_ATTEMPTED" | "UNKNOWN" | "NOT_COMMITTED";
   error: DurableDatabaseError;
   cleanupFailed: boolean;
 }>;
@@ -118,6 +118,12 @@ export type DurableTransactionResult<T> = Readonly<{
   cleanupFailed: boolean;
 }> | DurableTransactionFailure;
 
+function commandAcknowledged(result: unknown, command: string): boolean {
+  return typeof result === "object" && result !== null && !Array.isArray(result) &&
+    "command" in result && result.command === command;
+}
+
+// Trusted body callbacks must not end or replace the transaction boundary.
 // SQL-only callback contract: external effects belong to a later durable operation.
 export async function runDurableTransaction<T>(
   pool: Pool,
@@ -134,16 +140,30 @@ export async function runDurableTransaction<T>(
   let destroy = false, commitAttempted = false, cleanupFailed = false;
   let outcome: DurableTransactionResult<T>;
   try {
-    await tx.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+    const begun = await tx.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+    if (!commandAcknowledged(begun, "BEGIN")) {
+      throw new DurableDatabaseError("TX_BEGIN_UNCONFIRMED");
+    }
     const value = await body(tx);
     commitAttempted = true;
-    await tx.query("COMMIT");
-    outcome = { ok: true, settlement: "COMMITTED", commitOutcome: "ACKNOWLEDGED", value, cleanupFailed: false };
+    const committed = await tx.query("COMMIT");
+    if (commandAcknowledged(committed, "ROLLBACK")) {
+      outcome = { ok: false, settlement: "ROLLED_BACK", commitOutcome: "NOT_COMMITTED",
+        error: new DurableDatabaseError("TX_NOT_COMMITTED"), cleanupFailed: false };
+    } else {
+      if (!commandAcknowledged(committed, "COMMIT")) {
+        throw new DurableDatabaseError("TX_COMMIT_UNCONFIRMED");
+      }
+      outcome = { ok: true, settlement: "COMMITTED", commitOutcome: "ACKNOWLEDGED", value, cleanupFailed: false };
+    }
   } catch (error) {
     const firstError = safeDatabaseError(error);
     let settlement: "ROLLED_BACK" | "UNCONFIRMED" = "ROLLED_BACK";
     try {
-      await client.query("ROLLBACK");
+      const rolledBack = await client.query("ROLLBACK");
+      if (!commandAcknowledged(rolledBack, "ROLLBACK")) {
+        throw new DurableDatabaseError("TX_ROLLBACK_UNCONFIRMED");
+      }
     } catch {
       destroy = true;
       settlement = "UNCONFIRMED";

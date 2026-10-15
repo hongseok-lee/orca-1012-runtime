@@ -9,6 +9,7 @@ function transport(options: {
   checkoutError?: unknown; beginError?: unknown; commitError?: unknown; rollbackError?: unknown;
   cleanupError?: unknown; commitGate?: Promise<void>; commitStarted?: () => void;
   rollbackGate?: Promise<void>; rollbackStarted?: () => void;
+  beginResult?: unknown; commitResult?: unknown; rollbackResult?: unknown;
 } = {}) {
   const sql: string[] = [], releases: boolean[] = []
   const events: string[] = []
@@ -27,7 +28,10 @@ function transport(options: {
         if (options.rollbackError) { throw options.rollbackError }
         events.push('ROLLBACK_ACK')
       }
-      return { command: statement, rowCount: 0, oid: 0, fields: [], rows: [] }
+      if (statement.startsWith('BEGIN') && Object.hasOwn(options, 'beginResult')) { return options.beginResult }
+      if (statement === 'COMMIT' && Object.hasOwn(options, 'commitResult')) { return options.commitResult }
+      if (statement === 'ROLLBACK' && Object.hasOwn(options, 'rollbackResult')) { return options.rollbackResult }
+      return { command: statement.startsWith('BEGIN') ? 'BEGIN' : statement, rowCount: 0, oid: 0, fields: [], rows: [] }
     },
     release(destroy: boolean) {
       releases.push(destroy); events.push('RELEASE')
@@ -172,6 +176,52 @@ await test('Transaction settlement: consumer-visible ACK, uncertainty and cleanu
     error instanceof DurableDatabaseError && error.code === 'DB_FAILURE' && !error.message.includes('synthetic'))
   const wrapperPrimary = transport({ cleanupError: new Error('synthetic raw cleanup details') })
   await assert.rejects(withDurableTransaction(wrapperPrimary.pool, async () => { throw rollbackPrimary }), error => error === rollbackPrimary)
+
+  // An aborted transaction can answer COMMIT with a ROLLBACK command tag.
+  const commitRolledBack = transport({ commitResult: { command: 'ROLLBACK' } })
+  const notCommitted = failure(await runDurableTransaction(commitRolledBack.pool, async () => marker))
+  assert.equal(notCommitted.settlement, 'ROLLED_BACK'); assert.equal(notCommitted.commitOutcome, 'NOT_COMMITTED')
+  assert.equal(notCommitted.error.code, 'TX_NOT_COMMITTED'); assert.equal(notCommitted.cleanupFailed, false)
+  assert.deepEqual(commitRolledBack.sql, [begin, 'COMMIT'], 'ROLLBACK command ACK needs no second rollback')
+  assert.deepEqual(commitRolledBack.releases, [false])
+  const wrapperNotCommitted = transport({ commitResult: { command: 'ROLLBACK' } })
+  await assert.rejects(withDurableTransaction(wrapperNotCommitted.pool, async () => marker), error =>
+    error instanceof DurableDatabaseError && error.code === 'TX_NOT_COMMITTED')
+  assert.deepEqual(wrapperNotCommitted.sql, [begin, 'COMMIT'])
+  const rolledBackCleanup = transport({ commitResult: { command: 'ROLLBACK' }, cleanupError: new Error('synthetic cleanup') })
+  const notCommittedCleanup = failure(await runDurableTransaction(rolledBackCleanup.pool, async () => marker))
+  assert.equal(notCommittedCleanup.settlement, 'ROLLED_BACK'); assert.equal(notCommittedCleanup.commitOutcome, 'NOT_COMMITTED')
+  assert.equal(notCommittedCleanup.error.code, 'TX_NOT_COMMITTED'); assert.equal(notCommittedCleanup.cleanupFailed, true)
+
+  const invalidAcks = [undefined, null, {}, { command: 'SELECT' }, [{ command: 'COMMIT' }]]
+  for (const invalidAck of invalidAcks) {
+    const wrongCommit = transport({ commitResult: invalidAck })
+    const unknownCommit = failure(await runDurableTransaction(wrongCommit.pool, async () => marker))
+    assert.equal(unknownCommit.settlement, 'ROLLED_BACK'); assert.equal(unknownCommit.commitOutcome, 'UNKNOWN')
+    assert.equal(unknownCommit.error.code, 'TX_COMMIT_UNCONFIRMED')
+    assert.deepEqual(wrongCommit.sql, [begin, 'COMMIT', 'ROLLBACK']); assert.deepEqual(wrongCommit.releases, [false])
+    const wrongBegin = transport({ beginResult: invalidAck })
+    let wrongBeginBodyCalls = 0
+    const beginUnconfirmed = failure(await runDurableTransaction(wrongBegin.pool, async () => { wrongBeginBodyCalls++; return marker }))
+    assert.equal(beginUnconfirmed.settlement, 'ROLLED_BACK'); assert.equal(beginUnconfirmed.commitOutcome, 'NOT_ATTEMPTED')
+    assert.equal(beginUnconfirmed.error.code, 'TX_BEGIN_UNCONFIRMED'); assert.equal(wrongBeginBodyCalls, 0)
+    assert.deepEqual(wrongBegin.sql, [begin, 'ROLLBACK'])
+    for (const commitAttempted of [false, true]) {
+      const first = new DurableDatabaseError(commitAttempted ? '40001' : 'STORAGE_FIXTURE_BODY')
+      const wrongRollback = transport({ rollbackResult: invalidAck, commitError: commitAttempted ? first : undefined })
+      const unconfirmed = failure(await runDurableTransaction(wrongRollback.pool, async () => {
+        if (!commitAttempted) { throw first }
+        return marker
+      }))
+      assert.equal(unconfirmed.settlement, 'UNCONFIRMED')
+      assert.equal(unconfirmed.commitOutcome, commitAttempted ? 'UNKNOWN' : 'NOT_ATTEMPTED')
+      assert.equal(unconfirmed.error, first); assert.deepEqual(wrongRollback.releases, [true])
+    }
+  }
+  const ambiguousBoth = transport({ commitResult: { command: 'OTHER' }, rollbackResult: [] })
+  const ambiguousResult = failure(await runDurableTransaction(ambiguousBoth.pool, async () => marker))
+  assert.equal(ambiguousResult.settlement, 'UNCONFIRMED'); assert.equal(ambiguousResult.commitOutcome, 'UNKNOWN')
+  assert.equal(ambiguousResult.error.code, 'TX_COMMIT_UNCONFIRMED'); assert.deepEqual(ambiguousBoth.releases, [true])
 
   const wrapperSuccess = transport()
   assert.equal(await withDurableTransaction(wrapperSuccess.pool, async () => marker), marker)
