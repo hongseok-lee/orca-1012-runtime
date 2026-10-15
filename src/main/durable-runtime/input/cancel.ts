@@ -243,23 +243,9 @@ export async function recordObservedTurnCancel(
     entry.classification === 'ORIGINAL_EXECUTION' &&
     (entry.state === 'SETTLED' || entry.state === 'INTERRUPTED')
   )
-  const confirmed = await query(
-    `SELECT 1 FROM durable_runtime.cancel_intents ci
-     JOIN durable_runtime.session_context_records cr
-       ON cr.session_id=ci.session_id AND cr.target_message_id=ci.target_message_id
-      AND cr.kind='CANCEL_INTENT' AND cr.body_ref->>'operationId'=ci.operation_id::text
-     WHERE ci.session_id=$1 AND ci.target_message_id=$2
-       AND ci.target_runtime_unit_id=$3 AND ci.target_attempt_id=$4
-       AND ci.target_execution_epoch=$5 AND ci.interrupt_status='CONFIRMED'
-       AND nullif(ci.interrupt_evidence_ref,'') IS NOT NULL
-       AND cr.body_ref->'fixedDelivery'->>'deliveryAttemptId'=$6
-       AND cr.body_ref->'fixedDelivery'->>'runtimeUnitId'=$3::uuid::text
-       AND cr.body_ref->'fixedDelivery'->>'attemptId'=$4::uuid::text
-       AND cr.body_ref->'fixedDelivery'->>'executionEpoch'=$5::bigint::text LIMIT 1`,
-    [target.sessionId, target.messageId, target.runtimeUnitId, target.attemptId,
-      target.executionEpoch, target.deliveryAttemptId]
-  )
-  const interrupt: CancelInterruptStatus = terminalObservation || !!confirmed.rowCount
+  // Production CONFIRMED is backed by the same atomic original observation.
+  // A status/evidence string alone cannot replace that validated provenance.
+  const interrupt: CancelInterruptStatus = terminalObservation
     ? 'ALREADY_SETTLED' : 'REQUESTED'
   const recorded = await recordCancelIntent(
     tx, { ...request, targetMessageId: target.messageId }, unit, row,

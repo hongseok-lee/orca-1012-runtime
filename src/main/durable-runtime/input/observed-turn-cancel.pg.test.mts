@@ -122,7 +122,8 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   const stopped = await executionFixture(pool)
   const ambiguous = await executionFixture(pool)
   const legacy = await executionFixture(pool)
-  const fixtures = [f,other,terminal,stopped,ambiguous,legacy]
+  const unproven = await executionFixture(pool)
+  const fixtures = [f,other,terminal,stopped,ambiguous,legacy,unproven]
   const prefix = `synthetic-fixed-cancel-${randomUUID()}`
   const turnA = `${prefix}-A`
   // Fixture-owned Message is active before production observations update it.
@@ -250,6 +251,58 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   assert.equal(stopResult.interruptStatus,'ALREADY_SETTLED')
   assert.equal((await inspect(pool,stopResult.operationId)).outbox,null)
   assert.deepEqual((await snapshot(pool,fixtures)).outbox,stopBefore.outbox)
+
+  // Negative fixture-only state: no verified original completion/stop exists.
+  // Change only this callback's new mutable rows; never rewrite observation/context history.
+  const unprovenTurn = `${prefix}-unproven`
+  const unprovenId = await delivery(pool,unproven)
+  await observe(pool,unproven,unprovenId,unprovenTurn,'ADMITTED')
+  const unprovenRequest = await inExecution(pool,unproven,(tx) =>
+    recordObservedTurnCancel(tx,request(unproven,unprovenTurn),unproven.context.runtimeUnitId))
+  assert.equal(unprovenRequest.interruptStatus,'REQUESTED')
+  await inExecution(pool,unproven,async (tx) => {
+    await tx.query(
+      `UPDATE durable_runtime.delivery_attempts SET state='SETTLED',completed_at=clock_timestamp()
+       WHERE id=$1 AND session_id=$2`,[unprovenId,unproven.authority.sessionId]
+    )
+    await tx.query(
+      `UPDATE durable_runtime.cancel_intents SET interrupt_status='CONFIRMED',
+       interrupt_evidence_ref=$3,updated_at=clock_timestamp()
+       WHERE operation_id=$1 AND session_id=$2`,
+      [unprovenRequest.operationId,unproven.authority.sessionId,`${prefix}-bare-evidence`]
+    )
+  })
+  // The production observation entry classifies this stop as contradictory to bare SETTLED state.
+  await observe(pool,unproven,unprovenId,unprovenTurn,'INTERRUPTED')
+  const unprovenBefore = await snapshot(pool,fixtures)
+  const unprovenResult = await inExecution(pool,unproven,(tx) =>
+    recordObservedTurnCancel(tx,request(unproven,unprovenTurn),unproven.context.runtimeUnitId))
+  assert.equal(unprovenResult.interruptStatus,'REQUESTED',
+    'bare delivery state/CONFIRMED evidence and late contradiction must not settle the original turn')
+  assert.equal(unprovenResult.target.deliveryAttemptId,unprovenId)
+  assert.deepEqual(unprovenResult.target.provenance.map((p) => [p.state,p.classification]),[
+    ['ADMITTED','ORIGINAL_EXECUTION'],['INTERRUPTED','CONTRADICTORY_NO_PERMISSION']
+  ])
+  const unprovenIntent = await inspect(pool,unprovenResult.operationId)
+  assert.equal(unprovenIntent.interrupt_status,'REQUESTED')
+  assert.equal(unprovenIntent.interrupt_evidence_ref,null)
+  assert.equal(unprovenIntent.outbox.kind,'INTERRUPT_FIXED_DELIVERY')
+  assert.equal(unprovenIntent.outbox.fixedDelivery.deliveryAttemptId,unprovenId)
+  assert.equal(unprovenIntent.outbox.fixedDelivery.nativeTurnId,unprovenTurn)
+  const unprovenAfter = await snapshot(pool,fixtures)
+  assert.equal(unprovenAfter.outbox.length,unprovenBefore.outbox.length+1)
+  assert.deepEqual(unprovenAfter.deliveries,unprovenBefore.deliveries)
+  assert.deepEqual(unprovenAfter.units,unprovenBefore.units)
+  assert.deepEqual(unprovenAfter.attempts,unprovenBefore.attempts)
+  assert.deepEqual(unprovenAfter.cancels.find((row: { operation_id: string }) =>
+    row.operation_id === unprovenRequest.operationId),
+    unprovenBefore.cancels.find((row: { operation_id: string }) => row.operation_id === unprovenRequest.operationId))
+  for (const previous of unprovenBefore.contexts) {
+    assert.deepEqual(unprovenAfter.contexts.find((row: { id: string }) => row.id === previous.id),previous)
+  }
+  for (const previous of unprovenBefore.journal) {
+    assert.deepEqual(unprovenAfter.journal.find((row: { event_id: string }) => row.event_id === previous.event_id),previous)
+  }
 
   // Two distinct original requests remain fixed to A, even after another independent Message exists.
   const independentMessage = logicalId('message',randomUUID())
