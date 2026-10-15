@@ -48,7 +48,8 @@ await test('Ops Browser page session authority: first value callback 1', async (
     browserPageId: 'browser:second-page', worktreePublicId: workspace })
   const secondBearer = second.readBearer()
   assert.equal(bearer === secondBearer, false)
-  assert.deepEqual(authenticateBearer(secondBearer), firstActor)
+  const secondActor = authenticateBearer(secondBearer)
+  assert.deepEqual(secondActor, firstActor)
   const repeated = issuePageSession({ authenticatedCallerFingerprint: fingerprint,
     browserPageId: first.browserPageId, worktreePublicId: workspace })
   assert.equal(repeated, first)
@@ -115,7 +116,7 @@ await test('Ops Browser page session authority: first value callback 1', async (
   const disposeFirst = first.dispose, readFirst = first.readBearer
   disposeFirst.call(third)
   assert.equal(authenticateBearer(bearer), null)
-  assert.equal(authenticateBearer(secondBearer), firstActor)
+  assert.equal(authenticateBearer(secondBearer), secondActor)
   fails(readFirst, 'OPS_BROWSER_SESSION_CLOSED')
   assert.equal(findPageSession({ browserPageId: first.browserPageId, worktreePublicId: workspace }), null)
   const reissued = issuePageSession({ authenticatedCallerFingerprint: fingerprint,
