@@ -1,0 +1,602 @@
+{
+  "recordType": "sanitized-observed-result",
+  "recordedAt": "2026-10-15T04:38:40.878137+00:00",
+  "documentationBase": "ba99c4619f9b71f25d2f383e3f56fe4c6e4aa7f7",
+  "serverSource": {
+    "pin": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "pinKind": "local-composite-product-source",
+    "referenceTree": "9a72dcc04b9175002ed3ac1dfca9ce3a519d6157",
+    "parentBase": "ab9b369d5318b01cd862e5abc78307a06e983685",
+    "actualAmendmentBatch": {
+      "files": 15,
+      "bytes": 105185,
+      "manifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+      "role": "Client에 지정한 실제 반영 입력"
+    },
+    "foundation50MetadataSHA256": "85282792297a31ca6b1d5f1314e3fd9c18c6820d79094f187d4697524fbd2a13",
+    "combinedMetadata": {
+      "files": 62,
+      "bytes": 446866,
+      "sha256": "564212e6a43ac84904a2edc276c84446603d3e9c5e5f5e93f9812fc340092410",
+      "role": "기반 50개와 이번 15개를 합친 provenance 기록이며 겹친 3개는 이번 bytes를 사용합니다.",
+      "separateClientExecutionInput": false
+    },
+    "wholeCheckoutRevisionProven": false,
+    "wholeRuntimeClosureProven": false
+  },
+  "backend": {
+    "oldRunnerNormalStop": {
+      "runnerPid": 20837,
+      "runtimePid": 20881,
+      "runtimeExitCode": 0,
+      "runtimeExitSignal": null,
+      "closedEventObserved": true,
+      "locksRemovedBeforeReplacement": true
+    },
+    "firstBuild": {
+      "status": "failed",
+      "at": "2026-10-15T02:09:10.457Z",
+      "code": "FIRST_WATCH_BUILD_FAILED",
+      "diagnostic": "Could not resolve \"../durable-runtime/ha/worker.ts\"",
+      "sourceLocation": {
+        "file": "src/main/orcad/orcad-controller.ts",
+        "line": 103,
+        "column": 17
+      }
+    },
+    "supplement": {
+      "sourceFile": "src/main/durable-runtime/ha/worker.ts",
+      "bytes": 14352,
+      "sha256": "16bcce24082a2c5b5fac58bb3a93e0f34cc837711f3e5a4f81e3e957ff6ebb7b",
+      "gitBlob": "d495bd4233c7d60bc5f7569b29f66e2ab1751fb7",
+      "existingDependencyFilesMatched": 5,
+      "existingRunnerPreserved": true,
+      "additionalRunnerStartStop": 0,
+      "separateBuildCommand": 0
+    },
+    "incrementalResult": {
+      "status": "started-ready",
+      "runnerPid": 30559,
+      "runtimePid": 30799,
+      "generation": 1,
+      "startedAt": "2026-10-15T02:16:32.653Z",
+      "readyObservedAt": "2026-10-15T02:16:45.017Z",
+      "readyEvent": "orca_server_ready",
+      "bundleSHA256": "e40073c997920093055f6ba9758e12f5e8b3c588ea0e73169181e6512a07519c",
+      "bundleArtifacts": [
+        {
+          "filename": "orcad.js",
+          "bytes": 8621873,
+          "sha256": "062d8d8f0ea6df8824b8fc1efe476c28374b23cce9706793edc4e06b62a3b307"
+        },
+        {
+          "filename": "parcel-watcher-process-entry.js",
+          "bytes": 7579,
+          "sha256": "cea5616fe6310ae2be48a4d25d52deae44809fa29afdc50e97b12dc62f7fae14"
+        },
+        {
+          "filename": "daemon-entry.js",
+          "bytes": 526183,
+          "sha256": "a6023202585d0d3bb0ad37e7d518cdd0270f3a2f822cc9b6d01a2f855a56f95f"
+        }
+      ],
+      "nextStartedCount": 1
+    },
+    "controllerConnected": false,
+    "authenticatedApiQualifiedByThisRecord": false,
+    "amendmentOldRunnerNormalStop": {
+      "runnerPid": 30559,
+      "runtimePid": 30799,
+      "runtimeExitCode": 0,
+      "runtimeExitSignal": null,
+      "closedEventObserved": true,
+      "locksRemovedBeforeReplacement": true
+    },
+    "latestResult": {
+      "status": "started-ready",
+      "runnerPid": 32040,
+      "runtimePid": 32095,
+      "generation": 1,
+      "startedObservedAt": "2026-10-15T03:21:50.556Z",
+      "readyObservedAt": "2026-10-15T03:21:54.411Z",
+      "readyEvent": "orca_server_ready",
+      "bundleSHA256": "07858f120b5209f9e97b51cc82887624cc24fee34665c8907fc75e323e54ca2c",
+      "watchInvocations": 1,
+      "startedCount": 1,
+      "existingProfileReused": true,
+      "configPreserved": true,
+      "bundleArtifacts": [
+        {
+          "filename": "orcad.js",
+          "sha256": "8435519aa8925cfa032970085622cda1a81777a621a271a8c8df6d3748884a85",
+          "bytes": 8640744
+        },
+        {
+          "filename": "parcel-watcher-process-entry.js",
+          "sha256": "cea5616fe6310ae2be48a4d25d52deae44809fa29afdc50e97b12dc62f7fae14",
+          "bytes": 7579
+        },
+        {
+          "filename": "daemon-entry.js",
+          "sha256": "a6023202585d0d3bb0ad37e7d518cdd0270f3a2f822cc9b6d01a2f855a56f95f",
+          "bytes": 526183
+        }
+      ],
+      "authenticatedApiAndClientQualified": false
+    }
+  },
+  "expoFirstAttempt": {
+    "startedAt": "2026-10-15T02:25:17.325Z",
+    "finishedAt": "2026-10-15T02:26:05.214Z",
+    "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "serverSourcePin": "1c1dc82442e96fa6855752d393581eb8208d9d8f",
+    "httpStatus": 200,
+    "status": "failed",
+    "phase": "existing-workspace-list",
+    "code": "PHASE_DEADLINE_EXCEEDED",
+    "workspaceCreationCount": 0,
+    "browserOpenClicks": 0,
+    "codexSelectionClicks": 0,
+    "sendClicks": 0,
+    "captures": [],
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true,
+    "failureDomCause": "unconfirmed",
+    "selectionUiCorrectionStatus": {
+      "valueAtOriginalRecord": "in-progress-as-reported-by-root",
+      "asOfAttemptFinishedAt": "2026-10-15T02:26:05.214Z",
+      "historicalOnly": true,
+      "followUpResultRefs": [
+        "#/expoAfterConnectionsAttempt",
+        "#/existingBrowserFrameAttempt"
+      ],
+      "meaning": "첫 실패 기록 당시의 교정 상태이며 현재 문서 전체의 상태가 아닙니다."
+    },
+    "correctedAttemptIncluded": false,
+    "completed": false,
+    "recordScope": "이 객체의 completed/correctedAttemptIncluded 등은 첫 실패 시도만 나타냅니다. 후속 시도는 별도 객체를 참조합니다."
+  },
+  "qualification": {
+    "providerExecution": false,
+    "physicalExecutor": false,
+    "ha": false,
+    "nativeIPhone": false,
+    "browserCreateUi": false,
+    "chatSendUi": false,
+    "historySubscribeRoundTrip": false,
+    "pgBrowserTabIdentityAndReceiptResponseLinkObserved": true,
+    "uiRequestReceiptIdentityProven": false,
+    "browserBlankNormalizationObserved": true,
+    "existingBrowserFirstDecodedFrameObserved": true,
+    "existingBrowserCachedReturnObserved": true,
+    "freshStreamResumeProven": false,
+    "stableReconnectionProven": false,
+    "latestAttemptRuntimeErrors": 0
+  },
+  "publication": {
+    "newC4ScreenshotsIncluded": 2,
+    "previousC3ScreenshotsReused": false,
+    "privateRawArtifactsIncluded": false,
+    "actualC4FailurePngObserved": 1,
+    "latestActualScreenshots": [
+      {
+        "file": "existing-browser-first.png",
+        "sha256": "d88d58698cc2e14eb6827f1b30bac74fd5c7e8e5c643d55369fa06baabb191f7",
+        "bytes": 15860,
+        "capturedAt": "2026-10-15T04:20:35.063Z",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "source": "Root가 검토한 실제 Expo Web PNG 원 bytes이며 재촬영·편집하지 않았습니다."
+      },
+      {
+        "file": "existing-browser-return.png",
+        "sha256": "662aa5cb69bf95fcb10bd7c6f8d3ac974880ba6aecc22ca40eee7157f121004a",
+        "bytes": 16436,
+        "capturedAt": "2026-10-15T04:20:35.506Z",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "source": "Root가 검토한 실제 Expo Web PNG 원 bytes이며 재촬영·편집하지 않았습니다."
+      }
+    ]
+  },
+  "scope": "Root가 확정하고 수락한 기존 실행 결과만 기록했습니다. 이 파일은 새 계획이나 수용기준을 정하지 않습니다.",
+  "foundationServerSource": {
+    "pin": "1c1dc82442e96fa6855752d393581eb8208d9d8f",
+    "referenceTree": "ffa9ed1ad9a9ef3aa0be40f2db55bedf9b59af49",
+    "appliedFiles": 50,
+    "appliedBytes": 375767,
+    "combinedAppliedMetadataSHA256": "85282792297a31ca6b1d5f1314e3fd9c18c6820d79094f187d4697524fbd2a13",
+    "provenance": [
+      {
+        "role": "initial-applied-inputs",
+        "files": 49,
+        "bytes": 361415,
+        "sha256": "1bab3932487c9416ed289cc5fdc4150f6f54bd9510bda74a8f9293a650ee8a68"
+      },
+      {
+        "role": "missing-module-supplement",
+        "files": 1,
+        "bytes": 14352,
+        "sha256": "99385ac8ab7817e200ed5eaf83a7e27a6c8c20ea5da3a6471b3a4477b21364a6"
+      }
+    ],
+    "wholeCheckoutRevisionProven": false,
+    "wholeRuntimeClosureProven": false
+  },
+  "expoAfterConnectionsAttempt": {
+    "startedAt": "2026-10-15T03:25:48.372Z",
+    "finishedAt": "2026-10-15T03:26:14.117Z",
+    "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "serverSourcePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "actual15ManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+    "status": "failed",
+    "helperExitCode": 1,
+    "helperFailure": {
+      "phase": "new-browser-label",
+      "name": "Error",
+      "code": "PHASE_DEADLINE_EXCEEDED"
+    },
+    "actualAppFailure": {
+      "error": "image?.setNativeProps is not a function",
+      "sourceLocations": [
+        "MobileBrowserPaneView.tsx (198:23)",
+        "mobile-browser-frame-state.ts (104:10)"
+      ],
+      "evidence": "Root가 검토한 실제 Expo Web 실패 PNG",
+      "webFixStatus": {
+        "valueAtOriginalRecord": "Client가 교정 중이며 수정 후 결과는 아직 이 기록에 포함하지 않았습니다.",
+        "asOfAttemptFinishedAt": "2026-10-15T03:26:14.117Z",
+        "historicalOnly": true,
+        "followUpResultRefs": [
+          "#/clientPartialSource",
+          "#/existingBrowserFrameAttempt"
+        ],
+        "meaning": "UI 5199 실패 기록 당시의 상태입니다. 이후 Web 7개 부분 반영과 UI 5338의 제한된 관측을 별도 기록했습니다."
+      }
+    },
+    "onboarding": {
+      "chatVisible": true,
+      "chatClicks": 1,
+      "skipVisible": true,
+      "skipClicks": 1
+    },
+    "clicks": {
+      "browserOpenClicks": 1,
+      "codexSelectionClicks": 0,
+      "sendClicks": 0,
+      "tabAwayClicks": 0,
+      "tabReturnClicks": 0,
+      "helperResubmissions": 0,
+      "directRpcCalls": 0
+    },
+    "browserFrameObservation": "about:blank 주소와 source 범위의 loaded data image를 관측한 뒤 앱 오류가 나타났습니다. 정상 stream 또는 페이지 사용 합격은 아닙니다.",
+    "browserFrameQualified": false,
+    "chatQualified": false,
+    "actualFailurePng": {
+      "sha256": "fcb6ace7428b97415a5fdb85ddbc2ac341c0d40a94b9204bac763f54cc3e7499",
+      "bytes": 63044,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "actualDevelopmentUI": true,
+      "nativeIPhone": false,
+      "failureEvidence": true,
+      "publicImageFileIncluded": false
+    },
+    "newBrowserPageIdConfirmed": false,
+    "pgCorrelationPending": {
+      "valueAtOriginalAttemptEnd": true,
+      "asOfAttemptFinishedAt": "2026-10-15T03:26:14.117Z",
+      "historicalOnly": true,
+      "followUpResultRefs": [
+        "#/existingBrowserPgReadback",
+        "#/browserBlankNormalizationReadback"
+      ],
+      "meaning": "당시에는 PG 상관 조회 전이었습니다. 후속 PG Tab/receipt response 연결은 관측했지만 UI request key/principal identity 일치는 여전히 미증명입니다."
+    },
+    "directPgOperations": 0,
+    "cleanup": {
+      "contextClosed": true,
+      "browserClosed": true,
+      "originalPrivateStateUnchanged": true,
+      "activeKnownChildren": 0
+    },
+    "automaticRetry": false,
+    "additionalOpenCodexSendOrFix": false,
+    "completed": false
+  },
+  "repositoryMergeStatus": {
+    "rootReportedMainPrefix": "e070",
+    "PR77AndPR78Merged": true,
+    "livePartialSourcePinUnchanged": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "liveCombinedFileCount": 62,
+    "additionalServerSyncForMerge": false,
+    "PR79Merged": true,
+    "PR79RootReportedMergePinPrefix": "96859aec",
+    "PR80AndPR81FinalMergePinPending": false,
+    "rootReportedMainPrefixIsHistorical77And78Merge": true,
+    "PR80AndPR81Merged": true,
+    "rootFinalDocumentationMainPin": "ba99c4619f9b71f25d2f383e3f56fe4c6e4aa7f7"
+  },
+  "existingBrowserPgReadback": {
+    "status": "exact-existing-open-browser-observed",
+    "snapshot": {
+      "startedAt": "2026-10-15T03:45:12.332Z",
+      "endedAt": "2026-10-15T03:45:12.811Z",
+      "helperPid": 32328,
+      "transactionReadOnly": "on",
+      "transactionIsolation": "repeatable read",
+      "identityDatasetLedgerBaselineMatched": true,
+      "ledgerCount": 19,
+      "scope": "지정 Workspace의 tabs/metadata와 대응 Browser receipt만 관측했습니다."
+    },
+    "workspaceInternalId": "096f5595-63e6-45ec-a8d8-35d7589427ce",
+    "matchingOpenBrowserCount": 1,
+    "browserIdentity": {
+      "internalTabId": "2bc99253-b16a-4d3b-8084-d6de7b725b25",
+      "publicTabId": "243bb196-87ec-401a-852d-60bd20ad2a2b",
+      "browserPageId": "243bb196-87ec-401a-852d-60bd20ad2a2b",
+      "browserWorkspaceId": "243bb196-87ec-401a-852d-60bd20ad2a2b",
+      "kind": "browser",
+      "lifecycle": "OPEN",
+      "revision": "0",
+      "uiOrder": "1"
+    },
+    "originalPayloadUrlExactlyAboutBlank": false,
+    "originalResultSHA256": "714c228739e2923ac26048a72dbd1b64721286373c6fd3563a1769a7fbcc3f99",
+    "receiptCorrelation": {
+      "count": 1,
+      "method": "browser.tabCreate",
+      "responseBrowserPageIdMatchesScopedPgTab": true,
+      "committedAt": "2026-10-15T03:25:56.255Z",
+      "uiRequestKeyKnown": false,
+      "uiPrincipalKnown": false,
+      "uiRequestIdentityProven": false,
+      "rawPrincipalOrOperationKeyIncluded": false,
+      "scope": "같은 snapshot의 PG Tab과 receipt response ID 관계만 확인했습니다."
+    },
+    "cleanup": {
+      "clientReleased": true,
+      "poolEnded": true
+    },
+    "writes": 0,
+    "newBrowserOpen": 0,
+    "automaticRetry": 0
+  },
+  "browserBlankNormalizationReadback": {
+    "status": "exact-row-normalization-observed",
+    "startedAt": "2026-10-15T03:52:54.891Z",
+    "endedAt": "2026-10-15T03:52:55.342Z",
+    "helperPid": 32344,
+    "exactRowCount": 1,
+    "kind": "browser",
+    "lifecycle": "OPEN",
+    "payloadUrlEqualsNormalizedBlank": true,
+    "payloadUrlEqualsAboutBlank": false,
+    "launchParamsUrlEqualsAboutBlank": true,
+    "launchParamsUrlAbsent": false,
+    "launchParamsUrlIsJsonNull": false,
+    "sourceBasis": {
+      "pin": "0919809827747ffec106fdfef0c751e43538bdbb",
+      "function": "normalizeBrowserNavigationUrl",
+      "constant": "ORCA_BROWSER_BLANK_URL",
+      "constantValue": "data:text/html,",
+      "declaration": "src/shared/constants.ts:49"
+    },
+    "firstFalseObservationPreserved": true,
+    "resultSHA256": "d0ffcfc2272aa9e9988ec4ae80bf8c627da1da412a6f2975b869247476777612",
+    "rawUrlOrLaunchRequestIncluded": false,
+    "receiptOrAllTabsRequeried": false,
+    "transactionReadOnly": "on",
+    "cleanup": {
+      "clientReleased": true,
+      "poolEnded": true
+    },
+    "writes": 0,
+    "newBrowserOpen": 0,
+    "automaticRetry": 0
+  },
+  "clientPartialSource": {
+    "installedBaseline": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "webFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+    "webFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+    "partialFiles": 7,
+    "wholeCheckoutRevisionProven": false,
+    "wholeClientRuntimeClosureProven": false,
+    "PR79MergePendingAtPreparation": false,
+    "PR79MergePendingAtOriginalUiRecord": true,
+    "PR79RootReportedMergePinPrefix": "96859aec"
+  },
+  "existingBrowserFrameAttempt": {
+    "status": "bounded-ui-observation-completed-with-limits",
+    "helperPid": 5338,
+    "startedAt": "2026-10-15T04:20:21.537Z",
+    "finishedAt": "2026-10-15T04:20:35.674Z",
+    "exitCode": 0,
+    "serverSourcePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "actualBackend15ManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+    "clientBaseline": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "clientPartialWeb7SourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+    "clientPartialWeb7ManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+    "httpStatus": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "onboarding": {
+      "chatVisible": true,
+      "chatClicks": 1,
+      "skipVisible": true,
+      "skipClicks": 1
+    },
+    "selectionClicks": {
+      "browser": 1,
+      "terminal": 1,
+      "returnBrowser": 1
+    },
+    "selectionDiagnostics": {
+      "firstBrowser": {
+        "at": "2026-10-15T04:20:34.524Z",
+        "event": "tab-switch",
+        "type": "browser",
+        "tabSuffix": "20ad2a2b",
+        "tabCount": null
+      },
+      "terminal": {
+        "at": "2026-10-15T04:20:35.243Z",
+        "event": "tab-switch",
+        "type": "terminal",
+        "tabSuffix": "88142132",
+        "tabCount": null
+      },
+      "returnBrowser": {
+        "at": "2026-10-15T04:20:35.368Z",
+        "event": "tab-switch",
+        "type": "browser",
+        "tabSuffix": "20ad2a2b",
+        "tabCount": null
+      }
+    },
+    "frames": [
+      {
+        "kind": "existing-browser-first",
+        "observedAt": "2026-10-15T04:20:35.014Z",
+        "addressExactlyAboutBlank": true,
+        "visibleDecodedCount": 1,
+        "imageLayers": [
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 1,
+            "effectiveOpacity": 1,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          },
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 0,
+            "effectiveOpacity": 0,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          }
+        ],
+        "sameImageHashAllowed": true,
+        "observedFullBrowserId": null,
+        "alertCount": 0,
+        "uncaughtOverlayCount": 0
+      },
+      {
+        "kind": "existing-browser-return",
+        "observedAt": "2026-10-15T04:20:35.476Z",
+        "addressExactlyAboutBlank": true,
+        "visibleDecodedCount": 1,
+        "imageLayers": [
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 1,
+            "effectiveOpacity": 1,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          },
+          {
+            "uriSHA256": "ec35bd72594b514e2022c2dfcf20fce0a88d13f5a80b57517b0c80f3958a7adf",
+            "decoded": true,
+            "naturalWidth": 390,
+            "naturalHeight": 176,
+            "matchingBackgroundSurface": true,
+            "layerOpacity": 0,
+            "effectiveOpacity": 0,
+            "hidden": false,
+            "renderedWidth": 390,
+            "renderedHeight": 175.796875
+          }
+        ],
+        "sameImageHashAllowed": true,
+        "observedFullBrowserId": null,
+        "alertCount": 0,
+        "uncaughtOverlayCount": 0
+      }
+    ],
+    "screenshots": [
+      {
+        "file": "existing-browser-first.png",
+        "sha256": "d88d58698cc2e14eb6827f1b30bac74fd5c7e8e5c643d55369fa06baabb191f7",
+        "bytes": 15860,
+        "capturedAt": "2026-10-15T04:20:35.063Z",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "source": "Root가 검토한 실제 Expo Web PNG 원 bytes이며 재촬영·편집하지 않았습니다."
+      },
+      {
+        "file": "existing-browser-return.png",
+        "sha256": "662aa5cb69bf95fcb10bd7c6f8d3ac974880ba6aecc22ca40eee7157f121004a",
+        "bytes": 16436,
+        "capturedAt": "2026-10-15T04:20:35.506Z",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "source": "Root가 검토한 실제 Expo Web PNG 원 bytes이며 재촬영·편집하지 않았습니다."
+      }
+    ],
+    "firstVisualObservation": "pearlfish, 2 tabs, New Browser, about:blank와 흰 blank frame을 실제 PNG에서 확인했습니다.",
+    "returnVisualObservation": "같은 Browser의 frame 영역에 loading overlay가 남은 실제 PNG를 확인했습니다.",
+    "returnScreenshotAfterTabSwitchMs": 138,
+    "firstDecodedFrameOpacityOneObserved": true,
+    "sameBrowserCachedReturnObserved": true,
+    "newFreshFrameArrivalProven": false,
+    "stableReconnectionProven": false,
+    "runtimeErrors": [],
+    "newBrowserOpenClicks": 0,
+    "codexSelectionClicks": 0,
+    "sendClicks": 0,
+    "helperResubmissions": 0,
+    "directRpcCalls": 0,
+    "rawLegacyTabCountersNotUsedAsSelectionCounts": true,
+    "activationScope": {
+      "wholeServerReadOnly": false,
+      "existingActivateRPCTriggeredByTabSelection": true,
+      "rawReadOnlyLabelQualification": "원 helper result의 readOnlyBrowserContinuation=true는 새 생성/직접RPC가 없는 continuation을 뜻하는 필드명입니다. 실제 탭 선택은 기존 activation RPC를 발생시키므로 전체 서버 read-only로 해석하지 않습니다."
+    },
+    "identity": {
+      "expectedBrowserPageWorkspaceId": "243bb196-87ec-401a-852d-60bd20ad2a2b",
+      "expectedInternalTabId": "2bc99253-b16a-4d3b-8084-d6de7b725b25",
+      "inputBasis": "Root가 앞서 수행한 exact-row PG 관측을 입력으로 사용했습니다.",
+      "observedFullBrowserId": null,
+      "observedRequestKey": null,
+      "directPgQueries": 0,
+      "suffixOrEncryptedFrameCountsProveRpcPgIdentity": false
+    },
+    "cleanup": {
+      "contextClosed": true,
+      "browserClosed": true,
+      "originalPrivateStateUnchanged": true,
+      "activeOwnedJob": 0
+    },
+    "nativeIPhone": false,
+    "wholeBrowserStreamQualified": false,
+    "chatQualified": false
+  }
+}
