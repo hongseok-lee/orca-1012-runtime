@@ -1,0 +1,147 @@
+{
+  "capturedAt": "2026-10-15T10:41:31.942Z",
+  "routePattern": "/h/:paired-host/session/:worktree",
+  "queryKeys": [
+    "name"
+  ],
+  "rawExpoURLRecorded": false,
+  "validatedProductSourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+  "liveCompositeSourcePin": "b2e344cc24973a55c2c062fe345a33851f790c5b",
+  "appliedManifestSHA256": "2ed22632b854b80e3d0c5c4b63c63a9a20f09bed42ad607a6d4c33e62d790d22",
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "clientFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+  "clientFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "opsURL": "http://127.0.0.1:16768/ops/",
+  "observedBrowserPageId": null,
+  "targetPublicBrowserPageId": "842c7768-d0d9-4466-8313-129aae49edf2",
+  "targetPageIdSource": "Root PG read-only correlation",
+  "phoneClicks": 1,
+  "phoneModeObservations": [
+    {
+      "phase": "before",
+      "at": "2026-10-15T10:40:44.172Z",
+      "selected": null,
+      "ariaDisabled": null,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "phase": "after",
+      "at": "2026-10-15T10:40:44.258Z",
+      "selected": null,
+      "ariaDisabled": null,
+      "enabled": true,
+      "visible": true
+    }
+  ],
+  "freshViewer": {
+    "at": "2026-10-15T10:40:38.499Z",
+    "newBrowser": true,
+    "newContext": true,
+    "newPage": true,
+    "browserContextCount": 1,
+    "contextPageCount": 1,
+    "previousViewerPageReused": false,
+    "moduleFrameCache": "module-local Map; not restored from storageState",
+    "freshnessBasis": "Root source review plus this new browser/context/page first visible frame",
+    "encryptedPayloadDecoded": false,
+    "webSocketCountsProvePageIdentity": false
+  },
+  "firstVisibleFrameObservedAt": "2026-10-15T10:40:44.124Z",
+  "sameVisibleFrameHashAfterPhone": false,
+  "frameHashChangeRequired": false,
+  "artifactSHA256": "f02aa969df15049e1e1e4cb2fa9fd4938ed0b2b528480ef616fd1aae2078b5d3",
+  "artifactBytes": 133021,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuthQualified": false,
+  "rootImageReviewPending": true,
+  "failureEvidence": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "targetUnitId": "6cc49676-3ed6-46ea-ab6e-a4356ece2335",
+  "summaryTaps": 1,
+  "upDrags": 1,
+  "detailTaps": 0,
+  "state": "expanded",
+  "frameAtCapture": {
+    "kind": "expanded-card-after-single-drag",
+    "at": "2026-10-15T10:41:31.907Z",
+    "address": "http://127.0.0.1:16768/ops/",
+    "frames": [
+      {
+        "decoded": true,
+        "naturalWidth": 390,
+        "naturalHeight": 616,
+        "matchingBackgroundSurface": true,
+        "layerOpacity": 0,
+        "effectiveOpacity": 0,
+        "hidden": false,
+        "renderedWidth": 390,
+        "renderedHeight": 616,
+        "renderedX": 0,
+        "renderedY": 115,
+        "uriSHA256": "954c810dd311157bad90028e5ef9cfa3606e6555b167774ac256868fe16de6fe"
+      },
+      {
+        "decoded": true,
+        "naturalWidth": 390,
+        "naturalHeight": 616,
+        "matchingBackgroundSurface": true,
+        "layerOpacity": 1,
+        "effectiveOpacity": 1,
+        "hidden": false,
+        "renderedWidth": 390,
+        "renderedHeight": 616,
+        "renderedX": 0,
+        "renderedY": 115,
+        "uriSHA256": "5ff78a2367aeb04d253d60d9b660619dc53a5a7c11fd7d36c43b7d13ab6b2837"
+      }
+    ],
+    "visibleDecodedCount": 1,
+    "observationStartedAt": "2026-10-15T10:41:30.826Z",
+    "observationFinishedAt": "2026-10-15T10:41:31.907Z",
+    "observationElapsedMs": 1081,
+    "pollStartedAt": "2026-10-15T10:41:31.894Z",
+    "pollFinishedAt": "2026-10-15T10:41:31.895Z",
+    "pollElapsedMs": 0.7999999821186066,
+    "returnedValueType": "object",
+    "waitReturnedSnapshot": true,
+    "waitAndMetadataFromSamePoll": true,
+    "postWaitFrameDOMRead": false,
+    "synchronousPredicate": true,
+    "decodeObservation": "complete and positive natural size; no asynchronous img.decode",
+    "currentPaneConnected": true,
+    "detachedImageExcluded": true,
+    "freshStreamNotProvenByImageHash": true,
+    "expectedOpsURL": "http://127.0.0.1:16768/ops/",
+    "observedFullBrowserId": null,
+    "priorVisibleHashes": [
+      "954c810dd311157bad90028e5ef9cfa3606e6555b167774ac256868fe16de6fe"
+    ],
+    "phoneModeObservation": {
+      "phase": "after",
+      "at": "2026-10-15T10:40:44.258Z",
+      "selected": null,
+      "ariaDisabled": null,
+      "enabled": true,
+      "visible": true
+    },
+    "frameWaitFailure": null,
+    "alertCount": 0,
+    "uncaughtOverlayCount": 0
+  },
+  "rawProvenanceSHA256": "1d561bd5f6279b771ac6556a385c2d7e921be0dfd89c5dbe200d79245ad812a9",
+  "rootVisualReview": {
+    "result": "Root가 펼친 카드와 RUNNING / ABSENT·Pod 없음·미관측 필드를 확인했습니다. 상세 버튼은 보이지 않아 상세 클릭을 승인하지 않았습니다.",
+    "separateFromOriginalFlags": true
+  }
+}

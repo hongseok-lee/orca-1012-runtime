@@ -1,0 +1,275 @@
+{
+  "validatedProductPin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+  "liveCompositePin": "b2e344cc24973a55c2c062fe345a33851f790c5b",
+  "liveCompositeTree": "5f0a979c5234aca161ba1fca77ba5dde261c70d5",
+  "liveChangeScope": {
+    "productFiles": 4,
+    "bytes": 29435,
+    "wholeCheckoutGitIdentityProven": false,
+    "readyAt": "2026-10-15T09:58:48.747Z",
+    "watchPID": 38770,
+    "runtimePID": 38826,
+    "chromePID": 38851,
+    "MetroPID": 615,
+    "bundleSHA256": "70864ec7942c40f50a470e5777d9f6af5d94254fd927c318689a23464e56568d",
+    "previousChromeNormalExitObserved": true
+  },
+  "overview": {
+    "startedAt": "2026-10-15T10:17:03.071Z",
+    "finishedAt": "2026-10-15T10:17:11.601Z",
+    "supervisorPID": 8078,
+    "helperPID": 8085,
+    "exit": 0,
+    "status": "observed",
+    "phase": "same-ops-stream-recovery-overview-captured-root-review-pending",
+    "phoneClicks": 1,
+    "PNGCount": 1,
+    "manualKeyInputs": 0,
+    "newBrowserClicks": 0,
+    "firstFrame": {
+      "kind": "before-phone-mode",
+      "at": "2026-10-15T10:17:10.119Z",
+      "address": "http://127.0.0.1:16768/ops/",
+      "frames": [
+        {
+          "decoded": true,
+          "naturalWidth": 390,
+          "naturalHeight": 176,
+          "matchingBackgroundSurface": true,
+          "layerOpacity": 1,
+          "effectiveOpacity": 1,
+          "hidden": false,
+          "renderedWidth": 390,
+          "renderedHeight": 175.796875,
+          "uriSHA256": "262f95aa41842b77e326383a3b1e50ec6ca0f6a0e870da8bdff8c4e7f4343469"
+        },
+        {
+          "decoded": true,
+          "naturalWidth": 390,
+          "naturalHeight": 176,
+          "matchingBackgroundSurface": true,
+          "layerOpacity": 0,
+          "effectiveOpacity": 0,
+          "hidden": false,
+          "renderedWidth": 390,
+          "renderedHeight": 175.796875,
+          "uriSHA256": "262f95aa41842b77e326383a3b1e50ec6ca0f6a0e870da8bdff8c4e7f4343469"
+        }
+      ],
+      "visibleDecodedCount": 1,
+      "observationStartedAt": "2026-10-15T10:17:07.893Z",
+      "observationFinishedAt": "2026-10-15T10:17:10.119Z",
+      "observationElapsedMs": 2226,
+      "pollStartedAt": "2026-10-15T10:17:10.110Z",
+      "pollFinishedAt": "2026-10-15T10:17:10.110Z",
+      "pollElapsedMs": 0.5,
+      "returnedValueType": "object",
+      "waitReturnedSnapshot": true,
+      "waitAndMetadataFromSamePoll": true,
+      "postWaitFrameDOMRead": false,
+      "synchronousPredicate": true,
+      "decodeObservation": "complete and positive natural size; no asynchronous img.decode",
+      "currentPaneConnected": true,
+      "detachedImageExcluded": true,
+      "freshStreamNotProvenByImageHash": true,
+      "expectedOpsURL": "http://127.0.0.1:16768/ops/",
+      "observedFullBrowserId": null,
+      "priorVisibleHashes": [],
+      "phoneModeObservation": null,
+      "frameWaitFailure": null,
+      "alertCount": 0,
+      "uncaughtOverlayCount": 0
+    },
+    "afterPhoneFrame": {
+      "kind": "after-phone-mode",
+      "at": "2026-10-15T10:17:11.381Z",
+      "address": "http://127.0.0.1:16768/ops/",
+      "frames": [
+        {
+          "decoded": true,
+          "naturalWidth": 390,
+          "naturalHeight": 616,
+          "matchingBackgroundSurface": true,
+          "layerOpacity": 1,
+          "effectiveOpacity": 1,
+          "hidden": false,
+          "renderedWidth": 390,
+          "renderedHeight": 616,
+          "uriSHA256": "d09c7dcc4ea0f60bc38c72be78b78610542d4809e47fb76754d9b8ebf3f3057e"
+        },
+        {
+          "decoded": true,
+          "naturalWidth": 390,
+          "naturalHeight": 616,
+          "matchingBackgroundSurface": true,
+          "layerOpacity": 0,
+          "effectiveOpacity": 0,
+          "hidden": false,
+          "renderedWidth": 390,
+          "renderedHeight": 616,
+          "uriSHA256": "d09c7dcc4ea0f60bc38c72be78b78610542d4809e47fb76754d9b8ebf3f3057e"
+        }
+      ],
+      "visibleDecodedCount": 1,
+      "observationStartedAt": "2026-10-15T10:17:10.315Z",
+      "observationFinishedAt": "2026-10-15T10:17:11.381Z",
+      "observationElapsedMs": 1066,
+      "pollStartedAt": "2026-10-15T10:17:11.369Z",
+      "pollFinishedAt": "2026-10-15T10:17:11.370Z",
+      "pollElapsedMs": 0.800000011920929,
+      "returnedValueType": "object",
+      "waitReturnedSnapshot": true,
+      "waitAndMetadataFromSamePoll": true,
+      "postWaitFrameDOMRead": false,
+      "synchronousPredicate": true,
+      "decodeObservation": "complete and positive natural size; no asynchronous img.decode",
+      "currentPaneConnected": true,
+      "detachedImageExcluded": true,
+      "freshStreamNotProvenByImageHash": true,
+      "expectedOpsURL": "http://127.0.0.1:16768/ops/",
+      "observedFullBrowserId": null,
+      "priorVisibleHashes": [],
+      "phoneModeObservation": {
+        "phase": "after",
+        "at": "2026-10-15T10:17:10.282Z",
+        "selected": null,
+        "ariaDisabled": null,
+        "enabled": true,
+        "visible": true
+      },
+      "frameWaitFailure": null,
+      "alertCount": 0,
+      "uncaughtOverlayCount": 0
+    },
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true,
+    "rootImageAccepted": true,
+    "originalAutomaticAuthQualified": false
+  },
+  "livePGReadOnlyCorrelation": {
+    "database": "orca_dev",
+    "OID": 16384,
+    "systemIdentifier": "7696101282789175327",
+    "ledgerCount": 19,
+    "transactionReadOnly": "on",
+    "isolation": "repeatable read",
+    "beforeAndAfterSnapshotsEach": 1,
+    "identityAndLedgerEqual": true,
+    "comparisons": {
+      "ledger": true,
+      "dataset": true,
+      "workspace": true,
+      "browserTabs": true,
+      "existingOpsBrowser": true,
+      "previousBlank": true,
+      "receiptCorrelation": true,
+      "workspaceCounts": false,
+      "linkedRuntimeUnits": true,
+      "linkedSessionLifecycle": true
+    },
+    "countsBefore": {
+      "tabs": "3",
+      "browser_tabs": "2",
+      "receipts": "24",
+      "linked_operations": "1",
+      "linked_agents": "1",
+      "sessions": "1"
+    },
+    "countsAfter": {
+      "tabs": "3",
+      "browser_tabs": "2",
+      "receipts": "25",
+      "linked_operations": "1",
+      "linked_agents": "1",
+      "sessions": "1"
+    },
+    "PGWrites": 0,
+    "rootReceiptFinding": {
+      "method": "worktree.activate",
+      "committedAt": "2026-10-15T10:17:07.872089Z",
+      "rows": 1,
+      "meaning": "기존 Catalog 선택 metadata/receipt 경로입니다. 해당 경로의 wake 호출은 0입니다.",
+      "exactUIActorProven": false,
+      "rootReview": "https://github.com/hongseok-lee/orca-1012-runtime/pull/93#issuecomment-6189932357"
+    },
+    "rawRowsPublished": false
+  },
+  "preflightFormatCorrection": {
+    "originalGuardOutcome": "9개 일치·manifest hash 1개 불일치로 PG/UI 진입 전에 중단했습니다.",
+    "localSerializedManifest": {
+      "bytes": 3844,
+      "SHA256": "2ed22632b854b80e3d0c5c4b63c63a9a20f09bed42ad607a6d4c33e62d790d22"
+    },
+    "remoteRawManifest": {
+      "bytes": 3843,
+      "SHA256": "01c2e934b37ba1feff0e17f075109c8dac867ffa3a69aa4b517ea11c84a36195"
+    },
+    "proof": "로컬 마지막 LF 한 바이트를 제외하면 원격 raw hash와 같으며 JSON 내용도 같습니다.",
+    "rootAcceptedGuardCorrectionLines": 1,
+    "remoteMetadataRequeries": 0,
+    "originalFailurePreserved": true
+  },
+  "readOnlyDetailAttempt": {
+    "startedAt": "2026-10-15T10:40:38.139Z",
+    "finishedAt": "2026-10-15T10:42:20.495Z",
+    "supervisorPID": 8241,
+    "helperPID": 8248,
+    "exit": 1,
+    "failurePhase": "bounded-root-expanded-image-review",
+    "failureCode": "ROOT_CURRENT_IMAGE_UNIT_AND_ACTION_REVIEW_REQUIRED",
+    "summaryTaps": 1,
+    "upDrags": 1,
+    "requestedDrag": {
+      "from": {
+        "x": 195,
+        "y": 550
+      },
+      "to": {
+        "x": 195,
+        "y": 100
+      },
+      "durationMs": 350
+    },
+    "observedPageMovementApproxPx": 65,
+    "causeEstablished": false,
+    "detailTaps": 0,
+    "captureCounts": {
+      "coordinate": 1,
+      "expanded": 1,
+      "detail": 0
+    },
+    "coordinateImageSHA256": "564f876611b40102080d4a950b0b54645fa0b067bbe865829cb395b6bc53f98c",
+    "coordinateImageMeaning": "새 viewer/job의 좌표 확인 관측이며 기존 overview와 pixels가 같아 공개 asset은 한 파일을 공유합니다.",
+    "expandedImageSHA256": "f02aa969df15049e1e1e4cb2fa9fd4938ed0b2b528480ef616fd1aae2078b5d3",
+    "rootExpandedApproved": false,
+    "rootReason": "상세 버튼이 화면 밖이므로 현재 binding의 approved=false를 전달했습니다.",
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true,
+    "runtimeErrors": [],
+    "knownLauncherAbsent": true,
+    "knownChildAbsent": true,
+    "supervisorEndedState": "Z",
+    "automaticRetry": 0,
+    "PGQueries": 0
+  },
+  "limits": [
+    "상세 버튼 클릭 및 상세 GET 결과는 미검증입니다.",
+    "요청한 drag와 화면 이동 차이의 원인은 미확정입니다.",
+    "원 automaticAuthQualified=false 등 raw flag는 별도 Root 이미지 수락으로 덮어쓰지 않았습니다.",
+    "UI는 full page ID를 직접 노출하지 않아 고유 Ops URL/새 frame과 별도 PG identity로 연결합니다.",
+    "실물 iPhone·모든 인증 세션 인수·P1-27 전체·HA 전체 합격이 아닙니다.",
+    "실제 화면을 오프라인 보고서 이미지로 대체하지 않았습니다."
+  ],
+  "newExecutionDuringFinalPublication": {
+    "test": 0,
+    "PG": 0,
+    "PNG": 0,
+    "live": 0,
+    "install": 0,
+    "build": 0,
+    "restart": 0
+  },
+  "usageErrors": "이번 후속 실행과 공개 turn에서 usage limit/credits/stream 원오류는 미관측입니다."
+}

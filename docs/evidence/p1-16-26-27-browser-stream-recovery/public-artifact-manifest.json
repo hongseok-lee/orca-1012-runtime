@@ -1,0 +1,51 @@
+{
+  "artifacts": [
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/final-alignment-input-delta.json",
+      "bytes": 10259,
+      "sha256": "698a05e86d59b71284f9de6620c7e5234b14c30c192ba402b907418647378f36"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/first-validation.json",
+      "bytes": 8116,
+      "sha256": "f7cc686f9bb9f7c480f168c4a0a139c28fb058682c0112081c3915872d057666"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/live-expanded-provenance.json",
+      "bytes": 5027,
+      "sha256": "22f7fb6db919d8f77abadcb59738a08acbed77294be5614f41cfd5d05b1ee2ba"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/live-expanded.png",
+      "bytes": 133021,
+      "sha256": "f02aa969df15049e1e1e4cb2fa9fd4938ed0b2b528480ef616fd1aae2078b5d3"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/live-overview-provenance.json",
+      "bytes": 2605,
+      "sha256": "cdbbb218db47679bb1a0e44a18f7297d8a3ef6a25b611afe740d5d0e8c431ebd"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/live-overview.png",
+      "bytes": 113795,
+      "sha256": "564f876611b40102080d4a950b0b54645fa0b067bbe865829cb395b6bc53f98c"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/live-ui.json",
+      "bytes": 9697,
+      "sha256": "9aca434a80a9c9fac27a0f04c1a55ef5cce6a7786e796ef7d66ae6477aab6ecd"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/pg.tap",
+      "bytes": 883,
+      "sha256": "cc3e83ca9c137ad50100ca87b8ef81d3c07ecf05f34abbbcd3b83fbb795911e8"
+    },
+    {
+      "path": "docs/evidence/p1-16-26-27-browser-stream-recovery/value.tap",
+      "bytes": 3214,
+      "sha256": "fa1aaa74ee36e2598026a4ae25bd21fe5070085d5bfad2fff61a393ef4b2f7d1"
+    }
+  ],
+  "originalPNGsUnedited": true,
+  "rawPrivateLogsOrCredentialFilesIncluded": false
+}
