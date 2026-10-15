@@ -61,6 +61,7 @@ async function observe(pool: Pool, f: ExecutionFixture, deliveryId: string, turn
 async function snapshot(pool: Pool, f: ExecutionFixture) {
   return (await pool.query(`SELECT
     (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.version) FROM durable_runtime.schema_migrations r) AS ledger,
+    (SELECT to_jsonb(r) FROM durable_runtime.sessions r WHERE r.id=$1) AS session,
     (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.messages r WHERE r.session_id=$1) AS messages,
     (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.delivery_attempts r WHERE r.session_id=$1) AS deliveries,
     (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.operation_id) FROM durable_runtime.cancel_intents r WHERE r.session_id=$1) AS cancels,
