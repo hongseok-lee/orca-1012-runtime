@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-15T12:47:02.807385+00:00",
+  "base": "c0ccca1735dfd652765e36cb8cd0171bde10d00b",
+  "head": "affc182389e1bce9e433335080b00581ab5621f2",
+  "earlyProductPin": "25e86fcffe776998469374e78d2569f8e11ceb0d",
+  "files": {
+    "src/main/durable-runtime/storage/store.ts": {
+      "bytes": 24123,
+      "lines": 309,
+      "sha256": "d8bc3dc1696ab6e78c08993193ef21362110e744fc5a565e50c0f7f51019401f"
+    },
+    "src/main/durable-runtime/storage/binding-verification.ts": {
+      "bytes": 6428,
+      "lines": 102,
+      "sha256": "25d74495545f81be0e846994d439fa441098acd9db67e01c25f3bf7bbc6b4fe2"
+    },
+    "src/main/durable-runtime/storage/binding-verification.pg.test.mts": {
+      "bytes": 24419,
+      "lines": 332,
+      "sha256": "0083c189233cc862d87ae3c9ff2c4a6d29fe0271d731b0604e0975a928693e8f"
+    }
+  },
+  "exactDiffSHA256": "78eb250c9297f6bb3a0c91b23c309750d9458181e593559f705bab7c64767a90",
+  "owned3": [
+    "100644 blob 0d50bf35b9a8edb4d340aa5676cc36b59aaa1606\tsrc/main/durable-runtime/storage/binding-verification.pg.test.mts",
+    "100644 blob 221a63bf281ffadd9ee3b0d504deccc710bb5a85\tsrc/main/durable-runtime/storage/binding-verification.ts",
+    "100644 blob 539484b87cdf69a5f384c839eb7aefe08bc0629b\tsrc/main/durable-runtime/storage/store.ts"
+  ],
+  "fixtureTopLevelCallbacks": 1,
+  "productSinceEarlyUnchanged": true,
+  "schemaCanonicalAuthorityRegisterAttachUnchanged": true,
+  "fixtureSamePoolIdentityBeforeFirstSeed": true,
+  "fixtureUsesExistingLedger21WithoutApply": true,
+  "fixtureOnlySyntheticAuthority": true,
+  "execution": {
+    "lint": 1,
+    "lintWholeExit": 1,
+    "inheritedLintDiagnostics": 26,
+    "newLintDiagnostics": 0,
+    "type": 1,
+    "typeWholeExit": 0,
+    "PGCallbacks": 1,
+    "PGWholeExit": 0,
+    "SQLApply": 0,
+    "PNG": 1,
+    "live": 0,
+    "NFS": 0,
+    "provider": 0,
+    "install": 0,
+    "build": 0,
+    "heavy": 0
+  },
+  "usageLimitCreditsStream": "미관측",
+  "sourceOnly": false,
+  "rootContractPrivateSHA256": "ec6c7a93b73c53e93ada60b8e786416197a7d26a9e0ac1ec007371e15ff2cc3d",
+  "rootContractPublicSHA256": "c788bbf5ca0f77c8518770c47c5f3195fdd63d4227d297c218ea784ce0d93746",
+  "fixtureExecution": "최초 PG callback 1개 PASS; 부모 wrapper는 제품 callback 수에 합산하지 않습니다.",
+  "preparedEvidenceIsPhysicalLifetimeProof": false,
+  "validatedSourcePin": "affc182389e1bce9e433335080b00581ab5621f2",
+  "fixtureExecuted": true,
+  "lintBaselinePin": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "rebaseCount": 0
+}

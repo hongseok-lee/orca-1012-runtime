@@ -2,11 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts';
 import { lockAggregates } from '../db/locks.ts';
 import { appendAudit, appendSessionEvent, enqueueOutbox } from '../journal/store.ts';
-import { counter, logicalId, type SessionId, type RuntimeUnitId, type AttemptId,
-  type OperationId, type StorageBindingId, type ExecutionEpoch, type StorageEpoch,
-  type RowRevision } from '../../../shared/durable-runtime/identity.ts';
+import { counter, logicalId, type SessionId, type RuntimeUnitId, type AttemptId, type OperationId, type StorageBindingId, type ExecutionEpoch, type StorageEpoch, type RowRevision } from '../../../shared/durable-runtime/identity.ts';
 import { sameDirectory, type CanonicalCandidate } from './canonical.ts';
 import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence, ExecutionTarget } from './evidence.ts';
+import { verifyBindingInTransaction, type BindingVerificationInput } from './binding-verification.ts';
 
 type State = 'RESERVED' | 'ACTIVE' | 'REVOKING' | 'REVOKED';
 export type Binding = { id: StorageBindingId; backend_id: string; export_id: string;
@@ -35,6 +34,7 @@ function matchesBinding(c: CanonicalCandidate, b: Binding): boolean {
 // outside the transaction. No production verifier/pin or actuator is supplied.
 export class StorageStore {
   constructor(private readonly authority: StorageEvidenceAuthority) {}
+  verifyBinding(tx: DurableTransaction, input: BindingVerificationInput): Promise<Binding> { return verifyBindingInTransaction(tx, input, this.authority, this.directoryPinValid.bind(this), this.event.bind(this)); }
   private async event(tx: DurableTransaction, scope: StorageScope, binding: Binding, kind: string,
     detail: { grantId?: string; mountId?: string; state?: string; reason?: string } = {}): Promise<void> {
     const event = { kind, bindingId: binding.id, revision: binding.revision, ...detail };

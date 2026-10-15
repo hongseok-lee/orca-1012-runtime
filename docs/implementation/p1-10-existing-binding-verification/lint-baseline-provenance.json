@@ -1,0 +1,8 @@
+{
+  "baselinePin": "9339d7457ff3fc7aa0dd12dd3decef862b57bcbe",
+  "baselineFile": "src/main/durable-runtime/storage/store.ts",
+  "baselineFileSHA256": "125a5d08c7ef0cd60ef87b83c461c535491480d60fdb4bc25c8c9af7d64ce82a",
+  "classifierCapturedFileMatchesNamedBaseline": true,
+  "currentProductBase": "c0ccca1735dfd652765e36cb8cd0171bde10d00b",
+  "classificationMeaning": "baseLines는 지정한 이전 baseline의 행 번호입니다. Root가 현재 main의 같은 statement와 현재 행을 별도로 대조해 수락했습니다."
+}
