@@ -1,0 +1,55 @@
+diff --git a/src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql b/src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql
+index 39433fcf..30e3c6b7 100644
+--- a/src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql
++++ b/src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql
+@@ -23,6 +23,17 @@ CREATE TRIGGER runtime_member_primary_storage_binding AFTER INSERT ON runtime_me
+ CREATE TRIGGER retain_runtime_member_storage_bindings BEFORE UPDATE OR DELETE ON runtime_member_storage_bindings
+   FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+ 
++CREATE FUNCTION keep_runtime_member_primary_storage_binding() RETURNS trigger LANGUAGE plpgsql
++SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
++BEGIN
++  IF NEW.storage_binding_id IS DISTINCT FROM OLD.storage_binding_id THEN
++    RAISE EXCEPTION USING ERRCODE='23514', MESSAGE='Primary storage binding is immutable';
++  END IF;
++  RETURN NEW;
++END $$;
++CREATE TRIGGER runtime_member_primary_storage_binding_guard BEFORE UPDATE OF storage_binding_id ON runtime_members
++  FOR EACH ROW EXECUTE FUNCTION keep_runtime_member_primary_storage_binding();
++
+ -- Preserve 007's domain write gate, post-gate epoch read, immutable grants and
+ -- parent/child conflict checks; membership now includes every attached binding.
+ CREATE OR REPLACE FUNCTION guard_storage_writer() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, durable_runtime, pg_temp AS $$
+diff --git a/src/main/durable-runtime/storage/session-storage-bindings.pg.test.mts b/src/main/durable-runtime/storage/session-storage-bindings.pg.test.mts
+index 4ac74946..d67c1268 100644
+--- a/src/main/durable-runtime/storage/session-storage-bindings.pg.test.mts
++++ b/src/main/durable-runtime/storage/session-storage-bindings.pg.test.mts
+@@ -228,6 +228,18 @@ await test('Session storage bindings: migration021 and focused Store/lifecycle/O
+     ...scope(a, hidden), bindingId: privateHome, directoryEvidenceRef: privateHeld.reference
+   }))
+ 
++  // Root's 11:24 addition: direct primary reassignment must not split the old
++  // primary consumers from the append-only additional association history.
++  const associationsBefore = (await pool.query(`SELECT * FROM durable_runtime.runtime_member_storage_bindings
++    WHERE session_id=$1 ORDER BY storage_binding_id`, [sa])).rows
++  await rejectCode(withDurableTransaction(pool, tx => tx.query(`UPDATE durable_runtime.runtime_members
++    SET storage_binding_id=$3 WHERE runtime_unit_id=$1 AND session_id=$2`, [a, sa, home])), '23514')
++  assert.equal((await pool.query('SELECT storage_binding_id FROM durable_runtime.runtime_members WHERE session_id=$1', [sa])).rows[0].storage_binding_id, primary)
++  assert.deepEqual((await pool.query(`SELECT * FROM durable_runtime.runtime_member_storage_bindings
++    WHERE session_id=$1 ORDER BY storage_binding_id`, [sa])).rows, associationsBefore)
++  assert.equal((await withDurableTransaction(pool, tx => tx.query(`UPDATE durable_runtime.runtime_members
++    SET storage_binding_id=storage_binding_id WHERE runtime_unit_id=$1 AND session_id=$2`, [a, sa]))).rowCount, 1)
++
+   const bindingBefore = await bindingRow(home)
+   const unitBefore = (await pool.query('SELECT * FROM durable_runtime.runtime_units WHERE id=$1', [a])).rows[0]
+   const historyBefore = await history(sa2, home)
+@@ -347,7 +359,8 @@ await test('Session storage bindings: migration021 and focused Store/lifecycle/O
+   assertRetained(originalRows, await rowHashes())
+   await identity(pool)
+   console.log(JSON.stringify({ phase: 'SESSION_BINDINGS_CASES', callbackCount: 1,
+-    cases: ['021-backfill-and-primary-insert-trigger', 'register-secondary-primary-preserved', 'attach-and-history-rollback-together',
++    cases: ['021-backfill-and-primary-insert-trigger', 'register-secondary-primary-preserved', 'primary-reassignment-refused-associations-retained',
++      'attach-and-history-rollback-together',
+       'attach-replay-no-new-event-or-binding-state-change', 'wrong-unit-revision-binding-and-relation-mutation-refused',
+       'store-and-direct-sql-exact-membership-and-writer-conflict', 'secondary-writer-blocks-lifecycle-with-no-local-prior-attempt',
+       'ops-all-authorized-bindings-no-duplicates-or-private-workspace', 'original-ids-rows-and-ledger20-preserved'],

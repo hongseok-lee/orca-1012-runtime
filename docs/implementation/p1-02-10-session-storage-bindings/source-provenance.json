@@ -1,0 +1,70 @@
+{
+  "base": "a8874fd1952f010f2da1ed4a43352510394cfbed",
+  "head": "b6c7a3ca10c3616e9178421ea04fc1a0b70dbe0a",
+  "earlyProductPin": "7f4a5c6147b2b22cbfb127a61a9afb478b0cdb1c",
+  "primarySupplementPin": "7474abf8011eea064add4b65f78b02a381110e59",
+  "ownedPaths": [
+    "src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql",
+    "src/main/durable-runtime/lifecycle/controller.ts",
+    "src/main/durable-runtime/ops/unit.ts",
+    "src/main/durable-runtime/storage/session-storage-bindings.pg.test.mts",
+    "src/main/durable-runtime/storage/store.ts"
+  ],
+  "ownedEntries": [
+    "100644 blob 30e3c6b7e5ca9707e2bf3bea56aeadd4a1fe80a9\tsrc/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql",
+    "100644 blob b8122f39758464bde20557f65e20867749acfc52\tsrc/main/durable-runtime/lifecycle/controller.ts",
+    "100644 blob 94ae5129470670dee495a11468fa476c3b192780\tsrc/main/durable-runtime/ops/unit.ts",
+    "100644 blob 58b7d1d99fb6b05fdc33cea1bcc4591b15f7b77c\tsrc/main/durable-runtime/storage/session-storage-bindings.pg.test.mts",
+    "100644 blob 19bb87690cce23034ccdcc8d5837b0eaca05ac30\tsrc/main/durable-runtime/storage/store.ts"
+  ],
+  "ownedFiles": {
+    "src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql": {
+      "bytes": 4387,
+      "lines": 71,
+      "sha256": "4aafe9e45241e8a2c73789fab12d26373b5bcc9c432b02b4c445ae5260d82a5a"
+    },
+    "src/main/durable-runtime/lifecycle/controller.ts": {
+      "bytes": 13537,
+      "lines": 173,
+      "sha256": "d9fce1c9a8c9b4d4a65c3f84dd24c9edb63960b194865a1db6bfa6bc658739ed"
+    },
+    "src/main/durable-runtime/ops/unit.ts": {
+      "bytes": 6485,
+      "lines": 66,
+      "sha256": "1bbb2b0554874fedd24d39eb5151471e728b654518cba862a2214bdcef8f5b5f"
+    },
+    "src/main/durable-runtime/storage/session-storage-bindings.pg.test.mts": {
+      "bytes": 28391,
+      "lines": 371,
+      "sha256": "057040b6c47374d34ace9d49e521dfd7acbeae71e3e281267ac390f8c8ca3030"
+    },
+    "src/main/durable-runtime/storage/store.ts": {
+      "bytes": 23891,
+      "lines": 313,
+      "sha256": "63c47c62a7dd639e86ac083da50e78fd8ccd179bc833d3918c27f8db6fc60863"
+    }
+  },
+  "exactDiffSHA256": "afd8665a81a4421fccdb46ef59375c200303ea1bf09c6065a6db593ad29f6452",
+  "primarySupplementDiffSHA256": "80e84c71fe1bb3b9a8934307dbd2c23d9b57af55af9d4a5b9345fefa9554e326",
+  "oldMigration001to020Unchanged": true,
+  "primaryConsumersUnchanged": true,
+  "fixtureTopLevelCallbacks": 1,
+  "fixtureExecuted": false,
+  "execution": {
+    "remoteEnvironment": 0,
+    "PG": 0,
+    "SQL": 0,
+    "type": 0,
+    "lint": 0,
+    "test": 0,
+    "live": 0,
+    "build": 0,
+    "install": 0,
+    "PNG": 0,
+    "heavy": 0
+  },
+  "usageLimitCreditsStream": "이번 turn에서 usage limit·credits·stream 중단 원오류는 미관측입니다.",
+  "sourceOnly": true,
+  "migrationLoader": "기존 readMigrations의 파일명 검색이 021을 자동 발견합니다. 별도 등록/기존 migration 수정은 없습니다.",
+  "knownLimit": "새 관계는 논리 소속만 표현하며 directory 인증·RO/RW 허가·물리 old-writer 종료 proof가 아닙니다."
+}
