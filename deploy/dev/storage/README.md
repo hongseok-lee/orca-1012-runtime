@@ -97,6 +97,10 @@ G03는 14:03:37 UTC에 정확히 결합된 PV/PVC/Pod를 1 batch로 생성했고
 
 [RO 정제 결과](evidence/managed-leaf-readonly.md)와 [JSON/provenance](evidence/managed-leaf-readonly-provenance.json)에 14:48 Root 수락의 VFS ro·open 1회 EROFS·write 0·기존 marker 불변·직접 TCP timeout 및 원 비교 실패→로컬 교정을 구분했습니다. PR102의 14:06 PNG는 RO 이전 UI 이력으로만 참조하며 다수 RO 전체/production authority/old writer fencing/HA 합격은 아닙니다.
 
+### 인증된 collector의 최초 관측
+
+[Collector 결과](evidence/managed-leaf-collector.md)와 [정제 JSON](evidence/managed-leaf-collector.json), [필드별 정제·원자료 hash](evidence/managed-leaf-collector-provenance.json)에 2026-10-15 15:22 UTC의 Root 수락 범위를 기록했습니다. 제품의 최초 실제 인증 수집 1회에서 TLS GET 5개·v5 WSS 1개·정상 close와 같은 NFS incarnation의 server candidate를 확인했고 `namespacePin:false`를 유지했습니다. 합성 callback 1개/subcase 10개의 최초 실패·교정·성공과 실제 수집을 구분합니다. PR102의 14:06 PNG는 collector 이전 UI 이력으로만 참조합니다. 이 공개 작업의 추가 실행/시험/PNG는 0이며 lifetime pin·StorageEvidenceAuthority·writer grant·physical fence·SQL/HA 합격은 아닙니다.
+
 ## Optional NFS kernel-client ingress boundary
 
 `25-nfs-kernel-clients.yaml.in` selects the NFS Pods by both `app.kubernetes.io/name=orca-dev-nfs` and the exact dataset label in the chosen namespace. It permits ingress on TCP 2049 from one operator-verified node primary IPv4 subnet. It adds no egress rule, Pod/namespace peer selector, external Service, or host-network exception. Both existing NFS and MOUNT services use TCP 2049.

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "kind": "managed-leaf-collector-public-projection-provenance",
+  "documentationBase": "9ba7a0a3a74036ccf9fd9a1fd06d9443867bcc72",
+  "acceptedProductHead": "10e0e87565e094749a6923ff6580345301d4b724",
+  "executionSourcePin": "aa512be7896a1bacd501dd375b947d23aa3b8063",
+  "acceptedPrivateHandoffSha256": "e1a664c5b0fcf56e69afb8d346d009ecc109bac3e760a7dc0b1314cb60b9e33a",
+  "rootActualAuditSha256": "2a50886835d55d7a887eb7bc9fc0daa6545910767c8a6694a33a5e381fd4d3ec",
+  "rootSyntheticAuditSha256Prefix": "73d5799f",
+  "originalPrivateEvidenceUnmodified": true,
+  "privateAndPublicHashesHaveDifferentMeaning": true,
+  "privateOriginalArtifacts": {
+    "execute-actual.json": {
+      "bytes": 671,
+      "sha256": "b9f6fe713ee3d76187e6cdac2c03d2a5a396b147b3eebb7d404dd1fc7e411b24"
+    },
+    "actual-input.exact.diff": {
+      "bytes": 669,
+      "sha256": "8c9af60ed1edd2740e60066c743a35c9935b7bc4c88140807f08234b10e7a82e"
+    },
+    "actual-once/execution-state.json": {
+      "bytes": 15706,
+      "sha256": "1c2c6621e01546a7a575fc51360ddd209e798d9476549bed632168b68eb9164b"
+    },
+    "actual-once/collector.stdout.json": {
+      "bytes": 6698,
+      "sha256": "c4422ba00f166d2b93605c8568a49ee61655c404f39f11ac5ff487546ab0bc3b"
+    },
+    "actual-once/collector.stderr.log": {
+      "bytes": 178,
+      "sha256": "2ab49fd671f7d8f15155643e04bce5f49fc59b4526cbaed445cdd873638c3c63"
+    },
+    "actual-once/collector.stderr.metadata.json": {
+      "bytes": 69,
+      "sha256": "09527d058df5d846e495316f8c69554bc27800f70320522e4c0d9569174ae5aa"
+    }
+  },
+  "acceptedSyntheticHandoffSha256": "25e6ad4942855e900f12850d76359eb0feffd1f8dd643e6815b23e3bcfb4222b",
+  "privateSyntheticOriginalHashes": {
+    "owned-lint.stdout.log": {
+      "bytes": 91,
+      "sha256": "33381aefe2eb0373fb681127afe250aae694ddf6b64173e4633ff083c3be6d96"
+    },
+    "owned-type.stdout.log": {
+      "bytes": 28061,
+      "sha256": "d4f18edccfc58b8bfcd40ff91dd15a33bb5b53abb3938b29df1d142c7ec98619"
+    },
+    "value.tap": {
+      "bytes": 2890,
+      "sha256": "c31a2e1c3f09b16eeecc9773ddec5eb9247d31b8cc75b28d2160efe99b5d94ed"
+    },
+    "value.metafile.json": {
+      "bytes": 15558,
+      "sha256": "8af6ebfc7880d7e857a2fd76cfebbf100ec3860f03bb00b9ec38aac736e20722"
+    },
+    "value.actual-inputs.json": {
+      "bytes": 3651,
+      "sha256": "7a04cdbb695554722e58cd8a7aee0585ce511b3592a55b927af44bfc788046b8"
+    },
+    "actual-type-inputs.json": {
+      "bytes": 30867,
+      "sha256": "714e59c230d10c0ab0ba52b294a51c34037b2d922ff9d59602ca98068693eca3"
+    }
+  },
+  "publicProjectionSha256": {
+    "managed-leaf-collector.json": "b6af7f562b22b56c33ac27f99f1d37d45b6b3eb05b24a23b80fc35e6f541eec8",
+    "managed-leaf-collector.md": "49a4c8a19f34eaf6607714e41782df125254e10653e2f53d64dcc077ce6c71f9"
+  },
+  "contracts": {
+    "sourceOriginalSha256": "a4ff8e21bd5b0d9d07a2c7a42692dbe45f7b747fd23c4b3e19210c540df77ab9",
+    "sourcePublicSha256": "edbeaa71916294d6ff2cb9d2fa19b3e81a29051ec0838cc102b28fbe2c347281",
+    "actualOriginalSha256": "2215d8582ab97361a1c23170f16b6f7c6aabcf1632c37604388636a2daf9f616",
+    "actualPublicSha256": "142d389cc4cee2fd695fc0f53072780beaa92e81bd37ab099c0040d45b292e67"
+  },
+  "fieldMappings": [
+    {
+      "input": "actual-result-handoff.observation.clusterIdentityRef; execute config API origin/CA/context; execution-state.serviceEndpoint",
+      "output": "scopeValidation.fixedInternalOriginAndCA; 공개 실행 계약의 검증된 origin/CA placeholder",
+      "rule": "운영주소·CA identity·context를 게시하지 않고 검증 결과와 고정 경계를 보존합니다."
+    },
+    {
+      "input": "observation.namespace/dataset/leafId; candidate.canonicalDirectory",
+      "output": "observation.namespace/dataset/leafId/candidate.canonicalDirectory",
+      "rule": "실제 식별자만 역할 placeholder로 일반화합니다. 원 candidate가 아닌 projection임을 명시합니다."
+    },
+    {
+      "input": "observation.pod.name/uid/nodeName/containerId/imageId/resourceVersion/finalPodResourceVersion; candidate.podUid/generation",
+      "output": "scopeValidation.samePodUIDContainerImageRestartAfterExec; observation.candidate.identityProjection",
+      "rule": "상세 infrastructure identity는 제외하고 실제 동일 incarnation 대조 결과와 restartCount를 유지합니다. 축약된 실제 Pod UID도 공개하지 않습니다."
+    },
+    {
+      "input": "observation.candidate.domain.backendId/pvUid; storage.pvc.name/uid/resourceVersion; storage.pv.name/uid/resourceVersion/volumeHandle; storage.helper.name/uid/resourceVersion",
+      "output": "observation.candidate.domain; scopeValidation.exactPodPVC_PV_HelperIdentity",
+      "rule": "역할 placeholder와 검증 결과로 일반화합니다. CSI driver·원 source/helper hash는 논리 의미로 유지합니다."
+    },
+    {
+      "input": "actual-input.exact.diff; execute-actual.rootApprovalRef; private evidence paths; launcher argv/commands",
+      "output": "원자료 size/SHA와 공개 실행 계약",
+      "rule": "승인 변경은 rootApprovedExecution/focusedVerificationAccepted/rootApprovalRef 3필드뿐임을 보존하고 원 argv·실제 경로·준비 묶음은 게시하지 않습니다."
+    },
+    {
+      "input": "original collector.stderr.log",
+      "output": "actual.stderr; md의 178 B ExperimentalWarning 설명; privateOriginalArtifacts",
+      "rule": "token-free warning의 size/hash/의미만 공개하며 gcloud/kubectl 민감 stderr는 미보존으로 구분합니다."
+    },
+    {
+      "input": "collector.stdout sourceFiles/http/ws/calls/UTC/PID/cleanup; candidate.device/inode/digest",
+      "output": "runtimeSourceFiles/actual/observation",
+      "rule": "원 값과 의미를 유지합니다. Device/inode는 server namespace의 stat이며 authority가 아닙니다."
+    },
+    {
+      "input": "first synthetic lint/type failures and corrected successful run",
+      "output": "syntheticVerification; 원 stdout/TAP/metafile hash",
+      "rule": "초기 실패·최소 교정·성공을 분리하고 scoped source18/value17의 검증 입력을 유지합니다."
+    },
+    {
+      "input": "PR102 original Expo PNG/provenance",
+      "output": "historicalUI 및 기존 파일 링크",
+      "rule": "collector 이전 14:06:37.253Z 이력으로만 참조하고 새 PNG를 만들지 않습니다."
+    }
+  ],
+  "historicalPng": {
+    "pr": 102,
+    "path": "managed-nfs-rollout-expo.png",
+    "capturedAt": "2026-10-15T14:06:37.253Z",
+    "sha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+    "bytes": 146837,
+    "meaning": "Collector 실행 전 기존 개발 UI의 연속성 증거이며 collector 또는 새 UI 시험 화면이 아닙니다.",
+    "newCaptureOrPNG": 0
+  },
+  "publicationNewExecutions": 0,
+  "rootAcceptanceUTC": "2026-10-15 15:22 UTC"
+}
