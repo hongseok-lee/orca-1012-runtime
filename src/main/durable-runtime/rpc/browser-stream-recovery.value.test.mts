@@ -22,7 +22,7 @@ test('인증된 Browser stream은 기존 native 조회를 보존하고 부재만
     ) {
       assert.equal(this, native.runtime)
       calls.push({ params: { ...params }, options })
-      options.emit({ type: 'synthetic-stream-frame', page: params.page })
+      options.emit({ type: 'end', subscriptionId: `synthetic-stream-recovery:${params.page}` })
     } })
     const original = BROWSER_SCREENCAST_METHODS.find(method => method.name === 'browser.screencast')!
     const methods = adapter.bind(BROWSER_SCREENCAST_METHODS)

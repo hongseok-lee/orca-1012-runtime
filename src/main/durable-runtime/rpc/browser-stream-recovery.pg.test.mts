@@ -81,7 +81,7 @@ test('원 dispatcher에서 PG OPEN row를 재사용해 같은 native ID를 복�
     assert.equal(this, f.runtime); streams++
     assert.equal(params.page, openPage); assert.equal(params.worktree, `id:${publicId}`)
     assert.ok(f.authority.findPageSession({ browserPageId: openPage, worktreePublicId: publicId }))
-    options.emit({ type: 'synthetic-stream-frame', page: openPage })
+    options.emit({ type: 'end', subscriptionId: `synthetic-stream-recovery:${openPage}` })
   } })
   const dispatcher = new RpcDispatcher({ runtime: f.runtime, methods: adapter.bind(BROWSER_SCREENCAST_METHODS) })
   const replies: { ok: boolean; error?: { code: string }; result?: unknown }[] = []
