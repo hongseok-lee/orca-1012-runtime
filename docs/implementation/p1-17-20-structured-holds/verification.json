@@ -1,0 +1,184 @@
+{
+  "sourcePin": "a49774b5a537b8ceee5c286c3833e8524d5e74f4",
+  "base": "ab9b369d5318b01cd862e5abc78307a06e983685",
+  "product4AndValueBlobModeUnchanged": true,
+  "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/78#issuecomment-6183626521",
+  "initialLint6": {
+    "pin": "74f720ea6234bfe7a1784dd5b7673a34a72107c3",
+    "exit": 0,
+    "repeated": false
+  },
+  "value": {
+    "pin": "74f720ea6234bfe7a1784dd5b7673a34a72107c3",
+    "callbacks": 1,
+    "actualTestPID": 31638,
+    "exit": 0,
+    "TAPpass": 2,
+    "parentProductCallbacks": 0,
+    "repeated": false,
+    "TAPSHA256": "229a555db771e3a7805a6f1642d35ce57faef1f8ed29a2c7e73a0b5238b94794"
+  },
+  "PG": {
+    "pin": "a49774b5a537b8ceee5c286c3833e8524d5e74f4",
+    "callbacks": 1,
+    "parentProductCallbacks": 0,
+    "actualTestPID": 31921,
+    "runnerPID": 31915,
+    "exit": 0,
+    "TAPpass": 2,
+    "TAPfail": 0,
+    "cancelled": 0,
+    "rawTAPSHA256": "793af90f8c1178245abf748ff1c3d64728a71dfe2686541e16a937f5482d6100"
+  },
+  "failureBoundaries": [
+    {
+      "kind": "최초 PG snapshot 배열 순서",
+      "sourcePin": "74f720ea6234bfe7a1784dd5b7673a34a72107c3",
+      "actualTestPID": 31672,
+      "exit": 1,
+      "TAPSHA256": "78cc64ca9de35dcf27b529667dcccb079933a2779022dbcc3bbe9af5c98a490e",
+      "tableHashMapEqualCount": 73,
+      "resultOrderEqual": false
+    },
+    {
+      "kind": "ORDER BY 표현의 prefer-template lint",
+      "sourcePin": "8d3e9eb8f72d810af96fbfdd0bf1cb175fd8967b",
+      "exit": 1,
+      "PGEntered": false,
+      "logSHA256": "761be0525bd4f6af628b97d48fa29ff0ae28c7e51aac8e14a0d0556ff602195c",
+      "correction": "동일 SQL 문자열의 template literal 표현으로 교정했습니다."
+    },
+    {
+      "kind": "기존 manifest의 blob-only 항목을 SHA로 읽은 준비 오류",
+      "sourcePin": "a49774b5a537b8ceee5c286c3833e8524d5e74f4",
+      "flaggedEntries": 368,
+      "actualFixedGitMismatches": 0,
+      "PGEnteredBeforeCorrection": false,
+      "logSHA256": "0e007d75d4262bc0c8bf2179ccc6ce0710b273f23b144e85a925cf8f70e29905",
+      "correction": "기존 SHA-or-blob 비교로 원 artifact를 대조한 뒤 동일 artifact만 실행했습니다."
+    }
+  ],
+  "changedPGFixtureLint": {
+    "sourcePin": "a49774b5a537b8ceee5c286c3833e8524d5e74f4",
+    "exit": 0,
+    "logSHA256": "698cd8dcde1f65255ec82f9a89394e6a26681b74af32b4a2d1471e357969b2fe"
+  },
+  "runtime": {
+    "inputs": 462,
+    "originalActualFixedGitMismatch": [],
+    "representationCorrectedMismatch": [],
+    "SQL19": 19,
+    "metafileSavedBeforeGuard": true,
+    "sameArtifactHashVerifiedBeforePG": true,
+    "PGCallbackBodySHA256": "f213fc9cebd9ed30a9477b1238b23a8c44f9dd4a98f326707a115be44a535a91",
+    "PGOriginalBodyUnchanged": true,
+    "wholeStageRepeated": false,
+    "successfulValueRepeated": false,
+    "successfulLint6Repeated": false,
+    "bundleRebuiltForGuardCorrection": false
+  },
+  "reusedArtifactHashes": {
+    "bundles/pg.cjs": "399bf655e3afce7b9cde054bd556dc06309438065bafb64041b6c00bc018ead1",
+    "bundles/pg.cjs.metafile.json": "a3f66aa8c88a32ff972dce945457f06e8c639b9b7b40aa76aa9580b6ec54ae8b",
+    "pg-actual-inputs.json": "2c5da27f6758734e2a00fa5cc5b00becd6faaa02a2eaa1c041c481a7f9d6dbc7",
+    "pg.generated.cts": "301ce2b8c1754820f3f0c3234fb6f2001a6e8480d3e2e8e042b2b33e6928458b",
+    "structured-holds.pg.test.mts": "d63da6ae8908d652c727e3e70f465bdcd8f240054ff1beffef9684131dae4a0f"
+  },
+  "databaseGuard": {
+    "samePoolBeforeSeed": true,
+    "databaseOidSystemDatasetMatched": true,
+    "tables": 73,
+    "originalRowBaselines": [
+      195,
+      207
+    ],
+    "originalMultisetsPreserved": true,
+    "ledgerCount": 19,
+    "ledgerUnchanged": true
+  },
+  "scope": {
+    "actualAdapterBindAndOriginalDeclaration": true,
+    "logicalPod0Sessions": true,
+    "perRPCBusinessTablesUnchanged": true,
+    "syntheticTransportAndSeedOnly": true,
+    "liveExpoResultJoined": true,
+    "nativeDeviceProviderHAQualified": false,
+    "holdReleaseUISuccessQualified": false,
+    "liveExpoQualification": "실제 Expo Web 첫 실패만 합류했으며 hold/subscribe 성공 증거가 아닙니다."
+  },
+  "notRepeated": {
+    "initialLint6": true,
+    "value": true,
+    "entireStage": true,
+    "bundleForGuardCorrection": true
+  },
+  "DDLResetDeleteSchemaTypeInstallFullBuildLiveUIProvider": 0,
+  "jobsCompleted": true,
+  "heavy": 0,
+  "usageCreditsStreamErrorObserved": false,
+  "C4UIFailure": {
+    "sourcePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "actual15ManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+    "installedClientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "childPID": 5199,
+    "startedAt": "2026-10-15T03:25:48.372Z",
+    "finishedAt": "2026-10-15T03:26:14.117Z",
+    "exitCode": 1,
+    "helperFailure": {
+      "phase": "new-browser-label",
+      "name": "Error",
+      "code": "PHASE_DEADLINE_EXCEEDED"
+    },
+    "actualAppFailure": {
+      "error": "image?.setNativeProps is not a function",
+      "sourceLocations": [
+        "MobileBrowserPaneView.tsx (198:23)",
+        "mobile-browser-frame-state.ts (104:10)"
+      ]
+    },
+    "clicks": {
+      "browserOpenClicks": 1,
+      "codexSelectionClicks": 0,
+      "sendClicks": 0,
+      "tabAwayClicks": 0,
+      "tabReturnClicks": 0,
+      "helperResubmissions": 0,
+      "directRpcCalls": 0
+    },
+    "PNG": {
+      "path": "c4-first-ui-failure.png",
+      "sha256": "fcb6ace7428b97415a5fdb85ddbc2ac341c0d40a94b9204bac763f54cc3e7499",
+      "bytes": 63044,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "actualDevelopmentUI": true,
+      "nativeIPhone": false,
+      "failureEvidence": true,
+      "BrowserStreamQualified": false,
+      "ChatQualified": false,
+      "provenance": "c4-first-ui-failure-provenance.json",
+      "provenanceSHA256": "adcb25c6c83424ec5224e3233c9974e56375d3722eb2b9487891174f5510ad05"
+    },
+    "holdReleaseUISuccessQualified": false,
+    "PGCorrelationPending": true,
+    "automaticRetry": false,
+    "additionalOpenCodexSendOrFix": false,
+    "directPgOperations": 0,
+    "qualification": "다른 Client worker의 최초 실패 인계를 문서로 합류했습니다. 이 worker는 제품/원격/UI를 변경하거나 재실행하지 않았습니다."
+  },
+  "verifiedSourcePin": "a49774b5a537b8ceee5c286c3833e8524d5e74f4",
+  "alignedSourcePin": "e7648d41c9f2638fc602a6a68c9eec06649a27ec",
+  "alignedBase": "fce7a8eef2aab893e2292f945adc0b572e884c15",
+  "sourceAlignment": {
+    "originalRef": "a49774b5a537b8ceee5c286c3833e8524d5e74f4",
+    "originalBase": "ab9b369d5318b01cd862e5abc78307a06e983685",
+    "rebaseCount": 1,
+    "owned6BlobModeUnchanged": true,
+    "actualRuntimeInputs": 462,
+    "SQL19": 19,
+    "consumedDelta": [],
+    "successfulVerificationRepeated": false
+  }
+}
