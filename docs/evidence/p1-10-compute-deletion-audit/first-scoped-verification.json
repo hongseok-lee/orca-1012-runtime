@@ -1,0 +1,73 @@
+{
+  "kind": "pure-parser-and-injected-https-stream-fixture-report",
+  "verifiedSource": "03c7614fd48d1c199f563b79825dd8408efc2593",
+  "fixedBase": "e07023c7005ced45466185ca8efc0e928cf8b06c",
+  "originalSource": "6a0b54851265427b4288d8eb7a6be291bf90d8c9",
+  "originalLint": {
+    "exit": 1,
+    "rule": "prefer-template",
+    "diagnostics": 3,
+    "fixtureFiles": 2
+  },
+  "correction": "Three equivalent string concatenations changed to template literals; assertions/callbacks/product source unchanged",
+  "checks": {
+    "changedLint": {
+      "files": 2,
+      "exit": 0
+    },
+    "scopedType": {
+      "ownedFiles": 10,
+      "exit": 0,
+      "ownedDiagnostics": 0,
+      "externalDiagnostics": 0
+    },
+    "parser": {
+      "subtests": 11,
+      "exit": 0,
+      "tapSha256": "178fc499ceb796c0d165bcf2b9698747eaa83373ed98e29dcfc9cd6c6761f10b"
+    },
+    "transport": {
+      "subtests": 8,
+      "exit": 0,
+      "tapSha256": "e0f48b39a6a2f69cedf32f98eaf62b99df123e9ffbbdba647ac0299576877222"
+    }
+  },
+  "verificationUtc": {
+    "startedAt": "2026-10-15T04:23:06.436Z",
+    "finishedAt": "2026-10-15T04:23:10.385Z"
+  },
+  "metafiles": {
+    "parser": {
+      "sha256": "cafa9a989bd4920b1c20bbab45911e99a78f91647777fe4ed17bf5d53517694f",
+      "consumedInputs": 8
+    },
+    "transport": {
+      "sha256": "6006abe2b953af87ce75bb7f22ba8f1ec0ea59ab0bb15fcf406a1d9a60c5f54a",
+      "consumedInputs": 9
+    }
+  },
+  "report": {
+    "png": "first-scoped-verification.png",
+    "sha256": "13bf52ea6f640fb46a3c8758ce4f0a169e0a5830024a5cd5893f71410bdf4fa0",
+    "bytes": 123513,
+    "width": 1280,
+    "height": 1080,
+    "htmlSha256": "8ba884c33e34f4bbf3e3e77e7cd4571daa55ddac914695017fc0beafa45fae9b",
+    "capturedUtc": "2026-10-15T04:28:46.467Z",
+    "playwrightVersion": "1.59.1",
+    "screenshotCalls": 1,
+    "contextOffline": true,
+    "applicationRequests": 0,
+    "pairedProfileReused": false,
+    "browserClosed": true
+  },
+  "limits": {
+    "actualTlsHandshakeValidation": 0,
+    "authenticatedCloudLoggingCalls": 0,
+    "pgCalls": 0,
+    "nativeUiValidation": 0,
+    "productionProofOrPermitIssued": 0,
+    "writerOrStartupActivation": 0
+  },
+  "rawEvidence": "비공개 원 진단·TAP·실제 입력·runner·프로세스 종료 증거에 보존"
+}
