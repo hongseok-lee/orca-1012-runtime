@@ -9,11 +9,17 @@
 - Supervisor 40124는 2026-10-15 11:57:17.192–11:57:19.372 UTC에 exit 0으로 끝났습니다. 11:57:55.979 UTC에 supervisor Z와 알려진 자식 5개 ABSENT를 확인했습니다. Heavy는 0입니다.
 - Root는 원 TAP·helper·입력·strict 설정·종료 상태를 audit 30건, 불일치 0으로 대조해 최초 검증을 수락했습니다.
 
-실제 directory 수집·인증·namespace pin·Verified evidence·RO/RW 권한·SQL writer·HA는 미검증입니다. PG/NFS/live/기존 parser suite/설치/전체 build/UI는 실행하지 않았습니다. 새 보고 PNG는 Root 슬롯 배분 전이므로 아직 없습니다.
+실제 directory 수집·인증·namespace pin·Verified evidence·RO/RW 권한·SQL writer·HA는 미검증입니다. PG/NFS/live/기존 parser suite/설치/전체 build/UI는 실행하지 않았습니다. 최초 보고 PNG 1개를 12:12:09.479 UTC에 촬영했습니다. 외부 요청 0, 인증 state 0이며 context와 browser를 닫았습니다. Supervisor 9125는 Z, helper 9132는 ABSENT이고 heavy 0입니다.
 
-`verification.json`은 정제된 원 결과, `input-manifest.json`은 정확한 source closure와 설정, `value.tap`과 `value.metafile.json`은 원 산출물과 byte-identical입니다. `report.html`은 위 결과만 표시하는 정적 보고 입력이며 `report-provenance.json`의 capture 상태는 미실행입니다. Private cache/원자료 경로는 공개하지 않고 원 전체 로그와 helper는 비공개 운영 증거에 보존합니다.
+`verification.json`은 정제된 원 결과, `input-manifest.json`은 정확한 source closure와 설정, `value.tap`과 `value.metafile.json`은 원 산출물과 byte-identical입니다. `report.html`은 위 결과만 표시하는 정적 보고 입력이며 `report-provenance.json`에 실제 촬영·hash·PID·종료 상태를 기록했습니다. `verification.json`의 미실행 목록은 11:57의 source 최초 검증 단계 기준이며, 12:12에 오프라인 보고 촬영만 추가했습니다. Private cache/원자료 경로는 공개하지 않고 원 전체 로그와 helper는 비공개 운영 증거에 보존합니다.
 
 아래 실행 계약은 비공개 리뷰 링크 1개만 설명 문구로 일반화했습니다. 승인 public COMMON은 전문 그대로 포함하며 private 정본은 수정하지 않았습니다.
+
+## 실제 오프라인 보고 PNG
+
+![Managed leaf 정규화 최초 검증의 오프라인 보고](report.png)
+
+PNG SHA-256: `ef062ed37f4224e872f30d609df4edb38634a4b7b1d0f114214c00ba32923e1e`, 214798 B입니다. 실제 앱 UI·NFS 인증·물리 proof 화면이 아닙니다.
 
 ## Root 실행 계약 전문
 
@@ -52,6 +58,10 @@ Backend에 heavy1을 배분한다. 기존 remote Node/oxlint/TS/esbuild cache에
 Root가원valueTAPe20e8f2d·변환helper·source4/metafile/hash·strict NodeNext/ES2023 설정·원진단/cleanup을대조했다. Rootaudit30모두일치1c4425a5다. Control40124는11:57:17.192–19.372 exit0,lint40131/type40143 진단0·type입력source4+external194,value실제40209 callback1 PASS/skip0다. 실제knownchildren5 ABSENT/supervisorZ·heavy0이며원fixture본문은변경하지않았다. Raw 합성정규화만수락하고physical인증/namespace pin/SQLwriter/HA로확대하지않는다.
 
 Backend는동일source2 bytes로정제결과/TAP/provenance 및본문을준비한다. 기존명세전문과후속검증/수락절을유지하고최종필수CI를확인한다. 현재Infra와DB의보고capture가배분돼있어Backend의최초필수보고PNG1은free슬롯Root배분전까지0이다. 새제품실행/시험/PG/NFS/설치/build0·heavy0이다. 현재base9339는독립PR97/98의변경과같은검증입력에겹침이없으면재정렬하지않고Root가finaldiff/merge가능성을확인한다.
+
+## 최초 보고 PNG 배분 — 2026-10-15 12:10 UTC
+
+Infra와 DB의 보고 capture가 끝나 heavy0임을 확인했다. Backend에 기존 원격 Playwright/browser cache를 이용한 현재 정제 HTML의 실제 보고 PNG 1회만 heavy1로 배분한다. 앱 UI·물리 NFS·인증 proof 사진으로 표현하지 않는다. 제품 source2 bytes와 통과한 원 lint/type/value 결과를 유지하며 재시험·PG·NFS·live 변경·설치·build는0이다. 사진 원본/hash/실제 PID·cleanup을 기록하고 공개 사본·provenance·본문·최종 head 및 필수 CI를 제출한다. 마지막 source와 다른 독립 main 변경을 이유로 불필요한 정렬·검증을 반복하지 않는다. 최종 source/본문/PNG/CI 확인과 merge는 Root가 수행한다.
 
 
 ## P1-10 명세 전문

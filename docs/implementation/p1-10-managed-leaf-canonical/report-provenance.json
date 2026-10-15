@@ -1,16 +1,60 @@
 {
-  "kind": "OFFLINE_VERIFICATION_REPORT_PREPARATION",
+  "kind": "OFFLINE_VERIFICATION_REPORT",
+  "pid": 9132,
+  "startedAt": "2026-10-15T12:12:09.174Z",
+  "phase": "OFFLINE_REPORT_COMPLETE",
   "sourcePin": "9e097febcb248752a4ce89d0aa197d0621aaf678",
+  "htmlSHA256": "3540913c49231c8a8cee1dd3352afeca192c9bebafb7e3f25b435f5875d960f6",
   "productUI": false,
-  "htmlSha256": "3540913c49231c8a8cee1dd3352afeca192c9bebafb7e3f25b435f5875d960f6",
-  "verificationSha256": "9a7560fc2c0b8ac473c0b8976f095c452431b90a18b4212b17e43a2c33de8aaf",
-  "tapSha256": "e20e8f2d1462fd6df76e0be91a5533d8097f48bf31d19a71de19379db239efe9",
-  "capture": {
-    "status": "NOT_RUN_ROOT_SLOT_PENDING",
-    "count": 0,
-    "png": null
+  "actualKubernetesAPI": false,
+  "authStateLoaded": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "node": "v24.14.1",
+  "capturedAt": "2026-10-15T12:12:09.479Z",
+  "PNGSHA256": "ef062ed37f4224e872f30d609df4edb38634a4b7b1d0f114214c00ba32923e1e",
+  "PNGBytes": 214798,
+  "viewport": {
+    "width": 1280,
+    "height": 1600
   },
-  "testsRepeated": 0,
-  "scope": "새 PNG는 아직 촬영하지 않았다. 원 검증 결과의 정적 보고 입력만 준비했다. 실제 physical Verified evidence, namespace pin, SQL writer 및 HA는 미검증이다.",
-  "privateEvidence": "원 config/helper/전체 listFiles/metafile/TAP/PID/exit/cleanup은 비공개 운영 증거에 보존했다."
+  "DPR": 1,
+  "networkRequests": 0,
+  "externalRequestsBlocked": true,
+  "exit": 0,
+  "contextClosed": true,
+  "browserClosed": true,
+  "finishedAt": "2026-10-15T12:12:09.698Z",
+  "supervisor": {
+    "supervisorPID": 9125,
+    "childPID": 9132,
+    "startedAt": "2026-10-15T12:12:07.370Z",
+    "phase": "OFFLINE_CAPTURE_COMPLETE",
+    "heavy": 0,
+    "finished": true,
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-15T12:12:09.709Z"
+  },
+  "knownOwnedProcesses": {
+    "at": "2026-10-15T12:12:20.240Z",
+    "processes": [
+      {
+        "pid": 9125,
+        "state": "Z",
+        "startTicks": "16991854"
+      },
+      {
+        "pid": 9132,
+        "state": "ABSENT"
+      }
+    ]
+  },
+  "helperSha256": "29c932351c8755e46f6372bc013d4ac176f62bb07eacb429eece28c75876e2a3",
+  "launcherSha256": "1fb650118ee2adf4aadc92b9aea43a6c55bbf7e3b72d1758887b9ef677c6d28b",
+  "inputSha256": "539c3df0e87be83be1d3f2010563bc41aeeb45ee993a2be0446cf7fb990fe04c",
+  "captureCount": 1,
+  "sourceTestsRepeated": 0,
+  "scope": "기존 원격 Browser cache로 정적 보고 HTML을 렌더한 오프라인 결과 보고 PNG 1개다. 실제 제품 UI·physical Verified evidence·namespace pin·SQL writer·HA 증거가 아니다.",
+  "privateEvidence": "원 HTML/PNG/helper/input/private stdout/PID/exit/cleanup을 비공개 운영 증거에 보존했다."
 }
