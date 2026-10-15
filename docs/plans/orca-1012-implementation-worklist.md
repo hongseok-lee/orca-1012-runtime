@@ -2,11 +2,15 @@
 
 # Orca 1012 개정본 구현 작업 목록
 
-작성일: 2026-10-12 · 작성/기획 책임: **root 오케스트레이션 세션** · 구현 상태: **미착수**
+> 2026-10-15 범위 개정: 최초 공개 사본의 provenance는 위 hash로 보존한다. 이번 부분 갱신은 [Root 공용 RW 계약](orca-1012-shared-rw-scope.md) SHA256 `c8430943986c7bb53891c5d94fa368ce8670b153c66ee377b8746ab9ad89d10b`에 따른 보호/공용 범위와 착수 표시만 반영하며 최신 private 작업목록 전문의 복사본이 아니다.
+
+**2026-10-15 사용자 확정 — 공용 RW:** [공용 공간과 Agent 보호 범위](orca-1012-shared-rw-scope.md)를 적용한다. Agent 홈/provider 상태/보호된 checkout은 활성 RW 최대 1·RO 여러 개이며, 별도 공용 문서·인계·산출물 공간은 여러 Agent RW다. 공용에서 보호된 홈으로 쓰기 우회를 막는다. 이번 명세 교정과 실제 구현/검증 완료를 구별하며 현재 공용 두 Agent RW는 미검증이다.
+
+작성일: 2026-10-12 · 작성/기획 책임: **root 오케스트레이션 세션** · 구현 상태: **2026-10-13 사용자 승인으로 착수, 전체 완료 아님**
 
 이 목록은 1012 개정 설계를 실행 가능한 단위로 나눈 것이다. 계획 해석, 작업 분해, 우선순위, 의존성, 수용기준과 완료 판정은 오케스트레이터가 담당한다. 코드 작성·명령 실행·테스트는 `gpt-6.1-sol`, reasoning `high` 실행 에이전트에 구체적으로 위임한다. 실행 에이전트에게 기획이나 작업 목록 작성을 위임하지 않는다.
 
-기존 클러스터 삭제·작업목록 작성과 후속 리뷰를 완료했고, 사용자 요청에 따라 [작업 ID별 개별 명세](orca-1012-specs/README.md)를 작성했다. 구현 40개·기술 증거 5개·완료 운영 기록 3개·사용자 결정 대기 1개·조건부 1개를 각각 별도 MD로 제공하며 [공통 계약](orca-1012-specs/COMMON.md)을 함께 적용한다. 아래 제품 구현 항목은 아직 실행하지 않았다. 과거 실험 성공과 설계 반영을 제품 구현 완료로 표시하지 않는다.
+기존 클러스터 삭제·작업목록 작성과 후속 리뷰를 완료했고, 사용자 요청에 따라 [작업 ID별 개별 명세](orca-1012-specs/README.md)를 작성했다. 구현 40개·기술 증거 5개·완료 운영 기록 3개·사용자 결정 대기 1개·조건부 1개를 각각 별도 MD로 제공하며 [공통 계약](orca-1012-specs/COMMON.md)을 함께 적용한다. 아래 항목의 착수·중간 산출물·완료 상태는 현재 공개 PR의 실제 증거로 판단한다. 과거 실험 성공과 설계 반영을 제품 구현 완료로 표시하지 않는다.
 
 후속 사용자 지시에 따른 5개 Sol 6.1/high 독립 리뷰와 root 재검토를 완료했다. structured 생성 RPC의 담당 범위 한 건을 P1-17·V1-01에 명확히 반영했다. 원 보고서·건별 판정·반영 근거 (비공개 운영 기록)를 보존하며, 문서 검토 완료를 제품 구현·검증 완료로 바꾸지 않는다.
 
@@ -39,7 +43,7 @@
 2. PostgreSQL이 논리 객체·입력·receipt·사건·operation의 정본이다. hot/cold 입력 모두 같은 수신함을 사용하고 durable commit 전에 성공 ACK를 보내지 않는다.
 3. 원래 Input Component·본문·첨부·receipt를 보존한다. dispatch 전 일반 입력을 하나의 Message로 병합하며 서로 다른 operation ID의 동일 본문을 제거하지 않는다. 새 합산 byte/token/입력 개수 quota, 자동 분할·요약·삭제를 도입하지 않는다. 실제 wire/provider/저장소 제약은 정직하게 처리한다.
 4. 취소 의도와 실행 결과를 분리한다. UNKNOWN 후 취소된 과거 작업의 자동 계속은 금지하고 새 독립 입력은 진행한다. UNKNOWN·취소·실패 이력만으로 Pod를 깨우지 않는다.
-5. 실행 세대와 controller term을 실제 명령 수락·실행 경계에서 검증한다. DB lease나 Pod object 삭제만으로 이전 NFS writer가 차단됐다고 판정하지 않는다. 같은 실제 디렉터리의 RW는 하나, RO는 여러 개다.
+5. 실행 세대와 controller term을 실제 명령 수락·실행 경계에서 검증한다. DB lease나 Pod object 삭제만으로 이전 NFS writer가 차단됐다고 판정하지 않는다. 같은 실제 Agent 홈·provider 상태·보호된 checkout의 활성 RW는 최대 하나, RO는 여러 개다. 별도 공용 협업 공간은 여러 Agent RW를 허용하고 보호 범위로 쓰기 우회를 막는다.
 6. Agent는 1 Runtime Unit/Node, memory limit 필드 생략을 유지한다. CPU limit 미설정 원칙, 실제 admission·예산·Spot 조건을 함께 검증한다. 별도 Orca node-headroom gate를 추가하지 않는다.
 7. Phase 1은 cold native-session resume, reactive OOM 증설, 안전한 자동 축소까지 구현한다. memory Snapshot과 실행 중 선제 증량은 Phase 2다. Snapshot 구현을 Phase 1 완료 조건에 넣지 않는다.
 8. 기존 개발 데이터 이관기는 만들지 않는다. 새 dataset epoch와 새 작업 디렉터리를 사용해 과거 provider 경로를 우연히 재사용하지 않는다. 백업·계정 자격·공유 인프라는 개발 데이터 초기화와 구분해 보존한다.
@@ -64,7 +68,7 @@
 
 | ID | 작업과 산출물 | 선행 | 완료 조건 | 근거 |
 |---|---|---|---|---|
-| P1-01 | 새 개발 실행 환경·영속 저장소·원격 검증 환경 | O-01, G-01 | 새 dataset epoch, Agent 홈/checkout과 공유 자료의 경계를 확립한다. PGDATA/WAL은 Agent NFS와 분리된 영속 block volume에 둔다. Spot 회수 후 동일 WAL 복구와 백업/복원 절차를 확인한다. `fsync`·`synchronous_commit`을 유지하고 단일 PG를 HA라고 부르지 않는다. Agent/Orca/PG Compute의 Spot 조건과 보존 디스크, 원격 테스트·빌드 캐시를 관리한다. | §4.1, §14–15 |
+| P1-01 | 새 개발 실행 환경·영속 저장소·원격 검증 환경 | O-01, G-01 | 새 dataset epoch, Agent 보호 홈/checkout과 여러 Agent RW가 가능한 공용 자료의 별도 경로·mount 및 우회 금지 경계를 확립한다. PGDATA/WAL은 Agent NFS와 분리된 영속 block volume에 둔다. Spot 회수 후 동일 WAL 복구와 백업/복원 절차를 확인한다. `fsync`·`synchronous_commit`을 유지하고 단일 PG를 HA라고 부르지 않는다. Agent/Orca/PG Compute의 Spot 조건과 보존 디스크, 원격 테스트·빌드 캐시를 관리한다. | §4.1, §14–15 |
 | P1-02 | PG schema·객체 ID·revision·잠금 규칙 | G-01 | §5의 Catalog/Session/Tab, input/message/receipt/context/cancel, attempt/operation/lease, resource/incident/reservation, storage, queue/audit/notification/replay 테이블군과 필수 UNIQUE/CAS를 구현한다. `session_fence`, `execution_epoch`, `controller_term`, `storage_epoch`를 분리한다. 외부 K8s 호출 동안 DB lock을 잡지 않는다. | §3, §5 |
 | P1-03 | 공통 transaction·journal·outbox·감사 기록 | P1-02 | 상태 변경과 receipt/journal/outbox를 같은 transaction에 넣는다. commit 후 publish, 발행 전 crash 인수, canonical event ID와 producer dedup을 구현한다. body/credential을 인프라 로그에 넣지 않는다. DB 불가·불확정 commit을 성공으로 위장하지 않는다. | §5, §10.8.10, §13 |
 | P1-04 | 영속 첨부·upload/chunk/commit/abort | P1-02/03 | 기존 clipboard RPC와 작은 이미지 fallback을 durable blob과 안정적 alias에 연결한다. blob 내구성 확인 전 Message 수락 금지, chunk 순서/내용 보존, 접수 Message 참조 blob 삭제 금지. 이전 Pod의 `/tmp` 절대경로에 의존하지 않는다. | §7, §8.4 |
@@ -73,7 +77,7 @@
 | P1-07 | 취소 intent와 실행 claim의 원자적 승자 | P1-05/06 | 고정 Message/revision/attempt/epoch 대상, `cancel_revision`, context·receipt·outbox를 원자적으로 저장한다. 취소와 `EFFECT_POSSIBLE` CAS를 직렬화해 취소 승리 시 provider 호출 0회. claim 승리 시 REQUESTED/CONFIRMED/UNKNOWN/ALREADY_SETTLED를 증거에 맞게 관리하고 늦은 ACK가 실행 권한을 부활시키지 않는다. 병합 pending은 묶음 전체 취소다. | §7.1.1, §8.3 |
 | P1-08 | 취소·UNKNOWN·사건 실패 복구 context | P1-03/06/07 | 최신 context/cancel revision과 과거 결과 증거를 다음 정상 입력 전에 전달하고 전달 증거를 남긴다. 취소된 UNKNOWN의 미완료 자동 계속을 금지하고 새 독립 입력을 진행한다. 미실행 취소를 실행 후 중단으로 꾸미지 않는다. 이력만으로 wake/원 작업 재전송하지 않고 미확정 상태는 보존한다. | §8.3, §9.2.1 |
 | P1-09 | Runtime Port·gateway와 외부 명령 실행 소유권 | P1-02/03 | §12의 operation/term/step/Pod UID/epoch/intent envelope를 실제 명령 수락·실행 경계에서 확인한다. ensure/fence/bind/stage/dispatch/cancel/events의 receipt와 인수 규칙을 구현한다. STAGED와 ADMITTED를 구분한다. Phase 2 checkpoint/resize/restore 계약은 표현하되 미구현 기능을 활성화하지 않는다. | §4.2, §8, §12 |
-| P1-10 | Storage Binding·RO 다수/RW 하나·실제 fencing | P1-02/09, G-04 | backend/export/canonical directory, alias·symlink·상하위 중첩을 같은 보호 범위로 판정한다. RESERVED→REVOKING→차단 증거→ACTIVE를 구현하고 실제 RO mount를 적용한다. Phase 1은 이전 Compute 실제 종료 증거 뒤 새 RW를 허용하며 실패 시 REVOKING/BLOCKED로 보존한다. | §3, §11 |
+| P1-10 | 보호된 Storage Binding·공용 RW 구분·실제 fencing | P1-02/09, G-04 | Agent 홈/provider 상태/보호된 checkout의 backend/export/canonical directory, alias·symlink·상하위 중첩을 같은 보호 범위로 판정한다. 별도 공용 공간은 여러 Agent RW를 허용하고 공용→보호 범위 우회를 거절한다. RESERVED→REVOKING→차단 증거→ACTIVE를 구현하고 실제 RO mount를 적용한다. Phase 1은 이전 Compute 실제 종료 증거 뒤 새 RW를 허용하며 실패 시 REVOKING/BLOCKED로 보존한다. | §3, §11 |
 | P1-11 | Claude/Codex provider adapter·cold native resume | P1-08/09/10, G-05 | 현재 영속 파일과 provider-native session으로 재개하고 동일 Session/Tab/handle에 bind한다. 실제 provider readiness·수락·완료·interrupt 증거와 질문 revision을 검증한다. permission-skip 유지, platform context를 원문 transcript 조작 없이 전달, Snapshot 자동 선택이 없는 명시적 cold 실행을 구현한다. | §7–8, §10.5, §12 |
 | P1-12 | PG 영속 사건 큐·producer ACK·consumer 재시도 | P1-02/03/09 | producer 영속 outbox와 gap-free enqueue ACK, Agent/producer별 head 처리를 구현한다. 최초 1회+재시도 5회, 총 6회와 crash 시도 이력을 PG에 보존한다. 성공 projection/outbox/DONE 또는 원인/시도/FAILED/context/revision/알림을 각각 원자 commit한다. FAILED 확정 뒤 다음 사건 진행, 미수신 gap·미확정 실패 head는 통과하지 않는다. | §9.2.1, §15.1 |
 | P1-13 | 영속 lifecycle·deadline·idle/sleep·wake 병합 | P1-06~12 | desired/observed/UI 상태를 분리하고 K8s watch+LIST 복구와 DB deadline으로 수렴한다. 결정적 리소스 이름과 실제 create 결과 조회로 중복 Pod를 막는다. 같은 RUNNING 입력은 wake를 공유한다. sleep/새 입력/close 경합과 다중 member의 작업·background writer를 직렬화하고 조회/hold를 작업 활동으로 세지 않는다. | §9.1–3, §12 |
@@ -123,7 +127,7 @@
 | V1-06 | provider 호출 뒤 crash→UNKNOWN, UNKNOWN 뒤 취소+새 입력, 취소/실패 원문 context 전달과 재실행/wake 금지 | P1-08/11 |
 | V1-07 | seq11→10, producer ACK gap, 3번째 시도 뒤 Active 교체, 총6회 소진, FAILED commit 전 crash, 다음 사건 진행 | P1-12/14 |
 | V1-08 | sleep/입력/close·다중 member 경합, Spot/crash cold resume, 동일 Session·Tab 유지. provider receipt/history 등으로 처리가 확인된 Message의 자동 재전송0; 증거 불명은 V1-06의 UNKNOWN으로 보존하며 외부 효과 전체의 exactly-once를 보장하지 않음 | P1-11/13/16 |
-| V1-09 | old Pod 단절·복귀와 실제 RW 차단, alias·상하위 경로·RO 다수, 명령 수락 뒤 Active 교체·옛 term 복귀 | G-04, P1-09/10/14 |
+| V1-09 | 보호 범위의 old Pod 단절·복귀와 실제 RW 차단, alias·상하위 경로·RO 다수, 공용 공간의 두 Agent RW 및 보호 범위 우회 거절, 명령 수락 뒤 Active 교체·옛 term 복귀 | G-04, P1-09/10/14 |
 | V1-10 | 5h59m fresh IDLE/WAITING_INPUT 회복, 과거 spool과 옛 timer, 6h DB deadline에서 실제 fencing 시작·차단 증거 전 새 RW 금지·차단 실패 BLOCKED | P1-15 |
 | V1-11 | isolated-node OOM/eviction·shared pressure·heap/child·Spot/exit137 구분, 같은 incident 중복·quota/admission·동시 reservation | G-03, P1-21~23 |
 | V1-12 | 최소→상한 유한 증설·24h예산, sleep/wake 승인 크기 유지, cancel/close 우선, 저사용60분·최소 도달·rollback·관측누락 | P1-22~24 |
@@ -131,7 +135,7 @@
 | V1-14 | iPhone/Mac Browser Pod0·인증·durable command·실시간 로그·알림 dedup·읽음≠해결·실제 조건 회복 | G-02, P1-26/27 |
 | V1-15 | hot/cold/reconnect/감지 지연 주입, pre-commit 병목·generation/wake/전달 분리, sample/오차/미측정 보고 | P1-28 |
 
-필수 invariant는 `accepted-without-row=0`, `duplicate active writer=0`, `stale grant accepted=0`, `closed Tab resurrected=0`이다. UNKNOWN 수/최장 나이, queue age, reconcile overdue, replay gap, 자원 desired/admitted/실사용·예산·실패/rollback을 함께 관측한다.
+필수 invariant는 `accepted-without-row=0`, `duplicate active writer=0`(Agent 실행 보호 범위), `stale grant accepted=0`, `closed Tab resurrected=0`이다. UNKNOWN 수/최장 나이, queue age, reconcile overdue, replay gap, 자원 desired/admitted/실사용·예산·실패/rollback을 함께 관측한다.
 
 정본의 초기 측정 목표는 intake commit p95<300ms, 기존 기록 첫 응답 p95<500ms, provider event commit→구독 전달 p95<1초다. scheduling·이미지 시작·generation·복원은 별도다. 과거 Claude 단일 표본344ms/2776ms나 NFS9843ms를 새 p95·현재 성능으로 사용하지 않는다. 실제 앱 rendering은 별도 실기기 증거가 없으면 미측정으로 남긴다.
 

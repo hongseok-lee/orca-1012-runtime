@@ -53,7 +53,7 @@ G-02~05는 core 구현과 병렬로 증거를 확보할 수 있다. gate 미완�
 | [P1-07](P1-07.md) | 취소 의도와 실행 claim의 원자적 승자 | 2 |
 | [P1-08](P1-08.md) | 취소·UNKNOWN·사건 실패 복구 context | 2 |
 | [P1-09](P1-09.md) | Runtime Port·gateway·외부 명령 실행 소유권 | 2 |
-| [P1-10](P1-10.md) | Storage Binding·RO 다수/RW 하나·실제 fencing | 2 |
+| [P1-10](P1-10.md) | 보호된 Storage Binding·공용 RW 구분·실제 fencing | 2 |
 | [P1-11](P1-11.md) | Claude/Codex provider adapter·cold native resume | 2 |
 | [P1-12](P1-12.md) | 영속 사건 큐·producer ACK·consumer 재시도 | 2 |
 | [P1-13](P1-13.md) | lifecycle·deadline·idle/sleep·wake 병합 | 2 |
