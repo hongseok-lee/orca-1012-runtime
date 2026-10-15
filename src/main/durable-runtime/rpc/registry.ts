@@ -72,6 +72,11 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.cancelStructured(params, context) }
     }
+    if (method.name === 'agentSession.hold' || method.name === 'agentSession.release') {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return { ...method, handler: (params: never, context: RpcContext) => method.name === 'agentSession.hold'
+        ? adapter.holdStructured(params, context) : adapter.releaseStructured(params, context) }
+    }
     if (method.name === 'browser.tabCreate') {
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.createBrowser(params, context) }

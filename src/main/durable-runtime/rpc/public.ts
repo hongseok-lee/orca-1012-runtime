@@ -5,6 +5,7 @@ import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
 import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
 import { createCatalogStructuredSendRpc } from './structured-send.ts'
 import { createCatalogStructuredCancelRpc } from './structured-cancel.ts'
+import { createCatalogStructuredHolds } from './structured-holds.ts'
 import { createCatalogCreationFacade, createCatalogRpc } from './creation.ts'
 import type { CatalogCreationMethod } from './launch-preparation.ts'
 import type { RpcContext, RpcAnyMethodDeclaration } from '../../runtime/rpc/core.ts'
@@ -27,6 +28,7 @@ export class DurableCatalogReadAdapter {
   private readonly browserCreate: ReturnType<typeof createCatalogBrowserCreateRpc>
   private readonly structuredSend: ReturnType<typeof createCatalogStructuredSendRpc>
   private readonly structuredCancel: ReturnType<typeof createCatalogStructuredCancelRpc>
+  private readonly structuredHolds: ReturnType<typeof createCatalogStructuredHolds>
   private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
   private disposed = false
   constructor(config: DurableCatalogReadConfig) {
@@ -41,6 +43,7 @@ export class DurableCatalogReadAdapter {
     this.browserCreate = createCatalogBrowserCreateRpc(this.config)
     this.structuredSend = createCatalogStructuredSendRpc(this.config)
     this.structuredCancel = createCatalogStructuredCancelRpc(this.config)
+    this.structuredHolds = createCatalogStructuredHolds(this.config)
   }
   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
   async read(method: string, params: unknown, context: RpcContext): Promise<unknown> {
@@ -95,6 +98,14 @@ export class DurableCatalogReadAdapter {
     try { this.requireOpen(); return await this.structuredCancel(params, context) }
     catch (error) { throw catalogReadFailure(error) }
   }
+  async holdStructured(params: unknown, context: RpcContext): Promise<unknown> {
+    try { this.requireOpen(); return await this.structuredHolds.hold(params, context) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
+  async releaseStructured(params: unknown, context: RpcContext): Promise<unknown> {
+    try { this.requireOpen(); return this.structuredHolds.release(params, context) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
   async createBrowser(params: unknown, context: RpcContext): Promise<{ browserPageId: string }> {
     try { this.requireOpen(); return await this.browserCreate(params, context) }
     catch (error) { throw catalogReadFailure(error) }
@@ -111,6 +122,8 @@ export class DurableCatalogReadAdapter {
   dispose(): void {
     if (this.disposed) { return }
     this.disposed = true
-    try { this.subscriptions.dispose() } finally { this.structuredSubscriptions.dispose() }
+    try { this.subscriptions.dispose() } finally {
+      try { this.structuredSubscriptions.dispose() } finally { this.structuredHolds.dispose() }
+    }
   }
 }
