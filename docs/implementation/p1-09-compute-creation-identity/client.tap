@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: creation uses one fixed POST/filter and captures input accessors, token and HTTPS receivers before await
+ok 1 - creation uses one fixed POST/filter and captures input accessors, token and HTTPS receivers before await
+  ---
+  duration_ms: 38.869447
+  type: 'test'
+  ...
+# Subtest: creation caller abort wins before work and during pending token without requests or raw reason
+ok 2 - creation caller abort wins before work and during pending token without requests or raw reason
+  ---
+  duration_ms: 1.831243
+  type: 'test'
+  ...
+# Subtest: creation rejects a late token before the first request after the shared deadline fix merges
+ok 3 - creation rejects a late token before the first request after the shared deadline fix merges
+  ---
+  duration_ms: 21.065941
+  type: 'test'
+  ...
+# Subtest: creation rejects invalid captured input before suppliers and does not follow incomplete pages
+ok 4 - creation rejects invalid captured input before suppliers and does not follow incomplete pages
+  ---
+  duration_ms: 5.684854
+  type: 'test'
+  ...
+# Subtest: shared Audit transport keeps an earlier absolute deadline and caller-abort precedence
+ok 5 - shared Audit transport keeps an earlier absolute deadline and caller-abort precedence
+  ---
+  duration_ms: 23.127666
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 240.862771

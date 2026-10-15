@@ -57,7 +57,7 @@ export function createComputeDeletionAuditClient(config: ComputeAuditTransportCo
       if (beforeTransport) {
         return beforeTransport
       }
-      const result = await readComputeAuditPage(transport, body, signal)
+      const result = await readComputeAuditPage(transport, body, signal, deadline)
       const afterTransport = stopped()
       if (afterTransport) {
         return afterTransport

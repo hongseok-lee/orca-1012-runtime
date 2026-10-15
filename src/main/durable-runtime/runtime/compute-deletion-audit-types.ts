@@ -64,6 +64,14 @@ export type ComputeDeletionAuditResult =
 
 export type ProjectedAuditEntry = Readonly<{
   exactEntryDigest: string
+  /** Shape only; deliberately excluded from the deletion evaluator's public digest. */
+  responseShape: Readonly<{
+    present: boolean
+    object: boolean
+    fields: Readonly<Record<'name' | 'id' | 'operationType' | 'targetId' | 'targetLink' | 'zone',
+      Readonly<{ present: boolean; string: boolean }>>>
+    errorPresent: boolean
+  }>
   shapeValid: boolean
   insertId: string | null
   timestamp: string | null

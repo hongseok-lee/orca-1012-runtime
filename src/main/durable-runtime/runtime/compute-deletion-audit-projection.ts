@@ -33,6 +33,18 @@ function projectEntry(value: unknown): ProjectedAuditEntry | null {
     // Internal only: dedup requires the exact original JSON entry, not its projection.
     // Never returned as evidenceDigest; the returned digest uses allowlisted fields only.
     exactEntryDigest: createHash('sha256').update(JSON.stringify(value)).digest('hex'),
+    responseShape: {
+      present: Object.hasOwn(audit, 'response'), object: response !== null,
+      fields: {
+        name: { present: Object.hasOwn(response ?? {}, 'name'), string: typeof response?.name === 'string' },
+        id: { present: Object.hasOwn(response ?? {}, 'id'), string: typeof response?.id === 'string' },
+        operationType: { present: Object.hasOwn(response ?? {}, 'operationType'), string: typeof response?.operationType === 'string' },
+        targetId: { present: Object.hasOwn(response ?? {}, 'targetId'), string: typeof response?.targetId === 'string' },
+        targetLink: { present: Object.hasOwn(response ?? {}, 'targetLink'), string: typeof response?.targetLink === 'string' },
+        zone: { present: Object.hasOwn(response ?? {}, 'zone'), string: typeof response?.zone === 'string' }
+      },
+      errorPresent: response !== null && Object.hasOwn(response, 'error')
+    },
     shapeValid: optionalText(audit, '@type') &&
       (!response || (optionalText(response, 'id') && optionalText(response, 'zone'))),
     insertId: text(entry.insertId), timestamp: text(entry.timestamp), logName: text(entry.logName),
