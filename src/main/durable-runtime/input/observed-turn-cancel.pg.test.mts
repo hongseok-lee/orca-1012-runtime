@@ -66,6 +66,7 @@ async function snapshot(pool: Pool, fixtures: readonly ExecutionFixture[]) {
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.outbox_events r WHERE r.aggregate_id=ANY($1::uuid[]) OR r.aggregate_id=ANY($2::uuid[])) AS outbox,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.runtime_units r WHERE r.id=ANY($2::uuid[])) AS units,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.attempts r WHERE r.runtime_unit_id=ANY($2::uuid[])) AS attempts,
+      (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.execution_grants r WHERE r.runtime_unit_id=ANY($2::uuid[])) AS grants,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM durable_runtime.runtime_audit_events r WHERE r.session_id=ANY($1::uuid[])) AS audit,
       (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.principal_id,r.session_scope,r.method,r.operation_key)
         FROM durable_runtime.rpc_receipts r WHERE r.principal_id=ANY($3::text[])) AS receipts`,
@@ -136,6 +137,14 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   const nextAttempt = logicalId('attempt',randomUUID())
   const nextPod = `synthetic-next-pod-${nextAttempt}` as ExecutionFixture['podUid']
   await inExecution(pool,f,async (tx) => {
+    // Synthetic fixture initialization only: not Compute/Storage fencing or a product proof issuer.
+    // This callback owns the new A grant; preserve its identity and every existing DB/history row.
+    const revoked = await tx.query(
+      `UPDATE durable_runtime.execution_grants SET state='REVOKED',revoked_at=clock_timestamp(),stopped_proof_ref=$4
+       WHERE runtime_unit_id=$1 AND attempt_id=$2 AND execution_epoch=$3 AND state='ACTIVE'`,
+      [f.context.runtimeUnitId,f.attemptId,f.envelope.executionEpoch,`synthetic-fixture-stopped-proof:${f.attemptId}`]
+    )
+    assert.equal(revoked.rowCount,1)
     await tx.query(
       `INSERT INTO durable_runtime.attempts
        (id,runtime_unit_id,execution_epoch,mode,pod_uid,incarnation,resource_profile_revision,effective_resources,status)
@@ -144,6 +153,11 @@ await test('observed cancel fixes original A and preserves transaction, replay a
     )
     await tx.query('UPDATE durable_runtime.runtime_units SET execution_epoch=2,active_attempt_id=$2 WHERE id=$1',
       [f.context.runtimeUnitId,nextAttempt])
+    const granted = await tx.query(
+      `INSERT INTO durable_runtime.execution_grants(id,runtime_unit_id,attempt_id,execution_epoch,state)
+       VALUES ($1,$2,$3,2,'ACTIVE')`,[randomUUID(),f.context.runtimeUnitId,nextAttempt]
+    )
+    assert.equal(granted.rowCount,1)
   })
   const newer: ExecutionFixture = {
     ...f, attemptId: nextAttempt, podUid: nextPod,
@@ -156,7 +170,21 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   await observe(pool,other,foreign,turnA,'ADMITTED')
   const before = await snapshot(pool,fixtures)
   const messageBefore = before.messages.find((row: { id: string }) => row.id === f.messageId)
-  assert.equal(messageBefore.intake_status,'SETTLED','B has settled the Message while A is still running')
+  assert.equal(messageBefore.intake_status,'SETTLED','B has settled the Message while A has no original terminal observation')
+  const currentUnit = before.units.find((row: { id: string }) => row.id === f.context.runtimeUnitId)
+  assert.equal(currentUnit.active_attempt_id,nextAttempt)
+  assert.equal(currentUnit.execution_epoch,2)
+  const ownGrants = before.grants.filter((row: { runtime_unit_id: string }) => row.runtime_unit_id === f.context.runtimeUnitId)
+  assert.equal(ownGrants.length,2)
+  const originalGrant = ownGrants.find((row: { attempt_id: string }) => row.attempt_id === f.attemptId)
+  const currentGrant = ownGrants.find((row: { attempt_id: string }) => row.attempt_id === nextAttempt)
+  assert.equal(originalGrant.state,'REVOKED')
+  assert.equal(originalGrant.execution_epoch,1)
+  assert.ok(originalGrant.revoked_at)
+  assert.equal(originalGrant.stopped_proof_ref,`synthetic-fixture-stopped-proof:${f.attemptId}`)
+  assert.equal(currentGrant.state,'ACTIVE')
+  assert.equal(currentGrant.execution_epoch,2)
+  assert.equal(currentGrant.revoked_at,null)
   assert.equal(before.deliveries.find((row: { id: string }) => row.id === a).provider_ref,
     `synthetic-native-${f.authority.sessionId}`,'stored native Session is not a native turn selector')
   const result = await inExecution(pool,f,(tx) => recordObservedTurnCancel(tx,request(f,turnA),f.context.runtimeUnitId))
@@ -187,6 +215,7 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   assert.deepEqual(after.deliveries,before.deliveries,'A/B and unrelated pre-effect deliveries must remain unchanged')
   assert.deepEqual(after.units,before.units)
   assert.deepEqual(after.attempts,before.attempts)
+  assert.deepEqual(after.grants,before.grants)
   assert.deepEqual(after.inputs,before.inputs)
   assert.deepEqual(after.receipts,before.receipts)
   assert.equal(after.deliveries.find((row: { id: string }) => row.id === pending).state,'STAGED')
@@ -294,6 +323,7 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   assert.deepEqual(unprovenAfter.deliveries,unprovenBefore.deliveries)
   assert.deepEqual(unprovenAfter.units,unprovenBefore.units)
   assert.deepEqual(unprovenAfter.attempts,unprovenBefore.attempts)
+  assert.deepEqual(unprovenAfter.grants,unprovenBefore.grants)
   assert.deepEqual(unprovenAfter.cancels.find((row: { operation_id: string }) =>
     row.operation_id === unprovenRequest.operationId),
     unprovenBefore.cancels.find((row: { operation_id: string }) => row.operation_id === unprovenRequest.operationId))
@@ -397,6 +427,7 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   assert.deepEqual(capturedAfter.deliveries,capturedBefore.deliveries)
   assert.deepEqual(capturedAfter.units,capturedBefore.units)
   assert.deepEqual(capturedAfter.attempts,capturedBefore.attempts)
+  assert.deepEqual(capturedAfter.grants,capturedBefore.grants)
 
   // One regression for shared persistence: original Message-wide pre-effect behavior stays intact.
   const legacyDelivery = await delivery(pool,legacy,'STAGED')
@@ -415,6 +446,7 @@ await test('observed cancel fixes original A and preserves transaction, replay a
   assert.deepEqual(legacyAfter.outbox,legacyBefore.outbox)
   assert.deepEqual(legacyAfter.units,legacyBefore.units)
   assert.deepEqual(legacyAfter.attempts,legacyBefore.attempts)
+  assert.deepEqual(legacyAfter.grants,legacyBefore.grants)
   assert.deepEqual(legacyAfter.ledger,before.ledger)
   assert.deepEqual((await pool.query(
     'SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version'
