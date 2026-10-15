@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "kind": "shared-nfs-server-rollout-partial-publication",
+  "kind": "shared-nfs-server-rollout-and-qualified-consumer-publication",
   "sourceMain": "99623a5977f1bd43c9895a5317bc8566162df1e9",
   "rootServerAcceptedUtc": "2026-10-15T19:50:23.566171+00:00",
-  "acceptanceScope": "공용 서버 namespace와 0770 및 현재 Client 화면이 Root 수락됐습니다. 두 consumer의 최종 결과는 별도 수락 대기 중입니다.",
+  "acceptanceScope": "Root가 서버 namespace/0770, 두 consumer의 한정 공용 RW 관측 및 현재 Client 화면을 수락했습니다. 최초 즉시 연속성 실패와 미완료 범위는 유지합니다.",
   "serverExecution": {
     "attempts": 1,
     "startedUtc": "2026-10-15T19:45:54.473746+00:00",
@@ -81,8 +81,14 @@
     "overallImmediateContinuityPass": false
   },
   "twoConsumerQualification": {
-    "status": "pending-separate-G03-result-and-root-acceptance",
-    "completionAssumed": false
+    "status": "Root가 A/B/A 최초 각 1회 결과를 수락했습니다.",
+    "rootAcceptedUtc": "2026-10-15T20:05:25Z",
+    "evidence": "shared-rw-qualification.json",
+    "eachStageExit": 0,
+    "mutualHashReadsAndPrivateMarkersUnchanged": true,
+    "hardlinks": "EXDEV",
+    "bSymlinkWriteOnlyOpen": "ENOENT",
+    "completeIsolationProof": false
   },
   "clientObservation": {
     "status": "Root가 현재 원본 PNG를 직접 보고 수락했습니다.",
@@ -102,12 +108,12 @@
     "heavy": 0
   },
   "unverified": [
-    "two-consumer shared write and mutual read",
-    "shared-to-protected bypass refusal",
     "immediate 15-second kernel continuity",
     "which syscall waited",
     "production Agent shared mount generator/controller",
     "authenticated physical authority and old writer fencing",
-    "HA/native provider lifecycle"
+    "HA/native provider lifecycle",
+    "arbitrary alias/raw NFS/administrator bypass isolation",
+    "same-file concurrent overwrite or locking policy"
   ]
 }

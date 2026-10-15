@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "kind": "shared-rw-two-consumer-qualified-observation",
+  "rootAcceptedUtc": "2026-10-15T20:05:25Z",
+  "sourceMain": "99623a5977f1bd43c9895a5317bc8566162df1e9",
+  "sourceManifestSha256": "48b4b9a053637c0a719267eea953d1e0afea4e6584026eb938afe873f113d9f9",
+  "probeSha256": "882ec60de8cec7b32f43eed30b03880126f35ede6c3d89256b9cdf8b9ae80d40",
+  "resourcesListSha256": "b5faf6c59524a8ae29e20926823226ada52dcd7bc3f82d7ee0c08547c5cc5c72",
+  "sourceUnchanged": true,
+  "rootAcceptanceSha256": "23122ae7088087c399af6a787dd0d024bb18deefb0cc17336ccbdca5fad0f624",
+  "workerHandoffSha256": "3f34f066b5a0304a55581a45cccd13f8bf73798d13de113ecdfb8e7233389c91",
+  "rootArtifactAudit": {
+    "sha256": "2087e977b29c9e124c55432058f5f51f286c432937d780bd10f808de6299494e",
+    "hashComparisons": 202,
+    "mismatches": 0
+  },
+  "resourceCreation": {
+    "createBatches": 1,
+    "pvs": 3,
+    "pvcs": 3,
+    "pods": 2,
+    "privateLeafEnsureEach": 1,
+    "privateLeafOwnerMode": "1000:1000/0700",
+    "sharedDatasetOwnerMode": "0:1000/0770",
+    "allReadyBoundObservedUtc": "2026-10-15T19:56:55.991714+00:00",
+    "sameCreatedIdentities": true,
+    "retained": true
+  },
+  "placement": {
+    "differentSpotNodes": true,
+    "noOtherCurrentNamespaceWorkloadOnThoseNodes": true,
+    "allNamespaceWorkloadsChecked": false,
+    "computeGet": 0,
+    "imageDigest": "sha256:c68dafad77cf5c4f34d03d4d8cac2febca416a1a2bd9106c307bc7ae4c39f7b0",
+    "cpuRequest": "500m",
+    "memoryRequest": "512Mi",
+    "cpuMemoryLimitsAbsent": true,
+    "ephemeralStorageRequestLimit": "6Gi",
+    "nonRootUidGid": 1000,
+    "capabilitiesDrop": [
+      "ALL"
+    ],
+    "readOnlyRootFilesystem": true,
+    "serviceAccountTokenAutomount": false,
+    "hostNetwork": false,
+    "tmpEmptyDirSizeLimit": "1Gi"
+  },
+  "mountTopology": {
+    "privateA": "/agent → <protected-leaf-A>",
+    "privateB": "/agent → <protected-leaf-B>",
+    "sharedBoth": "/shared → <same-shared-export-and-pvc>",
+    "nfsVersion": 3,
+    "bothVfsRw": true,
+    "parentExportOrOtherPrivateLeafMounted": false,
+    "clientServerNumericDeviceEqualityRequired": false,
+    "rawStatIssuesAuthority": false
+  },
+  "stages": [
+    {
+      "stage": "write-a",
+      "attempts": 1,
+      "executionStartedUtc": "2026-10-15T20:00:06.424175+00:00",
+      "executionFinishedUtc": "2026-10-15T20:00:06.877674+00:00",
+      "childStartedUtc": "2026-10-15T20:00:06.815Z",
+      "childFinishedUtc": "2026-10-15T20:00:06.851Z",
+      "executionExit": 0,
+      "childExit": 0,
+      "timeout": false,
+      "deadlineMs": 20000,
+      "outcome": "SHARED_RW_STAGE_OBSERVED",
+      "uid": 1000,
+      "gid": 1000,
+      "originalStdoutSha256": "f4f2ae4d939e52a8c419efc7b3298c475ad4ffa8ad7579cc592fe83673507d84"
+    },
+    {
+      "stage": "write-b",
+      "attempts": 1,
+      "executionStartedUtc": "2026-10-15T20:00:07.434916+00:00",
+      "executionFinishedUtc": "2026-10-15T20:00:07.882858+00:00",
+      "childStartedUtc": "2026-10-15T20:00:07.787Z",
+      "childFinishedUtc": "2026-10-15T20:00:07.858Z",
+      "executionExit": 0,
+      "childExit": 0,
+      "timeout": false,
+      "deadlineMs": 20000,
+      "outcome": "SHARED_RW_STAGE_OBSERVED",
+      "uid": 1000,
+      "gid": 1000,
+      "originalStdoutSha256": "6a2d1cf697f0e9d112d3b8544cc74e38d569b64331d1d786258a636b5b22a8a9"
+    },
+    {
+      "stage": "read-a",
+      "attempts": 1,
+      "executionStartedUtc": "2026-10-15T20:00:08.360177+00:00",
+      "executionFinishedUtc": "2026-10-15T20:00:08.768460+00:00",
+      "childStartedUtc": "2026-10-15T20:00:08.691Z",
+      "childFinishedUtc": "2026-10-15T20:00:08.742Z",
+      "executionExit": 0,
+      "childExit": 0,
+      "timeout": false,
+      "deadlineMs": 20000,
+      "outcome": "SHARED_RW_STAGE_OBSERVED",
+      "uid": 1000,
+      "gid": 1000,
+      "originalStdoutSha256": "918bf5a8d7eb9cd4b6e9f6f646aab0468780fb05a1fc1166bd18dd4eff080cfa"
+    }
+  ],
+  "mutualReads": {
+    "bReadAHash": "9aab1300234b2b9c72e5eb47eefabc1cc273adfeeaa7bd89b7b586ffde771d52",
+    "aReadBHash": "138a3a246b162aa2027b2bdec7e516c41cb5097785cb3c47089392c64e52db0e",
+    "eachSharedFileBytes": 56,
+    "ownFilesExclusiveCreateFsyncReadback": true,
+    "privateMarkersUnchanged": true,
+    "aPrivateMarkerSameAcrossFirstWriteAndFinalRead": true,
+    "lastAStageWrites": 0
+  },
+  "links": {
+    "hardlinkAttemptsEach": 1,
+    "hardlinkA": "EXDEV",
+    "hardlinkB": "EXDEV",
+    "bSymlinkCreates": 1,
+    "bTargetPreviouslyCreatedByA": true,
+    "bWriteOnlyOpenAttempts": 1,
+    "bOpenError": "ENOENT",
+    "targetWriteCalls": 0,
+    "openCreateTruncateOrNoFollow": false,
+    "completeIsolationProof": false,
+    "meaning": "B에는 A의 서버 절대경로가 노출되지 않는 mount topology의 한정 관측입니다. A marker의 생성과 마지막 읽기를 원 결과로 연결했습니다."
+  },
+  "localPreparationFailures": [
+    {
+      "original": "server-identity-gate.json",
+      "originalSha256": "3ad0dd85994595f65d4dbe4d931df91baf59ebd08c53e399b5d1691e8dadf16f",
+      "problem": "status.image의 config digest를 spec.image의 pull digest와 직접 비교했습니다.",
+      "correction": "보존된 수락 status.image/imageID와 같은 종류의 현재 필드를 비교했습니다. 추가 spec 재조회는 없습니다.",
+      "correctedSha256": "23d74aa3091ed82f5dd4a9f9e27d1d153366f2545e3cbf5045952e016e4439c6",
+      "directDiffSha256": "ed8b16de7cdf1cba0a788a4631f4d08fdedc6a69052fdf1d44a3fa6e978a5c51"
+    },
+    {
+      "original": "placement-and-spec-gate.json",
+      "originalSha256": "cc3843e13035f75552fa22556a905c06cb94d95568e9d21293aee1f38f0ddad8",
+      "problem": "이름이 같은 Pod/PVC를 이름만으로 색인해 claimUID를 잘못 비교했습니다.",
+      "correction": "kind/name 기준으로 기존 원자료의 비교만 교정했고 첫 probe 전에 통과했습니다.",
+      "correctedSha256": "2bdabb30e7b64fbcc24a0aa2371af4d9591f2dba0904602f7bea8d48657a9fb3",
+      "directDiffSha256": "aaaf3fc8272982cb0ac7c0f8dba703969b56a62b27d2cb02813e1a7e4854bf3f"
+    }
+  ],
+  "cleanup": {
+    "observedUtc": "2026-10-15T20:01:00.368052+00:00",
+    "ownedProcessesAbsent": true,
+    "activeOwnedJobs": 0,
+    "samePodIdentitiesRunningReadyRestart0": true,
+    "otherProcessSignals": 0,
+    "deletedResources": 0,
+    "retainedQualificationResourcesAndFiles": true,
+    "heavySlotsReturned": 1
+  },
+  "counts": {
+    "newDryRunBatches": 0,
+    "reusedFirstDryRunBatches": 1,
+    "currentServerMetadataBatches": 1,
+    "helperExportsGuardExecs": 1,
+    "ensureLeafA": 1,
+    "ensureLeafB": 1,
+    "createBatches": 1,
+    "createdPVs": 3,
+    "createdPVCs": 3,
+    "createdPods": 2,
+    "ownedUIDObservations": 16,
+    "targetUIDEventReads": 2,
+    "nodeMetadataBatches": 1,
+    "namespacePlacementReads": 1,
+    "stages": 3,
+    "probeExecutions": 3,
+    "hardlinkAttempts": 2,
+    "symlinkCreates": 1,
+    "symlinkWriteOpenAttempts": 1,
+    "symlinkTargetWrites": 0,
+    "tcpTests": 0,
+    "computeGET": 0,
+    "pgOrUIOrPNG": 0,
+    "installOrBuild": 0,
+    "runtimeRestarts": 0,
+    "deletesOrRepair": 0,
+    "remoteRetries": 0,
+    "heavySlotsReturned": 1,
+    "activeOwnedJobs": 0
+  },
+  "originalServerResult": {
+    "immediate15SecondContinuityPass": false,
+    "executorExit": 1,
+    "supervisorExit": 124,
+    "sameOriginalJobLateCompletionSeconds": 123.108,
+    "rerunRollbackSignals": 0
+  },
+  "limitations": [
+    "동일 파일 동시 overwrite/잠금 정책은 시험하지 않았습니다.",
+    "ENOENT는 B에 A 서버 절대경로가 노출되지 않는 topology 관측이며 임의 alias/raw NFS/관리자 권한의 전체 격리 증명이 아닙니다.",
+    "Production Agent mount generator/controller, physical pin, old writer/Compute fencing, provider/HA/native iPhone 완료가 아닙니다.",
+    "이전 서버 rollout의 원 15초 timeout/exit1 및 같은 job 123.108초 지연 완료는 별도 이력으로 유지합니다."
+  ],
+  "infraPublication": {
+    "newRemoteCallsTestsCaptureBuildApply": 0,
+    "productSourceChange": 0,
+    "heavy": 0,
+    "usageCreditsStreamErrors": "이번 turn에서 미관측입니다."
+  }
+}
