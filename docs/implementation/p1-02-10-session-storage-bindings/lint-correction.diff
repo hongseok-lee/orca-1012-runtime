@@ -1,0 +1,56 @@
+diff --git a/src/main/durable-runtime/storage/store.ts b/src/main/durable-runtime/storage/store.ts
+index 19bb8769..756cd762 100644
+--- a/src/main/durable-runtime/storage/store.ts
++++ b/src/main/durable-runtime/storage/store.ts
+@@ -68,7 +68,7 @@ export class StorageStore {
+     await this.unit(tx, input);
+     const member = await tx.query<{ runtime_unit_id: string }>(
+       'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1', [input.sessionId]);
+-    if (member.rows[0] && member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
++    if (member.rows[0] && member.rows[0].runtime_unit_id !== input.unitId) { deny('STORAGE_MEMBER_UNIT_MISMATCH'); }
+     await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [c.domain.backendId, c.domain.exportId]);
+     await lockAggregates(tx, { storageDomains: [{ backendId: c.domain.backendId, exportId: c.domain.exportId }] });
+     // Local validity only, after lock waits. No stat/cloud/K8s callback in tx.
+@@ -77,14 +77,10 @@ export class StorageStore {
+       (id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
+       VALUES($1,$2,$3,$4,$5,clock_timestamp(),'VERIFIED') RETURNING *`,
+       [input.bindingId, c.domain.backendId, c.domain.exportId, c.canonicalDirectory, evidence.evidenceRef]);
+-    if (member.rows[0]) {
+-      await tx.query('INSERT INTO durable_runtime.runtime_member_storage_bindings(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
+-        [input.unitId, input.sessionId, input.bindingId]);
+-    } else {
+-      // The 021 INSERT trigger records this primary binding in the same tx.
+-      await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
+-        [input.unitId, input.sessionId, input.bindingId]);
+-    }
++    // The 021 INSERT trigger records a new primary binding in the same tx.
++    await tx.query(member.rows[0]
++      ? 'INSERT INTO durable_runtime.runtime_member_storage_bindings(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)'
++      : 'INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [input.unitId, input.sessionId, input.bindingId]);
+     await this.event(tx, input, row.rows[0], 'STORAGE_BINDING_REGISTERED');
+     return row.rows[0];
+   }
+@@ -102,18 +98,18 @@ export class StorageStore {
+     await this.unit(tx, input);
+     const member = await query<{ runtime_unit_id: string }>(
+       'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1', [input.sessionId]);
+-    if (member.rowCount !== 1) deny('STORAGE_MEMBER_MISSING');
+-    if (member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
++    if (member.rowCount !== 1) { deny('STORAGE_MEMBER_MISSING'); }
++    if (member.rows[0].runtime_unit_id !== input.unitId) { deny('STORAGE_MEMBER_UNIT_MISMATCH'); }
+     const first = await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId]);
+-    if (first.rowCount !== 1) deny('STORAGE_BINDING_MISSING');
++    if (first.rowCount !== 1) { deny('STORAGE_BINDING_MISSING'); }
+     await lockAggregates(tx, { storageDomains: [{ backendId: first.rows[0].backend_id, exportId: first.rows[0].export_id }] });
+     const binding = (await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId])).rows[0];
+-    if (!binding) deny('STORAGE_BINDING_MISSING');
++    if (!binding) { deny('STORAGE_BINDING_MISSING'); }
+     const inserted = await query(`INSERT INTO durable_runtime.runtime_member_storage_bindings
+       (runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)
+       ON CONFLICT(runtime_unit_id,session_id,storage_binding_id) DO NOTHING RETURNING storage_binding_id`,
+       [input.unitId, input.sessionId, input.bindingId]);
+-    if (inserted.rowCount) await this.event(tx, input, binding, 'STORAGE_BINDING_ATTACHED');
++    if (inserted.rowCount) { await this.event(tx, input, binding, 'STORAGE_BINDING_ATTACHED'); }
+     return binding;
+   }
+   private async lock(tx: DurableTransaction, target: StorageTarget): Promise<Locked> {

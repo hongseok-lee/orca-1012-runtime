@@ -105,8 +105,9 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
       // No G04 verifier is supplied, so any earlier attempt keeps new writer
       // admission BLOCKED. Never reset epoch/grants or infer safe replacement.
       const prior = await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1', [context.runtimeUnitId])
-      const grants = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g JOIN durable_runtime.runtime_members m
-        ON m.storage_binding_id=g.storage_binding_id WHERE m.runtime_unit_id=$1 AND g.state<>'REVOKED'`, [context.runtimeUnitId])
+      const grants = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
+        WHERE g.state<>'REVOKED' AND EXISTS(SELECT 1 FROM durable_runtime.runtime_member_storage_bindings m
+          WHERE m.storage_binding_id=g.storage_binding_id AND m.runtime_unit_id=$1)`, [context.runtimeUnitId])
       if (unit.active_attempt_id || prior.rowCount || grants.rowCount) {
         const blocked = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units
           SET phase='BLOCKED',revision=revision+1 WHERE id=$1 AND revision=$2

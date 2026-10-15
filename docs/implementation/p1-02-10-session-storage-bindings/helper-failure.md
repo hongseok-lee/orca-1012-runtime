@@ -1,0 +1,1 @@
+분류 helper가 실행 중인 자기 job의 exit를 읽어 undefined가 됐습니다. 원 lint 진단은 상속 26건·신규 0건이었고 lint를 반복하지 않았습니다. job 이름 lint의 완료 exit를 읽도록 helper를 교정한 뒤 type·PG에 처음 진입했습니다. 제품 source·SQL·fixture assertion은 이 준비 교정에서 변경하지 않았습니다.
