@@ -91,7 +91,12 @@ await test('execution target original records: isolated PG callback 1', async (t
 
   await rejected(() => transaction(tx => tx.query('UPDATE durable_runtime.execution_target_records SET node_name=node_name WHERE attempt_id=$1', [exact.input.attemptId])), '23514')
   await rejected(() => transaction(tx => tx.query('DELETE FROM durable_runtime.execution_target_records WHERE attempt_id=$1', [exact.input.attemptId])), '23514')
-  for (const [column, value] of [['pod_uid','replacement-pod'],['incarnation','replacement-incarnation'],['execution_epoch','2'],['runtime_unit_id',identical.input.runtimeUnitId]]) {
+  const replacementUnit = randomUUID()
+  await transaction(async tx => {
+    await tx.query("INSERT INTO durable_runtime.runtime_units(id,desired_mode,intent_revision,execution_epoch,phase) VALUES($1,'RUNNING',1,1,'ABSENT')", [replacementUnit])
+    await tx.query("INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,1,'{}',1)", [replacementUnit])
+  })
+  for (const [column, value] of [['pod_uid','replacement-pod'],['incarnation','replacement-incarnation'],['execution_epoch','2'],['runtime_unit_id',replacementUnit]]) {
     await rejected(() => transaction(tx => tx.query(`UPDATE durable_runtime.attempts SET ${column}=$2 WHERE id=$1`, [exact.input.attemptId,value])), '23503')
   }
   await transaction(tx => tx.query("UPDATE durable_runtime.attempts SET status='STOPPED',reason='synthetic ordinary state' WHERE id=$1", [exact.input.attemptId]))
