@@ -57,6 +57,7 @@ class FixtureAuthority implements StorageEvidenceAuthority {
       canonicalDirectory: directory, podUid: 'synthetic-directory-server', generation: 'synthetic-1',
       device: '123', inode: String(this.directories.size + 1)
     })
+    // SAFETY: fixture-only synthetic directory brand; no production verifier is qualified.
     const held = Object.freeze({ evidenceRef: reference, topologyPinId: `synthetic-pin:${binding}`, candidate }) as VerifiedDirectoryEvidence
     this.directories.set(reference, held)
     return { reference, candidate }
@@ -322,12 +323,14 @@ await test('Session storage bindings: migration021 and focused Store/lifecycle/O
       VALUES($1,$2,'WAKE',0,$3,1,'INITIAL',0,$4,clock_timestamp()+interval '1 hour')`,
       [operation, empty, controllerScope, `synthetic-member-external:${operation}`])
   })
-  // Explicit fixture controller identity, not a production authentication result.
+  // SAFETY: explicit fixture controller identity, not a production authentication result.
   const controller = Object.freeze({ scope: controllerScope, owner, term: counter('controller-term', '1') }) as VerifiedControllerIdentity
+  // SAFETY: synthetic executor label only; this fixture must return NO_EXECUTION.
+  const executorId = `synthetic-member-executor:${randomUUID()}` as ExecutorId
   const prepared = await prepareReconcileStep(pool, { context: { runtimeUnitId: empty, operationId: operation, controller },
     mutationKey: randomUUID(), expectedUnitRevision: revision(), expectedIntentRevision: counter('intent-revision', '0'),
     expectedStepRevision: counter('step-revision', '0'), step: 'ENSURE_ATTEMPT',
-    executorId: `synthetic-member-executor:${randomUUID()}` as ExecutorId, input: {} })
+    executorId, input: {} })
   assert.equal(prepared.mutation.status, 'COMMITTED')
   assert.equal(prepared.execution.disposition, 'NO_EXECUTION')
   if (prepared.execution.disposition !== 'NO_EXECUTION') { assert.fail('secondary held writer must prevent an execution claim') }
