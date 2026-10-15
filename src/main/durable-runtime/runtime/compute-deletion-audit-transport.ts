@@ -45,6 +45,11 @@ function networkCode(error: unknown): ComputeAuditErrorCode {
     ? 'TLS_ERROR' : 'NETWORK_ERROR'
 }
 
+function invalidToken(token: string): boolean {
+  return Array.from(token).some(character => /\s/.test(character) ||
+    character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+}
+
 function httpCode(status: number | undefined): ComputeAuditErrorCode | null {
   if (status === 200) {
     return null
@@ -168,7 +173,7 @@ export function readComputeAuditPage(
       if (settled) {
         return
       }
-      if (typeof token !== 'string' || !token || /[\s\x00-\x1f\x7f]/.test(token)) {
+      if (typeof token !== 'string' || !token || invalidToken(token)) {
         finish(failure('AUTH_FAILED'))
         return
       }
