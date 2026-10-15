@@ -1,0 +1,19 @@
+{
+  "kind": "HISTORICAL_EXISTING_ENVIRONMENT_ONLY",
+  "repositoryPin": "083a6455cc8c4a08e1eb64fe7460ad15a6a81589",
+  "path": "docs/implementation/p1-16-c3-first-ui/workspace-created-first.png",
+  "provenancePath": "docs/implementation/p1-16-c3-first-ui/workspace-created-first-provenance.json",
+  "capturedAt": "2026-10-14T13:33:04.734Z",
+  "sha256": "53990a5ab41bfafed707ee5a02b7fbdd67fe1a977d994cbce63a07f58f8cf00a",
+  "bytes": 13699,
+  "dimensions": {
+    "width": 390,
+    "height": 844
+  },
+  "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "serverSourcePin": "e8ef0f7664bc8a5828b0c771b4b0bd247083a2ab",
+  "wholeCheckoutGitSHAQualified": false,
+  "nativeIPhone": false,
+  "transactionResultScreen": false,
+  "newCapture": false
+}

@@ -1,0 +1,164 @@
+{
+  "sourcePin": "3b0ca608cffb2e9aa488093125ad462e523df25d",
+  "lint": {
+    "wholeExit": 0,
+    "ownedFiles": 2,
+    "diagnostics": 0
+  },
+  "type": {
+    "wholeExit": 0,
+    "strict": true,
+    "sourceInputs": 2,
+    "externalTypePaths": 210,
+    "mismatches": [],
+    "outside": [],
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0
+  },
+  "syntheticCallback": {
+    "wholeExit": 0,
+    "synthetic": true,
+    "productCallbacks": 1,
+    "parentProductCallbackCount": 0,
+    "rawTAPIncludingParent": 2,
+    "passIncludingParent": 2,
+    "fail": 0,
+    "skipped": 0,
+    "actualRuntimePID": 41141,
+    "runtimeSourceInputsExcludingGeneratedFixture": 1,
+    "fixtureGeneratedAsWholeOriginalBody": true,
+    "wrapper": {
+      "sourceSha256": "baffb607cac99ab9b8e06f5f56f71a93da9b830595f8922f0589095b3627d5cf",
+      "originalBodySha256": "7094e82535639b75086928270fd23ec35bb46c9c1f1cd45cd6997d045a22a43c",
+      "wrapperSha256": "8258757fe048e2277b7bac6cdb50bbae16a7269ff0af555b99ccf1fe50acb76c",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    },
+    "mismatches": [],
+    "rawHelperFilenamesRetainPGPrefixButActualPGWasNotRun": true
+  },
+  "syntheticTiming": {
+    "startedAt": "2026-10-15T18:50:08.311Z",
+    "endedAt": "2026-10-15T18:50:12.509Z",
+    "controlPID": 40999
+  },
+  "syntheticRawEvidenceSHA256": {
+    "callback.tap": "73a8e5c24ffdff70fb952406a8c4c0ee86c500f8c51d80309c43c4e9208b6a56",
+    "pg.metafile.json": "bfbec468e8ba359df4646764e6101caac94af4a1389421a85d93114b04a04c48",
+    "pg.actual-inputs.json": "a5459517ecec1718d6b81a41a86c1bd77debe57ae7c3db3ea8d0d51255be2b1f",
+    "pg.generated.cts": "8258757fe048e2277b7bac6cdb50bbae16a7269ff0af555b99ccf1fe50acb76c",
+    "pg.cjs": "65db62d5cb294710e1e12b768303e12796a3a7b832f570707d6a142707fdd793",
+    "actual-type-inputs.json": "e3526ea6601ad8cee4cb50f1388b531192f414c72050995984f153a486714ddc",
+    "input-manifest.json": "ffb2d237b4678913c45221d42b818f1f4b397d129f16c73d80447a3cccae7e22",
+    "lint.log": "f846f6740424fca2b05339dd9e452d295ea92730f7fe415ea711397972ad4b00",
+    "type.log": "e3a0e2a50ae621d5067622191a44b1d9a330758fd44ec7aadb20c2c5452d3a4d",
+    "run-state.json": "7ed2cf45725be7ff7184a5f8e0d19254a2bfd806294a3561e0800603305a8806",
+    "known-pid-cleanup.json": "d5d5f474af77c3a15242d01f1bcff49ad7361419a94207755bc03bacf26e214e"
+  },
+  "actualPG": {
+    "transactions": 1,
+    "outcome": {
+      "ok": false,
+      "settlement": "ROLLED_BACK",
+      "commitOutcome": "NOT_COMMITTED",
+      "cleanupFailed": false,
+      "errorCode": "TX_NOT_COMMITTED"
+    },
+    "bodyError": "22012",
+    "nativeCommitTag": "ROLLBACK",
+    "samePoolBackendPIDMatched": true,
+    "ledger21Unchanged": true,
+    "rawEvidenceSHA256": {
+      "actual-ack-state.json": "e367a0e778343ede5007679ca3612b3d9ac4de7613798e66b6cfc9cf976cb93c",
+      "actual-ack.stdout": "c7c6b3687c22a9977f48ac749c6cf208251625f61bdd24244ffa963382cc33c7",
+      "actual-ack.stderr": "c458f05d014e6157234fc58163c4ac0de70e06d1245cf95ddbc862dd4ce55ab3",
+      "actual-ack-input-before.json": "f2221f24a9116d685879369fd4b1d925a79f181c95ee63d3fe117041bdd69370",
+      "actual-ack.metafile.json": "04fc967932058a0bc2afe55039b53ba20bffb68b1d11d55a61578b76afc946a6",
+      "actual-ack.actual-inputs.json": "cb7e1bf6e6cb2034bd14fec34d2abf87f7aa6ceb9898fad751ae32a9a3613980",
+      "actual-pg-ack-before.json": "cbce752d6ee84c11f19efea31c3279ca85419d35873f285dc25d43b54a607235",
+      "actual-pg-ack-result.json": "63a2a099dbcc7c857da36b2ab191f2ba08cef0b9f2c231358d960bbc17c384a6",
+      "actual-pg-ack-cleanup.json": "296ba3226724a4e8ba9d43ba83ae4f8df8b66a4eeccb43a9574d0aa03b9325f6",
+      "known-pid-cleanup.json": "b9a22dadd5de74f05b0e217a307a7b58d8de5255b97cea0df653c3bb14928ff2"
+    }
+  },
+  "cleanup": {
+    "synthetic": {
+      "at": "2026-10-15T18:50:37.401Z",
+      "pids": [
+        {
+          "pid": 40999,
+          "present": true,
+          "state": "Z (zombie)"
+        },
+        {
+          "pid": 41006,
+          "present": false,
+          "error": "ENOENT"
+        },
+        {
+          "pid": 41013,
+          "present": false,
+          "error": "ENOENT"
+        },
+        {
+          "pid": 41025,
+          "present": false,
+          "error": "ENOENT"
+        },
+        {
+          "pid": 41115,
+          "present": false,
+          "error": "ENOENT"
+        },
+        {
+          "pid": 41122,
+          "present": false,
+          "error": "ENOENT"
+        },
+        {
+          "pid": 41135,
+          "present": false,
+          "error": "ENOENT"
+        },
+        {
+          "pid": 41141,
+          "present": false,
+          "error": "ENOENT"
+        }
+      ]
+    },
+    "actualPG": {
+      "at": "2026-10-15T19:01:39.244Z",
+      "pids": [
+        {
+          "pid": 41196,
+          "present": true,
+          "state": "Z (zombie)"
+        },
+        {
+          "pid": 41209,
+          "present": false,
+          "error": "ENOENT"
+        }
+      ]
+    }
+  },
+  "successfulValidationRepeated": 0,
+  "actualPGHelperTranspiles": 1,
+  "DDLSeedMutationMigration": 0,
+  "newPNG": 0,
+  "live": 0,
+  "NFS": 0,
+  "install": 0,
+  "wholeBuild": 0,
+  "heavy": 0,
+  "priorModelServiceError": {
+    "rootServerRecord": "Earlier delegated turn failed with workspace out-of-credits; current response recovered.",
+    "error": "Your workspace is out of credits. Ask your workspace owner to refill in order to continue.",
+    "modelDirectErrorObserved": false
+  },
+  "newDirectUsageCreditsStreamError": "미관측",
+  "physicalAuthorityLifetimeQualified": false,
+  "actualNetworkInterruptionQualified": false
+}

@@ -1,0 +1,58 @@
+{
+  "sourcePin": "3b0ca608cffb2e9aa488093125ad462e523df25d",
+  "startedAt": "2026-10-15T19:01:17.136Z",
+  "endedAt": "2026-10-15T19:01:17.346Z",
+  "pid": 41209,
+  "bodyError": "22012",
+  "commands": [
+    {
+      "requested": "BEGIN",
+      "command": "BEGIN",
+      "array": false,
+      "at": "2026-10-15T19:01:17.340Z"
+    },
+    {
+      "requested": "COMMIT",
+      "command": "ROLLBACK",
+      "array": false,
+      "at": "2026-10-15T19:01:17.342Z"
+    }
+  ],
+  "outcome": {
+    "ok": false,
+    "settlement": "ROLLED_BACK",
+    "commitOutcome": "NOT_COMMITTED",
+    "cleanupFailed": false,
+    "errorCode": "TX_NOT_COMMITTED"
+  },
+  "samePoolBackendPIDMatched": true,
+  "actualDBSystemOIDDatasetGuardMatched": true,
+  "ledger21Unchanged": true,
+  "bodyTransactions": 1,
+  "schemaApply": 0,
+  "seed": 0,
+  "networkFault": false,
+  "cleanup": {
+    "pid": 41209,
+    "at": "2026-10-15T19:01:17.347Z",
+    "ownedPoolEnded": true
+  },
+  "knownPIDs": {
+    "at": "2026-10-15T19:01:39.244Z",
+    "pids": [
+      {
+        "pid": 41196,
+        "present": true,
+        "state": "Z (zombie)"
+      },
+      {
+        "pid": 41209,
+        "present": false,
+        "error": "ENOENT"
+      }
+    ]
+  },
+  "rawResultSHA256": "63a2a099dbcc7c857da36b2ab191f2ba08cef0b9f2c231358d960bbc17c384a6",
+  "rawBeforeSHA256": "cbce752d6ee84c11f19efea31c3279ca85419d35873f285dc25d43b54a607235",
+  "helperSHA256": "44ebcec114ed1d30206e8626f89d206648b18ba9b632351012cac80fb92da1d5"
+}
