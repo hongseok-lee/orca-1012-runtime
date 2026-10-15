@@ -1,0 +1,169 @@
+{
+  "kind": "SYNTHETIC_COMPUTE_CREATION_MODULE_VERIFICATION",
+  "sourcePin": "469b7bd2f42745e7fea75e1538006439d3701ebf",
+  "base": "fe2d0540035a53e4f5f1acdff13a8fb2cd17401d",
+  "sourceRelationship": {
+    "original": "bfadfa521411071d9a0cb1c522a560349e43f596",
+    "rootReviewedCorrection": "63c0d55373226402f79c36c30b602c8873d9d3e6",
+    "lintOnlyCorrectionAndVerified": "469b7bd2f42745e7fea75e1538006439d3701ebf",
+    "publicationHead": "이 source와 byte-identical한 11개 파일에 공개 보고 asset만 추가합니다. 최종 commit은 PR head로 기록합니다."
+  },
+  "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/90#issuecomment-6186766457",
+  "rootFirstAuditItems": 44,
+  "rootFirstAuditAllMatched": true,
+  "firstLintFailure": {
+    "PID": 36187,
+    "startedAt": "2026-10-15T07:00:52.096Z",
+    "finishedAt": "2026-10-15T07:00:52.475Z",
+    "exit": 1,
+    "errors": {
+      "no-control-regex": 2,
+      "prefer-template": 2
+    },
+    "rawSHA256": "ade0d0ba4a3b52dc932309f541da10513f4cc3aaa304e9f7c773b4689a52d0ff",
+    "correctionDiffSHA256": "e95676c508c7a13bcfb370f2166eff73423fa1164216e4fa32f47636c29ce7b4",
+    "meaningOrAssertionsChanged": false
+  },
+  "passedLint": {
+    "changedFiles": 3,
+    "PID": 36309,
+    "startedAt": "2026-10-15T07:02:55.579Z",
+    "finishedAt": "2026-10-15T07:02:55.944Z",
+    "exit": 0,
+    "rawSHA256": "e7ffee233a96f5811772ee73db3141e4997e6813eb509084b312713bf05e6c90"
+  },
+  "scopedType": {
+    "inputs": 15,
+    "diagnostics": 0,
+    "PID": 36321,
+    "startedAt": "2026-10-15T07:02:55.948Z",
+    "finishedAt": "2026-10-15T07:02:58.035Z",
+    "exit": 0,
+    "rawSHA256": "df57d0906764fa4dd9000555a551f80cc0fcdc065769bc2cc6ac0cb6697b6450",
+    "configurationSHA256": "90ce4516e27143af4320e7be8e4348b73a81434c59ed34834edfc8ef50f3a60f"
+  },
+  "nativePreparationFailure": {
+    "PID": 36363,
+    "startedAt": "2026-10-15T07:02:58.042Z",
+    "finishedAt": "2026-10-15T07:02:58.384Z",
+    "exit": 1,
+    "errorCode": "ERR_MODULE_NOT_FOUND",
+    "causeBoundary": "고정 source는 존재하지만 native Node가 extensionless import를 해석하지 못했습니다.",
+    "callbackEntries": 0,
+    "rawTAPSHA256": "64b5d3141bbb333dc0b4287544cf3803ceb9c04ea785abd554c6e0e96a3a31b1",
+    "productAndFixtureBytesChanged": false
+  },
+  "bundlePreparation": {
+    "PID": 36442,
+    "startedAt": "2026-10-15T07:05:29.017Z",
+    "sourcePin": "469b7bd2f42745e7fea75e1538006439d3701ebf",
+    "esbuild": "0.25.12",
+    "jobs": [
+      {
+        "name": "parser",
+        "actualInputs": 11,
+        "mismatches": [],
+        "bundleSHA256": "8b53e6b2c82ff24ce862d918b9fda98015aeeec6b27240334be3507bcd03cf22",
+        "metafileSHA256": "8a7ce75d0b3304db09885a1c186938e994821a258bf11b6e91c710d19e80d045"
+      },
+      {
+        "name": "client",
+        "actualInputs": 10,
+        "mismatches": [],
+        "bundleSHA256": "5302e32361f82a8c136764b90ffeadfdb8fa32f98cc69c96e1b645e14ee33ea9",
+        "metafileSHA256": "408ea4602a261bd1485fb5ba1db4d91c0a9ad676f7f532539d2a31c5fe6936fb"
+      }
+    ],
+    "metafilesBeforeGuard": true,
+    "finishedAt": "2026-10-15T07:05:29.201Z",
+    "exit": 0
+  },
+  "callbacks": [
+    {
+      "phase": "parser",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "TAPSHA256": "9d068ef532dc03a0ba09789c63b97c4c0e063dd970a9b4c090a1da3c6a7e7a8a"
+    },
+    {
+      "phase": "client",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "TAPSHA256": "31d88cef8e31f4d5d2997095009fb0773a70de302e12dddb136d7941f50cc473"
+    }
+  ],
+  "successfulJobs": [
+    {
+      "phase": "bundle-prepare",
+      "PID": 36442,
+      "startedAt": "2026-10-15T07:05:28.906Z",
+      "finishedAt": "2026-10-15T07:05:29.215Z",
+      "exit": 0,
+      "logSHA256": "7ea49474e1bf831ca5eaf422cc33f65c1ca052ec42db4c966d64a86bc28f39e8"
+    },
+    {
+      "phase": "parser",
+      "PID": 36455,
+      "startedAt": "2026-10-15T07:05:29.219Z",
+      "finishedAt": "2026-10-15T07:05:29.494Z",
+      "exit": 0,
+      "logSHA256": "9d068ef532dc03a0ba09789c63b97c4c0e063dd970a9b4c090a1da3c6a7e7a8a"
+    },
+    {
+      "phase": "client",
+      "PID": 36469,
+      "startedAt": "2026-10-15T07:05:29.503Z",
+      "finishedAt": "2026-10-15T07:05:29.824Z",
+      "exit": 0,
+      "logSHA256": "31d88cef8e31f4d5d2997095009fb0773a70de302e12dddb136d7941f50cc473"
+    }
+  ],
+  "supervisor": {
+    "controlPid": 36435,
+    "startedAt": "2026-10-15T07:05:28.896Z",
+    "finishedAt": "2026-10-15T07:05:29.825Z",
+    "phase": "CREATION_IDENTITY_FIRST_COMPLETE"
+  },
+  "knownProcesses": [
+    {
+      "pid": 36435,
+      "state": "Z"
+    },
+    {
+      "pid": 36442,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 36455,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 36469,
+      "state": "ABSENT"
+    }
+  ],
+  "separateTestWorkerPIDObserved": false,
+  "metafileSavedBeforeGuard": true,
+  "actualInputUnion": 13,
+  "typeInputs": 15,
+  "guardMismatches": 0,
+  "toolVersions": {
+    "node": "v24.15.0",
+    "typescript": "7.0.2",
+    "oxlint": "1.80.0",
+    "esbuild": "0.25.12"
+  },
+  "firstHandoffPrivateOriginalSHA256": "df039e9d4c2e587a5ec0260a9a09a6efb394b011faa29b6c5f2a1c95a465dfe2",
+  "manifestSHA256": "afd0db8cad08a21f792304142eea5bfebd847138c285951cc699dab924cee338",
+  "testsRepeatedForPublication": false,
+  "actualCloudPGAPI": 0,
+  "installWholeBuildLive": 0,
+  "heavyAfterFirstVerification": 0,
+  "limits": [
+    "합성 Audit/HTTPS fixture의 모듈 검증입니다.",
+    "현재 RUNNING/STOPPED·Pod 인증·제품 attempt/producer PG binding을 확인하지 않았습니다.",
+    "Compute identity 신뢰/종료·VerifiedWorkloadIdentity·ComputeStoppedProof·permit·writer fencing·HA·native iPhone 합격이 아닙니다."
+  ]
+}

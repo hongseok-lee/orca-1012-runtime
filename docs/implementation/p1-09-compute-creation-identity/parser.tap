@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: creation first response and absent final response preserve exact uint64 and no authority
+ok 1 - creation first response and absent final response preserve exact uint64 and no authority
+  ---
+  duration_ms: 9.115944
+  type: 'test'
+  ...
+# Subtest: creation input captures canonical scope and rejects overflow, separators and trailing newline
+ok 2 - creation input captures canonical scope and rejects overflow, separators and trailing newline
+  ---
+  duration_ms: 3.357916
+  type: 'test'
+  ...
+# Subtest: creation rejects identity replacement, missing labels/type, wrong method and status ambiguity
+ok 3 - creation rejects identity replacement, missing labels/type, wrong method and status ambiguity
+  ---
+  duration_ms: 7.924615
+  type: 'test'
+  ...
+# Subtest: last response absence differs from malformed shape, invalid field types and provided contradictions
+ok 4 - last response absence differs from malformed shape, invalid field types and provided contradictions
+  ---
+  duration_ms: 5.405331
+  type: 'test'
+  ...
+# Subtest: one operation only, exact dedup, one first/last and nanosecond order are required
+ok 5 - one operation only, exact dedup, one first/last and nanosecond order are required
+  ---
+  duration_ms: 3.183122
+  type: 'test'
+  ...
+# Subtest: creation empty observation, bounded pages and parser errors remain distinct
+ok 6 - creation empty observation, bounded pages and parser errors remain distinct
+  ---
+  duration_ms: 4.355472
+  type: 'test'
+  ...
+# Subtest: an intermediate row cannot borrow last-only response omission from a valid pair
+ok 7 - an intermediate row cannot borrow last-only response omission from a valid pair
+  ---
+  duration_ms: 0.519813
+  type: 'test'
+  ...
+# Subtest: one deletion compatibility vector keeps its existing observation/digest when shape metadata is added
+ok 8 - one deletion compatibility vector keeps its existing observation/digest when shape metadata is added
+  ---
+  duration_ms: 1.605187
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 191.343936

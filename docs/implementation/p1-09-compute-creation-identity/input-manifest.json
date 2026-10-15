@@ -1,0 +1,210 @@
+{
+  "sourcePin": "469b7bd2f42745e7fea75e1538006439d3701ebf",
+  "base": "fe2d0540035a53e4f5f1acdff13a8fb2cd17401d",
+  "originalSourcePin": "bfadfa521411071d9a0cb1c522a560349e43f596",
+  "approvedCorrectionPin": "63c0d55373226402f79c36c30b602c8873d9d3e6",
+  "source11": [
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-client.test.mts",
+      "mode": "100644",
+      "blob": "f78407a0ac215ce045f6e4ccf37659cf6c9ef740",
+      "sha256": "e4cffc4d671a9f9f8b9f4650620c6a9c36aeb1d471d283e2fc937d9385ac3c7b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-fixtures.mts",
+      "mode": "100644",
+      "blob": "ddc1cc20c1e2ccac31c738b09c7b2409b9de54a2",
+      "sha256": "12352cc2107c0acb794cb794822550594186833df968bd335d991a8d88cf271b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-input.ts",
+      "mode": "100644",
+      "blob": "576c22941e76e24c11e89273689aaee51e279ef8",
+      "sha256": "d7831a82ed2f177d2d7149d20b455c8b8a0c350fa3753852bf7784198adb9cf3"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-parser.test.mts",
+      "mode": "100644",
+      "blob": "3285a277622ef5d19958e75aa737de438995c684",
+      "sha256": "154127a55092b4c227b534a22cf2743b0976f4db9feb04d8db12da7d61602cee"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-parser.ts",
+      "mode": "100644",
+      "blob": "bd36d3c8b7f5e807245c2321e44c918f7e852430",
+      "sha256": "c2e8463d839ac5a6b98405fc8fbeb67d23216f002761544c07584674e13e7465"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-types.ts",
+      "mode": "100644",
+      "blob": "b7405c1c47864b5e7bd7e87533918440c7d90f03",
+      "sha256": "1f8a7072ca8203d9955562d24686885727c2152eae5245da99b9f7e8e5133014"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity.ts",
+      "mode": "100644",
+      "blob": "cd1dbb4d3d52f8432c23183ef75aa9edac5ec9ed",
+      "sha256": "41e97b5ad7a6847232e83d7345babc8d66610ca8087f601127fc7945a40623a6"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-projection.ts",
+      "mode": "100644",
+      "blob": "d66ade6d0a4aecf82c875f4761c06033c5eeb1bf",
+      "sha256": "6e36fbc09633462fbae5048c64700cf47cb310f5be416735a41a6ab2e8f9b30e"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport.ts",
+      "mode": "100644",
+      "blob": "675e5bd191944d5f57b9003400a80c282e8ab4e5",
+      "sha256": "6ec252f819fc0b8506c11bab1ed47153b84643a39cea246f1152cf39ed7f072c"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-types.ts",
+      "mode": "100644",
+      "blob": "4e0b2b0b2cdfb1e3f772ad4fb61b8b0bb682cdf5",
+      "sha256": "7c398ccfccae1d3ba68662bcefd2a4dd7896ae7d0fe666d3aa2a39a1347522d0"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+      "mode": "100644",
+      "blob": "ca9aa16ea2cb8c5d461574f515f855f93c0b3696",
+      "sha256": "3cd3178d0b3ec2ed1dca66e395b4fc17f18fd2d58eedfeea22139387c11b5579"
+    }
+  ],
+  "type15": [
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-types.ts",
+      "sha256": "7c398ccfccae1d3ba68662bcefd2a4dd7896ae7d0fe666d3aa2a39a1347522d0"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-input.ts",
+      "sha256": "5cef86e655cc91d4cc81ec328fc89c550550a456f1d4cdebc2239e7003889bf1"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-types.ts",
+      "sha256": "1f8a7072ca8203d9955562d24686885727c2152eae5245da99b9f7e8e5133014"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-input.ts",
+      "sha256": "d7831a82ed2f177d2d7149d20b455c8b8a0c350fa3753852bf7784198adb9cf3"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-parser.ts",
+      "sha256": "c2e8463d839ac5a6b98405fc8fbeb67d23216f002761544c07584674e13e7465"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-projection.ts",
+      "sha256": "6e36fbc09633462fbae5048c64700cf47cb310f5be416735a41a6ab2e8f9b30e"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport.ts",
+      "sha256": "6ec252f819fc0b8506c11bab1ed47153b84643a39cea246f1152cf39ed7f072c"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity.ts",
+      "sha256": "41e97b5ad7a6847232e83d7345babc8d66610ca8087f601127fc7945a40623a6"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-fixtures.mts",
+      "sha256": "12352cc2107c0acb794cb794822550594186833df968bd335d991a8d88cf271b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport-fixtures.mts",
+      "sha256": "4b72bd6dda6a9cf8b17b1f8dfe4ac55ee1d8329bbef9406d4d0b670d7420bee7"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-client.test.mts",
+      "sha256": "e4cffc4d671a9f9f8b9f4650620c6a9c36aeb1d471d283e2fc937d9385ac3c7b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-fixtures.mts",
+      "sha256": "a7a2db20279ae579c7d3ac7b68aa62239d5d9bf3177dc5e8b54cb7d71d8ee20b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+      "sha256": "2ede59949d46295603f754b81024749932cfbdbcef5aa6ec8ecb90e0fb6f7487"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-parser.test.mts",
+      "sha256": "154127a55092b4c227b534a22cf2743b0976f4db9feb04d8db12da7d61602cee"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+      "sha256": "3cd3178d0b3ec2ed1dca66e395b4fc17f18fd2d58eedfeea22139387c11b5579"
+    }
+  ],
+  "runtime13": [
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-client.test.mts",
+      "sha256": "e4cffc4d671a9f9f8b9f4650620c6a9c36aeb1d471d283e2fc937d9385ac3c7b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-fixtures.mts",
+      "sha256": "12352cc2107c0acb794cb794822550594186833df968bd335d991a8d88cf271b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-input.ts",
+      "sha256": "d7831a82ed2f177d2d7149d20b455c8b8a0c350fa3753852bf7784198adb9cf3"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-parser.test.mts",
+      "sha256": "154127a55092b4c227b534a22cf2743b0976f4db9feb04d8db12da7d61602cee"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity-parser.ts",
+      "sha256": "c2e8463d839ac5a6b98405fc8fbeb67d23216f002761544c07584674e13e7465"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-creation-identity.ts",
+      "sha256": "41e97b5ad7a6847232e83d7345babc8d66610ca8087f601127fc7945a40623a6"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-fixtures.mts",
+      "sha256": "a7a2db20279ae579c7d3ac7b68aa62239d5d9bf3177dc5e8b54cb7d71d8ee20b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-input.ts",
+      "sha256": "5cef86e655cc91d4cc81ec328fc89c550550a456f1d4cdebc2239e7003889bf1"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-parser.ts",
+      "sha256": "2ede59949d46295603f754b81024749932cfbdbcef5aa6ec8ecb90e0fb6f7487"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-projection.ts",
+      "sha256": "6e36fbc09633462fbae5048c64700cf47cb310f5be416735a41a6ab2e8f9b30e"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport-fixtures.mts",
+      "sha256": "4b72bd6dda6a9cf8b17b1f8dfe4ac55ee1d8329bbef9406d4d0b670d7420bee7"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport.ts",
+      "sha256": "6ec252f819fc0b8506c11bab1ed47153b84643a39cea246f1152cf39ed7f072c"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-types.ts",
+      "sha256": "7c398ccfccae1d3ba68662bcefd2a4dd7896ae7d0fe666d3aa2a39a1347522d0"
+    }
+  ],
+  "validationConfiguration": [
+    {
+      "label": "원 type/scoped config",
+      "sha256": "90ce4516e27143af4320e7be8e4348b73a81434c59ed34834edfc8ef50f3a60f"
+    },
+    {
+      "label": "원 type input manifest",
+      "sha256": "9d084e4142c574d35abd62f757c2702593c195d7e4b523d5833e96e0119a6162"
+    },
+    {
+      "label": "CJS fixture preparation input",
+      "sha256": "9d084e4142c574d35abd62f757c2702593c195d7e4b523d5833e96e0119a6162"
+    },
+    {
+      "label": "CJS fixture preparation control manifest",
+      "sha256": "7a6b6d14087147650c33901e153838cb4b66bc56ec484b4d48055b91b184a76b"
+    }
+  ],
+  "lintConfiguration": "기존 checkout의 readonly lint config를 재사용했으며 이 PR에서 수정하지 않았습니다. 원 실행 시 별도 hash는 수집하지 않았습니다.",
+  "inputMismatches": 0
+}

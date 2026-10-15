@@ -1,0 +1,51 @@
+{
+  "kind": "OFFLINE_VERIFICATION_REPORT",
+  "pid": 6635,
+  "startedAt": "2026-10-15T07:24:27.729Z",
+  "phase": "OFFLINE_REPORT_COMPLETE",
+  "sourcePin": "469b7bd2f42745e7fea75e1538006439d3701ebf",
+  "htmlSHA256": "5e34736daebddcad8eeae9de62ef18c2d92a43c736c00adebc4b9723f1c4994b",
+  "productUI": false,
+  "actualKubernetesAPI": false,
+  "authStateLoaded": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "node": "v24.14.1",
+  "capturedAt": "2026-10-15T07:24:28.000Z",
+  "PNGSHA256": "2bfc94dbef84d42ec5df5d531233f65dacaec885a39c2dfc170e85415d888439",
+  "PNGBytes": 222696,
+  "viewport": {
+    "width": 1280,
+    "height": 1600
+  },
+  "DPR": 1,
+  "networkRequests": 0,
+  "externalRequestsBlocked": true,
+  "exit": 0,
+  "contextClosed": true,
+  "browserClosed": true,
+  "finishedAt": "2026-10-15T07:24:28.276Z",
+  "supervisorPID": 6628,
+  "runnerStartedAt": "2026-10-15T07:24:25.914Z",
+  "runnerFinishedAt": "2026-10-15T07:24:28.295Z",
+  "runnerExit": 0,
+  "screenshotCount": 1,
+  "syntheticReport": true,
+  "nativeIPhone": false,
+  "liveStateLoaded": false,
+  "testsTypeCloudPGRepeatedForCapture": false,
+  "captureHelperSHA256": "29c932351c8755e46f6372bc013d4ac176f62bb07eacb429eece28c75876e2a3",
+  "captureInputSHA256": "c93759f7ba90b934d52d17e268ecc28936c1d3da19be9b8a919f1f456b601522",
+  "knownCaptureProcesses": [
+    {
+      "PID": 6628,
+      "state": "Z"
+    },
+    {
+      "PID": 6635,
+      "state": "ABSENT"
+    }
+  ],
+  "HTMLBytesPreserved": true,
+  "PNGBytesPreserved": true
+}
