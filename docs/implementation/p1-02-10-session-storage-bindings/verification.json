@@ -1,0 +1,90 @@
+{
+  "sourcePin": "8f35e8da0ea2b48dc96c369b7e9405ad2ed14a8c",
+  "acceptedSourcePin": "b6c7a3ca10c3616e9178421ea04fc1a0b70dbe0a",
+  "base": "a8874fd1952f010f2da1ed4a43352510394cfbed",
+  "fixtureSHA256": "057040b6c47374d34ace9d49e521dfd7acbeae71e3e281267ac390f8c8ca3030",
+  "lint": {
+    "firstWholeExit": 1,
+    "firstErrors": 34,
+    "changedWholeExit": 1,
+    "inheritedDiagnostics": 26,
+    "newDiagnostics": 0,
+    "suppression": 0
+  },
+  "type": {
+    "wholeExit": 0,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0,
+    "sourceInputs": 36,
+    "externalPaths": 210,
+    "mismatches": [],
+    "outside": [],
+    "reused": 29,
+    "measured": 7,
+    "strict": true,
+    "configRawSHA256": "8749a4dd1b073e44a7c9cdf4ee649e99cf9807224cf3d4f26494507989eb8890",
+    "publicConfig": "scoped-type.public.json"
+  },
+  "PG": {
+    "wholeExit": 0,
+    "productCallbacks": 1,
+    "parentProductCallbackCount": 0,
+    "tapTests": 2,
+    "tapPass": 2,
+    "tapFail": 0,
+    "actualRuntimePID": 40052,
+    "inputFiles": 20,
+    "mismatches": [],
+    "syntheticAuthority": true,
+    "physicalProviderOrLiveValidation": false
+  },
+  "database": {
+    "ledgerBefore": 20,
+    "ledgerAfter": 21,
+    "ledger20Unchanged": true,
+    "applied021": true,
+    "originalRowsPreserved": true,
+    "originalRowCount": 163,
+    "afterRowCount": 244,
+    "relationRows": "13",
+    "comparisonTables": 23,
+    "allDatabaseTablesPreservedClaimed": false
+  },
+  "identityGuard": {
+    "actualDatabaseSystemOidDatasetMatchedBeforeSeedAndDDL": true,
+    "samePool": true,
+    "rawValuesPublished": false
+  },
+  "execution": {
+    "live": 0,
+    "install": 0,
+    "imageOrProductBuild": 0,
+    "newPNG": 1,
+    "providerValidation": 0,
+    "heavyEnd": 0,
+    "successfulPhaseRepeat": 0
+  },
+  "originalEvidenceSHA256": {
+    "pg.tap": "cc83d3fa2cf1584f8e6a6b4506993491f1ddf941c06adbc257132a7474232a0e",
+    "input-manifest.json": "4c93b8a72573f57ff6239d748f6a35bf2d7c22f269afd218116665307ab0d507",
+    "pg.actual-inputs.json": "8d26949179d46c8f812dd88d4a081a026bb2c36380a3d0b45a5bf6bf47b0dc63",
+    "pg.metafile.json": "872035796ca70d8efa94f5436dd02208bf9625d3d3de301acb00af6709645024",
+    "pg.generated.cts": "d2a61ca65405d8736f19819e899d48090f4dd8e834561da906928f68785f6766",
+    "actual-type-inputs.json": "58c14615f7d0fdfb0d1e17cd8a0797f39ac3a3743f4ba581f48cbbf61baf3283",
+    "before-pg.json": "8948d6cac5b967afea0b59a51e035f0906516101cf44bc69bccafbc8d9d4b6ec",
+    "database-end.json": "5c9bd75e1b91edee823729a96d4461506d89365d78c05d5acfc3d6d346714cbe",
+    "resume-state.json": "2ef16cca6b6fd6d6cadf6e76032af7d2b0a2b4bc478e59a97b25bf0d38fb96eb",
+    "lint.log": "d85880d17d619b6296bfbc2495b1e9d7da3321fcddc600efcec159c58b29ef50",
+    "type.log": "fe0b657f02ee2ca7e96b69980854c22fd541d595d31e2c453b560bcb9a68f629"
+  },
+  "usageLimitCreditsStreamInterruption": "이번 turn에서 usage limit·credits·stream 중단 원오류는 미관측입니다.",
+  "syntheticAuthorityIsPhysicalProof": false,
+  "reportPNG": {
+    "kind": "OFFLINE_RESULT_REPORT",
+    "productUI": false,
+    "sha256": "3f9466c42029d54c560e9f7ca8a3dadfbbbb99840dce14046e81750b68c2f2f1",
+    "captureCount": 1,
+    "networkRequests": 0,
+    "cleanup": true
+  }
+}

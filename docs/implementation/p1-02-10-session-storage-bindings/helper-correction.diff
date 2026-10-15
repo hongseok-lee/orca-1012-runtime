@@ -1,0 +1,12 @@
+--- lint-classification.mjs
++++ lint-classification-correction.mjs
+@@ -1,7 +1,7 @@
+ import fs from 'node:fs';import path from 'node:path';import{fileURLToPath}from'node:url';
+ const root=path.dirname(fileURLToPath(import.meta.url)),m=JSON.parse(fs.readFileSync(root+'/input-manifest.json')),log=fs.readFileSync(root+'/lint.log','utf8'),base=fs.readFileSync(root+'/original-base-store.ts','utf8').split('\n'),current=fs.readFileSync(root+'/store.ts','utf8').split('\n');
+ const records=[];for(const match of log.matchAll(/x ([^\n]+): ([^\n]+)\n\s*,?-\[src\/main\/durable-runtime\/storage\/store\.ts:(\d+):(\d+)\]/g)){const [_,rule,message,line,column]=match,statement=current[Number(line)-1].trim();records.push({rule,message,line:Number(line),column:Number(column),statement,baseLines:base.flatMap((text,i)=>text.trim()===statement?[i+1]:[])})}
+-const inherited=records.filter(x=>['eslint(curly)','eslint(no-control-regex)'].includes(x.rule)&&x.baseLines.length),unexpected=records.filter(x=>!inherited.includes(x)),summary=log.match(/Found (\d+) warnings and (\d+) errors\./),exit=JSON.parse(fs.readFileSync(root+'/run-state.json')).jobs.at(-1).exit;
++const inherited=records.filter(x=>['eslint(curly)','eslint(no-control-regex)'].includes(x.rule)&&x.baseLines.length),unexpected=records.filter(x=>!inherited.includes(x)),summary=log.match(/Found (\d+) warnings and (\d+) errors\./),exit=JSON.parse(fs.readFileSync(root+'/run-state.json')).jobs.find(job=>job.name==='lint').exit;
+ const valid=summary&&Number(summary[1])===0&&Number(summary[2])===26&&records.length===26&&inherited.length===26&&!unexpected.length&&exit===1;
+-fs.writeFileSync(root+'/lint-classification.json',JSON.stringify({wholeExit:exit,inherited,unexpected,valid,originalFirstLint:'e1538ec7049ea08c27ef1fd4c3f71afe8d0b1dddaeee81800229cb951e815fec',method:'원 base의 같은 행과 정적으로 대조했습니다. 규칙 억제 및 기존 source 수정은 없습니다.'},null,2)+'\n',{flag:'wx'});
++fs.writeFileSync(root+'/lint-classification-correction.json',JSON.stringify({wholeExit:exit,inherited,unexpected,valid,originalFirstLint:'e1538ec7049ea08c27ef1fd4c3f71afe8d0b1dddaeee81800229cb951e815fec',method:'원 base의 같은 행과 정적으로 대조했습니다. 규칙 억제 및 기존 source 수정은 없습니다.'},null,2)+'\n',{flag:'wx'});
+ console.log(JSON.stringify({wholeExit:exit,inherited:inherited.length,unexpected:unexpected.length,valid}));if(!valid)throw Error('CHANGED_LINT_UNEXPECTED_DIAGNOSTIC');

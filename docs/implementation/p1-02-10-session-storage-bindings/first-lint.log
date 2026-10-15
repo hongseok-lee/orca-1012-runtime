@@ -1,0 +1,318 @@
+
+  x eslint(max-lines): File has too many lines (304).
+     ,-[src/main/durable-runtime/storage/store.ts:313:2]
+ 312 |   }
+ 313 | }
+     :  ^
+     `----
+  help: Maximum allowed is 300.
+
+  x eslint(curly): Expected { after 'if' condition.
+    ,-[src/main/durable-runtime/storage/store.ts:28:73]
+ 27 | function trustedReference(value: string): void {
+ 28 |   if (typeof value !== 'string' || !value || /[\x00-\x1f]/.test(value)) deny('STORAGE_EVIDENCE_REF');
+    :                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 29 | }
+    `----
+  help: Replace `deny('STORAGE_EVIDENCE_REF');` with `{deny('STORAGE_EVIDENCE_REF');}`.
+
+  x eslint(no-control-regex): Unexpected control characters
+    ,-[src/main/durable-runtime/storage/store.ts:28:48]
+ 27 | function trustedReference(value: string): void {
+ 28 |   if (typeof value !== 'string' || !value || /[\x00-\x1f]/.test(value)) deny('STORAGE_EVIDENCE_REF');
+    :                                                ^^|^ ^^|^
+    :                                                  |    `-- 'U+001F' is a control character.
+    :                                                  `-- 'U+0000' is a control character.
+ 29 | }
+    `----
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  x eslint(curly): Expected { after 'if' condition.
+    ,-[src/main/durable-runtime/storage/store.ts:55:88]
+ 54 |     const found = await tx.query('SELECT revision FROM durable_runtime.runtime_units WHERE id=$1', [scope.unitId]);
+ 55 |     if (found.rowCount !== 1 || found.rows[0].revision !== scope.expectedUnitRevision) deny('STORAGE_UNIT_STALE');
+    :                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 56 |   }
+    `----
+  help: Replace `deny('STORAGE_UNIT_STALE');` with `{deny('STORAGE_UNIT_STALE');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+    ,-[src/main/durable-runtime/storage/store.ts:64:75]
+ 63 |     catch { deny('STORAGE_DIRECTORY_UNVERIFIED'); }
+ 64 |     if (!evidence || evidence.evidenceRef !== input.directoryEvidenceRef) deny('STORAGE_DIRECTORY_UNVERIFIED');
+    :                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 65 |     if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');
+    `----
+  help: Replace `deny('STORAGE_DIRECTORY_UNVERIFIED');` with `{deny('STORAGE_DIRECTORY_UNVERIFIED');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+    ,-[src/main/durable-runtime/storage/store.ts:65:44]
+ 64 |     if (!evidence || evidence.evidenceRef !== input.directoryEvidenceRef) deny('STORAGE_DIRECTORY_UNVERIFIED');
+ 65 |     if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');
+    :                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 66 |     const c = evidence.candidate;
+    `----
+  help: Replace `deny('STORAGE_DIRECTORY_PIN_INVALID');` with `{deny('STORAGE_DIRECTORY_PIN_INVALID');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+    ,-[src/main/durable-runtime/storage/store.ts:71:76]
+ 70 |       'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1', [input.sessionId]);
+ 71 |     if (member.rows[0] && member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
+    :                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 72 |     await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [c.domain.backendId, c.domain.exportId]);
+    `----
+  help: Replace `deny('STORAGE_MEMBER_UNIT_MISMATCH');` with `{deny('STORAGE_MEMBER_UNIT_MISMATCH');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+    ,-[src/main/durable-runtime/storage/store.ts:75:44]
+ 74 |     // Local validity only, after lock waits. No stat/cloud/K8s callback in tx.
+ 75 |     if (!this.directoryPinValid(evidence)) deny('STORAGE_DIRECTORY_PIN_INVALID');
+    :                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 76 |     const row = await tx.query<Binding>(`INSERT INTO durable_runtime.storage_bindings
+    `----
+  help: Replace `deny('STORAGE_DIRECTORY_PIN_INVALID');` with `{deny('STORAGE_DIRECTORY_PIN_INVALID');}`.
+
+  x unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ,-[src/main/durable-runtime/storage/store.ts:80:5]
+ 79 |           [input.bindingId, c.domain.backendId, c.domain.exportId, c.canonicalDirectory, evidence.evidenceRef]);
+ 80 | ,->     if (member.rows[0]) {
+ 81 | |         await tx.query('INSERT INTO durable_runtime.runtime_member_storage_bindings(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
+ 82 | |           [input.unitId, input.sessionId, input.bindingId]);
+ 83 | |       } else {
+ 84 | |         // The 021 INSERT trigger records this primary binding in the same tx.
+ 85 | |         await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)',
+ 86 | |           [input.unitId, input.sessionId, input.bindingId]);
+ 87 | `->     }
+ 88 |         await this.event(tx, input, row.rows[0], 'STORAGE_BINDING_REGISTERED');
+    `----
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:105:32]
+ 104 |       'SELECT runtime_unit_id FROM durable_runtime.runtime_members WHERE session_id=$1', [input.sessionId]);
+ 105 |     if (member.rowCount !== 1) deny('STORAGE_MEMBER_MISSING');
+     :                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 106 |     if (member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
+     `----
+  help: Replace `deny('STORAGE_MEMBER_MISSING');` with `{deny('STORAGE_MEMBER_MISSING');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:106:58]
+ 105 |     if (member.rowCount !== 1) deny('STORAGE_MEMBER_MISSING');
+ 106 |     if (member.rows[0].runtime_unit_id !== input.unitId) deny('STORAGE_MEMBER_UNIT_MISMATCH');
+     :                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 107 |     const first = await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId]);
+     `----
+  help: Replace `deny('STORAGE_MEMBER_UNIT_MISMATCH');` with `{deny('STORAGE_MEMBER_UNIT_MISMATCH');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:108:31]
+ 107 |     const first = await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId]);
+ 108 |     if (first.rowCount !== 1) deny('STORAGE_BINDING_MISSING');
+     :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 109 |     await lockAggregates(tx, { storageDomains: [{ backendId: first.rows[0].backend_id, exportId: first.rows[0].export_id }] });
+     `----
+  help: Replace `deny('STORAGE_BINDING_MISSING');` with `{deny('STORAGE_BINDING_MISSING');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:111:19]
+ 110 |     const binding = (await query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [input.bindingId])).rows[0];
+ 111 |     if (!binding) deny('STORAGE_BINDING_MISSING');
+     :                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 112 |     const inserted = await query(`INSERT INTO durable_runtime.runtime_member_storage_bindings
+     `----
+  help: Replace `deny('STORAGE_BINDING_MISSING');` with `{deny('STORAGE_BINDING_MISSING');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:116:28]
+ 115 |       [input.unitId, input.sessionId, input.bindingId]);
+ 116 |     if (inserted.rowCount) await this.event(tx, input, binding, 'STORAGE_BINDING_ATTACHED');
+     :                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 117 |     return binding;
+     `----
+  help: Replace `await this.event(tx, input, binding, 'STORAGE_BINDING_ATTACHED');` with `{await this.event(tx, input, binding, 'STORAGE_BINDING_ATTACHED');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:121:31]
+ 120 |     const first = await tx.query<Binding>('SELECT * FROM durable_runtime.storage_bindings WHERE id=$1', [target.bindingId]);
+ 121 |     if (first.rowCount !== 1) deny('STORAGE_BINDING_MISSING');
+     :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 122 |     const b = first.rows[0];
+     `----
+  help: Replace `deny('STORAGE_BINDING_MISSING');` with `{deny('STORAGE_BINDING_MISSING');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:130:7]
+ 129 |     if (binding.revision !== target.expectedBindingRevision || binding.epoch !== target.storageEpoch)
+ 130 |       deny('STORAGE_BINDING_STALE');
+     :       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 131 |     const member = await tx.query(`SELECT a.incarnation FROM durable_runtime.attempts a
+     `----
+  help: Replace `deny('STORAGE_BINDING_STALE');` with `{deny('STORAGE_BINDING_STALE');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:136:63]
+ 135 |       [target.attemptId, target.unitId, target.executionEpoch, target.podUid, target.sessionId, target.bindingId]);
+ 136 |     if (member.rowCount !== 1 || !member.rows[0].incarnation) deny('STORAGE_TARGET_STALE');
+     :                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 137 |     if (target.operation) {
+     `----
+  help: Replace `deny('STORAGE_TARGET_STALE');` with `{deny('STORAGE_TARGET_STALE');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:141:37]
+ 140 |         [target.operation.id, target.unitId, target.operation.expectedRevision, target.executionEpoch, target.podUid]);
+ 141 |       if (operation.rowCount !== 1) deny('STORAGE_OPERATION_STALE');
+     :                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 142 |     }
+     `----
+  help: Replace `deny('STORAGE_OPERATION_STALE');` with `{deny('STORAGE_OPERATION_STALE');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:147:33]
+ 146 |     const session = await tx.query("SELECT id FROM durable_runtime.sessions WHERE id=$1 AND lifecycle='OPEN'", [target.sessionId]);
+ 147 |     if (session.rowCount !== 1) deny('STORAGE_SESSION_CLOSED');
+     :                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 148 |     const result = await tx.query(`SELECT g.id FROM durable_runtime.execution_grants g
+     `----
+  help: Replace `deny('STORAGE_SESSION_CLOSED');` with `{deny('STORAGE_SESSION_CLOSED');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:152:32]
+ 151 |       AND u.desired_mode='RUNNING' AND g.state=ANY($4::text[])`, [target.unitId, target.attemptId, target.executionEpoch, active ? ['ACTIVE'] : ['RESERVED','ACTIVE']]);
+ 152 |     if (result.rowCount !== 1) deny('STORAGE_EXECUTION_NOT_CURRENT');
+     :                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 153 |   }
+     `----
+  help: Replace `deny('STORAGE_EXECUTION_NOT_CURRENT');` with `{deny('STORAGE_EXECUTION_NOT_CURRENT');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:159:56]
+ 158 |       WHERE id=$1 AND revision=$2 RETURNING revision`, [target.unitId, target.expectedUnitRevision]);
+ 159 |     if (binding.rowCount !== 1 || unit.rowCount !== 1) deny('STORAGE_CAS');
+     :                                                        ^^^^^^^^^^^^^^^^^^^^
+ 160 |     if (target.operation) await tx.query(`UPDATE durable_runtime.operations SET retry_at=clock_timestamp(),result=$2::jsonb,revision=revision+1
+     `----
+  help: Replace `deny('STORAGE_CAS');` with `{deny('STORAGE_CAS');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:160:27]
+ 159 |         if (binding.rowCount !== 1 || unit.rowCount !== 1) deny('STORAGE_CAS');
+ 160 | ,->     if (target.operation) await tx.query(`UPDATE durable_runtime.operations SET retry_at=clock_timestamp(),result=$2::jsonb,revision=revision+1
+ 161 | `->       WHERE id=$1`, [target.operation.id, JSON.stringify({ status: 'BLOCKED', reason })]);
+ 162 |         await this.event(tx, target, binding.rows[0], 'STORAGE_BLOCKED', { reason });
+     `----
+  help: Replace `await tx.query(`UPDATE durable_runtime.operations SET retry_at=clock_timestamp(),result=$2::jsonb,revision=revision+1
+              WHERE id=$1`, [target.operation.id, JSON.stringify({ status: 'BLOCKED', reason })]);` with `{await tx.query(`UPDATE durable_runtime.operations SET retry_at=clock_timestamp(),result=$2::jsonb,revision=revision+1
+              WHERE id=$1`, [target.operation.id, JSON.stringify({ status: 'BLOCKED', reason })]);}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:176:32]
+ 175 |   private directory(b: Binding): VerifiedDirectoryEvidence | null {
+ 176 |     if (!b.identity_proof_ref) return null;
+     :                                ^^^^^^^^^^^^
+ 177 |     try {
+     `----
+  help: Replace `return null;` with `{return null;}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:179:101]
+ 178 |       const held = this.authority.directory(b.identity_proof_ref);
+ 179 |       if (!held || held.evidenceRef !== b.identity_proof_ref || !matchesBinding(held.candidate, b)) return null;
+     :                                                                                                     ^^^^^^^^^^^^
+ 180 |       return this.directoryPinValid(held) ? held : null;
+     `----
+  help: Replace `return null;` with `{return null;}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:186:32]
+ 185 |       WHERE id=$1 AND revision=$2 RETURNING *`, [binding.id, binding.revision, state, writer]);
+ 186 |     if (result.rowCount !== 1) deny('STORAGE_CAS');
+     :                                ^^^^^^^^^^^^^^^^^^^^
+ 187 |     return result.rows[0];
+     `----
+  help: Replace `deny('STORAGE_CAS');` with `{deny('STORAGE_CAS');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:192:31]
+ 191 |     await this.currentExecution(tx, target, false);
+ 192 |     if (!(this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
+     :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 193 |     const conflict = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
+     `----
+  help: Replace `return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');` with `{return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:199:28]
+ 198 |         OR left($3,length(b.canonical_directory)+1)=b.canonical_directory||'/')`, [b.backend_id, b.export_id, b.canonical_directory]);
+ 199 |     if (conflict.rowCount) return this.blocked(tx, target, b, 'WRITER_HELD');
+     :                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 200 |     const grant = await tx.query<WriterGrant>(`INSERT INTO durable_runtime.storage_write_grants(id,storage_binding_id,attempt_id,storage_epoch,state)
+     `----
+  help: Replace `return this.blocked(tx, target, b, 'WRITER_HELD');` with `{return this.blocked(tx, target, b, 'WRITER_HELD');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:208:31]
+ 207 |     const { binding: b } = await this.lock(tx, target);
+ 208 |     if (!(this.directory(b))) return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');
+     :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 209 |     await tx.query(`INSERT INTO durable_runtime.storage_mounts(id,storage_binding_id,attempt_id,pod_uid,mode,desired_state,observed_state,grant_epoch)
+     `----
+  help: Replace `return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');` with `{return this.blocked(tx, target, b, 'DIRECTORY_UNVERIFIED_OR_CHANGED');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:219:32]
+ 218 |       [grantId, target.bindingId, target.attemptId, target.storageEpoch, revision, state]);
+ 219 |     if (result.rowCount !== 1) deny('STORAGE_GRANT_STALE');
+     :                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 220 |     return result.rows[0];
+     `----
+  help: Replace `deny('STORAGE_GRANT_STALE');` with `{deny('STORAGE_GRANT_STALE');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:231:24]
+ 230 |     const { binding: b, incarnation } = await this.lock(tx, target);
+ 231 |     if (target.writer) await this.currentExecution(tx, target, true);
+     :                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 232 |     const directory = this.directory(b);
+     `----
+  help: Replace `await this.currentExecution(tx, target, true);` with `{await this.currentExecution(tx, target, true);}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:246:7]
+ 245 |         observation.target.numericInstanceId !== expected.numericInstanceId || observation.actualReadOnly !== (mode === 'RO'))
+ 246 |       return this.blocked(tx, target, b, 'MOUNT_UNVERIFIED');
+     :       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 247 |     if (target.writer) {
+     `----
+  help: Replace `return this.blocked(tx, target, b, 'MOUNT_UNVERIFIED');` with `{return this.blocked(tx, target, b, 'MOUNT_UNVERIFIED');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:257:31]
+ 256 |         [target.mountId, b.id, target.attemptId, target.podUid, b.epoch, target.mountEvidenceRef]);
+ 257 |       if (row.rowCount !== 1) deny('STORAGE_MOUNT_STALE');
+     :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 258 |     }
+     `----
+  help: Replace `deny('STORAGE_MOUNT_STALE');` with `{deny('STORAGE_MOUNT_STALE');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:280:29]
+ 279 |     await this.grant(tx, target, target.grantId, target.expectedGrantRevision, 'REVOKING');
+ 280 |     if (!this.directory(b)) return this.blocked(tx, target, b, 'DIRECTORY_PIN_INVALID');
+     :                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 281 |     let stopped, expected;
+     `----
+  help: Replace `return this.blocked(tx, target, b, 'DIRECTORY_PIN_INVALID');` with `{return this.blocked(tx, target, b, 'DIRECTORY_PIN_INVALID');}`.
+
+  x eslint(curly): Expected { after 'if' condition.
+     ,-[src/main/durable-runtime/storage/store.ts:296:7]
+ 295 |         stopped.numericInstanceId !== expected.numericInstanceId)
+ 296 |       return this.blocked(tx, target, b, 'COMPUTE_STOP_UNCONFIRMED');
+     :       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 297 |     await tx.query(`UPDATE durable_runtime.storage_write_grants SET state='REVOKED',revoked_at=clock_timestamp(),revocation_proof_ref=$2,revision=revision+1 WHERE id=$1`,
+     `----
+  help: Replace `return this.blocked(tx, target, b, 'COMPUTE_STOP_UNCONFIRMED');` with `{return this.blocked(tx, target, b, 'COMPUTE_STOP_UNCONFIRMED');}`.
+
+Found 0 warnings and 34 errors.
+Finished in 225ms on 4 files with 176 rules using 1 threads.

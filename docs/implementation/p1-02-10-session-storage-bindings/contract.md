@@ -35,3 +35,26 @@ Live `orca_dev` migration 적용, 실제 NFS/Agent/Compute 변경, 새 physical 
 Root가 early7f4a5c61 제품4파일 exactdiff를 읽고 기존 primary 컬럼 UPDATE의 일관성 공백을 찾았다. Backend 독립 source 의견도 같은 반례를 확인했다. 기존 제품 호출에 runtime_members UPDATE는 없지만, DB에서 primary A→기존 B를 직접 바꾸면 기존 Catalog/RPC는B·새 Store/grant/Ops는A로 갈린다. 현재 production에서 발생한 회귀라고 확대하지 않는다.
 
 같은021 안에서 runtime_members의 primary storage_binding_id가 실제 달라지는 UPDATE를 거절하는 guard를 추가한다. 동일값 UPDATE까지 불필요하게 금지할 필요는 없다. 이번에 primary 재지정/Session 이동 API를 만들지 않는 원 계약을 DB에 보강하는 것이며 과거001–020은 변경0이다. Focusedfixture에 실제 primary 변경 거절·원 primary/관계 유지1건을 포함한다. 다른 source/시험범위는 유지한다.
+
+
+> 후속 검증·수락 절의 공개 일반화 사본입니다. 운영 DB identity와 비공개 감사 식별자를 일반화했으며 실행·보존 조건은 유지합니다.
+
+## Source 수락·최초 격리 검증 배분 — 2026-10-15 11:35 UTC
+
+Root가 제품4파일 전체 diff, primary guard 보완80e84c71, 최종 b6c7a3ca10c3616e9178421ea04fc1a0b70dbe0a의 fixture371줄 및 앞 pin 대비 fixture delta를 읽었다. Draft PR98 head83fa8b0208bc09bbb6154a1503f884061df9910b는 동일 제품/fixture bytes다. 추가 guard는 primary 변경만 거절하고 동일값 UPDATE는 허용하며, 새 관계·writer membership·lifecycle·권한 내 Ops 조회의 source 방향을 수락한다. 이는 실제 PG 합격이 아니다.
+
+DB에 heavy1로 최초 검증을 배분한다. 기존 remote backend 검증 도구/cache를 재사용하여 소유 TS3+새 fixture1의 lint와 필요한 실제 dependency closure의 좁은 type check를 각각 한 번 수행한다. 실제 source 입력·metafile·hash·원 진단/종료값을 보존하고 소유 밖 진단과 새 변경 진단을 분리한다. 기존 통과 suite·설치·이미지/릴리스 build·live source sync·UI는0이다. 의미불변 lint 교정은 운영 규칙 범위 안에서만 수행하고 원 diff를 보존한다.
+
+PG 대상은 기존 격리 Root가 지정한 기존 격리 DB, OID 고정 OID, system `승인된 system identifier`, dataset `orca-1012-dev-v1`, ledger001–020이다. 명시적 Root 승인 환경 입력, 같은 database/OID/migrations 입력을 고정한다. 검토한 fixture SHA057040b6c47374d34ace9d49e521dfd7acbeae71e3e281267ac390f8c8ca3030의 최초 callback1만 실행하며, samePool identity와 checksum20/새관계 부재 guard가 seed/DDL 전에 성공해야 한다. DB create/drop/reset·원행 삭제/변경·001–020 수정은0이다. 새021 migration의 이 격리DB 적용과 randomUUID fixture 행만 허용한다. 실제 live `orca_dev` ledger19와 연결/환경은 변경하지 않는다.
+
+원 TAP·case별 성공/실패·ledger20→21 및 원행 보존·실제 시작/끝/cleanup을 제출한다. Synthetic authority와 실제 SQL 검증을 구분한다. 021이 적용된 뒤 중간 실패가 나면 최초 migration fixture 전체를 재실행하거나 schema를 되돌리지 말고 실패 위치·보존 state·최소 후속안을 Root에 보고한다. Root가 필요한 실패 경계만 별도 판단한다. 현재 raw 결과만 먼저 납품하고 새 보고 PNG·추가 suite는 아직0이다. Source/검증 결과가 모이면 공개 증거와 최종 base 정렬을 Root가 지정한다.
+
+11:51 Root lint 개입: 첫control39754/lint39768은11:47:22.642–23.201에34진단/exit1로끝났고type/PG미진입·heavy0였다. 원로그e1538ec7을보존한다. 신규register if/else만같은조건의 `tx.query(condition ? 기존추가관계SQL : 기존primarySQL, 동일params)`로바꾸도록승인했다. 이필요교정으로max-lines304도줄인다. 신규if의deny/event는조건·statement동일한중괄호를허용한다. 기존no-control-regex/옛curly는base와정적대조해상속진단으로구분하고전면정리/suppression0이다. 교정diff/pin과변경lint를확인해새진단0이면미진입type/PG최초검증을이어가되기존오류를0으로보고하지않는다.
+
+## 원 검증 수락·최종 공개 배분 — 2026-10-15 12:00 UTC
+
+Root가 최종source8f35e8da의의미불변교정6d269fb2와원TAPcc83d3fa·actualinput/metafile/wrapper·DB전후·strict type설정·cleanup을대조했다. Root의 원자료 116항목 대조 모두 일치이며PG source20/type source36+external210,wrapper는원fixture본문그대로+부모test만이다. Actualruntime40052·11:54:46.754–48에callback1 PASS(원TAP부모포함2),samePool seed전동일 Pool의 실제 backend PID·OID고정 OID/system/dataset일치,ledger20불변+021한개·대상23표원163행보존/후244행을수락한다. 전체DB모든표보존으로확대하지않는다. Type exit0/진단0,lint exit1의상속26건은원base statement와직접대조해새0을확인했다. 원lint34실패와helper의현재job exit읽기준비오류는별도보존하며단일전부PASS로합치지않는다. 성공단계반복0·실제child종료/heavy0이다.
+
+DB는제품4+fixture1 bytes를유지하며public 증거/본문을마무리한다. 같은remote Playwright/cache의최초결과보고PNG1만heavy1로허용하고제품UI/실제NFS사진으로표시하지않는다. 원실패·상속lint·type/PG합성authority·23표보존범위·live미적용을그대로표시한다. Public private주소/DBidentity/경로는일반화하고원hash는남긴다. 기존명세전문을유지하며새검증/수락절을추가한다. 아직새PG/live migration/source sync/시험/build/install0이다.
+
+Main9339d745까지최종정렬은한번허용한다. 이후독립PR97/99가먼저합류하면소유파일및실제검증입력과겹치는지Root가diff로판정한다. 겹침없는main변경마다재정렬/CI/성공검증을반복하지않는다. Finalhead/bodySHA·제품및증거불변·필수CI를제출하고Root가댓글/merge한다.
