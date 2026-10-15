@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "kind": "offline-managed-nfs-namespace-first-validation-report",
+  "sourcePin": "ddb6b23793d4d5d1422d8a69df15c73fb4a5d204",
+  "captureStartedUtc": "2026-10-15T13:12:15.447Z",
+  "captureFinishedUtc": "2026-10-15T13:12:16.384Z",
+  "renderer": "existing remote Playwright Chromium",
+  "browserVersion": "147.0.7727.15",
+  "viewport": {
+    "width": 1280,
+    "height": 1080
+  },
+  "png": {
+    "sha256": "0d4d77f51d5d168432985d91826c60341ffb284014f77ced4d373e5814cb5a23",
+    "bytes": 179712,
+    "width": 1280,
+    "height": 1080
+  },
+  "htmlSha256": "493c534e7296eaba18ca23de8b5b7ef9571da6102e2d7db67a48914c74f2d34b",
+  "captureSourceSha256": "fea3bde271aa05422315217f3a1ef10284738555fa85188d01e26fc37178c158",
+  "screenshotCalls": 1,
+  "applicationRequests": 0,
+  "newProductOrInfrastructureValidationDuringCapture": 0,
+  "pairedProfileReused": false,
+  "browserClosed": true,
+  "ownedBrowserChildrenAbsent": true,
+  "privateAddressesUidsPathsPublished": false,
+  "imageIsProductUiEvidence": false
+}
