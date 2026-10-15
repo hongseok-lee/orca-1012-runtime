@@ -141,6 +141,22 @@ await test('execution target original records: isolated PG callback 1', async (t
   assert.deepEqual(await read(exact),original)
   assert.deepEqual(await record(exact),original)
   seen.push('stale-lease-inactive-attempt-finished-or-other-epoch-operation-no-first-write-historical-read')
+  const ensure = await fixture()
+  await transaction(tx => tx.query("UPDATE durable_runtime.operations SET expected_pod_uid=NULL,step='ENSURE_ATTEMPT' WHERE id=$1", [ensure.context.operationId]))
+  assert.equal((await record(ensure)).podUid, ensure.input.podUid)
+  for (const delta of [{ step: 'OTHER_STEP', pod: null }, { step: 'ENSURE_ATTEMPT', pod: 'other-nonnull-pod' }]) {
+    const f = await fixture()
+    await transaction(tx => tx.query('UPDATE durable_runtime.operations SET expected_pod_uid=$2,step=$3 WHERE id=$1', [f.context.operationId, delta.pod, delta.step]))
+    await rejected(() => record(f), 'EXECUTION_TARGET_STALE')
+    assert.equal(await count(f), 0)
+  }
+  for (const invalid of [' trailing ', 'control\u0000value', 'delete\u007fvalue']) {
+    const f = await fixture()
+    await rejected(() => record({ ...f, input: { ...f.input, nodeUid: invalid } }), 'EXECUTION_TARGET_INPUT_INVALID')
+    assert.equal(await count(f), 0)
+  }
+  seen.push('root-reviewed-null-ensure-only-and-opaque-input-boundaries')
+
 
   const rollback=await fixture()
   await rejected(()=>transaction(async tx=>{

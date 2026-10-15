@@ -40,7 +40,7 @@ function invalid(): never {
   throw new DurableDatabaseError('EXECUTION_TARGET_INPUT_INVALID')
 }
 function text<T extends string>(value: T): T {
-  if (typeof value !== 'string' || value.trim().length === 0) {
+  if (typeof value !== 'string' || value.length === 0 || value !== value.trim() || /[\x00-\x1f\x7f]/.test(value)) {
     invalid()
   }
   return value
@@ -173,7 +173,7 @@ export async function recordExecutionTarget(
        WHERE u.id=$6 AND u.execution_epoch=$7 AND a.id=$5 AND a.execution_epoch=$7
          AND a.pod_uid=$8 AND a.incarnation=$9 AND o.id=$4 AND o.execution_epoch=$7
          AND o.controller_scope=$1 AND o.controller_term=$3 AND o.result IS NULL
-         AND o.expected_pod_uid=$8
+         AND (o.expected_pod_uid=$8 OR (o.expected_pod_uid IS NULL AND o.step='ENSURE_ATTEMPT'))
          AND EXISTS(SELECT 1 FROM durable_runtime.controller_leases c
            WHERE c.scope=$1 AND c.owner=$2 AND c.term=$3 AND c.expires_at>clock_timestamp())
        ON CONFLICT(attempt_id) DO NOTHING RETURNING *`, values
