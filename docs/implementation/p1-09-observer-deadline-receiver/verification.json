@@ -1,0 +1,160 @@
+{
+  "verifiedSourcePin": "0f3a9816f4fafcf98d2726a3875c9e5cf56ab1ba",
+  "base": "c6cb0b9d88389e3325f5a459bdf5eb75f85f0ffd",
+  "ownedSource": [
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport.test.mts",
+      "bytes": 10597,
+      "sha256": "0c2ff1d3d4986f458141005b4b4c820498581c9c873df87ff29ba87da71ddd77",
+      "gitEntry": "100644 blob 9ab9ff2194f1ad8e53d549296b37891f5bd9521f\tsrc/main/durable-runtime/runtime/compute-deletion-audit-transport.test.mts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit-transport.ts",
+      "bytes": 7787,
+      "sha256": "b9acb341d46d5c51fe2fad4ecb996175566a50a53d964348fa2671e2b7e3a85c",
+      "gitEntry": "100644 blob b86798d8a7ce09686d82e1904106905b726bd2fa\tsrc/main/durable-runtime/runtime/compute-deletion-audit-transport.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/compute-deletion-audit.ts",
+      "bytes": 3161,
+      "sha256": "d8d48e2aaf3b6d308baaad67fc02f1b9f351229cf539c8f76b3ddb37896ff291",
+      "gitEntry": "100644 blob f87e4bd84667769a5f46934e668f08fdee9fd339\tsrc/main/durable-runtime/runtime/compute-deletion-audit.ts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.test.mts",
+      "bytes": 10419,
+      "sha256": "b903e0edc88d23c6d36b82386e8f9f3ec7c50537749bef848524486dfe5525b3",
+      "gitEntry": "100644 blob 199a32d977c5a90b1023982e39e872a8c04023e0\tsrc/main/durable-runtime/runtime/kubernetes-pod-auth-transport.test.mts"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth.ts",
+      "bytes": 6147,
+      "sha256": "f426533d8076a21d95657ec5bae4298a8b10ddbf4ed8521112e518966f30928f",
+      "gitEntry": "100644 blob 79bc5aee5ff8f1316bf1506fadd20ac51e5c4c9c\tsrc/main/durable-runtime/runtime/kubernetes-pod-auth.ts"
+    }
+  ],
+  "firstAttempt": {
+    "pin": "6bf03214b788d760ca48d4a8bd92baeb9b5313a0",
+    "lint": {
+      "ownedFiles": 5,
+      "exit": 0,
+      "pid": 34639,
+      "logSHA256": "c44791f615b7e32ba8861fc0df6ef5b4e9ff0bc9cc1ef7f2ccf8bcf5da5f6f16"
+    },
+    "type": {
+      "exit": 1,
+      "pid": 34653,
+      "diagnostics": [
+        "source/src/main/durable-runtime/runtime/kubernetes-pod-auth.ts(62,38): error TS2684: The 'this' context of type 'void' is not assignable to method's 'this' of type 'Readonly<KubernetesPodAuthConfig>'."
+      ],
+      "logSHA256": "6d48c439e8b43b347e2401b755aff6594e4ba060bcebd8b417f3211d90bbd81d"
+    },
+    "bundleEntered": false,
+    "selectedTestsEntered": false
+  },
+  "correction": {
+    "sourcePin": "0f3a9816f4fafcf98d2726a3875c9e5cf56ab1ba",
+    "change": "Keep factory bind to the original caller and invoke readReviewer.call(caller, controller.signal).",
+    "exactDiffSHA256": "d0c54bd3e19912c169553a8c963724f4b6c6f54593a9e9b5589ecd0b63e16d6c",
+    "changedLintFiles": 1,
+    "lintPID": 34781,
+    "typePID": 34795,
+    "typeExit": 0
+  },
+  "actualRun": {
+    "controlPID": 34767,
+    "startedAt": "2026-10-15T06:21:27.552Z",
+    "finishedAt": "2026-10-15T06:21:31.483Z",
+    "heavyReturned": true
+  },
+  "selectedTests": {
+    "audit": {
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "actualPID": 34869,
+      "selectedNames": [
+        "production URL/method/TLS are fixed; config, input and suppliers are snapshotted before await",
+        "caller abort covers pending token and pre-abort without ever making a request",
+        "finite timeout includes a token that never resolves and destroys an owned waiting request",
+        "monotonic credential deadline blocks a synchronous late token before the timer runs; caller abort wins",
+        "outer observe continuation rejects elapsed deadline after the product end listener; caller abort wins"
+      ],
+      "declared": 10,
+      "notSelectedDeclarations": 5,
+      "runtimeInputs": 9,
+      "runtimeMismatches": [],
+      "tapSHA256": "8e6a50f2ffafab63d71fd28775186f06f354f57d916fc4cbf739446b72384b69",
+      "inputManifestSHA256": "8540eff12ac9b11a62f0e0337384431a69d31678cdee4ab48a6d88ba5b73c1c3",
+      "metafileSHA256": "86a515855cca69260157eb90baddf3ecdfef7feadcfc07871af96308addb9788",
+      "generatedParent": false
+    },
+    "pod": {
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "actualPID": 34887,
+      "selectedNames": [
+        "first-await capture isolates caller, CA, expected identity and supplier/transport method replacement",
+        "supplier abort/timeout ignore late credentials, and pre-abort never calls supplier or transport",
+        "monotonic credential deadline blocks synchronous late reviewer before the timer runs; caller abort wins",
+        "monotonic deadline after each API response blocks the next request and final observation before timer runs",
+        "abort during each of three requests releases owned request/response and parent listeners",
+        "one total timeout covers all three API waits and destroys the pending response"
+      ],
+      "declared": 9,
+      "notSelectedDeclarations": 3,
+      "runtimeInputs": 8,
+      "runtimeMismatches": [],
+      "tapSHA256": "cfd9d65df213a4c6c7303de63620752a610b5fd6188042e05e649285247f9785",
+      "inputManifestSHA256": "2118321d0ce5428910ff3f7ba1c99a40e6784f556183944c4484bdd3c23e557d",
+      "metafileSHA256": "6f61629076ff9fa24a09e5adcb494e410dbeb450b1ebbb7d324f1de5be78f899",
+      "generatedParent": false
+    }
+  },
+  "productCallbacks": 11,
+  "TAPSkipped": 0,
+  "notSelectedDeclarations": 8,
+  "typeInputs": {
+    "source": 18,
+    "external": 202,
+    "total": 220,
+    "mismatches": 0
+  },
+  "runtimeInputs": {
+    "audit": 9,
+    "pod": 8,
+    "mismatches": 0
+  },
+  "cleanup": {
+    "observedAt": "2026-10-15T06:22:38.808Z",
+    "controlState": "Z",
+    "knownChildrenAndActualTests": "ABSENT",
+    "nativeCompilerChildPID": "unobserved"
+  },
+  "executionScope": {
+    "syntheticTransport": true,
+    "actualTLSHandshake": false,
+    "cloudCalls": 0,
+    "podCreation": 0,
+    "liveSync": 0,
+    "pg": 0,
+    "browserProductUI": 0,
+    "reportPNG": 0,
+    "install": 0,
+    "imageBuild": 0,
+    "fullSuite": false
+  },
+  "limits": [
+    "이름 필터로 선택한 합성 callback 11개만 통과했습니다. 미선택 선언 8개와 TAP skipped 0을 구분합니다.",
+    "최초 TS2684 실패와 Root 승인 교정 뒤 PASS를 분리합니다. 최초 성공한 lint5 전체는 반복하지 않았습니다.",
+    "기존 실제 Audit·Pod 관측은 당시 source의 증거입니다. 이번 변경의 live 검증으로 소급하지 않습니다.",
+    "실제 credential·Cloud 권한·Pod 인증·제품 UI·HA·writer fencing의 합격 증거가 아닙니다.",
+    "보고 HTML만 준비했으며 PNG와 final base 정렬은 Root의 후속 배분 전입니다."
+  ],
+  "usageLimitCreditsStream": "이번 작업에서 usage limit·credits·stream 중단 원오류는 미관측입니다."
+}

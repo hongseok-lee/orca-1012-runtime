@@ -1,0 +1,26 @@
+{
+  "reportType": "OFFLINE_SELECTED_REGRESSION_RESULT_REPORT",
+  "sourcePin": "0f3a9816f4fafcf98d2726a3875c9e5cf56ab1ba",
+  "reportHTML": {
+    "path": "report.html",
+    "sha256": "66988b5f48c086dead4529859ebfa6b5ab2a0c92fe5de70d59e645f442cca631",
+    "bytes": 3678
+  },
+  "capture": {
+    "status": "NOT_RUN_AWAITING_ROOT_SLOT",
+    "PNG": null,
+    "productUICaptured": false,
+    "nativeIPhoneCaptured": false,
+    "liveApplicationOpened": false
+  },
+  "rawTAPSHA256": {
+    "audit": "8e6a50f2ffafab63d71fd28775186f06f354f57d916fc4cbf739446b72384b69",
+    "pod": "cfd9d65df213a4c6c7303de63620752a610b5fd6188042e05e649285247f9785"
+  },
+  "typeLogSHA256": "6197bdb08b2a05564d1b59472dddf8322706f4ccae60294332271272bcd39441",
+  "originalTypeFailureLogSHA256": "6d48c439e8b43b347e2401b755aff6594e4ba060bcebd8b417f3211d90bbd81d",
+  "limitations": [
+    "Static report HTML prepared only; no report browser/capture or live application execution in this publication preparation.",
+    "No successful test/lint/type repetition; the report reuses the accepted original results."
+  ]
+}
