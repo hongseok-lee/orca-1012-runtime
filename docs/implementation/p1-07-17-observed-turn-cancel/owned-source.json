@@ -1,0 +1,73 @@
+{
+  "verifiedSourcePin": "4b43633990303e44075b1a8db55f5499930cbd95",
+  "files": [
+    {
+      "path": "src/main/durable-runtime/input/cancel.ts",
+      "bytes": 10952,
+      "sha256": "68e986707e7269dbde1ead7181b6c95bbc55d37067fddd2bc9fe3acbabbf462f",
+      "mode": "100644",
+      "gitBlob": "48a85bf0f5ca778cd5da58ba5f27e77f9ae52c02"
+    },
+    {
+      "path": "src/main/durable-runtime/input/cancel-types.ts",
+      "bytes": 1164,
+      "sha256": "5e4496ccbd951790571a9d7a1cb6cce8d66cc532ed5c7b599db0965dcc47171c",
+      "mode": "100644",
+      "gitBlob": "71d28e20964417285c63ee3308693bebb04b1a0e"
+    },
+    {
+      "path": "src/main/durable-runtime/input/cancel-record.ts",
+      "bytes": 5712,
+      "sha256": "78aefb7bb20d4e83c2e93232b6632d65a59747c53d736b7cee0ca1d491cf6e7e",
+      "mode": "100644",
+      "gitBlob": "1daf80f192547c518bbcfaedac44d6ee1a89c055"
+    },
+    {
+      "path": "src/main/durable-runtime/input/observed-turn-cancel.pg.test.mts",
+      "bytes": 27960,
+      "sha256": "3903c6d5497b349b4763949bb1018cf0d0ca112096842d1ac232d51100d7c57a",
+      "mode": "100644",
+      "gitBlob": "fd9bbc82e81afd59aada4c21e9f233c523e50608"
+    }
+  ],
+  "product3UnchangedSince": "28b8f1fe7d39eb8e88d5f491592ac3c48a8c8fb6",
+  "helperExtraction": {
+    "from": "6ccd811bac7d051d2356a2d74edf47d1fe826ab9",
+    "to": "28b8f1fe7d39eb8e88d5f491592ac3c48a8c8fb6",
+    "functionHashes": {
+      "requestInputCancel": {
+        "beforeSha256": "b3de625f2842e17f4f0a3538d2fcb518c9ce2ecfae14bcd651134b05fbf10aed",
+        "afterSha256": "b3de625f2842e17f4f0a3538d2fcb518c9ce2ecfae14bcd651134b05fbf10aed",
+        "same": true
+      },
+      "recordInputCancel": {
+        "beforeSha256": "419c0655b6e0e73e5b3673fefd0e55d2f71ba86c1c0f0bbbb69abdca48e29933",
+        "afterSha256": "419c0655b6e0e73e5b3673fefd0e55d2f71ba86c1c0f0bbbb69abdca48e29933",
+        "same": true
+      },
+      "recordObservedTurnCancel": {
+        "beforeSha256": "19d1334fc0f93d395826934b06403b3222cdccf061cac9349567a7939043b624",
+        "afterSha256": "19d1334fc0f93d395826934b06403b3222cdccf061cac9349567a7939043b624",
+        "same": true
+      }
+    },
+    "helperBody": {
+      "beforeSha256": "6e04c928124385cef890e7d297a405620d968268257e767ae315e8271aed314c",
+      "afterSha256": "6e04c928124385cef890e7d297a405620d968268257e767ae315e8271aed314c",
+      "same": true
+    },
+    "rowTypes": {
+      "CancelMessageRow": {
+        "same": true,
+        "beforeSha256": "345d03af95cf15269631436680951430e4c3f7679405cfd298507b78afc2651a",
+        "afterSha256": "345d03af95cf15269631436680951430e4c3f7679405cfd298507b78afc2651a"
+      },
+      "CancelDeliveryRow": {
+        "same": true,
+        "beforeSha256": "82ab7629b8b0c7a479c61faec77b35ac2c6792d76637c0f41932da8f94a4be9f",
+        "afterSha256": "82ab7629b8b0c7a479c61faec77b35ac2c6792d76637c0f41932da8f94a4be9f"
+      }
+    },
+    "scope": "기존 공개 함수 3개와 helper body의 원문은 동일합니다."
+  }
+}
