@@ -1,0 +1,23 @@
+TAP version 13
+# Subtest: Root 승인 value callback 1개
+    # Subtest: 배선 값 1개: 원 declaration·schema·capture·인증·소유 종료를 확인합니다
+    ok 1 - 배선 값 1개: 원 declaration·schema·capture·인증·소유 종료를 확인합니다
+      ---
+      duration_ms: 13.473341
+      type: 'test'
+      ...
+    1..1
+ok 1 - Root 승인 value callback 1개
+  ---
+  duration_ms: 14.764925
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2061.549023

@@ -1,0 +1,25 @@
+TAP version 13
+# (node:30015) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: Root 승인 pg callback 1개
+    # Subtest: 배선 PG 1개: 실제 declaration→dispatcher→adapter→RR와 소유 cleanup을 확인합니다
+    ok 1 - 배선 PG 1개: 실제 declaration→dispatcher→adapter→RR와 소유 cleanup을 확인합니다
+      ---
+      duration_ms: 758.422523
+      type: 'test'
+      ...
+    1..1
+ok 1 - Root 승인 pg callback 1개
+  ---
+  duration_ms: 760.958919
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2905.798801

@@ -1,0 +1,181 @@
+{
+  "기록": "원 artifact 35개의 논리 이름과 hash입니다. 비공개 절대경로·credential·원 운영 로그 본문은 게시하지 않습니다. 별도 공개 TAP 및 lint 로그는 원 바이트와 같습니다.",
+  "files": [
+    {
+      "artifact": "initial/actual-inputs.json",
+      "sha256": "2675e5519dc48d5e84142da4eb117f03dbd39c7354bb2fd9398794bd3704a93a",
+      "bytes": 394842
+    },
+    {
+      "artifact": "initial/bundles/pg.cjs.metafile.json",
+      "sha256": "ff8cff09b5ccc2aea3b718f6a335bb3c3752b54e5ba5d24eb5dba9d217777f8f",
+      "bytes": 1186542
+    },
+    {
+      "artifact": "initial/bundles/value.cjs.metafile.json",
+      "sha256": "b1074f2d8458d6ef03ed6acd3758d13f7951c242ca623b9ec64cbc4219f3bf44",
+      "bytes": 312565
+    },
+    {
+      "artifact": "initial/control-error.log",
+      "sha256": "dcfba06989262c83d33907d32b5bd057e8581a13b349f6df37dc828d95d47bfd",
+      "bytes": 379
+    },
+    {
+      "artifact": "initial/existing-db-end-error.log",
+      "sha256": "33ec9721dc056040976a869fbc33030cfcb925335ad6cda7a41082d3a196cba2",
+      "bytes": 379
+    },
+    {
+      "artifact": "initial/exit.json",
+      "sha256": "bf7b9cd6a9d7783ab7e4a4e3b0cb1d420aec4b23a4df7d927ea91a874ee70c4e",
+      "bytes": 132
+    },
+    {
+      "artifact": "initial/known-pid-end.json",
+      "sha256": "6661f312a034549f12bd770dde32807c70e16726bf4c2c58d011b2c49ab848db",
+      "bytes": 779
+    },
+    {
+      "artifact": "initial/launch.json",
+      "sha256": "d3a60c632466e132893437df622495ced95907a907105ffadfac41f7bc9db54b",
+      "bytes": 164
+    },
+    {
+      "artifact": "initial/owned-lint.log",
+      "sha256": "42e5f09ba9991e945dccd19c6ee745dfa806467c13bb4f7f212583d21ebc626e",
+      "bytes": 92
+    },
+    {
+      "artifact": "initial/pg-actual-inputs.json",
+      "sha256": "4b078171b31db27d03bdd7d2e8a96fcb9ef3c3a64f0c90d19ea183f22766350e",
+      "bytes": 390248
+    },
+    {
+      "artifact": "initial/prepare-pg.log",
+      "sha256": "138378a1102740bb66055e0122cd5f170885f6b16c7120c7e26c8bb446f6ff85",
+      "bytes": 90
+    },
+    {
+      "artifact": "initial/prepare-value.log",
+      "sha256": "aeb14f440bc100320cec5dd01aa2fafd73e91dc5d8a516d5397a23fa7f8c0e82",
+      "bytes": 89
+    },
+    {
+      "artifact": "initial/prepared-pg.json",
+      "sha256": "4f7c9c9d436bd77d99b4bcf624aa3b44594d9e911265723be95493d665ae7aaa",
+      "bytes": 743
+    },
+    {
+      "artifact": "initial/prepared-value.json",
+      "sha256": "e049b4d3a7b5af8438639c8b60bb9d1207cc80c9bda1383298d073fb928e95fb",
+      "bytes": 750
+    },
+    {
+      "artifact": "initial/run-state.json",
+      "sha256": "160ba82fb4a28b1f19b667c7857712f98e554ad28c849ee9f598375269bd675f",
+      "bytes": 4430
+    },
+    {
+      "artifact": "initial/source/src/main/durable-runtime/rpc/.wiring-first-pg.cts",
+      "sha256": "570fac7f8abb3ec57cc97c316326d7318ff2e36f36ded8864dd68df44ce3985f",
+      "bytes": 14457
+    },
+    {
+      "artifact": "initial/source/src/main/durable-runtime/rpc/.wiring-first-value.cts",
+      "sha256": "1b1dfbf9c16fbaac4ba26c3424cf886f0dc08e5c58bc1729844c30f7f816d3a5",
+      "bytes": 7458
+    },
+    {
+      "artifact": "initial/stage.log",
+      "sha256": "8483ed49712e08067787dcc4b0afddb4baf86ad6ac8252687d72f5fa42dc1415",
+      "bytes": 98
+    },
+    {
+      "artifact": "initial/supervisor.log",
+      "sha256": "97303b96bffd7c6c7b1ac413a03db054b55825c2da6d4be72a84cae62164224d",
+      "bytes": 565
+    },
+    {
+      "artifact": "initial/value-actual-inputs.json",
+      "sha256": "50e003afc58c4c228466e064b8556d83c186d25d0ef5c816e80fdf7057d818d0",
+      "bytes": 108813
+    },
+    {
+      "artifact": "initial/value-entries.jsonl",
+      "sha256": "61078973b85b12ab5c2ee6724f2e6c7bc3dd6c639aeb882f849db8ace80b8312",
+      "bytes": 1016
+    },
+    {
+      "artifact": "initial/value.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "artifact": "initial/value.tap",
+      "sha256": "50ca35d8b6a2fb69dd6e1da6ac800705a4055f076ae8b9bc2608f374d99c492a",
+      "bytes": 541
+    },
+    {
+      "artifact": "continuation/PG-host-continuation-exact.diff",
+      "sha256": "30be4806c7fc64b83b8bc19b8b5eec8b918e5a5c890fcfda5d1858e18028e4e3",
+      "bytes": 7148
+    },
+    {
+      "artifact": "continuation/PG-host-continuation-postrun-reuse-facts.json",
+      "sha256": "8030af93cb7e35d7023baab06067d72f8ab969ff7e28cc11b02703212c33985d",
+      "bytes": 1898
+    },
+    {
+      "artifact": "continuation/existing-db-before-host-continuation.json",
+      "sha256": "df5cd6824a68c536b105959e3f0e61becc997595cfd1d5dad0759ebeddecd9a5",
+      "bytes": 10888
+    },
+    {
+      "artifact": "continuation/existing-db-end-host-continuation.json",
+      "sha256": "0efb6285501f4e1cf2adce1f76dcf39d313cabe9777cd7c73cc817e6c877847c",
+      "bytes": 16137
+    },
+    {
+      "artifact": "continuation/exit-host-continuation.json",
+      "sha256": "75c7e432a6c92160bc14390f1ff66e02673b395d5629251ae0e2ca29b4d449dd",
+      "bytes": 87
+    },
+    {
+      "artifact": "continuation/launch-pg-host-continuation.json",
+      "sha256": "09869304d794402551d35628d935c573e3d0e35c4d442327193909ab5eaa3669",
+      "bytes": 164
+    },
+    {
+      "artifact": "continuation/pg-host-continuation-entries.jsonl",
+      "sha256": "24bb53ce555af8375c2fa94e1ea31308967d24f1d8bfa755e5a4de607db84f4e",
+      "bytes": 1028
+    },
+    {
+      "artifact": "continuation/pg-host-continuation.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "artifact": "continuation/pg-host-continuation.tap",
+      "sha256": "7e42405b88d32f194037f8136d32d33fc849c65a47f292f62e6b27d21ce9f135",
+      "bytes": 918
+    },
+    {
+      "artifact": "continuation/run-pg-host-continuation.mjs",
+      "sha256": "9c8b8c83d40286167b41c96b0ec8bb11a7ca83172629591c7e5ffada4dcfbc8d",
+      "bytes": 6007
+    },
+    {
+      "artifact": "continuation/run-state-host-continuation.json",
+      "sha256": "404a96bec222d49eeb6cb4cf729dede976af0422c58d15a4e7d85eb0766c580b",
+      "bytes": 1300
+    },
+    {
+      "artifact": "continuation/supervisor-pg-host-continuation.log",
+      "sha256": "f6533879d83cca00cc29e28fa8b7bdf40ab17c40a738373f3aae0b120e535cca",
+      "bytes": 612
+    }
+  ],
+  "prelaunchCopiedToolOutputSha256": "4a02b7ec07c83eab531ddc2e27aa9b0b7c825e46c5eadd47943d3ce4b08f690c"
+}
