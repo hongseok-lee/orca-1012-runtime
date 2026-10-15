@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { getEventListeners } from 'node:events'
 import { performance } from 'node:perf_hooks'
 import { test } from 'node:test'
+import type { ClientRequest, IncomingMessage } from 'node:http'
+import type { RequestOptions } from 'node:https'
 import { createComputeDeletionAuditClient } from './compute-deletion-audit.ts'
 import { deletionEntries, fixtureInput, privateSentinel } from './compute-deletion-audit-fixtures.mts'
 import { auditWire, closedStreams } from './compute-deletion-audit-transport-fixtures.mts'
@@ -137,6 +139,42 @@ test('monotonic credential deadline blocks a synchronous late token before the t
     assert.equal(wire.requests.length, 0)
     assert.equal(wire.responses.length, 0)
     assert.equal(getEventListeners(caller.signal, 'abort').length, 0)
+  }
+})
+
+test('outer observe continuation rejects elapsed deadline after the product end listener; caller abort wins', async () => {
+  for (const abortCaller of [false, true]) {
+    const wire = auditWire({ json: { entries: deletionEntries() } })
+    const caller = new AbortController()
+    const originalRequest = wire.holder.request.bind(wire.holder)
+    let afterProductEnd = false
+    wire.holder.request = function (options: RequestOptions,
+      callback: (message: IncomingMessage) => void): ClientRequest {
+      return originalRequest(options, message => {
+        callback(message)
+        message.once('end', () => {
+          afterProductEnd = true
+          holdEventLoopPastDeadline()
+          if (abortCaller) {
+            caller.abort(privateSentinel)
+          }
+        })
+      })
+    } as typeof wire.holder.request
+    const client = createComputeDeletionAuditClient({ timeoutMs: 10,
+      tokenProvider: tokenProvider(), https: wire.holder })
+    assert.deepEqual(await client.observe(fixtureInput, caller.signal), {
+      ok: false, error: { code: abortCaller ? 'ABORTED' : 'TIMEOUT' }
+    })
+    assert.equal(afterProductEnd, true)
+    assert.equal(wire.requests.length, 1)
+    assert.equal(wire.responses.length, 1)
+    assert.equal(getEventListeners(caller.signal, 'abort').length, 0)
+    await closedStreams()
+    assert.equal(wire.requests[0].destroyed, true)
+    assert.equal(wire.responses[0].destroyed, true)
+    assert.equal(wire.requests[0].listenerCount('error'), 0)
+    assert.equal(wire.responses[0].listenerCount('end'), 0)
   }
 })
 
