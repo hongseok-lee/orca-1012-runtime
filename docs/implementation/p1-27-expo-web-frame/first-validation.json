@@ -1,0 +1,98 @@
+{
+  "sourceBase": "ab9b369d5318b01cd862e5abc78307a06e983685",
+  "productPin": "d584c0bdcf28cae276ec12920bf4e3ced56b3439",
+  "validatedSourcePin": "8e6589e66680583a6dbc747b9f5b8f45bac6cb11",
+  "installedClientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+  "installedAssignedFileComparison": {
+    "files": 6,
+    "mismatches": 0
+  },
+  "changedRuntimeFiles": 7,
+  "newRegressionFiles": 1,
+  "actualOwnedInputs": 8,
+  "ownedInputMismatches": 0,
+  "productModeBlobMismatchesAfterLintCorrection": 0,
+  "tools": {
+    "node": "24.15.0",
+    "react": "19.2.8",
+    "react-test-renderer": "19.2.8",
+    "react-native-web": "0.21.2",
+    "vitest": "4.1.11",
+    "oxlint": "1.80.0"
+  },
+  "originalFailure": {
+    "kind": "실제 Expo Web 앱 오류",
+    "message": "image?.setNativeProps is not a function",
+    "screenshotSHA256": "fcb6ace7428b97415a5fdb85ddbc2ac341c0d40a94b9204bac763f54cc3e7499",
+    "qualification": "교정 전 실패 화면이며 성공/native iPhone 증거가 아닙니다."
+  },
+  "firstLint": {
+    "files": 8,
+    "PID": 308,
+    "exitCode": 1,
+    "startedAt": "2026-10-15T03:46:11.532Z",
+    "finishedAt": "2026-10-15T03:46:11.760Z",
+    "logSHA256": "2bc352d566319ef6eb056e72e156a1b731a30d097051dc09d56f44eb10725eae",
+    "diagnostics": [
+      "새 fixture의 for-of 본문 중괄호 누락 1개",
+      "새 fixture의 if throw 본문 중괄호 누락 1개"
+    ],
+    "correction": "조건·statement·scope·assertion을 보존하고 닫는 중괄호를 포함한 block 구분자만 추가했습니다. 제품 7파일은 불변입니다.",
+    "exactDiffSHA256": "679014af1d17bcc2dad250a91e4ef15b1fc66a065c4a1d8f9c48241bb721934c"
+  },
+  "changedFixtureLint": {
+    "files": 1,
+    "PID": 373,
+    "exitCode": 0,
+    "startedAt": "2026-10-15T03:47:14.446Z",
+    "finishedAt": "2026-10-15T03:47:14.609Z",
+    "logSHA256": "964a16ae952a48c666873f9f4e0253acdbcbf521e5ae0ad5128dff603be2d407"
+  },
+  "firstRegression": {
+    "files": 1,
+    "cases": 3,
+    "passed": 3,
+    "PID": 387,
+    "exitCode": 0,
+    "startedAt": "2026-10-15T03:47:14.609Z",
+    "finishedAt": "2026-10-15T03:47:15.684Z",
+    "logSHA256": "79fe495e348b88e6057761896c5c73994fb932b655c95c3651c32fbb5cd8e2a0",
+    "fixtureSHA256": "cb71e33a330672d6f3508fca8847151d27d00fef2971fd2ca892d6725a1dd9da",
+    "boundaries": [
+      "setNativeProps가 없는 Web host의 실제 Pane 렌더",
+      "첫 프레임·같은 geometry 후속 프레임·onLoad 전 최신 hidden frame",
+      "load 전후 opacity 전환과 마지막 coalesced 정지 프레임",
+      "decode error 뒤 회복·cached remount·이전 stream 무시",
+      "native Image/View의 기존 imperative source/opacity 호출"
+    ],
+    "qualification": "기존 react-test-renderer/모바일 harness와 명시적 host/ref double을 사용한 회귀입니다. 실제 브라우저/native 기기 캡처 시험은 아닙니다."
+  },
+  "cacheReuse": {
+    "install": false,
+    "wholeLegacyCopy": false,
+    "ownedStageOnly": true,
+    "originalMobileHarnessPreserved": true,
+    "changedConfig": "격리 root/cacheDir·preserveSymlinks·React dedupe·단일 fixture/worker만 지정했습니다."
+  },
+  "newRuns": {
+    "fullSuite": 0,
+    "fullType": 0,
+    "productBuild": 0,
+    "install": 0,
+    "liveSourceSync": 0,
+    "MetroRestart": 0,
+    "BrowserOpen": 0,
+    "CodexCreate": 0,
+    "Send": 0
+  },
+  "cleanup": {
+    "knownChildPIDsAbsent": true,
+    "completedSupervisorsZombie": true,
+    "activeOwnedJobs": 0
+  },
+  "limits": [
+    "지정 frame source 6개와 새 소유 input 8개를 대조했으며 whole checkout/runtime closure를 증명하지 않습니다.",
+    "수정 후 실제 Expo Web frame/stream과 기존 Browser 재사용 검증은 Root의 별도 배분 전 미실행입니다.",
+    "실제 native iPhone/Mac·provider·HA·PG writer 기능 수용은 별도입니다."
+  ]
+}
