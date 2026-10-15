@@ -1,0 +1,71 @@
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":37276,"at":"2026-10-15T08:02:34.691Z"}
+# Subtest: prepare captures original observer receivers, scope and input once before await; handle is opaque
+ok 1 - prepare captures original observer receivers, scope and input once before await; handle is opaque
+  ---
+  duration_ms: 7.547093
+  type: 'test'
+  ...
+# Subtest: Pod scope, SA, exact execution and Node identity mismatch never reach creation
+ok 2 - Pod scope, SA, exact execution and Node identity mismatch never reach creation
+  ---
+  duration_ms: 13.977448
+  type: 'test'
+  ...
+# Subtest: creation must independently confirm every exact scope field, source and canonical digest
+ok 3 - creation must independently confirm every exact scope field, source and canonical digest
+  ---
+  duration_ms: 7.282724
+  type: 'test'
+  ...
+# Subtest: uncooperative Pod or creation wait ends on abort/deadline and late results issue no handle
+ok 4 - uncooperative Pod or creation wait ends on abort/deadline and late results issue no handle
+  ---
+  duration_ms: 25.128151
+  type: 'test'
+  ...
+# Subtest: synchronous late observers are rejected before next observer or prepared handle
+ok 5 - synchronous late observers are rejected before next observer or prepared handle
+  ---
+  duration_ms: 51.778335
+  type: 'test'
+  ...
+# Subtest: forged or foreign handles and wrong Unit/operation are refused before borrowed SQL
+ok 6 - forged or foreign handles and wrong Unit/operation are refused before borrowed SQL
+  ---
+  duration_ms: 2.817795
+  type: 'test'
+  ...
+# Subtest: same handle records one frozen observation; context capture and original conflict propagate
+not ok 7 - same handle records one frozen observation; context capture and original conflict propagate
+  ---
+  duration_ms: 3.710414
+  type: 'test'
+  location: '<verification-stage>/value.cjs:1370:27'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'toISOString')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    projection (<verification-stage>/value.cjs:423:33)
+    recordExecutionTarget (<verification-stage>/value.cjs:517:12)
+    async Object.record (<verification-stage>/value.cjs:975:22)
+    async TestContext.<anonymous> (<verification-stage>/value.cjs:1379:17)
+    async Test.run (node:internal/test_runner/test:1208:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+  ...
+# Subtest: input/config getter and observer failures expose stable errors without original cause
+ok 8 - input/config getter and observer failures expose stable errors without original cause
+  ---
+  duration_ms: 1.155118
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 7
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 726.212342

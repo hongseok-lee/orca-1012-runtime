@@ -1,0 +1,2 @@
+source/src/main/durable-runtime/runtime/execution-target-composition.value.test.mts(44,3): error TS2322: Type '"another-project"' is not assignable to type '"fixture-project"'.
+source/src/main/durable-runtime/runtime/execution-target-composition.value.test.mts(45,3): error TS2322: Type '"different-namespace"' is not assignable to type '"agents"'.

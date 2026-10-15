@@ -1,0 +1,193 @@
+{
+  "scope": "내부 모듈 검증입니다. 합성 trusted observer와 실제 격리 PG를 사용했습니다.",
+  "verifiedSourcePin": "0b15cb8ab1cdd0beedd6df0dba8510fb6ffcc96a",
+  "alignedSourcePin": "9ba7bdba48e307604dfadf820555b390c1ef69e7",
+  "firstFailure": {
+    "pin": "34094e86d862304f07d83a0b934b22fa6b2d4b95",
+    "lint7": "PASS",
+    "typeExit": 1,
+    "diagnostics": 2,
+    "productDiagnostics": 0,
+    "cause": "Frozen synthetic scope의 literal 타입이 mutable configuration에 남았습니다. 실제 API의 mapped type annotation만 교정했습니다.",
+    "valueEntered": false,
+    "PGEntered": false
+  },
+  "secondFailure": {
+    "pin": "fac1538ff427bfda92b37f793c5fefce8bfcb2bf",
+    "typeExit": 0,
+    "typeInputs": 248,
+    "valueTests": 8,
+    "pass": 7,
+    "fail": 1,
+    "cancelled": 0,
+    "failedCase": 7,
+    "error": "Cannot read properties of undefined (reading 'toISOString')",
+    "causeSourceAnalysis": "Synthetic SQL double이 lease SELECT 외에 실제 INSERT의 EXISTS도 먼저 매칭해 scope-only row를 반환했습니다. 실제 runtime TypeError와 소스를 대조했습니다.",
+    "correction": "SELECT scope FROM durable_runtime.controller_leases로 시작하는 SQL만 매칭하는 한 줄을 수정했습니다.",
+    "PGEntered": false
+  },
+  "finalContinuation": {
+    "jobs": [
+      {
+        "name": "stage",
+        "pid": 37355,
+        "startedAt": "2026-10-15T08:07:55.687Z",
+        "finishedAt": "2026-10-15T08:07:55.823Z",
+        "exit": 0,
+        "signal": null
+      },
+      {
+        "name": "owned-lint",
+        "pid": 37362,
+        "startedAt": "2026-10-15T08:07:55.827Z",
+        "finishedAt": "2026-10-15T08:07:56.184Z",
+        "exit": 0,
+        "signal": null
+      },
+      {
+        "name": "prepare-value",
+        "pid": 37376,
+        "startedAt": "2026-10-15T08:07:56.189Z",
+        "finishedAt": "2026-10-15T08:07:56.662Z",
+        "exit": 0,
+        "signal": null
+      },
+      {
+        "name": "value-focused",
+        "pid": 37389,
+        "startedAt": "2026-10-15T08:07:56.668Z",
+        "finishedAt": "2026-10-15T08:07:57.456Z",
+        "exit": 0,
+        "signal": null
+      },
+      {
+        "name": "prepare-pg",
+        "pid": 37406,
+        "startedAt": "2026-10-15T08:07:57.462Z",
+        "finishedAt": "2026-10-15T08:07:57.775Z",
+        "exit": 0,
+        "signal": null
+      },
+      {
+        "name": "pg",
+        "pid": 37424,
+        "startedAt": "2026-10-15T08:07:58.148Z",
+        "finishedAt": "2026-10-15T08:07:58.739Z",
+        "exit": 0,
+        "signal": null
+      }
+    ],
+    "changedHelperLint": "PASS",
+    "focusedCase7": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "actualPID": 37395
+    },
+    "firstPG": {
+      "productCallbacks": 1,
+      "wrapperParentCallbacks": 0,
+      "TAPTests": 2,
+      "pass": 2,
+      "fail": 0,
+      "actualPID": 37430,
+      "cases": [
+        "prepare outside transaction; no observer calls during record",
+        "exact read/replay; stable observation",
+        "reobservation conflict preserves original",
+        "stale lease refused",
+        "caller rollback",
+        "ledger and original row multisets preserved"
+      ]
+    },
+    "finishedAt": "2026-10-15T08:07:58.757Z"
+  },
+  "separateRunAccounting": "앞선 value 7 PASS와 focused 1 PASS는 서로 다른 실행입니다. 단일 실행 8 PASS로 합치지 않습니다.",
+  "database": {
+    "isolated": true,
+    "oid": "92238",
+    "systemIdentifier": "7696101282789175327",
+    "dataset": "orca-1012-dev-v1",
+    "ledgerRows": 20,
+    "migration020Checksum": "85fc2a7494dc1066c2e168948560a3114d043c0dbcdc6ab5d1177adf706565b1",
+    "originalRows": 152,
+    "afterRows": 168,
+    "originalTables": 7,
+    "originalRowsPreserved": true,
+    "ledgerUnchanged": true,
+    "schemaChanges": 0
+  },
+  "rawEvidence": {
+    "first-value/value.tap": {
+      "bytes": 2964,
+      "sha256": "b2bf81be35b6a0558c94819d13567ef563b49ff1c3040be700a9ba7fabd2cac2"
+    },
+    "focused-and-pg/value.tap": {
+      "bytes": 450,
+      "sha256": "a18c374cc592a86ae69bc9981d5f247462bb08928ba9aedbb87183e5a19c5c6b"
+    },
+    "focused-and-pg/pg.tap": {
+      "bytes": 1575,
+      "sha256": "47d5b6eda834d2d677feedf83427722f9dc5b7aef27448462117a684f78d3c70"
+    },
+    "first-type/owned-type.log": {
+      "bytes": 30395,
+      "sha256": "3b69bb835ed74f326ad7266fd385a4958cc536474c8950084e73e5db2fa1931a"
+    },
+    "first-value/owned-type.log": {
+      "bytes": 31243,
+      "sha256": "052b8d991de91ec343d6aa6323bcbe91bda9e009cad77c4e53886031aa599a43"
+    }
+  },
+  "knownOwnedProcesses": {
+    "at": "2026-10-15T08:13:06.415Z",
+    "pids": [
+      {
+        "pid": 37348,
+        "state": "Z"
+      },
+      {
+        "pid": 37355,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37362,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37376,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37389,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37395,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37406,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37424,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 37430,
+        "state": "ABSENT"
+      }
+    ],
+    "active": 0,
+    "heavy": 0
+  },
+  "originalFailureLimit": "첫 type readset recorder가 node_modules 아래 8개 외부 입력을 source로 오분류했습니다. 원 오류를 보존하고 metadata만 교정했으며 compiler는 해당 준비 교정 때문에 재실행하지 않았습니다.",
+  "notVerified": [
+    "server startup/public HTTP/RuntimePort activation",
+    "real Cloud or Pod authentication",
+    "producer identity/storage permits/writer termination proof",
+    "live UI/native iPhone/HA"
+  ],
+  "usageLimitCreditsStream": "이번 turn에서 usage limit·credits·stream 중단 원오류는 미관측입니다."
+}
