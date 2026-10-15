@@ -103,33 +103,74 @@ export class DurableTransaction {
   }
 }
 
+export type DurableTransactionFailure = Readonly<{
+  ok: false;
+  settlement: "NOT_STARTED" | "ROLLED_BACK" | "UNCONFIRMED";
+  commitOutcome: "NOT_ATTEMPTED" | "UNKNOWN";
+  error: DurableDatabaseError;
+  cleanupFailed: boolean;
+}>;
+export type DurableTransactionResult<T> = Readonly<{
+  ok: true;
+  settlement: "COMMITTED";
+  commitOutcome: "ACKNOWLEDGED";
+  value: T;
+  cleanupFailed: boolean;
+}> | DurableTransactionFailure;
+
 // SQL-only callback contract: external effects belong to a later durable operation.
-export async function withDurableTransaction<T>(
+export async function runDurableTransaction<T>(
   pool: Pool,
   body: (tx: DurableTransaction) => Promise<T>,
-): Promise<T> {
+): Promise<DurableTransactionResult<T>> {
   let client: PoolClient;
   try {
     client = await pool.connect();
   } catch (error) {
-    throw safeDatabaseError(error);
+    return Object.freeze({ ok: false, settlement: "NOT_STARTED", commitOutcome: "NOT_ATTEMPTED",
+      error: safeDatabaseError(error), cleanupFailed: false });
   }
   const tx = new DurableTransaction(client);
-  let destroy = false;
+  let destroy = false, commitAttempted = false, cleanupFailed = false;
+  let outcome: DurableTransactionResult<T>;
   try {
     await tx.query("BEGIN ISOLATION LEVEL READ COMMITTED");
-    const result = await body(tx);
+    const value = await body(tx);
+    commitAttempted = true;
     await tx.query("COMMIT");
-    return result;
+    outcome = { ok: true, settlement: "COMMITTED", commitOutcome: "ACKNOWLEDGED", value, cleanupFailed: false };
   } catch (error) {
+    let settlement: DurableTransactionFailure["settlement"] = "ROLLED_BACK";
     try {
       await client.query("ROLLBACK");
     } catch {
       destroy = true;
+      settlement = "UNCONFIRMED";
     }
-    throw safeDatabaseError(error);
+    outcome = { ok: false, settlement, commitOutcome: commitAttempted ? "UNKNOWN" : "NOT_ATTEMPTED",
+      error: safeDatabaseError(error), cleanupFailed: false };
   } finally {
     tx.close();
-    client.release(destroy);
+    try {
+      client.release(destroy);
+    } catch {
+      cleanupFailed = true;
+    }
   }
+  return Object.freeze({ ...outcome, cleanupFailed });
+}
+
+export async function withDurableTransaction<T>(
+  pool: Pool,
+  body: (tx: DurableTransaction) => Promise<T>,
+): Promise<T> {
+  const outcome = await runDurableTransaction(pool, body);
+  if (!outcome.ok) {
+    throw outcome.error;
+  }
+  // Preserve rejection on cleanup failure, while never exposing its raw cause.
+  if (outcome.cleanupFailed) {
+    throw new DurableDatabaseError("DB_FAILURE");
+  }
+  return outcome.value;
 }
