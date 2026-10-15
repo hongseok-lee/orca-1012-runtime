@@ -1,0 +1,118 @@
+{
+  "verifiedSourcePin": "0b15cb8ab1cdd0beedd6df0dba8510fb6ffcc96a",
+  "alignedSourcePin": "9ba7bdba48e307604dfadf820555b390c1ef69e7",
+  "targetBase": "2efede71206417f2d77f608025e0758a56a41108",
+  "alignmentCount": 1,
+  "ownedBefore": [
+    "100644 blob 72809fb182bdbf942e5abfabdebacb16d05a9806\tsrc/main/durable-runtime/runtime/execution-target-composition-fixtures.mts",
+    "100644 blob 5a5de71c5be0292bc08a39e22da9e3c525f127aa\tsrc/main/durable-runtime/runtime/execution-target-composition-input.ts",
+    "100644 blob 8a609c6a2f0cdea7b171c9d1f330cb756e7142ed\tsrc/main/durable-runtime/runtime/execution-target-composition-observation.ts",
+    "100644 blob 6baf4fb7867a733bc9ea5673f41e4ce386dc961c\tsrc/main/durable-runtime/runtime/execution-target-composition-types.ts",
+    "100644 blob 7934dd572ccb0a77bb1865e6127028a6f53e37d1\tsrc/main/durable-runtime/runtime/execution-target-composition.pg.test.mjs",
+    "100644 blob 0bb8c48d083c76d8314fd4b242ed0c309c35bc0c\tsrc/main/durable-runtime/runtime/execution-target-composition.ts",
+    "100644 blob 3fda0a67be298acaeee12fd1dceb3af93f4f9fa2\tsrc/main/durable-runtime/runtime/execution-target-composition.value.test.mts"
+  ],
+  "ownedAfter": [
+    "100644 blob 72809fb182bdbf942e5abfabdebacb16d05a9806\tsrc/main/durable-runtime/runtime/execution-target-composition-fixtures.mts",
+    "100644 blob 5a5de71c5be0292bc08a39e22da9e3c525f127aa\tsrc/main/durable-runtime/runtime/execution-target-composition-input.ts",
+    "100644 blob 8a609c6a2f0cdea7b171c9d1f330cb756e7142ed\tsrc/main/durable-runtime/runtime/execution-target-composition-observation.ts",
+    "100644 blob 6baf4fb7867a733bc9ea5673f41e4ce386dc961c\tsrc/main/durable-runtime/runtime/execution-target-composition-types.ts",
+    "100644 blob 7934dd572ccb0a77bb1865e6127028a6f53e37d1\tsrc/main/durable-runtime/runtime/execution-target-composition.pg.test.mjs",
+    "100644 blob 0bb8c48d083c76d8314fd4b242ed0c309c35bc0c\tsrc/main/durable-runtime/runtime/execution-target-composition.ts",
+    "100644 blob 3fda0a67be298acaeee12fd1dceb3af93f4f9fa2\tsrc/main/durable-runtime/runtime/execution-target-composition.value.test.mts"
+  ],
+  "ownedBlobModeUnchanged": true,
+  "transitiveSourceCount": 38,
+  "dependencyMismatches": [],
+  "COMMONSHA256": "8c8122bcd2333b94937ed83f5ba8a095a08fb18771dac25040c3e2379d31704d",
+  "rootContractPrivateOriginalSHA256": "e89d8d0dd02ea5b63d850345ea2e60aadafe1404841296e7195b2e97719729fe",
+  "publicContractSHA256": "2c306cd37a7041a804cabefd1086ba31281c6465764ce5d4d4a4e7f707742e6b",
+  "report": {
+    "PNG_SHA256": "0b7176abca477d4deb1f0a4fecff49021a97577563a88cdb8067545494ac133b",
+    "width": 1200,
+    "height": 1100,
+    "captureCount": 1,
+    "visuallyReviewed": true,
+    "productUI": false,
+    "requestCount": 0,
+    "authStateLoaded": false,
+    "knownPIDs": {
+      "at": "2026-10-15T08:32:27.786Z",
+      "pids": [
+        {
+          "pid": 7649,
+          "state": "ABSENT"
+        },
+        {
+          "pid": 7666,
+          "state": "ABSENT"
+        }
+      ]
+    }
+  },
+  "publicationPreparationErrors": [
+    {
+      "error": "Sparse checkout did not materialize docs; initial local read returned FileNotFoundError.",
+      "correction": "Read only the exact approved P1-09 and COMMON Git blobs; created only the new owned documentation directory."
+    },
+    {
+      "error": "Browser container has no /usr/local/bin/node; OCI exec failed before starting capture.",
+      "correction": "Used actual command -v node result /usr/bin/node. First actual capture completed once."
+    }
+  ],
+  "noVerificationRerunAfterAlignment": true,
+  "publicArtifacts": {
+    "composition-result-report.png": {
+      "bytes": 205880,
+      "sha256": "0b7176abca477d4deb1f0a4fecff49021a97577563a88cdb8067545494ac133b"
+    },
+    "type-first-diagnostics.txt": {
+      "bytes": 349,
+      "sha256": "14b06830c1e478beb1c8a80f8505c49db0579175833a99ece61c28935095c2f2"
+    },
+    "report.html": {
+      "bytes": 3811,
+      "sha256": "3621c6598bf9b8cea46870e7a42356426ece3580624fe7ba40841bccc39ba678"
+    },
+    "pg-first-pass.tap": {
+      "bytes": 1575,
+      "sha256": "47d5b6eda834d2d677feedf83427722f9dc5b7aef27448462117a684f78d3c70"
+    },
+    "verification.json": {
+      "bytes": 5887,
+      "sha256": "990362729167c25ac320ad443da6adbe7ab08cf5cbaa28efb9aaab8a359cfa4d"
+    },
+    "value-focused-pass.tap": {
+      "bytes": 450,
+      "sha256": "a18c374cc592a86ae69bc9981d5f247462bb08928ba9aedbb87183e5a19c5c6b"
+    },
+    "value-first-failure.tap": {
+      "bytes": 2764,
+      "sha256": "91d633133e63d0c89d518f9907dd44e7e2a50a8519112800cadeb8672a82cc90"
+    },
+    "fixture-lease-select.diff": {
+      "bytes": 907,
+      "sha256": "6ad250eb40adcae72bcb1bceb6540ee37da459aca5262b33124b4cd1096818e0"
+    },
+    "inputs.json": {
+      "bytes": 61384,
+      "sha256": "8e226d3b57c368ade7534ef855d5b9377dddf79b3169218d3742a3b7fd3333f0"
+    },
+    "composition-result-report-provenance.json": {
+      "bytes": 1261,
+      "sha256": "e49c44d555e4305616766c1510dee2116b0fd1bdb70de8dde8dbd781d313607e"
+    },
+    "README.md": {
+      "bytes": 3697,
+      "sha256": "f805ec89e2dc5932c6596f8d59375803cf8dc36f3d8fb58c54728b65d952d80b"
+    },
+    "fixture-configuration-type.diff": {
+      "bytes": 1025,
+      "sha256": "c4a36629a1755e070a882b7cf2afbe4c80e650261a65c8dc0acb04e05566795f"
+    },
+    "contract.md": {
+      "bytes": 12692,
+      "sha256": "2c306cd37a7041a804cabefd1086ba31281c6465764ce5d4d4a4e7f707742e6b"
+    }
+  }
+}
