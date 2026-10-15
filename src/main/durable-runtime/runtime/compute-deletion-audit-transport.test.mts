@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { getEventListeners } from 'node:events'
+import { performance } from 'node:perf_hooks'
 import { test } from 'node:test'
 import { createComputeDeletionAuditClient } from './compute-deletion-audit.ts'
 import { deletionEntries, fixtureInput, privateSentinel } from './compute-deletion-audit-fixtures.mts'
@@ -11,6 +13,14 @@ function tokenProvider() {
       assert.equal(this.receiver, 'trusted-operator')
       return 'fixture-token'
     }
+  }
+}
+
+function holdEventLoopPastDeadline(): void {
+  const until = performance.now() + 25
+  let now = performance.now()
+  while (now < until) {
+    now = performance.now()
   }
 }
 
@@ -102,6 +112,32 @@ test('finite timeout includes a token that never resolves and destroys an owned 
   assert.equal(wire.requests.length, 1)
   assert.equal(wire.requests[0].destroyed, true)
   assert.equal(wire.requests[0].listenerCount('error'), 0)
+})
+
+test('monotonic credential deadline blocks a synchronous late token before the timer runs; caller abort wins', async () => {
+  for (const abortCaller of [false, true]) {
+    const wire = auditWire()
+    const caller = new AbortController()
+    let supplierSignal: AbortSignal | undefined
+    const client = createComputeDeletionAuditClient({ timeoutMs: 10, tokenProvider: {
+      async getAccessToken(signal) {
+        supplierSignal = signal
+        holdEventLoopPastDeadline()
+        assert.equal(signal.aborted, false)
+        if (abortCaller) {
+          caller.abort(privateSentinel)
+        }
+        return 'fixture-token'
+      }
+    }, https: wire.holder })
+    assert.deepEqual(await client.observe(fixtureInput, caller.signal), {
+      ok: false, error: { code: abortCaller ? 'ABORTED' : 'TIMEOUT' }
+    })
+    assert.equal(supplierSignal?.aborted, true)
+    assert.equal(wire.requests.length, 0)
+    assert.equal(wire.responses.length, 0)
+    assert.equal(getEventListeners(caller.signal, 'abort').length, 0)
+  }
 })
 
 test('HTTP auth/redirect errors do not parse or expose the raw response and never retry', async () => {

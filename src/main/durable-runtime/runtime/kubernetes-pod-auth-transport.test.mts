@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { getEventListeners } from 'node:events'
+import { performance } from 'node:perf_hooks'
 import test from 'node:test'
 import { createKubernetesPodAuthenticator, KubernetesPodAuthError } from './kubernetes-pod-auth.ts'
 import type { KubernetesPodAuthConfig } from './kubernetes-pod-auth.ts'
@@ -14,6 +15,14 @@ const rejected = (code: string) => (error: unknown) => {
   return true
 }
 const input = () => ({ podBearer: podToken, expected: expected() })
+
+function holdEventLoopPastDeadline(): void {
+  const until = performance.now() + 25
+  let now = performance.now()
+  while (now < until) {
+    now = performance.now()
+  }
+}
 
 test('POST TokenReview then exact Pod and Node GET once, fixed TLS origin and separate bearer credentials', async () => {
   for (const status of [200, 201]) {
@@ -40,12 +49,15 @@ test('POST TokenReview then exact Pod and Node GET once, fixed TLS origin and se
 })
 
 test('first-await capture isolates caller, CA, expected identity and supplier/transport method replacement', async () => {
+  const credentials = new WeakMap<object, string>()
   const gate = deferred<string>(), h = harness(), c = { ...config(),
     readReviewerBearer(this: Readonly<KubernetesPodAuthConfig>) {
-      assert.equal(this.namespace, 'agents'); assert.equal(Object.isFrozen(this), true)
+      assert.equal(this, c); assert.equal(credentials.get(this), reviewerToken)
+      assert.equal(this.namespace, 'agents')
       this.ca.fill(0)
       return gate.promise
     } }
+  credentials.set(c, reviewerToken)
   const auth = createKubernetesPodAuthenticator(c, h.transport), request = input()
   const promise = auth.authenticatePod(request, new AbortController().signal)
   Object.assign(c, { apiOrigin: 'https://attacker.invalid', audience: 'another', namespace: 'another',
@@ -99,6 +111,41 @@ test('supplier abort/timeout ignore late credentials, and pre-abort never calls 
   external.abort()
   await assert.rejects(createKubernetesPodAuthenticator(c, h.transport).authenticatePod(input(), external.signal), rejected('ABORTED'))
   assert.equal(calls, 0); assert.equal(h.requests.length, 0)
+})
+
+test('monotonic credential deadline blocks synchronous late reviewer before the timer runs; caller abort wins', async () => {
+  for (const abortCaller of [false, true]) {
+    const h = harness(), caller = new AbortController()
+    let supplierSignal: AbortSignal | undefined
+    const c = { ...config(), timeoutMs: 10, readReviewerBearer(signal: AbortSignal) {
+      supplierSignal = signal
+      holdEventLoopPastDeadline()
+      assert.equal(signal.aborted, false)
+      if (abortCaller) {
+        caller.abort(new Error(podToken))
+      }
+      return reviewerToken
+    } }
+    await assert.rejects(createKubernetesPodAuthenticator(c, h.transport).authenticatePod(input(), caller.signal),
+      rejected(abortCaller ? 'ABORTED' : 'TIMEOUT'))
+    assert.equal(supplierSignal?.aborted, true)
+    assert.equal(h.requests.length, 0)
+    assert.equal(getEventListeners(caller.signal, 'abort').length, 0)
+    h.assertCleanup()
+  }
+})
+
+test('monotonic deadline after each API response blocks the next request and final observation before timer runs', async () => {
+  for (const stage of [0, 1, 2]) {
+    const steps = [{ body: tokenReview() }, { body: pod() }, { body: node() }]
+      .map((step, index) => index === stage ? { ...step, before: holdEventLoopPastDeadline } : step)
+    const h = harness(steps), caller = new AbortController()
+    await assert.rejects(createKubernetesPodAuthenticator({ ...config(), timeoutMs: 10 }, h.transport)
+      .authenticatePod(input(), caller.signal), rejected('TIMEOUT'))
+    assert.equal(h.requests.length, stage + 1)
+    assert.equal(getEventListeners(caller.signal, 'abort').length, 0)
+    h.assertCleanup()
+  }
 })
 
 test('abort during each of three requests releases owned request/response and parent listeners', async () => {
