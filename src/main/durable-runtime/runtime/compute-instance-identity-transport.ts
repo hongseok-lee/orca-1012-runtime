@@ -1,4 +1,5 @@
 import { TextDecoder } from 'node:util'
+import { performance } from 'node:perf_hooks'
 import type { ClientRequest, IncomingMessage } from 'node:http'
 import { projectComputeInstanceIdentity } from './compute-instance-identity-projection'
 import type {
@@ -51,6 +52,7 @@ export function readComputeInstanceIdentity(
   path: string,
   signal?: AbortSignal
 ): Promise<ComputeInstanceIdentityResult> {
+  const deadline = performance.now() + config.timeoutMs
   return new Promise(resolve => {
     const cancellation = new AbortController()
     let request: ClientRequest | undefined
@@ -74,12 +76,19 @@ export function readComputeInstanceIdentity(
       resolve(result)
     }
     const fail = (code: ComputeInstanceIdentityErrorCode): void => finish(identityFailure(code))
+    const expired = (): boolean => {
+      if (performance.now() >= deadline) {
+        fail('TIMEOUT')
+        return true
+      }
+      return false
+    }
     const onAbort = (): void => fail('ABORTED')
     const onRequestError = (error: unknown): void => fail(networkCode(error))
     const onResponseError = (): void => fail('RESPONSE_TRUNCATED')
     const onResponseAborted = (): void => fail('RESPONSE_TRUNCATED')
     const onData = (chunk: Buffer): void => {
-      if (settled) {
+      if (settled || expired()) {
         return
       }
       bytes += chunk.length
@@ -90,7 +99,7 @@ export function readComputeInstanceIdentity(
       chunks.push(chunk)
     }
     const onEnd = (): void => {
-      if (settled) {
+      if (settled || expired()) {
         return
       }
       if (!response?.complete) {
@@ -101,10 +110,15 @@ export function readComputeInstanceIdentity(
       try {
         value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)))
       } catch {
-        fail('INVALID_JSON')
+        if (!expired()) {
+          fail('INVALID_JSON')
+        }
         return
       }
-      finish(projectComputeInstanceIdentity(config.projectId, input, value))
+      const result = projectComputeInstanceIdentity(config.projectId, input, value)
+      if (!expired()) {
+        finish(result)
+      }
     }
     const onResponseClose = (): void => {
       if (!settled) {
@@ -132,6 +146,9 @@ export function readComputeInstanceIdentity(
         message.destroy()
         return
       }
+      if (expired()) {
+        return
+      }
       const code = httpCode(message.statusCode)
       if (code) {
         fail(code)
@@ -141,14 +158,14 @@ export function readComputeInstanceIdentity(
       message.once('end', onEnd)
       message.once('aborted', onResponseAborted)
     }
-    timer = setTimeout(() => fail('TIMEOUT'), config.timeoutMs)
+    timer = setTimeout(() => fail('TIMEOUT'), Math.max(0, deadline - performance.now()))
     signal?.addEventListener('abort', onAbort, { once: true })
     if (signal?.aborted) {
       onAbort()
       return
     }
-    void Promise.resolve().then(() => settled ? null : config.readAccessToken(cancellation.signal)).then(token => {
-      if (settled) {
+    void Promise.resolve().then(() => settled || expired() ? null : config.readAccessToken(cancellation.signal)).then(token => {
+      if (settled || expired()) {
         return
       }
       if (typeof token !== 'string' || invalidToken(token)) {
@@ -156,15 +173,27 @@ export function readComputeInstanceIdentity(
         return
       }
       try {
+        if (expired()) {
+          return
+        }
         request = config.request({ protocol: 'https:', hostname: 'compute.googleapis.com', port: 443,
           path, method: 'GET', rejectUnauthorized: true, agent: false,
           headers: { Authorization: `Bearer ${token}` } }, onResponse)
         request.on('error', onRequestError)
         request.once('close', onRequestClose)
+        if (expired()) {
+          return
+        }
         request.end()
       } catch {
-        fail('NETWORK_ERROR')
+        if (!expired()) {
+          fail('NETWORK_ERROR')
+        }
       }
-    }, () => fail('AUTH_FAILED'))
+    }, () => {
+      if (!expired()) {
+        fail('AUTH_FAILED')
+      }
+    })
   })
 }

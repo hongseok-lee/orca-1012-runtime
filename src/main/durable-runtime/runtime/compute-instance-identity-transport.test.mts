@@ -2,6 +2,9 @@ import assert from 'node:assert/strict'
 import { getEventListeners } from 'node:events'
 import { test } from 'node:test'
 import { inspect } from 'node:util'
+import { performance } from 'node:perf_hooks'
+import type { ClientRequest, IncomingMessage } from 'node:http'
+import type { RequestOptions } from 'node:https'
 import { createComputeInstanceIdentityClient } from './compute-instance-identity.ts'
 import type { ComputeInstanceIdentityConfiguration } from './compute-instance-identity.ts'
 import { COMPUTE_INSTANCE_RESPONSE_MAX_BYTES } from './compute-instance-identity-transport.ts'
@@ -230,7 +233,53 @@ test('malformed JSON/UTF8, missing identity, mismatches, truncation and body bou
 })
 
 test('invalid function receiver/config access returns configuration failure without thrown secrets', async () => {
-  const config = { get projectId() { throw new Error(privateSentinel) } } as ComputeInstanceIdentityConfiguration
+  const config = { get projectId(): string { throw new Error(privateSentinel) } } as ComputeInstanceIdentityConfiguration
   const client = createComputeInstanceIdentityClient(config)
   assert.deepEqual(await client.observe(fixtureInput), { ok: false, error: { code: 'INVALID_CONFIGURATION' } })
+})
+
+test('monotonic deadline rejects synchronous supplier and end-listener overrun before timer dispatch', async t => {
+  const timeoutMs = 5
+  const wait = new Int32Array(new SharedArrayBuffer(4))
+  for (const boundary of ['supplier', 'response-end'] as const) {
+    const wire = identityWire({ json: instanceResource() })
+    let timerDispatched = false
+    let elapsed = 0
+    const marker = setTimeout(() => { timerDispatched = true }, 0)
+    const blockPastDeadline = (): void => {
+      const start = performance.now()
+      Atomics.wait(wait, 0, 0, 25)
+      elapsed = performance.now() - start
+    }
+    if (boundary === 'response-end') {
+      const request = wire.holder.request.bind(wire.holder)
+      wire.holder.request = function (options: RequestOptions,
+        callback: (message: IncomingMessage) => void): ClientRequest {
+        return request(options, message => {
+          message.prependOnceListener('end', blockPastDeadline)
+          callback(message)
+        })
+      } as typeof request
+    }
+    const client = createComputeInstanceIdentityClient({ projectId: fixtureProject, timeoutMs,
+      readAccessToken() {
+        if (boundary === 'supplier') {
+          blockPastDeadline()
+        }
+        return Promise.resolve('fixture-token')
+      }, https: wire.holder })
+    try {
+      const result = await client.observe(fixtureInput)
+      t.diagnostic(JSON.stringify({ boundary, elapsedMs: elapsed, timeoutMs, timerDispatched,
+        requests: wire.requests.length }))
+      assert.deepEqual(result, { ok: false, error: { code: 'TIMEOUT' } })
+      assert.equal(elapsed >= timeoutMs, true)
+      assert.equal(timerDispatched, false)
+      assert.equal(wire.requests.length, boundary === 'supplier' ? 0 : 1)
+    } finally {
+      clearTimeout(marker)
+    }
+    await closedIdentityStreams()
+    assertClosed(wire)
+  }
 })
