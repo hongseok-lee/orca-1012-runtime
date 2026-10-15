@@ -26,7 +26,7 @@ function request(handler: ReturnType<typeof createOpsHttpHandler>, authorization
     const incoming = Object.assign(new EventEmitter(), { url: '/ops/v1/runtime-units', method: 'GET', complete: true,
       headers: { origin: requestOrigin, ...(authorization === undefined ? {} : { authorization }) } })
     const outgoing = Object.assign(new EventEmitter(), { statusCode: 200, headersSent: false, writableEnded: false,
-      destroyed: false, setHeader() {}, end() { this.writableEnded = true; this.emit('finish'); resolve(this.statusCode) } })
+      destroyed: false, setHeader() {}, end(this: EventEmitter & { writableEnded: boolean; statusCode: number }) { this.writableEnded = true; this.emit('finish'); resolve(this.statusCode) } })
     assert.equal(handler(incoming as IncomingMessage, outgoing as unknown as ServerResponse), true)
   })
 }

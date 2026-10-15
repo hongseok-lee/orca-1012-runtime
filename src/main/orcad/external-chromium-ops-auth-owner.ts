@@ -104,7 +104,7 @@ export class ExternalChromiumOpsAuthOwners {
     }
     const read = ownBrowserAuthValue(session, 'readBearer'), release = ownBrowserAuthValue(session, 'dispose')
     if (typeof read !== 'function' || typeof release !== 'function') { throw browserOpsAuthUnavailable() }
-    owner.release = release.bind(session)
+    owner.release = release.bind(session) as () => void
     if (!this.current(owner)) { owner.release(); throw browserOpsAuthUnavailable() }
     owner.interceptor = await this.install({ opsOrigin: owner.origin, page: owner.expected, connection: this.connection,
       readBearer: read.bind(session), disposeBearer: owner.release })
