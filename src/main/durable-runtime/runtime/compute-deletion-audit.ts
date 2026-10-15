@@ -1,3 +1,4 @@
+import { performance } from 'node:perf_hooks'
 import { computeAuditRequestBody, snapshotAuditInput } from './compute-deletion-audit-input'
 import { evaluateComputeAuditPage } from './compute-deletion-audit-parser'
 import { projectComputeAuditPage } from './compute-deletion-audit-projection'
@@ -44,11 +45,27 @@ export function createComputeDeletionAuditClient(config: ComputeAuditTransportCo
       if (!transport) {
         return auditError('INVALID_CONFIGURATION')
       }
+      const deadline = performance.now() + transport.timeoutMs
+      const stopped = (): ComputeDeletionAuditResult | null => {
+        if (signal?.aborted) {
+          return auditError('ABORTED')
+        }
+        return performance.now() >= deadline ? auditError('TIMEOUT') : null
+      }
       const body = computeAuditRequestBody(copied)
+      const beforeTransport = stopped()
+      if (beforeTransport) {
+        return beforeTransport
+      }
       const result = await readComputeAuditPage(transport, body, signal)
-      return result.ok
+      const afterTransport = stopped()
+      if (afterTransport) {
+        return afterTransport
+      }
+      const evaluated = result.ok
         ? freezeAuditValue<ComputeDeletionAuditResult>({ ok: true, observation: evaluateComputeAuditPage(copied, result.page) })
         : result
+      return stopped() ?? evaluated
     }
   })
 }

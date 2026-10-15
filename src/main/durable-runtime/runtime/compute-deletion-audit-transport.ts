@@ -1,4 +1,5 @@
 import * as https from 'node:https'
+import { performance } from 'node:perf_hooks'
 import { TextDecoder } from 'node:util'
 import type { ClientRequest, IncomingMessage } from 'node:http'
 import { projectComputeAuditPage } from './compute-deletion-audit-projection'
@@ -70,6 +71,7 @@ export function readComputeAuditPage(
   signal?: AbortSignal
 ): Promise<ComputeAuditPageResult> {
   return new Promise(resolve => {
+    const deadline = performance.now() + config.timeoutMs
     const cancellation = new AbortController()
     let request: ClientRequest | undefined
     let response: IncomingMessage | undefined
@@ -85,6 +87,11 @@ export function readComputeAuditPage(
       if (settled) {
         return
       }
+      if (signal?.aborted) {
+        result = failure('ABORTED')
+      } else if (performance.now() >= deadline) {
+        result = failure('TIMEOUT')
+      }
       settled = true
       clearTimeout(timer)
       signal?.removeEventListener('abort', onAbort)
@@ -95,12 +102,26 @@ export function readComputeAuditPage(
       request?.destroy()
       resolve(result)
     }
+    const stopped = (): boolean => {
+      if (settled) {
+        return true
+      }
+      if (signal?.aborted) {
+        finish(failure('ABORTED'))
+        return true
+      }
+      if (performance.now() >= deadline) {
+        finish(failure('TIMEOUT'))
+        return true
+      }
+      return false
+    }
     const onAbort = (): void => finish(failure('ABORTED'))
     const onRequestError = (error: unknown): void => finish(failure(networkCode(error)))
     const onResponseError = (): void => finish(incomplete('RESPONSE_TRUNCATED'))
     const onResponseAborted = (): void => finish(incomplete('RESPONSE_TRUNCATED'))
     const onData = (chunk: Buffer): void => {
-      if (settled) {
+      if (stopped()) {
         return
       }
       bytes += chunk.length
@@ -111,7 +132,7 @@ export function readComputeAuditPage(
       chunks.push(chunk)
     }
     const onEnd = (): void => {
-      if (settled) {
+      if (stopped()) {
         return
       }
       if (!response?.complete) {
@@ -149,7 +170,7 @@ export function readComputeAuditPage(
       response = message
       message.on('error', onResponseError)
       message.once('close', onResponseClose)
-      if (settled) {
+      if (stopped()) {
         message.destroy()
         return
       }
@@ -169,8 +190,8 @@ export function readComputeAuditPage(
       return
     }
     // Resolve asynchronous and synchronous token-provider failures without exposing their cause.
-    void Promise.resolve().then(() => settled ? null : config.token(cancellation.signal)).then(token => {
-      if (settled) {
+    void Promise.resolve().then(() => stopped() ? null : config.token(cancellation.signal)).then(token => {
+      if (stopped()) {
         return
       }
       if (typeof token !== 'string' || !token || invalidToken(token)) {
@@ -178,6 +199,9 @@ export function readComputeAuditPage(
         return
       }
       try {
+        if (stopped()) {
+          return
+        }
         request = config.request({
           protocol: 'https:', hostname: 'logging.googleapis.com', port: 443,
           path: '/v2/entries:list', method: 'POST', rejectUnauthorized: true, agent: false,
