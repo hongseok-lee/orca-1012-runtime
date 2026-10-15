@@ -12,10 +12,7 @@ import { captureBrowserTabCreateCaller, browserOpsAuthUnavailable, type BrowserO
 import { captureExternalChromiumTabPublication } from './external-chromium-tab-publication'
 import { normalizeBrowserNavigationUrl } from '../../shared/browser-url'
 import type { ExternalChromiumBrowserSession } from './external-chromium-browser-session'
-import {
-  externalChromiumTabInfo,
-  type ExternalChromiumPageRecord
-} from './external-chromium-tab-projection'
+import { externalChromiumTabInfo, type ExternalChromiumPageRecord } from './external-chromium-tab-projection'
 const AgentBrowserCreatedTab = z.object({ tabId: z.string().min(1) })
 
 export class ExternalChromiumTabRegistry {
@@ -27,10 +24,7 @@ export class ExternalChromiumTabRegistry {
   private readonly opsAuth: ExternalChromiumOpsAuthOwners
   private epoch = 0
 
-  constructor(
-    private readonly session: ExternalChromiumBrowserSession,
-    private readonly stopPage: (pageId: string) => Promise<void>
-  ) {
+  constructor( private readonly session: ExternalChromiumBrowserSession, private readonly stopPage: (pageId: string) => Promise<void> ) {
     this.opsAuth = new ExternalChromiumOpsAuthOwners(session.cdp)
     this.targets = new ExternalChromiumTargetBinding(session,
       page => this.pagesByPublicId.get(page.publicPageId) === page,
@@ -166,10 +160,7 @@ export class ExternalChromiumTabRegistry {
     return { browserPageId: publicPageId }
   }
 
-  async listTabs(
-    host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
-  ): Promise<unknown> {
+  async listTabs( host: RuntimeBrowserCommandHost, params: Record<string, unknown> ): Promise<unknown> {
     const requestedWorktreeId = await this.resolveWorktreeId(host, params.worktree)
     await this.session.connectCdp()
     const tabs = await this.session.readTabs()
@@ -194,17 +185,11 @@ export class ExternalChromiumTabRegistry {
     }
   }
 
-  async describeTab(
-    host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
+  async describeTab( host: RuntimeBrowserCommandHost, params: Record<string, unknown> ): Promise<Record<string, unknown>> {
     return this.describePage(await this.resolveTargetPage(host, params))
   }
 
-  async currentTab(
-    host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
-  ): Promise<unknown> {
+  async currentTab( host: RuntimeBrowserCommandHost, params: Record<string, unknown> ): Promise<unknown> {
     const worktreeId = await this.resolveWorktreeId(host, params.worktree)
     const page = this.findActivePage(worktreeId)
     if (!page) {
@@ -213,10 +198,7 @@ export class ExternalChromiumTabRegistry {
     return this.describePage(page)
   }
 
-  async switchTab(
-    host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
-  ): Promise<unknown> {
+  async switchTab( host: RuntimeBrowserCommandHost, params: Record<string, unknown> ): Promise<unknown> {
     const worktreeId = await this.resolveWorktreeId(host, params.worktree)
     const pages = [...this.pagesByPublicId.values()].filter(
       (page) => !worktreeId || page.worktreeId === worktreeId
@@ -235,10 +217,7 @@ export class ExternalChromiumTabRegistry {
     return { switched: pages.indexOf(page), browserPageId: page.publicPageId }
   }
 
-  async closeTab(
-    host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>
-  ): Promise<unknown> {
+  async closeTab( host: RuntimeBrowserCommandHost, params: Record<string, unknown> ): Promise<unknown> {
     const worktreeId = await this.resolveWorktreeId(host, params.worktree)
     const pages = [...this.pagesByPublicId.values()].filter(
       (page) => !worktreeId || page.worktreeId === worktreeId
@@ -270,11 +249,7 @@ export class ExternalChromiumTabRegistry {
     return { closed: true }
   }
 
-  async resolveTargetPage(
-    host: RuntimeBrowserCommandHost,
-    params: Record<string, unknown>,
-    select = false
-  ): Promise<ExternalChromiumPageRecord> {
+  async resolveTargetPage( host: RuntimeBrowserCommandHost, params: Record<string, unknown>, select = false ): Promise<ExternalChromiumPageRecord> {
     const worktreeId = await this.resolveWorktreeId(host, params.worktree)
     const page =
       typeof params.page === 'string'
@@ -333,10 +308,7 @@ export class ExternalChromiumTabRegistry {
     }
   }
 
-  private async resolveWorktreeId(
-    host: RuntimeBrowserCommandHost,
-    worktree: unknown
-  ): Promise<string | undefined> {
+  private async resolveWorktreeId( host: RuntimeBrowserCommandHost, worktree: unknown ): Promise<string | undefined> {
     return typeof worktree === 'string' && worktree
       ? (await host.resolveWorktreeSelector(worktree)).id
       : undefined
