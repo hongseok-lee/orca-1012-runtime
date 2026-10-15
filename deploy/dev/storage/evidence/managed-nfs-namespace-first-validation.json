@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "kind": "managed-nfs-namespace-first-validation",
+  "testedSource": "ddb6b23793d4d5d1422d8a69df15c73fb4a5d204",
+  "fixedSourceBase": "687e1cf9dcf69bb5bfd869250f12ceb37f25d58a",
+  "rootAssignedFinalBase": "c75845690e563d942923b3c7b12cbab30e6b7d31",
+  "sourceFilesSha256": {
+    "deploy/dev/storage/templates/20-nfs.yaml.in": "88b36d4e08351d2c10447bc3c02102533661c5f297cdc601efbb99b913573fd8",
+    "deploy/dev/storage/tools/render_storage.py": "6c91bc758e96f6d3a54a1df500ba81cb844f2ceb369956fc0fcee2f742668db6",
+    "deploy/dev/storage/tools/managed_storage.sh": "461fec8939a173a6f42c5ae65e5da28297433ede0c779626ebbf41b2723cf67d",
+    "deploy/dev/storage/README.md": "b72ec39223d726a9808696b428a7001c4b3a9ff6ddb6c26a6e48c6f85602cf96"
+  },
+  "originalFailure": {
+    "source": "663d5313d02fe1ae7d08ec4e3cbe81b3b0f814bd",
+    "renderExit": 0,
+    "unresolvedPlaceholderCount": 3,
+    "error": "binascii.Error: Only base64 data is allowed",
+    "cause": "Token regex [A-Z_]+ excluded digits.",
+    "originalEvidencePreserved": true
+  },
+  "correction": {
+    "changedRegexCount": 2,
+    "newTokenRegex": "[A-Z_][A-Z0-9_]*",
+    "diffSha256": "095b944ac25ad1b047d403b9a80bd09d8ce9926b62e223e59b4fedf9f4482d8f",
+    "helperTemplateReadmeUnchanged": true
+  },
+  "firstValidation": {
+    "utcRange": [
+      "2026-10-15T13:01:48Z",
+      "2026-10-15T13:02:13Z"
+    ],
+    "correctedRenderCalls": 1,
+    "renderExit": 0,
+    "unresolvedPlaceholderCount": 0,
+    "otherFourOutputsIdentical": true,
+    "decodedHelperBytesExact": true,
+    "helperSha256": "461fec8939a173a6f42c5ae65e5da28297433ede0c779626ebbf41b2723cf67d",
+    "immutableConfigMap": "nfs-managed-storage-461fec8939a173a6",
+    "exportsSha256": "8810e8d741ab14334de80c09de6994f20569fbb4e35d825830fb86c4c49c8a12",
+    "rendered20Sha256": "490a23c89fea284804f6b1793ebcb445e3f613d22c1dc2b5cb5f394f05e4279a",
+    "exactNfsGuardCalls": 1,
+    "guardMatched": true,
+    "shNCalls": 1,
+    "shNExit": 0,
+    "serverDryRunCalls": 1,
+    "serverDryRunExit": 0,
+    "onlyManifest20Submitted": true,
+    "pvcServiceIdentityMatchesPreservedMetadata": true
+  },
+  "admission": {
+    "initMainImageResourcesUnchanged": true,
+    "requestsEach": {
+      "cpu": "250m",
+      "memory": "512Mi",
+      "ephemeral-storage": "256Mi"
+    },
+    "limitsEach": {
+      "memory": "512Mi",
+      "ephemeral-storage": "256Mi"
+    },
+    "initSecurity": {
+      "runAsUser": 0,
+      "runAsGroup": 0,
+      "allowPrivilegeEscalation": false,
+      "drop": [
+        "ALL"
+      ],
+      "add": [
+        "CHOWN",
+        "FOWNER"
+      ]
+    },
+    "mainResponseDrop": [
+      "NET_RAW"
+    ],
+    "podResponseSeccomp": "RuntimeDefault",
+    "defaultsAndTolerationsRecorded": true,
+    "lastAppliedAnnotationWarningsPreserved": true,
+    "dryRunConfigMapUidIsNotAnActualCreatedUid": true
+  },
+  "readonlyPreflight": {
+    "utc": "2026-10-15T13:10:50Z",
+    "oneBatch": true,
+    "getCount": 9,
+    "fixedMetadataExecCount": 1,
+    "existingThreePodIdentitiesMatch": true,
+    "allReady": true,
+    "allRestartsZero": true,
+    "sixFixedPathMetadataPreserved": true,
+    "managedPrefixAbsent": true,
+    "datasetParentAbsent": true,
+    "exportsConfigMapBytesMatch": true,
+    "environmentSecretsRead": 0,
+    "newTargetSearch": 0,
+    "hostnameSelectorProbe": 0,
+    "samePvFilehandleContinuityProven": false
+  },
+  "actualMutation": {
+    "apply": 0,
+    "helperBody": 0,
+    "bootstrapEnsureInspectSync": 0,
+    "rollout": 0,
+    "markerWrite": 0,
+    "pg": 0,
+    "buildInstall": 0
+  },
+  "unverified": [
+    "actual namespace bootstrap/leaf/sync",
+    "fresh PV",
+    "rollout",
+    "first kernel mount from a fresh Node",
+    "physical authority/old writer/HA",
+    "runtime filehandle continuity after rollout"
+  ],
+  "report": {
+    "offlineOperationalReport": true,
+    "productUi": false,
+    "nativeUi": false,
+    "screenshotCalls": 1,
+    "applicationRequests": 0,
+    "pairedProfileReused": false,
+    "pngSha256": "0d4d77f51d5d168432985d91826c60341ffb284014f77ced4d373e5814cb5a23"
+  }
+}

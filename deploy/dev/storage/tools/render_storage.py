@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Render fixed foundation shapes to private files; performs no cloud mutation."""
 import argparse
+import base64
+import hashlib
 import ipaddress
 from pathlib import Path
 import re
@@ -24,11 +26,11 @@ def node_ipv4_cidr(value):
 
 
 def substitute(text, values):
-    tokens = set(re.findall(r"\$\{([A-Z_]+)\}", text))
+    tokens = set(re.findall(r"\$\{([A-Z_][A-Z0-9_]*)\}", text))
     missing = tokens - values.keys()
     if missing:
         raise ValueError("Missing template inputs: " + ", ".join(sorted(missing)))
-    return re.sub(r"\$\{([A-Z_]+)\}", lambda match: values[match[1]], text)
+    return re.sub(r"\$\{([A-Z_][A-Z0-9_]*)\}", lambda match: values[match[1]], text)
 
 
 def main():
@@ -54,13 +56,28 @@ def main():
     if args.nfs_node_cidr:
         values["NFS_NODE_CIDR"] = args.nfs_node_cidr
     templates = Path(__file__).resolve().parents[1] / "templates"
+    nfs_template = templates / "20-nfs.yaml.in"
+    nfs_text = nfs_template.read_text(encoding="utf-8")
+    export_block = re.search(r"(?m)^  exports: \|\n((?:    [^\n]*\n)+)", nfs_text)
+    if export_block is None:
+        raise ValueError("NFS exports literal block is missing.")
+    exports = "".join(line[4:] for line in export_block[1].splitlines(keepends=True))
+    helper = Path(__file__).with_name("managed_storage.sh").read_bytes()
+    helper_hash = hashlib.sha256(helper).hexdigest()
+    values.update({
+        "NFS_EXPORTS_SHA256": hashlib.sha256(exports.encode("utf-8")).hexdigest(),
+        "MANAGED_STORAGE_SHA256": helper_hash,
+        "MANAGED_STORAGE_CONFIGMAP": "nfs-managed-storage-" + helper_hash[:16],
+        "MANAGED_STORAGE_BASE64": base64.b64encode(helper).decode("ascii"),
+    })
     selected = sorted(templates.glob("*.yaml.in"))
     for source in selected:
         if source.name == "25-nfs-kernel-clients.yaml.in" and not args.nfs_node_cidr:
             continue
         if source.name.startswith("30-") and not args.nfs_service_ip:
             continue
-        rendered = substitute(source.read_text(encoding="utf-8"), values)
+        text = nfs_text if source == nfs_template else source.read_text(encoding="utf-8")
+        rendered = substitute(text, values)
         target = private_output(args.output_dir / source.name.removesuffix(".in"), rendered)
         print(target.name)
 

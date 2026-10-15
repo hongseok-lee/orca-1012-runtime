@@ -22,6 +22,18 @@ metadata:
 data:
   exports: |
     /x (rw,no_root_squash,insecure)
+    /exports/runtime-domains (rw,root_squash,insecure)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${MANAGED_STORAGE_CONFIGMAP}
+  namespace: ${NAMESPACE}
+  labels:
+    orca.dev/dataset: ${DATASET}
+immutable: true
+binaryData:
+  managed_storage.sh: "${MANAGED_STORAGE_BASE64}"
 ---
 apiVersion: v1
 kind: Service
@@ -54,6 +66,9 @@ spec:
       app.kubernetes.io/name: orca-dev-nfs
   template:
     metadata:
+      annotations:
+        orca.dev/exports-sha256: "${NFS_EXPORTS_SHA256}"
+        orca.dev/managed-storage-sha256: "${MANAGED_STORAGE_SHA256}"
       labels:
         app.kubernetes.io/name: orca-dev-nfs
         orca.dev/dataset: ${DATASET}
@@ -62,6 +77,38 @@ spec:
       terminationGracePeriodSeconds: 30
       nodeSelector:
         kubernetes.io/arch: amd64
+      initContainers:
+      - name: nfs-storage-bootstrap
+        image: ${UNFS_IMAGE}
+        imagePullPolicy: IfNotPresent
+        command: [/bin/sh, /opt/orca-nfs-tools/managed_storage.sh]
+        args: [bootstrap, "${DATASET}"]
+        env:
+        - name: ORCA_NFS_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+            ephemeral-storage: 256Mi
+          limits:
+            memory: 512Mi
+            ephemeral-storage: 256Mi
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+            add: [CHOWN, FOWNER]
+        volumeMounts:
+        - name: data
+          mountPath: /exports
+        - name: managed-storage-tools
+          mountPath: /opt/orca-nfs-tools
+          readOnly: true
       containers:
       - name: unfs3
         image: ${UNFS_IMAGE}
@@ -69,10 +116,13 @@ spec:
         command: [/bin/sh, -ec]
         args:
         - |
-          mkdir -p /exports/x/agents /exports/x/dev /exports/x/test-homes
-          chown 1000:1000 /exports/x /exports/x/agents /exports/x/dev /exports/x/test-homes
-          chmod 0755 /exports/x /exports/x/agents /exports/x/dev /exports/x/test-homes
+          /bin/sh /opt/orca-nfs-tools/managed_storage.sh bootstrap '${DATASET}'
           exec unfsd -d -p -t -n 2049 -m 2049 -e /etc/exports
+        env:
+        - name: ORCA_NFS_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
         ports:
         - name: nfs
           containerPort: 2049
@@ -98,6 +148,9 @@ spec:
           mountPath: /etc/exports
           subPath: exports
           readOnly: true
+        - name: managed-storage-tools
+          mountPath: /opt/orca-nfs-tools
+          readOnly: true
         readinessProbe:
           tcpSocket:
             port: nfs
@@ -114,3 +167,7 @@ spec:
       - name: exports
         configMap:
           name: nfs-exports
+      - name: managed-storage-tools
+        configMap:
+          name: ${MANAGED_STORAGE_CONFIGMAP}
+          defaultMode: 0444
