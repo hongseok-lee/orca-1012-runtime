@@ -77,6 +77,38 @@ spec:
       terminationGracePeriodSeconds: 30
       nodeSelector:
         kubernetes.io/arch: amd64
+      initContainers:
+      - name: nfs-storage-bootstrap
+        image: ${UNFS_IMAGE}
+        imagePullPolicy: IfNotPresent
+        command: [/bin/sh, /opt/orca-nfs-tools/managed_storage.sh]
+        args: [bootstrap, "${DATASET}"]
+        env:
+        - name: ORCA_NFS_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+            ephemeral-storage: 256Mi
+          limits:
+            memory: 512Mi
+            ephemeral-storage: 256Mi
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+            add: [CHOWN, FOWNER]
+        volumeMounts:
+        - name: data
+          mountPath: /exports
+        - name: managed-storage-tools
+          mountPath: /opt/orca-nfs-tools
+          readOnly: true
       containers:
       - name: unfs3
         image: ${UNFS_IMAGE}
