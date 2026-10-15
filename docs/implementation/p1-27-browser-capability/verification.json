@@ -1,0 +1,120 @@
+{
+  "기록": "원 Vitest JSON의 새 callback 1개와 총계, 별도 Client의 최초 C4 UI 실패 관측을 합류한 정제 기록입니다.",
+  "sourcePin": "cdb84393b3469141fc2f86cf62465e109f7faf46",
+  "base": "ab9b369d5318b01cd862e5abc78307a06e983685",
+  "scope": "기존 runtime.getStatus와 설치 factory의 명시 screencast·health·certificate 비광고 단위 경계입니다.",
+  "originalVitestReport": {
+    "sha256": "e0e5c69ab90bb0eebf261bf75fb4844bbfc01f5f42ea769710d1dbd043a5cf99",
+    "bytes": 372141,
+    "wholeReportPublished": false
+  },
+  "selection": {
+    "testFile": "src/main/runtime/orca-runtime.test.ts",
+    "testNamePattern": "^OrcaRuntimeService advertises explicit screencast only while the installed provider remains healthy$"
+  },
+  "totals": {
+    "numTotalTestSuites": 115,
+    "numPassedTestSuites": 115,
+    "numFailedTestSuites": 0,
+    "numPendingTestSuites": 0,
+    "numTotalTests": 1269,
+    "numPassedTests": 1,
+    "numFailedTests": 0,
+    "numPendingTests": 1268,
+    "numTodoTests": 0,
+    "success": true
+  },
+  "totalsQualification": "원 reporter의 suite 총계는 그대로 기록했습니다. 실제 실행해 통과한 callback은 아래 1개이며 기존 1,268개 callback은 pending으로 건너뛰었습니다.",
+  "callback": {
+    "fullName": "OrcaRuntimeService advertises explicit screencast only while the installed provider remains healthy",
+    "status": "passed",
+    "reportedDurationMs": 26.900909999996657
+  },
+  "runner": {
+    "pid": 31461,
+    "startedAt": "2026-10-15T03:01:42.355Z",
+    "finishedAt": "2026-10-15T03:02:40.215Z",
+    "exit": 0,
+    "workerPID": null,
+    "workerPIDObserved": false
+  },
+  "lint": {
+    "firstSourcePin": "0e145e32f54629a8d7bd88f1965b996c70b79bd4",
+    "firstFiles": 4,
+    "firstExit": 1,
+    "firstDiagnostic": "eslint(max-lines): File has too many lines (301). Maximum allowed is 300.",
+    "callbackEnteredBeforeCorrection": false,
+    "correctionPin": "cdb84393b3469141fc2f86cf62465e109f7faf46",
+    "correction": "인접한 headless/screencast options 속성의 공백 배치만 바꿨습니다. 표현식·규칙·suppression은 변경하지 않았습니다.",
+    "correctionDiffSha256": "afbc14d329be0061a29d18ce52dd7b0bcf6c0dabcd52506e6988a9f24bb99d1f",
+    "correctedFilesChecked": 1,
+    "correctedLintExit": 0
+  },
+  "sourceGuard": {
+    "files": 4,
+    "beforeAfterMismatches": 0,
+    "wholeCheckoutGitSHAProven": false
+  },
+  "status": {
+    "rootAcceptedSourceAndFirstVerification": true,
+    "Draft": true,
+    "C4Applied": true,
+    "actualUIEvidencePending": false,
+    "screenshotPresent": true,
+    "C4AppliedQualification": "별도 owner가 승인 제품 delta를 아래 composite에 반영했습니다. 전체 checkout Git SHA를 증명하지 않았습니다."
+  },
+  "limits": [
+    "실제 Expo Web의 최초 Browser Open 뒤 앱 오류를 관측했습니다. 정상 streaming·인증·Chat·provider·HA·native 기기 합격은 아닙니다.",
+    "External Chromium의 certificate 지원을 광고하지 않으며 기존 renderer/offscreen 조건을 보존했습니다.",
+    "최종 납품에서는 성공한 lint·callback·설치·type/schema/PG·전체 build·UI를 반복하지 않았습니다. 실제 C4 갱신과 UI 1회는 별도 owner의 원자료입니다.",
+    "별도 callback worker PID는 관측하지 못했습니다. Runner 시간과 callback 자체 보고 시간을 구분합니다.",
+    "제품 3개와 fixture 1개의 bytes/mode, base는 유지합니다. Web setNativeProps 수정은 별도 Client PR에 남습니다."
+  ],
+  "actualUI": {
+    "serverCompositePin": "0919809827747ffec106fdfef0c751e43538bdbb",
+    "applied15ManifestSHA256": "cb6c56b913d6475538f61f756555eeda983533d5df57674246de29960e86a316",
+    "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "runnerPID": 5199,
+    "startedAt": "2026-10-15T03:25:48.372Z",
+    "finishedAt": "2026-10-15T03:26:14.117Z",
+    "exit": 1,
+    "observedPath": [
+      "Browser 메뉴",
+      "New Browser modal",
+      "about:blank Open 1회",
+      "source-scoped loaded data image"
+    ],
+    "observedPathQualification": "Loaded data image 관측을 정상 stream·페이지 사용 합격으로 확대하지 않습니다.",
+    "helperFailure": {
+      "phase": "new-browser-label",
+      "name": "Error",
+      "code": "PHASE_DEADLINE_EXCEEDED"
+    },
+    "actualAppError": "image?.setNativeProps is not a function",
+    "errorSourceLocations": [
+      "MobileBrowserPaneView.tsx (198:23)",
+      "mobile-browser-frame-state.ts (104:10)"
+    ],
+    "clicks": {
+      "browserOpenClicks": 1,
+      "codexSelectionClicks": 0,
+      "sendClicks": 0,
+      "tabAwayClicks": 0,
+      "tabReturnClicks": 0,
+      "helperResubmissions": 0,
+      "directRpcCalls": 0
+    },
+    "rawResultSHA256": "1f409d8c24ae3ea9763052a331ae71839ddf83799fd2036047281fb4f3f029eb",
+    "screenshot": "c4-first-ui-failure.png",
+    "screenshotSHA256": "fcb6ace7428b97415a5fdb85ddbc2ac341c0d40a94b9204bac763f54cc3e7499",
+    "screenshotBytes": 63044,
+    "provenance": "c4-first-ui-failure-provenance.json",
+    "failureEvidence": true,
+    "nativeIPhone": false,
+    "BrowserStreamQualified": false,
+    "ChatQualified": false,
+    "PGCorrelationPending": true,
+    "rootOriginalArtifactMismatches": 0,
+    "webFix": "별도 Client PR 소유입니다."
+  }
+}
