@@ -89,9 +89,9 @@ export function createOpsUiPresentation(callbacks: {
       const cell = node('td'), button = node('button', '상세') as HTMLButtonElement
       button.type = 'button'; button.addEventListener('click', () => { onDetail(unit.id) }); cell.append(button); row.append(cell); byId('unit-rows').append(row)
       const card = node('details', undefined, 'unit-card'), summary = node('summary', unit.alias ?? unit.id)
-      summary.append(node('span', unit.desiredMode, 'badge')); card.append(summary, unitFacts(unit), actions(unit))
+      summary.append(node('span', unit.desiredMode, 'badge'))
       const more = node('button', 'Session·Tab·mount 상세') as HTMLButtonElement
-      more.type = 'button'; more.addEventListener('click', () => { onDetail(unit.id) }); card.append(more); byId('unit-cards').append(card)
+      more.type = 'button'; more.addEventListener('click', () => { onDetail(unit.id) }); card.append(summary, more, unitFacts(unit), actions(unit)); byId('unit-cards').append(card)
     }
   }
   return { byId, text, node, time, status, unitFacts, actions, renderUnits }
