@@ -138,7 +138,7 @@ if [ "$operation" = bootstrap ]; then
     shared_root="$backing_root/shared"
     shared_dataset_root="$shared_root/$dataset"
     check_existing "$shared_root" 0 0 755
-    check_existing "$shared_dataset_root" 0 1000 2770
+    check_existing "$shared_dataset_root" 0 1000 770
     check_existing /exports/x 1000 1000 755
     for path in /exports/x/agents /exports/x/dev /exports/x/test-homes; do
         check_existing "$path" 1000 1000 755
@@ -153,7 +153,7 @@ if [ "$operation" = bootstrap ]; then
     bootstrap_legacy
     ensure_directory "$shared_root" 0 0 755 "$backing_root" 755
     # Only initialize the dataset root; never traverse its mutable collaboration data.
-    ensure_directory "$shared_dataset_root" 0 1000 2770 "$shared_root" 755
+    ensure_directory "$shared_dataset_root" 0 1000 770 "$shared_root" 755
 else
     directory_record "$managed_root" 0 0 755 "$backing_device" >/dev/null
     directory_record "$dataset_root" 0 0 755 "$backing_device" >/dev/null

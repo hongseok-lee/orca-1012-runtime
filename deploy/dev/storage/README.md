@@ -55,7 +55,7 @@ Root의 [확정 계약](../../../docs/plans/orca-1012-shared-rw-scope.md)에 따
 
 ### 별도 공용 namespace의 서버 source 준비
 
-공용 서버 source는 기존 보호 범위와 별개인 `/exports/shared`를 `0:0/0755`, `/exports/shared/<dataset>`을 `0:1000/2770`으로 초기화합니다. UID/GID 1000 Agent 여러 개의 group RW와 setgid 협업을 위한 설정이며 root 소유 부모·dataset 자체의 identity는 보존합니다. 기존 `bootstrap DATASET`만 non-symlink/realpath/device/owner/mode를 사전 검사하고, root-only exclusive mkdir에 성공한 새 경로만 최종 권한으로 공개합니다. 기존 경로는 chmod/chown/삭제/rename/repair하지 않으며 mutable dataset 안의 docs/handoffs/artifacts를 순회·생성·수리하지 않습니다. 새 생성이 있을 때만 기존 filesystem sync를 사용합니다.
+공용 서버 source는 기존 보호 범위와 별개인 `/exports/shared`를 `0:0/0755`, `/exports/shared/<dataset>`을 `0:1000/0770`으로 초기화합니다. UID/GID 1000 Agent 여러 개의 group RW 협업을 위한 설정이며 root 소유 부모·dataset 자체의 identity는 보존합니다. 기존 `bootstrap DATASET`만 non-symlink/realpath/device/owner/mode를 사전 검사하고, root-only exclusive mkdir에 성공한 새 경로만 최종 권한으로 공개합니다. 기존 경로는 chmod/chown/삭제/rename/repair하지 않으며 mutable dataset 안의 docs/handoffs/artifacts를 순회·생성·수리하지 않습니다. 새 생성이 있을 때만 기존 filesystem sync를 사용합니다.
 
 Exports는 기존 `/x`와 `/exports/runtime-domains` 두 줄을 유지하고 정확한 `/exports/shared/${DATASET} (rw,root_squash,insecure)`만 추가합니다. Backing root나 shared 부모 전체는 export하지 않습니다. Renderer는 검증된 DATASET을 exports literal block에 먼저 치환한 최종 bytes의 SHA256을 annotation에 넣고 기존 helper immutable ConfigMap/base64/full hash 전달을 유지합니다. Leaf ensure/inspect의 입력·행동·raw schema는 변경하지 않습니다. Bootstrap createdPaths에는 실제 새 공용 부모/dataset이 추가될 수 있지만 별도 writer grant/proof/pin은 없습니다.
 
