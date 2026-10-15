@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "kind": "post-nfs-rollout-original-expo-browser-capture",
+  "capturedAt": "2026-10-15T14:06:37.253Z",
+  "jobStartedAt": "2026-10-15T14:06:26.851Z",
+  "jobFinishedAt": "2026-10-15T14:06:37.467Z",
+  "jobExit": 0,
+  "png": {
+    "sha256": "764c87f0d34f0145aa699fa11f14bdf48457e1ac035f2298ded27bc44de8e9d0",
+    "bytes": 146837,
+    "width": 390,
+    "height": 844,
+    "originalUnedited": true
+  },
+  "rootVisualAcceptance": true,
+  "sameBytesAsHistorical1125Png": true,
+  "byteEqualityMeaning": "The current 14:06 job captured a new original PNG. Its bytes equal the historical accepted PNG; the older artifact was not copied as the current result. Current job/time/viewer/frame provenance is separate.",
+  "freshnessBasis": "Root-accepted Client source/job provenance and this new viewer/context/page first visible decoded frame, not image-hash uniqueness.",
+  "firstVisibleDecodedFrameAt": "2026-10-15T14:06:34.706Z",
+  "visibleDecodedFrameCount": 1,
+  "visibleScope": {
+    "sameExistingOpsDetail": true,
+    "koreanTextVisible": true,
+    "loadingVisible": false,
+    "errorVisible": false,
+    "sessionTabMountBelowFoldVisible": false
+  },
+  "notEstablished": {
+    "nativeDevice": true,
+    "currentPgInvariance": true,
+    "networkHttpStatus": true,
+    "allSessionTabMountSections": true,
+    "allHandlesOrHa": true
+  },
+  "historicalPgCorrelationOnly": true,
+  "newPgQuery": false,
+  "sourcePin": "b19f82b424100b9e5a74f99fe5d1dac9b26bce27",
+  "selectedSourceSha256": "4f70c4b50c6c071edfa51cd57b413277dac8380459087fa0892c547a6495baab",
+  "rawManifestSha256": "3a4eff2106cf846837b4435909c0b92f2adaf395886ff99e658dfe23fbae933e",
+  "wholeLiveCheckoutShaProven": false,
+  "sourceHelperSha256": "890597e06155d42e3d886c9e77f92fbcca7f5e62a98a4e595eeb099b05fdf690",
+  "launcherSha256": "148d0056d28dac9718e2aa6bcfb34f6f9bd899d45e7a0a1302928b7cb4209999",
+  "inputSha256": "8d0d63122938ce633e4d5dea0506b57905848bd90b47cfba012b2c8ceb92d8ff",
+  "acceptedPrivateClientHandoffSha256": "8559be0f556e7542b209f169150753e7be7dcabb620210ed36eee06df8e70aec",
+  "acceptedCatalogHandoffSha256": "98ac6fe5f9d530c1bf031e3ca2687755aa7549640e96a1d49f729212d0ac9001",
+  "captureCounts": {
+    "coordinate": 0,
+    "expanded": 0,
+    "detail": 1
+  },
+  "phoneClicks": 1,
+  "summaryDetailClicksDragsReloadCommands": 0,
+  "cleanup": {
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true,
+    "childExit": 0
+  },
+  "pngOriginalFixtureUuidAndLoopbackPreserved": true,
+  "privateAuthAndOperationalUidsPublishedInMetadata": false,
+  "captureCallsByInfra": 0
+}
