@@ -1,0 +1,222 @@
+{
+  "sourcePin": "61b1d27b22047cc2c71adbe3c951ebaecd2d7df5",
+  "runtimeInputs": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+      "bytes": 3803
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+      "bytes": 5150
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/execution-target-records.ts",
+      "sha256": "5bc2d2b2ada5cf72f4edcb104034cb5923de9e2d6e3df6f5e98324c0a69d712c",
+      "bytes": 9908
+    }
+  ],
+  "originalFixtureSHA256": "f35df38704f590e1f8e91789abb31e0291b394b565116f87bfd3a3a4772bb5a7",
+  "originalCallbackBodySHA256": "8dd4926f8d9d9eabac871fba78beb6b98a3680d6f325601f709b15c3f93c1ced",
+  "generatedWrapperSHA256": "5253f8f25e0dbde01252048dd17ec00c758fdd6d77277910d0281401cba9822f",
+  "sql20": {
+    "src/main/durable-runtime/db/migrations/001-catalog.sql": {
+      "bytes": 2801,
+      "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "blob": "4136743b1d83cb2229c86c52f088a74cd69842da"
+    },
+    "src/main/durable-runtime/db/migrations/002-execution-storage.sql": {
+      "bytes": 10866,
+      "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "blob": "ce2bf1d2518a835aee76c257bcc33fa3783dc664"
+    },
+    "src/main/durable-runtime/db/migrations/003-operations-resources.sql": {
+      "bytes": 4205,
+      "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "blob": "7a02b3c7e0e4869f14cc2ff9ae579ff7037402e4"
+    },
+    "src/main/durable-runtime/db/migrations/004-input-context.sql": {
+      "bytes": 7731,
+      "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "blob": "0c0f893a2e766e5e8b025c92b2a47f2cf3535972"
+    },
+    "src/main/durable-runtime/db/migrations/005-events-replay.sql": {
+      "bytes": 7858,
+      "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "blob": "6b93e0d43e7b0fb3d17cc9986acf7b15143835d0"
+    },
+    "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql": {
+      "bytes": 2756,
+      "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "blob": "92bd8cad64d5d5acd9b2406399073f9c902d37e6"
+    },
+    "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql": {
+      "bytes": 4404,
+      "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "blob": "a6003a49ec14deeab2e798acb9c78240e085d584"
+    },
+    "src/main/durable-runtime/db/migrations/008-attachment-store.sql": {
+      "bytes": 6084,
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "blob": "5991c99117a8207b50a57fa2771e1b87d3eae205"
+    },
+    "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql": {
+      "bytes": 2175,
+      "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "blob": "e0dcc43c473770cd1134288e26e0f8bc7ebd3386"
+    },
+    "src/main/durable-runtime/db/migrations/010-runtime-command-ledger.sql": {
+      "bytes": 4849,
+      "sha256": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "blob": "bed0a1fd0c52ed5f65c74b7f68e8222410f3c07d"
+    },
+    "src/main/durable-runtime/db/migrations/011-runtime-event-producers.sql": {
+      "bytes": 5037,
+      "sha256": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "blob": "759e1270e22a319c2dd1afbb1f1df40d2a2be97b"
+    },
+    "src/main/durable-runtime/db/migrations/012-input-merge-boundary.sql": {
+      "bytes": 1244,
+      "sha256": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "blob": "3933af0d38d7ecddc563537a9c71b26ab6ea21a2"
+    },
+    "src/main/durable-runtime/db/migrations/013-context-deliveries.sql": {
+      "bytes": 1910,
+      "sha256": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "blob": "90d49e9c074c34c589a663bd490c0e12eb857fc4"
+    },
+    "src/main/durable-runtime/db/migrations/014-durable-catalog.sql": {
+      "bytes": 9419,
+      "sha256": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "blob": "ab98cd7a258fe8a3ffc5312d015184bc5a091426"
+    },
+    "src/main/durable-runtime/db/migrations/015-failure-evidence.sql": {
+      "bytes": 8211,
+      "sha256": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "blob": "ee305a5395ccba5a1e87d65897ffccf207e61cc9"
+    },
+    "src/main/durable-runtime/db/migrations/016-observation-episodes.sql": {
+      "bytes": 7243,
+      "sha256": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+      "blob": "46ded89c7e507e4f7e3bca592e93f131628f700e"
+    },
+    "src/main/durable-runtime/db/migrations/017-structured-session-wire.sql": {
+      "bytes": 1852,
+      "sha256": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+      "blob": "975c657c262e4b974173bbbefe72cbb0e08eb440"
+    },
+    "src/main/durable-runtime/db/migrations/018-terminal-input-floor.sql": {
+      "bytes": 2345,
+      "sha256": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+      "blob": "e10c162dfdd4f1275cb46bd1559d81702f66472d"
+    },
+    "src/main/durable-runtime/db/migrations/019-durable-resource-allocation.sql": {
+      "bytes": 11743,
+      "sha256": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+      "blob": "63f497f142d83825cc43526fed23614d2a749556"
+    },
+    "src/main/durable-runtime/db/migrations/020-execution-target-records.sql": {
+      "bytes": 2143,
+      "sha256": "85fc2a7494dc1066c2e168948560a3114d043c0dbcdc6ab5d1177adf706565b1",
+      "blob": "71e6da6ec5c386fa322c7c0e269df386d15cda6a"
+    }
+  },
+  "typeInputs": [
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+      "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+      "bytes": 5248
+    },
+    {
+      "path": "src/main/durable-runtime/db/execution-target-record-rows.ts",
+      "sha256": "45b8353b4177d8e35d0b327cd775f250e0a63f334cc0176f37063f6818ca2fdb",
+      "bytes": 1035
+    },
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "712fe68a065eb2b21bfaa5523c2119e559eb5a03fe8a77037457bbf673dd2866",
+      "bytes": 3803
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/command-types.ts",
+      "sha256": "3081e24d2502e153708fca4b45b78eba1031b86351a43b1ef36732a2fc12b8fe",
+      "bytes": 2818
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "bytes": 9074
+    },
+    {
+      "path": "src/main/durable-runtime/db/observation-rows.ts",
+      "sha256": "0873b46a2213790944fbc8ca7ea23926fad40656f4f9db67cc47f783a1933c13",
+      "bytes": 1439
+    },
+    {
+      "path": "src/main/durable-runtime/resources/evidence/types.ts",
+      "sha256": "89f9830c495218e5c8fc9b33b77d5931914d45d5db736847784f32b684216349",
+      "bytes": 5854
+    },
+    {
+      "path": "src/main/durable-runtime/db/structured-session-rows.ts",
+      "sha256": "15bd86d1c65d6584228bdabdbd0aa90b4da64bbb95553dab49fb8ece5d351329",
+      "bytes": 1022
+    },
+    {
+      "path": "src/main/durable-runtime/db/terminal-input-rows.ts",
+      "sha256": "167d108ad093ce69d27257c60245b2140d515d997c23aba4656e9fe6bf67a1d4",
+      "bytes": 880
+    },
+    {
+      "path": "src/main/durable-runtime/db/failure-evidence-rows.ts",
+      "sha256": "2687026d2d25b0b7d30be3b1089bf213931e40645b17133578b96610637d5c11",
+      "bytes": 2374
+    },
+    {
+      "path": "src/main/durable-runtime/db/resource-allocation-rows.ts",
+      "sha256": "1d4f77efb305f7b2504f1f5eb33c13817300520dfac7ad548950a7d796044948",
+      "bytes": 3101
+    },
+    {
+      "path": "src/main/durable-runtime/db/rows.ts",
+      "sha256": "0288d809820312eeabb0ca995ef5a356d6a39e33d170e47741f4140910836263",
+      "bytes": 7855
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/types.ts",
+      "sha256": "383e7f09f7d70e097c81c0f69155745274ca8ff76c6765419376ff4c1c7399b3",
+      "bytes": 3895
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+      "bytes": 5150
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/execution-target-records.ts",
+      "sha256": "5bc2d2b2ada5cf72f4edcb104034cb5923de9e2d6e3df6f5e98324c0a69d712c",
+      "bytes": 9908
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "ISOLATED_POSTGRESQL_RESULT_REPORT_SCREENSHOT",
+  "sourcePin": "61b1d27b22047cc2c71adbe3c951ebaecd2d7df5",
+  "rawTAPSHA256": "c0da12dd9726598bfed9133b5a9560486a4dc5b4942137ec5e2e7721f19e5a2b",
+  "startedAt": "2026-10-15T04:24:03.074Z",
+  "capturedAt": "2026-10-15T04:24:05.764Z",
+  "pid": 5459,
+  "viewport": {
+    "width": 1200,
+    "height": 1100
+  },
+  "deviceScaleFactor": 1,
+  "productUICaptured": false,
+  "nativeIPhone": false,
+  "liveAppOpened": false,
+  "rawCredentialOrOperatorPathIncluded": false,
+  "screenshotSHA256": "0ff519c52666ddc879e7a526ae1f52bfa1aa42e75acd709ef8effccf3d07c7f9",
+  "screenshotBytes": 169873,
+  "reportHTMLSHA256": "fd521c7aa127ba994e04e689f0c992e382b207ea7bf621f6d348e1161f6f07ba"
+}
