@@ -1,0 +1,53 @@
+{
+  "sourcePin": "3b0ca608cffb2e9aa488093125ad462e523df25d",
+  "type": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "blob": "181384ff0bf130ae6ad1ff64e2d9043f08d76d18"
+    },
+    {
+      "path": "src/main/durable-runtime/db/transaction-settlement.test.mts",
+      "bytes": 15226,
+      "sha256": "baffb607cac99ab9b8e06f5f56f71a93da9b830595f8922f0589095b3627d5cf",
+      "blob": "6e7c2205e4043766ae71423e44e82837599b4c34"
+    }
+  ],
+  "externalTypePathsCount": 210,
+  "syntheticRuntime": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e"
+    }
+  ],
+  "wrapper": {
+    "sourceSha256": "baffb607cac99ab9b8e06f5f56f71a93da9b830595f8922f0589095b3627d5cf",
+    "originalBodySha256": "7094e82535639b75086928270fd23ec35bb46c9c1f1cd45cd6997d045a22a43c",
+    "wrapperSha256": "8258757fe048e2277b7bac6cdb50bbae16a7269ff0af555b99ccf1fe50acb76c",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "runtimeExternal": [
+    "pg"
+  ],
+  "syntheticMetafileSHA256": "bfbec468e8ba359df4646764e6101caac94af4a1389421a85d93114b04a04c48",
+  "syntheticBundleSHA256": "65db62d5cb294710e1e12b768303e12796a3a7b832f570707d6a142707fdd793",
+  "actualPGHelperInputs": [
+    {
+      "path": "source/src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e"
+    },
+    {
+      "path": "actual-pg-ack-helper.mjs",
+      "bytes": 4902,
+      "sha256": "44ebcec114ed1d30206e8626f89d206648b18ba9b632351012cac80fb92da1d5"
+    }
+  ],
+  "actualPGMetafileSHA256": "04fc967932058a0bc2afe55039b53ba20bffb68b1d11d55a61578b76afc946a6",
+  "actualPGBundleSHA256": "84d376b731f2390196c5c55cba2c7b50f6a2850b1722d28feb1ffc0b270247d1",
+  "mismatches": []
+}

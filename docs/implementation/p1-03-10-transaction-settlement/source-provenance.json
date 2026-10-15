@@ -1,0 +1,36 @@
+{
+  "base": "083a6455cc8c4a08e1eb64fe7460ad15a6a81589",
+  "validatedSourcePin": "3b0ca608cffb2e9aa488093125ad462e523df25d",
+  "reviewedSourcePin": "70cf366fadc92c4de4a13899a7dc059e81d400d5",
+  "earlyProductPin": "d2c72d4ba6a91ef7e85a6e4d53239758a511d734",
+  "ownedEntries": [
+    "100644 blob 181384ff0bf130ae6ad1ff64e2d9043f08d76d18\tsrc/main/durable-runtime/db/connection.ts",
+    "100644 blob 6e7c2205e4043766ae71423e44e82837599b4c34\tsrc/main/durable-runtime/db/transaction-settlement.test.mts"
+  ],
+  "ownedFiles": {
+    "src/main/durable-runtime/db/connection.ts": {
+      "bytes": 6387,
+      "lines": 197,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e"
+    },
+    "src/main/durable-runtime/db/transaction-settlement.test.mts": {
+      "bytes": 15226,
+      "lines": 234,
+      "sha256": "baffb607cac99ab9b8e06f5f56f71a93da9b830595f8922f0589095b3627d5cf"
+    }
+  },
+  "sourceDiffSHA256": "99eb6ee6ed2b0f0c4f984653a95bbcc8d9f8c57210bb82cc561686cb98049395",
+  "commandAckCorrectionSHA256": "9b88bcb2e98b54465d315df112798b8111a6e8ead91d3dc05a73dca2a2db0856",
+  "firstErrorCaptureSupplementSHA256": "c7057a0541fd3c5c7f7f974fdbc1bb74114b3b4891d952c25ec0dcc7662d65be",
+  "existingPoolTransactionQueryLockErrorPrefixUnchanged": true,
+  "singleTransactionEngine": true,
+  "legacyTwoArgumentWrapper": true,
+  "intentionalLegacyWrapperDeltas": {
+    "cleanupException": "COMMIT ACK then cleanup failure rejects sanitized DB_FAILURE; original DB/body error preserved if cleanup also fails",
+    "commitResponseRollback": "TX_NOT_COMMITTED replaces prior incorrect successful return"
+  },
+  "rebaseCount": 1,
+  "source2UnchangedAfterVerification": true,
+  "contractPrivateSHA256": "8d94fcac7491bbe5255fe23de93ab6bc10526fe37d5765df08bf5a0c7d8066ad",
+  "contractPublicSHA256": "b94f59999b2ae3bbebeff8201d91aac7fcfbeb5bc6dd34322c20e34dbe1a06a9"
+}
