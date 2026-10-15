@@ -2,6 +2,7 @@ import { OrcaRuntimeWithGetRuntimeId } from './orca-runtime-get-runtime-id'
 import type { RuntimeDegradation, RuntimeStatus } from '../../shared/runtime-types'
 import {
   runtimeBrowserCommandsFactoryIsHeadless,
+  runtimeBrowserCommandsFactorySupportsScreencast,
   runtimeBrowserUnavailableCause
 } from './runtime-browser-commands-factory'
 import type { RuntimeCapability } from '../../shared/protocol-version'
@@ -48,14 +49,15 @@ export class OrcaRuntimeWithGetStatus extends OrcaRuntimeWithGetRuntimeId {
   getStatus(): RuntimeStatus {
     // Why: browser panes need a backend that can create and stream a page. A
     // desktop renderer provides one via <webview>; a headless serve provides one
-    // via the offscreen backend. Either way the same browser.screencast.v1 path
-    // works, so advertise it when either is present. browser.headless.v1
+    // via the offscreen backend. An external provider can explicitly support the
+    // same browser.screencast.v1 path while healthy. browser.headless.v1
     // additionally tells clients this host owns browser pages with no renderer,
     // so they must not fall back to a local desktop browser tab.
     const statusHost = this.asRuntimeStatusHost()
     const hasRenderer = Boolean(statusHost.getAvailableAuthoritativeWindow())
     const hasOffscreen = !hasRenderer && Boolean(this.offscreenBrowserBackend)
     const hasHeadlessCommands = runtimeBrowserCommandsFactoryIsHeadless()
+    const hasScreencastCommands = runtimeBrowserCommandsFactorySupportsScreencast()
     const canBrowse = hasRenderer || hasOffscreen
     // This field reports current Windows process-identity proof. Structured RPC
     // support itself stays advertised; agentSession.createSupport owns current eligibility.
@@ -63,7 +65,7 @@ export class OrcaRuntimeWithGetStatus extends OrcaRuntimeWithGetRuntimeId {
       process.platform === 'win32' && isWindowsProcessStartTimeAvailable()
     const capabilities: RuntimeCapability[] = RUNTIME_CAPABILITIES.filter(
       (capability) =>
-        (capability !== 'browser.screencast.v1' || canBrowse) &&
+        (capability !== 'browser.screencast.v1' || canBrowse || hasScreencastCommands) &&
         // Why: the nested-runtime E2E needs a real legacy transport without maintaining an old binary fixture.
         (process.env.ORCA_E2E_DISABLE_RUNTIME_SHARED_CONTROL !== '1' ||
           capability !== REMOTE_RUNTIME_SHARED_CONTROL_CAPABILITY) &&

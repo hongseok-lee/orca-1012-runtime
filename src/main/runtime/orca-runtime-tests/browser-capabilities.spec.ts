@@ -63,6 +63,49 @@ describe('OrcaRuntimeService', () => {
       }
     ])
   })
+  it('advertises explicit screencast only while the installed provider remains healthy', () => {
+    let available = true
+    let throwHealth = false
+    const runtime = createRuntime()
+    try {
+      setRuntimeBrowserCommandsFactory((host) => new RuntimeBrowserCommands(host), {
+        headless: true,
+        screencast: true,
+        isAvailable: () => {
+          if (throwHealth) {
+            throw new Error('Synthetic browser health failure')
+          }
+          return available
+        }
+      })
+      const healthy = runtime.getStatus()
+      expect(healthy.capabilities).toContain('browser.screencast.v1')
+      expect(healthy.capabilities).not.toContain('browser.certificate-trust.v1')
+
+      available = false
+      const unavailable = runtime.getStatus()
+      expect(unavailable.capabilities).not.toContain('browser.screencast.v1')
+      expect(unavailable.capabilities).not.toContain('browser.certificate-trust.v1')
+
+      available = true
+      throwHealth = true
+      const failedHealth = runtime.getStatus()
+      expect(failedHealth.capabilities).not.toContain('browser.screencast.v1')
+      expect(failedHealth.capabilities).not.toContain('browser.certificate-trust.v1')
+
+      setRuntimeBrowserCommandsFactory(null, { headless: true, screencast: true })
+      expect(runtime.getStatus().capabilities).not.toContain('browser.screencast.v1')
+      setRuntimeBrowserCommandsFactory((host) => new RuntimeBrowserCommands(host), {
+        headless: true
+      })
+      const reset = runtime.getStatus()
+      expect(reset.capabilities).not.toContain('browser.screencast.v1')
+      expect(reset.capabilities).not.toContain('browser.certificate-trust.v1')
+    } finally {
+      setRuntimeBrowserCommandsFactory((host) => new RuntimeBrowserCommands(host))
+    }
+  })
+
   it('surfaces live offscreen load failures in headless browser snapshots', () => {
     const runtime = createRuntime()
     runtime.setOffscreenBrowserBackend({ createTab: vi.fn(), closeTab: vi.fn() })

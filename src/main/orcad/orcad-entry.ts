@@ -175,6 +175,7 @@ async function startOrcadRuntime(
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
       headless: browserProvider !== null,
+      screencast: browserProvider?.kind === 'chromium',
       ...(browserProvider ? { isAvailable: () => browserProvider.isAvailable() } : {})
     }
   )
