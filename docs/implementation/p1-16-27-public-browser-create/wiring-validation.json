@@ -1,0 +1,166 @@
+{
+  "validatedProductPin": "9d2da25480ad8591cef0c39c4bea02ee48aa03ec",
+  "moduleScope": "기존 Browser declaration/dispatcher/PG reservation with synthetic Browser receiver",
+  "authenticationEvidence": "합성 transport context이며 실제 pairing·기기 인증 증거가 아닙니다.",
+  "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/71#issuecomment-6177873142",
+  "firstWiring": {
+    "ownedLint": {
+      "files": 4,
+      "exit": 0,
+      "sha256": "d844f0b0ff003f49f2710170d061d74e890c555255fbd0ba8b58393e1d190217"
+    },
+    "value": {
+      "productCallbacks": 1,
+      "exit": 0,
+      "sha256": "c5fa96b9618caa0c92d4d30b49e3101857ceb58fa19a49533b705fef33b06e0a"
+    },
+    "preparationFailure": {
+      "phase": "parent DB identity connection; PG callback 미진입",
+      "message": "SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string",
+      "utc": "2026-10-14T20:23:32.908Z"
+    }
+  },
+  "controlCorrection": {
+    "rootAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/71#issuecomment-6177767762",
+    "diffSha256": "a7e8705799d7e4e18c53c6474e865531fa9651d0dd4ef197e6e948e2d802116b",
+    "statement": "process.env.PGPASSFILE=env.PGPASSFILE;",
+    "credentialOrConfigurationFilesChanged": false
+  },
+  "pgContinuation": {
+    "startedAt": "2026-10-14T20:32:27.327Z",
+    "endedAt": "2026-10-14T20:32:30.576Z",
+    "supervisorPid": 29470,
+    "pgPid": 29481,
+    "exit": 0,
+    "productCallbacks": 1,
+    "parentHarnessProductCallbacks": 0,
+    "TAPSha256": "aacd7d32810fc6ea66ac4ed7857f293df1379ea9d706ba08b09a252c11ea1063",
+    "identityBefore": {
+      "database": "orca_public_browser_20261014",
+      "oid": "86613",
+      "system_identifier": "7696101282789175327",
+      "dataset": "orca-1012-dev-v1",
+      "backend_pid": 186970,
+      "utc": "2026-10-14T20:32:27.785Z"
+    },
+    "identityAfter": {
+      "database": "orca_public_browser_20261014",
+      "oid": "86613",
+      "system_identifier": "7696101282789175327",
+      "dataset": "orca-1012-dev-v1",
+      "backend_pid": 186981,
+      "utc": "2026-10-14T20:32:30.556Z"
+    },
+    "ledger19ChecksumAppliedAtUnchanged": true,
+    "originalRowTables": 15,
+    "originalRowsPreserved": 27,
+    "rows": {
+      "agents": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "workspaces": {
+        "before": 1,
+        "after": 2,
+        "preserved": true
+      },
+      "sessions": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "runtime_units": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "operations": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "attempts": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "execution_grants": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "storage_bindings": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "storage_write_grants": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "storage_mounts": {
+        "before": 0,
+        "after": 0,
+        "preserved": true
+      },
+      "catalog_project_groups": {
+        "before": 1,
+        "after": 2,
+        "preserved": true
+      },
+      "catalog_workspace_metadata": {
+        "before": 1,
+        "after": 2,
+        "preserved": true
+      },
+      "tabs": {
+        "before": 6,
+        "after": 8,
+        "preserved": true
+      },
+      "catalog_tab_metadata": {
+        "before": 6,
+        "after": 8,
+        "preserved": true
+      },
+      "rpc_receipts": {
+        "before": 12,
+        "after": 14,
+        "preserved": true
+      }
+    },
+    "knownChildrenEnded": true,
+    "heavyOccupied": false
+  },
+  "actualInputs": {
+    "union": 1612,
+    "value": 337,
+    "pg": 1612,
+    "fixedGitMismatches": 0,
+    "metafilesSavedBeforeGuard": true,
+    "PGbundleSha256": "ad56f4c385a45dda76577e485dd8a0cd8373d106a86aaa7ca84a52f7de0f53e3",
+    "PGmetafileSha256": "adf0bf0b01b7c177a5d0b149816dda0eb0c268b496f5fe031a4fe0a11245192e",
+    "PGwrapperSha256": "d069b90ea1de346c31f3328cc5a372c1ed30cb87994f88df001b09d967ce6778",
+    "manifestSha256": "b404d7b17e76eebaa805be1729c22beb66f866a8595ef1939676e0d6c8c3ffcb",
+    "wrappersPreserveCallbackBody": true
+  },
+  "repetitions": {
+    "successfulLintValue": 0,
+    "module": 0,
+    "schema": 0,
+    "type": 0,
+    "bundlePreparation": 0,
+    "install": 0,
+    "Chrome": 0,
+    "live": 0
+  },
+  "limitations": [
+    "실제 Chrome·iPhone·native·navigation 인증·HA 합격이 아닙니다.",
+    "caller별 PG navigation/구독·Ops 자동 인증·물리 cleanup/restore는 별도 연결입니다.",
+    "원 module schema-ready에는 측정 system 값이 없었으며 이번 별도 identity capture와 구분합니다.",
+    "known process 종료 관측은 supervisor 및 직접 자식 범위입니다."
+  ],
+  "usageLimitCreditsModelStreamInterruption": "이번 turn에서 미관측입니다. 해당 원 오류와 시각은 없습니다."
+}
