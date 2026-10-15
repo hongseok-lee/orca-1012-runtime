@@ -59,7 +59,7 @@ export function createKubernetesPodAuthenticator(caller: KubernetesPodAuthConfig
       checkDeadline()
       // Promise conversion preserves synchronous supplier errors without leaking the original cause.
       let supply: Promise<string>
-      try { supply = Promise.resolve(readReviewer(controller.signal)) }
+      try { supply = Promise.resolve(readReviewer.call(caller, controller.signal)) }
       catch { throw new KubernetesPodAuthError('REVIEWER_CREDENTIAL_FAILED') }
       const reviewer = await awaitPodAuthValue(supply, controller.signal)
       checkDeadline()
