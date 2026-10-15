@@ -101,7 +101,7 @@ test('authenticated collector follows exact GET/exec/GET with one budget and own
       { play(s) { s.frame(1, 'text', false) }, code: 'EXEC_PROTOCOL' },
       { play(s, o) { s.frame(3, '{"status":"Success"}'); s.frame(3, '{"status":"Success"}'); s.frame(1, o); s.end() }, code: 'EXEC_FAILED' },
       { play(s) { s.frame(2, 'synthetic-private-stderr') }, code: 'EXEC_FAILED' },
-      { play(s, o) { finish(s, o + 'unexpected') }, code: 'OUTPUT_INVALID' },
+      { play(s, o) { finish(s, `${o}unexpected`) }, code: 'OUTPUT_INVALID' },
       { play(s, o) { s.frame(1, o); s.frame(3, '{"status":"Success"}'); s.end(1006) }, code: 'EXEC_PROTOCOL' },
     ]
     for (const item of cases) {

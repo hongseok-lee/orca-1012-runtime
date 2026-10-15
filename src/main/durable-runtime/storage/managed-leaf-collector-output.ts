@@ -20,7 +20,7 @@ export function projectManagedLeafOutput(stdout: string, config: ManagedLeafColl
     const after = '\nMOUNTINFO_AFTER\n', suffix = '\nORCA_MANAGED_LEAF_END\n'
     if (!stdout.startsWith(prefix) || !stdout.endsWith(suffix)) { throw new ManagedLeafCollectorError('OUTPUT_INVALID') }
     const middleIndex = stdout.indexOf(middle, prefix.length), afterIndex = stdout.indexOf(after, middleIndex + middle.length)
-    if (middleIndex < 0 || afterIndex < 0) { throw new ManagedLeafCollectorError('OUTPUT_INVALID') }
+    if (middleIndex === -1 || afterIndex === -1) { throw new ManagedLeafCollectorError('OUTPUT_INVALID') }
     const beforeInfo = stdout.slice(prefix.length, middleIndex)
     const afterInfo = stdout.slice(afterIndex + after.length, -suffix.length)
     if (beforeInfo !== afterInfo) { throw new ManagedLeafCollectorError('MOUNT_CHANGED') }
