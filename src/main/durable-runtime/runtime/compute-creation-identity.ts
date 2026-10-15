@@ -66,10 +66,8 @@ export function createComputeCreationIdentityClient(config: ComputeAuditTranspor
       if (beforeAwait) {
         return beforeAwait
       }
-      // Do not restart the observer budget after synchronous capture/body construction.
-      const page = await readComputeAuditPage({
-        ...transport, timeoutMs: Math.max(1, Math.ceil(deadline - performance.now()))
-      }, body, signal)
+      // Pass the original absolute deadline without rounding/restarting its budget.
+      const page = await readComputeAuditPage(transport, body, signal, deadline)
       const afterAwait = expired()
       if (afterAwait) {
         return afterAwait

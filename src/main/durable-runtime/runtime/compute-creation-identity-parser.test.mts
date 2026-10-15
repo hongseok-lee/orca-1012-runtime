@@ -149,6 +149,17 @@ test('creation empty observation, bounded pages and parser errors remain distinc
   assert.deepEqual(observe('invalid'), { ok: false, error: { code: 'INVALID_RESPONSE' } })
 })
 
+test('an intermediate row cannot borrow last-only response omission from a valid pair', () => {
+  const entries = creationEntries(), intermediate = structuredClone(entries[1])
+  intermediate.insertId = 'creation-intermediate'
+  intermediate.timestamp = '2026-10-13T10:41:25.000000001Z'
+  delete intermediate.operation.last
+  const result = observe([entries[0], intermediate, entries[1]])
+  assert.deepEqual(result, {
+    ok: true, observation: { status: 'UNCONFIRMED', reason: 'IDENTITY_MISMATCH' }
+  })
+})
+
 test('one deletion compatibility vector keeps its existing observation/digest when shape metadata is added', () => {
   const projected = projectComputeAuditPage({ entries: deletionEntries() })
   assert.ok(projected.ok)

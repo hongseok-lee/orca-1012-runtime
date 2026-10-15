@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import { createComputeCreationIdentityClient } from './compute-creation-identity.ts'
 import { creationEntries, creationInput, creationSentinel } from './compute-creation-identity-fixtures.mts'
 import { auditWire, closedStreams } from './compute-deletion-audit-transport-fixtures.mts'
+import { readComputeAuditPage, snapshotAuditTransport } from './compute-deletion-audit-transport.ts'
 
 test('creation uses one fixed POST/filter and captures input accessors, token and HTTPS receivers before await', async () => {
   const wire = auditWire({ json: { entries: creationEntries() } })
@@ -102,4 +103,32 @@ test('creation rejects invalid captured input before suppliers and does not foll
   })
   assert.equal(tokenCalls, 1); assert.equal(wire.requests.length, 1)
   await closedStreams()
+})
+
+test('shared Audit transport keeps an earlier absolute deadline and caller-abort precedence', async () => {
+  const expiredWire = auditWire(), aborted = new AbortController()
+  let tokenCalls = 0
+  const expiredTransport = snapshotAuditTransport({ timeoutMs: 500, https: expiredWire.holder,
+    tokenProvider: { async getAccessToken() { tokenCalls++; return 'synthetic-token' } } })
+  assert.ok(expiredTransport)
+  assert.deepEqual(await readComputeAuditPage(expiredTransport, '{}', undefined, performance.now() - 1), {
+    ok: false, error: { code: 'TIMEOUT' }
+  })
+  aborted.abort(creationSentinel)
+  assert.deepEqual(await readComputeAuditPage(expiredTransport, '{}', aborted.signal, performance.now() - 1), {
+    ok: false, error: { code: 'ABORTED' }
+  })
+  assert.equal(tokenCalls, 0); assert.equal(expiredWire.requests.length, 0)
+  const lateWire = auditWire({ json: { entries: creationEntries() } })
+  const lateTransport = snapshotAuditTransport({ timeoutMs: 500, https: lateWire.holder,
+    tokenProvider: { async getAccessToken() {
+      const until = performance.now() + 20
+      while (performance.now() < until) { /* bounded synchronous supplier */ }
+      return 'synthetic-late-token'
+    } } })
+  assert.ok(lateTransport)
+  assert.deepEqual(await readComputeAuditPage(lateTransport, '{}', undefined, performance.now() + 10), {
+    ok: false, error: { code: 'TIMEOUT' }
+  })
+  assert.equal(lateWire.requests.length, 0)
 })

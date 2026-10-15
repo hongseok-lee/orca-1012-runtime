@@ -68,10 +68,12 @@ function httpCode(status: number | undefined): ComputeAuditErrorCode | null {
 export function readComputeAuditPage(
   config: TransportSnapshot,
   body: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  absoluteDeadline?: number
 ): Promise<ComputeAuditPageResult> {
   return new Promise(resolve => {
-    const deadline = performance.now() + config.timeoutMs
+    // Trusted internal callers may shorten the budget, never rebase/extend it.
+    const deadline = Math.min(performance.now() + config.timeoutMs, absoluteDeadline ?? Infinity)
     const cancellation = new AbortController()
     let request: ClientRequest | undefined
     let response: IncomingMessage | undefined
@@ -183,10 +185,9 @@ export function readComputeAuditPage(
       message.once('end', onEnd)
       message.once('aborted', onResponseAborted)
     }
-    timer = setTimeout(() => finish(failure('TIMEOUT')), config.timeoutMs)
+    timer = setTimeout(() => finish(failure('TIMEOUT')), Math.max(0, deadline - performance.now()))
     signal?.addEventListener('abort', onAbort, { once: true })
-    if (signal?.aborted) {
-      onAbort()
+    if (stopped()) {
       return
     }
     // Resolve asynchronous and synchronous token-provider failures without exposing their cause.

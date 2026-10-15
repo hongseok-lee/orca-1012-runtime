@@ -26,7 +26,7 @@ function computeUrl(value: string | null, path: string): boolean {
 function responseMatches(entry: ProjectedAuditEntry, input: ComputeCreationIdentityInput): boolean {
   const shape = entry.responseShape, response = entry.audit.response
   if (!shape.present) {
-    return !entry.operation.first
+    return entry.operation.last && !entry.operation.first
   }
   if (!shape.object || response === null || shape.errorPresent ||
       Object.values(shape.fields).some(field => field.present && !field.string)) {
