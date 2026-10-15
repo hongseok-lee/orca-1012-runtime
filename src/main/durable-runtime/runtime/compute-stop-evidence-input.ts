@@ -2,6 +2,7 @@ import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { canonicalCreationUint64 } from './compute-creation-identity-input.ts'
 import { auditTimestamp, snapshotAuditInput } from './compute-deletion-audit-input.ts'
 import { createComputeDeletionAuditClient } from './compute-deletion-audit.ts'
+import type { ExecutionTargetRecord } from './execution-target-records.ts'
 import { ComputeStopEvidenceError } from './compute-stop-evidence-types.ts'
 import type { ComputeStopEvidenceConfiguration, ComputeStopEvidenceInput } from './compute-stop-evidence-types.ts'
 
@@ -63,7 +64,7 @@ export function captureStopInput(original: ComputeStopEvidenceInput): ComputeSto
 }
 
 export function capturedTargetAuditInput(config: CapturedStopConfiguration,
-  input: ComputeStopEvidenceInput, target: import('./execution-target-records.ts').ExecutionTargetRecord) {
+  input: ComputeStopEvidenceInput, target: ExecutionTargetRecord) {
   const key = input.key
   if (target.runtimeUnitId !== input.runtimeUnitId || target.attemptId !== key.attemptId ||
       target.podUid !== key.podUid || target.incarnation !== key.incarnation || target.executionEpoch !== key.executionEpoch ||

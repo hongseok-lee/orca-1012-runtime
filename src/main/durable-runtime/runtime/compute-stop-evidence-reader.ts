@@ -1,7 +1,7 @@
 import type { PoolClient, QueryResultRow } from 'pg'
 import { DurableTransaction } from '../db/connection.ts'
 import { readExecutionTarget } from './execution-target-records.ts'
-import { ComputeStopBudget } from './compute-stop-evidence-budget.ts'
+import type { ComputeStopBudget } from './compute-stop-evidence-budget.ts'
 import type { CapturedStopConfiguration } from './compute-stop-evidence-input.ts'
 import { ComputeStopEvidenceError } from './compute-stop-evidence-types.ts'
 import type { ComputeStopEvidenceInput } from './compute-stop-evidence-types.ts'
