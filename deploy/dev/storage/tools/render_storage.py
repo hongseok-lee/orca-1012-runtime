@@ -26,11 +26,11 @@ def node_ipv4_cidr(value):
 
 
 def substitute(text, values):
-    tokens = set(re.findall(r"\$\{([A-Z_]+)\}", text))
+    tokens = set(re.findall(r"\$\{([A-Z_][A-Z0-9_]*)\}", text))
     missing = tokens - values.keys()
     if missing:
         raise ValueError("Missing template inputs: " + ", ".join(sorted(missing)))
-    return re.sub(r"\$\{([A-Z_]+)\}", lambda match: values[match[1]], text)
+    return re.sub(r"\$\{([A-Z_][A-Z0-9_]*)\}", lambda match: values[match[1]], text)
 
 
 def main():
