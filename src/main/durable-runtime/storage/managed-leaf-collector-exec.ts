@@ -1,4 +1,5 @@
 import { TextDecoder } from 'node:util'
+import type { ClientOptions } from 'ws'
 import { performance } from 'node:perf_hooks'
 import { ManagedLeafCollectorError } from './managed-leaf-collector-types.ts'
 import type { ManagedLeafCollectorConfig, ManagedLeafCollectorDependencies, ManagedLeafSocket } from './managed-leaf-collector-types.ts'
@@ -108,7 +109,8 @@ export function collectManagedLeafExec(open: ManagedLeafCollectorDependencies['o
       const remainingMs = absoluteDeadline - performance.now()
       if (!Number.isFinite(remainingMs) || remainingMs <= 0) { fail('TIMEOUT'); return }
       socket = open(url, 'v5.channel.k8s.io', {
-        ca, rejectUnauthorized: true, agent: false, followRedirects: false,
+        // ws forwards false to Node HTTPS; @types/ws 8.18.1 omits this supported value.
+        ca, rejectUnauthorized: true, agent: false as unknown as ClientOptions['agent'], followRedirects: false,
         handshakeTimeout: Math.max(1, Math.ceil(remainingMs)), perMessageDeflate: false,
         headers: { Authorization: `Bearer ${reviewer}` },
       })
