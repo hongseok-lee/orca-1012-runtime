@@ -54,7 +54,7 @@ await test('Ops Browser page session authority: first value callback 1', async (
   assert.equal(repeated, first)
   assert.equal(repeated.readBearer() === bearer, true)
   const findKey = { browserPageId: first.browserPageId, worktreePublicId: workspace }
-  const found = findPageSession.call(null, findKey)
+  const found = Reflect.apply(findPageSession, null, [findKey])
   findKey.browserPageId = 'later-mutation'
   assert.equal(found, first)
   assert.equal(findPageSession({ browserPageId: first.browserPageId, worktreePublicId: otherWorkspace }), null)
@@ -84,8 +84,8 @@ await test('Ops Browser page session authority: first value callback 1', async (
   assert.equal(authenticateBearer(thirdBearer)?.principalId, `pairing-sha256:${otherFingerprint}`)
   assert.deepEqual(authenticateBearer(thirdBearer)?.workspaceIds, [workspace])
 
-  for (const unknown of ['', syntheticPairing, fingerprint, 'Bearer '+bearer, bearer+'x',
-    bearer.slice(0, -1)+'!', 'orca-ops-page-v1.'+'z'.repeat(43), null, {}, 17]) {
+  for (const unknown of ['', syntheticPairing, fingerprint, `Bearer ${bearer}`, `${bearer}x`,
+    `${bearer.slice(0, -1)}!`, `orca-ops-page-v1.${'z'.repeat(43)}`, null, {}, 17]) {
     assert.equal(Reflect.apply(authenticateBearer, undefined, [unknown]), null)
   }
   for (const invalid of [{ ...request, authenticatedCallerFingerprint: 'A'.repeat(64) },

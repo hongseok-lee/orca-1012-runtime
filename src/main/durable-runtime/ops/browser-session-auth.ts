@@ -175,7 +175,8 @@ export function createOpsBrowserSessionAuthority(scope: OpsServerScope): OpsBrow
       return
     }
     closed = true
-    for (const record of [...pages.values()]) {
+    const closing = [...pages.values()]
+    for (const record of closing) {
       record.handle.dispose()
     }
     pages.clear()
