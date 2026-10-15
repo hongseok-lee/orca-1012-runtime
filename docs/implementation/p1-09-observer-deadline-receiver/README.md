@@ -18,6 +18,8 @@ Credential supplier가 동기 작업으로 deadline을 넘겨도 timer 실행 �
 
 기존 capture의 CA·input·method 교체 격리 assertion을 유지했습니다. 잘못된 frozen-copy receiver 기대만 원 receiver identity와 WeakMap 상태 검증으로 바꿨습니다. 새 regression은 동기 supplier의 25 ms 지연과 10 ms deadline, caller abort 우선순위, Pod의 세 API 응답 이후 다음 요청·최종 관측 차단, Audit product end listener 뒤 outer continuation 지연을 확인합니다. 동기 코드를 선점할 수 있다는 주장은 하지 않습니다.
 
-[verification.json](verification.json)에 원 실패·교정 결과·선택 이름·TAP hash를, [inputs.json](inputs.json)에 정제한 실제 source/type/runtime 입력을 기록했습니다. [report.html](report.html)은 오프라인 결과 보고용 정적 HTML이며 [provenance.json](provenance.json)은 현재 촬영 전 상태를 명시합니다.
+[verification.json](verification.json)에 원 실패·교정 결과·선택 이름·TAP hash를, [inputs.json](inputs.json)에 정제한 실제 source/type/runtime 입력을 기록했습니다. [report.html](report.html)은 오프라인 결과 보고용 정적 HTML입니다. [원 PNG](observer-result-report.png)와 [원 provenance](observer-result-report-provenance.json)를 그대로 게시하며, [provenance.json](provenance.json)에 촬영·종료 상태를 기록했습니다.
 
-아직 보고 PNG를 촬영하지 않았고 final base 정렬도 하지 않았습니다. 실제 credential·TLS handshake·Cloud API·Pod 생성/인증·live source·PG·제품 UI·HA 검증은 이번 범위에서 수행하지 않았습니다. 기존 실제 Audit·Pod 관측은 당시 source의 별도 증거이며 이번 수정의 live 합격으로 소급하지 않습니다. Root가 리뷰·수락·merge를 담당합니다.
+보고 PNG는 2026-10-15 06:34:16.557–06:34:19.106 UTC에 1회 촬영했습니다. Offline context의 요청은 0이고 소유 Node 6511·Chrome 6528은 종료됐습니다. Root가 지정한 최종 base는 `c9bbc5f9f56cfd44f9a92280f93b4b1edec3e2e5`입니다. 실제 credential·TLS handshake·Cloud API·Pod 생성/인증·live source·PG·제품 UI·HA 검증은 이번 범위에서 수행하지 않았습니다. 기존 실제 Audit·Pod 관측은 당시 source의 별도 증거이며 이번 수정의 live 합격으로 소급하지 않습니다. Root가 리뷰·수락·merge를 담당합니다.
+
+![오프라인 선택 회귀 결과 보고](observer-result-report.png)

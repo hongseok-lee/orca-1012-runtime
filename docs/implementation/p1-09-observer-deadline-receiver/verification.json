@@ -144,7 +144,7 @@
     "liveSync": 0,
     "pg": 0,
     "browserProductUI": 0,
-    "reportPNG": 0,
+    "reportPNG": 1,
     "install": 0,
     "imageBuild": 0,
     "fullSuite": false
@@ -154,7 +154,18 @@
     "최초 TS2684 실패와 Root 승인 교정 뒤 PASS를 분리합니다. 최초 성공한 lint5 전체는 반복하지 않았습니다.",
     "기존 실제 Audit·Pod 관측은 당시 source의 증거입니다. 이번 변경의 live 검증으로 소급하지 않습니다.",
     "실제 credential·Cloud 권한·Pod 인증·제품 UI·HA·writer fencing의 합격 증거가 아닙니다.",
-    "보고 HTML만 준비했으며 PNG와 final base 정렬은 Root의 후속 배분 전입니다."
+    "승인된 정적 HTML의 오프라인 보고 PNG를 1회 촬영했습니다. 제품 UI나 실제 인증 화면으로 해석하지 않습니다."
   ],
-  "usageLimitCreditsStream": "이번 작업에서 usage limit·credits·stream 중단 원오류는 미관측입니다."
+  "usageLimitCreditsStream": "이번 작업에서 usage limit·credits·stream 중단 원오류는 미관측입니다.",
+  "reportCapture": {
+    "pid": 6511,
+    "startedAt": "2026-10-15T06:34:16.557Z",
+    "capturedAt": "2026-10-15T06:34:19.057Z",
+    "finishedAt": "2026-10-15T06:34:19.106Z",
+    "exit": 0,
+    "requestCount": 0,
+    "screenshotSHA256": "347d3fc69e7b226b6942edb22d2a8103a826012b97137b6ed8f13bdc0e5bdb3f",
+    "sourcePin": "0f3a9816f4fafcf98d2726a3875c9e5cf56ab1ba"
+  },
+  "finalBase": "c9bbc5f9f56cfd44f9a92280f93b4b1edec3e2e5"
 }

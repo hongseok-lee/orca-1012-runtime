@@ -7,11 +7,36 @@
     "bytes": 3678
   },
   "capture": {
-    "status": "NOT_RUN_AWAITING_ROOT_SLOT",
-    "PNG": null,
+    "status": "CAPTURED_OFFLINE_REPORT_ONLY",
+    "PNG": "observer-result-report.png",
+    "rawProvenance": "observer-result-report-provenance.json",
+    "rawProvenanceSHA256": "e981c9b995c8e8cd193cf112ba25def257a03fa865f52390f1fa869b81b0582c",
+    "screenshotSHA256": "347d3fc69e7b226b6942edb22d2a8103a826012b97137b6ed8f13bdc0e5bdb3f",
+    "bytes": 191814,
+    "pid": 6511,
+    "startedAt": "2026-10-15T06:34:16.557Z",
+    "capturedAt": "2026-10-15T06:34:19.057Z",
     "productUICaptured": false,
     "nativeIPhoneCaptured": false,
-    "liveApplicationOpened": false
+    "liveApplicationOpened": false,
+    "authStateLoaded": false,
+    "contextOffline": true,
+    "requestCount": 0,
+    "contextClosed": true,
+    "browserClosed": true,
+    "knownCapturePIDs": {
+      "at": "2026-10-15T06:35:11.032Z",
+      "pids": [
+        {
+          "pid": 6511,
+          "state": "ABSENT"
+        },
+        {
+          "pid": 6528,
+          "state": "ABSENT"
+        }
+      ]
+    }
   },
   "rawTAPSHA256": {
     "audit": "8e6a50f2ffafab63d71fd28775186f06f354f57d916fc4cbf739446b72384b69",
@@ -20,7 +45,7 @@
   "typeLogSHA256": "6197bdb08b2a05564d1b59472dddf8322706f4ccae60294332271272bcd39441",
   "originalTypeFailureLogSHA256": "6d48c439e8b43b347e2401b755aff6594e4ba060bcebd8b417f3211d90bbd81d",
   "limitations": [
-    "Static report HTML prepared only; no report browser/capture or live application execution in this publication preparation.",
-    "No successful test/lint/type repetition; the report reuses the accepted original results."
+    "승인된 정적 HTML을 오프라인 context에서 1회 촬영한 결과 보고입니다. 실제 제품 UI·인증·Cloud 관측의 화면이 아닙니다.",
+    "원 TAP·성공한 시험/lint/type을 재실행하지 않았습니다."
   ]
 }
