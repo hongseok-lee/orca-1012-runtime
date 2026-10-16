@@ -156,8 +156,8 @@ export function createFirstManagedInitialReservationOwner(pool: Pool, original: 
     const candidate = Object.freeze({ ...receipt.originalCandidate, domain: Object.freeze({ ...receipt.originalCandidate.domain }) })
     const evidence = Object.freeze({ evidenceRef: receipt.evidenceRef, topologyPinId: op.holdInput.pinId, candidate }) as VerifiedDirectoryEvidence
     const authority: StorageEvidenceAuthority = Object.freeze({
-      directory: ref => ref === evidence.evidenceRef && op.state === 'HELD' ? evidence : null,
-      directoryPinValid: held => held === evidence && op.state === 'HELD',
+      directory: (ref: string) => ref === evidence.evidenceRef && op.state === 'HELD' ? evidence : null,
+      directoryPinValid: (held: VerifiedDirectoryEvidence) => held === evidence && op.state === 'HELD',
       mount: () => null, mountPinValid: () => false, executionTarget: () => null, executionTargetPinValid: () => false,
       permanentComputeStop: () => null, computeStopPinValid: () => false,
     })
