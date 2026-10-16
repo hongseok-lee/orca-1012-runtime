@@ -81,6 +81,11 @@
             "name": "dev-storage",
             "mountPath": "/workspace/backend",
             "subPath": "dev/backend/source"
+          },
+          {
+            "name": "controller-credentials",
+            "mountPath": "/var/run/orca-controller",
+            "readOnly": true
           }
         ]
       }
@@ -91,6 +96,44 @@
         "persistentVolumeClaim": {
           "claimName": "agent-dev-homes"
         }
+      },
+      {
+        "name": "controller-credentials",
+        "projected": {
+          "defaultMode": 292,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3600,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "name": "kube-root-ca.crt",
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ]
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "path": "namespace",
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
       }
     ],
     "tolerations": [
@@ -100,6 +143,7 @@
         "operator": "Equal",
         "value": "true"
       }
-    ]
+    ],
+    "serviceAccountName": "orca-backend-inventory"
   }
 }
