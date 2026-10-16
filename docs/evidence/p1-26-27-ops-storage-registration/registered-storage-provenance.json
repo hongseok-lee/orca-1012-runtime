@@ -1,0 +1,39 @@
+{
+  "capturedAt": "2026-10-16T12:40:38.031Z",
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "DPR": 1
+  },
+  "sourcePin": "80eff45fe6395ed40dc3106e7d874e584969b80c",
+  "sourceWholeCheckoutGitIdentityProven": false,
+  "runtime": {
+    "generation": 5,
+    "pid": 7336,
+    "parentPid": 31,
+    "startTicks": "26541851",
+    "artifactSHA256": "99aceb02fd005a6e75b2f67318b8599d17b816d232bdb70b1f7ba91535536eea"
+  },
+  "viewer": {
+    "startedAt": "2026-10-16T12:38:07.351Z",
+    "finishedAt": "2026-10-16T12:40:38.210Z",
+    "exit": 0,
+    "summaryTaps": 0,
+    "detailTaps": 0,
+    "scrolls": 1,
+    "frameRereads": 0,
+    "screenshots": 1,
+    "existingAuthenticationReused": true,
+    "authStateUnchanged": true,
+    "contextClosed": true,
+    "browserClosed": true
+  },
+  "observed": "Mount 등록 경로/backend/export와 UNVERIFIED·epoch0·저장 grant 없음·writer attempt 없음이 같은 화면에 보입니다. 수락된 readonly 원행과 일치합니다.",
+  "APIResponseCollected": false,
+  "additionalGET": 0,
+  "limit": "등록 정보의 표시이며 실제 consumer mount/RO·RW/namespace pin/old writer/physical pin/HA/native 합격의 증거가 아닙니다.",
+  "imageSHA256": "2c3f8cf69312642a49c6ac7573b8c652bd612b446186ea5bd6dc2e2632ce65a5"
+}

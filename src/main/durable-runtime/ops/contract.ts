@@ -30,6 +30,7 @@ export type OpsUnit = {
   counts: { pendingMessages: OpsCounter; inputComponents: OpsCounter; inFlight: OpsCounter; historicalUnknown: OpsCounter }
   mounts: {
     id: OpsId; accessState: string; storageEpoch: OpsCounter
+    backendId: string; exportId: string; canonicalDirectory: string
     writerAttemptId: OpsId | null
     grant: { state: string; attemptId: OpsId; storageEpoch: OpsCounter; revokedAt: OpsTime } | null
   }[]
