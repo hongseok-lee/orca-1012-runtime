@@ -2,6 +2,7 @@ import { constants, closeSync, fstatSync, openSync, readSync } from 'node:fs'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host.ts'
 import type { AbortableInventoryTransport } from '../durable-runtime/ha/pass.ts'
 import type { ControllerWorker, ControllerWorkerSnapshot } from '../durable-runtime/ha/worker.ts'
+import { persistControllerInventoryObservation } from '../durable-runtime/lifecycle/controller-inventory-observation.ts'
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import type { OrcadDurableCatalog } from './orcad-durable-catalog.ts'
@@ -13,6 +14,7 @@ export type OrcadControllerObservation = Readonly<{
   type: ResourceWatchEvent['type']
   resourceVersion: string
   observedAt: string
+  persistence: 'CURSOR_ONLY' | 'RECORDED' | 'REPLAYED'
   counts: Readonly<{ total: number; list: number; watch: number }>
   resource: Readonly<{ namespace: string; name: string; uid: string; unitId: string; operationId: string;
     executionEpoch: string; specHash: string }> | null
@@ -120,12 +122,29 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         // Plan/execute/lookup 대체 callback이나 별도 queue 소비 loop는 만들지 않습니다.
         worker = createControllerWorker(captured.pool, config.policy, {
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
-          async sink(event, source) {
-            if (closing) { return }
+          async sink(event, source, pass) {
+            if (closing || pass.signal.aborted) { invalidOrcadControllerConfig('CONTROLLER_INVENTORY_ABORTED') }
+            captured.assertCurrentHost()
+            let persistence: OrcadControllerObservation['persistence'] = 'CURSOR_ONLY'
+            if (event.type !== 'BOOKMARK') {
+              const outcome = await persistControllerInventoryObservation(captured.pool,
+                { datasetName: config.datasetName, namespace: config.inventory.namespace }, event, source, pass)
+              if (!outcome.ok || outcome.cleanupFailed) {
+                lastFailure = Object.freeze({ stage: 'INVENTORY', code: 'CONTROLLER_INVENTORY_PERSISTENCE_FAILED' })
+                invalidOrcadControllerConfig('CONTROLLER_INVENTORY_PERSISTENCE_FAILED')
+              }
+              if (outcome.value.disposition !== 'RECORDED' && outcome.value.disposition !== 'REPLAYED') {
+                const code = `CONTROLLER_INVENTORY_${outcome.value.disposition}`
+                lastFailure = Object.freeze({ stage: 'INVENTORY', code })
+                return // An unrelated/unbound target does not stop the controller or advance its snapshot.
+              }
+              persistence = outcome.value.disposition
+            }
+            if (closing || pass.signal.aborted) { invalidOrcadControllerConfig('CONTROLLER_INVENTORY_ABORTED') }
             captured.assertCurrentHost()
             total++; if (source === 'LIST') { list++ } else { watch++ }
             const object = event.type === 'BOOKMARK' ? null : event.object
-            latestObservation = Object.freeze({ source, type: event.type,
+            latestObservation = Object.freeze({ source, type: event.type, persistence,
               resourceVersion: event.type === 'BOOKMARK' ? event.resourceVersion : event.object.resourceVersion,
               observedAt: new Date().toISOString(), counts: Object.freeze({ total, list, watch }),
               resource: object ? Object.freeze({ namespace: object.namespace, name: object.name, uid: object.uid,
