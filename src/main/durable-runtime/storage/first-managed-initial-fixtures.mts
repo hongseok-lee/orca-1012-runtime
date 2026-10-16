@@ -8,6 +8,7 @@ import { firstManagedFixture } from './first-managed-binding-owner-fixtures.mts'
 import { fixture, pod, pvc, pv, helper, rawOutput, finish } from './managed-leaf-collector-fixtures.mts'
 import { registerNamespaceProfile } from './namespace-holds.ts'
 import { createAgentPodPlanner } from '../runtime/agent-pod-plan.ts'
+import { CLOSED_AGENT_BOOTSTRAP } from '../runtime/closed-agent-bootstrap.ts'
 import { recordAgentPodPlan } from '../runtime/agent-pod-plan-records.ts'
 import { LockedGatewayAuthority } from '../runtime/gateway/authority.ts'
 import { submitCommand, originalIdentity } from '../runtime/gateway/store.ts'
@@ -43,7 +44,8 @@ export async function requireInitialFixtureDatabase(pool: Pool, expected: Initia
   assert.deepEqual((await pool.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows,
     [{ dataset_name: 'orca-1012-dev-v1' }])
 }
-export async function seedInitialRevalidation(pool: Pool, expected: InitialFixtureDatabase) {
+export async function seedInitialRevalidation(pool: Pool, expected: InitialFixtureDatabase,
+  options: Readonly<{ closedBootstrap?: true }> = {}) {
   await requireInitialFixtureDatabase(pool, expected)
   const f = firstManagedFixture(), agent = randomUUID(), workspace = randomUUID()
   const original: FirstManagedBindingInput = { sessionId: logicalId('session', randomUUID()),
@@ -78,7 +80,9 @@ export async function seedInitialRevalidation(pool: Pool, expected: InitialFixtu
   const context: GatewayContext = Object.freeze({ runtimeUnitId: original.unitId, operationId: operation, controller })
   const dataset = f.record.profile.datasetName
   const plan = createAgentPodPlanner({ namespace: 'initial-revalidation-fixture', dataset,
-    image: `example.invalid/agent@sha256:${'1'.repeat(64)}`, entrypoint: { command: ['/opt/agent/entrypoint'], args: ['--cold'] },
+    image: `example.invalid/agent@sha256:${'1'.repeat(64)}`,
+    entrypoint: options.closedBootstrap ? { command: CLOSED_AGENT_BOOTSTRAP.command, args: CLOSED_AGENT_BOOTSTRAP.args } :
+      { command: ['/opt/agent/entrypoint'], args: ['--cold'] },
     nfsServer: 'nfs.fixture.svc.cluster.local', protectedExportRoot: `/exports/runtime-domains/${dataset}`,
     paths: { home: '/agent/home', claudeState: '/agent/home/.claude', codexState: '/agent/home/.codex', checkout: '/agent/checkout' },
     protectedMounts: [{ key: 'home', clientPath: '/agent' }],
