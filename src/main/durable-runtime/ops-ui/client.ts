@@ -109,10 +109,7 @@ function bootOpsUi(routes: typeof OPS_ROUTES, createPresentation: typeof createO
       text('detail-title', data.unit.alias ?? data.unit.id)
       const body = byId('detail-body'); body.append(unitFacts(data.unit), actions(data.unit)); syncCommandControls()
       const sections: [string, string[]][] = [ ['Sessions', data.sessions.map(s => `${s.id} · ${s.lifecycle} · revision ${s.revision}`)], ['Tabs', data.tabs.map(t => `${t.id} · ${t.kind} · ${t.lifecycle} · Session ${t.sessionId ?? '없음'}`)],
-        ['Mount 저장 상태', data.unit.mounts.flatMap(m => [
-          `${m.id} · ${m.accessState} · epoch ${m.storageEpoch} · 저장 grant ${m.grant?.state ?? '없음'} · writer attempt ${m.writerAttemptId ?? '없음'}`,
-          `등록 경로: ${m.canonicalDirectory}`, `backend: ${m.backendId}`, `export: ${m.exportId}`
-        ])], ['최근 사건', data.recentIncidents.map(i => `${i.id} · ${i.state} · ${i.classification ?? '미분류'} · ${time(i.observedAt)}`)],
+        ['Mount 저장 상태', data.unit.mounts.flatMap(m => [`${m.id} · ${m.accessState} · epoch ${m.storageEpoch} · 저장 grant ${m.grant?.state ?? '없음'} · writer attempt ${m.writerAttemptId ?? '없음'}`, `등록 경로: ${m.canonicalDirectory}`, `backend: ${m.backendId}`, `export: ${m.exportId}`])], ['최근 사건', data.recentIncidents.map(i => `${i.id} · ${i.state} · ${i.classification ?? '미분류'} · ${time(i.observedAt)}`)],
         ['Operations', data.operations.map(o => `${o.id} · ${o.disposition} · ${o.step} · ${o.reason ?? '사유 없음'}`)] ]
       for (const [label, rows] of sections) {
         const section = node('section', undefined, 'detail-section'); section.append(node('h3', label))
