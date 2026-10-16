@@ -10,6 +10,8 @@ import type { InitialAgentAttemptInput } from './initial-agent-attempt.ts'
 import { reserveInitialAgentAttemptWithPreparedPins } from './initial-agent-attempt-transaction.ts'
 import type { InitialAgentAttemptTransactionResult, PreparedInitialAgentPinsOwner } from './initial-agent-attempt-transaction.ts'
 import { assignInitialAgentPod, readInitialAgentPodAssignmentTarget } from './initial-agent-pod-assignment.ts'
+import { agentPodWithin } from './agent-pod-policy.ts'
+import { CLOSED_AGENT_BOOTSTRAP, isClosedAgentBootstrap } from './closed-agent-bootstrap.ts'
 
 export type InitialAgentPodExecutionStart = Readonly<{
   context: GatewayContext
@@ -49,10 +51,14 @@ function captureCall(original: InitialAgentPodExecutionLookup) {
 type CapturedCall = ReturnType<typeof captureCall>
 
 /** Fixed idle bootstrap only. This is not the image ENTRYPOINT, native CLI or a provider launcher. */
-function requireClosedBootstrap(plan: Awaited<ReturnType<typeof readInitialAgentPodAssignmentTarget>>['plan']): void {
+function requireClosedBootstrap(plan: Awaited<ReturnType<typeof readInitialAgentPodAssignmentTarget>>['plan'], createRequested: boolean): void {
   const containers = plan.pod.spec.containers, container = containers[0]
-  if (containers.length !== 1 || !container || container.command.length !== 1 || container.command[0] !== '/usr/local/bin/node' ||
-      container.args.length !== 2 || container.args[0] !== '-e' || container.args[1] !== 'setInterval(() => {}, 3600000)') {
+  const hasCheckout = Object.hasOwn(plan.pod.metadata.annotations, CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation)
+  const checkout = hasCheckout ? plan.pod.metadata.annotations[CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation] : container?.workingDir
+  if (containers.length !== 1 || !container || !isClosedAgentBootstrap(container) || typeof checkout !== 'string' ||
+      !agentPodWithin('/agent', checkout) || checkout === '/agent' ||
+      plan.mountExpectations.protected.filter(binding => agentPodWithin(binding.clientPath, checkout)).length !== 1 ||
+      (hasCheckout && container.workingDir !== CLOSED_AGENT_BOOTSTRAP.workingDir) || (createRequested && !hasCheckout)) {
     throw new DurableDatabaseError('INITIAL_AGENT_EXECUTION_BOOTSTRAP')
   }
 }
@@ -90,10 +96,11 @@ export function createInitialAgentPodExecution(deployment: Readonly<{
       target = await runDurableTransaction(borrowed, tx => readInitialAgentPodAssignmentTarget(tx, call.context,
         { claim: call.claim, planDigest: call.planDigest }))
       if (!target.ok || target.settlement !== 'COMMITTED' || target.commitOutcome !== 'ACKNOWLEDGED' || target.cleanupFailed) { return result() }
-      requireClosedBootstrap(target.value.plan)
-      const budget = remaining()
       // An already assigned target cannot become a new CREATE after a concurrent assignment.
-      createRequested = allowCreate && target.value.status === 'RESERVED' && target.value.podUid === null
+      const requestCreate = allowCreate && target.value.status === 'RESERVED' && target.value.podUid === null
+      requireClosedBootstrap(target.value.plan, requestCreate)
+      const budget = remaining()
+      createRequested = requestCreate
       phase = 'TRANSPORT'
       observation = await observeOrCreate({ record: target.value.record,
         mode: createRequested ? 'CREATE_ONCE' : 'LOOKUP_ONLY', remainingMs: budget }, signal)

@@ -3,6 +3,7 @@ import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { AgentPodPlanError, agentPodArray, agentPodFields, agentPodInteger, agentPodName, agentPodPath,
   agentPodText, agentPodUuid, agentPodWithin, captureAgentPodPolicy } from './agent-pod-policy.ts'
 import type { CapturedAgentPodPolicy } from './agent-pod-policy.ts'
+import { CLOSED_AGENT_BOOTSTRAP, isClosedAgentBootstrap } from './closed-agent-bootstrap.ts'
 
 export type TrustedAgentPodRequest = Readonly<{
   identity: Readonly<{ unitId: string; operationId: string; attemptId: string; resourceName: string; executionEpoch: string; intentRevision: string; specHash: string }>
@@ -65,6 +66,7 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
   return Object.freeze({ plan(value: unknown) {
     try {
       const request = captureRequest(value, policy), { identity, protectedBindings, profile } = request
+      const closedBootstrap = isClosedAgentBootstrap(policy.entrypoint)
       const spec = Object.freeze({ restartPolicy: 'Never', terminationGracePeriodSeconds: 25,
         hostNetwork: false, automountServiceAccountToken: false,
         nodeSelector: Object.freeze({ 'cloud.google.com/gke-spot': 'true', 'kubernetes.io/arch': 'amd64' }),
@@ -76,7 +78,8 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
         affinity: Object.freeze({ podAntiAffinity: Object.freeze({ requiredDuringSchedulingIgnoredDuringExecution: Object.freeze([
           Object.freeze({ topologyKey: 'kubernetes.io/hostname', namespaces: Object.freeze([policy.namespace]), labelSelector: Object.freeze({}) })]) }) }),
         containers: Object.freeze([Object.freeze({ name: 'agent', image: policy.image, imagePullPolicy: 'IfNotPresent',
-          command: policy.entrypoint.command, args: policy.entrypoint.args, workingDir: policy.paths.checkout,
+          command: policy.entrypoint.command, args: policy.entrypoint.args,
+          workingDir: closedBootstrap ? CLOSED_AGENT_BOOTSTRAP.workingDir : policy.paths.checkout,
           env: Object.freeze([Object.freeze({ name: 'HOME', value: policy.paths.home }),
             Object.freeze({ name: 'CLAUDE_CONFIG_DIR', value: policy.paths.claudeState }),
             Object.freeze({ name: 'CODEX_HOME', value: policy.paths.codexState })]),
@@ -97,7 +100,8 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
         annotations: Object.freeze({ 'orca.dev/operation-id': identity.operationId, 'orca.dev/attempt-id': identity.attemptId,
           'orca.dev/execution-epoch': identity.executionEpoch, 'orca.dev/intent-revision': identity.intentRevision,
           // This is the trusted logical desired-spec hash, not a newly issued authority proof.
-          'orca.dev/spec-hash': identity.specHash, 'orca.dev/resource-profile-revision': profile.revision }) }), spec })
+          'orca.dev/spec-hash': identity.specHash, 'orca.dev/resource-profile-revision': profile.revision,
+          ...(closedBootstrap ? { [CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation]: policy.paths.checkout } : {}) }) }), spec })
       const mountExpectations = Object.freeze({ protected: Object.freeze(protectedBindings.map(binding => Object.freeze({ ...binding, server: policy.nfsServer }))),
         shared: Object.freeze({ ...policy.shared, server: policy.nfsServer, clientPath: '/shared', mode: 'RW' }) })
       return Object.freeze({ kind: 'UNAUTHORIZED_PLAN', identity, pod, mountExpectations, podSpecSHA256: digest(spec),
