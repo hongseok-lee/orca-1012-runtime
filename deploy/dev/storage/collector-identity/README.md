@@ -1,6 +1,6 @@
 # 전용 managed-leaf collector 자격 준비
 
-이 source는 `d76726b5fc9156860ff7aa9f7809f07f58d8a0fd`의 기존 collector 경로에 맞춘 개발 운영 후보입니다. 현재 source-only이며 SA·권한·정책·token·Pod를 생성하지 않았습니다. 실제 CEL·TokenRequest·허용 exec 및 physical pin 합격은 아닙니다.
+이 source는 `d76726b5fc9156860ff7aa9f7809f07f58d8a0fd`의 기존 collector 경로에 맞춘 개발 운영 후보입니다. Source와 원격 합성 fixture만 검증했으며 실제 SA·권한·정책·token·Pod를 생성하지 않았습니다. 실제 CEL·TokenRequest·허용 exec 및 physical pin 합격은 아닙니다.
 
 `prepareCollectorIdentity`는 권한 없는 `orca-dev/orca-storage-collector` SA와 최소 RBAC를 순수 JSON으로 준비합니다. 아직 bootstrap 응답 UID가 없으면 credential guard 출력은 `null`입니다. UID를 예측하거나 기존 이름을 채택하지 않습니다. 실제 guard는 최초 SA CREATE 응답 UID로만 생성합니다.
 
@@ -20,4 +20,6 @@ NFS guard의 `specSHA256`은 `specDigest`의 정렬된 JSON SHA-256입니다. �
 
 CREATE timeout/응답 유실·HTTP 5xx·identity를 확인할 수 없는 201은 정확 원 이름 GET 최대 한 번으로 회수하고 중단합니다. 취소된 signal 뒤에는 새 GET을 강제하지 않습니다. 회수 UID는 관측이며 소유권으로 채택하지 않습니다. POST 재호출·기존 객체 덮기·자동 삭제/rollback은 없습니다. 원 CREATE intent와 불명 효과·회수 결과 및 생성 UID ledger를 Root에 제출하며 관리자의 정책 제거는 별도 break-glass입니다. 이 caller는 다른 주체가 부여한 전체 effective RBAC를 감사하지 않습니다.
 
-`identity.test.mjs`는 domain caller의 작은 fixture source입니다. 현재 lint/type/value·CEL·권한·remote 검증은 실행하지 않았습니다. 기존 collector/HTTPS 성공 suite, 설치, 이미지 빌드, 새 화면은 반복하지 않습니다.
+`67e452b41fa58614f0a581e178bd05619e9b9b92`의 소유 mjs 4개는 2026-10-16 10:16:02.979–10:16:03.627 UTC의 분리 stage에서 변경 lint 0 warnings/0 errors와 최초 합성 value 8/8을 통과했습니다. Stage의 원 입력 11개 hash가 일치했으며 소유 control/lint/value PID 종료를 회수했습니다. 이 fixture는 가짜 operator API의 순서·이름 충돌·응답 불명 회수·metadata negotiation·guard readback을 확인한 결과입니다. 실제 Kubernetes CEL·권한·TokenRequest·collector exec 또는 전체 type 검증은 아닙니다.
+
+이전 `5eca63fb3929dea002089a4e20035ac094046442`의 09:58:16.589–09:58:17.037 UTC 첫 lint는 `curly` 32건으로 exit 1이며 value 미진입이었습니다. 원 실패를 보존하고 해당 중괄호 및 지정 GKE selector만 교정했습니다. 기존 collector/HTTPS 성공 suite, 설치, 이미지 빌드, 가동 source 변경과 새 화면은 반복하지 않았습니다.
