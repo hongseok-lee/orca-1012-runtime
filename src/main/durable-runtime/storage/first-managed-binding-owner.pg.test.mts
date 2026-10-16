@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
-import type { Pool } from 'pg';
 import { createDurablePool, DurableDatabaseError, withDurableTransaction } from '../db/connection.ts';
 import { readMigrations } from '../db/migrate.ts';
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts';
@@ -169,7 +168,9 @@ await test('first managed owner integrates held original collection, prepared au
     const repeated = await owner.verifyFirstBinding(input, new AbortController().signal);
     assert.equal(repeated.errorCode, 'FIRST_MANAGED_PIN_ALREADY_ATTEMPTED');
     assert.equal(f.wire.api.requests.length, requests); assert.equal(observer.connects, connects);
-    for (const secret of [input.ownerToken, f.issued, f.reviewerToken]) assert.equal(JSON.stringify(result).includes(secret), false);
+    for (const secret of [input.ownerToken, f.issued, f.reviewerToken]) {
+      assert.equal(JSON.stringify(result).includes(secret), false);
+    }
     assert.equal('retainedOwner' in result.binding!.pin, false); assert.equal('retainedLease' in result.binding!.pin, false);
     await f.wire.assertCleanup();
   });
@@ -223,7 +224,11 @@ await test('first managed owner integrates held original collection, prepared au
   });
 
   assert.deepEqual((await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger);
-  for (const row of originalBindings) assert.deepEqual((await pool.query('SELECT to_jsonb(b) AS body FROM durable_runtime.storage_bindings b WHERE id=$1', [row.id])).rows[0].body, row.body);
-  for (const row of originalAudits) assert.deepEqual((await pool.query('SELECT to_jsonb(a) AS body FROM durable_runtime.runtime_audit_events a WHERE id=$1', [row.id])).rows[0].body, row.body);
+  for (const row of originalBindings) {
+    assert.deepEqual((await pool.query('SELECT to_jsonb(b) AS body FROM durable_runtime.storage_bindings b WHERE id=$1', [row.id])).rows[0].body, row.body);
+  }
+  for (const row of originalAudits) {
+    assert.deepEqual((await pool.query('SELECT to_jsonb(a) AS body FROM durable_runtime.runtime_audit_events a WHERE id=$1', [row.id])).rows[0].body, row.body);
+  }
   assert.deepEqual((await pool.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows, [{ dataset_name: 'orca-1012-dev-v1' }]);
 });
