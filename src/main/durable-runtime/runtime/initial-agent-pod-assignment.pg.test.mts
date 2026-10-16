@@ -243,14 +243,21 @@ await test("Initial Pod assignment: original UID/resources and closed gate trans
     const originalQuery = tx.query, entered = Promise.withResolvers<void>(), gate = Promise.withResolvers<void>();
     tx.query = async function(sql, values) { entered.resolve(); await gate.promise; return Reflect.apply(originalQuery, tx, [sql, values]); };
     const pending = assignInitialAgentPod(tx, captured.context, mutable);
-    await entered.promise;
-    tx.query = originalQuery; // Restore borrowed receiver before later lock/helper queries.
-    Object.assign(mutable, { planDigest: "0".repeat(64) });
-    Object.assign(mutable.claim, { executionToken: logicalId("runtime-command-execution", randomUUID()) });
-    Object.assign(mutable.observation, { namespace: "changed", name: "changed" });
-    Object.assign(mutable.observation.pod!, { uid: "changed", desiredResources: {}, admittedResources: {} });
-    gate.resolve();
-    return pending;
+    const settled = pending.then(() => undefined, () => undefined);
+    try {
+      await Promise.race([entered.promise, pending.then(() => { throw new Error("Fixture assignment ended before expected boundary"); })]);
+      tx.query = originalQuery; // Restore borrowed receiver before later lock/helper queries.
+      Object.assign(mutable, { planDigest: "0".repeat(64) });
+      Object.assign(mutable.claim, { executionToken: logicalId("runtime-command-execution", randomUUID()) });
+      Object.assign(mutable.observation, { namespace: "changed", name: "changed" });
+      Object.assign(mutable.observation.pod!, { uid: "changed", desiredResources: {}, admittedResources: {} });
+      gate.resolve();
+      return await pending;
+    } finally {
+      tx.query = originalQuery;
+      gate.resolve();
+      await settled;
+    }
   });
   assert.equal(capturedResult.disposition, "ASSIGNED");
   assert.equal(capturedResult.podUid, observation(captured).pod!.uid);
