@@ -106,11 +106,11 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
           [operation.id, context.runtimeUnitId])
         const attempts = await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 LIMIT 1', [context.runtimeUnitId])
         const executions = await tx.query("SELECT id FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1 AND state<>'REVOKED' LIMIT 1", [context.runtimeUnitId])
-        // A Unit's write grants are identified through its attempts. Unrelated
-        // shared-space writers are not a no-effect signal for this operation.
+        // Protected member bindings can retain another owner's writer grant
+        // even when this Unit has never had an attempt. Shared RW is not queried.
         const writers = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
-          JOIN durable_runtime.attempts a ON a.id=g.attempt_id
-          WHERE a.runtime_unit_id=$1 AND g.state<>'REVOKED' LIMIT 1`, [context.runtimeUnitId])
+          WHERE g.state<>'REVOKED' AND EXISTS(SELECT 1 FROM durable_runtime.runtime_member_storage_bindings m
+            WHERE m.storage_binding_id=g.storage_binding_id AND m.runtime_unit_id=$1) LIMIT 1`, [context.runtimeUnitId])
         if (commands.rowCount === 0 && plans.rowCount === 0 && attempts.rowCount === 0 &&
             executions.rowCount === 0 && writers.rowCount === 0) {
           const reason = 'DEADLINE_EXPIRED_BEFORE_ACCEPTANCE'

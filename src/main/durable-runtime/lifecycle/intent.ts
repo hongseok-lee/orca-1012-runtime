@@ -38,6 +38,14 @@ export async function initializeLifecycleScope(tx: DurableTransaction): Promise<
 export async function ensureIntentOperation(
   tx: DurableTransaction, unit: RuntimeUnitRow, policy: UnitIntentRequest['policy']
 ): Promise<{ operation: LifecycleOperation; blocked: boolean }> {
+  return selectIntentOperation(tx, unit, policy, false)
+}
+
+// Only recordUnitIntent's authenticated receipt transaction may pass the
+// pre-acceptance terminal boundary. Pending reconciliation cannot renew it.
+async function selectIntentOperation(
+  tx: DurableTransaction, unit: RuntimeUnitRow, policy: UnitIntentRequest['policy'], explicitReception: boolean
+): Promise<{ operation: LifecycleOperation; blocked: boolean }> {
   if (!tx.isLockHeld(2, unit.id)) {
     throw new DurableDatabaseError('LIFECYCLE_UNIT_LOCK_REQUIRED')
   }
@@ -62,6 +70,15 @@ export async function ensureIntentOperation(
     WHERE runtime_unit_id=$1 AND result IS NULL AND step<>'INTENT_QUEUED' ORDER BY id`, [unit.id])
   if (started.rows[0]) {
     return { operation: started.rows[0], blocked: true }
+  }
+  if (!explicitReception) {
+    const terminal = await tx.query<LifecycleOperation>(`SELECT * FROM durable_runtime.operations
+      WHERE runtime_unit_id=$1 AND intent_revision=$2 AND kind=$3 AND step='FAILED'
+      AND result='{"state":"FAILED","reason":"DEADLINE_EXPIRED_BEFORE_ACCEPTANCE"}'::jsonb ORDER BY id LIMIT 1`,
+    [unit.id, unit.intent_revision, kind])
+    if (terminal.rows[0]) {
+      return { operation: terminal.rows[0], blocked: true }
+    }
   }
   await initializeLifecycleScope(tx)
   const operationId = logicalId('operation', randomUUID())
@@ -118,7 +135,7 @@ export async function recordUnitIntent(
   await tx.query(`UPDATE durable_runtime.operations SET step='CANCELLED',step_revision=step_revision+1,
     revision=revision+1,result='{"state":"SUPERSEDED_BEFORE_ACCEPTANCE"}'::jsonb WHERE id=ANY($1::uuid[])`,
     [obsolete.rows.map(row => row.id)])
-  const selected = await ensureIntentOperation(tx, unit, request.policy)
+  const selected = await selectIntentOperation(tx, unit, request.policy, true)
   const result: IntentRecorded = {
     runtimeUnitId: id, desired: unit.desired_mode, intentRevision: unit.intent_revision,
     revision: unit.revision, operationId: selected.operation.id, sharedIntent: shared,
