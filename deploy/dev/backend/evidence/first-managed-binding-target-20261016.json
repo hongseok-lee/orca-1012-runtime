@@ -168,6 +168,7 @@
     "scope": "당시 개발 서버 접속 화면이며 새 managed 대상·owner·후속 UI 검증은 포함하지 않습니다."
   },
   "newExecutionForThisEvidencePR": {
+    "scope": "Catalog의 증거 편집 작업만 집계합니다. Infra의 실제 실행 1회와 Client의 실제 viewer 1회는 이 객체의 집계 범위 밖이며 각 원 결과에 별도로 기록합니다.",
     "productTest": 0,
     "PGQuery": 0,
     "capture": 0,
