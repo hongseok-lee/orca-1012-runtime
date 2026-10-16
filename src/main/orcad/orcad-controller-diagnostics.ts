@@ -1,0 +1,106 @@
+import process from 'node:process'
+import { writeSync } from 'node:fs'
+import type { OrcadControllerSnapshot } from './orcad-controller.ts'
+
+export type ControllerDiagnosticOwner = Readonly<{ controllerSnapshot?: () => OrcadControllerSnapshot }>
+type DiagnosticCode = 'CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED' | 'CONTROLLER_DIAGNOSTIC_OUTPUT_FAILED'
+type SignalHandler = () => DiagnosticCode | null
+export type ControllerDiagnosticIo = Readonly<{
+  signals: Readonly<{
+    readonly pid: number
+    on(signal: 'SIGUSR2', handler: SignalHandler): unknown
+    removeListener(signal: 'SIGUSR2', handler: SignalHandler): unknown
+  }>
+  output: Readonly<{ write(line: string): unknown }>
+  now(): Date
+}>
+
+function code(value: string): string {
+  if (typeof value !== 'string' || !/^[A-Z0-9_]{1,128}$/.test(value)) {
+    throw new Error('CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED')
+  }
+  return value
+}
+function state<T extends string>(value: T, allowed: readonly T[]): T {
+  if (!allowed.includes(value)) { throw new Error('CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED') }
+  return value
+}
+function flag(value: boolean): boolean {
+  if (typeof value !== 'boolean') { throw new Error('CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED') }
+  return value
+}
+function count(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 0) { throw new Error('CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED') }
+  return value
+}
+
+// Explicit projection only: never serialize the owner, a resource, or raw extra fields.
+function project(snapshot: OrcadControllerSnapshot) {
+  const worker = snapshot.worker, latest = snapshot.latestObservation
+  const lease = worker?.confirmedLease, pass = worker?.lastPass
+  const failure = worker?.lastFailure, stopped = worker?.stoppedBy, flight = worker?.inFlight
+  return {
+    worker: worker === null ? null : {
+      phase: state(worker.phase, ['NEW', 'STARTING', 'STANDBY', 'ACTIVE', 'STOPPING', 'STOPPED']),
+      confirmedLease: lease == null ? null : { scope: lease.scope, owner: lease.owner, term: lease.term,
+        revision: lease.revision, expiresAt: lease.expiresAt },
+      lastPass: pass == null ? null : { status: state(pass.status, ['FINISHED', 'STOPPED']), reason: code(pass.reason),
+        items: pass.items.map(item => ({ kind: state(item.kind, ['RECONCILE', 'QUEUE', 'INVENTORY']), disposition: code(item.disposition) })) },
+      lastFailure: failure == null ? null : { stage: state(failure.stage, ['ACQUIRE', 'RENEW', 'PASS', 'RELEASE', 'START']), code: code(failure.code) },
+      stoppedBy: stopped == null ? null : { stage: state(stopped.stage, ['ACQUIRE', 'RENEW', 'PASS', 'RELEASE', 'START', 'STOP']), code: code(stopped.code) },
+      inFlight: flight == null ? null : { acquire: flag(flight.acquire), renew: flag(flight.renew), pass: flag(flight.pass),
+        callbacks: count(flight.callbacks), cleanup: flag(flight.cleanup) }
+    },
+    latestObservation: latest === null ? null : {
+      source: state(latest.source, ['LIST', 'WATCH']), type: state(latest.type, ['ADDED', 'MODIFIED', 'DELETED', 'BOOKMARK']),
+      persistence: state(latest.persistence, ['CURSOR_ONLY', 'RECORDED', 'REPLAYED']), observedAt: latest.observedAt,
+      counts: { total: count(latest.counts.total), list: count(latest.counts.list), watch: count(latest.counts.watch) }
+    },
+    lastFailure: snapshot.lastFailure === null ? null : {
+      stage: state(snapshot.lastFailure.stage, ['START', 'STOP', 'INVENTORY']), code: code(snapshot.lastFailure.code)
+    }
+  }
+}
+
+/** Owns one diagnostic listener, never a controller/Pool/transport. No owner means no listener. */
+export function installOrcadControllerDiagnostics(owner: ControllerDiagnosticOwner | null,
+  io: ControllerDiagnosticIo = { signals: process, output: { write(line) {
+    // The existing private runtime stdout fd is synchronous: no unhandled stream error callback.
+    const bytes = Buffer.from(line)
+    if (writeSync(process.stdout.fd, bytes) !== bytes.length) { throw new Error('CONTROLLER_DIAGNOSTIC_OUTPUT_FAILED') }
+  } }, now: () => new Date() }): () => void {
+  const method = owner?.controllerSnapshot
+  if (typeof method !== 'function') { return () => {} }
+  const read = method.bind(owner), signals = io.signals, output = io.output
+  const register = signals.on.bind(signals), remove = signals.removeListener.bind(signals)
+  const write = output.write.bind(output), now = io.now.bind(io), pid = signals.pid
+  let closed = false
+  const handler: SignalHandler = () => {
+    if (closed) { return null }
+    let line: string, observedAt: string | null = null
+    try {
+      observedAt = now().toISOString()
+      const snapshot = read()
+      if (closed) { return null }
+      line = `${JSON.stringify({ type: 'orca_controller_diagnostic', observedAt, pid, ...project(snapshot) })}\n`
+    } catch {
+      if (closed) { return null }
+      line = `${JSON.stringify({ type: 'orca_controller_diagnostic', observedAt, pid,
+        failure: { code: 'CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED' } })}\n`
+    }
+    if (closed) { return null }
+    try { write(line) }
+    catch {
+      // A write may have emitted bytes before throwing. Never retry or leak its cause.
+      // EventEmitter ignores this fixed result; the diagnostic cannot stop the controller.
+      return 'CONTROLLER_DIAGNOSTIC_OUTPUT_FAILED'
+    }
+    return null
+  }
+  register('SIGUSR2', handler)
+  return () => {
+    if (closed) { return }
+    closed = true
+    remove('SIGUSR2', handler)
+  }
+}
