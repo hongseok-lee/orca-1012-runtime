@@ -7,7 +7,8 @@ import { counter } from '../../../shared/durable-runtime/identity.ts'
 import type { GatewayContext, VerifiedControllerIdentity, CommandClaim } from '../runtime/gateway/types.ts'
 import { fixture, intent, executor } from '../lifecycle/verification-fixtures.mts'
 import { requestUnitIntent } from '../lifecycle/intent.ts'
-import { CONTROLLER_SCOPE, CONTROLLER_DATASET, ControllerInstance } from './instance.ts'
+import { CONTROLLER_SCOPE, CONTROLLER_DATASET, ControllerInstance, type LeaseRecord } from './instance.ts'
+import { releaseControllerLease } from './lease.ts'
 import { ControllerLeaseSession } from './session.ts'
 import { runControllerPass, type ControllerPassRequest } from './pass.ts'
 import type { TakeoverCommand } from './takeover.ts'
@@ -41,7 +42,13 @@ async function originalRows() {
 await test('committed execute and original lookup receive the frozen original controller/Unit/operation context', async t=>{
   const session=new ControllerLeaseSession(pool,new ControllerInstance(CONTROLLER_SCOPE),
     { revision:'command-context-fixture',durationMs:60000 })
-  t.after(async()=>{ try { if (session.lease) { await session.release() } } finally { await pool.end() } })
+  let confirmed: LeaseRecord | null=null
+  t.after(async()=>{
+    try {
+      if (session.lease) { await session.release() }
+      else if (confirmed) { await releaseControllerLease(pool,session.instance,confirmed) }
+    } finally { await pool.end() }
+  })
   const actual=await withDurableTransaction(pool,async tx=>{
     const row=(await tx.query<{ database:string;oid:string;system:string;pid:number }>(`SELECT current_database() AS database,
       (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
@@ -58,6 +65,7 @@ await test('committed execute and original lookup receive the frozen original co
   const before=await originalRows()
   assert.equal((await session.acquire()).status,'ACTIVE')
   const lease=session.lease; assert.ok(lease)
+  confirmed=lease
   const marker=Symbol('synthetic fixture provenance, not a production identity brand')
   // SAFETY: isolated fixture nominal identity from its real confirmed session;
   // this is not the private worker authentication issuer or provider proof.
