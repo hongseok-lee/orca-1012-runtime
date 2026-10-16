@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import test from 'node:test'
 import { logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
@@ -16,13 +16,13 @@ import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 import { inputDigest } from './gateway/input.ts'
 
 if (process.env.ORCA_AGENT_POD_PLAN_PERSISTENCE_APPROVED !== 'root-ready' ||
-    !/^orca_agent_pod_plan_[a-z0-9_]+$/u.test(process.env.PGDATABASE ?? '')) {
-  throw new Error('Root first plan-persistence assignment and isolated schema-ready database required')
+    process.env.PGDATABASE !== 'orca_execution_targets_20261015') {
+  throw new Error('Root first plan-persistence assignment and exact existing database required')
 }
 
 test('actual planner record and inventory preserve original unverified history and match only the stored logical plan', async t => {
-  const pool = createDurablePool({ max: 4, connectionTimeoutMillis: 5000, statement_timeout: 5000 })
-  const observer = createDurablePool({ max: 2, connectionTimeoutMillis: 5000, statement_timeout: 5000 })
+  const pool = createDurablePool({ database: 'orca_execution_targets_20261015', max: 4, connectionTimeoutMillis: 5000, statement_timeout: 5000 })
+  const observer = createDurablePool({ database: 'orca_execution_targets_20261015', max: 2, connectionTimeoutMillis: 5000, statement_timeout: 5000 })
   const namespace = 'agent-plan-persistence-fixture'
   const fresh = { unit: randomUUID(), operation: randomUUID(), attempt: randomUUID(), uid: `fixture-${randomUUID()}` }
   const late = { unit: randomUUID(), operation: randomUUID(), attempt: randomUUID(), uid: `fixture-${randomUUID()}` }
@@ -43,6 +43,37 @@ test('actual planner record and inventory preserve original unverified history a
     begin.release(); callback.release(); await worker.stop()
     await Promise.all([pool.end(), observer.end()])
   })
+  // Same existing DB after the DB owner's first023. This fixture never applies DDL or creates/resets a database.
+  const identity = (await pool.query(`SELECT current_database() AS database,
+    (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
+    (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
+  assert.deepEqual(identity, { database: 'orca_execution_targets_20261015', oid: '92238', system: '7696101282789175327' })
+  assert.deepEqual((await pool.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows,
+    [{ dataset_name: CONTROLLER_DATASET }])
+  const ledger = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
+  assert.equal(ledger.length, 23)
+  assert.deepEqual(ledger.map(row => row.version.slice(0, 3)), Array.from({ length: 23 }, (_, index) => String(index + 1).padStart(3, '0')))
+  assert.equal(ledger[22].version, '023-agent-pod-plans.sql')
+  assert.equal(ledger[22].checksum, 'c9f6f7d5a058114644175eaedd501dd9892bc31684e34f89bdb75901e3ff342e')
+  // Reuse the DB fixture's explicit protected-row multiset comparison, including its already committed plans.
+  const protectedTables = ['runtime_units', 'operations', 'attempts', 'execution_grants', 'runtime_members',
+    'storage_bindings', 'storage_write_grants', 'storage_mounts', 'messages', 'input_components',
+    'rpc_receipts', 'session_events', 'session_context_records', 'runtime_audit_events', 'outbox_events',
+    'runtime_commands', 'execution_target_records', 'runtime_member_storage_bindings', 'storage_namespace_profiles',
+    'storage_namespace_profile_versions', 'storage_namespace_holds', 'storage_namespace_management_operations', 'agent_pod_plans'] as const
+  async function originalRowHashes() {
+    const rows: Record<string, string[]> = {}
+    for (const table of protectedTables) {
+      rows[table] = (await observer.query<{ body: string }>(`SELECT to_jsonb(t)::text AS body FROM durable_runtime.${table} t`)).rows
+        .map(row => createHash('sha256').update(row.body).digest('hex')).sort()
+    }
+    rows.otherControllerLeases = (await observer.query<{ body: string }>(
+      'SELECT to_jsonb(c)::text AS body FROM durable_runtime.controller_leases c WHERE scope<>$1', [CONTROLLER_SCOPE])).rows
+      .map(row => createHash('sha256').update(row.body).digest('hex')).sort()
+    return rows
+  }
+  const originals = await originalRowHashes()
+  const fixtureLeaseBefore = (await observer.query('SELECT scope,owner,term,revision,expires_at FROM durable_runtime.controller_leases WHERE scope=$1', [CONTROLLER_SCOPE])).rows
   await withDurableTransaction(pool, initializeLifecycleScope)
   assert.equal(worker.start(), true)
   await until(() => worker.snapshot().inFlight.callbacks === 1)
@@ -87,7 +118,6 @@ test('actual planner record and inventory preserve original unverified history a
       WHERE aggregate_id=$1 AND event->>'kind'='CONTROLLER_INVENTORY_OBSERVATION' ORDER BY id`, [target.unit])).rows
   }
   const scope = Object.freeze({ datasetName: CONTROLLER_DATASET, namespace })
-  const ledger = (await observer.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
   await withDurableTransaction(pool, async tx => {
     for (const target of [fresh, late]) {
       await tx.query("INSERT INTO durable_runtime.runtime_units(id,dataset_name,desired_mode,phase) VALUES($1,$2,'RUNNING','READY')", [target.unit, CONTROLLER_DATASET])
@@ -173,5 +203,18 @@ test('actual planner record and inventory preserve original unverified history a
     [[fresh.attempt, late.attempt]])).rows[0].n, '0')
   assert.deepEqual((await observer.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger)
   callback.release(); await worker.stop()
+  const after = await originalRowHashes()
+  for (const [table, original] of Object.entries(originals)) {
+    const counts = new Map<string, number>()
+    for (const hash of after[table]) { counts.set(hash, (counts.get(hash) ?? 0) + 1) }
+    for (const hash of original) {
+      assert.ok((counts.get(hash) ?? 0) > 0, `Original ${table} row missing`)
+      counts.set(hash, (counts.get(hash) ?? 0) - 1)
+    }
+  }
+  const fixtureLeaseAfter = (await observer.query('SELECT scope,owner,term,revision,expires_at FROM durable_runtime.controller_leases WHERE scope=$1', [CONTROLLER_SCOPE])).rows
+  t.diagnostic(JSON.stringify({ identity, ledgerRows: 23, originalRowsPreserved: true,
+    originalRows: Object.fromEntries(Object.entries(originals).map(([table, hashes]) => [table, hashes.length])),
+    fixtureLeaseBefore, fixtureLeaseAfter, fixtureLeaseUsesOriginalWorkerSql: true, liveLeaseAccessed: false }))
   assert.equal((await pool.query('SELECT 1 AS n')).rows[0].n, 1, 'The borrowed pool remains usable')
 })
