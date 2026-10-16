@@ -82,7 +82,7 @@ await test('Namespace profile bootstrap: first domain, immutable replay and conf
   assert.equal(registered.profile.dataset_name, input.datasetName);
   assert.equal(registered.profile.backend_id, input.backendId);
   assert.equal(registered.profile.export_id, input.exportId);
-  assert.equal(registered.profile.generation, input.generation);
+  assert.equal(String(registered.profile.generation), input.generation);
   assert.equal(registered.profile.digest, input.digest);
   assert.equal(registered.profile.state, 'ACTIVE');
   assert.equal(registered.profile.revision, 0);
