@@ -37,7 +37,7 @@ PR150은 2026-10-16 19:46:04 UTC에 병합됐다. 이 문서의 Git base는 `f31
 | 후속 객체 | recorded Agent Pod plan·declared profile·command·지정 새 attempt·지정 새 pin hold가 없다. |
 | target 권한·mount | execution grant·write grant·mount 개수가 각각 0이다. |
 
-정확 Agent Pod 이름의 첫 GET은 제어 PID 1597759로 20:08:19.149–20:08:19.489 UTC에 실행됐으며 원 결과는 `NotFound`/exit 1이다. 제어 프로세스는 회수됐다. 실제 Pod UID·admission은 관측되지 않았다. LIST·exec·events·다른 이름 조회·추가 GET·Pod 생성으로 이 결과를 대체하지 않았다.
+정확 Agent Pod 이름의 첫 GET은 kubectl PID 1597759로 20:08:19.149–20:08:19.489 UTC에 실행됐으며 원 결과는 `NotFound`/exit 1이다. 제어 프로세스는 회수됐다. 실제 Pod UID·admission은 관측되지 않았다. LIST·exec·events·다른 이름 조회·추가 GET·Pod 생성으로 이 결과를 대체하지 않았다.
 
 정상 개발 runtime/API와 Agent 미생성 관측은 별개다. 이 snapshot과 NotFound만으로 실패 원인을 확정하지 않는다.
 
