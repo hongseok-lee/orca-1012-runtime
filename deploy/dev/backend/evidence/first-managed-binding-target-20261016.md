@@ -30,7 +30,7 @@
 
 후속 owner는 같은 고정 source와 수락된 target을 사용해 `2026-10-16T16:13:52.141Z`부터 `16:13:53.308Z`까지 한 번 실행했다. Caller PID는 9663이고 exit 0이며 hold·audit·binding·release가 각각 COMMITTED/ACKNOWLEDGED다. Binding은 `VERIFIED`, revision 1, epoch 0으로 바뀌었고 hold는 `RELEASED`다. 위 대상 표의 UNVERIFIED/revision 0은 그 전 읽기 전용 관측값으로 보존한다.
 
-Pin ID는 `618ca98a-4338-4c11-92aa-e936ad10ca54`, audit ID는 `824bd957-78ab-437b-8659-a69432e35c29`다. 원 인증 collector 관측은 `first-managed-binding:sha256:495fc8738c4c29a96a752b9d5e49327f6fe8b35aaa2e7f4f53bdfc479c2389a0`으로 감사에 보존됐다. 정확 membership 1개와 ledger 23은 유지됐다. Attempt·execution grant·write grant·seal·mount 이력은 여전히 0이다. Pool 정리 완료·active client 0·cleanupFailed=false이며 16:15:36.439 UTC의 원 PID 관측은 ABSENT다. Root는 인계의 참조 20개에서 오류 0을 확인해 수락했다.
+Pin ID는 `618ca98a-4338-4c11-92aa-e936ad10ca54`, audit ID는 `824bd957-78ab-437b-8659-a69432e35c29`다. Binding 검증의 `evidenceRef`는 `first-managed-binding:sha256:495fc8738c4c29a96a752b9d5e49327f6fe8b35aaa2e7f4f53bdfc479c2389a0`이다. Collector 자체의 `observationRef`는 별도의 `managed-leaf-observation:sha256:8ca050a7eddc257f48a24932f670bd6b965f04b7bf637071f26c9ab46027da64`이며 원 관측은 감사에 보존됐다. 정확 membership 1개와 ledger 23은 유지됐다. Attempt·execution grant·write grant·seal·mount 이력은 여전히 0이다. Pool 정리 완료·active client 0·cleanupFailed=false이며 16:15:36.439 UTC의 원 PID 관측은 ABSENT다. Root는 인계의 참조 20개에서 오류 0을 확인해 수락했다.
 
 재호출·새 pin·자동 release·Pod/정책 변경·provider/writer 활성화는 수행하지 않았다. 이 한정된 binding 검증은 물리 pin issuer 일반 구현·실제 Agent mount·oldwriter 차단을 대신하지 않는다.
 
