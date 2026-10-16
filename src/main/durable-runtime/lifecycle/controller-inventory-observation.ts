@@ -6,6 +6,7 @@ import { CONTROLLER_DATASET, CONTROLLER_SCOPE } from '../ha/instance.ts'
 import type { ControllerInventoryContext } from '../ha/pass.ts'
 import { LockedGatewayAuthority } from '../runtime/gateway/authority.ts'
 import { inputDigest } from '../runtime/gateway/input.ts'
+import type { JsonValue } from '../runtime/gateway/types.ts'
 import { readAgentPodPlan } from '../runtime/agent-pod-plan-records.ts'
 import { inventoryNamespace, inventoryName, inventoryOpaque } from './kubernetes-identity.ts'
 import type { ResourceWatchEvent } from './watch.ts'
@@ -26,14 +27,14 @@ function disposition(value: ControllerInventoryPersistence['disposition']): Cont
   return Object.freeze({ disposition: value })
 }
 
-function replaysObservation(stored: unknown, original: Readonly<Record<string, unknown>>): boolean {
+function replaysObservation(stored: unknown, original: Readonly<Record<string, JsonValue>>): boolean {
   if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) { return false }
   for (const [field, value] of Object.entries(original)) {
     if (!Object.hasOwn(stored, field) || Reflect.get(stored, field) !== value) { return false }
   }
   const verification = Reflect.get(stored, 'specHashVerification'), version = Reflect.get(stored, 'observationVersion')
   const planDigest = Reflect.get(stored, 'planDigest')
-  let payload: Readonly<Record<string, unknown>>
+  let payload: Readonly<Record<string, JsonValue>>
   if (version === undefined && verification === 'UNAVAILABLE' && planDigest === undefined) {
     // Original v1 history remains UNAVAILABLE even after a plan is recorded later.
     payload = { ...original, specHashVerification: verification }
