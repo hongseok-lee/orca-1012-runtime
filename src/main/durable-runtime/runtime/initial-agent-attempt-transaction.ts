@@ -2,7 +2,8 @@ import type { Pool } from 'pg'
 import { DurableDatabaseError, runDurableTransaction, type DurableTransactionResult } from '../db/connection.ts'
 import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence } from '../storage/evidence.ts'
 import type { GatewayContext } from './gateway/types.ts'
-import { reserveInitialAgentAttempt, type InitialAgentAttemptInput, type InitialAgentAttemptReservation } from './initial-agent-attempt.ts'
+import type { InitialDirectoryRevalidationGuard } from '../storage/initial-directory-revalidation-guard.ts'
+import { reserveInitialAgentAttempt, reserveFirstManagedInitialAgentAttempt, type InitialAgentAttemptInput, type InitialAgentAttemptReservation } from './initial-agent-attempt.ts'
 
 /** Externally prepared pins only. A lease represents the WHOLE group, including
  * protected RO bindings. This interface does not implement a physical issuer. */
@@ -50,9 +51,10 @@ function frozenDataRecord(value: unknown): boolean {
 /** Captures original claim/revisions before checkout and consumes only prepared
  * synchronous evidence. Caller owns pins on pre-handoff rejection. No provider,
  * filesystem, K8s, background retry, grant activation or physical pin issuance. */
-export async function reserveInitialAgentAttemptWithPreparedPins(
+async function reserveInitialAgentAttemptWithPreparedPinsInternal(
   pool: Pool, originalContext: GatewayContext, original: InitialAgentAttemptInput,
   authority: StorageEvidenceAuthority, originalReferences: readonly string[], owner: PreparedInitialAgentPinsOwner,
+  firstDirectory?: InitialDirectoryRevalidationGuard,
 ): Promise<InitialAgentAttemptTransactionResult> {
   const context: GatewayContext = Object.freeze({ runtimeUnitId: originalContext.runtimeUnitId,
     operationId: originalContext.operationId, controller: Object.freeze({ ...originalContext.controller }) })
@@ -133,7 +135,9 @@ export async function reserveInitialAgentAttemptWithPreparedPins(
   })
   let database: DurableTransactionResult<InitialAgentAttemptReservation>
   try {
-    database = await runDurableTransaction(borrowed, tx => reserveInitialAgentAttempt(tx, context, input, capturedAuthority))
+    database = await runDurableTransaction(borrowed, tx => firstDirectory
+      ? reserveFirstManagedInitialAgentAttempt(tx, context, input, capturedAuthority, firstDirectory)
+      : reserveInitialAgentAttempt(tx, context, input, capturedAuthority))
   } catch {
     return result(null, new DurableDatabaseError('INITIAL_AGENT_TRANSACTION_ENGINE_REJECTED'), retained('ENGINE_REJECTED'))
   }
@@ -144,4 +148,24 @@ export async function reserveInitialAgentAttemptWithPreparedPins(
     return result(database, null, retained('RELEASE_FAILED', new DurableDatabaseError('INITIAL_AGENT_PINS_RELEASE_FAILED')))
   }
   return result(database, null, Object.freeze({ disposition: 'RELEASED', releaseError: null, retainedOwner: null, retainedLease: null }))
+}
+
+/** Existing generic API keeps complete multi-binding group/settlement semantics. */
+export function reserveInitialAgentAttemptWithPreparedPins(pool: Pool, context: GatewayContext,
+  input: InitialAgentAttemptInput, authority: StorageEvidenceAuthority, references: readonly string[],
+  owner: PreparedInitialAgentPinsOwner): Promise<InitialAgentAttemptTransactionResult> {
+  return reserveInitialAgentAttemptWithPreparedPinsInternal(pool, context, input, authority, references, owner)
+}
+/** Named first-unused specialization; no caller transaction callback is accepted. */
+export function reserveFirstManagedInitialAgentAttemptWithPreparedPins(pool: Pool, context: GatewayContext,
+  input: InitialAgentAttemptInput, authority: StorageEvidenceAuthority, reference: string,
+  owner: PreparedInitialAgentPinsOwner, revalidation: InitialDirectoryRevalidationGuard): Promise<InitialAgentAttemptTransactionResult> {
+  if (!frozenDataRecord(revalidation) || !frozenDataRecord(revalidation.accepted) ||
+      !frozenDataRecord(revalidation.accepted.record) || !frozenDataRecord(revalidation.originalCandidate) ||
+      !frozenDataRecord(revalidation.originalCandidate.domain) ||
+      reference !== revalidation.evidenceRef || input.bindings.length !== 1) {
+    return Promise.reject(new DurableDatabaseError('INITIAL_AGENT_FIRST_SCOPE_REQUIRED'))
+  }
+  return reserveInitialAgentAttemptWithPreparedPinsInternal(pool, context, input, authority,
+    [reference], owner, revalidation)
 }
