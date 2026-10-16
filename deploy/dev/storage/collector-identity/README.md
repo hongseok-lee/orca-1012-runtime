@@ -34,4 +34,4 @@ Export된 `checkedMetadataList(response)`는 정확 HTTP 200·kind/apiVersion의
 
 명시적 계속은 실제 SA GET과 guard 8개 GET의 UID/spec/readiness를 확인하고 미생성 RBAC 6개를 확인한 뒤 원 metadata2→NFS10→RBAC6/issuer Binding-last를 재사용합니다. 기존 SA/guard POST는 하지 않으며 `priorAcknowledged`와 신규 `created`를 구분합니다. 변경·불명·충돌이면 CREATE 0으로 중단하고 원 불명 CREATE 회수·abort/no retry helper를 그대로 사용합니다. Root 부분수락은 전체 설치·실제 권한·token·collector·physical pin 합격이 아닙니다.
 
-새 `continuation.test.mjs`는 이 경계만 확인하는 미실행 집중 fixture source입니다. 기존 8개 합성 검사를 반복하지 않았으며 새 lint/value·실제 계속 API 호출은 아직 0입니다.
+`871c6c76eb59b9e182453ca318de2395e0aeb980`의 변경 mjs 2개와 새 `continuation.test.mjs`는 2026-10-16 11:11:08.664–11:11:09.292 UTC의 분리 stage에서 lint 0 warnings/0 errors·최초 집중 fixture 6/6을 통과했습니다. 실제 stage 입력 10개와 기존 도구 lock/package hash가 일치했고 소유 control/lint/value PID 종료를 회수했습니다. 기존 8개 합성 검사는 입력과 실행 대상에서 제외했습니다. 이 결과는 합성 operator API 경계이며 실제 계속 API·RBAC/token/collector·CEL/physical pin 검증은 아닙니다.
