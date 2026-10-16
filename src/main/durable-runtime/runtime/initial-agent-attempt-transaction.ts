@@ -38,6 +38,14 @@ function reference(value: string): string {
   }
   return value
 }
+function frozenDataRecord(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || !Object.isFrozen(value)) { return false }
+  const prototype = Object.getPrototypeOf(value)
+  return (prototype === Object.prototype || prototype === null) && Reflect.ownKeys(value).every(key => {
+    const property = Object.getOwnPropertyDescriptor(value, key)
+    return !!property && 'value' in property
+  })
+}
 
 /** Captures original claim/revisions before checkout and consumes only prepared
  * synchronous evidence. Caller owns pins on pre-handoff rejection. No provider,
@@ -66,8 +74,9 @@ export async function reserveInitialAgentAttemptWithPreparedPins(
   const prepared = Object.freeze(references.map(ref => {
     let evidence
     try { evidence = directory(ref) } catch { throw new DurableDatabaseError('INITIAL_AGENT_DIRECTORY_UNVERIFIED') }
-    if (!evidence || evidence.evidenceRef !== ref || !evidence.topologyPinId ||
-        !Object.isFrozen(evidence) || !Object.isFrozen(evidence.candidate) || !Object.isFrozen(evidence.candidate.domain)) {
+    if (!evidence || !frozenDataRecord(evidence) || evidence.evidenceRef !== ref ||
+        typeof evidence.topologyPinId !== 'string' || !evidence.topologyPinId ||
+        !frozenDataRecord(evidence.candidate) || !frozenDataRecord(evidence.candidate.domain)) {
       throw new DurableDatabaseError('INITIAL_AGENT_DIRECTORY_UNVERIFIED')
     }
     return evidence
