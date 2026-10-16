@@ -77,25 +77,40 @@ export async function verifyBindingWithPreparedPin(
     pin: Object.freeze({ disposition: 'RETAINED', reason, releaseError: null, retainedOwner: owner, retainedLease: lease }),
     physicalPinIssuerImplemented: false,
   });
+  // No borrowed-pool setup may throw after a successful ownership transfer.
+  const borrowed: Pool = Object.create(pool, { connect: { value: connect } });
   let lease;
   try { lease = take(evidence); }
   catch { return notStarted('STORAGE_PIN_HANDOFF_FAILED', 'TAKE_FAILED', null); }
-  if (!lease || !Object.isFrozen(lease) || lease.evidence !== evidence || typeof lease.release !== 'function') {
+  let releaseValue: unknown;
+  try {
+    if (!lease || !Object.isFrozen(lease)) {
+      return notStarted('STORAGE_PIN_HANDOFF_INVALID', 'INVALID_HANDOFF', lease ?? null);
+    }
+    const evidenceProperty = Object.getOwnPropertyDescriptor(lease, 'evidence');
+    const releaseProperty = Object.getOwnPropertyDescriptor(lease, 'release');
+    if (!evidenceProperty || !('value' in evidenceProperty) || evidenceProperty.value !== evidence ||
+        !releaseProperty || !('value' in releaseProperty)) {
+      return notStarted('STORAGE_PIN_HANDOFF_INVALID', 'INVALID_HANDOFF', lease);
+    }
+    releaseValue = releaseProperty.value;
+    if (typeof releaseValue !== 'function') {
+      return notStarted('STORAGE_PIN_HANDOFF_INVALID', 'INVALID_HANDOFF', lease);
+    }
+  } catch {
     return notStarted('STORAGE_PIN_HANDOFF_INVALID', 'INVALID_HANDOFF', lease ?? null);
   }
-  const heldLease = lease, release = heldLease.release.bind(heldLease);
+  const heldLease = lease, release = releaseValue;
   const retained = (reason: 'UNCONFIRMED' | 'RELEASE_FAILED',
     releaseError: DurableDatabaseError | null = null): BindingPinDisposition => Object.freeze({
     disposition: 'RETAINED', reason, releaseError, retainedOwner: owner, retainedLease: heldLease,
   });
-  // Borrow the original pool, capture its receiver, and never end it here.
-  const borrowed: Pool = Object.create(pool, { connect: { value: connect } });
   const database = await runDurableTransaction<Binding>(borrowed, tx => verify(tx, input));
   if (database.settlement === 'UNCONFIRMED') {
     return Object.freeze({ database, pin: retained('UNCONFIRMED'), physicalPinIssuerImplemented: false });
   }
   try {
-    await release();
+    await Reflect.apply(release, heldLease, []);
   } catch {
     return Object.freeze({ database, pin: retained('RELEASE_FAILED', new DurableDatabaseError('STORAGE_PIN_RELEASE_FAILED')),
       physicalPinIssuerImplemented: false });

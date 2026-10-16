@@ -17,9 +17,10 @@ function fixture(options: {
   commitGate?: Promise<void>; commitStarted?: () => void;
   rollbackGate?: Promise<void>; rollbackStarted?: () => void;
   releaseGate?: Promise<void>; releaseStarted?: () => void; releaseError?: Error; takeError?: Error;
+  invalidHandoff?: 'evidence-getter' | 'release-getter' | 'mutable';
 } = {}) {
   const events: string[] = [], sql: string[] = [], connectionReleases: boolean[] = []
-  const state = { pinHeld: true, taken: false, takes: 0, releases: 0, connectCalls: 0 }
+  const state = { pinHeld: true, taken: false, takes: 0, releases: 0, connectCalls: 0, leaseGetterReads: 0 }
   const unit = logicalId('runtime-unit', randomUUID()), member = logicalId('session', randomUUID())
   const binding = logicalId('storage-binding', randomUUID()), ref = 'synthetic-held:' + randomUUID()
   // SAFETY: fixture-only immutable prepared evidence; it is not a physical pin
@@ -34,15 +35,22 @@ function fixture(options: {
     mount() { return null }, mountPinValid() { return false }, executionTarget() { return null },
     executionTargetPinValid() { return false }, permanentComputeStop() { return null }, computeStopPinValid() { return false }
   })
-  const lease: PreparedBindingPinLease = Object.freeze({ evidence,
-    async release() {
-      assert.equal(this, lease); assert.equal(state.pinHeld, true)
-      state.releases++; events.push('PIN_RELEASE_REQUEST'); options.releaseStarted?.()
-      await options.releaseGate
-      if (options.releaseError) { throw options.releaseError }
-      state.pinHeld = false; events.push('PIN_RELEASED')
-    }
-  })
+  const release = async function (this: PreparedBindingPinLease) {
+    assert.equal(this, lease); assert.equal(state.pinHeld, true)
+    state.releases++; events.push('PIN_RELEASE_REQUEST'); options.releaseStarted?.()
+    await options.releaseGate
+    if (options.releaseError) { throw options.releaseError }
+    state.pinHeld = false; events.push('PIN_RELEASED')
+  }
+  const lease: PreparedBindingPinLease = options.invalidHandoff === 'evidence-getter'
+    ? Object.freeze({ get evidence(): VerifiedDirectoryEvidence {
+      state.leaseGetterReads++; throw new Error('synthetic evidence getter throws after transfer')
+    }, release })
+    : options.invalidHandoff === 'release-getter'
+      ? Object.freeze({ evidence, get release(): () => Promise<void> {
+        state.leaseGetterReads++; throw new Error('synthetic release getter throws after transfer')
+      } })
+      : options.invalidHandoff === 'mutable' ? { evidence, release } : Object.freeze({ evidence, release })
   const owner: PreparedBindingPinOwner = Object.freeze({
     takePreparedPin(held: VerifiedDirectoryEvidence) {
       assert.equal(this, owner); assert.equal(held, evidence); assert.equal(state.pinHeld, true)
@@ -205,6 +213,19 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
     assert.equal(commitWithRetainedPin.pin.retainedOwner, failedRelease.owner); assert.equal(commitWithRetainedPin.pin.retainedLease, failedRelease.lease)
     assert.equal(commitWithRetainedPin.pin.releaseError?.code, 'STORAGE_PIN_RELEASE_FAILED')
     assert.equal(commitWithRetainedPin.pin.releaseError?.message.includes('private'), false)
+  }
+
+  for (const invalidHandoff of ['evidence-getter', 'release-getter', 'mutable'] as const) {
+    const invalid = fixture({ invalidHandoff })
+    const invalidResult = await invalid.run()
+    assert.equal(invalid.state.taken, true); assert.equal(invalid.state.pinHeld, true)
+    assert.equal(invalid.state.connectCalls, 0); assert.deepEqual(invalid.sql, [])
+    assert.equal(invalid.state.releases, 0); assert.equal(invalid.state.leaseGetterReads, 0)
+    assert.equal(invalidResult.database.settlement, 'NOT_STARTED')
+    if (invalidResult.pin.disposition === 'RETAINED') {
+      assert.equal(invalidResult.pin.reason, 'INVALID_HANDOFF')
+      assert.equal(invalidResult.pin.retainedOwner, invalid.owner); assert.equal(invalidResult.pin.retainedLease, invalid.lease)
+    } else { assert.fail('invalid post-take lease must retain the same owner and handle') }
   }
 
   const noTake = fixture({ takeError: new Error('synthetic atomic owner rejection') })
