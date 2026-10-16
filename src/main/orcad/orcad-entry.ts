@@ -25,6 +25,7 @@ import { acquireOrcadInstanceLock, OrcadInstanceLockError } from './orcad-instan
 import { startOrcadWithLifecycle } from './orcad-lifecycle'
 import { stopOrcadRuntimeWithDurableCatalog } from './orcad-durable-catalog-cleanup'
 import * as startup from './orcad-ops'
+import { installOrcadControllerDiagnostics } from './orcad-controller-diagnostics'
 
 let runOrcadQuitHandlers = (): void => {}
 
@@ -162,16 +163,23 @@ async function startOrcadRuntime(
 
   let rpc: InstanceType<typeof OrcaRuntimeRpcServer> | null = null
   let durableCatalog: startup.OrcadDurableCatalog | null = null
+  let removeControllerDiagnostics = (): void => {}
   let uninstallHookStatusRepublish = (): void => {}
   let uninstallObservedStatusIdentity = (): void => {}
-  registerCleanup(() => stopOrcadRuntimeWithDurableCatalog({
-    stopRpc: () => rpc?.stop(), stopAgentControlAdapter, stopDaemon: stopOrcadDaemon,
-    uninstallObservedStatusIdentity: () => uninstallObservedStatusIdentity(),
-    uninstallHookStatusRepublish: () => uninstallHookStatusRepublish(),
-    stopAgentHookServer: () => agentHookServer.stop(),
-    stopDurableCatalog: () => durableCatalog?.stop()
-  }))
-  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog })
+  registerCleanup(() => {
+    removeControllerDiagnostics()
+    return stopOrcadRuntimeWithDurableCatalog({
+      stopRpc: () => rpc?.stop(), stopAgentControlAdapter, stopDaemon: stopOrcadDaemon,
+      uninstallObservedStatusIdentity: () => uninstallObservedStatusIdentity(),
+      uninstallHookStatusRepublish: () => uninstallHookStatusRepublish(),
+      stopAgentHookServer: () => agentHookServer.stop(),
+      stopDurableCatalog: () => durableCatalog?.stop()
+    })
+  })
+  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => {
+    durableCatalog = catalog
+    removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog)
+  })
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
       headless: browserProvider !== null, screencast: browserProvider?.kind === 'chromium',
