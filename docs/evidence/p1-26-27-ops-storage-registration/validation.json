@@ -1,0 +1,80 @@
+{
+  "recordedAt": "2026-10-16T12:46:20.298539+00:00",
+  "sourcePin": "80eff45fe6395ed40dc3106e7d874e584969b80c",
+  "typeExaminedPin": "aecddd931f318f146be968b898f8dfe87796bdd9",
+  "sourceGitTreeEqualsTypeExaminedTree": true,
+  "originalLint": {
+    "files": 3,
+    "exit": 1,
+    "diagnostic": "eslint(max-lines): File has too many lines (303). Maximum allowed is 300."
+  },
+  "formatCorrection": "같은 flatMap 표현의 줄바꿈3개만 접었습니다. 규칙/suppression 변경은 없습니다.",
+  "changedUILint": {
+    "files": 1,
+    "exit": 0
+  },
+  "originalStrictType": {
+    "exit": 1,
+    "diagnostics": [
+      "connection.ts:30 oid TS7006",
+      "connection.ts:30 format TS7006"
+    ],
+    "cause": "검증 stage에서 cached pg-types/pg-protocol 전이 선언 경로가 빠져 contextual typing이 사라졌습니다."
+  },
+  "strictTypeCorrection": {
+    "startedAt": "2026-10-16T12:11:47.700Z",
+    "endedAt": "2026-10-16T12:11:48.932Z",
+    "exit": 0,
+    "entries": 3,
+    "sourceClosure": 22,
+    "sourceAndConfigInputs": 28,
+    "GitMismatch": 0,
+    "outsideSourceTree": 0,
+    "strictConfigChanged": false,
+    "originalConnectionSourceUnchanged": true,
+    "cachedDeclarationPathsCorrected": 2,
+    "sharedCacheModified": false,
+    "installation": 0
+  },
+  "parserAnnotationProposal": "제안은 원자료로 보존하고 최종 제품 delta에서 제외했습니다. 실제 검사는 원 connection.ts로 통과했습니다.",
+  "live": {
+    "sourceFilesApplied": 3,
+    "automaticWatchGenerations": 1,
+    "readyAt": "2026-10-16T12:25:35.784Z",
+    "generation": 5,
+    "runtimePID": 7336,
+    "artifactSHA256": "99aceb02fd005a6e75b2f67318b8599d17b816d232bdb70b1f7ba91535536eea",
+    "extraAlreadyMergedRuntimeChange": "기존 live unit.ts에 미반영된 PR98의 junction JOIN1줄을 Root 수락 뒤 함께 반영했습니다. 이 PR의 base 대비 제품 diff는 등록3필드뿐입니다.",
+    "manualBuildOrRestart": 0
+  },
+  "firstNewViewer": {
+    "startedAt": "2026-10-16T12:29:09.191Z",
+    "endedAt": "2026-10-16T12:33:17.398Z",
+    "exit": 0,
+    "PNG": 1,
+    "imageSHA256": "19443ace153b9ec4fb668b277af970d20e6b5fa9937b980d5c1f56b7b093abba",
+    "observation": "Sessions/Tabs까지만 보여 등록 필드는 미확인이었습니다. 마지막 PNG를 transport/전체scroll 완료로 세지 않았습니다. 원자료는 비공개 운영 증거에 보존했습니다."
+  },
+  "rootAllocatedCurrentFrameContinuation": {
+    "exit": 0,
+    "summary": 0,
+    "detail": 0,
+    "scroll": 1,
+    "frameReread": 0,
+    "PNG": 1,
+    "imageSHA256": "2c3f8cf69312642a49c6ac7573b8c652bd612b446186ea5bd6dc2e2632ce65a5",
+    "registrationFieldsMatchedAcceptedReadonlyRow": true
+  },
+  "noAdditionalExecution": {
+    "successLintOrTypeRepeat": 0,
+    "valueOrUnit": 0,
+    "PG": 0,
+    "additionalGET": 0,
+    "installation": 0,
+    "fullEntryType": 0,
+    "imageBuild": 0,
+    "newPairing": 0,
+    "automaticViewerRetry": 0
+  },
+  "usageCreditsStreamErrorObserved": false
+}
