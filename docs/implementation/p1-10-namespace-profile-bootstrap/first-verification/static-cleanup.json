@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-16T14:43:07.982Z",
+  "pids": [
+    {
+      "pid": 8526,
+      "state": "Z",
+      "parent": 1,
+      "ticks": "27365970"
+    },
+    {
+      "pid": 8533,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 8540,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 8552,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 8597,
+      "state": "ABSENT"
+    }
+  ],
+  "heavy": 0,
+  "PGConnections": 0
+}

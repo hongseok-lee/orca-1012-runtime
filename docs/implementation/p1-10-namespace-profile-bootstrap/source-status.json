@@ -2,7 +2,7 @@
   "fixedBase": "e036bee08083750345796596d1e330280cd86c3c",
   "sourcePin": "9839357ab2057bf320d842aad69361386ac0bd2f",
   "productPin": "d3fbc48238d8378b8d6196258e5c9a1c8fa6730b",
-  "phase": "SOURCE_ONLY_NOT_EXECUTED",
+  "phase": "FIRST_LINT_TYPE_PG_PASS",
   "ownedFiles": [
     "src/main/durable-runtime/storage/namespace-holds.ts",
     "src/main/durable-runtime/storage/namespace-profile-bootstrap.pg.test.mts"
@@ -60,12 +60,17 @@
   ],
   "runtimeSourceFiles": 6,
   "inputBasis": "Source imports only; actual native type readset/runtime metafile not yet executed.",
-  "lint": 0,
-  "type": 0,
-  "PGCallbacks": 0,
+  "lint": 1,
+  "type": 1,
+  "PGCallbacks": 1,
   "DDL": 0,
-  "remote": 0,
+  "remote": "One static job and one separately approved PG job; no successful repeat.",
   "collector": 0,
   "heavy": 0,
-  "usageCreditsStreamErrorObserved": false
+  "usageCreditsStreamErrorObserved": false,
+  "verifiedPin": "11eb8b40756ba6a010473f859132f548e4f3bb1f",
+  "actualTypeSourceInputs": 7,
+  "actualTypeExternalInputs": 210,
+  "actualRuntimeSourceInputs": 5,
+  "actualRuntimeMetafileInputs": 6
 }

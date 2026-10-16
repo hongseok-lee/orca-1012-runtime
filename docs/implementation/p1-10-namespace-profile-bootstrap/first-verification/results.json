@@ -1,0 +1,102 @@
+{
+  "sourcePin": "11eb8b40756ba6a010473f859132f548e4f3bb1f",
+  "static": {
+    "lint": {
+      "files": 2,
+      "exit": 0,
+      "rawLogSHA256": "4e79b11754e52e9be09b4a5ac49a851c96130cbed1546d1e2e0dab7e109fd3d4"
+    },
+    "type": {
+      "sourceInputs": 7,
+      "externalInputs": 210,
+      "mismatches": [],
+      "outside": [],
+      "GitBytesHashMismatch": [],
+      "wholeExit": 0,
+      "ownedDiagnostics": 0,
+      "externalDiagnostics": 0,
+      "rawListFilesLogSHA256": "a82a0bf10e66eaedf30f2feb2d22e67d54af1654bbad0ad1832734672c8e3a9c"
+    },
+    "jobs": [
+      {
+        "name": "stage",
+        "pid": 8533,
+        "startedAt": "2026-10-16T14:42:35.265Z",
+        "exit": 0,
+        "signal": null,
+        "endedAt": "2026-10-16T14:42:35.390Z",
+        "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "lint",
+        "pid": 8540,
+        "startedAt": "2026-10-16T14:42:35.396Z",
+        "exit": 0,
+        "signal": null,
+        "endedAt": "2026-10-16T14:42:35.747Z",
+        "logSHA256": "4e79b11754e52e9be09b4a5ac49a851c96130cbed1546d1e2e0dab7e109fd3d4"
+      },
+      {
+        "name": "type",
+        "pid": 8552,
+        "startedAt": "2026-10-16T14:42:35.754Z",
+        "observedDirectChildren": [],
+        "exit": 0,
+        "signal": null,
+        "endedAt": "2026-10-16T14:42:37.424Z",
+        "logSHA256": "a82a0bf10e66eaedf30f2feb2d22e67d54af1654bbad0ad1832734672c8e3a9c"
+      },
+      {
+        "name": "type-input-guard",
+        "pid": 8597,
+        "startedAt": "2026-10-16T14:42:37.427Z",
+        "exit": 0,
+        "signal": null,
+        "endedAt": "2026-10-16T14:42:37.567Z",
+        "logSHA256": "63bfd876baeee85021caafd37e4b02472e28c499f5e77e3c72e4a3407a4f7be6"
+      }
+    ]
+  },
+  "PG": {
+    "actualCallbackPid": 9039,
+    "callbackEnteredAt": "2026-10-16T14:49:16.803Z",
+    "callbackCount": 1,
+    "parentProductCallbackCount": 0,
+    "tapPass": 2,
+    "tapFail": 0,
+    "jobs": [
+      {
+        "name": "prepare-pg",
+        "pid": 9016,
+        "startedAt": "2026-10-16T14:49:15.668Z",
+        "exit": 0,
+        "signal": null,
+        "endedAt": "2026-10-16T14:49:15.872Z",
+        "logSHA256": "543cc34f36737924076ab50b8c57aec4646fc195d1ebfb7a75793b0407e6fe31"
+      },
+      {
+        "name": "pg",
+        "pid": 9033,
+        "startedAt": "2026-10-16T14:49:16.560Z",
+        "exit": 0,
+        "signal": null,
+        "endedAt": "2026-10-16T14:49:17.163Z",
+        "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "ledgerCount": 23,
+  "ledger23Unchanged": true,
+  "originalTables": 32,
+  "originalRows": 1040,
+  "afterRows": 1045,
+  "originalRowsPreserved": true,
+  "identityGuard": "Exact original isolated DB/OID/system/dataset matched; same runner Pool before/after and fixture same Pool before/after. Exact identity evidence retained privately.",
+  "DDL": 0,
+  "livePG": 0,
+  "collector": 0,
+  "sourceChanged": false,
+  "successfulTestsRepeated": false,
+  "heavy": 0,
+  "usageCreditsStreamErrorObserved": false
+}
