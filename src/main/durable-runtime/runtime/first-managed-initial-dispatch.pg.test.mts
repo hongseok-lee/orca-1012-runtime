@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import test from 'node:test'
-import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
+import { logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { createDurablePool } from '../db/connection.ts'
 import { readMigrations } from '../db/migrate.ts'
 import { CONTROLLER_SCOPE } from '../ha/instance.ts'
