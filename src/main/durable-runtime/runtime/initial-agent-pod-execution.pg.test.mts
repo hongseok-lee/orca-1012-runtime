@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, createHash } from 'node:crypto'
 import { test } from 'node:test'
 import type { Pool, PoolClient, QueryResultRow } from 'pg'
 import { createDurablePool, DurableDatabaseError, withDurableTransaction } from '../db/connection.ts'
@@ -10,11 +10,13 @@ import type { PayloadHash } from './runtime-evidence.ts'
 import type { InitialAgentAttemptInput } from './initial-agent-attempt.ts'
 import type { PreparedInitialAgentPinsLease, PreparedInitialAgentPinsOwner } from './initial-agent-attempt-transaction.ts'
 import { createAgentPodPlanner } from './agent-pod-plan.ts'
-import { recordAgentPodPlan } from './agent-pod-plan-records.ts'
+import type { UnauthorizedAgentPodPlan } from './agent-pod-plan.ts'
+import { CLOSED_AGENT_BOOTSTRAP } from './closed-agent-bootstrap.ts'
+import { recordAgentPodPlan, readAgentPodPlan } from './agent-pod-plan-records.ts'
 import { LockedGatewayAuthority } from './gateway/authority.ts'
 import { submitCommand, originalIdentity } from './gateway/store.ts'
 import { claimCommand } from './gateway/claim.ts'
-import { inputDigest } from './gateway/input.ts'
+import { inputDigest, canonicalInput } from './gateway/input.ts'
 import { harness, reviewerToken } from './kubernetes-pod-auth-fixtures.mts'
 import { createInitialAgentPodExecution } from './initial-agent-pod-execution.ts'
 
@@ -55,12 +57,22 @@ async function originalRows() {
 }
 
 // Only the additive seed needed by this integration. Reservation/assignment SQL stays in its actual modules.
-async function seed(entrypoint = { command: ['/usr/local/bin/node'], args: ['-e', 'setInterval(() => {}, 3600000)'] }) {
+// Historical fixture data only: the old row is seeded without rewriting any existing plan.
+function legacyClosedFixturePlan(current: UnauthorizedAgentPodPlan): UnauthorizedAgentPodPlan {
+  const value = JSON.parse(JSON.stringify(current))
+  delete value.pod.metadata.annotations[CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation]
+  value.pod.spec.containers[0].workingDir = '/agent/project'
+  value.podSpecSHA256 = createHash('sha256').update(JSON.stringify(value.pod.spec)).digest('hex')
+  return value
+}
+async function seed(entrypoint: { command: readonly string[]; args: readonly string[] } = {
+  command: CLOSED_AGENT_BOOTSTRAP.command, args: CLOSED_AGENT_BOOTSTRAP.args },
+  legacyClosedRead = false) {
   const unit = logicalId('runtime-unit', randomUUID()), operation = logicalId('operation', randomUUID()), attempt = randomUUID()
   const session = randomUUID(), agent = randomUUID(), workspace = randomUUID(), leaf = randomUUID(), bindingId = logicalId('storage-binding', randomUUID())
   const exportId = `synthetic-execution-export:${randomUUID()}`, reference = `synthetic-execution-directory:${bindingId}`
   const context: GatewayContext = Object.freeze({ runtimeUnitId: unit, operationId: operation, controller })
-  const plan = createAgentPodPlanner({ namespace, dataset, image: `example.invalid/agent@sha256:${'1'.repeat(64)}`,
+  const currentPlan = createAgentPodPlanner({ namespace, dataset, image: `example.invalid/agent@sha256:${'1'.repeat(64)}`,
     entrypoint,
     paths: { home: '/agent/home', claudeState: '/agent/home/.claude', codexState: '/agent/home/.codex', checkout: '/agent/project' },
     protectedMounts: [{ key: 'all', clientPath: '/agent' }], nfsServer: 'nfs.fixture.svc.cluster.local',
@@ -71,6 +83,7 @@ async function seed(entrypoint = { command: ['/usr/local/bin/node'], args: ['-e'
   protectedBindings: [{ key: 'all', bindingId, leafId: leaf, claimName: `protected-${leaf}`, claimUid: `claim-${leaf}`,
     pvUid: `consumer-pv-${leaf}`, serverPath: `/exports/runtime-domains/${dataset}/${leaf}`, mode: 'RW' }],
   profile: { revision: '0', cpuMilli: 100, memoryMi: 128, ephemeralMi: 256, temporaryMi: 64 } })
+  const plan = legacyClosedRead ? legacyClosedFixturePlan(currentPlan) : currentPlan
   // SAFETY: synthetic prepared proof only. Server backing PV and consumer leaf PV remain distinct.
   const evidence = Object.freeze({ evidenceRef: reference, topologyPinId: `synthetic-pin:${bindingId}`,
     candidate: Object.freeze({ domain: Object.freeze({ backendId: 'execution-fixture', exportId, pvUid: `server-ssd-pv:${exportId}` }),
@@ -88,7 +101,23 @@ async function seed(entrypoint = { command: ['/usr/local/bin/node'], args: ['-e'
     await tx.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
       VALUES($1,$2,$3,$4,$5,clock_timestamp(),'VERIFIED')`, [bindingId, 'execution-fixture', exportId, `/${dataset}/${leaf}`, reference])
     await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [unit, session, bindingId])
-    const stored = await recordAgentPodPlan(tx, context, plan)
+    let stored
+    if (legacyClosedRead) {
+      await assert.rejects(recordAgentPodPlan(tx, context, plan),
+        error => error instanceof DurableDatabaseError && error.code === 'AGENT_POD_PLAN_INPUT_INVALID')
+      // Isolated historical-row setup, not a product write path or legacy CREATE permission.
+      const encoded = canonicalInput(JSON.parse(JSON.stringify(plan))), planDigest = inputDigest(JSON.parse(encoded))
+      await tx.query(`INSERT INTO durable_runtime.agent_pod_plans
+        (operation_id,runtime_unit_id,dataset_name,attempt_id,execution_epoch,intent_revision,namespace,resource_name,
+         spec_hash,pod_spec_sha256,plan_digest,plan) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)`,
+      [operation, unit, dataset, attempt, plan.identity.executionEpoch, plan.identity.intentRevision,
+        namespace, plan.identity.resourceName, plan.identity.specHash, plan.podSpecSHA256, planDigest, encoded])
+      const record = await readAgentPodPlan(tx, operation)
+      assert.ok(record)
+      stored = { record }
+    } else {
+      stored = await recordAgentPodPlan(tx, context, plan)
+    }
     const envelope = { operationId: operation, controllerTerm: controller.term, stepRevision: counter('step-revision', '0'),
       executionEpoch: plan.identity.executionEpoch, intentRevision: plan.identity.intentRevision, podTarget: 'CREATE_WITHOUT_POD' as const, expectedPodUid: null }
     const commandInput = { resourceName: plan.identity.resourceName, body: { mode: 'COLD', planDigest: stored.record.planDigest,
@@ -228,6 +257,96 @@ test('actual committed initial reservation connects once to idle Pod observation
   assert.equal(unconfirmed.reservation?.pins.disposition, 'RETAINED'); assert.equal(pending.held.state.releases, 0)
   assert.equal(unconfirmed.observation, null); assert.equal(unconfirmed.assignment, null); assert.equal(noHttp.requests.length, 0)
   assert.equal(pending.db.state.clients, 0); noHttp.assertCleanup()
+
+  const after = await originalRows()
+  for (const table of tables) {
+    const remaining = [...after[table]]
+    for (const row of before[table]) {
+      const index = remaining.indexOf(row); assert.notEqual(index, -1, `original ${table} row retained`); remaining.splice(index, 1)
+    }
+  }
+  await identity()
+  assert.deepEqual((await pool.query('SELECT * FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger)
+})
+
+
+// Run this new callback alone; the earlier accepted integration callback is not part of this focused verification.
+test('closed bootstrap working directory preserves checkout records and legacy lookup without legacy CREATE', async t => {
+  t.after(() => pool.end())
+  await identity()
+  const ledger = (await pool.query('SELECT * FROM durable_runtime.schema_migrations ORDER BY version')).rows
+  assert.equal(ledger.length, 23)
+  const before = await originalRows()
+  await pool.query(`INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at)
+    VALUES($1,$2,1,clock_timestamp()+interval '5 minutes')`, [scope, ownerId])
+
+  await t.test('new closed plan round-trips its desired checkout and rejects cwd or annotation changes', async () => {
+    const f = await seed(), container = f.plan.pod.spec.containers[0]
+    assert.equal(container.workingDir, '/tmp')
+    assert.equal(f.plan.pod.metadata.annotations[CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation], '/agent/project')
+    assert.deepEqual(container.env, [{ name: 'HOME', value: '/agent/home' },
+      { name: 'CLAUDE_CONFIG_DIR', value: '/agent/home/.claude' }, { name: 'CODEX_HOME', value: '/agent/home/.codex' }])
+    const record = await withDurableTransaction(pool, tx => readAgentPodPlan(tx, f.context.operationId))
+    assert.ok(record)
+    assert.equal(JSON.stringify(record.plan), JSON.stringify(f.plan))
+    assert.equal(record.planDigest, f.request.planDigest)
+    const mutations: readonly [string, (value: typeof f.plan) => void, string][] = [
+      ['cwd', value => { Object.assign(value.pod.spec.containers[0], { workingDir: '/agent/project' }) }, 'AGENT_POD_PLAN_INPUT_INVALID'],
+      ['extra annotation', value => { Object.assign(value.pod.metadata.annotations, { 'orca.dev/unreviewed': 'value' }) }, 'AGENT_POD_PLAN_INPUT_INVALID'],
+      ['changed desired checkout', value => { Object.assign(value.pod.metadata.annotations, { [CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation]: '/agent/other' }) }, 'AGENT_POD_PLAN_CONFLICT'],
+      ['shared checkout', value => { Object.assign(value.pod.metadata.annotations, { [CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation]: '/shared/project' }) }, 'AGENT_POD_PLAN_INPUT_INVALID'],
+      ['missing desired checkout', value => { Reflect.deleteProperty(value.pod.metadata.annotations, CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation) }, 'AGENT_POD_PLAN_INPUT_INVALID'],
+    ]
+    for (const [label, mutate, code] of mutations) {
+      const changed: typeof f.plan = JSON.parse(JSON.stringify(f.plan))
+      mutate(changed)
+      await assert.rejects(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, f.context, changed)),
+        error => error instanceof DurableDatabaseError && error.code === code, label)
+    }
+    const h = harness([{ status: 404 }, { status: 201, body: observedPod(f, `synthetic-new-cwd:${randomUUID()}`) }]), actual = compose(f, h)
+    const assigned = await actual.executor.start(start(f), new AbortController().signal)
+    assert.equal(assigned.assignment?.ok, true)
+    assert.deepEqual(h.requests.map(row => row.options.method), ['GET', 'POST'])
+    assert.equal(h.requests[1]?.request.body, JSON.stringify(f.plan.pod))
+    assert.equal(assigned.gate, 'CLOSED'); assert.equal(assigned.providerReady, false); assert.equal(assigned.writerGrantActivated, false)
+    h.assertCleanup()
+  })
+
+  await t.test('legacy canonical bytes and digest survive read and LOOKUP_ONLY while new CREATE stays closed', async () => {
+    const f = await seed({ command: CLOSED_AGENT_BOOTSTRAP.command, args: CLOSED_AGENT_BOOTSTRAP.args }, true)
+    const original = (await pool.query('SELECT plan::text AS bytes,plan_digest,pod_spec_sha256 FROM durable_runtime.agent_pod_plans WHERE operation_id=$1', [f.context.operationId])).rows
+    const record = await withDurableTransaction(pool, tx => readAgentPodPlan(tx, f.context.operationId))
+    assert.ok(record)
+    assert.equal(JSON.stringify(record.plan), JSON.stringify(f.plan))
+    assert.equal(record.planDigest, f.request.planDigest)
+    assert.equal(record.plan.pod.spec.containers[0].workingDir, '/agent/project')
+    assert.equal(Object.hasOwn(record.plan.pod.metadata.annotations, CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation), false)
+    const replay = await withDurableTransaction(pool, tx => recordAgentPodPlan(tx, f.context, record.plan))
+    assert.equal(replay.disposition, 'REPLAYED'); assert.equal(replay.record.planDigest, record.planDigest)
+    const noHttp = harness([]), denied = compose(f, noHttp)
+    const stopped = await denied.executor.start(start(f), new AbortController().signal)
+    assert.equal(stopped.reservation?.database?.ok, true)
+    assert.equal(stopped.error?.code, 'INITIAL_AGENT_EXECUTION_BOOTSTRAP')
+    assert.equal(stopped.createRequested, false); assert.equal(noHttp.requests.length, 0)
+    assert.equal(denied.held.state.releases, 1); noHttp.assertCleanup()
+    const h = harness([{ body: observedPod(f, `synthetic-legacy-cwd:${randomUUID()}`) }]), existing = compose(f, h)
+    const found = await existing.executor.lookup(lookup(f), new AbortController().signal)
+    assert.equal(found.assignment?.ok, true); assert.equal(found.observation?.disposition, 'FOUND')
+    assert.equal(found.createRequested, false); assert.equal(found.observation?.postAttempts, 0)
+    assert.deepEqual(h.requests.map(row => row.options.method), ['GET'])
+    assert.equal(existing.held.state.takes, 0)
+    assert.equal(found.gate, 'CLOSED'); assert.equal(found.providerReady, false); assert.equal(found.writerGrantActivated, false)
+    h.assertCleanup()
+    assert.deepEqual((await pool.query('SELECT plan::text AS bytes,plan_digest,pod_spec_sha256 FROM durable_runtime.agent_pod_plans WHERE operation_id=$1', [f.context.operationId])).rows, original)
+  })
+
+  await t.test('a different trusted argv retains its protected checkout cwd and has no bootstrap annotation', async () => {
+    const f = await seed({ command: ['/usr/local/bin/node'], args: ['-e', 'setInterval(() => {}, 3600000);'] })
+    assert.equal(f.plan.pod.spec.containers[0].workingDir, '/agent/project')
+    assert.equal(Object.hasOwn(f.plan.pod.metadata.annotations, CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation), false)
+    const record = await withDurableTransaction(pool, tx => readAgentPodPlan(tx, f.context.operationId))
+    assert.ok(record); assert.equal(JSON.stringify(record.plan), JSON.stringify(f.plan))
+  })
 
   const after = await originalRows()
   for (const table of tables) {

@@ -9,6 +9,7 @@ import { agentPodArray, agentPodFields, agentPodInteger, agentPodText } from './
 import { canonicalInput } from './gateway/input.ts'
 import { LockedGatewayAuthority } from './gateway/authority.ts'
 import type { GatewayContext } from './gateway/types.ts'
+import { CLOSED_AGENT_BOOTSTRAP, isClosedAgentBootstrap } from './closed-agent-bootstrap.ts'
 
 export type { AgentPodPlanRecord, AgentPodPlanWriteResult, RecordAgentPodPlan, ReadAgentPodPlan } from '../db/agent-pod-plan-record-rows.ts'
 
@@ -41,6 +42,18 @@ function quantity(value: unknown, suffix: string): number {
   if (!text.endsWith(suffix) || !/^[1-9][0-9]*$/.test(text.slice(0, -suffix.length))) { return invalid() }
   return agentPodInteger(Number(text.slice(0, -suffix.length)))
 }
+// Read compatibility only. The original canonical plan/spec bytes are rebuilt,
+// never rewritten in storage or accepted as a new legacy-format record.
+function legacyClosedPlanForRead(plan: UnauthorizedAgentPodPlan, checkout: string): UnauthorizedAgentPodPlan {
+  const annotations = { ...plan.pod.metadata.annotations }
+  delete annotations[CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation]
+  const container = Object.freeze({ ...plan.pod.spec.containers[0], workingDir: checkout })
+  const spec = Object.freeze({ ...plan.pod.spec, containers: Object.freeze([container]) })
+  return Object.freeze({ ...plan,
+    pod: Object.freeze({ ...plan.pod, metadata: Object.freeze({ ...plan.pod.metadata,
+      annotations: Object.freeze(annotations) }), spec }),
+    podSpecSHA256: createHash('sha256').update(JSON.stringify(spec)).digest('hex') })
+}
 function capturePlan(original: unknown) {
   try {
     const json = snapshot(original), encoded = canonicalInput(json)
@@ -48,11 +61,19 @@ function capturePlan(original: unknown) {
     const pod = agentPodFields(p.get('pod'), ['apiVersion','kind','metadata','spec'])
     const metadata = agentPodFields(pod.get('metadata'), ['name','namespace','labels','annotations'])
     const labels = agentPodFields(metadata.get('labels'), ['orca.dev/role','orca.dev/dataset','orca.dev/runtime-unit'])
-    const annotations = agentPodFields(metadata.get('annotations'), ['orca.dev/operation-id','orca.dev/attempt-id','orca.dev/execution-epoch','orca.dev/intent-revision','orca.dev/spec-hash','orca.dev/resource-profile-revision'])
+    const annotationInput = metadata.get('annotations')
+    const hasCheckout = annotationInput !== null && typeof annotationInput === 'object' &&
+      Object.hasOwn(annotationInput, CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation)
+    const annotations = agentPodFields(annotationInput, ['orca.dev/operation-id','orca.dev/attempt-id','orca.dev/execution-epoch','orca.dev/intent-revision','orca.dev/spec-hash','orca.dev/resource-profile-revision',
+      ...(hasCheckout ? [CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation] : [])])
     const spec = agentPodFields(pod.get('spec'), ['restartPolicy','terminationGracePeriodSeconds','hostNetwork','automountServiceAccountToken','nodeSelector','tolerations','securityContext','affinity','containers','volumes'])
     const containers = agentPodArray(spec.get('containers'))
     if (containers.length !== 1) { return invalid() }
     const container = agentPodFields(containers[0], ['name','image','imagePullPolicy','command','args','workingDir','env','resources','securityContext','volumeMounts'])
+    const entrypoint = { command: agentPodArray(container.get('command')), args: agentPodArray(container.get('args')) }
+    const closedBootstrap = isClosedAgentBootstrap(entrypoint), legacyClosedRead = closedBootstrap && !hasCheckout
+    if (hasCheckout && (!closedBootstrap || container.get('workingDir') !== CLOSED_AGENT_BOOTSTRAP.workingDir)) { return invalid() }
+    const checkout = agentPodText(hasCheckout ? annotations.get(CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation) : container.get('workingDir'))
     const env = agentPodArray(container.get('env')).map(item => agentPodFields(item, ['name','value']))
     const envValue = (name: string) => {
       const matches = env.filter(item => item.get('name') === name)
@@ -77,19 +98,20 @@ function capturePlan(original: unknown) {
     // Reconstruction validates only the planner's fixed structure and internal
     // digest. Reconstructed policy is NOT authenticated external authority.
     const planner = createAgentPodPlanner({ namespace: metadata.get('namespace'), dataset, image: container.get('image'),
-      entrypoint: { command: container.get('command'), args: container.get('args') },
-      paths: { home: envValue('HOME'), claudeState: envValue('CLAUDE_CONFIG_DIR'), codexState: envValue('CODEX_HOME'), checkout: container.get('workingDir') },
+      entrypoint,
+      paths: { home: envValue('HOME'), claudeState: envValue('CLAUDE_CONFIG_DIR'), codexState: envValue('CODEX_HOME'), checkout },
       nfsServer: protectedBindings[0].server, protectedExportRoot: `/exports/runtime-domains/${dataset}`,
       protectedMounts: protectedBindings.map(b => ({ key: b.key, clientPath: b.clientPath })),
       shared: { claimName: shared.get('claimName'), claimUid: shared.get('claimUid'), pvUid: shared.get('pvUid'), serverPath: shared.get('serverPath') } })
-    const plan = planner.plan({ identity: p.get('identity'),
+    const rebuilt = planner.plan({ identity: p.get('identity'),
       protectedBindings: protectedBindings.map(b => ({ key: b.key, bindingId: b.bindingId, leafId: b.leafId,
         claimName: b.claimName, claimUid: b.claimUid, pvUid: b.pvUid, serverPath: b.serverPath, mode: b.mode })),
       profile: { revision: annotations.get('orca.dev/resource-profile-revision'), cpuMilli: quantity(requests.get('cpu'), 'm'),
         memoryMi: quantity(requests.get('memory'), 'Mi'), ephemeralMi: quantity(requests.get('ephemeral-storage'), 'Mi'),
         temporaryMi: quantity(emptyDir.get('sizeLimit'), 'Mi') } })
+    const plan = legacyClosedRead ? legacyClosedPlanForRead(rebuilt, checkout) : rebuilt
     if (canonicalInput(snapshot(plan)) !== encoded) { return invalid() }
-    return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset })
+    return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset, legacyClosedRead })
   } catch { return invalid() }
 }
 function projection(row: AgentPodPlanRow): AgentPodPlanRecord {
@@ -129,6 +151,7 @@ export async function recordAgentPodPlan(tx: DurableTransaction, originalContext
     }
     return Object.freeze({ disposition: 'REPLAYED', record })
   }
+  if (captured.legacyClosedRead) { return invalid() }
   const values = [context.controller.scope, context.controller.owner, context.controller.term, id.operationId, id.unitId,
     captured.dataset, id.attemptId, id.executionEpoch, id.intentRevision, plan.pod.metadata.namespace,
     id.resourceName, id.specHash, plan.podSpecSHA256, captured.planDigest, captured.encoded]
