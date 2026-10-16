@@ -42,10 +42,10 @@ export type InitialDirectoryRevalidationGuard = InitialDirectoryRevalidationReco
 const kind = 'INITIAL_AGENT_DIRECTORY_REVALIDATED'
 const deny = (code: string): never => { throw new DurableDatabaseError(`INITIAL_DIRECTORY_${code}`) }
 const hash = (bytes: string): string => createHash('sha256').update(bytes).digest('hex')
-function isRecord(value: JsonValue): value is { [key: string]: JsonValue } {
+function isRecord(value: JsonValue): value is Record<string, JsonValue> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
-function object(value: JsonValue): { [key: string]: JsonValue } {
+function object(value: JsonValue): Record<string, JsonValue> {
   if (!isRecord(value)) { return deny('AUDIT_SHAPE') }
   return value
 }
