@@ -276,6 +276,7 @@ test('closed bootstrap working directory preserves checkout records and legacy l
   await identity()
   const ledger = (await pool.query('SELECT * FROM durable_runtime.schema_migrations ORDER BY version')).rows
   assert.equal(ledger.length, 23)
+  const before = await originalRows()
   await pool.query(`INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at)
     VALUES($1,$2,1,clock_timestamp()+interval '5 minutes')`, [scope, ownerId])
 
@@ -347,6 +348,13 @@ test('closed bootstrap working directory preserves checkout records and legacy l
     assert.ok(record); assert.equal(JSON.stringify(record.plan), JSON.stringify(f.plan))
   })
 
+  const after = await originalRows()
+  for (const table of tables) {
+    const remaining = [...after[table]]
+    for (const row of before[table]) {
+      const index = remaining.indexOf(row); assert.notEqual(index, -1, `original ${table} row retained`); remaining.splice(index, 1)
+    }
+  }
   await identity()
   assert.deepEqual((await pool.query('SELECT * FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger)
 })
