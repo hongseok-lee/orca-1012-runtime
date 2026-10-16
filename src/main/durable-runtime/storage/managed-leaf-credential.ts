@@ -80,7 +80,6 @@ export function createManagedLeafCredentialReader(caller: ManagedLeafCredentialC
     config = Object.freeze({ ...input, apiOrigin: origin.origin, ca: Buffer.from(ca), namespace: inventoryNamespace(input.namespace),
       serviceAccountName: inventoryName(input.serviceAccountName), serviceAccountUid: inventoryOpaque(input.serviceAccountUid),
       readIssuerBearer: input.readIssuerBearer.bind(caller) })
-    if (config.namespace !== 'orca-dev' || config.serviceAccountName !== 'orca-storage-collector') { return fail('CONFIG_INVALID') }
     transport = Object.freeze({ request: request.bind(originalTransport) })
   } catch { throw new ManagedLeafCredentialError('CONFIG_INVALID') }
   const readIssuer = config.readIssuerBearer

@@ -149,7 +149,7 @@ test('fixed collector credential reader uses one unbound TokenRequest and expose
       'https://kubernetes.invalid?query=1', 'https://kubernetes.invalid#fragment']) {
       assert.throws(() => createManagedLeafCredentialReader({ ...config(), apiOrigin }), rejected('CONFIG_INVALID'))
     }
-    for (const change of [{ serviceAccountUid: '' }, { namespace: 'another' }, { serviceAccountName: 'another' }, { timeoutMs: 0 }]) {
+    for (const change of [{ serviceAccountUid: '' }, { namespace: 'bad/namespace' }, { serviceAccountName: 'bad/name' }, { timeoutMs: 0 }]) {
       assert.throws(() => createManagedLeafCredentialReader({ ...config(), ...change }), rejected('CONFIG_INVALID'))
     }
     for (const readIssuerBearer of [() => { throw new Error(reviewerToken) }, () => Promise.reject(new Error(reviewerToken)), () => '']) {
