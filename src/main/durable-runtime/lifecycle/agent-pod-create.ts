@@ -38,7 +38,7 @@ export function createAgentPodCreateTransport(caller: AgentPodCreateConfig,
     const controller = new AbortController(), duration = Math.min(config.timeoutMs, input.remainingMs), deadline = started + duration
     let expired = false, postAttempts: 0 | 1 = 0
     const abort = () => controller.abort()
-    const timer = setTimeout(() => { expired = true; controller.abort() }, duration)
+    const timer = setTimeout(() => { expired = true; controller.abort() }, Math.max(0, deadline - performance.now()))
     signal.addEventListener('abort', abort, { once: true })
     if (signal.aborted) { controller.abort() }
     function check(): void {
