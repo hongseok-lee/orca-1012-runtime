@@ -42,7 +42,7 @@ type OperationRow = { id: string; profile_id: string; generation: string; digest
 
 function deny(code: string): never { throw new DurableDatabaseError(code); }
 function text(value: string): string {
-  if (typeof value !== "string" || !value || value.length > 512 || /[\x00-\x1f]/.test(value)) {
+  if (typeof value !== "string" || !value || value.length > 512 || [...value].some(char => char.charCodeAt(0) < 32)) {
     deny("NAMESPACE_INPUT_INVALID");
   }
   return value;
@@ -52,7 +52,7 @@ function digest(value: string): string {
   return value;
 }
 function tokenHash(value: string): string {
-  if (typeof value !== "string" || value.length < 32 || value.length > 512 || /[\x00-\x1f]/.test(value)) {
+  if (typeof value !== "string" || value.length < 32 || value.length > 512 || [...value].some(char => char.charCodeAt(0) < 32)) {
     deny("NAMESPACE_TOKEN_INVALID");
   }
   return createHash("sha256").update(value).digest("hex");
