@@ -1,0 +1,14 @@
+{
+  "originalRawTapSHA256": "302595fae1509f12c438f7023cd00fcb14038568d1efca6a8904d56628f4d878",
+  "publicSanitizedTapSHA256": "b96554811e7c9e652ac76313e950822d559071941cb28e6d7f2a228cb5fbd95d",
+  "redactions": [
+    "isolated database name",
+    "database OID",
+    "system identifier"
+  ],
+  "syntheticProfileOnly": true,
+  "physicalQualification": false,
+  "bindingCreated": false,
+  "holdCreated": false,
+  "sourceAndAssertionsUnchanged": true
+}

@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-16T14:50:04.544Z",
+  "pids": [
+    {
+      "pid": 9009,
+      "state": "Z",
+      "parent": 1,
+      "ticks": "27406010"
+    },
+    {
+      "pid": 9016,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 9033,
+      "state": "ABSENT"
+    },
+    {
+      "pid": 9039,
+      "state": "ABSENT"
+    }
+  ],
+  "heavy": 0
+}

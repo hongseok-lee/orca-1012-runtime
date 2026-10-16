@@ -1,0 +1,76 @@
+{
+  "fixedBase": "e036bee08083750345796596d1e330280cd86c3c",
+  "sourcePin": "9839357ab2057bf320d842aad69361386ac0bd2f",
+  "productPin": "d3fbc48238d8378b8d6196258e5c9a1c8fa6730b",
+  "phase": "FIRST_LINT_TYPE_PG_PASS",
+  "ownedFiles": [
+    "src/main/durable-runtime/storage/namespace-holds.ts",
+    "src/main/durable-runtime/storage/namespace-profile-bootstrap.pg.test.mts"
+  ],
+  "typeSourceInputs": [
+    {
+      "path": "src/main/durable-runtime/storage/namespace-holds.ts",
+      "bytes": 17948,
+      "sha256": "036362b4f89526ec48eb0d3fbbb83c6d4eea1a851242fa78132234da10bcffce",
+      "blob": "7563fe6df03659b9569b7946cd084c0306e912c5",
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-profile-bootstrap.pg.test.mts",
+      "bytes": 7606,
+      "sha256": "175d059e48270fa1b2772754abfda545b771b5deba63a03af729044e178a8023",
+      "blob": "18e1f675b1fc8a8521496c6d9efa1e17544e8b68",
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "blob": "181384ff0bf130ae6ad1ff64e2d9043f08d76d18",
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "bytes": 2071,
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "blob": "2fc02747102fddc0f4ad669a6484c2382f7f5822",
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "bytes": 6238,
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+      "blob": "1b0de8b5c6961f60315f714071e6cf627233dc43",
+      "mode": "100644"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "blob": "11c0f09a0bfc3950a29465efa6d504b9e3207a75",
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "bytes": 9074,
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "blob": "5437efd3e2466b6357d918fac84768479871e03e",
+      "mode": "100644"
+    }
+  ],
+  "runtimeSourceFiles": 6,
+  "inputBasis": "Source imports only; actual native type readset/runtime metafile not yet executed.",
+  "lint": 1,
+  "type": 1,
+  "PGCallbacks": 1,
+  "DDL": 0,
+  "remote": "One static job and one separately approved PG job; no successful repeat.",
+  "collector": 0,
+  "heavy": 0,
+  "usageCreditsStreamErrorObserved": false,
+  "verifiedPin": "11eb8b40756ba6a010473f859132f548e4f3bb1f",
+  "actualTypeSourceInputs": 7,
+  "actualTypeExternalInputs": 210,
+  "actualRuntimeSourceInputs": 5,
+  "actualRuntimeMetafileInputs": 6
+}

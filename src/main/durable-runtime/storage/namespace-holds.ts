@@ -133,6 +133,8 @@ export function registerNamespaceProfile(pool: Pool, original: NamespaceProfileI
   const input = capture(original);
   return execute(pool, async (tx) => {
     const query = tx.query.bind(tx);
+    await query("INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
+      [input.backendId, input.exportId]);
     await lockAggregates(tx, { storageDomains: [{ backendId: input.backendId, exportId: input.exportId }] });
     const old = await query<ProfileRow>("SELECT * FROM durable_runtime.storage_namespace_profiles WHERE id=$1 FOR UPDATE", [input.profileId]);
     if (old.rowCount) {
