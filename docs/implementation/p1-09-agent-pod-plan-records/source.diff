@@ -1,0 +1,450 @@
+diff --git a/src/main/durable-runtime/db/agent-pod-plan-record-rows.ts b/src/main/durable-runtime/db/agent-pod-plan-record-rows.ts
+new file mode 100644
+index 00000000..b5c72603
+--- /dev/null
++++ b/src/main/durable-runtime/db/agent-pod-plan-record-rows.ts
+@@ -0,0 +1,25 @@
++import type { AttemptId, ExecutionEpoch, IntentRevision, OperationId, RuntimeUnitId } from '../../../shared/durable-runtime/identity.ts'
++import type { DurableTransaction } from './connection.ts'
++import type { GatewayContext } from '../runtime/gateway/types.ts'
++import type { UnauthorizedAgentPodPlan } from '../runtime/agent-pod-plan.ts'
++
++export type AgentPodPlanRecord = Readonly<{
++  plan: UnauthorizedAgentPodPlan
++  planDigest: string
++  recordedAt: string
++}>
++/** Transaction-local result; only the caller's transaction engine confirms COMMIT. */
++export type AgentPodPlanWriteResult = Readonly<{
++  disposition: 'RECORDED' | 'REPLAYED'
++  record: AgentPodPlanRecord
++}>
++export type RecordAgentPodPlan = (tx: DurableTransaction, context: GatewayContext,
++  plan: UnauthorizedAgentPodPlan) => Promise<AgentPodPlanWriteResult>
++export type ReadAgentPodPlan = (tx: DurableTransaction, operationId: OperationId) => Promise<AgentPodPlanRecord | null>
++
++export type AgentPodPlanRow = {
++  operation_id: OperationId; runtime_unit_id: RuntimeUnitId; dataset_name: string
++  attempt_id: AttemptId; execution_epoch: ExecutionEpoch; intent_revision: IntentRevision
++  namespace: string; resource_name: string; spec_hash: string; pod_spec_sha256: string
++  plan_digest: string; plan: unknown; recorded_at: Date
++}
+diff --git a/src/main/durable-runtime/db/migrations/023-agent-pod-plans.sql b/src/main/durable-runtime/db/migrations/023-agent-pod-plans.sql
+new file mode 100644
+index 00000000..ea776dba
+--- /dev/null
++++ b/src/main/durable-runtime/db/migrations/023-agent-pod-plans.sql
+@@ -0,0 +1,34 @@
++SET LOCAL search_path = durable_runtime, pg_catalog;
++
++-- An immutable UNAUTHORIZED_PLAN, not an actual attempt, Pod or grant.
++CREATE TABLE agent_pod_plans (
++  operation_id uuid PRIMARY KEY,
++  runtime_unit_id uuid NOT NULL,
++  dataset_name text NOT NULL REFERENCES dataset_metadata,
++  attempt_id uuid NOT NULL UNIQUE,
++  execution_epoch bigint NOT NULL CHECK (execution_epoch >= 0),
++  intent_revision bigint NOT NULL CHECK (intent_revision >= 0),
++  namespace text NOT NULL CHECK (namespace <> ''),
++  resource_name text NOT NULL CHECK (resource_name <> ''),
++  spec_hash text NOT NULL CHECK (spec_hash ~ '^[0-9a-f]{64}$'),
++  pod_spec_sha256 text NOT NULL CHECK (pod_spec_sha256 ~ '^[0-9a-f]{64}$'),
++  plan_digest text NOT NULL CHECK (plan_digest ~ '^[0-9a-f]{64}$'),
++  plan jsonb NOT NULL CHECK (jsonb_typeof(plan)='object'),
++  recorded_at timestamptz NOT NULL DEFAULT clock_timestamp() CHECK (isfinite(recorded_at)),
++  FOREIGN KEY (operation_id,runtime_unit_id) REFERENCES operations(id,runtime_unit_id),
++  CHECK (plan ?& ARRAY['kind','identity','pod','mountExpectations','podSpecSHA256',
++    'readinessObserved','storageGrantIssued','physicalPinIssued']),
++  CHECK ((plan->>'kind'='UNAUTHORIZED_PLAN' AND plan->'readinessObserved'='false'::jsonb
++    AND plan->'storageGrantIssued'='false'::jsonb AND plan->'physicalPinIssued'='false'::jsonb) IS TRUE),
++  CHECK ((jsonb_typeof(plan->'identity')='object' AND
++    (plan->'identity') ?& ARRAY['unitId','operationId','attemptId','executionEpoch','intentRevision','resourceName','specHash']) IS TRUE),
++  CHECK ((plan->'identity'->>'unitId'=runtime_unit_id::text
++    AND plan->'identity'->>'operationId'=operation_id::text
++    AND plan->'identity'->>'attemptId'=attempt_id::text
++    AND plan->'identity'->>'executionEpoch'=execution_epoch::text
++    AND plan->'identity'->>'intentRevision'=intent_revision::text
++    AND plan->'identity'->>'resourceName'=resource_name
++    AND plan->'identity'->>'specHash'=spec_hash AND plan->>'podSpecSHA256'=pod_spec_sha256) IS TRUE)
++);
++CREATE TRIGGER retain_agent_pod_plans BEFORE UPDATE OR DELETE ON agent_pod_plans
++  FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+diff --git a/src/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts b/src/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts
+new file mode 100644
+index 00000000..1a44eec3
+--- /dev/null
++++ b/src/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts
+@@ -0,0 +1,195 @@
++import assert from 'node:assert/strict'
++import { createHash, randomUUID } from 'node:crypto'
++import { test } from 'node:test'
++import { createDurablePool, DurableDatabaseError, withDurableTransaction } from '../db/connection.ts'
++import { applyMigrations, readMigrations } from '../db/migrate.ts'
++import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
++import { createAgentPodPlanner } from './agent-pod-plan.ts'
++import type { GatewayContext, VerifiedControllerIdentity } from './gateway/types.ts'
++import { recordAgentPodPlan, readAgentPodPlan } from './agent-pod-plan-records.ts'
++
++// Root supplies the existing isolated DB and SQL directory at the first run.
++// No live DB selection, create/reset/drop or production authority is supplied.
++const database = process.env.ORCA_AGENT_POD_PLANS_DATABASE
++const oid = process.env.ORCA_AGENT_POD_PLANS_DATABASE_OID
++const migrationsPath = process.env.ORCA_AGENT_POD_PLANS_MIGRATIONS
++const schemaState = process.env.ORCA_AGENT_POD_PLANS_SCHEMA_STATE
++if (process.env.ORCA_AGENT_POD_PLANS_APPROVED !== 'root-first-verification' ||
++  !database || !/^orca_[a-z0-9_]+$/.test(database) || database === 'orca_dev' ||
++  database !== process.env.PGDATABASE || !oid || !/^[1-9][0-9]*$/.test(oid) || !migrationsPath ||
++  (schemaState !== 'initial22' && schemaState !== 'verified23')) {
++  throw new Error('Root-approved existing isolated database/OID and migration directory required')
++}
++const pool = createDurablePool({ database, max: 3, application_name: 'agent-pod-plan-records-first' })
++const hash = (text: string) => createHash('sha256').update(text).digest('hex')
++const scope = `synthetic-agent-pod-plans:${randomUUID()}`
++const owner = `synthetic-controller:${randomUUID()}`
++// SAFETY: fixture-only nominal controller identity for synthetic SQL seeds.
++// This is not a production identity issuer or authenticated external evidence.
++const controller = Object.freeze({ scope, owner, term: counter('controller-term', '1') }) as VerifiedControllerIdentity
++const rejectCode = (promise: Promise<unknown>, code: string) => assert.rejects(promise,
++  error => error instanceof DurableDatabaseError && error.code === code)
++
++// Narrow reuse of the reviewed pure planner fixture policy/request layout.
++function policy() {
++  return { namespace: 'agent-plan-record-fixture', dataset: 'orca-1012-dev-v1',
++    image: `example.invalid/agent@sha256:${'1'.repeat(64)}`,
++    entrypoint: { command: ['/opt/agent/entrypoint'], args: ['--resume-mode', 'cold', ''] },
++    paths: { home: '/agent/home', claudeState: '/agent/home/.claude', codexState: '/agent/home/.codex', checkout: '/agent/project' },
++    protectedMounts: [{ key: 'main', clientPath: '/agent' }], nfsServer: 'nfs.fixture.svc.cluster.local',
++    protectedExportRoot: '/exports/runtime-domains/orca-1012-dev-v1',
++    shared: { claimName: 'shared-fixture', claimUid: 'shared-claim-opaque', pvUid: 'shared-pv-opaque', serverPath: '/exports/shared/orca-1012-dev-v1' } }
++}
++function request() {
++  const unitId = randomUUID(), operationId = randomUUID(), leafId = randomUUID()
++  return { identity: { unitId, operationId, attemptId: randomUUID(), resourceName: `orca-unit-${operationId}`,
++    executionEpoch: '3', intentRevision: '5', specHash: 'a'.repeat(64) },
++    protectedBindings: [{ key: 'main', bindingId: randomUUID(), leafId, claimName: 'protected-fixture',
++      claimUid: 'protected-claim-opaque', pvUid: 'protected-pv-opaque',
++      serverPath: `/exports/runtime-domains/orca-1012-dev-v1/${leafId}`, mode: 'RW' }],
++    profile: { revision: '7', cpuMilli: 777, memoryMi: 1024, ephemeralMi: 2048, temporaryMi: 256 } }
++}
++const context = (r: ReturnType<typeof request>): GatewayContext => Object.freeze({
++  runtimeUnitId: logicalId('runtime-unit', r.identity.unitId), operationId: logicalId('operation', r.identity.operationId), controller
++})
++async function identity() {
++  const row = (await pool.query<{ database: string; oid: string; system: string; backend_pid: number }>(
++    `SELECT current_database() AS database,(SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
++      (SELECT system_identifier::text FROM pg_control_system()) AS system,pg_backend_pid() AS backend_pid`)).rows[0]
++  assert.equal(row.database, database); assert.equal(row.oid, oid); assert.equal(row.system, '7696101282789175327')
++  assert.deepEqual((await pool.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows,
++    [{ dataset_name: 'orca-1012-dev-v1' }])
++  return row
++}
++const protectedTables = ['runtime_units','operations','attempts','execution_grants','runtime_members',
++  'storage_bindings','storage_write_grants','storage_mounts','messages','input_components',
++  'rpc_receipts','session_events','session_context_records','runtime_audit_events','outbox_events'] as const
++const protectedTableNames = schemaState === 'verified23' ? [...protectedTables, 'agent_pod_plans'] : protectedTables
++async function rowHashes() {
++  const rows: Record<string, string[]> = {}
++  for (const table of protectedTableNames) {
++    rows[table] = (await pool.query<{ body: string }>(`SELECT to_jsonb(t)::text AS body FROM durable_runtime.${table} t`)).rows.map(row => hash(row.body)).sort()
++  }
++  return rows
++}
++function retained(before: Record<string, string[]>, after: Record<string, string[]>) {
++  for (const table of protectedTableNames) {
++    const counts = new Map<string, number>()
++    for (const item of after[table]) { counts.set(item, (counts.get(item) ?? 0) + 1) }
++    for (const item of before[table]) { assert.ok((counts.get(item) ?? 0) > 0, `Original ${table} row missing`); counts.set(item, (counts.get(item) ?? 0) - 1) }
++  }
++}
++async function history(operation: string) {
++  return (await pool.query(`SELECT
++    (SELECT count(*)::text FROM durable_runtime.agent_pod_plans WHERE operation_id=$1) AS plans,
++    (SELECT count(*)::text FROM durable_runtime.runtime_audit_events WHERE operation_id=$1 AND kind='AGENT_POD_PLAN_RECORDED') AS audit,
++    (SELECT count(*)::text FROM durable_runtime.outbox_events WHERE event->>'operationId'=$1::text) AS outbox`, [operation])).rows[0]
++}
++
++await test('Agent Pod plan records: first023 immutable plan, exact replay and authority boundaries', async t => {
++  t.after(() => pool.end())
++  const firstIdentity = await identity() // Same Pool actual system/OID/dataset before DDL or seed.
++  const migrations = await readMigrations(migrationsPath)
++  assert.equal(migrations.length, 23); assert.equal(migrations[22].version, '023-agent-pod-plans.sql')
++  const ledgerBefore = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
++  assert.equal(ledgerBefore.length, schemaState === 'initial22' ? 22 : 23)
++  assert.deepEqual(ledgerBefore.map(row => [row.version, row.checksum]), migrations.slice(0, ledgerBefore.length).map(row => [row.version, row.checksum]))
++  assert.equal((await pool.query("SELECT to_regclass('durable_runtime.agent_pod_plans') IS NULL AS absent")).rows[0].absent, schemaState === 'initial22')
++  const originals = await rowHashes()
++  // Root selects verified23 only after the original 023 COMMIT is preserved.
++  // This branch checks the full ledger above and executes no migration SQL.
++  const applied = schemaState === 'initial22' ? await applyMigrations(pool, migrations) : ledgerBefore
++  assert.equal(applied.length, 23); assert.deepEqual(applied.slice(0, ledgerBefore.length), ledgerBefore)
++  const seedIdentity = await identity(), a = request(), b = request(), c = request()
++  await withDurableTransaction(pool, async tx => {
++    await tx.query(`INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at)
++      VALUES($1,$2,1,clock_timestamp()+interval '5 minutes')`, [scope, owner])
++    for (const value of [a,b,c]) {
++      await tx.query(`INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase,execution_epoch,intent_revision)
++        VALUES($1,'RUNNING','ABSENT',3,5)`, [value.identity.unitId])
++      await tx.query(`INSERT INTO durable_runtime.operations
++        (id,runtime_unit_id,kind,intent_revision,controller_scope,controller_term,step,execution_epoch,external_resource_name)
++        VALUES($1,$2,'WAKE',5,$3,1,'ENSURE_ATTEMPT',3,$4)`,
++      [value.identity.operationId, value.identity.unitId, scope, value.identity.resourceName])
++    }
++  })
++  const seedRows = async () => (await pool.query<{ body: string }>(`SELECT to_jsonb(u)::text AS body FROM durable_runtime.runtime_units u WHERE id=ANY($1::uuid[])
++    UNION ALL SELECT to_jsonb(o)::text FROM durable_runtime.operations o WHERE id=ANY($2::uuid[])
++    UNION ALL SELECT to_jsonb(c)::text FROM durable_runtime.controller_leases c WHERE scope=$3`,
++  [[a,b,c].map(r => r.identity.unitId),[a,b,c].map(r => r.identity.operationId),scope])).rows.map(row => hash(row.body)).sort()
++  const seedBefore = await seedRows(), planner = createAgentPodPlanner(policy()), plan = planner.plan(a)
++  const recorded = await withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(a), plan))
++  assert.equal(recorded.disposition, 'RECORDED'); assert.deepEqual(recorded.record.plan, plan)
++  assert.ok(Object.isFrozen(recorded)); assert.ok(Object.isFrozen(recorded.record)); assert.ok(Object.isFrozen(recorded.record.plan.pod.spec.containers))
++  assert.equal(new Date(recorded.record.recordedAt).toISOString(), recorded.record.recordedAt)
++  assert.equal(recorded.record.plan.kind, 'UNAUTHORIZED_PLAN'); assert.equal(recorded.record.plan.storageGrantIssued, false)
++  assert.equal(recorded.record.plan.physicalPinIssued, false); assert.equal(recorded.record.plan.readinessObserved, false)
++  const replayed = await withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(a), plan))
++  assert.equal(replayed.disposition, 'REPLAYED'); assert.deepEqual(replayed.record, recorded.record)
++  assert.deepEqual(await withDurableTransaction(pool, tx => readAgentPodPlan(tx, context(a).operationId)), recorded.record)
++  assert.deepEqual(await history(a.identity.operationId), { plans:'1', audit:'1', outbox:'1' })
++  const changedClaim = structuredClone(a); changedClaim.protectedBindings[0].claimUid = 'different-protected-claim'
++  const changedProfile = structuredClone(a); changedProfile.profile.cpuMilli = 888
++  const changedPolicy = policy(); changedPolicy.entrypoint.command = ['/opt/agent/other-entrypoint']
++  for (const other of [planner.plan(changedClaim),planner.plan(changedProfile),createAgentPodPlanner(changedPolicy).plan(a)]) {
++    await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(a), other)), 'AGENT_POD_PLAN_CONFLICT')
++  }
++  const stale: GatewayContext = { ...context(b), controller: { ...controller, term: counter('controller-term', '0') } }
++  await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, stale, planner.plan(b))), 'COMMAND_AUTHORITY_STALE')
++  await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(b), plan)), 'AGENT_POD_PLAN_SCOPE')
++  const wrongName = structuredClone(b); wrongName.identity.resourceName = 'wrong-original-resource-name'
++  await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(b), planner.plan(wrongName))), 'AGENT_POD_PLAN_STALE')
++  const duplicateAttempt = structuredClone(b); duplicateAttempt.identity.attemptId = a.identity.attemptId
++  await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(b), planner.plan(duplicateAttempt))), 'AGENT_POD_PLAN_CONFLICT')
++  // Non-production malformed candidate on this fixture's new operation only.
++  // Keep the key present but set its JSON value to null; immutable history and
++  // all original rows/triggers remain untouched.
++  const bPlan = planner.plan(b)
++  await rejectCode(withDurableTransaction(pool, tx => tx.query(`INSERT INTO durable_runtime.agent_pod_plans
++    (operation_id,runtime_unit_id,dataset_name,attempt_id,execution_epoch,intent_revision,namespace,resource_name,spec_hash,pod_spec_sha256,plan_digest,plan)
++    VALUES($1,$2,'orca-1012-dev-v1',$3,3,5,$4,$5,$6,$7,$8,jsonb_set($9::jsonb,'{identity,operationId}','null'::jsonb))`,
++  [b.identity.operationId,b.identity.unitId,b.identity.attemptId,bPlan.pod.metadata.namespace,b.identity.resourceName,
++    b.identity.specHash,bPlan.podSpecSHA256,'b'.repeat(64),JSON.stringify(bPlan)])), '23514')
++  assert.deepEqual(await history(b.identity.operationId), { plans:'0', audit:'0', outbox:'0' })
++  let getters = 0
++  const getterPlan = structuredClone(plan)
++  Object.defineProperty(getterPlan, 'pod', { get() { getters++; throw new Error('fixture getter must not execute') } })
++  await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(a), getterPlan)), 'AGENT_POD_PLAN_INPUT_INVALID')
++  assert.equal(getters, 0)
++  for (const field of ['storageGrantIssued','physicalPinIssued','readinessObserved']) {
++    const forged = structuredClone(plan); Object.defineProperty(forged, field, { value:true })
++    await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(a), forged)), 'AGENT_POD_PLAN_INPUT_INVALID')
++  }
++  const wrongDigest = structuredClone(plan); Object.defineProperty(wrongDigest, 'podSpecSHA256', { value:'0'.repeat(64) })
++  await rejectCode(withDurableTransaction(pool, tx => recordAgentPodPlan(tx, context(a), wrongDigest)), 'AGENT_POD_PLAN_INPUT_INVALID')
++  const cPlan = planner.plan(c)
++  await rejectCode(withDurableTransaction(pool, async tx => {
++    assert.equal((await recordAgentPodPlan(tx, context(c), cPlan)).disposition, 'RECORDED')
++    throw new DurableDatabaseError('PLAN_FIXTURE_ROLLBACK')
++  }), 'PLAN_FIXTURE_ROLLBACK')
++  assert.equal(await withDurableTransaction(pool, tx => readAgentPodPlan(tx, context(c).operationId)), null)
++  assert.deepEqual(await history(c.identity.operationId), { plans:'0', audit:'0', outbox:'0' })
++  const mutablePlan = structuredClone(cPlan), mutableContext: GatewayContext = { ...context(c), controller: { ...controller } }
++  const captured = await withDurableTransaction(pool, async tx => {
++    const pending = recordAgentPodPlan(tx, mutableContext, mutablePlan)
++    Object.defineProperty(mutablePlan, 'storageGrantIssued', { value:true })
++    Object.defineProperty(mutableContext.controller, 'owner', { value:'changed-after-first-await' })
++    return pending
++  })
++  assert.deepEqual(captured.record.plan, cPlan)
++  for (const sql of ['UPDATE durable_runtime.agent_pod_plans SET plan=plan WHERE operation_id=$1',
++    'DELETE FROM durable_runtime.agent_pod_plans WHERE operation_id=$1']) {
++    await rejectCode(withDurableTransaction(pool, tx => tx.query(sql,[a.identity.operationId])), '23514')
++  }
++  assert.deepEqual(await history(a.identity.operationId), { plans:'1', audit:'1', outbox:'1' })
++  assert.deepEqual(await seedRows(), seedBefore)
++  assert.equal((await pool.query('SELECT count(*)::text AS n FROM durable_runtime.attempts WHERE runtime_unit_id=ANY($1::uuid[])',
++    [[a,b,c].map(r => r.identity.unitId)])).rows[0].n, '0')
++  const audit = (await pool.query<{ next_state: Record<string, unknown> }>(
++    "SELECT next_state FROM durable_runtime.runtime_audit_events WHERE operation_id=$1 AND kind='AGENT_POD_PLAN_RECORDED'",[a.identity.operationId])).rows[0].next_state
++  for (const key of ['plan','pod','command','env','mountExpectations']) { assert.equal(Object.hasOwn(audit,key), false) }
++  retained(originals, await rowHashes())
++  assert.deepEqual((await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows, applied)
++  t.diagnostic(JSON.stringify({ firstIdentity,seedIdentity,finalIdentity:await identity(),schemaState,ledgerBefore:ledgerBefore.length,ledgerAfter:23,
++    productCallbacks:1,originalRowsPreserved:true,syntheticControllerIdentity:true,actualAttemptOrPodCreated:false,physicalPermissionIssued:false }))
++})
+diff --git a/src/main/durable-runtime/runtime/agent-pod-plan-records.ts b/src/main/durable-runtime/runtime/agent-pod-plan-records.ts
+new file mode 100644
+index 00000000..4be74758
+--- /dev/null
++++ b/src/main/durable-runtime/runtime/agent-pod-plan-records.ts
+@@ -0,0 +1,172 @@
++import { randomUUID, createHash } from 'node:crypto'
++import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
++import type { OperationId } from '../../../shared/durable-runtime/identity.ts'
++import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts'
++import type { JsonValue } from '../db/atomic.ts'
++import type { AgentPodPlanRow, AgentPodPlanRecord, AgentPodPlanWriteResult } from '../db/agent-pod-plan-record-rows.ts'
++import { createAgentPodPlanner, type UnauthorizedAgentPodPlan } from './agent-pod-plan.ts'
++import { agentPodArray, agentPodFields, agentPodInteger, agentPodText } from './agent-pod-policy.ts'
++import { canonicalInput } from './gateway/input.ts'
++import { LockedGatewayAuthority } from './gateway/authority.ts'
++import type { GatewayContext } from './gateway/types.ts'
++
++export type { AgentPodPlanRecord, AgentPodPlanWriteResult, RecordAgentPodPlan, ReadAgentPodPlan } from '../db/agent-pod-plan-record-rows.ts'
++
++function invalid(): never { throw new DurableDatabaseError('AGENT_POD_PLAN_INPUT_INVALID') }
++// Plain own-data snapshot before await. No toJSON/getter execution, mutable
++// caller references, sparse arrays, extra symbol keys, or cyclic JSON survive.
++function snapshot(value: unknown, ancestors = new Set<object>()): JsonValue {
++  if (value === null || typeof value === 'string' || typeof value === 'boolean') { return value }
++  if (typeof value === 'number' && Number.isFinite(value)) { return value }
++  if (typeof value !== 'object' || ancestors.has(value)) { return invalid() }
++  ancestors.add(value)
++  let result: JsonValue
++  if (Array.isArray(value)) { result = agentPodArray(value).map(item => snapshot(item, ancestors)) }
++  else {
++    if (Object.getPrototypeOf(value) !== Object.prototype) { return invalid() }
++    const object: Record<string, JsonValue> = {}
++    for (const key of Reflect.ownKeys(value)) {
++      if (typeof key !== 'string') { return invalid() }
++      const descriptor = Object.getOwnPropertyDescriptor(value, key)
++      if (!descriptor || !('value' in descriptor)) { return invalid() }
++      Object.defineProperty(object, key, { value: snapshot(descriptor.value, ancestors), enumerable: true })
++    }
++    result = object
++  }
++  ancestors.delete(value)
++  return result
++}
++function quantity(value: unknown, suffix: string): number {
++  const text = agentPodText(value)
++  if (!text.endsWith(suffix) || !/^[1-9][0-9]*$/.test(text.slice(0, -suffix.length))) { return invalid() }
++  return agentPodInteger(Number(text.slice(0, -suffix.length)))
++}
++function capturePlan(original: unknown) {
++  try {
++    const json = snapshot(original), encoded = canonicalInput(json)
++    const p = agentPodFields(json, ['kind','identity','pod','mountExpectations','podSpecSHA256','readinessObserved','storageGrantIssued','physicalPinIssued'])
++    const pod = agentPodFields(p.get('pod'), ['apiVersion','kind','metadata','spec'])
++    const metadata = agentPodFields(pod.get('metadata'), ['name','namespace','labels','annotations'])
++    const labels = agentPodFields(metadata.get('labels'), ['orca.dev/role','orca.dev/dataset','orca.dev/runtime-unit'])
++    const annotations = agentPodFields(metadata.get('annotations'), ['orca.dev/operation-id','orca.dev/attempt-id','orca.dev/execution-epoch','orca.dev/intent-revision','orca.dev/spec-hash','orca.dev/resource-profile-revision'])
++    const spec = agentPodFields(pod.get('spec'), ['restartPolicy','terminationGracePeriodSeconds','hostNetwork','automountServiceAccountToken','nodeSelector','tolerations','securityContext','affinity','containers','volumes'])
++    const containers = agentPodArray(spec.get('containers'))
++    if (containers.length !== 1) { return invalid() }
++    const container = agentPodFields(containers[0], ['name','image','imagePullPolicy','command','args','workingDir','env','resources','securityContext','volumeMounts'])
++    const env = agentPodArray(container.get('env')).map(item => agentPodFields(item, ['name','value']))
++    const envValue = (name: string) => {
++      const matches = env.filter(item => item.get('name') === name)
++      if (matches.length !== 1) { return invalid() }
++      return matches[0].get('value')
++    }
++    const resources = agentPodFields(container.get('resources'), ['requests','limits'])
++    const requests = agentPodFields(resources.get('requests'), ['cpu','memory','ephemeral-storage'])
++    const volumes = agentPodArray(spec.get('volumes'))
++    const temporary = agentPodFields(volumes.at(-1), ['name','emptyDir'])
++    const emptyDir = agentPodFields(temporary.get('emptyDir'), ['sizeLimit'])
++    const mounts = agentPodFields(p.get('mountExpectations'), ['protected','shared'])
++    const protectedBindings = agentPodArray(mounts.get('protected')).map(item => {
++      const b = agentPodFields(item, ['key','bindingId','leafId','claimName','claimUid','pvUid','serverPath','mode','clientPath','server'])
++      return { key: b.get('key'), bindingId: b.get('bindingId'), leafId: b.get('leafId'), claimName: b.get('claimName'),
++        claimUid: b.get('claimUid'), pvUid: b.get('pvUid'), serverPath: b.get('serverPath'), mode: b.get('mode'),
++        clientPath: b.get('clientPath'), server: b.get('server') }
++    })
++    if (!protectedBindings.length) { return invalid() }
++    const shared = agentPodFields(mounts.get('shared'), ['claimName','claimUid','pvUid','serverPath','server','clientPath','mode'])
++    const dataset = agentPodText(labels.get('orca.dev/dataset'))
++    // Reconstruction validates only the planner's fixed structure and internal
++    // digest. Reconstructed policy is NOT authenticated external authority.
++    const planner = createAgentPodPlanner({ namespace: metadata.get('namespace'), dataset, image: container.get('image'),
++      entrypoint: { command: container.get('command'), args: container.get('args') },
++      paths: { home: envValue('HOME'), claudeState: envValue('CLAUDE_CONFIG_DIR'), codexState: envValue('CODEX_HOME'), checkout: container.get('workingDir') },
++      nfsServer: protectedBindings[0].server, protectedExportRoot: `/exports/runtime-domains/${dataset}`,
++      protectedMounts: protectedBindings.map(b => ({ key: b.key, clientPath: b.clientPath })),
++      shared: { claimName: shared.get('claimName'), claimUid: shared.get('claimUid'), pvUid: shared.get('pvUid'), serverPath: shared.get('serverPath') } })
++    const plan = planner.plan({ identity: p.get('identity'),
++      protectedBindings: protectedBindings.map(b => ({ key: b.key, bindingId: b.bindingId, leafId: b.leafId,
++        claimName: b.claimName, claimUid: b.claimUid, pvUid: b.pvUid, serverPath: b.serverPath, mode: b.mode })),
++      profile: { revision: annotations.get('orca.dev/resource-profile-revision'), cpuMilli: quantity(requests.get('cpu'), 'm'),
++        memoryMi: quantity(requests.get('memory'), 'Mi'), ephemeralMi: quantity(requests.get('ephemeral-storage'), 'Mi'),
++        temporaryMi: quantity(emptyDir.get('sizeLimit'), 'Mi') } })
++    if (canonicalInput(snapshot(plan)) !== encoded) { return invalid() }
++    return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset })
++  } catch { return invalid() }
++}
++function projection(row: AgentPodPlanRow): AgentPodPlanRecord {
++  try {
++    const captured = capturePlan(row.plan), { plan } = captured, id = plan.identity
++    if (row.plan_digest !== captured.planDigest || row.operation_id !== id.operationId || row.runtime_unit_id !== id.unitId ||
++      row.dataset_name !== captured.dataset || row.attempt_id !== id.attemptId || row.execution_epoch !== id.executionEpoch ||
++      row.intent_revision !== id.intentRevision || row.namespace !== plan.pod.metadata.namespace || row.resource_name !== id.resourceName ||
++      row.spec_hash !== id.specHash || row.pod_spec_sha256 !== plan.podSpecSHA256 || !(row.recorded_at instanceof Date) ||
++      !Number.isFinite(row.recorded_at.getTime())) { throw new Error('Invalid stored Agent Pod plan') }
++    return Object.freeze({ plan, planDigest: captured.planDigest, recordedAt: row.recorded_at.toISOString() })
++  } catch { throw new DurableDatabaseError('AGENT_POD_PLAN_RECORD_INVALID') }
++}
++
++/** Observation only; no locks, lease acquisition, grant or provider effects. */
++export async function readAgentPodPlan(tx: DurableTransaction, originalOperationId: OperationId): Promise<AgentPodPlanRecord | null> {
++  const operationId = logicalId('operation', originalOperationId), query = tx.query.bind(tx)
++  const result = await query<AgentPodPlanRow>('SELECT * FROM durable_runtime.agent_pod_plans WHERE operation_id=$1', [operationId])
++  return result.rows[0] ? projection(result.rows[0]) : null
++}
++
++/** Immutable UNAUTHORIZED_PLAN, transaction-local until caller observes COMMIT. */
++export async function recordAgentPodPlan(tx: DurableTransaction, originalContext: GatewayContext,
++  originalPlan: UnauthorizedAgentPodPlan): Promise<AgentPodPlanWriteResult> {
++  const captured = capturePlan(originalPlan), { plan } = captured, id = plan.identity, query = tx.query.bind(tx)
++  const controller = originalContext.controller
++  const context: GatewayContext = Object.freeze({ runtimeUnitId: logicalId('runtime-unit', originalContext.runtimeUnitId),
++    operationId: logicalId('operation', originalContext.operationId), controller: Object.freeze({ ...controller,
++      scope: agentPodText(controller.scope), owner: agentPodText(controller.owner), term: counter('controller-term', controller.term) }) })
++  if (context.runtimeUnitId !== id.unitId || context.operationId !== id.operationId) { throw new DurableDatabaseError('AGENT_POD_PLAN_SCOPE') }
++  const authority = await LockedGatewayAuthority.acquire(tx, context)
++  const old = await query<AgentPodPlanRow>('SELECT * FROM durable_runtime.agent_pod_plans WHERE operation_id=$1', [id.operationId])
++  if (old.rowCount) {
++    const record = projection(old.rows[0])
++    if (record.planDigest !== captured.planDigest || canonicalInput(snapshot(record.plan)) !== captured.encoded) {
++      throw new DurableDatabaseError('AGENT_POD_PLAN_CONFLICT')
++    }
++    return Object.freeze({ disposition: 'REPLAYED', record })
++  }
++  const values = [context.controller.scope, context.controller.owner, context.controller.term, id.operationId, id.unitId,
++    captured.dataset, id.attemptId, id.executionEpoch, id.intentRevision, plan.pod.metadata.namespace,
++    id.resourceName, id.specHash, plan.podSpecSHA256, captured.planDigest, captured.encoded]
++  await authority.assertCurrent()
++  let inserted
++  try {
++    inserted = await query<AgentPodPlanRow>(`INSERT INTO durable_runtime.agent_pod_plans
++      (operation_id,runtime_unit_id,dataset_name,attempt_id,execution_epoch,intent_revision,namespace,resource_name,spec_hash,pod_spec_sha256,plan_digest,plan)
++      SELECT $4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb FROM durable_runtime.runtime_units u
++      JOIN durable_runtime.operations o ON o.runtime_unit_id=u.id
++      WHERE u.id=$5 AND o.id=$4 AND u.dataset_name=$6 AND u.desired_mode='RUNNING'
++      AND u.execution_epoch=$8 AND o.execution_epoch=$8 AND u.intent_revision=$9 AND o.intent_revision=$9
++      AND o.kind='WAKE' AND o.result IS NULL AND o.external_resource_name=$11
++      AND o.controller_scope=$1 AND o.controller_term=$3
++      AND EXISTS(SELECT 1 FROM durable_runtime.controller_leases c
++        WHERE c.scope=$1 AND c.owner=$2 AND c.term=$3 AND c.expires_at>clock_timestamp()) RETURNING *`, values)
++  } catch (error) {
++    if (error instanceof DurableDatabaseError && error.code === '23505') { throw new DurableDatabaseError('AGENT_POD_PLAN_CONFLICT') }
++    throw error
++  }
++  if (inserted.rowCount !== 1) { throw new DurableDatabaseError('AGENT_POD_PLAN_STALE') }
++  const eventId = randomUUID(), producer = randomUUID()
++  const event = JSON.stringify({ kind: 'AGENT_POD_PLAN_RECORDED', operationId: id.operationId, runtimeUnitId: id.unitId,
++    reservedAttemptId: id.attemptId, planDigest: captured.planDigest, specHash: id.specHash, podSpecSHA256: plan.podSpecSHA256,
++    planKind: plan.kind, storageGrantIssued: false, physicalPinIssued: false, readinessObserved: false })
++  const audit = await query(`INSERT INTO durable_runtime.runtime_audit_events
++    (id,actor_id,runtime_unit_id,operation_id,kind,next_state,occurred_at,received_at,producer_id,producer_seq,evidence_refs,payload)
++    SELECT $1,$2,$3,$4,'AGENT_POD_PLAN_RECORDED',$5::jsonb,clock_timestamp(),clock_timestamp(),$6,1,'[]'::jsonb,'{}'::jsonb
++    WHERE EXISTS(SELECT 1 FROM durable_runtime.controller_leases c
++      WHERE c.scope=$7 AND c.owner=$2 AND c.term=$8 AND c.expires_at>clock_timestamp()) RETURNING id`,
++  [eventId, context.controller.owner, id.unitId, id.operationId, event, producer, context.controller.scope, context.controller.term])
++  if (audit.rowCount !== 1) { throw new DurableDatabaseError('AGENT_POD_PLAN_STALE') }
++  const outbox = await query(`INSERT INTO durable_runtime.outbox_events(id,aggregate_id,aggregate_kind,revision,event,created_at)
++    SELECT $1,u.id,'runtime-unit',u.revision,$3::jsonb,clock_timestamp() FROM durable_runtime.runtime_units u WHERE u.id=$2
++    AND EXISTS(SELECT 1 FROM durable_runtime.controller_leases c
++      WHERE c.scope=$4 AND c.owner=$5 AND c.term=$6 AND c.expires_at>clock_timestamp()) RETURNING id`,
++  [eventId, id.unitId, event, context.controller.scope, context.controller.owner, context.controller.term])
++  if (outbox.rowCount !== 1) { throw new DurableDatabaseError('AGENT_POD_PLAN_STALE') }
++  await authority.assertCurrent()
++  return Object.freeze({ disposition: 'RECORDED', record: projection(inserted.rows[0]) })
++}

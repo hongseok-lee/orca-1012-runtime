@@ -1,0 +1,178 @@
+{
+  "validatedSourcePin": "519eea49b4c7ba79e219eb06762f6450a03b8a79",
+  "apiPin": "61c487842cedb715923af6d00ea79e0750223d27",
+  "publicationBase": "9e19b556a7a4ef5cc28f8a12aa8cd6acf8e59fc7",
+  "firstLint": {
+    "sourcePin": "fc9d7c13958570199666f436e226242123a95ba5",
+    "productDiagnostics": 3,
+    "fixtureAndRowTypeDiagnostics": 0,
+    "exit": 1,
+    "exactCorrectionDiffSHA256": "33e1f193e6af99fbd6228020d4e97d2ebffc30f0e0c34385649add5535eaa9ff"
+  },
+  "productLintAndInitialStrictType": {
+    "sourcePin": "61c487842cedb715923af6d00ea79e0750223d27",
+    "wholeExit": 0,
+    "actualTypeSource": 22,
+    "externalPaths": 210,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0
+  },
+  "firstPG": {
+    "sourcePin": "61c487842cedb715923af6d00ea79e0750223d27",
+    "exit": 1,
+    "code": "42883",
+    "cause": "Fixture history(): same UUID-inferred $1 compared with JSON text.",
+    "sourceLocation": "src/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts:83",
+    "rawTapSHA256": "debdc4801e568c428e02dfb2c0d457778a509adeb5d3b3567673a52e26fc94d2",
+    "023Committed": true,
+    "oldLedger22Unchanged": true,
+    "originalRowsPreserved": 396,
+    "planRowsRetained": 1
+  },
+  "fixtureCorrection": {
+    "exactDiffSHA256": "e7a46e91753f0e36e2a4b080f57425b8f0eb298203f4a51218804c77dc646044",
+    "changes": [
+      "JSON text condition explicitly casts $1::text",
+      "Root-explicit initial22 / verified23 schema state",
+      "Preserve the original failed run plan row"
+    ],
+    "APIAnd023Unchanged": true
+  },
+  "changedFixtureChecks": {
+    "lintExit": 0,
+    "strictTypeExit": 0,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0,
+    "typeInputs": 22,
+    "externalPaths": 210,
+    "reusedPriorGuardedInputs": 21,
+    "measuredFixtureDeltaInputs": 1
+  },
+  "finalPG": {
+    "productCallbacks": 1,
+    "parentProductCallbackCount": 0,
+    "tapPass": 2,
+    "tapFail": 0,
+    "tapSkipped": 0,
+    "exit": 0,
+    "actualRuntimePID": 1757,
+    "rawTapSHA256": "9a8684af7ecee07b8eb497720db7d33ebd19ecd1f241b15b47458476c5136855"
+  },
+  "runtime": {
+    "inputs": 9,
+    "mismatches": [],
+    "wrapper": {
+      "sourceSha256": "16e2aab6e00e53a27e93c3295abca68fd7bb69eabe086f5a51ab3225928a42d6",
+      "originalBodySha256": "a6e4f1bf6615db7e7b094a9fb9c05f830d3ec9289de28958a20e7c1745e923c0",
+      "wrapperSha256": "ee7f3300955ed5cdccd02586cddb9e7a1b45558d7bb10ffbbe5e1675162af6e8",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    },
+    "metafileSHA256": "d35d7530779948f2fd3b72c0d8db4bc90a6dd9f4a7b52095da8cf59c07f6747a",
+    "bundleSHA256": "77872040bc52d9cd3a0a11862a61fc1cfa23a960825a99ce962bc83ae61341d0"
+  },
+  "schema": {
+    "state": "verified23",
+    "DDL": 0,
+    "ledgerBefore": 23,
+    "ledgerAfter": 23,
+    "all23VersionChecksumAppliedAtUnchanged": true,
+    "original023Checksum": "c9f6f7d5a058114644175eaedd501dd9892bc31684e34f89bdb75901e3ff342e",
+    "original023AppliedAt": "2026-10-16T02:49:18.307Z",
+    "originalRowsBefore": 406,
+    "rowsAfter": 419,
+    "originalRowsPreserved": true,
+    "originalPlanRowsBefore": 1,
+    "planRowsAfter": 3,
+    "newSyntheticPlanRows": 2,
+    "schemaResetOrDrop": 0
+  },
+  "manifestMetadataQualification": {
+    "runtimeGuardUsesFilesMapAndActualWrapper": true,
+    "actualFixtureSHA256": "16e2aab6e00e53a27e93c3295abca68fd7bb69eabe086f5a51ab3225928a42d6",
+    "inheritedUnusedFixtureHashScalarWasStale": true,
+    "rawManifestPreservedPrivately": true
+  },
+  "preparationQualification": "Root stopped further use of the initial raw-regex collector. Subsequent inputs used the fixed22-source set and actual native listFiles/esbuild metafile; additional collector runs 0.",
+  "jobs": [
+    {
+      "name": "prepare-pg",
+      "pid": 1734,
+      "startedAt": "2026-10-16T03:01:04.671Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T03:01:05.086Z",
+      "logSHA256": "98e0c06ac411ca392b38389304f12a9cf230142fe22f0f48f6479ca5e4e6e2ce"
+    },
+    {
+      "name": "pg",
+      "pid": 1751,
+      "startedAt": "2026-10-16T03:01:06.429Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T03:01:07.257Z",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "controlPID": 1727,
+  "startedAt": "2026-10-16T03:01:04.664Z",
+  "endedAt": "2026-10-16T03:01:07.294Z",
+  "cleanup": {
+    "at": "2026-10-16T03:02:57.519Z",
+    "rows": [
+      {
+        "pid": 1600,
+        "comm": "MainThread",
+        "state": "Z"
+      },
+      {
+        "pid": 1607,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 1614,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 1626,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 1688,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 1727,
+        "comm": "MainThread",
+        "state": "Z"
+      },
+      {
+        "pid": 1734,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 1751,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 1757,
+        "status": "ABSENT"
+      }
+    ]
+  },
+  "heavy": 0,
+  "activeOwnedJobs": 0,
+  "automaticCallbackRetry": 0,
+  "rootAuthorizedFailedCallbackContinuation": 1,
+  "liveDBMutation": 0,
+  "NFSRuntimeMutation": 0,
+  "K8sMutation": 0,
+  "actualAttemptOrPodCreatedByThisFixture": false,
+  "physicalAuthorityIssued": false,
+  "newPNG": 0,
+  "install": 0,
+  "wholeBuild": 0,
+  "runtimeRestart": 0,
+  "usageCreditsStreamErrors": "이번 turn에서 새 usage/credits/stream 중단은 미관측입니다."
+}

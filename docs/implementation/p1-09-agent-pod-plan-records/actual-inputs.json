@@ -1,0 +1,331 @@
+{
+  "validatedSourcePin": "519eea49b4c7ba79e219eb06762f6450a03b8a79",
+  "typeSource": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "blob": "181384ff0bf130ae6ad1ff64e2d9043f08d76d18"
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrate.ts",
+      "bytes": 3136,
+      "sha256": "2ec01fa1bd35f29edffa19a5f3089642d68146399a1d506e042beab85257abf1",
+      "blob": "9172ba37b4578252a8bb94244083a0d119037bc8"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "blob": "11c0f09a0bfc3950a29465efa6d504b9e3207a75"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+      "bytes": 7365,
+      "sha256": "575f1607631fe6c47f484b06e3145ccba2054468d77570fa7d85a5826ebfed8f",
+      "blob": "21859d852ffd6ae6655507bc316a2d98a9d1d1ac"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+      "bytes": 9397,
+      "sha256": "9439fe2e23e04dd49954a0adece4170516c0c7f5c2fa9aff2de6c24cf1e39711",
+      "blob": "cbffca9c42e14f0c136a67a8fad487229b680589"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "bytes": 2071,
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "blob": "2fc02747102fddc0f4ad669a6484c2382f7f5822"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "bytes": 9074,
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "blob": "5437efd3e2466b6357d918fac84768479871e03e"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+      "bytes": 5248,
+      "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+      "blob": "c52e24f98744a52eb3e945bdb9a6419a41d11118"
+    },
+    {
+      "path": "src/main/durable-runtime/db/observation-rows.ts",
+      "bytes": 1439,
+      "sha256": "0873b46a2213790944fbc8ca7ea23926fad40656f4f9db67cc47f783a1933c13",
+      "blob": "110804c3483140f26e0a3c0991b3de7bd61c6c1b"
+    },
+    {
+      "path": "src/main/durable-runtime/resources/evidence/types.ts",
+      "bytes": 5854,
+      "sha256": "89f9830c495218e5c8fc9b33b77d5931914d45d5db736847784f32b684216349",
+      "blob": "3cc0f52796796e26ea5a211a015c71d9bb18403c"
+    },
+    {
+      "path": "src/main/durable-runtime/db/structured-session-rows.ts",
+      "bytes": 1022,
+      "sha256": "15bd86d1c65d6584228bdabdbd0aa90b4da64bbb95553dab49fb8ece5d351329",
+      "blob": "03fc175dbba1a6e9651b077475fb172dd6217c54"
+    },
+    {
+      "path": "src/main/durable-runtime/db/terminal-input-rows.ts",
+      "bytes": 880,
+      "sha256": "167d108ad093ce69d27257c60245b2140d515d997c23aba4656e9fe6bf67a1d4",
+      "blob": "bbdc36323bbcbdef0e8dc0e6022365a2a8141793"
+    },
+    {
+      "path": "src/main/durable-runtime/db/failure-evidence-rows.ts",
+      "bytes": 2374,
+      "sha256": "2687026d2d25b0b7d30be3b1089bf213931e40645b17133578b96610637d5c11",
+      "blob": "e72d88039a54ccec2b3ad141c952f0bada712680"
+    },
+    {
+      "path": "src/main/durable-runtime/db/resource-allocation-rows.ts",
+      "bytes": 3101,
+      "sha256": "1d4f77efb305f7b2504f1f5eb33c13817300520dfac7ad548950a7d796044948",
+      "blob": "9e7033d40ab1c94d6560b4326a21ccac0101047b"
+    },
+    {
+      "path": "src/main/durable-runtime/db/rows.ts",
+      "bytes": 7855,
+      "sha256": "0288d809820312eeabb0ca995ef5a356d6a39e33d170e47741f4140910836263",
+      "blob": "66603575607ade2093424a8d3f4d47c9b5a0cd75"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/command-types.ts",
+      "bytes": 2818,
+      "sha256": "3081e24d2502e153708fca4b45b78eba1031b86351a43b1ef36732a2fc12b8fe",
+      "blob": "b26fcff83e834d9b435e8ec2c3a1ccd7da11269b"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/types.ts",
+      "bytes": 3895,
+      "sha256": "383e7f09f7d70e097c81c0f69155745274ca8ff76c6765419376ff4c1c7399b3",
+      "blob": "399a829e274d0eaeb4aec3c096eecf7b4d934a65"
+    },
+    {
+      "path": "src/main/durable-runtime/db/agent-pod-plan-record-rows.ts",
+      "bytes": 1291,
+      "sha256": "a24318678c062dbdebcfb967b7d8160b182a68057940ff309e7d7c0a4156acfb",
+      "blob": "b5c726038e667e9d9b6ed5b945735cdc5c9f9a5f"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+      "bytes": 2182,
+      "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+      "blob": "2e16ca8ad10ee7cdbb730efc7e10752198fc942a"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "bytes": 5150,
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+      "blob": "0c9ebfdb32abe7555b9297c5b703014070daade4"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+      "bytes": 13515,
+      "sha256": "986d4c74540bfef7f911e7c3616ee0ff57d0caf56cb6b8afca10874130bdafbf",
+      "blob": "4be74758eaa7a99475757eb167536543acfe86d6"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts",
+      "bytes": 15788,
+      "sha256": "16e2aab6e00e53a27e93c3295abca68fd7bb69eabe086f5a51ab3225928a42d6",
+      "blob": "1a44eec30dad3a4126120312536ff6863b08473e"
+    }
+  ],
+  "typeExternalPathsCount": 210,
+  "runtimeSource": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "bytes": 6387
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrate.ts",
+      "sha256": "2ec01fa1bd35f29edffa19a5f3089642d68146399a1d506e042beab85257abf1",
+      "bytes": 3136
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+      "sha256": "575f1607631fe6c47f484b06e3145ccba2054468d77570fa7d85a5826ebfed8f",
+      "bytes": 7365
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+      "sha256": "9439fe2e23e04dd49954a0adece4170516c0c7f5c2fa9aff2de6c24cf1e39711",
+      "bytes": 9397
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+      "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+      "bytes": 2182
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+      "bytes": 5150
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+      "sha256": "986d4c74540bfef7f911e7c3616ee0ff57d0caf56cb6b8afca10874130bdafbf",
+      "bytes": 13515
+    }
+  ],
+  "runtimeDeclaredExternal": [
+    "pg",
+    "zod"
+  ],
+  "runtimeOutputExternalImports": [
+    "node:assert/strict",
+    "node:crypto",
+    "node:test",
+    "pg",
+    "node:crypto",
+    "node:fs/promises",
+    "node:path",
+    "node:crypto",
+    "node:net",
+    "node:path",
+    "node:crypto"
+  ],
+  "runtimeMetafileSHA256": "d35d7530779948f2fd3b72c0d8db4bc90a6dd9f4a7b52095da8cf59c07f6747a",
+  "runtimeBundleSHA256": "77872040bc52d9cd3a0a11862a61fc1cfa23a960825a99ce962bc83ae61341d0",
+  "fixtureWrapper": {
+    "sourceSha256": "16e2aab6e00e53a27e93c3295abca68fd7bb69eabe086f5a51ab3225928a42d6",
+    "originalBodySha256": "a6e4f1bf6615db7e7b094a9fb9c05f830d3ec9289de28958a20e7c1745e923c0",
+    "wrapperSha256": "ee7f3300955ed5cdccd02586cddb9e7a1b45558d7bb10ffbbe5e1675162af6e8",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "sqlInputs": [
+    {
+      "path": "src/main/durable-runtime/db/migrations/001-catalog.sql",
+      "sha256": "d6dc77d638e2a529a6b949ba0e9c9bb69cb11b63b9d6a96a4a46e092895d8ef8",
+      "bytes": 2801
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/002-execution-storage.sql",
+      "sha256": "4afb77588cdc8760757977ea44de0df27a47350cb54c5f727d28df1e19b885db",
+      "bytes": 10866
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/003-operations-resources.sql",
+      "sha256": "9117a47ac3f70b65a2321fa9b752dacd8fe900a06017e9493f2b82908335722e",
+      "bytes": 4205
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/004-input-context.sql",
+      "sha256": "9542dd191a3914abb7278db044b0035b4d3ff77da642c4dd8eef8e628c96de35",
+      "bytes": 7731
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/005-events-replay.sql",
+      "sha256": "b65a8286fd528d00e8cb2d2c10337831b9234d3247adca169fc05903bd34f2ed",
+      "bytes": 7858
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/006-snapshot-seals.sql",
+      "sha256": "9c2f190864629c1dbdb1fad6bda14ec90f8a31dcfb5d9bda8e5b6ed7ec5a08e2",
+      "bytes": 2756
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/007-storage-epoch-cancel-guards.sql",
+      "sha256": "b96f33da9382f8b525a29889a9ed9dbfe29974cb4f233478761612e094acfec4",
+      "bytes": 4404
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/008-attachment-store.sql",
+      "sha256": "17838c94c8d04998d41c4eb7a1965ec82fac7db5d6ca135fc847d0e0de768315",
+      "bytes": 6084
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/009-atomic-journal-outbox.sql",
+      "sha256": "1174944530533eaa01b303faaadfd694542238c79955be0b47b5fe7574320e3a",
+      "bytes": 2175
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/010-runtime-command-ledger.sql",
+      "sha256": "ee24f657e0e597da8df3952a542bcf0ec6cc4c60b610545b7036f2520fd03f59",
+      "bytes": 4849
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/011-runtime-event-producers.sql",
+      "sha256": "1e0bf2a76794f5b987ccfc2fe8f3efbadfdb0881baa227e96025cced1db0c92e",
+      "bytes": 5037
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/012-input-merge-boundary.sql",
+      "sha256": "7c372c38653709acb498007c5533a88daa1f47675b1930ca7cee6743a6699469",
+      "bytes": 1244
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/013-context-deliveries.sql",
+      "sha256": "4d89e1350fba482237df15f3e26098721899b977d1c93f8dcc10047873fdf1cd",
+      "bytes": 1910
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/014-durable-catalog.sql",
+      "sha256": "75f87d716ad1a9477cc1184fb1b1fb580974eed898b47a5c038004f74e4fc7f2",
+      "bytes": 9419
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/015-failure-evidence.sql",
+      "sha256": "b13fdfbeaf022b4b0bb2a60268f09bed6167c8ca741e1d1b5744b8e87f97072d",
+      "bytes": 8211
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/016-observation-episodes.sql",
+      "sha256": "10be9edbc64c69ad1dc34153415c4e5e3175edb25c93efeca5c6712c1870e90d",
+      "bytes": 7243
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/017-structured-session-wire.sql",
+      "sha256": "b0e0159563ddca084b63607b2d37ab3b64e2812ff32c5f761c369a0992afa146",
+      "bytes": 1852
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/018-terminal-input-floor.sql",
+      "sha256": "58f44332d79aaf6ca1966d34ef864974f0490d54e95f6aec26760adc15c18e27",
+      "bytes": 2345
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/019-durable-resource-allocation.sql",
+      "sha256": "b1b0c75cbd2ee9e9f63eba51a2939c3e75b34a75cbbf6d1db2fbef53483339d5",
+      "bytes": 11743
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/020-execution-target-records.sql",
+      "sha256": "85fc2a7494dc1066c2e168948560a3114d043c0dbcdc6ab5d1177adf706565b1",
+      "bytes": 2143
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/021-runtime-member-storage-bindings.sql",
+      "sha256": "4aafe9e45241e8a2c73789fab12d26373b5bcc9c432b02b4c445ae5260d82a5a",
+      "bytes": 4387
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/022-storage-namespace-holds.sql",
+      "sha256": "cf30157eb48efac48067defe45fbcb998d77923500a2b9d891de0b261fbbdbee",
+      "bytes": 8724
+    },
+    {
+      "path": "src/main/durable-runtime/db/migrations/023-agent-pod-plans.sql",
+      "sha256": "c9f6f7d5a058114644175eaedd501dd9892bc31684e34f89bdb75901e3ff342e",
+      "bytes": 2149
+    }
+  ],
+  "typeRuntimeMismatches": [],
+  "fixtureHashAuthority": "Actual files[fixture] and bundle wrapper source SHA256; unused inherited scalar is not a runtime guard."
+}

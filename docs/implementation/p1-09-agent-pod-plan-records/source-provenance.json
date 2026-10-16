@@ -1,0 +1,37 @@
+{
+  "publicationSourceHead": "c2dd817a0b367ab69272546d9a110aeb25cd1a33",
+  "publicationBase": "9e19b556a7a4ef5cc28f8a12aa8cd6acf8e59fc7",
+  "validatedSourcePin": "519eea49b4c7ba79e219eb06762f6450a03b8a79",
+  "apiPin": "61c487842cedb715923af6d00ea79e0750223d27",
+  "ownedFiles": {
+    "src/main/durable-runtime/runtime/agent-pod-plan-records.ts": {
+      "sha256": "986d4c74540bfef7f911e7c3616ee0ff57d0caf56cb6b8afca10874130bdafbf",
+      "bytes": 13515,
+      "lines": 172,
+      "gitEntry": "100644 blob 4be74758eaa7a99475757eb167536543acfe86d6\tsrc/main/durable-runtime/runtime/agent-pod-plan-records.ts"
+    },
+    "src/main/durable-runtime/db/agent-pod-plan-record-rows.ts": {
+      "sha256": "a24318678c062dbdebcfb967b7d8160b182a68057940ff309e7d7c0a4156acfb",
+      "bytes": 1291,
+      "lines": 25,
+      "gitEntry": "100644 blob b5c726038e667e9d9b6ed5b945735cdc5c9f9a5f\tsrc/main/durable-runtime/db/agent-pod-plan-record-rows.ts"
+    },
+    "src/main/durable-runtime/db/migrations/023-agent-pod-plans.sql": {
+      "sha256": "c9f6f7d5a058114644175eaedd501dd9892bc31684e34f89bdb75901e3ff342e",
+      "bytes": 2149,
+      "lines": 34,
+      "gitEntry": "100644 blob ea776dbac2a3ba97576b35c6fa4c3122430f99c2\tsrc/main/durable-runtime/db/migrations/023-agent-pod-plans.sql"
+    },
+    "src/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts": {
+      "sha256": "16e2aab6e00e53a27e93c3295abca68fd7bb69eabe086f5a51ab3225928a42d6",
+      "bytes": 15788,
+      "lines": 195,
+      "gitEntry": "100644 blob 1a44eec30dad3a4126120312536ff6863b08473e\tsrc/main/durable-runtime/runtime/agent-pod-plan-records.pg.test.mts"
+    }
+  },
+  "sourceDiffSHA256": "f74b37505bbc2e3a5cda040d27734a509b0f7f53a153d910c7649725eb5cedea",
+  "existingMigrations001Through022Changed": false,
+  "migrationRegistration": "Existing readMigrations discovers numbered SQL; no central registration list changes.",
+  "actualAttemptForeignKeyAdded": false,
+  "actualAttemptCreated": false
+}
