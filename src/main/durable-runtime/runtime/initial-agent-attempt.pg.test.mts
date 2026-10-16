@@ -30,6 +30,7 @@ const dataset = 'orca-1012-dev-v1', scope = `synthetic-initial:${randomUUID()}`,
 // SAFETY: fixture-only nominal identity, not an authenticated controller issuer.
 const controller = Object.freeze({ scope, owner, term: counter('controller-term', '1') }) as VerifiedControllerIdentity
 const directories = new Map<string, VerifiedDirectoryEvidence>()
+const bindingDomains = new Map<string,{ exportId: string; backingPvUid: string }>()
 const authority: StorageEvidenceAuthority = Object.freeze({
   directory(reference: string) { return directories.get(reference) ?? null },
   directoryPinValid(evidence: VerifiedDirectoryEvidence) { return directories.get(evidence.evidenceRef) === evidence },
@@ -63,7 +64,9 @@ function binding(key: string, mode: 'RW' | 'RO', existing?: { bindingId: string;
     claimName: `protected-${leafId}`, claimUid: `claim-${leafId}`, pvUid: existing?.pvUid ?? `pv-${leafId}`,
     serverPath: `/exports/runtime-domains/${dataset}/${leafId}` }
 }
-async function seed(bindings = [binding('home','RW'),binding('project','RW'),binding('reference','RO')]) {
+async function seed(bindings = [binding('home','RW'),binding('project','RW'),binding('reference','RO')], commandPlanDigest?: string) {
+  const storageDomain = bindingDomains.get(bindings[0].bindingId) ?? {
+    exportId: `synthetic-export:${randomUUID()}`, backingPvUid: `synthetic-server-ssd-pv:${randomUUID()}` }
   const unit = logicalId('runtime-unit', randomUUID()), operation = logicalId('operation', randomUUID())
   const attempt = randomUUID(), session = randomUUID(), agent = randomUUID(), workspace = randomUUID()
   const context: GatewayContext = Object.freeze({ runtimeUnitId: unit, operationId: operation, controller })
@@ -86,16 +89,18 @@ async function seed(bindings = [binding('home','RW'),binding('project','RW'),bin
     await tx.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,'synthetic initial reservation','READY')", [workspace,`initial:${workspace}`])
     await tx.query("INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')", [session,agent,workspace])
     for (const b of bindings) {
+      bindingDomains.set(b.bindingId,storageDomain)
       const reference = `synthetic-initial-directory:${b.bindingId}`
       // SAFETY: synthetic prepared proof only; no authenticated physical pin issuer is qualified.
       const evidence = Object.freeze({ evidenceRef: reference, topologyPinId: `synthetic-pin:${b.bindingId}`,
-        candidate: Object.freeze({ domain: Object.freeze({ backendId: 'initial-fixture', exportId: b.pvUid, pvUid: b.pvUid }),
+        candidate: Object.freeze({ domain: Object.freeze({ backendId: 'initial-fixture', exportId: storageDomain.exportId, pvUid: storageDomain.backingPvUid }),
           canonicalDirectory: `/${dataset}/${b.leafId}`, podUid: 'synthetic-nfs', generation: 'synthetic-1', device: '123', inode: '456' }) }) as VerifiedDirectoryEvidence
       directories.set(reference, evidence)
-      await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING', ['initial-fixture',b.pvUid])
+      assert.notEqual(evidence.candidate.domain.pvUid,b.pvUid) // Server SSD backing PV differs from each consumer leaf PV.
+      await tx.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2) ON CONFLICT DO NOTHING', ['initial-fixture',storageDomain.exportId])
       await tx.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
         VALUES($1,$2,$3,$4,$5,clock_timestamp(),'VERIFIED') ON CONFLICT(id) DO NOTHING`,
-      [b.bindingId,'initial-fixture',b.pvUid,`/${dataset}/${b.leafId}`,reference])
+      [b.bindingId,'initial-fixture',storageDomain.exportId,`/${dataset}/${b.leafId}`,reference])
     }
     await tx.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [unit,session,bindings[0].bindingId])
     for (const b of bindings.slice(1)) {
@@ -105,7 +110,9 @@ async function seed(bindings = [binding('home','RW'),binding('project','RW'),bin
     const envelope = { operationId: operation, controllerTerm: controller.term, stepRevision: counter('step-revision', '0'),
       executionEpoch: plan.identity.executionEpoch, intentRevision: plan.identity.intentRevision,
       podTarget: 'CREATE_WITHOUT_POD' as const, expectedPodUid: null }
-    const input = { planDigest: stored.record.planDigest }
+    const input = { resourceName: plan.identity.resourceName, body: { mode:'COLD',
+      planDigest: commandPlanDigest ?? stored.record.planDigest, attemptId: plan.identity.attemptId,
+      resourceProfileRevision: plan.pod.metadata.annotations['orca.dev/resource-profile-revision'] } }
     const locked = await LockedGatewayAuthority.acquire(tx, context)
     const submitted = await submitCommand(locked, { command: 'ensureAttempt', envelope, input, inputHash: inputDigest(input), predecessor: { kind:'NONE' } })
     // SAFETY: synthetic fixture executor string only, never a workload authentication issuer.
@@ -158,6 +165,9 @@ await test('initial attempt and complete protected writer reservation: focused S
     { access_state:'VERIFIED',writer_attempt_id:null,revision:'0' })
   assert.ok(!result.storageGrants.some(g => g.bindingId==='shared-fixture'))
   const bad = await seed()
+  const wrongPlanClaim = await seed(undefined,'0'.repeat(64))
+  await reject(reserve(wrongPlanClaim),'INITIAL_AGENT_CLAIM_PLAN')
+  assert.deepEqual(await counts(wrongPlanClaim),{ attempts:'0',execution:'0',storage:'0',mounts:'0',audit:'0',outbox:'0' })
   await reject(reserve(bad,{ ...bad.request,planDigest:'0'.repeat(64) }),'INITIAL_AGENT_PLAN')
   await reject(reserve(bad,{ ...bad.request,bindings:bad.request.bindings.slice(1) }),'INITIAL_AGENT_PLAN')
   await reject(reserve(bad,{ ...bad.request,claim:{ ...bad.request.claim,executionToken:logicalId('runtime-command-execution',randomUUID()) } }),'INITIAL_AGENT_CLAIM')
@@ -211,11 +221,12 @@ await test('initial attempt and complete protected writer reservation: focused S
   // A parent-domain RESERVED writer blocks the exact managed child leaf too.
   const child = await seed(), parentUnit=randomUUID(), parentAttempt=randomUUID(), parentBinding=randomUUID()
   const leaf = child.bindings[0]
+  const parentDomain = bindingDomains.get(leaf.bindingId)!
   await withDurableTransaction(pool, async tx => {
     await tx.query("INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'RUNNING','ABSENT')",[parentUnit])
     await tx.query("INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,0,'{}',0)",[parentUnit])
     await tx.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,identity_proof_ref,identity_verified_at,access_state)
-      VALUES($1,'initial-fixture',$2,$3,'synthetic-parent',clock_timestamp(),'VERIFIED')`,[parentBinding,leaf.pvUid,`/${dataset}`])
+      VALUES($1,'initial-fixture',$2,$3,'synthetic-parent',clock_timestamp(),'VERIFIED')`,[parentBinding,parentDomain.exportId,`/${dataset}`])
     const member=randomUUID(), agent=randomUUID(), workspace=randomUUID()
     await tx.query("INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'codex')",[agent])
     await tx.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,'synthetic parent writer','READY')",[workspace,`parent:${workspace}`])

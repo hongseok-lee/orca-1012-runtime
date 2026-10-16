@@ -76,6 +76,7 @@ export async function reserveInitialAgentAttempt(tx: DurableTransaction, origina
   const record = await readAgentPodPlan(tx, context.operationId)
   if (!record || record.planDigest !== planDigest) { return deny('PLAN') }
   const plan = record.plan, identity = plan.identity, dataset = plan.pod.metadata.labels['orca.dev/dataset']
+  const profileRevision = plan.pod.metadata.annotations['orca.dev/resource-profile-revision']
   const protectedBindings = plan.mountExpectations.protected
   if (identity.unitId !== context.runtimeUnitId || identity.operationId !== context.operationId ||
       e.executionEpoch !== identity.executionEpoch || e.intentRevision !== identity.intentRevision ||
@@ -113,6 +114,8 @@ export async function reserveInitialAgentAttempt(tx: DurableTransaction, origina
   assertOriginal(command, claim.identity)
   if (command.operation_id !== identity.operationId || command.runtime_unit_id !== identity.unitId || command.state !== 'EXECUTING' ||
       command.executor_id !== claim.executorId || command.execution_token !== claim.executionToken || command.owner_controller_term !== context.controller.term) { return deny('CLAIM') }
+  if (canonicalInput(command.input) !== canonicalInput({ resourceName: identity.resourceName,
+    body: { mode: 'COLD', planDigest, attemptId: identity.attemptId, resourceProfileRevision: profileRevision } })) { return deny('CLAIM_PLAN') }
 
   const held: VerifiedDirectoryEvidence[] = []
   for (const b of bindings) {
@@ -123,7 +126,7 @@ export async function reserveInitialAgentAttempt(tx: DurableTransaction, origina
     if (!evidence || evidence.evidenceRef !== b.identity_proof_ref || !evidence.topologyPinId || !Object.isFrozen(evidence) ||
         !Object.isFrozen(evidence.candidate) || !Object.isFrozen(evidence.candidate.domain) ||
         evidence.candidate.domain.backendId !== b.backend_id || evidence.candidate.domain.exportId !== b.export_id ||
-        evidence.candidate.domain.pvUid !== p.pvUid || evidence.candidate.canonicalDirectory !== b.canonical_directory ||
+        evidence.candidate.canonicalDirectory !== b.canonical_directory ||
         b.canonical_directory !== `/${dataset}/${p.leafId}` || p.serverPath !== `/exports/runtime-domains${b.canonical_directory}`) { return deny('DIRECTORY') }
     held.push(evidence)
   }
@@ -149,7 +152,6 @@ export async function reserveInitialAgentAttempt(tx: DurableTransaction, origina
     'SELECT * FROM durable_runtime.attempts WHERE runtime_unit_id=$1', [identity.unitId])).rows
   const executions = (await query<{ id: string; attempt_id: string; execution_epoch: string; state: string; revision: string }>(
     'SELECT * FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1', [identity.unitId])).rows
-  const profileRevision = plan.pod.metadata.annotations['orca.dev/resource-profile-revision']
   const result = (disposition: 'RESERVED' | 'REPLAYED'): InitialAgentAttemptReservation => Object.freeze({ disposition,
     visibility: 'TRANSACTION_LOCAL', attemptId: identity.attemptId, executionGrantId, storageGrants, planDigest, unitRevision,
     kubernetesExecutionAuthorized: false, physicalPinIssuerImplemented: false })
