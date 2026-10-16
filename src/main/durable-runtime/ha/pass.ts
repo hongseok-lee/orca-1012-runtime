@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
 import type { Pool } from 'pg'
 import { logicalId, counter, type RuntimeUnitId } from '../../../shared/durable-runtime/identity.ts'
@@ -9,7 +10,7 @@ import type { ConsumerOptions, EventHandler, ProducerStream } from '../events/ty
 // Exact P113 dependency; these shared files belong to the lifecycle owner.
 // Verification composes the pinned dependency instead of copying a new API.
 import { listDueReconciliations } from '../lifecycle/due.ts'
-import { prepareReconcileStep, type ReconcileStepRequest } from '../lifecycle/controller.ts'
+import { expireInitialWake, prepareReconcileStep, type InitialWakeExpiryRequest, type ReconcileStepRequest } from '../lifecycle/controller.ts'
 import { recoverListWatch, type ListWatchTransport, type ObservationSink } from '../lifecycle/watch.ts'
 import { positiveInteger } from './instance.ts'
 import type { TakeoverCommand, TakeoverOperation, TakeoverQueueHead, TakeoverUnit } from './takeover.ts'
@@ -131,28 +132,60 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   try {
     await gate()
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
-    // Planner가 없으면 due 조회와 candidate별 gate·미지원 항목의 work 계산을 생략합니다.
-    // 기존 queue/inventory budget과 takeover snapshot·lease 검증은 유지합니다.
-    if (request.planStep) {
+    const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
+    const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
+    const expiredInitialWakes = new Map<RuntimeUnitId, TakeoverOperation>()
+    // Scheduling uses the actual PG snapshot flag, never a JS deadline clock.
+    // The expiry transaction alone revalidates lease/CAS/clock/no-effect guards.
+    for (const operation of snapshot.operations) {
+      const unit = units.get(operation.runtime_unit_id)
+      if (unit && !pending.has(unit.id) && !expiredInitialWakes.has(unit.id) &&
+          operation.deadline_expired && !operation.terminal && operation.kind === 'WAKE' &&
+          operation.step === 'INTENT_QUEUED' && operation.step_revision === '0' && operation.expected_pod_uid === null &&
+          unit.desired_mode === 'RUNNING' && unit.active_attempt_id === null &&
+          operation.intent_revision === unit.intent_revision && operation.execution_epoch === unit.execution_epoch) {
+        expiredInitialWakes.set(unit.id, operation)
+      }
+    }
+    // Without a planner, keep the non-expired due/gate/work skip optimization.
+    // Only actual expired initial WAKE candidates enter the expiry-only path.
+    if (request.planStep || expiredInitialWakes.size) {
       // listDueReconciliations retains its original PG deadline predicate/order.
-      const due = await listDueReconciliations(pool)
-      const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
-      const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
+      const due = request.planStep ? await listDueReconciliations(pool) : []
       // Unresolved original commands also need lookup, even if their normal
       // Unit projection does not currently appear in the due list.
-      const candidates: RuntimeUnitId[] = [...new Set([...due, ...snapshot.commands.map(c => c.runtime_unit_id)])]
+      const candidates: RuntimeUnitId[] = request.planStep
+        ? [...new Set([...due, ...snapshot.commands.map(c => c.runtime_unit_id), ...expiredInitialWakes.keys()])]
+        : [...expiredInitialWakes.keys()]
       for (const unitId of candidates) {
         if (!room()) {break}
         const unit = units.get(unitId)
         if (!unit) {continue} // Never use a global due result to adopt another scope.
         await gate()
         const command = pending.get(unitId)
+        const expired = expiredInitialWakes.get(unitId)
         const operation = command
           ? snapshot.operations.find(o => o.id === command.operation_id)
-          : snapshot.operations.find(o => o.runtime_unit_id === unitId && !o.terminal && o.retry_due)
+          : expired ?? snapshot.operations.find(o => o.runtime_unit_id === unitId && !o.terminal && o.retry_due)
         work++
         if (!operation) {
           items.push({ kind: 'RECONCILE', identity: unitId, disposition: 'NO_ORIGINAL_OPERATION' })
+          continue
+        }
+        if (!command && expired) {
+          const expiryRequest: InitialWakeExpiryRequest = {
+            context: Object.freeze({ controller: request.controller, runtimeUnitId: unitId, operationId: expired.id }),
+            mutationKey: `initial-wake-expiry:${expired.id}:${unit.revision}:${expired.step_revision}:${randomUUID()}`,
+            expectedUnitRevision: unit.revision, expectedIntentRevision: unit.intent_revision,
+            expectedStepRevision: expired.step_revision
+          }
+          const expiry = await expireInitialWake(pool, expiryRequest)
+          if (expiry.mutation.status === 'UNCERTAIN') {
+            session.stop()
+            return { status: 'STOPPED', reason: 'UNCERTAIN_COMMIT', items }
+          }
+          await gate()
+          items.push({ kind: 'RECONCILE', identity: expired.id, disposition: expiry.reason })
           continue
         }
         const selected = request.planStep?.(operation, unit)
