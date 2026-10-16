@@ -162,6 +162,7 @@ export async function addPastGrant(pool: Pool, f: InitialRevalidationFixture) {
   const unit = randomUUID(), attempt = randomUUID(), grant = randomUUID()
   await withDurableTransaction(pool, async tx => {
     await tx.query("INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'RUNNING','ABSENT')", [unit])
+    await tx.query("INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,0,'{}',0)", [unit])
     await tx.query("INSERT INTO durable_runtime.attempts(id,runtime_unit_id,execution_epoch,mode,resource_profile_revision,effective_resources,status) VALUES($1,$2,0,'COLD',0,'{}','RESERVED')", [attempt, unit])
     await tx.query(`INSERT INTO durable_runtime.storage_write_grants(id,storage_binding_id,attempt_id,storage_epoch,state,revoked_at,revocation_proof_ref)
       VALUES($1,$2,$3,0,'REVOKED',clock_timestamp(),'fixture-past-revoked-proof')`, [grant, f.original.bindingId, attempt])
