@@ -1,6 +1,6 @@
 # 전용 managed-leaf collector 자격 준비
 
-이 source는 `d76726b5fc9156860ff7aa9f7809f07f58d8a0fd`의 기존 collector 경로에 맞춘 개발 운영 후보입니다. Source와 원격 합성 fixture만 검증했으며 실제 SA·권한·정책·token·Pod를 생성하지 않았습니다. 실제 CEL·TokenRequest·허용 exec 및 physical pin 합격은 아닙니다.
+이 source는 `d76726b5fc9156860ff7aa9f7809f07f58d8a0fd`의 기존 collector 경로에서 시작한 개발 운영 준비입니다. 초기 source/합성 검증 뒤 실제 SA 1개와 guard 8개의 ACK/readback까지 진행하고 metadata 형식 검사에서 중단했습니다. RBAC·token·collector 단계는 미진입이며 전체 자격·권한·TokenRequest·허용 exec 및 physical pin 합격은 아닙니다.
 
 `prepareCollectorIdentity`는 권한 없는 `orca-dev/orca-storage-collector` SA와 최소 RBAC를 순수 JSON으로 준비합니다. 아직 bootstrap 응답 UID가 없으면 credential guard 출력은 `null`입니다. UID를 예측하거나 기존 이름을 채택하지 않습니다. 실제 guard는 최초 SA CREATE 응답 UID로만 생성합니다.
 
@@ -23,3 +23,15 @@ CREATE timeout/응답 유실·HTTP 5xx·identity를 확인할 수 없는 201은 
 `67e452b41fa58614f0a581e178bd05619e9b9b92`의 소유 mjs 4개는 2026-10-16 10:16:02.979–10:16:03.627 UTC의 분리 stage에서 변경 lint 0 warnings/0 errors와 최초 합성 value 8/8을 통과했습니다. Stage의 원 입력 11개 hash가 일치했으며 소유 control/lint/value PID 종료를 회수했습니다. 이 fixture는 가짜 operator API의 순서·이름 충돌·응답 불명 회수·metadata negotiation·guard readback을 확인한 결과입니다. 실제 Kubernetes CEL·권한·TokenRequest·collector exec 또는 전체 type 검증은 아닙니다.
 
 이전 `5eca63fb3929dea002089a4e20035ac094046442`의 09:58:16.589–09:58:17.037 UTC 첫 lint는 `curly` 32건으로 exit 1이며 value 미진입이었습니다. 원 실패를 보존하고 해당 중괄호 및 지정 GKE selector만 교정했습니다. 기존 collector/HTTPS 성공 suite, 설치, 이미지 빌드, 가동 source 변경과 새 화면은 반복하지 않았습니다.
+
+## 확인된 SA·guard 이후의 명시적 계속
+
+2026-10-16 10:40:48.334–10:40:50.529 UTC의 최초 실제 설치는 SA 1개와 guard 8개의 CREATE ACK 및 원 UID/spec readback 뒤 Pod metadata 형식 검사에서 중단했습니다. Secret/NFS/RBAC/token 단계에는 진입하지 않았습니다. 최초 응답 body를 보존하지 않았으므로 그 형식을 확정하지 않습니다. 별도 10:45:29.213–10:45:29.821 UTC 진단 GET 1회에서 정상 `meta.k8s.io/v1`/`PartialObjectMetadataList`의 명시 `items:null`과 continue 부재를 확인했습니다. 최초 실패와 후속 진단은 별도 원자료입니다.
+
+Export된 `checkedMetadataList(response)`는 정확 HTTP 200·kind/apiVersion의 명시 `items:null`만 빈 배열로 처리하고 응답을 수정하지 않습니다. Items 누락·다른 type·잘못된 item·full-object fallback과 nonempty/잘못된 continue는 거절하며 paging이나 fallback 요청을 추가하지 않습니다.
+
+동일 factory의 `continueAfterCredentialGuards(approval, acknowledged, signal)`는 trusted operator composition 내부용입니다. `acknowledged`는 Root 부분수락의 `rootAcceptanceRef: sha256:<hash>`와 `{kind,name,namespace,uid}` collector, `{kind,name,uid}` guard 8개입니다. 원 generator의 정확 이름집합·중복/누락·UUID를 실행 전 capture/validate/freeze합니다. 기존 `install`은 create-only이며 자동 resume으로 바뀌지 않습니다.
+
+명시적 계속은 실제 SA GET과 guard 8개 GET의 UID/spec/readiness를 확인하고 미생성 RBAC 6개를 확인한 뒤 원 metadata2→NFS10→RBAC6/issuer Binding-last를 재사용합니다. 기존 SA/guard POST는 하지 않으며 `priorAcknowledged`와 신규 `created`를 구분합니다. 변경·불명·충돌이면 CREATE 0으로 중단하고 원 불명 CREATE 회수·abort/no retry helper를 그대로 사용합니다. Root 부분수락은 전체 설치·실제 권한·token·collector·physical pin 합격이 아닙니다.
+
+새 `continuation.test.mjs`는 이 경계만 확인하는 미실행 집중 fixture source입니다. 기존 8개 합성 검사를 반복하지 않았으며 새 lint/value·실제 계속 API 호출은 아직 0입니다.

@@ -40,13 +40,55 @@ function identity(value, desired) {
   return { kind: value.kind, name: value.metadata.name,
     ...(desired.metadata.namespace ? { namespace } : {}), uid: value.metadata.uid }
 }
-function checkedMetadataList(response) {
-  const value = response.body
-  if (response.statusCode !== 200 || value?.apiVersion !== 'meta.k8s.io/v1' ||
-      value.kind !== 'PartialObjectMetadataList' || !Array.isArray(value.items) ||
-      value.items.some(item => !item.metadata || Object.keys(item).some(key =>
-        !['apiVersion', 'kind', 'metadata'].includes(key)))) { fail('METADATA_ONLY_RESPONSE_REQUIRED') }
-  return value.items
+export function checkedMetadataList(response) {
+  const value = response?.body
+  if (response?.statusCode !== 200 || !value || typeof value !== 'object' || Array.isArray(value) ||
+      value.apiVersion !== 'meta.k8s.io/v1' || value.kind !== 'PartialObjectMetadataList' ||
+      !Object.hasOwn(value, 'items') || (value.items !== null && !Array.isArray(value.items)) ||
+      Object.keys(value).some(key => !['apiVersion', 'kind', 'metadata', 'items'].includes(key))) {
+    fail('METADATA_ONLY_RESPONSE_REQUIRED')
+  }
+  if (Object.hasOwn(value, 'metadata') && (!value.metadata || typeof value.metadata !== 'object' ||
+      Array.isArray(value.metadata))) { fail('METADATA_ONLY_RESPONSE_REQUIRED') }
+  if (value.metadata && Object.hasOwn(value.metadata, 'continue') && value.metadata.continue !== '') {
+    fail('METADATA_ONLY_RESPONSE_REQUIRED')
+  }
+  const items = value.items === null ? [] : value.items
+  if (items.some(item => !item || typeof item !== 'object' || Array.isArray(item) ||
+      !item.metadata || typeof item.metadata !== 'object' || Array.isArray(item.metadata) ||
+      (Object.hasOwn(item, 'apiVersion') && item.apiVersion !== 'meta.k8s.io/v1') ||
+      (Object.hasOwn(item, 'kind') && item.kind !== 'PartialObjectMetadata') ||
+      Object.keys(item).some(key => !['apiVersion', 'kind', 'metadata'].includes(key)))) {
+    fail('METADATA_ONLY_RESPONSE_REQUIRED')
+  }
+  return items
+}
+function captureAcknowledged(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) { fail('ACKNOWLEDGED_INPUT_INVALID') }
+  const rootAcceptanceRef = value.rootAcceptanceRef, rawCollector = value.collector, rawGuards = value.guards
+  if (typeof rootAcceptanceRef !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(rootAcceptanceRef) ||
+      !rawCollector || typeof rawCollector !== 'object' || Array.isArray(rawCollector) ||
+      !Array.isArray(rawGuards) || rawGuards.length !== 8) { fail('ACKNOWLEDGED_INPUT_INVALID') }
+  const collector = { kind: rawCollector.kind, name: rawCollector.name, namespace: rawCollector.namespace, uid: rawCollector.uid }
+  if (collector.kind !== 'ServiceAccount' || collector.name !== collectorName || collector.namespace !== namespace ||
+      typeof collector.uid !== 'string' || !uuid.test(collector.uid)) { fail('ACKNOWLEDGED_INPUT_INVALID') }
+  const expected = credentialGuards(collector.uid), captured = new Map()
+  for (const item of rawGuards) {
+    if (!item || typeof item !== 'object' || Array.isArray(item) || Object.hasOwn(item, 'namespace')) {
+      fail('ACKNOWLEDGED_INPUT_INVALID')
+    }
+    const entry = { kind: item.kind, name: item.name, uid: item.uid }, key = `${entry.kind}/${entry.name}`
+    if (typeof entry.kind !== 'string' || typeof entry.name !== 'string' || typeof entry.uid !== 'string' ||
+        !uuid.test(entry.uid) || captured.has(key) || !expected.some(object => `${object.kind}/${object.metadata.name}` === key)) {
+      fail('ACKNOWLEDGED_INPUT_INVALID')
+    }
+    captured.set(key, entry)
+  }
+  const guards = expected.map(object => captured.get(`${object.kind}/${object.metadata.name}`))
+  if (guards.some(item => !item) || new Set([collector.uid, ...guards.map(item => item.uid)]).size !== 9) {
+    fail('ACKNOWLEDGED_INPUT_INVALID')
+  }
+  return freeze({ rootAcceptanceRef, collector, guards })
 }
 
 /** The existing operator API adapter supplies auth/TLS/deadlines. No transport or token issuer is implemented here. */
@@ -54,12 +96,16 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
   const config = captureInput(rawInput)
   let request
   try { request = operatorApi.request.bind(operatorApi) } catch { fail('OPERATOR_TRANSPORT_REQUIRED') }
-  return freeze({ async install(approval, signal) {
+  async function run(approval, acknowledged, signal) {
     if (!approval || approval.execute !== true || approval.rootExecutionApproved !== true ||
         approval.rootAcceptedSourcePin !== config.rootAcceptedSourcePin) { fail('ROOT_EXECUTION_APPROVAL_REQUIRED') }
     const state = { kind: 'COLLECTOR_IDENTITY_INSTALLATION', rootAcceptedSourcePin: config.rootAcceptedSourcePin,
       phase: 'PREFLIGHT', startedAt: new Date().toISOString(), createIntents: [], created: [], observations: [],
       issuedTokens: 0, physicalPinIssued: false, actualCollectorExec: 0 }
+    if (acknowledged) {
+      state.priorAcknowledged = acknowledged
+      state.rechecks = []
+    }
     async function api(method, path, body, accept = 'application/json') {
       if (signal.aborted) { fail('ABORTED') }
       const options = { method, path, accept, timeoutMs: 15000, signal,
@@ -120,21 +166,19 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
       }
       return captured
     }
-    try {
-      const sa = bootstrapServiceAccount(), rbac = leastPrivilegeRbac(config)
-      await absent(sa)
-      // Preflight deterministic names before creating an identity; this is not an audit of all effective RBAC.
-      for (const object of rbac) { await absent(object) }
-      state.phase = 'BOOTSTRAP_SERVICE_ACCOUNT'
-      const collector = await create(sa)
-      state.collector = collector
-      const guards = credentialGuards(collector.uid)
-      for (const guard of guards) { await absent(guard) }
-      state.phase = 'CREDENTIAL_GUARDS'
-      const guardIdentities = []
-      for (const guard of guards) { guardIdentities.push(await create(guard)) }
+    function recheck(desired, expected, response) {
+      if (!acknowledged) { return null }
+      const observedUid = response.body?.metadata?.uid
+      const row = { kind: desired.kind, name: desired.metadata.name, expectedUid: expected.uid,
+        ...(desired.metadata.namespace ? { namespace } : {}), statusCode: response.statusCode, verified: false,
+        ...(uuid.test(observedUid ?? '') ? { observedUid } : {}) }
+      state.rechecks.push(row)
+      return row
+    }
+    async function verifyGuards(guards, guardIdentities) {
       for (const [index, guard] of guards.entries()) {
         const response = await api('GET', objectPath(guard))
+        const row = recheck(guard, guardIdentities[index], response)
         if (response.statusCode !== 200 || identity(response.body, guard).uid !== guardIdentities[index].uid ||
             canonicalJson(response.body.spec) !== canonicalJson(guard.spec)) { fail('CREDENTIAL_GUARD_READBACK_MISMATCH') }
         if (guard.kind === 'ValidatingAdmissionPolicy' &&
@@ -142,11 +186,40 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
              response.body.status.observedGeneration < response.body.metadata.generation ||
              !response.body.status.typeChecking ||
              (response.body.status.typeChecking.expressionWarnings ?? []).length !== 0)) { fail('CREDENTIAL_GUARD_NOT_READY') }
+        if (row) { row.verified = true }
       }
+    }
+    async function verifyServiceAccount(sa, collector) {
       const frozenSa = await api('GET', objectPath(sa))
+      const row = recheck(sa, collector, frozenSa)
       if (frozenSa.statusCode !== 200 || identity(frozenSa.body, sa).uid !== collector.uid ||
           frozenSa.body.automountServiceAccountToken !== false || (frozenSa.body.secrets ?? []).length !== 0) {
         fail('COLLECTOR_IDENTITY_CHANGED_BEFORE_GRANTS')
+      }
+      if (row) { row.verified = true }
+    }
+    try {
+      const sa = bootstrapServiceAccount(), rbac = leastPrivilegeRbac(config)
+      if (acknowledged) {
+        state.phase = 'ACKNOWLEDGED_CREDENTIAL_GUARDS_RECHECK'
+        state.collector = acknowledged.collector
+        await verifyServiceAccount(sa, acknowledged.collector)
+        await verifyGuards(credentialGuards(acknowledged.collector.uid), acknowledged.guards)
+        for (const object of rbac) { await absent(object) }
+      } else {
+        await absent(sa)
+        // Preflight deterministic names before creating an identity; this is not an audit of all effective RBAC.
+        for (const object of rbac) { await absent(object) }
+        state.phase = 'BOOTSTRAP_SERVICE_ACCOUNT'
+        const collector = await create(sa)
+        state.collector = collector
+        const guards = credentialGuards(collector.uid)
+        for (const guard of guards) { await absent(guard) }
+        state.phase = 'CREDENTIAL_GUARDS'
+        const guardIdentities = []
+        for (const guard of guards) { guardIdentities.push(await create(guard)) }
+        await verifyGuards(guards, guardIdentities)
+        await verifyServiceAccount(sa, collector)
       }
       state.phase = 'ASSOCIATION_METADATA'
       const podPath = `/api/v1/namespaces/${namespace}/pods?fieldSelector=${encodeURIComponent(`spec.serviceAccountName=${collectorName}`)}`
@@ -178,5 +251,12 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
     state.finishedAt = new Date().toISOString()
     // No raw API object, Secret data, token, CA, response/cause, or general user metadata leaves this caller.
     return freeze(state)
-  } })
+  }
+  return freeze({
+    async install(approval, signal) { return run(approval, null, signal) },
+    async continueAfterCredentialGuards(approval, acknowledged, signal) {
+      const captured = captureAcknowledged(acknowledged)
+      return run(approval, captured, signal)
+    },
+  })
 }
