@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "kind": "agent-consumer-mount-collector-synthetic-verification",
+  "recordedAt": "2026-10-16T05:28:04.840944+00:00",
+  "scope": "Root가 지정한 source와 합성 HTTPS/WS fixture의 검증입니다. 실제 Agent exec 또는 현재 NFS qualification이 아닙니다.",
+  "fixedBase": "6ba8efeb298386ac505bb17242a641aa7012adc3",
+  "verifiedSourcePin": "552559694b5a9272e1d2dc67e6606ec507373f83",
+  "alignedSourcePin": "cf51f876983cf2e44873ff651ca7b712c6bbf21e",
+  "sourceFiles": 7,
+  "productFiles": 5,
+  "fixtureFiles": 2,
+  "actualTypeInputs": 37,
+  "actualValueInputs": 23,
+  "postAlignmentInputDifferences": [],
+  "sourceInputs": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+      "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/observation-rows.ts",
+      "sha256": "0873b46a2213790944fbc8ca7ea23926fad40656f4f9db67cc47f783a1933c13",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/resources/evidence/types.ts",
+      "sha256": "89f9830c495218e5c8fc9b33b77d5931914d45d5db736847784f32b684216349",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/structured-session-rows.ts",
+      "sha256": "15bd86d1c65d6584228bdabdbd0aa90b4da64bbb95553dab49fb8ece5d351329",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/terminal-input-rows.ts",
+      "sha256": "167d108ad093ce69d27257c60245b2140d515d997c23aba4656e9fe6bf67a1d4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/failure-evidence-rows.ts",
+      "sha256": "2687026d2d25b0b7d30be3b1089bf213931e40645b17133578b96610637d5c11",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/resource-allocation-rows.ts",
+      "sha256": "1d4f77efb305f7b2504f1f5eb33c13817300520dfac7ad548950a7d796044948",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/rows.ts",
+      "sha256": "0288d809820312eeabb0ca995ef5a356d6a39e33d170e47741f4140910836263",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/command-types.ts",
+      "sha256": "3081e24d2502e153708fca4b45b78eba1031b86351a43b1ef36732a2fc12b8fe",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/types.ts",
+      "sha256": "383e7f09f7d70e097c81c0f69155745274ca8ff76c6765419376ff4c1c7399b3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+      "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+      "sha256": "575f1607631fe6c47f484b06e3145ccba2054468d77570fa7d85a5826ebfed8f",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/watch.ts",
+      "sha256": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+      "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+      "sha256": "9439fe2e23e04dd49954a0adece4170516c0c7f5c2fa9aff2de6c24cf1e39711",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/agent-pod-plan-record-rows.ts",
+      "sha256": "a24318678c062dbdebcfb967b7d8160b182a68057940ff309e7d7c0a4156acfb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create-types.ts",
+      "sha256": "d0bd432e98dc177f8cbd26ff09d8edb48c0b787f6a3d7a8bdc2c4b7a0ee432a4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create-projection.ts",
+      "sha256": "5a543d9a46819b0894babebc4e7b5a77725c30dd14d2e9688ed6db693c405466",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-types.ts",
+      "sha256": "e5c0409b245924cf10516bddd4d8d22b5daaea695cff32ed98ad6592b51f3797",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector-types.ts",
+      "sha256": "cc05709ff1f6277c0ba77e8ac76b55cf73793e9331815f0e9cc7b9c3c01ff621",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector-projection.ts",
+      "sha256": "6270649c54129652c80c52a0634e828a0b42a12ebd04498c84ce865881f5072e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector-probe.ts",
+      "sha256": "40b5d4169ea92d854dff3ac62709e76b2a9fdd3d08580f0ee7d1755f83398843",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector-exec.ts",
+      "sha256": "4ac4f9dcb637358f1393e13da13e2ba2d1e86535d2fe2d6f4cdd68074cf6c757",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-fixtures.mts",
+      "sha256": "ba134dacea911c09020ee4c8f1a28fdf60ac40427fb4a34e9a3564b7b0a1ec82",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-exec.ts",
+      "sha256": "ae55ac8a278b96a8d31c4e85c9bd146978d7e4a83b019e1857a051041259c1fe",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-fixtures.mts",
+      "sha256": "966ec7fbcb66c791300bb6e9784f6ac870c910178449f25644791450ce5156d1",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector-fixtures.mts",
+      "sha256": "0f347b8568f05260410f0ae666496e9eafe40600bfa39f9b10843dd872842e06",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+      "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create-transport.ts",
+      "sha256": "7d8d8269ce415e9f72dbc297422940e0d59ee21c080c657925173ed9be7bca95",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector.ts",
+      "sha256": "18e65c2bd3202cc6d4ea374aab4302bf8ba7b00bbe6867e486b29f920816c08a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/agent-mount-collector.test.mts",
+      "sha256": "aef3d1edd8af3c098847a87b93d70e1f402ee541c4e03be0fa8ee2ec16f9ed48",
+      "gitMode": "100644"
+    }
+  ],
+  "contextInputs": [
+    {
+      "path": ".oxlintrc.json",
+      "sha256": "c9937ad53bdaa27b1289b9e46ecd55d13151f3e1f619a78e35c88363b585096e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/app-store-performance.mjs",
+      "sha256": "4285aba06eb207c6f693a00384677fcc223567e6c15c4662ec83a7f275780cdb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/mobile-pairing-qrcode-import.mjs",
+      "sha256": "813c5dbd6908a4a4ce1bbbd3da525cb809bbd05a422dc5ccb3c9376202d290d7",
+      "gitMode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/quadratic-buffer-concat.mjs",
+      "sha256": "88cc326f7d8bc550526e086d9911dc6725d495aa2077943dfcf1580d7216baa6",
+      "gitMode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/renderer-scrollbar-style.mjs",
+      "sha256": "c9f023a8a56a97db0fb781fbef6acdf6d4139e6f406430475973d103b50f542e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/sort-comparator-performance.mjs",
+      "sha256": "aabed8f9985d8a7f84dfa04721b6d68bcf89f2492d41509ed8d30982081128f0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "package.json",
+      "sha256": "9793ff6351cb46cc05f13ecb10a5e706d6d1e3507de1d610b51000463b30f5f8",
+      "gitMode": "100644"
+    }
+  ],
+  "scopedTypeConfigSHA256": "4f1b06623bc3025d6e40d3e714084d205346ce48de9aee1d2c74ea665f9a9397",
+  "privateValidationInputMode": "0600",
+  "publishedGitMode": "100644",
+  "validation": {
+    "jobs": [
+      {
+        "name": "owned-lint-type-corrected",
+        "pid": 4733,
+        "exit": 0,
+        "startedAt": "2026-10-16T05:21:02.929Z",
+        "finishedAt": "2026-10-16T05:21:03.231Z"
+      },
+      {
+        "name": "owned-type-type-corrected",
+        "pid": 4745,
+        "exit": 0,
+        "startedAt": "2026-10-16T05:21:03.235Z",
+        "finishedAt": "2026-10-16T05:21:04.098Z"
+      },
+      {
+        "name": "prepare-value",
+        "pid": 4778,
+        "exit": 0,
+        "startedAt": "2026-10-16T05:21:04.134Z",
+        "finishedAt": "2026-10-16T05:21:04.321Z"
+      },
+      {
+        "name": "fixture",
+        "pid": 4791,
+        "exit": 0,
+        "startedAt": "2026-10-16T05:21:04.324Z",
+        "finishedAt": "2026-10-16T05:21:05.326Z"
+      }
+    ],
+    "fixture": {
+      "tests": 52,
+      "pass": 52,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "d95b5c48ec310825aae51d32b9ae3617f0ead10b49992feb6bf3d85044bcfed6"
+    },
+    "bundleSHA256": "0c3ab5d08be9cfc3fa262bd10dbe5bcce78f2e6d279afb2ec8c55e9bb6b23a45",
+    "metafileSHA256": "acefbe5de011dd692ee1bdeab2bceb40d4c5ac3d774fe0146d8d57e91133877e",
+    "typeInputMismatch": 0,
+    "typeInputMissing": 0,
+    "valueInputMismatch": 0,
+    "valueInputMissing": 0
+  },
+  "dependencies": [
+    {
+      "name": "ws",
+      "version": "8.21.3",
+      "packageSHA256": "a56a3fd55945a3ce177e3ca165dafae6f7eb03b7aefd58c092ac723d5741a6fb",
+      "entrySHA256": "924564d5be26d59b9682c4263f68320e48dde7240bd2d1ad17ec305537429dd2"
+    },
+    {
+      "name": "@types/ws",
+      "version": "8.18.1",
+      "packageSHA256": "92f0a87117b71231a0864f7bb7c6a84b7fc91dbdd7d33379fc23d655980ad083",
+      "entrySHA256": "1ba59c8bbeed2cb75b239bb12041582fa3e8ef32f8d0bd0ec802e38442d3f317"
+    }
+  ],
+  "originalFailures": [
+    {
+      "phase": "prepare",
+      "kind": "ENOENT",
+      "outcome": "기존 cache의 정확 package 경로로 교정했습니다. stage 생성 전에 멈췄습니다."
+    },
+    {
+      "phase": "metadata tool",
+      "kind": "rg executable missing",
+      "outcome": "같은 세 tree에서 표준 find를 한 번 사용했습니다."
+    },
+    {
+      "phase": "bounded metadata find",
+      "kind": "local timeout after 45 seconds",
+      "outcome": "원 D 상태를 보존했고 후속 조회에서 소유 PID가 부재여서 signal은 0입니다. timeout을 원격 종료로 쓰지 않았습니다."
+    },
+    {
+      "phase": "first lint",
+      "exit": 1,
+      "ownedDiagnostics": 3,
+      "outcome": "type import와 동일 문자열 표현만 교정했습니다."
+    },
+    {
+      "phase": "first strict type",
+      "exit": 1,
+      "ownedDiagnostics": 3,
+      "externalDiagnostics": 0,
+      "outcome": "Root가 JSON 표현, bound receiver와 digest 배열 spread의 작은 diff를 수락했습니다. assertion과 조건은 유지했습니다."
+    }
+  ],
+  "cleanup": {
+    "observedAt": "2026-10-16T05:22:30.278Z",
+    "childrenAbsent": true,
+    "supervisorState": "Z",
+    "supervisorParentPid": 1,
+    "heavyRunning": 0
+  },
+  "authority": {
+    "namespacePin": false,
+    "writerGrantIssued": false,
+    "providerReady": false
+  },
+  "limits": [
+    "전후 동일성은 transaction 수명 pin이 아닙니다.",
+    "WS timeout/close는 원격 NFS syscall 또는 probe 프로세스 종료 증명이 아닙니다.",
+    "새 NFS incarnation과 과거 qualification은 분리합니다.",
+    "실제 Agent 관측·physical pin·writer fencing·provider·controller 연결·P1-10/13 전체 합격은 아직입니다."
+  ],
+  "unchanged": {
+    "actualAgentExec": 0,
+    "pg": 0,
+    "install": 0,
+    "download": 0,
+    "imageBuild": 0,
+    "liveSourceChanges": 0,
+    "nfsConfigurationChanges": 0,
+    "newScreenshot": 0
+  },
+  "historicalScreenshot": {
+    "path": "deploy/dev/backend/evidence/controller-dev-connection.png",
+    "sourceCommit": "805b0da68ed49572d4f2e45a57712fd84dbbf419",
+    "capturedAt": "2026-10-16T01:58:40.109Z",
+    "sha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+    "limit": "당시 Expo Web 정상 연결·한국어 Ops·Unit summary 화면이며 이번 실제 Agent mount나 native 기기 합격 증거가 아닙니다."
+  },
+  "usageCreditsStreamErrorObserved": false
+}
