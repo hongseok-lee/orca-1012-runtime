@@ -1,0 +1,22 @@
+--- a/src/main/durable-runtime/storage/namespace-management-execution.pg.test.mts
++++ b/src/main/durable-runtime/storage/namespace-management-execution.pg.test.mts
+@@ -4,7 +4,7 @@
+ import type { Pool } from "pg";
+ import { createDurablePool, DurableDatabaseError, withDurableTransaction } from "../db/connection.ts";
+ import { readMigrations } from "../db/migrate.ts";
+-import { acquireNamespaceHold, beginNamespaceManagement, readNamespaceManagement,
++import { acquireNamespaceHold, readNamespaceManagement,
+   registerNamespaceProfile, releaseNamespaceHold } from "./namespace-holds.ts";
+ import type { NamespaceManagementInput, NamespaceProfileInput, NamespaceTransactionResult } from "./namespace-holds.ts";
+ import { executeNamespaceManagement } from "./namespace-management-execution.ts";
+--- a/src/main/durable-runtime/storage/namespace-management-execution.pg.test.mts
++++ b/src/main/durable-runtime/storage/namespace-management-execution.pg.test.mts
+@@ -265,7 +265,7 @@
+     [beginAckInput, 1, "BEGIN", "READY_TO_CLAIM"],
+     [claimAckInput, 2, "CLAIM", "LOOKUP_REQUIRED"],
+   ] as const) {
+-    const beforeCallbacks = applyCalls + lookupCalls;
++    const beforeCallbacks: number = applyCalls + lookupCalls;
+     const unknown = await executeNamespaceManagement(wire({ hideCommitAt, observations }), input, appliedPort);
+     assert.equal(unknown.database?.database.ok, false);
+     assert.equal(unknown.database?.database.settlement, "UNCONFIRMED");

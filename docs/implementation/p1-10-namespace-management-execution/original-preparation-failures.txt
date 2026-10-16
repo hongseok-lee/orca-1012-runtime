@@ -1,0 +1,17 @@
+Original first owned lint (54ead926), whole exit 1; product diagnostics 0; type/bundle/PG not entered:
+
+  x eslint(no-unused-vars): Identifier 'beginNamespaceManagement' is imported but never used.
+   ,-[src/main/durable-runtime/storage/namespace-management-execution.pg.test.mts:7:32]
+ 6 | import { readMigrations } from "../db/migrate.ts";
+ 7 | import { acquireNamespaceHold, beginNamespaceManagement, readNamespaceManagement,
+   :                                ^^^^^^^^^^^^|^^^^^^^^^^^
+   :                                            `-- 'beginNamespaceManagement' is imported here
+ 8 |   registerNamespaceProfile, releaseNamespaceHold } from "./namespace-holds.ts";
+   `----
+  help: Consider removing this import.
+
+Found 0 warnings and 1 error.
+Finished in 241ms on 2 files with 176 rules using 1 threads.
+
+Original first strict type (8331f284), whole exit 1; bundle/PG not entered:
+src/main/durable-runtime/storage/namespace-management-execution.pg.test.mts(268,11): error TS7022: 'beforeCallbacks' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.

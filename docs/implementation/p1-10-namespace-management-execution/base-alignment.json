@@ -1,0 +1,16 @@
+{
+  "originalRef": "613878cd4105cd990e8caf1a375fa6fa2a550b5d",
+  "originalBase": "2c6a990691b861e860b977a462ff45bb18a1096a",
+  "targetBase": "e7e46480af245df182354fd0f5ad859d495cb4c7",
+  "alignedSourcePin": "d43e0d9097a0934c45f02de3acea2f17d1ad3e1f",
+  "ownedCount": 2,
+  "typeInputCount": 9,
+  "runtimeInputCount": 7,
+  "configSQLInputCount": 29,
+  "blobModeDelta": [],
+  "exactSourceDiffSHA256": "487a8b56ca60d68c01b0c9cea09dca418180bb8bde911383cc7f6323814830b7",
+  "rebaseCount": 1,
+  "testsRepeated": false,
+  "DDL": 0,
+  "heavy": 0
+}

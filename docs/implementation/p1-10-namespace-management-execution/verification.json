@@ -1,0 +1,195 @@
+{
+  "validatedSourcePin": "613878cd4105cd990e8caf1a375fa6fa2a550b5d",
+  "publicationBase": "e7e46480af245df182354fd0f5ad859d495cb4c7",
+  "firstLint": {
+    "sourcePin": "54ead926f98d06b5546bb1de4a638064697d5968",
+    "wholeExit": 1,
+    "productDiagnostics": 0,
+    "fixtureDiagnostics": 1,
+    "rawSHA256": "f102410d96154d690dfc7c9ab8d8a5c2d97abeda8a8d0df83cc00597a37688b1",
+    "typeBundlePGEntered": false
+  },
+  "firstType": {
+    "sourcePin": "8331f28420f22dc42cb25e6273feffb9f6f556ff",
+    "wholeExit": 1,
+    "ownedDiagnostics": 1,
+    "externalDiagnostics": 0,
+    "code": "TS7022",
+    "rawLogSHA256": "ce0438b048aab8f3c8e4c2cce4b2e2feb8e1c5832150a328b949f1913936108f",
+    "bundlePGEntered": false
+  },
+  "corrections": {
+    "unusedImportOnly": true,
+    "counterTypeAnnotationOnly": true,
+    "runtimeAssertionsSQLProductUnchanged": true
+  },
+  "changedFixtureLint": {
+    "exit": 0,
+    "rawLogSHA256": "f124b1b7ab5e14b4a05c54e93a0ee31062bd41e1a5b8d738a47ff8432af08fad"
+  },
+  "strictType": {
+    "owned": [],
+    "external": [],
+    "unexpected": [],
+    "ownedCount": 0,
+    "externalCount": 0,
+    "wholeExit": 0,
+    "unexpectedExit": false,
+    "sourceOwnedDiagnosticsOnly": true
+  },
+  "callback": {
+    "productCallbacks": 1,
+    "parentProductCallbacks": 0,
+    "TAPPass": 2,
+    "TAPFail": 0,
+    "TAPSkip": 0,
+    "rawTAPSHA256": "7d41c77d490268029d1b371d4fd16229083a2a1e7a897881b781d85f4896c275",
+    "actualTestPID": 3209,
+    "syntheticACKFaultOverRealPG": true
+  },
+  "database": {
+    "existingIsolatedDatabaseIdentityMatched": true,
+    "sameControlPoolBackendBeforeAfter": true,
+    "ledgerBefore": 23,
+    "ledgerAfter": 23,
+    "ledgerChecksumAppliedAtUnchanged": true,
+    "preservedOriginalTables": 30,
+    "originalRows": 599,
+    "afterRows": 720,
+    "originalRowsPreserved": true,
+    "DDL": 0,
+    "newDatabase": 0,
+    "resetDelete": 0
+  },
+  "runtime": {
+    "concurrentApply": 1,
+    "concurrentLookup": 1,
+    "WAITINGCallbacks": 0,
+    "completedReplayCallbacks": 0,
+    "uncertainBeginOrClaimCallbacks": 0,
+    "completeEffectObservationSeparateFromDB": true,
+    "originalAPPLYINGPreservedAfterMismatchThrowRollback": true,
+    "ownerTokenSentToAdapter": false
+  },
+  "jobs": [
+    {
+      "name": "stage",
+      "pid": 3106,
+      "startedAt": "2026-10-16T04:12:35.024Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:35.107Z",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "lint",
+      "pid": 3113,
+      "startedAt": "2026-10-16T04:12:35.111Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:35.483Z",
+      "logSHA256": "f124b1b7ab5e14b4a05c54e93a0ee31062bd41e1a5b8d738a47ff8432af08fad"
+    },
+    {
+      "name": "type",
+      "pid": 3125,
+      "startedAt": "2026-10-16T04:12:35.487Z",
+      "observedDirectChildren": [],
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:36.746Z",
+      "logSHA256": "8908bb1b14c2fc86af3f16349c592943a7dbf683c0b4b201127d58ec48d69596"
+    },
+    {
+      "name": "type-input-guard",
+      "pid": 3172,
+      "startedAt": "2026-10-16T04:12:36.749Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:36.884Z",
+      "logSHA256": "27808e6d6062a6a07631cfa0fca3642d2c134ce81271c832b36088689f65fc7d"
+    },
+    {
+      "name": "pg-only",
+      "pid": 3179,
+      "startedAt": "2026-10-16T04:12:36.887Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:39.138Z",
+      "logSHA256": "662a6ba63010954ac949a455802604046560b939c59f636d556bdfd222cd0b20"
+    },
+    {
+      "name": "prepare-pg",
+      "pid": 3186,
+      "startedAt": "2026-10-16T04:12:36.964Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:37.249Z",
+      "logSHA256": "c94edd04cb9d3e0a17a6c8b2d07b3c8592f8ecd22cadd997ebf53927350a0ab6"
+    },
+    {
+      "name": "pg",
+      "pid": 3203,
+      "startedAt": "2026-10-16T04:12:38.025Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T04:12:39.073Z",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "startedAt": "2026-10-16T04:12:35.017Z",
+  "endedAt": "2026-10-16T04:12:39.139Z",
+  "cleanup": {
+    "at": "2026-10-16T04:13:33.406Z",
+    "pids": [
+      {
+        "pid": 3099,
+        "state": "Z",
+        "startTicks": "23585946"
+      },
+      {
+        "pid": 3106,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3113,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3125,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3172,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3179,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3186,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3203,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 3209,
+        "status": "ABSENT"
+      }
+    ]
+  },
+  "activeOwnedJobs": 0,
+  "heavy": 0,
+  "actualManagementAdapterUsed": false,
+  "physicalNamespaceProof": false,
+  "liveMutation": 0,
+  "provider": 0,
+  "newPNG": 0,
+  "wholeBuild": 0,
+  "install": 0,
+  "successfulSuiteRepeated": 0,
+  "newUsageCreditsStreamErrors": "미관측"
+}
