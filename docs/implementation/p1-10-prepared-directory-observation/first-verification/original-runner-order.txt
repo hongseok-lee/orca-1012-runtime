@@ -1,0 +1,8 @@
+try{
+ save()
+ await run('stage',[root+'/prepare.mjs','stage'])
+ // Initial owned lint passed; do not repeat it after the generic-only fixture correction.
+ await run('type',['<shared-tools>/typescript/bin/tsc','-p',root+'/scoped-type.json','--pretty','false','--listFiles'],root,true)
+ await run('type-input-guard',[root+'/type-input-guard.mjs'])
+ await run('pg-only',[root+'/pg-run.mjs'])
+

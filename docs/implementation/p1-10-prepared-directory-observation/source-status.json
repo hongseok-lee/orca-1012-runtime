@@ -2,7 +2,7 @@
   "base": "4ea6fdb92e0741f66455f77bc4b6eff602bfbe82",
   "sourcePin": "1e9b3774a44a1f2946efa372fdb43010eb5395d7",
   "productPin": "d57d4c359ce2c2305de660db302c210d3d4192e6",
-  "phase": "SOURCE_ONLY_NOT_EXECUTED",
+  "phase": "FIRST_TYPE_PG_PASS_ORIGINAL_LINT_FAIL_CORRECTED_PRODUCT_LINT_PASS",
   "sourceInputs": [
     {
       "path": "src/main/durable-runtime/storage/prepared-directory-observation.ts",
@@ -66,11 +66,22 @@
     "pg"
   ],
   "schemaApply": false,
-  "callbackCount": 0,
-  "lintRuns": 0,
-  "typeRuns": 0,
-  "remoteRuns": 0,
+  "callbackCount": 1,
+  "lintRuns": 2,
+  "typeRuns": 1,
+  "remoteRuns": "One first type/PG job plus first owned lint and corrected product-only lint; no successful type/PG repetition.",
   "collectorRuns": 0,
   "physicalQualification": false,
-  "newUsageCreditsStreamErrorObserved": false
+  "newUsageCreditsStreamErrorObserved": false,
+  "firstVerifiedPin": "30d96e2981eb8045c40e355a2b3cca3fb61e0d77",
+  "correctedProductPin": "2d0f4a1066a09bb92717510604b33bf5754cd9e4",
+  "correctedProductSHA256": "4b4bca132b052a4182068d911d5969932ca22bea0909e3f8f964416b73e1056e",
+  "sourceInputsBasis": "Original source-stage input list retained; actual first type/runtime inputs are in first-verification/actual-source-inputs.json. Corrected product changed only the accepted equivalent control-character predicate.",
+  "actualOrder": [
+    "type",
+    "PG",
+    "first owned lint FAIL",
+    "equivalent source correction",
+    "changed product lint PASS"
+  ]
 }

@@ -1,8 +1,8 @@
-> Root 계약의 공개 사본이다. 비공개 참조 링크만 일반화했다. 원본 SHA256: `2d53a4fbd09d08590b9032d53ae6fb69d252571817ddb31cd6abaa3ee47364fa`.
+> Root 계약의 공개 사본이다. 비공개 참조 링크·운영 증거 절대경로만 일반화했다. 원본 SHA256: `477b48b4044d4535f50c9192b6b312867453ef4dfa6d50dc865c443a9eb47522`.
 
 # P1-10 — 고정 managed leaf의 최초 binding 소비 연결
 
-Root 실행 계약, 2026-10-16 13:35 UTC. Base는 main `4ea6fdb92e0741f66455f77bc4b6eff602bfbe82`다. 의미 검토 (비공개 Root 리뷰 기록)의 첫 소비만 구현한다. 원 인증 collector는 실제 성공했고 고정 정책·권한 경계는 별도 원자료로 보존했다. 남은 사실 연결 (비공개 운영 기록)의 Root 판정과 실제 qualification 기록을 완료하기 전까지 live profile 등록·hold·binding 변경은 실행하지 않는다. 지금은 기존 Backend/DB worker의 제품 source 작성이다.
+Root 실행 계약, 2026-10-16 13:35 UTC. Base는 main `4ea6fdb92e0741f66455f77bc4b6eff602bfbe82`다. 의미 검토 (비공개 Root 기록)의 첫 소비만 구현한다. 원 인증 collector는 실제 성공했고 고정 정책·권한 경계는 별도 원자료로 보존했다. 남은 사실 연결 (비공개 Root 기록)의 Root 판정과 실제 qualification 기록을 완료하기 전까지 live profile 등록·hold·binding 변경은 실행하지 않는다. 지금은 기존 Backend/DB worker의 제품 source 작성이다.
 
 ## Root가 정한 소비 범위
 
@@ -41,3 +41,19 @@ Root 실행 계약, 2026-10-16 13:35 UTC. Base는 main `4ea6fdb92e0741f66455f77b
 새 검증은 실제 hold→collector→원 기록→binding settlement 순서, 미확정 취득/감사에서 수집 또는 검증이 진행되지 않는 경계, 한 번의 handoff, 기록 불변성과 소유권 불일치 거절을 대상으로 한다. 기존 verifier 전체 matrix와 기존 collector/network 시험을 재작성하지 않는다. 원 전용 PG와 도구/cache를 재사용하며 fixture 성공을 live 물리 qualification로 표시하지 않는다.
 
 PR 본문은 현재 계약·승인 COMMON·P1-10 전문, 변경·실제 검증과 정확 범위의 기존 스크린샷을 포함한다. 새 UI 변경이 없는 source 단계에서 반복 촬영하지 않는다. Root가 최종 코드/원 결과/본문/CI를 검토·댓글·병합한다. 모든 계획·qualification 판정은 Root 소유이며 새 fork0·동결 template/백업 불변·heavy 상한2다.
+
+## 2026-10-16 13:50 UTC DB 첫 집중 검증 배분
+
+Root가 제품 d57d4c35의 151줄과 fixture 1e9b3774의 249줄을 읽고 PR138 head `30d96e2981eb8045c40e355a2b3cca3fb61e0d77`의 소유 2파일/원입력 7개를 실제 disk·Git·SHA·bytes와 대조해 불일치0을 확인했다. 제품 SHA `ebe9cddf44b1824de684922287f7339afbcebfab03bfdf24263a5271d67c1d45`, fixture SHA `c0e2efc784b0b3d09ff962ff6b71885f0fe28b92754cf67d3c9eb3beaeae6efb`다. 이를 대상으로 변경 lint·strict type closure·PG callback 1회의 최초 집중 검증을 기존 DB worker에 heavy1로 배분한다.
+
+기존 원격 도구/cache와 전용 DB `orca_execution_targets_20261015`/OID92238/system7696101282789175327만 사용한다. Fixture의 동일 연결 identity 확인을 유지하며 live `orca_dev`·새 DDL·기존 전체 suite·설치·collector·새 화면 검증은 하지 않는다. 실제 runner/input closure와 UTC/exit/TAP·원 ledger23/행 보존·소유 cleanup 결과를 함께 기록한다. 구체 검증 입력이 달라지거나 제품 의미 변경이 필요하면 원 실패와 최소 diff를 먼저 제출한다. 기존 의미불변 lint 교정 예외는 그대로 적용한다. 실제 시작/종료는 run 기록을 따르며 배분 자체를 실행 성공으로 표시하지 않는다.
+
+## 2026-10-16 13:56 UTC 한정 qualification 기록과 동료 리뷰
+
+Root는 최초 미사용 binding 한정 수락 (비공개 Root 기록)을 기록했다. 실제 profile `81575d0d-57c2-40c4-b602-270e7a0460ec`/generation1의 private bytes4858/SHA`f93812ce4329a4b6cf8b28d9d18510f8cec2cb01cc6488153b0072548690f8c6`는 원13참조를 포함한다. Backend가 제시한 profile record 형식에 맞춘 신뢰된 서버 설정 입력이며 실제 profile 등록·hold·관측·binding 변경은 아직 배분하지 않았다.
+
+Root가 초기 제품 `fc0620250239ae058ec2f6525dfb2278f79694bc`의 owner2 파일과 기존 wrapper/verifier 경계를 읽었다. 기존 Claude worker는 이 새 2파일에 한정하여 hold/감사 미확정 경계, 한 번 handoff, 실제 settlement 뒤 release, 반환값의 secret/capability 비노출을 독립 리뷰한다. 필요하면 직접 호출하는 기존 정의의 관련 부분만 읽고 fixture 실행·전체 source 감사·새 설계·수정·원격 호출은 하지 않는다. 발견사항은 pin/파일/줄/구체 경로와 함께 `<private-review-evidence>`에 제출하며 최종 판단은 Root다. Backend는 fixture/Draft 작성을 병렬로 계속한다.
+
+## 2026-10-16 14:03 UTC Catalog의 기존 등록 입력 사실
+
+최초 실제 Session/Unit/binding 선택에 앞서 Catalog worker는 마지막 Root 수락 Backend 개발 설정에 등록된 repositoryId·kind·path와 launch의 storage backend/export/canonicalDirectory/localDirectory·agentHomeRoot/worktreeRoot, 그리고 기존 공개 생성 RPC→서버 설정→Catalog membership 경로의 실제 파일/함수만 기록한다. 기존 private 재기동 입력·수락된 source의 필요한 필드만 읽고 원 config 전체·인증값은 출력하지 않는다. 고정 managed leaf와 legacy tuple의 차이를 사실로 표시하되 새 연결 방식·작업목록을 기획하지 않는다. 새 GET/PG/API/현재 process 조회·수정·시험은0이다. 결과는 `<private-review-evidence>`에 source pin/hash/기록시각과 함께 제출한다. 이후 대상·변경·실행은 Root가 결정하며 이미 실행된 live 등록이 있다고 추정하지 않는다.

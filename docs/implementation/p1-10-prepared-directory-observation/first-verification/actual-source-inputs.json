@@ -1,0 +1,143 @@
+{
+  "sourcePin": "30d96e2981eb8045c40e355a2b3cca3fb61e0d77",
+  "typeSourceInputs": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "blob": "181384ff0bf130ae6ad1ff64e2d9043f08d76d18"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "blob": "11c0f09a0bfc3950a29465efa6d504b9e3207a75"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "bytes": 2071,
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "blob": "2fc02747102fddc0f4ad669a6484c2382f7f5822"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "bytes": 9074,
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "blob": "5437efd3e2466b6357d918fac84768479871e03e"
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "bytes": 6238,
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+      "blob": "1b0de8b5c6961f60315f714071e6cf627233dc43"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+      "bytes": 5248,
+      "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+      "blob": "c52e24f98744a52eb3e945bdb9a6419a41d11118"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "bytes": 5525,
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+      "blob": "a2464e40c333c19705ed587480484fe43ae25f5b"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/evidence.ts",
+      "bytes": 2720,
+      "sha256": "b412fba81f4dcc4d18ecf63a8da32a2ad7724793f7892f0ad0f1e97a811ade18",
+      "blob": "f798b2e028bdf0b8beff492226bee07de03abe89"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/store.ts",
+      "bytes": 24123,
+      "sha256": "d8bc3dc1696ab6e78c08993193ef21362110e744fc5a565e50c0f7f51019401f",
+      "blob": "539484b87cdf69a5f384c839eb7aefe08bc0629b"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification.ts",
+      "bytes": 6428,
+      "sha256": "25d74495545f81be0e846994d439fa441098acd9db67e01c25f3bf7bbc6b4fe2",
+      "blob": "221a63bf281ffadd9ee3b0d504deccc710bb5a85"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "bytes": 2786,
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb",
+      "blob": "6840db21b12fb41c7ae5abb3bd481fcc87b7c428"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-types.ts",
+      "bytes": 2961,
+      "sha256": "e5c0409b245924cf10516bddd4d8d22b5daaea695cff32ed98ad6592b51f3797",
+      "blob": "36dba59c8729f2d66b68b2f12145b4269d342eb3"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-holds.ts",
+      "bytes": 17784,
+      "sha256": "ac417234877955fff87b75c3ef94e79ae42b845759cd5e2c8c12a02e72ab331a",
+      "blob": "3fc71694d6d340551738edbab511feaef34fcd67"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.ts",
+      "bytes": 9876,
+      "sha256": "ebe9cddf44b1824de684922287f7339afbcebfab03bfdf24263a5271d67c1d45",
+      "blob": "8ddde40f3168e95776d3845298765197f40612aa"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.pg.test.mts",
+      "bytes": 16083,
+      "sha256": "c0e2efc784b0b3d09ff962ff6b71885f0fe28b92754cf67d3c9eb3beaeae6efb",
+      "blob": "a90f43e3cddb1b67cc0fd40ec5733be268729a95"
+    }
+  ],
+  "typeExternalInputCount": 211,
+  "typeOutside": [],
+  "typeMismatches": [],
+  "runtimeSourceInputs": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "bytes": 6387
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+      "bytes": 6238
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-holds.ts",
+      "sha256": "ac417234877955fff87b75c3ef94e79ae42b845759cd5e2c8c12a02e72ab331a",
+      "bytes": 17784
+    },
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.ts",
+      "sha256": "ebe9cddf44b1824de684922287f7339afbcebfab03bfdf24263a5271d67c1d45",
+      "bytes": 9876
+    }
+  ],
+  "runtimeMetafileInputCount": 7,
+  "wrapper": {
+    "sourceSha256": "c0e2efc784b0b3d09ff962ff6b71885f0fe28b92754cf67d3c9eb3beaeae6efb",
+    "originalBodySha256": "81ea3f4f97b3704e909ea2c54df75dc3aaf98563e39a928d55f6f157bfd93571",
+    "wrapperSha256": "6df2ef893a76f7cabe45e09a41a2b5c9a9841601b79fd1ddc70fe7ef6b714406",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "runtimeMismatches": [],
+  "bundleSHA256": "7db48722a5c6dfc5f6f182a4cdb08a82729f60d86b9a77480e3671627c5c2e5d",
+  "metafileSHA256": "b86600f2fed38e9bcab026d0a865be1a8b1b4be889f45c4aa9eee5e61a7d0110",
+  "exactExternalAndCachePaths": "Retained in private original input evidence; no package identity success inferred from a path alone."
+}
