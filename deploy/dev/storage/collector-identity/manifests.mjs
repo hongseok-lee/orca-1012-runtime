@@ -129,7 +129,8 @@ export function leastPrivilegeRbac(input) {
   }, kind === 'RoleBinding')
   return freeze([
     role('Role', readRole, [
-      { apiGroups: [''], resources: ['pods', 'pods/exec'], verbs: ['get'] },
+      { apiGroups: [''], resources: ['pods'], verbs: ['get'] },
+      { apiGroups: [''], resources: ['pods/exec'], verbs: ['get', 'create'] },
       { apiGroups: [''], resources: ['persistentvolumeclaims'], resourceNames: [config.backingPvc.name], verbs: ['get'] },
       { apiGroups: [''], resources: ['configmaps'], resourceNames: [config.helperConfigMap.name], verbs: ['get'] },
     ]),

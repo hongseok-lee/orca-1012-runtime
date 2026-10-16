@@ -4,7 +4,9 @@
 
 `prepareCollectorIdentity`는 권한 없는 `orca-dev/orca-storage-collector` SA와 최소 RBAC를 순수 JSON으로 준비합니다. 아직 bootstrap 응답 UID가 없으면 credential guard 출력은 `null`입니다. UID를 예측하거나 기존 이름을 채택하지 않습니다. 실제 guard는 최초 SA CREATE 응답 UID로만 생성합니다.
 
-원 `managed-leaf-collector.ts`의 Pod GET, 정확 backing PVC GET, PV GET, helper ConfigMap GET과 `managed-leaf-collector-exec.ts`의 WebSocket GET handshake만 허용합니다. Collector Role에 list/watch/create/patch/delete·Secret·RBAC·TokenRequest 권한은 없습니다. PV GET은 별도 ClusterRole의 정확 이름 하나로 제한합니다. 기존 inventory Role을 수정하지 않고, 별도 issuer Role은 `orca-storage-collector` 이름의 `serviceaccounts/token` CREATE만 허용합니다.
+원 `managed-leaf-collector.ts`의 Pod GET, 정확 backing PVC GET, PV GET, helper ConfigMap GET과 `managed-leaf-collector-exec.ts`의 WebSocket GET handshake를 위한 권한을 준비합니다. Collector Role은 `pods get`과 `pods/exec get,create`를 별도 rule로 둡니다. `create`는 exec 접속에 한정되며 Pod 생성 권한이 아닙니다. Collector Role에는 list/watch/patch/delete·Secret·RBAC·TokenRequest 권한이 없습니다. 현재 NFS exec admission은 collector의 다른 Pod 접근과 임의 명령을 거절하고 정확 inspect만 허용합니다. PV GET은 별도 ClusterRole의 정확 이름 하나로 제한합니다. 기존 inventory Role을 수정하지 않고, 별도 issuer Role은 `orca-storage-collector` 이름의 `serviceaccounts/token` CREATE만 허용합니다.
+
+2026-10-16의 별도 실제 exec 진단은 TokenRequest 201 이후 WebSocket 403·TLS authorized·v1 Status Forbidden이며 해당 진단의 GET은 0입니다. 원 Status의 message는 Pod 이름 뒤 이유가 비어 있고 causes는 빈 배열입니다. Root가 관측한 GKE 버전은 `v1.36.4-gke.1391002`입니다. Kubernetes v1.36의 `ExecREST.Connect`는 feature gate 아래 `pods/exec create`를 추가 검사합니다. 이 권한 부족이라는 추론은 현재 진단과 맞지만 GKE 내부 호출을 추적해 확정한 사실은 아닙니다. 이번 source 후보는 해당 최소 권한과 기존 RBAC assertion만 교정했으며 변경 lint·해당 callback·실제 Role 적용 및 collector 연결은 아직 실행하지 않았습니다. 다른 권한·credential guard·TokenRequest body와 NFS exact-inspect 경계는 유지합니다.
 
 `manifests.mjs`의 네 VAP/Binding 쌍은 SA 변경, 해당 SA를 쓰는 Pod, collector TokenRequest, 장기 token Secret을 각각 제한합니다. Old/new 객체와 optional 필드를 구분하며 `Fail`/`Deny` 및 보호된 namespace 이름 label을 사용합니다. TokenRequest는 정확 backend username·SA UID·600초·unbound 요청만 허용합니다. Backend wire는 audiences=[]를 유지하고 API server 기본값을 사용합니다. TokenREST가 audiences를 채운 뒤 admission하므로 CEL은 빈 배열이나 audience 집합을 제한하지 않습니다. 이 source의 출력은 실제 admission 검증을 대신하지 않습니다.
 
