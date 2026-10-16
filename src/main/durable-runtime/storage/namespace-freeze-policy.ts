@@ -77,8 +77,14 @@ function exec(input: NamespaceFreezePolicyInput): Policy {
 }
 function otherConnect(input: NamespaceFreezePolicyInput): Policy {
   // These options have different schemas; never access PodExecOptions fields here.
-  return policy(input, "connect", [rule("", ["pods/attach", "pods/portforward", "pods/proxy"], ["CONNECT"])], [],
-    `!(request.name.startsWith(${celLiteral(input.podNamePrefix)}) || request.name.contains(${celLiteral(`:${input.podNamePrefix}`)})) && ` +
+  return policy(input, "connect", [rule("", ["pods/attach", "pods/portforward", "pods/proxy"], ["CONNECT"])], [
+    // Kubernetes SplitSchemeNamePort: name, name:port, or scheme:name:port.
+    { name: "targetParts", expression: `request.subResource == "proxy" ? request.name.split(":") : [request.name]` },
+    { name: "targetName", expression: `size(variables.targetParts) == 3 ? variables.targetParts[1] : variables.targetParts[0]` },
+    { name: "targetValid", expression: `size(variables.targetParts) >= 1 && size(variables.targetParts) <= 3 && ` +
+      `variables.targetName != "" && (size(variables.targetParts) != 3 || variables.targetParts[0] in ["", "http", "https"]) && ` +
+      `(request.subResource == "proxy" || !variables.targetName.contains(":"))` },
+  ], `variables.targetValid && !variables.targetName.startsWith(${celLiteral(input.podNamePrefix)}) && ` +
     `!(request.userInfo.username in ${celLiteral(input.collectorUsernames)})`);
 }
 function endpoints(input: NamespaceFreezePolicyInput): Policy {
