@@ -21,7 +21,8 @@ export type InitialAgentResourceProfileResult = Readonly<{
   policyRevision: string
   shapeDigest: string
   eventId: string
-  unitRevision: string
+  recordedUnitRevision: string
+  currentUnitRevision: string
   admissionObserved: false
   executionAuthorized: false
 }>
@@ -35,20 +36,21 @@ function eventIdentity(unit: string, revision: string): string {
 
 // The stored plan reader already reconstructs the strict planner and compares
 // the complete original bytes/digests. This helper accepts only that plan.
-function declaredShape(plan: UnauthorizedAgentPodPlan, planDigest: string): AdmissionShape {
+function declaredShape(plan: UnauthorizedAgentPodPlan, planDigest: string): string {
   const container = plan.pod.spec.containers[0], requests = container.resources.requests
   const cpu = /^([1-9][0-9]*)m$/u.exec(requests.cpu)
   const memory = /^([1-9][0-9]*)Mi$/u.exec(requests.memory)
   if (!cpu || !memory) { return deny('PLAN') }
   const revision = plan.pod.metadata.annotations['orca.dev/resource-profile-revision']
-  return Object.freeze({ sourceRef: `initial-agent-plan:v1:${planDigest}`,
+  const shape = { sourceRef: `initial-agent-plan:v1:${planDigest}`,
     profileId: `initial-agent-profile:v1:${plan.identity.unitId}:${revision}`,
     runtimeUnitId: plan.identity.unitId, containerIdentity: container.name,
     observed: false, complete: true,
-    containers: Object.freeze([Object.freeze({ name: container.name, memoryBytes: (BigInt(memory[1]) * 1048576n).toString(),
-      cpuMillicores: BigInt(cpu[1]).toString(), memoryLimitPresent: false, cpuLimitPresent: false, restartableInit: false })]),
-    initContainers: Object.freeze([]), overheadMemoryBytes: '0', overheadCpuMillicores: '0',
-    spot: true, oneUnitPerNode: true })
+    containers: [{ name: container.name, memoryBytes: (BigInt(memory[1]) * 1048576n).toString(),
+      cpuMillicores: BigInt(cpu[1]).toString(), memoryLimitPresent: false, cpuLimitPresent: false, restartableInit: false }],
+    initContainers: [], overheadMemoryBytes: '0', overheadCpuMillicores: '0',
+    spot: true, oneUnitPerNode: true } satisfies AdmissionShape
+  return canonicalInput(shape)
 }
 
 /** SQL-only declaration, not admission/accounting or execution permission.
@@ -77,7 +79,7 @@ export async function recordInitialAgentResourceProfile(tx: DurableTransaction, 
       record.plan.identity.operationId !== context.operationId) { return deny('PLAN') }
   const plan = record.plan, id = plan.identity, dataset = plan.pod.metadata.labels['orca.dev/dataset']
   const revision = counter('profile-revision', plan.pod.metadata.annotations['orca.dev/resource-profile-revision'])
-  const shape = declaredShape(plan, planDigest), shapeBody = canonicalInput(shape), shapeDigest = digest(shapeBody)
+  const shapeBody = declaredShape(plan, planDigest), shapeDigest = digest(shapeBody)
   const members = async () => (await query<{ session_id: string }>(
     'SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1 ORDER BY session_id', [id.unitId])).rows.map(r => r.session_id)
   const sessions = await members()
@@ -107,13 +109,15 @@ export async function recordInitialAgentResourceProfile(tx: DurableTransaction, 
   const eventId = eventIdentity(id.unitId, revision)
   const temporary = plan.pod.spec.volumes.find(volume => volume.name === 'temporary')
   if (!temporary || !('emptyDir' in temporary)) { return deny('PLAN') }
-  const event = { kind, unitId: id.unitId, operationId: id.operationId, profileRevision: revision, policyRevision,
-    planDigest, podSpecSHA256: plan.podSpecSHA256, shapeDigest, unitRevision: unit.revision,
+  const event = (recordedUnitRevision: string, creatorOwner: string, creatorTerm: string) => ({
+    kind, unitId: id.unitId, operationId: id.operationId, profileRevision: revision, policyRevision,
+    planDigest, podSpecSHA256: plan.podSpecSHA256, shapeDigest, recordedUnitRevision,
+    recordedActorId: creatorOwner, recordedControllerScope: context.controller.scope, recordedControllerTerm: creatorTerm,
     ephemeralStorageRequest: plan.pod.spec.containers[0].resources.requests['ephemeral-storage'],
     ephemeralStorageLimit: plan.pod.spec.containers[0].resources.limits['ephemeral-storage'],
     temporarySizeLimit: temporary.emptyDir.sizeLimit,
-    admissionObserved: false, executionAuthorized: false }
-  const body = canonicalInput(event)
+    admissionObserved: false, executionAuthorized: false })
+  const body = canonicalInput(event(unit.revision, context.controller.owner, context.controller.term))
   const profiles = (await query<{ revision: string; policy_revision: string; container_resources: JsonValue;
     previous_good_revision: string | null; learned_memory_floor: string | null; floor_protected_until: Date | null }>(
     'SELECT * FROM durable_runtime.resource_profiles WHERE runtime_unit_id=$1 ORDER BY revision', [id.unitId])).rows
@@ -123,23 +127,31 @@ export async function recordInitialAgentResourceProfile(tx: DurableTransaction, 
     'SELECT * FROM durable_runtime.runtime_audit_events WHERE runtime_unit_id=$1 AND kind=$2', [id.unitId, kind])).rows
   const outboxes = (await query<{ id: string; aggregate_kind: string; revision: string; event: JsonValue }>(
     "SELECT * FROM durable_runtime.outbox_events WHERE aggregate_id=$1 AND event->>'kind'=$2", [id.unitId, kind])).rows
-  const result = (disposition: 'RECORDED' | 'REPLAYED'): InitialAgentResourceProfileResult => Object.freeze({
+  const result = (disposition: 'RECORDED' | 'REPLAYED', recordedUnitRevision: string): InitialAgentResourceProfileResult => Object.freeze({
     disposition, visibility: 'TRANSACTION_LOCAL', authority: 'DATA_ONLY', planDigest, profileRevision: revision,
-    policyRevision, shapeDigest, eventId, unitRevision: unit.revision, admissionObserved: false, executionAuthorized: false })
+    policyRevision, shapeDigest, eventId, recordedUnitRevision, currentUnitRevision: unit.revision,
+    admissionObserved: false, executionAuthorized: false })
   if (profiles.length || audits.length || outboxes.length) {
     const p = profiles[0], a = audits[0], o = outboxes[0]
     if (profiles.length !== 1 || audits.length !== 1 || outboxes.length !== 1 || !p || !a || !o ||
+        !a.next_state || typeof a.next_state !== 'object' || Array.isArray(a.next_state)) { return deny('CONFLICT') }
+    const recordedRevision = a.next_state.recordedUnitRevision, creatorTerm = a.next_state.recordedControllerTerm
+    if (typeof recordedRevision !== 'string' || typeof creatorTerm !== 'string' || !a.actor_id ||
+        !/^(0|[1-9][0-9]*)$/u.test(recordedRevision) || !/^(0|[1-9][0-9]*)$/u.test(creatorTerm) ||
+        BigInt(recordedRevision) > BigInt(unit.revision) || BigInt(creatorTerm) > BigInt(context.controller.term)) { return deny('CONFLICT') }
+    const originalBody = canonicalInput(event(recordedRevision, a.actor_id, creatorTerm))
+    if (
         p.revision !== revision || p.policy_revision !== policyRevision || canonicalInput(p.container_resources) !== shapeBody ||
         p.previous_good_revision !== null || p.learned_memory_floor !== null || p.floor_protected_until !== null ||
-        a.id !== eventId || a.operation_id !== id.operationId || a.actor_id !== context.controller.owner ||
+        a.id !== eventId || a.operation_id !== id.operationId ||
         a.resource_profile_revision !== revision || a.previous_state !== null ||
-        a.producer_id !== eventId || a.producer_seq !== '1' || canonicalInput(a.next_state) !== body ||
+        a.producer_id !== eventId || a.producer_seq !== '1' || canonicalInput(a.next_state) !== originalBody ||
         canonicalInput(a.evidence_refs) !== '[]' || canonicalInput(a.payload) !== '{}' ||
-        o.id !== eventId || o.aggregate_kind !== 'runtime-unit' || o.revision !== unit.revision || canonicalInput(o.event) !== body) {
+        o.id !== eventId || o.aggregate_kind !== 'runtime-unit' || o.revision !== recordedRevision || canonicalInput(o.event) !== originalBody) {
       return deny('CONFLICT')
     }
     await authority.assertCurrent()
-    return result('REPLAYED')
+    return result('REPLAYED', recordedRevision)
   }
   const auth = [context.controller.scope, context.controller.owner, context.controller.term]
   async function write(sql: string, values: readonly unknown[]): Promise<void> {
@@ -154,5 +166,5 @@ export async function recordInitialAgentResourceProfile(tx: DurableTransaction, 
   await write(`INSERT INTO durable_runtime.outbox_events(id,aggregate_id,aggregate_kind,revision,event,created_at)
     SELECT $4,$5,'runtime-unit',$6,$7::jsonb,clock_timestamp() WHERE ${currentAuthoritySql} RETURNING id`, [eventId, id.unitId, unit.revision, body])
   await authority.assertCurrent()
-  return result('RECORDED')
+  return result('RECORDED', unit.revision)
 }
