@@ -212,7 +212,7 @@ function retained(result: InitialAgentAttemptTransactionResult, pins: Group, rea
 
 await test('initial reservation: complete prepared group survives until real transaction settlement', async t => {
   const checkout=boundary(), commit=boundary(), rollback=boundary(), settlements: Promise<void>[]=[]
-  const observe=<T>(pending: Promise<T>): Promise<T> => {
+  const observe=<T,>(pending: Promise<T>): Promise<T> => {
     settlements.push(pending.then(()=>undefined,()=>undefined))
     return pending
   }
