@@ -6,6 +6,7 @@ import { CONTROLLER_DATASET, CONTROLLER_SCOPE } from '../ha/instance.ts'
 import type { ControllerInventoryContext } from '../ha/pass.ts'
 import { LockedGatewayAuthority } from '../runtime/gateway/authority.ts'
 import { inputDigest } from '../runtime/gateway/input.ts'
+import { readAgentPodPlan } from '../runtime/agent-pod-plan-records.ts'
 import { inventoryNamespace, inventoryName, inventoryOpaque } from './kubernetes-identity.ts'
 import type { ResourceWatchEvent } from './watch.ts'
 
@@ -23,6 +24,25 @@ function observerProducer(operationId: string): string {
 }
 function disposition(value: ControllerInventoryPersistence['disposition']): ControllerInventoryPersistence {
   return Object.freeze({ disposition: value })
+}
+
+function replaysObservation(stored: unknown, original: Readonly<Record<string, unknown>>): boolean {
+  if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) { return false }
+  for (const [field, value] of Object.entries(original)) {
+    if (!Object.hasOwn(stored, field) || Reflect.get(stored, field) !== value) { return false }
+  }
+  const verification = Reflect.get(stored, 'specHashVerification'), version = Reflect.get(stored, 'observationVersion')
+  const planDigest = Reflect.get(stored, 'planDigest')
+  let payload: Readonly<Record<string, unknown>>
+  if (version === undefined && verification === 'UNAVAILABLE' && planDigest === undefined) {
+    // Original v1 history remains UNAVAILABLE even after a plan is recorded later.
+    payload = { ...original, specHashVerification: verification }
+  } else if (version === 2 && verification === 'UNAVAILABLE' && planDigest === undefined) {
+    payload = { ...original, observationVersion: version, specHashVerification: verification }
+  } else if (version === 2 && verification === 'MATCHED' && typeof planDigest === 'string' && /^[0-9a-f]{64}$/u.test(planDigest)) {
+    payload = { ...original, observationVersion: version, specHashVerification: verification, planDigest }
+  } else { return false }
+  return Reflect.get(stored, 'observationHash') === inputDigest(payload)
 }
 
 /** Authenticated transport observation only. Caller supplies the private live pass identity;
@@ -49,9 +69,9 @@ export async function persistControllerInventoryObservation(pool: Pool,
   const key = JSON.stringify([namespace, observed.name, observed.uid, observed.resourceVersion,
     type, observed.operationId, observed.executionEpoch])
   // LIST/WATCH may replay the same exact object; original source/owner/time remain in the first audit.
-  const payload = Object.freeze({ kind: 'CONTROLLER_INVENTORY_OBSERVATION', type, datasetName, ...observed,
-    specHashVerification: 'UNAVAILABLE', physicalFenceVerified: false })
-  const payloadHash = inputDigest(payload), producer = observerProducer(observed.operationId)
+  const originalPayload = Object.freeze({ kind: 'CONTROLLER_INVENTORY_OBSERVATION', type, datasetName, ...observed,
+    physicalFenceVerified: false })
+  const producer = observerProducer(observed.operationId)
   const context = Object.freeze({ controller, runtimeUnitId: observed.unitId, operationId: observed.operationId })
   return runDurableTransaction(pool, async tx => {
     check()
@@ -80,16 +100,32 @@ export async function persistControllerInventoryObservation(pool: Pool,
     if (target.attempt_id === null || target.pod_uid === null) { return disposition('TARGET_UNBOUND') }
     if (target.pod_uid !== observed.uid || target.attempt_epoch !== observed.executionEpoch ||
         (target.expected_pod_uid !== null && target.expected_pod_uid !== observed.uid)) { return disposition('CONFLICT') }
-    const old = await tx.query<{ matches: boolean }>(`SELECT next_state->>'observationHash'=$4 AS matches
+    const old = await tx.query<{ next_state: unknown }>(`SELECT next_state
       FROM durable_runtime.runtime_audit_events WHERE runtime_unit_id=$1 AND operation_id=$2
       AND kind='CONTROLLER_INVENTORY_OBSERVATION' AND next_state->>'observationKey'=$3`,
-      [observed.unitId, observed.operationId, key, payloadHash])
+      [observed.unitId, observed.operationId, key])
     check()
     await authority.assertCurrent()
     check()
     if (old.rowCount) {
-      return disposition(old.rowCount === 1 && old.rows[0].matches ? 'REPLAYED' : 'CONFLICT')
+      return disposition(old.rowCount === 1 && replaysObservation(old.rows[0].next_state, originalPayload) ? 'REPLAYED' : 'CONFLICT')
     }
+    // Read only after the original target checks and first-observation replay. Stored plans do not issue authority.
+    const record = await readAgentPodPlan(tx, observed.operationId)
+    check()
+    let verification: Readonly<{ specHashVerification: 'UNAVAILABLE' } | { specHashVerification: 'MATCHED'; planDigest: string }> =
+      Object.freeze({ specHashVerification: 'UNAVAILABLE' })
+    if (record) {
+      const plan = record.plan, identity = plan.identity
+      if (plan.pod.metadata.labels['orca.dev/dataset'] !== datasetName || identity.unitId !== observed.unitId ||
+          identity.operationId !== observed.operationId || identity.attemptId !== target.attempt_id ||
+          identity.executionEpoch !== observed.executionEpoch || plan.pod.metadata.namespace !== observed.namespace ||
+          plan.pod.metadata.name !== observed.name || identity.resourceName !== observed.name ||
+          identity.specHash !== observed.observedSpecHash) { return disposition('CONFLICT') }
+      verification = Object.freeze({ specHashVerification: 'MATCHED', planDigest: record.planDigest })
+    }
+    const payload = Object.freeze({ ...originalPayload, observationVersion: 2, ...verification })
+    const payloadHash = inputDigest(payload)
     // This sequence is allocated under the Unit/operation locks. RV remains opaque event data.
     const sequence = (await tx.query<{ sequence: string }>(`SELECT (coalesce(max(producer_seq),0)+1)::text AS sequence
       FROM durable_runtime.runtime_audit_events WHERE producer_id=$1`, [producer])).rows[0].sequence
