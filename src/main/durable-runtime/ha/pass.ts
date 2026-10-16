@@ -3,7 +3,7 @@ import type { Pool } from 'pg'
 import { logicalId, counter, type RuntimeUnitId } from '../../../shared/durable-runtime/identity.ts'
 import { DurableDatabaseError, safeDatabaseError } from '../db/connection.ts'
 import { canonicalInput } from '../runtime/gateway/input.ts'
-import type { VerifiedControllerIdentity, CommandClaim } from '../runtime/gateway/types.ts'
+import type { VerifiedControllerIdentity, CommandClaim, GatewayContext } from '../runtime/gateway/types.ts'
 import { claimRuntimeEvent, processRuntimeEvent } from '../events/store.ts'
 import type { ConsumerOptions, EventHandler, ProducerStream } from '../events/types.ts'
 // Exact P113 dependency; these shared files belong to the lifecycle owner.
@@ -37,8 +37,10 @@ export type ControllerPassRequest = {
   readonly eventWork?: (head: TakeoverQueueHead) => {
     readonly handler: EventHandler; readonly options: ConsumerOptions
   } | null
-  readonly executeCommitted?: (claim: CommandClaim, signal: AbortSignal) => Promise<void>
-  readonly lookupOriginal?: (command: TakeoverCommand, signal: AbortSignal) => Promise<void>
+  /** The existing verified controller is forwarded, never issued from a claim/row.
+   * Existing two-argument callbacks remain assignable to this internal surface. */
+  readonly executeCommitted?: (claim: CommandClaim, signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<void>
+  readonly lookupOriginal?: (command: TakeoverCommand, signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<void>
   readonly inventory?: { readonly transport: AbortableInventoryTransport; readonly sink: ControllerInventorySink }
 }
 export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVENTORY';
@@ -164,8 +166,9 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
         }
         const plan: StepPlan = Object.freeze({ mutationKey: selected.mutationKey, step: selected.step,
           executorId: selected.executorId, input: JSON.parse(canonicalInput(selected.input)) })
+        const context: Readonly<GatewayContext> = Object.freeze({ controller: request.controller, runtimeUnitId: unitId, operationId: operation.id })
         const prepared = await prepareReconcileStep(pool, {
-          ...plan, context: Object.freeze({ controller: request.controller, runtimeUnitId: unitId, operationId: operation.id }),
+          ...plan, context,
           expectedUnitRevision: unit.revision, expectedIntentRevision: unit.intent_revision,
           expectedStepRevision: operation.step_revision
         })
@@ -179,13 +182,13 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
           if (!request.executeCommitted) {
             items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE_NOT_WIRED' })
           } else {
-            await external(signal => request.executeCommitted!(claim, signal))
+            await external(signal => request.executeCommitted!(claim, signal, context))
             items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE' })
           }
         } else if (prepared.execution.reason === 'LOOKUP_ORIGINAL' && command && request.lookupOriginal) {
           // P113 performed original gateway adoption. No receipt becomes a claim,
           // no ACCEPTED/EXECUTING/UNKNOWN command is executed a second time here.
-          await external(signal => request.lookupOriginal!(command, signal))
+          await external(signal => request.lookupOriginal!(command, signal, context))
           items.push({ kind: 'RECONCILE', identity: command.id, disposition: 'LOOKUP_ORIGINAL' })
         } else {items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })}
       }
