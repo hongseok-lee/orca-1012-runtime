@@ -197,3 +197,11 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 읽기 전용 준비 관측의 시각은 2026-10-16 Backend GET 00:15:33 UTC, 도구 metadata 종료 00:16:49 UTC, entry/config/live PG 관측 종료 01:03:31.611 UTC입니다. 당시 controller selector는 unset이었고, live PG ledger는 001–019였습니다. 이는 source 반영·migration·controller 활성화 성공이 아닙니다. 현재 PID·source/cache/config 경로·원 argv·정확 file hash와 복구 원자료는 private 운영 인계에 보존했으며 공개 문서에 인증/운영 식별 원문을 추가하지 않습니다. 기존 2026-10-15 19:53:29.593 UTC의 수락된 PNG는 당시 개발 화면이며 이번 source 후보의 새 화면 시험이 아닙니다.
 
 이번 준비는 개발환경 controller의 읽기 전용 inventory 연결 범위입니다. 실제 launcher create/delete, trusted specHash 영속화, namespace physical pin·old writer 차단·writer grant, Spot active/standby 장애 인수와 native 기기 합격은 미완료입니다.
+
+## 2026-10-16 실제 연결 결과
+
+위 controller inventory 절은 PR112 당시 source 준비 이력입니다. 후속 [실제 연결 결과](evidence/controller-dev-connection.md)에서 live ledger 19→22, RBAC3·Backend 정상 교체1, 승인 delta5/config/watch, 기존 인증 encrypted status.get1, 새 Expo 목록 PNG1을 Root가 수락했습니다. 새 Pod Ready 관측은 01:46:33.593 UTC이고 화면 캡처는 01:58:40.109 UTC입니다.
+
+Projected defaultMode 0444와 실제 token UID 1000/mode 0600을 구분합니다. Token은 runtime UID에서 읽을 수 있었고 CA·namespace는 0444였으며 credential 내용·hash는 읽지 않았습니다. 최초 admission 비교 실패와 fieldRef.apiVersion 기본값 교정을 보존했고 Pod DELETE/create를 재호출하지 않았습니다.
+
+화면은 연결됨·한글 Ops·Unit 1 RUNNING 목록 카드이며 상세 dialog는 닫혀 있었습니다. Lease 1개·term 1·revision 28 관측은 실제 LIST/WATCH 증거가 아닙니다. 실제 가동 owner의 LIST/WATCH, 전체 checkout/type closure, production launcher/mount·physical pin/old writer fencing·HA/native는 미완료/미측정입니다. 이 결과를 묶는 문서 작업에서 새 실행·재시험·재촬영은 없습니다.

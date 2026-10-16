@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "sourcePin": "8ff3168ebb6a7c0f92abe88c4c94f46742bfe5d1",
+  "publicationKind": "Root가 수락한 실제 개발 연결 결과의 공개 정제본입니다.",
+  "migration": {
+    "status": "COMMITTED_ACKNOWLEDGED",
+    "invocations": 1,
+    "commitAckUtc": "2026-10-16T01:32:53.916Z",
+    "ledgerBeforeCount": 19,
+    "ledgerAfterCount": 22,
+    "original19VersionChecksumAppliedAtUnchanged": true,
+    "newLedger": [
+      {
+        "version": "020-execution-target-records.sql",
+        "checksum": "85fc2a7494dc1066c2e168948560a3114d043c0dbcdc6ab5d1177adf706565b1",
+        "applied_at": "2026-10-16T01:32:53.834Z"
+      },
+      {
+        "version": "021-runtime-member-storage-bindings.sql",
+        "checksum": "4aafe9e45241e8a2c73789fab12d26373b5bcc9c432b02b4c445ae5260d82a5a",
+        "applied_at": "2026-10-16T01:32:53.853Z"
+      },
+      {
+        "version": "022-storage-namespace-holds.sql",
+        "checksum": "cf30157eb48efac48067defe45fbcb998d77923500a2b9d891de0b261fbbdbee",
+        "applied_at": "2026-10-16T01:32:53.906Z"
+      }
+    ],
+    "rowPreservation": {
+      "tables": 40,
+      "beforeRows": 124,
+      "afterRows": 124,
+      "originalRowsPreserved": true,
+      "missingOriginalCounts": {
+        "dataset_metadata": 0,
+        "agents": 0,
+        "workspaces": 0,
+        "workspace_aliases": 0,
+        "sessions": 0,
+        "tabs": 0,
+        "runtime_units": 0,
+        "runtime_members": 0,
+        "resource_profiles": 0,
+        "attempts": 0,
+        "execution_grants": 0,
+        "storage_domains": 0,
+        "storage_bindings": 0,
+        "storage_write_grants": 0,
+        "storage_mounts": 0,
+        "messages": 0,
+        "input_components": 0,
+        "input_attachments": 0,
+        "delivery_attempts": 0,
+        "session_context_records": 0,
+        "cancel_intents": 0,
+        "rpc_receipts": 0,
+        "legacy_drafts": 0,
+        "provider_context_deliveries": 0,
+        "runtime_commands": 0,
+        "operations": 0,
+        "session_events": 0,
+        "runtime_audit_events": 0,
+        "outbox_events": 0,
+        "replay_events": 0,
+        "structured_session_aliases": 0,
+        "structured_submissions": 0,
+        "terminal_input_floors": 0,
+        "catalog_heads": 0,
+        "catalog_project_groups": 0,
+        "catalog_repositories": 0,
+        "catalog_workspace_metadata": 0,
+        "catalog_tab_metadata": 0,
+        "catalog_ui_state": 0,
+        "catalog_name_reservations": 0
+      },
+      "backfillExactCurrentPrimary": true,
+      "primaryTuples": 1,
+      "originalPrimaryHashSetUnchanged": true,
+      "newRows": {
+        "execution_target_records": "0",
+        "runtime_member_storage_bindings": "1",
+        "storage_namespace_profiles": "0",
+        "storage_namespace_profile_versions": "0",
+        "storage_namespace_holds": "0",
+        "storage_namespace_management_operations": "0"
+      }
+    },
+    "poolEnded": true,
+    "ddlRepeated": 0,
+    "original001To019Reapplied": 0
+  },
+  "rbac": {
+    "counts": {
+      "exactGetPerObject": 1,
+      "createAttempts": 3,
+      "created": 3,
+      "reused": 0,
+      "podNodeGetDeleteCreate": 0,
+      "tokenContentsRead": 0,
+      "tests": 0,
+      "heavy": 0
+    },
+    "finishedUtc": "2026-10-16T01:39:51.579064+00:00",
+    "roleScope": "같은 namespace의 core Pods get/list/watch만 허용합니다.",
+    "createdResources": [
+      "ServiceAccount",
+      "Role",
+      "RoleBinding"
+    ],
+    "credentialContentsRead": 0
+  },
+  "podReplacement": {
+    "normalDeleteAttempts": 1,
+    "deleteGraceSeconds": 25,
+    "oldExactNodeReadyBeforeDelete": true,
+    "oldPodAbsentUtc": "2026-10-16T01:44:46.065058+00:00",
+    "newPodCreateUtc": "2026-10-16T01:44:46.376179+00:00",
+    "newPodReadyObservedUtc": "2026-10-16T01:46:33.593083+00:00",
+    "sameNfsPvc": true,
+    "sameHomeAndSourceSubPaths": true,
+    "sameImageResourcesSecurityPlacement": true,
+    "serviceAccount": "orca-backend-inventory",
+    "automountServiceAccountToken": false,
+    "projectedReadOnly": true,
+    "counts": {
+      "oldPodGuardGets": 1,
+      "oldNodeGuardGets": 1,
+      "deleteAttempts": 1,
+      "createAttempts": 1,
+      "absenceGets": 4,
+      "readyGets": 1,
+      "credentialMetadataBatches": 1,
+      "rbacRepeated": 0,
+      "forceDelete": 0,
+      "pgNfsExpoMutation": 0,
+      "tests": 0
+    },
+    "originalAdmissionComparisonFailure": "NEW_POD_ADMISSION_MEANING_CHANGED",
+    "originalFailedComparison": "sameHomeEnvironment=false",
+    "onlyActualDifference": "ORCAD_DEV_POD_UID.valueFrom.fieldRef.apiVersion absent → v1",
+    "defaultOnlyCorrection": true,
+    "deleteCreateRerun": 0,
+    "firstFailurePreserved": true,
+    "projectedFiles": [
+      {
+        "file": "token",
+        "uid": 1000,
+        "gid": 0,
+        "mode": "600",
+        "bytes": 1430,
+        "readableByRuntimeUid1000": true,
+        "regularFileTarget": true,
+        "projectionLink": true
+      },
+      {
+        "file": "ca.crt",
+        "uid": 0,
+        "gid": 0,
+        "mode": "444",
+        "bytes": 1509,
+        "readableByRuntimeUid1000": true,
+        "regularFileTarget": true,
+        "projectionLink": true
+      },
+      {
+        "file": "namespace",
+        "uid": 0,
+        "gid": 0,
+        "mode": "444",
+        "bytes": 8,
+        "readableByRuntimeUid1000": true,
+        "regularFileTarget": true,
+        "projectionLink": true
+      }
+    ],
+    "manifestProjectionDefaultMode": "0444",
+    "tokenActualUidMode": "1000/0600",
+    "tokenChmodOrContentRead": 0
+  },
+  "backendActivation": {
+    "privatePreservedFiles": 13,
+    "privatePreservationFinishedUtc": "2026-10-16T01:35:34.471Z",
+    "originalWatchStop": {
+      "utc": "2026-10-16T01:40:18.941Z",
+      "signalCount": 1,
+      "additionalSignals": 0,
+      "watchState": "Z",
+      "runtimeState": "ABSENT",
+      "lockExists": false,
+      "exit": 0
+    },
+    "candidateFileCount": 225,
+    "sameFiles": 220,
+    "differentFiles": 4,
+    "newFiles": 1,
+    "sourceDeltaApplied": [
+      {
+        "path": "src/main/durable-runtime/db/connection.ts",
+        "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+        "bytes": 6387,
+        "originalDisposition": "DIFFERENT"
+      },
+      {
+        "path": "src/main/durable-runtime/ha/pass.ts",
+        "sha256": "1ea6aa6f3cc33fd9dfbdf0ddc02176e37fcb80fe44879ac111fe5d7f5de9a7d2",
+        "bytes": 14360,
+        "originalDisposition": "DIFFERENT"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/controller-inventory-observation.ts",
+        "sha256": "ba9663e90f25398237635538b3fa16a4bc6d39f56339e0ce0d72c6b87f3748c4",
+        "bytes": 8784,
+        "originalDisposition": "MISSING"
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/controller.ts",
+        "sha256": "d9fce1c9a8c9b4d4a65c3f84dd24c9edb63960b194865a1db6bfa6bc658739ed",
+        "bytes": 13537,
+        "originalDisposition": "DIFFERENT"
+      },
+      {
+        "path": "src/main/orcad/orcad-controller.ts",
+        "sha256": "53b0809dd64e48e4658f94f3b4b1d115febd949fb48346fbf21b0e483c14a4f1",
+        "bytes": 10889,
+        "originalDisposition": "DIFFERENT"
+      }
+    ],
+    "appliedSourceCount": 5,
+    "sourcePinIsManifestReferenceOnly": true,
+    "wholeCheckoutGitPinProven": false,
+    "wholeDynamicDependencyClosureProven": false,
+    "startedUtc": "2026-10-16T01:49:44.157Z",
+    "watchPid": 31,
+    "runtimePid": 72,
+    "generation": 1,
+    "bundleHash": "8dde429ff9ba03bca7a1b2d69440393a9b440f4e8b157d9d1d25cc7611b33c90",
+    "orcadSha256": "59118ddd8bf2bb3a2815d31367abe1984749acaa1e2bfd20591827c8174913a3",
+    "controllerPrivateConfig": {
+      "sha256": "1f7664df4d3a83aa88168d9915063637630980f377e92eaff751d18c3dd15d98",
+      "uid": 1000,
+      "mode": "0600",
+      "selectorPassed": true,
+      "contentsPublished": false
+    },
+    "watchStarts": 1,
+    "devStartupBundleCount": 1,
+    "newInstallOrSeparateHelperTransform": 0
+  },
+  "encryptedApi": {
+    "startedUtc": "2026-10-16T02:00:54.230Z",
+    "utc": "2026-10-16T02:00:55.108Z",
+    "executions": 1,
+    "method": "status.get",
+    "authenticatedEncryptedRPC": true,
+    "ok": true,
+    "apiAppVersion": "0.1.0+8dde429ff9ba",
+    "apiRuntimeProtocolVersion": 3,
+    "apiDeviceScope": "runtime",
+    "matches": {
+      "apiVersion": true,
+      "readyPid": true,
+      "readyBuildHash": true,
+      "readyBuildVersion": true
+    },
+    "exit": 0
+  },
+  "controllerLeaseRead": {
+    "startedUtc": "2026-10-16T01:54:32.370Z",
+    "finishedUtc": "2026-10-16T01:54:33.012Z",
+    "readOnly": true,
+    "ledger22Unchanged": true,
+    "leaseRows": 1,
+    "term": "1",
+    "revision": "28",
+    "expiredAtObservedDatabaseTime": false,
+    "poolEnded": true,
+    "listWatchVerified": false,
+    "physicalFenceVerified": false,
+    "scopeOwnerRowObserved": true
+  },
+  "clientViewer": {
+    "executionStartedUtc": "2026-10-16T01:58:26.869Z",
+    "executionFinishedUtc": "2026-10-16T01:58:40.332Z",
+    "exit": 0,
+    "viewerRuns": 1,
+    "newPairing": 0,
+    "capturedAt": "2026-10-16T01:58:40.109Z",
+    "pngSha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+    "pngBytes": 113773,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "dpr": 1,
+    "phoneClicks": 1,
+    "summaryClicks": 0,
+    "detailClicks": 0,
+    "captureCount": 1,
+    "actualVisibleState": "overview와 닫힌 Unit summary 카드",
+    "detailDialogVisible": false,
+    "detailGetQualified": false,
+    "visible": [
+      "연결됨",
+      "한글 운영 현황",
+      "Runtime Unit 1",
+      "RUNNING 목록 카드"
+    ],
+    "loadingVisible": false,
+    "errorVisible": false,
+    "originalHelperState": "detail",
+    "originalCapturePhaseCounter": {
+      "coordinate": 0,
+      "expanded": 0,
+      "detail": 1
+    },
+    "rawPhaseNameIsNotDetailSuccess": true,
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalAuthUnchanged": true,
+    "nativeIPhoneQualified": false,
+    "newChromePidObserved": false
+  },
+  "evidenceInputSha256": {
+    "migration": "1ca5c267185ba1a447c303096e13a1ba3740c083652c67e3ffbef0ccd7834eb7",
+    "rbac": "b856927776bc6e8b40aacbe77a74770064d67436388542ad175925a78dda88a3",
+    "replacement": "a1a427c3aab887e570ecbe2dab3a24037e57fe665138d21e8ef5ed8f07ee8ab9",
+    "preservation": "1bb20642b1e8914fcd9dd78e33f95dae300ab212fbf19085ccab732bcd594848",
+    "stop": "b77d961d50ffafede92ed5a5cb6c7b35829dc8a7279df2f2ed5ee964c333f4b9",
+    "activation": "a5dbf500eaa1db20bb0188b75de90b42fabb480d0f9eaa3fc22e1c4b41e23a35",
+    "api": "01a4bc960495196466d05c11a082a392b020f3841d332dc8024ca434491522f3",
+    "lease": "76e1525d4d610c6c39f5df5c343bc0ff9a526f41afa5c3742fbc411ac36b4cfd",
+    "viewer": "f3e1699577d49b4da672c7c5af8422b9eb56669d0796c7d17c0e8c6c7b621e0a"
+  },
+  "limits": [
+    "실제 가동 owner의 Kubernetes LIST/WATCH 성공은 아직 미측정입니다. Lease/Ready/token 읽기/API/화면으로 이를 대체하지 않습니다.",
+    "화면은 목록과 닫힌 Unit 카드이며 상세 dialog/정확 detail API를 검증하지 않았습니다.",
+    "Source 225개 후보와 delta5 범위만 대조했으며 전체 checkout 또는 전체 import/type closure 일치는 증명하지 않았습니다.",
+    "Production mount/launcher create-delete/trusted specHash 영속화/namespace physical pin/old writer fencing/writer grant는 미완료입니다.",
+    "Spot active/standby 장애 인수·HA·provider/native iPhone/Mac 합격이 아닙니다."
+  ],
+  "publicationWork": {
+    "newRemoteQueriesTestsCaptureInstallProductChanges": 0,
+    "heavy": 0,
+    "usageCreditsStreamErrors": "이번 turn에서 새 usage/credits/stream 원오류는 미관측입니다."
+  }
+}
