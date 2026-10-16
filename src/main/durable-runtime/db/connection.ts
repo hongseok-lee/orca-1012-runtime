@@ -27,7 +27,7 @@ export function createDurablePool(
   const pool = new pg.Pool({
     ...config,
     types: {
-      getTypeParser(oid, format) {
+      getTypeParser(oid: Parameters<typeof pg.types.getTypeParser>[0], format?: Parameters<typeof pg.types.getTypeParser>[1]) {
         if (oid === 20 && format !== "binary") {
           return (value: string) => value;
         }
