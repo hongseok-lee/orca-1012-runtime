@@ -123,7 +123,7 @@ export function projectAgentPodCreate(value: unknown, input: CapturedAgentPodCre
   let pod: Record<string, unknown>, metadata: Record<string, unknown>
   try {
     pod = inventoryRecord(snapshot(value)); metadata = inventoryRecord(pod.metadata)
-    if (pod.apiVersion !== 'v1' || pod.kind !== 'Pod') { throw new Error() }
+    if (pod.apiVersion !== 'v1' || pod.kind !== 'Pod') { throw new Error('RESPONSE_INVALID') }
     inventoryOpaque(metadata.uid); inventoryOpaque(metadata.resourceVersion)
     inventoryName(metadata.name); inventoryNamespace(metadata.namespace)
     inventoryRecord(pod.spec)

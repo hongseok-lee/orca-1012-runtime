@@ -68,8 +68,8 @@ test('fixed stored Agent Pod transport observes original identity and never retr
       assert.equal(result.disposition, conflict ? 'FOUND' : 'CREATED'); assert.equal(result.postAttempts, 1)
       assert.deepEqual(h.requests.map(row => row.options.method), conflict ? ['GET', 'POST', 'GET'] : ['GET', 'POST'])
       const base = '/api/v1/namespaces/agent-fixture/pods'
-      assert.deepEqual(h.requests.map(row => row.url.pathname), conflict ? [base + '/original-agent-name', base, base + '/original-agent-name'] :
-        [base + '/original-agent-name', base])
+      assert.deepEqual(h.requests.map(row => row.url.pathname), conflict ? [`${base}/original-agent-name`, base, `${base}/original-agent-name`] :
+        [`${base}/original-agent-name`, base])
       assert.equal(h.requests[1]?.request.body, JSON.stringify(request.record.plan.pod))
       for (const row of h.requests) {
         assert.equal(row.url.origin, 'https://kubernetes.invalid:6443'); assert.equal(row.options.rejectUnauthorized, true)

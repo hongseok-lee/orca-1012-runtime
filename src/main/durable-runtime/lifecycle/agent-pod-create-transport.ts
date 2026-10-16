@@ -44,7 +44,7 @@ export function exchangeAgentPodCreate(transport: AgentPodCreateHttps, origin: s
     function data(chunk: unknown): void {
       if (settled) { return }
       try {
-        if (!(chunk instanceof Uint8Array) || (bytes += chunk.byteLength) > 2 * 1024 * 1024) { throw new Error() }
+        if (!(chunk instanceof Uint8Array) || (bytes += chunk.byteLength) > 2 * 1024 * 1024) { throw new Error('RESPONSE_INVALID') }
         text += decoder.decode(chunk, { stream: true })
       } catch { finish(new AgentPodCreateError('RESPONSE_INVALID')) }
     }
