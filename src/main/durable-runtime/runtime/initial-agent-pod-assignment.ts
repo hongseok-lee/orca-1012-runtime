@@ -5,14 +5,14 @@ import type { JsonValue } from "../db/atomic.ts";
 import { lockAggregates } from "../db/locks.ts";
 import type { AgentPodPlanRecord } from "../db/agent-pod-plan-record-rows.ts";
 import type { AgentPodCreateObservation } from "../lifecycle/agent-pod-create-types.ts";
-import { inventoryName, inventoryNamespace, inventoryOpaque } from "../lifecycle/kubernetes-identity.ts";
+import { inventoryOpaque } from "../lifecycle/kubernetes-identity.ts";
 import { readAgentPodPlan } from "./agent-pod-plan-records.ts";
-import { agentPodFields } from "./agent-pod-policy.ts";
 import type { UnauthorizedAgentPodPlan } from "./agent-pod-plan.ts";
 import { LockedGatewayAuthority, currentAuthoritySql } from "./gateway/authority.ts";
 import { assertOriginal } from "./gateway/store.ts";
 import { canonicalInput, inputDigest } from "./gateway/input.ts";
 import type { CommandClaim, CommandId, CommandRow, GatewayContext } from "./gateway/types.ts";
+import { captureObservation } from "./initial-agent-pod-observation.ts";
 import { readInitialAgentOriginalExecution, type InitialAgentOriginalExecution } from "./initial-agent-original-command.ts";
 
 export type InitialAgentPodTargetInput = Readonly<{ claim: CommandClaim; planDigest: string }>;
@@ -75,46 +75,6 @@ function captureLookup(originalContext: GatewayContext, original: InitialAgentPo
   const commandId = logicalId("runtime-command", original.commandId), planDigest = original.planDigest;
   if (typeof planDigest !== "string" || !/^[0-9a-f]{64}$/u.test(planDigest)) { return deny("INPUT"); }
   return Object.freeze({ kind: "LOOKUP", context, commandId, planDigest });
-}
-function fields(value: unknown, required: readonly string[], optional: readonly string[] = []) {
-  if (typeof value !== "object" || value === null) { return deny("INPUT"); }
-  const own = Reflect.ownKeys(value);
-  if (own.some(key => typeof key !== "string" || ![...required, ...optional].includes(key)) ||
-      required.some(key => !own.includes(key))) { return deny("INPUT"); }
-  return agentPodFields(value, own.filter((key): key is string => typeof key === "string"));
-}
-function resourceSnapshot(value: unknown): JsonValue {
-  const record = fields(value, [], ["requests", "limits"]);
-  const result: Record<string, JsonValue> = {};
-  for (const key of ["requests", "limits"]) {
-    if (!record.has(key)) { continue; }
-    const quantitiesInput = fields(record.get(key), [], ["cpu", "memory", "ephemeral-storage"]);
-    const quantities: Record<string, JsonValue> = {};
-    for (const [name, quantity] of quantitiesInput) {
-      if (typeof quantity !== "string" || !/^[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+|[numkKMGTEP]i?)?$/u.test(quantity) ||
-          key === "limits" && (name === "cpu" || name === "memory")) { return deny("OBSERVATION"); }
-      quantities[name] = quantity;
-    }
-    result[key] = Object.freeze(quantities);
-  }
-  return Object.freeze(result);
-}
-function captureObservation(original: AgentPodCreateObservation) {
-  try {
-    const value = fields(original, ["kind", "disposition", "planDigest", "namespace", "name", "pod",
-      "postAttempts", "readinessObserved", "physicalPinVerified"], ["reason"]);
-    const disposition = value.get("disposition"), pod = agentPodFields(value.get("pod"),
-      ["uid", "resourceVersion", "desiredResources", "admittedResources"]);
-    if (value.get("kind") !== "AGENT_POD_CREATE_OBSERVATION" ||
-        (disposition !== "FOUND" && disposition !== "CREATED") ||
-        (value.get("postAttempts") !== 0 && value.get("postAttempts") !== 1) ||
-        value.get("readinessObserved") !== false || value.get("physicalPinVerified") !== false) { return deny("OBSERVATION"); }
-    const planDigest = value.get("planDigest");
-    if (typeof planDigest !== "string" || !/^[0-9a-f]{64}$/u.test(planDigest)) { return deny("OBSERVATION"); }
-    return Object.freeze({ planDigest, namespace: inventoryNamespace(value.get("namespace")), name: inventoryName(value.get("name")),
-      pod: Object.freeze({ uid: inventoryOpaque(pod.get("uid")), resourceVersion: inventoryOpaque(pod.get("resourceVersion")),
-        desiredResources: resourceSnapshot(pod.get("desiredResources")), admittedResources: resourceSnapshot(pod.get("admittedResources")) }) });
-  } catch { return deny("OBSERVATION"); }
 }
 function bodyField(value: JsonValue, key: string): unknown {
   if (typeof value !== "object" || value === null || Array.isArray(value)) { return deny("RESERVATION"); }
