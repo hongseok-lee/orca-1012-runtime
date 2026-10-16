@@ -19,12 +19,13 @@ export type PreparedBindingPinOwner = Readonly<{
 export type BindingPinDisposition = Readonly<{
   disposition: 'RELEASED'; releaseError: null; retainedOwner: null; retainedLease: null;
 }> | Readonly<{
-  disposition: 'RETAINED'; reason: 'UNCONFIRMED' | 'RELEASE_FAILED' | 'INVALID_HANDOFF' | 'TAKE_FAILED';
+  disposition: 'RETAINED'; reason: 'UNCONFIRMED' | 'RELEASE_FAILED' | 'INVALID_HANDOFF' | 'TAKE_FAILED' | 'ENGINE_REJECTED';
   releaseError: DurableDatabaseError | null;
   retainedOwner: PreparedBindingPinOwner; retainedLease: PreparedBindingPinLease | null;
 }>;
 export type BindingVerificationTransactionResult = Readonly<{
-  database: DurableTransactionResult<Binding>;
+  database: DurableTransactionResult<Binding> | null;
+  engineError: DurableDatabaseError | null;
   pin: BindingPinDisposition;
   physicalPinIssuerImplemented: false;
 }>;
@@ -73,7 +74,7 @@ export async function verifyBindingWithPreparedPin(
   const notStarted = (code: string, reason: 'TAKE_FAILED' | 'INVALID_HANDOFF',
     lease: PreparedBindingPinLease | null): BindingVerificationTransactionResult => Object.freeze({
     database: Object.freeze({ ok: false, settlement: 'NOT_STARTED', commitOutcome: 'NOT_ATTEMPTED',
-      error: new DurableDatabaseError(code), cleanupFailed: false }),
+      error: new DurableDatabaseError(code), cleanupFailed: false }), engineError: null,
     pin: Object.freeze({ disposition: 'RETAINED', reason, releaseError: null, retainedOwner: owner, retainedLease: lease }),
     physicalPinIssuerImplemented: false,
   });
@@ -101,20 +102,27 @@ export async function verifyBindingWithPreparedPin(
     return notStarted('STORAGE_PIN_HANDOFF_INVALID', 'INVALID_HANDOFF', lease ?? null);
   }
   const heldLease = lease, release = releaseValue;
-  const retained = (reason: 'UNCONFIRMED' | 'RELEASE_FAILED',
+  const retained = (reason: 'UNCONFIRMED' | 'RELEASE_FAILED' | 'ENGINE_REJECTED',
     releaseError: DurableDatabaseError | null = null): BindingPinDisposition => Object.freeze({
     disposition: 'RETAINED', reason, releaseError, retainedOwner: owner, retainedLease: heldLease,
   });
-  const database = await runDurableTransaction<Binding>(borrowed, tx => verify(tx, input));
+  let database: DurableTransactionResult<Binding>;
+  try {
+    database = await runDurableTransaction<Binding>(borrowed, tx => verify(tx, input));
+  } catch {
+    // An escaped engine error carries no observed settlement/COMMIT/cleanup fact.
+    return Object.freeze({ database: null, engineError: new DurableDatabaseError('STORAGE_TRANSACTION_ENGINE_REJECTED'),
+      pin: retained('ENGINE_REJECTED'), physicalPinIssuerImplemented: false });
+  }
   if (database.settlement === 'UNCONFIRMED') {
-    return Object.freeze({ database, pin: retained('UNCONFIRMED'), physicalPinIssuerImplemented: false });
+    return Object.freeze({ database, engineError: null, pin: retained('UNCONFIRMED'), physicalPinIssuerImplemented: false });
   }
   try {
     await Reflect.apply(release, heldLease, []);
   } catch {
-    return Object.freeze({ database, pin: retained('RELEASE_FAILED', new DurableDatabaseError('STORAGE_PIN_RELEASE_FAILED')),
+    return Object.freeze({ database, engineError: null, pin: retained('RELEASE_FAILED', new DurableDatabaseError('STORAGE_PIN_RELEASE_FAILED')),
       physicalPinIssuerImplemented: false });
   }
-  return Object.freeze({ database, pin: Object.freeze({ disposition: 'RELEASED', releaseError: null,
+  return Object.freeze({ database, engineError: null, pin: Object.freeze({ disposition: 'RELEASED', releaseError: null,
     retainedOwner: null, retainedLease: null }), physicalPinIssuerImplemented: false });
 }
