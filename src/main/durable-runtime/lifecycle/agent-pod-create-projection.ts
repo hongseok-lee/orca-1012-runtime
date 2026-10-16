@@ -67,7 +67,8 @@ function keys(value: Record<string, unknown>, allowed: readonly string[]): void 
 function normalizedMount(value: unknown) {
   const mount = inventoryRecord(value)
   keys(mount, ['name', 'mountPath', 'readOnly', 'mountPropagation'])
-  if (mount.mountPropagation !== undefined && mount.mountPropagation !== 'None') { conflict() }
+  if (mount.mountPropagation !== undefined && mount.mountPropagation !== 'None' ||
+      mount.readOnly !== undefined && typeof mount.readOnly !== 'boolean') { conflict() }
   return { name: mount.name, mountPath: mount.mountPath, readOnly: mount.readOnly ?? false }
 }
 function normalizedVolume(value: unknown) {
@@ -76,6 +77,7 @@ function normalizedVolume(value: unknown) {
     keys(volume, ['name', 'persistentVolumeClaim'])
     const pvc = inventoryRecord(volume.persistentVolumeClaim)
     keys(pvc, ['claimName', 'readOnly'])
+    if (pvc.readOnly !== undefined && typeof pvc.readOnly !== 'boolean') { conflict() }
     return { name: volume.name, persistentVolumeClaim: { claimName: pvc.claimName, readOnly: pvc.readOnly ?? false } }
   }
   keys(volume, ['name', 'emptyDir'])
@@ -118,8 +120,15 @@ function tolerations(actual: unknown, expected: unknown): void {
 
 /** API object observation only; PVC names do not prove their current backend or a physical pin. */
 export function projectAgentPodCreate(value: unknown, input: CapturedAgentPodCreate): NonNullable<AgentPodCreateObservation['pod']> {
+  let pod: Record<string, unknown>, metadata: Record<string, unknown>
   try {
-    const pod = inventoryRecord(snapshot(value)), metadata = inventoryRecord(pod.metadata)
+    pod = inventoryRecord(snapshot(value)); metadata = inventoryRecord(pod.metadata)
+    if (pod.apiVersion !== 'v1' || pod.kind !== 'Pod') { throw new Error() }
+    inventoryOpaque(metadata.uid); inventoryOpaque(metadata.resourceVersion)
+    inventoryName(metadata.name); inventoryNamespace(metadata.namespace)
+    inventoryRecord(pod.spec)
+  } catch { throw new AgentPodCreateError('RESPONSE_INVALID') }
+  try {
     const listed = inventoryPod(pod, input.namespace, input.dataset, input.name)
     if (metadata.deletionTimestamp != null) { conflict() }
     const originalMetadata = inventoryRecord(input.pod.metadata)

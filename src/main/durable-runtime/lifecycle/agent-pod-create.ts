@@ -33,8 +33,9 @@ export function createAgentPodCreateTransport(caller: AgentPodCreateConfig,
   const readBearerToken = config.readBearerToken
   const collectionPath = `/api/v1/namespaces/${encodeURIComponent(config.namespace)}/pods`
   return Object.freeze({ async observeOrCreate(original: AgentPodCreateInput, signal: AbortSignal): Promise<AgentPodCreateObservation> {
+    const started = performance.now()
     const input = captureAgentPodCreateInput(original, config.namespace, config.dataset)
-    const controller = new AbortController(), duration = Math.min(config.timeoutMs, input.remainingMs), deadline = performance.now() + duration
+    const controller = new AbortController(), duration = Math.min(config.timeoutMs, input.remainingMs), deadline = started + duration
     let expired = false, postAttempts: 0 | 1 = 0
     const abort = () => controller.abort()
     const timer = setTimeout(() => { expired = true; controller.abort() }, duration)
@@ -52,8 +53,14 @@ export function createAgentPodCreateTransport(caller: AgentPodCreateConfig,
         readinessObserved: false, physicalPinVerified: false })
     }
     function project(value: unknown, disposition: 'FOUND' | 'CREATED'): AgentPodCreateObservation {
-      try { return result(disposition, projectAgentPodCreate(value, input)) }
-      catch { return result('CONFLICT', null, 'POD_CONFLICT') }
+      let pod: AgentPodCreateObservation['pod'] = null
+      let conflict = false
+      try { pod = projectAgentPodCreate(value, input) } catch (error) {
+        if (error instanceof AgentPodCreateError && error.code === 'RESPONSE_INVALID') { throw error }
+        conflict = true
+      }
+      check()
+      return conflict ? result('CONFLICT', null, 'POD_CONFLICT') : result(disposition, pod)
     }
     try {
       check()

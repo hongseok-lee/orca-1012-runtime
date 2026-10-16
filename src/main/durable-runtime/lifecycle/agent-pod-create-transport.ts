@@ -26,7 +26,9 @@ export function exchangeAgentPodCreate(transport: AgentPodCreateHttps, origin: s
       text = ''
       // Error guards remain until close; destroying never forwards raw errors/reasons.
       response?.destroy(); request?.destroy()
-      if (error) { reject(error) } else { resolve(Object.freeze(value ?? { status: 0 })) }
+      if (error) { reject(error) }
+      else if (value) { resolve(Object.freeze(value)) }
+      else { reject(new AgentPodCreateError('RESPONSE_INVALID')) }
     }
     function abort(): void { finish(new AgentPodCreateError('ABORTED')) }
     function disconnected(): void { finish(new AgentPodCreateError('NETWORK_FAILED')) }
