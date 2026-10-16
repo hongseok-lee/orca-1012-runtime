@@ -1,0 +1,158 @@
+{
+  "evidenceCutoff": "2026-10-16T21:39:45.367Z",
+  "sourceSelection": "491c855484abbf03f98219e29cf568485d030558",
+  "implementationPR": 152,
+  "testedImplementationPin": "ba40f8272ab5ebdc1d48fee01c9008d5c2e919fb",
+  "wholeCheckoutGitProven": false,
+  "publishedProducts": [
+    {
+      "path": "src/main/durable-runtime/lifecycle/controller.ts",
+      "sha256": "c765affa9e9deaaa91f0fb67612bfdc7f00b4873209e788626ddedd2945d5aa1",
+      "bytes": 18979,
+      "mode": 420
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/intent.ts",
+      "sha256": "c99970b7631b06d0f696886d6bba41a199d32bf81e0b78e4a76fcda96c87ee78",
+      "bytes": 10332,
+      "mode": 420
+    }
+  ],
+  "runtime": {
+    "readyAt": "2026-10-16T21:13:04.059Z",
+    "watchPID": 14734,
+    "runtimePID": 14778,
+    "generation": 1,
+    "artifactSHA256": "c7c97adedfb0e6a548a3e89e8ca5260fbfb9d128f469de9d0ed17fc9b6f3364f",
+    "normalStopStartOnce": true,
+    "controllerConfigurationPublished": false,
+    "newPairing": false
+  },
+  "authenticatedAPI": {
+    "method": "status.get",
+    "calls": 1,
+    "authenticatedEncryptedRPC": true,
+    "startedAt": "2026-10-16T21:18:07.346Z",
+    "finishedAt": "2026-10-16T21:18:08.637Z",
+    "exit": 0,
+    "runtimePID": 14778,
+    "readinessMatchesCurrentRuntime": true,
+    "automaticRetry": 0
+  },
+  "terminalReadOnlySnapshot": {
+    "observedAt": "2026-10-16T21:21:13.229Z",
+    "snapshotSHA256": "5736f3487b7b2573e1c09e6aab77a8c16c352ec4a675e5e782d1cb2de0e9f5be",
+    "readOnly": true,
+    "isolation": "repeatable read",
+    "count": 1,
+    "writes": 0,
+    "pgRetry": 0,
+    "unitPhase": "BLOCKED",
+    "unitRevision": "2",
+    "operationStep": "FAILED",
+    "result": {
+      "state": "FAILED",
+      "reason": "DEADLINE_EXPIRED_BEFORE_ACCEPTANCE"
+    },
+    "deadlinePreserved": true,
+    "retryPreserved": true,
+    "resourceNamePreserved": true,
+    "operationIdentityPreserved": true,
+    "unitIntentEpochPreserved": true,
+    "sessionPreserved": true,
+    "bindingPreserved": true,
+    "terminalAuditOutboxReceiptRevisionMatch": true,
+    "counts": {
+      "terminalAudit": "1",
+      "terminalOutbox": "1",
+      "attemptsForUnit": "0",
+      "terminalReceipt": "1",
+      "mountsForBinding": "0",
+      "plansForOperation": "0",
+      "commandsForOperation": "0",
+      "writeGrantsForBinding": "0",
+      "executionGrantsForUnit": "0",
+      "nonrevokedWriteGrantsForBinding": "0",
+      "nonrevokedExecutionGrantsForUnit": "0",
+      "originalNonterminalDeadlineReceipts": "692"
+    },
+    "firstTransferFailure": {
+      "missingStdinFlag": true,
+      "PGEntered": false,
+      "correctedTransferCount": 1,
+      "firstReadOnlySnapshotCount": 1
+    }
+  },
+  "isolatedPGImplementationVerification": {
+    "sourceParentCases": 1,
+    "childCases": 10,
+    "tapPass": 11,
+    "tapFail": 0,
+    "exit": 0,
+    "preservedTables": 35,
+    "originalRowsMissing": 0,
+    "originalRowCountBefore": 2569,
+    "rowCountAfter": 2749,
+    "ledgerEntries": 23,
+    "ledgerUnchanged": true,
+    "normalAcquire": 1,
+    "normalRelease": 1,
+    "renew": 0,
+    "termDelta": 1,
+    "revisionDelta": 2,
+    "rawTAPSHA256": "ab6ee246ac590f21f0d83109f965b46875943dd3b5b9ad01c4307cff06210884"
+  },
+  "ui": {
+    "targetUnit": "456de729-7b40-4cd2-810e-92674904724a",
+    "firstAttempt": {
+      "exit": 1,
+      "error": "REQUEST_FAILED",
+      "targetUUIDAndBlockedConfirmed": false,
+      "failureCauseKnown": false,
+      "startedAt": "2026-10-16T21:24:06.942Z",
+      "finishedAt": "2026-10-16T21:25:57.750Z",
+      "browserAndContextClosed": true,
+      "authUnchanged": true
+    },
+    "explicitReloadAttempt": {
+      "opsReloadClicks": 1,
+      "summaryTaps": 1,
+      "detailTaps": 1,
+      "scrolls": 0,
+      "exit": 0,
+      "desiredMode": "RUNNING",
+      "phase": "BLOCKED",
+      "pod": "없음",
+      "authUnchanged": true,
+      "capturedAt": "2026-10-16T21:39:45.367Z"
+    },
+    "images": [
+      {
+        "role": "first-ui-failure",
+        "file": "operation-deadline-terminal-first-ui-failure-20261016.png",
+        "sha256": "a7049034e244186c15fd0c430afb69a9b7ff3d9a1b15aab30980713fd680c46f",
+        "bytes": 124250,
+        "width": 390,
+        "height": 844
+      },
+      {
+        "role": "reloaded-detail",
+        "file": "operation-deadline-terminal-reloaded-detail-20261016.png",
+        "sha256": "d539e18e2bad6bb3ac44a965840fcaae78356ed98a5fa026042d89d4b364175b",
+        "bytes": 137311,
+        "width": 390,
+        "height": 844
+      }
+    ]
+  },
+  "scopeLimits": {
+    "newWakeIncluded": false,
+    "actualAgentQualified": false,
+    "physicalProviderWriterHAProven": false,
+    "nativeIPhone": false,
+    "belowFoldSessionMountAndFailureReasonObserved": false,
+    "imageEdited": false,
+    "newSourceTestsOrCaptureForEvidencePR": 0
+  },
+  "usageCreditsStreamDuringEvidencePreparation": "미관측"
+}
