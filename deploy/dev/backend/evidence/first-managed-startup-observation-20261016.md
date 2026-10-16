@@ -62,6 +62,14 @@ Provenance의 내부 `state=detail`은 detail tap 성공의 증명이 아니다.
 
 Client의 설치 source는 `8edb42e16caf0ddaa840dc16e4e886e6acaca328`, 관측 frame source는 `3817fb489ff9539aa1c0187170e842bed539c691`, Ops mobile detail source는 `ba5b58931fe054e3054ff04481bd41cd5422b4ee`다. 이들은 backend의 선택 source pin이나 whole checkout identity를 대신하지 않는다.
 
+## 추가로 수락된 원 operation의 기한 관측
+
+Root가 수락한 후속 기한 snapshot은 PID 14217로 20:18:35.712–20:18:36.099 UTC에 실행됐으며 exit 0, snapshot 1회, 쓰기 0회다. 이 문서 준비에서 새로 실행한 관측이 아니다.
+
+원 operation의 `deadline_at`은 `2026-10-16T15:55:49.735812Z`, 같은 snapshot의 DB clock은 `2026-10-16T20:18:36.097184Z`이고 `deadline_expired=true`였다. 기한은 20:02 UTC의 runtime activation 전에 이미 만료됐다. Root는 이 정확 target 관측과 원 deadline guard를 대조해, 기한 검사가 plan/command 생성을 막았다고 수락했다. 이 판정은 [PR150의 Root 관측 댓글](https://github.com/hongseok-lee/orca-1012-runtime/pull/150#issuecomment-6224019910)에 공개됐다.
+
+동시에 `completed=false`로 원 operation의 result가 null인 상태는 보존됐다. 수락 전 기한 만료가 미완료 상태로 남는 제품 경계는 별도의 후속 source 작업이며, 이 증거 문서는 만료 처리 수정이나 재실행 성공을 주장하지 않는다. 기존 deadline·operation·runtime을 변경하지 않았다.
+
 ## 남은 완료 경계
 
 이 증거는 한 번의 개발 runtime 반영·기존 encrypted API와 별도의 DB·Pod·실패 화면 관측에 한정된다. 실제 Agent 생성·admission·mount, physical pin issuer, provider/writer, oldwriter 차단, Active/Standby HA, native iPhone 및 detail 직접 조작 성공은 완료되지 않았다. Source/value 검증 통과와 이 실제 가동 결과를 구분한다.
