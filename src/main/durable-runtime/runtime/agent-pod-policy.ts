@@ -108,8 +108,8 @@ export function captureAgentPodPolicy(value: unknown) {
     if (!isIP(nfsServer)) { agentPodName(nfsServer) }
     const protectedExportRoot = agentPodPath(input.get('protectedExportRoot'))
     const sharedInput = agentPodFields(input.get('shared'), ['claimName', 'claimUid', 'pvUid', 'serverPath'])
-    const shared = Object.freeze({ claimName: agentPodName(sharedInput.get('claimName')), claimUid: agentPodUuid(sharedInput.get('claimUid')),
-      pvUid: agentPodUuid(sharedInput.get('pvUid')), serverPath: agentPodPath(sharedInput.get('serverPath')) })
+    const shared = Object.freeze({ claimName: agentPodName(sharedInput.get('claimName')), claimUid: agentPodText(sharedInput.get('claimUid')),
+      pvUid: agentPodText(sharedInput.get('pvUid')), serverPath: agentPodPath(sharedInput.get('serverPath')) })
     if (protectedExportRoot !== `/exports/runtime-domains/${dataset}` || shared.serverPath !== `/exports/shared/${dataset}` ||
         agentPodWithin(protectedExportRoot, shared.serverPath) || agentPodWithin(shared.serverPath, protectedExportRoot)) {
       throw new AgentPodPlanError('POLICY_INVALID')

@@ -5,18 +5,19 @@ import { AgentPodPlanError, agentPodArray, agentPodFields, agentPodInteger, agen
 import type { CapturedAgentPodPolicy } from './agent-pod-policy.ts'
 
 export type TrustedAgentPodRequest = Readonly<{
-  identity: Readonly<{ unitId: string; operationId: string; attemptId: string; executionEpoch: string; intentRevision: string; specHash: string }>
+  identity: Readonly<{ unitId: string; operationId: string; attemptId: string; resourceName: string; executionEpoch: string; intentRevision: string; specHash: string }>
   protectedBindings: readonly Readonly<{ bindingId: string; leafId: string; claimName: string; claimUid: string; pvUid: string; serverPath: string; mode: 'RO' | 'RW' }>[]
   profile: Readonly<{ revision: string; cpuMilli: number; memoryMi: number; ephemeralMi: number; temporaryMi: number }>
 }>
 
 function captureRequest(value: unknown, policy: CapturedAgentPodPolicy) {
   const input = agentPodFields(value, ['identity', 'protectedBindings', 'profile'])
-  const ids = agentPodFields(input.get('identity'), ['unitId', 'operationId', 'attemptId', 'executionEpoch', 'intentRevision', 'specHash'])
+  const ids = agentPodFields(input.get('identity'), ['unitId', 'operationId', 'attemptId', 'resourceName', 'executionEpoch', 'intentRevision', 'specHash'])
   const specHash = agentPodText(ids.get('specHash'))
   if (!/^[0-9a-f]{64}$/u.test(specHash)) { throw new AgentPodPlanError('INPUT_INVALID') }
   const identity = Object.freeze({ unitId: logicalId('runtime-unit', agentPodUuid(ids.get('unitId'))),
     operationId: logicalId('operation', agentPodUuid(ids.get('operationId'))), attemptId: logicalId('attempt', agentPodUuid(ids.get('attemptId'))),
+    resourceName: agentPodName(ids.get('resourceName'), true),
     executionEpoch: counter('execution-epoch', agentPodText(ids.get('executionEpoch'))),
     intentRevision: counter('intent-revision', agentPodText(ids.get('intentRevision'))), specHash })
   const bindings = agentPodArray(input.get('protectedBindings'))
@@ -26,8 +27,8 @@ function captureRequest(value: unknown, policy: CapturedAgentPodPolicy) {
   const mode = b.get('mode')
   if (mode !== 'RO' && mode !== 'RW') { throw new AgentPodPlanError('INPUT_INVALID') }
   const protectedBinding = Object.freeze({ bindingId: logicalId('storage-binding', agentPodUuid(b.get('bindingId'))),
-    leafId: agentPodUuid(b.get('leafId')), claimName: agentPodName(b.get('claimName')), claimUid: agentPodUuid(b.get('claimUid')),
-    pvUid: agentPodUuid(b.get('pvUid')), serverPath: agentPodPath(b.get('serverPath')), mode })
+    leafId: agentPodUuid(b.get('leafId')), claimName: agentPodName(b.get('claimName')), claimUid: agentPodText(b.get('claimUid')),
+    pvUid: agentPodText(b.get('pvUid')), serverPath: agentPodPath(b.get('serverPath')), mode })
   if (protectedBinding.serverPath !== `${policy.protectedExportRoot}/${protectedBinding.leafId}` ||
       protectedBinding.claimName === policy.shared.claimName || protectedBinding.claimUid === policy.shared.claimUid ||
       protectedBinding.pvUid === policy.shared.pvUid || agentPodWithin(protectedBinding.serverPath, policy.shared.serverPath) ||
@@ -45,7 +46,7 @@ const digest = (value: unknown): string => createHash('sha256').update(JSON.stri
 /** Pure trusted-server planner. No API call, proof issuer, grant transition or readiness result. */
 export function createAgentPodPlanner(deploymentPolicy: unknown) {
   const policy = captureAgentPodPolicy(deploymentPolicy)
-  return Object.freeze({ plan(value: TrustedAgentPodRequest | unknown) {
+  return Object.freeze({ plan(value: unknown) {
     try {
       const request = captureRequest(value, policy), { identity, protectedBinding, profile } = request
       const protectedReadOnly = protectedBinding.mode === 'RO'
@@ -74,7 +75,7 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
           Object.freeze({ name: 'shared', persistentVolumeClaim: Object.freeze({ claimName: policy.shared.claimName, readOnly: false }) }),
           Object.freeze({ name: 'temporary', emptyDir: Object.freeze({ sizeLimit: `${profile.temporaryMi}Mi` }) })]) })
       const pod = Object.freeze({ apiVersion: 'v1', kind: 'Pod', metadata: Object.freeze({
-        name: `orca-agent-${digest(identity).slice(0, 32)}`, namespace: policy.namespace,
+        name: identity.resourceName, namespace: policy.namespace,
         labels: Object.freeze({ 'orca.dev/role': 'runtime-agent', 'orca.dev/dataset': policy.dataset, 'orca.dev/runtime-unit': identity.unitId }),
         annotations: Object.freeze({ 'orca.dev/operation-id': identity.operationId, 'orca.dev/attempt-id': identity.attemptId,
           'orca.dev/execution-epoch': identity.executionEpoch, 'orca.dev/intent-revision': identity.intentRevision,
