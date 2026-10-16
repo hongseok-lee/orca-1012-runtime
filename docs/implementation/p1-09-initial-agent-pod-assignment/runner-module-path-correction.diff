@@ -1,0 +1,9 @@
+# 공개 일반화 diff 발췌입니다. 변경 없는 DB 접속 환경 문맥은 생략했습니다.
+# 원 exact private diff SHA256은 verification.json에 보존했습니다.
+--- original-pg-run.mjs
++++ corrected-pg-run.mjs
+@@ dependency resolution of the existing PG module
++ NODE_PATH: '<existing-pg-dependency-cache>/node_modules'
+@@ reuse the already guarded immutable bundle
+- await run('prepare-pg', [root + '/prepare.mjs', 'bundle-pg'])
++ if (sha(fs.readFileSync(root + '/pg.cjs')) !== m.reusedBundleSHA256) throw Error('REUSED_BUNDLE_MISMATCH')

@@ -1,0 +1,27 @@
+# Public sanitized TAP: one private DB identity diagnostic omitted; original hash in verification.json.
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":4306,"at":"2026-10-16T05:13:37.509Z"}
+# (node:4306) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: Root approved initial Pod assignment callback 1
+    # Subtest: Initial Pod assignment: original UID/resources and closed gate transaction boundaries
+    ok 1 - Initial Pod assignment: original UID/resources and closed gate transaction boundaries
+      ---
+      duration_ms: 1196.007997
+      type: 'test'
+      ...
+    1..1
+ok 1 - Root approved initial Pod assignment callback 1
+  ---
+  duration_ms: 1198.651086
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1749.548626

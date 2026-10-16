@@ -1,0 +1,118 @@
+{
+  "validatedSourcePin": "e7d945add4baee66fa0065e32431a2b71a452ded",
+  "productPin": "0b2ef89f925e6b3c5eb4eb0b0cd7a14bc2859f75",
+  "originalBase": "3397843166c9fee7ddda1b24639a5590d6bb4105",
+  "firstLint": {
+    "sourcePin": "11b735caa01e71ba7dc56b725b2b30a350316be5",
+    "exit": 0,
+    "rawLogSHA256": "048d56d53fa779a7fd54de78050391bc74750a5a243f3ff95dfb65c399f8b5c2",
+    "notRepeated": true
+  },
+  "firstType": {
+    "wholeExit": 1,
+    "ownedDiagnostics": 1,
+    "externalDiagnostics": 0,
+    "code": "TS2322",
+    "rawLogSHA256": "ecb54169004d2908ff33416fb75e8925660e200d8ee3f54d8c9789fd1f275034",
+    "bundlePGEntered": false
+  },
+  "fixtureTypeCorrection": {
+    "genericRowPreserved": true,
+    "originalQueryReceiverPreserved": true,
+    "productAssertionsSQLUnchanged": true,
+    "exactDiffSHA256": "c3a0e99ab4f28561f002c4177509b98289e6ec922623457f45f35561df9cc9e1"
+  },
+  "correctedStrictType": {
+    "owned": [],
+    "external": [],
+    "unexpected": [],
+    "ownedCount": 0,
+    "externalCount": 0,
+    "wholeExit": 0,
+    "unexpectedExit": false,
+    "sourceOwnedDiagnosticsOnly": true
+  },
+  "modulePreparationFailure": {
+    "error": "MODULE_NOT_FOUND: Cannot find module 'pg'",
+    "rawTAPSHA256": "939c05eabb97701ee010b75364b0c8beb8c09c6a8aa6acbd9f726d3e589bce3e",
+    "productCallbackEntered": false,
+    "fixtureSeedEntered": false,
+    "prePostOriginalRowsUnchanged": 770,
+    "ledger23Unchanged": true
+  },
+  "runnerPathCorrection": {
+    "reusePriorAcceptedPGDependencyPath": true,
+    "exactPrivateDiffSHA256": "9031fc37286754775d89a4e732e8408a9a13163e74e9cbdebdaa17255c1dbee1",
+    "productFixtureBundleUnchanged": true,
+    "typeLintRebundleRepeated": false
+  },
+  "callback": {
+    "productCallbacks": 1,
+    "parentProductCallbacks": 0,
+    "TAPPass": 2,
+    "TAPFail": 0,
+    "TAPSkip": 0,
+    "rawTAPSHA256": "1cb238c67dca0f08564ab1f856000da9c26ebbca26e262c0c644438b2852169b",
+    "actualTestPID": 4306,
+    "startedAt": "2026-10-16T05:13:37.509Z",
+    "syntheticDirectoryControllerAndAPIObservation": true
+  },
+  "database": {
+    "existingIsolatedIdentityMatched": true,
+    "sameControlPoolBeforeAfter": true,
+    "ledgerBefore": 23,
+    "ledgerAfter": 23,
+    "ledgerChecksumAppliedAtUnchanged": true,
+    "originalTables": 32,
+    "originalRows": 770,
+    "afterRows": 900,
+    "originalRowsPreserved": true,
+    "DDL": 0,
+    "resetDelete": 0
+  },
+  "PGJobs": [
+    {
+      "name": "pg",
+      "pid": 4300,
+      "startedAt": "2026-10-16T05:13:37.337Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T05:13:39.193Z",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "endedAt": "2026-10-16T05:13:39.241Z",
+  "cleanup": {
+    "at": "2026-10-16T05:14:43.606Z",
+    "pids": [
+      {
+        "pid": 4277,
+        "state": "Z",
+        "startTicks": "23952073"
+      },
+      {
+        "pid": 4300,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 4306,
+        "status": "ABSENT"
+      }
+    ]
+  },
+  "heavy": 0,
+  "activeOwnedJobs": 0,
+  "gate": "CLOSED",
+  "providerReady": false,
+  "writerGrantActivated": false,
+  "actualPodCalls": 0,
+  "physicalIssuer": false,
+  "liveChanges": 0,
+  "install": 0,
+  "wholeBuild": 0,
+  "newPNG": 0,
+  "successfulChecksRepeated": 0,
+  "newUsageCreditsStreamError": "미관측",
+  "publicationBase": "6e797327b47fb04126dfb0c1661da379f3519e00",
+  "publicationAlignedSourcePin": "0fb77c1021160e9505f05a90973568e8cd971e3a"
+}
