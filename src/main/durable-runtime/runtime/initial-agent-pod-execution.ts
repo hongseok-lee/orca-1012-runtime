@@ -5,11 +5,12 @@ import { AgentPodCreateError, createAgentPodCreateTransport } from '../lifecycle
 import type { AgentPodCreateConfig, AgentPodCreateObservation } from '../lifecycle/agent-pod-create.ts'
 import type { AgentPodCreateHttps } from '../lifecycle/agent-pod-create-types.ts'
 import type { StorageEvidenceAuthority } from '../storage/evidence.ts'
-import type { CommandClaim, GatewayContext } from './gateway/types.ts'
+import type { CommandClaim, CommandId, GatewayContext } from './gateway/types.ts'
 import type { InitialAgentAttemptInput } from './initial-agent-attempt.ts'
 import { reserveInitialAgentAttemptWithPreparedPins } from './initial-agent-attempt-transaction.ts'
 import type { InitialAgentAttemptTransactionResult, PreparedInitialAgentPinsOwner } from './initial-agent-attempt-transaction.ts'
-import { assignInitialAgentPod, readInitialAgentPodAssignmentTarget } from './initial-agent-pod-assignment.ts'
+import { assignInitialAgentPod, assignInitialAgentPodLookup, readInitialAgentPodAssignmentTarget,
+  readInitialAgentPodLookupTarget } from './initial-agent-pod-assignment.ts'
 import { agentPodWithin } from './agent-pod-policy.ts'
 import { CLOSED_AGENT_BOOTSTRAP, isClosedAgentBootstrap } from './closed-agent-bootstrap.ts'
 
@@ -21,6 +22,9 @@ export type InitialAgentPodExecutionStart = Readonly<{
 }>
 export type InitialAgentPodExecutionLookup = Readonly<{
   context: GatewayContext; claim: CommandClaim; planDigest: string; remainingMs: number
+}>
+export type InitialAgentPodLookupInput = Readonly<{
+  context: GatewayContext; commandId: CommandId; planDigest: string; remainingMs: number
 }>
 export type InitialAgentPodExecutionResult = Readonly<{
   phase: 'RESERVATION' | 'TARGET' | 'TRANSPORT' | 'ASSIGNMENT'
@@ -50,6 +54,19 @@ function captureCall(original: InitialAgentPodExecutionLookup) {
 }
 type CapturedCall = ReturnType<typeof captureCall>
 
+function captureOriginalLookup(original: InitialAgentPodLookupInput) {
+  const c = original.context
+  const context: GatewayContext = Object.freeze({ runtimeUnitId: c.runtimeUnitId, operationId: c.operationId,
+    controller: Object.freeze({ ...c.controller }) })
+  const commandId = original.commandId, remainingMs = original.remainingMs, planDigest = original.planDigest
+  if (!Number.isSafeInteger(remainingMs) || remainingMs <= 0 || remainingMs > 2_147_483_647 ||
+      typeof planDigest !== 'string' || !/^[0-9a-f]{64}$/u.test(planDigest)) {
+    throw new DurableDatabaseError('INITIAL_AGENT_EXECUTION_INPUT')
+  }
+  return Object.freeze({ context, commandId, planDigest, remainingMs })
+}
+type CapturedOriginalLookup = ReturnType<typeof captureOriginalLookup>
+
 /** Fixed idle bootstrap only. This is not the image ENTRYPOINT, native CLI or a provider launcher. */
 function requireClosedBootstrap(plan: Awaited<ReturnType<typeof readInitialAgentPodAssignmentTarget>>['plan'], createRequested: boolean): void {
   const containers = plan.pod.spec.containers, container = containers[0]
@@ -60,6 +77,54 @@ function requireClosedBootstrap(plan: Awaited<ReturnType<typeof readInitialAgent
       plan.mountExpectations.protected.filter(binding => agentPodWithin(binding.clientPath, checkout)).length !== 1 ||
       (hasCheckout && container.workingDir !== CLOSED_AGENT_BOOTSTRAP.workingDir) || (createRequested && !hasCheckout)) {
     throw new DurableDatabaseError('INITIAL_AGENT_EXECUTION_BOOTSTRAP')
+  }
+}
+
+/** Private execution sharing only; the original-command factory never supplies a claim or allows CREATE. */
+async function executeAgentPodCall(borrowed: Pool,
+  observeOrCreate: ReturnType<typeof createAgentPodCreateTransport>['observeOrCreate'],
+  call: CapturedCall | CapturedOriginalLookup, deadline: number, signal: AbortSignal,
+  reservation: InitialAgentAttemptTransactionResult | null, allowCreate: boolean): Promise<InitialAgentPodExecutionResult> {
+  let phase: InitialAgentPodExecutionResult['phase'] = 'TARGET'
+  let target: InitialAgentPodExecutionResult['target'] = null, observation: AgentPodCreateObservation | null = null
+  let assignment: InitialAgentPodExecutionResult['assignment'] = null, createRequested = false
+  const result = (error: InitialAgentPodExecutionResult['error'] = null): InitialAgentPodExecutionResult => Object.freeze({
+    phase, reservation, target, observation, assignment, error, createRequested,
+    gate: 'CLOSED', providerReady: false, writerGrantActivated: false })
+  function remaining(): number {
+    if (signal.aborted) { throw new AgentPodCreateError('ABORTED') }
+    const budget = Math.floor(deadline - performance.now())
+    if (budget <= 0) { throw new AgentPodCreateError('TIMEOUT') }
+    return budget
+  }
+  try {
+    remaining()
+    // Shared DB validation owns the original command/reservation/plan locks.
+    // Its actual transaction must settle and release before any HTTPS call.
+    target = await runDurableTransaction(borrowed, tx => 'claim' in call ?
+      readInitialAgentPodAssignmentTarget(tx, call.context, { claim: call.claim, planDigest: call.planDigest }) :
+      readInitialAgentPodLookupTarget(tx, call.context, { commandId: call.commandId, planDigest: call.planDigest }))
+    if (!target.ok || target.settlement !== 'COMMITTED' || target.commitOutcome !== 'ACKNOWLEDGED' || target.cleanupFailed) { return result() }
+    // An already assigned target cannot become a new CREATE after a concurrent assignment.
+    const requestCreate = 'claim' in call && allowCreate && target.value.status === 'RESERVED' && target.value.podUid === null
+    requireClosedBootstrap(target.value.plan, requestCreate)
+    const budget = remaining()
+    createRequested = requestCreate
+    phase = 'TRANSPORT'
+    observation = await observeOrCreate({ record: target.value.record,
+      mode: createRequested ? 'CREATE_ONCE' : 'LOOKUP_ONLY', remainingMs: budget }, signal)
+    if (observation.disposition !== 'FOUND' && (!('claim' in call) || observation.disposition !== 'CREATED')) { return result() }
+    remaining()
+    phase = 'ASSIGNMENT'
+    const capturedObservation = observation
+    assignment = await runDurableTransaction(borrowed, tx => 'claim' in call ?
+      assignInitialAgentPod(tx, call.context, { claim: call.claim, planDigest: call.planDigest, observation: capturedObservation }) :
+      assignInitialAgentPodLookup(tx, call.context, { commandId: call.commandId, planDigest: call.planDigest, observation: capturedObservation }))
+    // Keep transaction-local result and actual COMMIT/cleanup facts separate from Pod API observation.
+    return result()
+  } catch (error) {
+    return result(error instanceof DurableDatabaseError || error instanceof AgentPodCreateError ? error :
+      new DurableDatabaseError('INITIAL_AGENT_EXECUTION_FAILED'))
   }
 }
 
@@ -74,49 +139,6 @@ export function createInitialAgentPodExecution(deployment: Readonly<{
   const borrowed: Pool = Object.create(pool, { connect: { value: connect } })
   const transport = createAgentPodCreateTransport(deployment.podConfig, https)
   const observeOrCreate = transport.observeOrCreate.bind(transport)
-
-  async function execute(call: CapturedCall, deadline: number, signal: AbortSignal,
-    reservation: InitialAgentAttemptTransactionResult | null, allowCreate: boolean): Promise<InitialAgentPodExecutionResult> {
-    let phase: InitialAgentPodExecutionResult['phase'] = 'TARGET'
-    let target: InitialAgentPodExecutionResult['target'] = null, observation: AgentPodCreateObservation | null = null
-    let assignment: InitialAgentPodExecutionResult['assignment'] = null, createRequested = false
-    const result = (error: InitialAgentPodExecutionResult['error'] = null): InitialAgentPodExecutionResult => Object.freeze({
-      phase, reservation, target, observation, assignment, error, createRequested,
-      gate: 'CLOSED', providerReady: false, writerGrantActivated: false })
-    function remaining(): number {
-      if (signal.aborted) { throw new AgentPodCreateError('ABORTED') }
-      const budget = Math.floor(deadline - performance.now())
-      if (budget <= 0) { throw new AgentPodCreateError('TIMEOUT') }
-      return budget
-    }
-    try {
-      remaining()
-      // Shared DB validation owns the original command/reservation/plan locks.
-      // Its actual transaction must settle and release before any HTTPS call.
-      target = await runDurableTransaction(borrowed, tx => readInitialAgentPodAssignmentTarget(tx, call.context,
-        { claim: call.claim, planDigest: call.planDigest }))
-      if (!target.ok || target.settlement !== 'COMMITTED' || target.commitOutcome !== 'ACKNOWLEDGED' || target.cleanupFailed) { return result() }
-      // An already assigned target cannot become a new CREATE after a concurrent assignment.
-      const requestCreate = allowCreate && target.value.status === 'RESERVED' && target.value.podUid === null
-      requireClosedBootstrap(target.value.plan, requestCreate)
-      const budget = remaining()
-      createRequested = requestCreate
-      phase = 'TRANSPORT'
-      observation = await observeOrCreate({ record: target.value.record,
-        mode: createRequested ? 'CREATE_ONCE' : 'LOOKUP_ONLY', remainingMs: budget }, signal)
-      if (observation.disposition !== 'FOUND' && observation.disposition !== 'CREATED') { return result() }
-      remaining()
-      phase = 'ASSIGNMENT'
-      const capturedObservation = observation
-      assignment = await runDurableTransaction(borrowed, tx => assignInitialAgentPod(tx, call.context,
-        { claim: call.claim, planDigest: call.planDigest, observation: capturedObservation }))
-      // Keep transaction-local result and actual COMMIT/cleanup facts separate from Pod API observation.
-      return result()
-    } catch (error) {
-      return result(error instanceof DurableDatabaseError || error instanceof AgentPodCreateError ? error :
-        new DurableDatabaseError('INITIAL_AGENT_EXECUTION_FAILED'))
-    }
-  }
 
   return Object.freeze({
     async start(original: InitialAgentPodExecutionStart, signal: AbortSignal): Promise<InitialAgentPodExecutionResult> {
@@ -146,11 +168,27 @@ export function createInitialAgentPodExecution(deployment: Readonly<{
       if (reservation.engineError || reservation.pins.disposition !== 'RELEASED' || !database || !database.ok ||
           database.settlement !== 'COMMITTED' || database.commitOutcome !== 'ACKNOWLEDGED' || database.cleanupFailed ||
           database.value.disposition !== 'RESERVED') { return stopped(reservation) }
-      return execute(call, deadline, signal, reservation, true)
+      return executeAgentPodCall(borrowed, observeOrCreate, call, deadline, signal, reservation, true)
     },
     async lookup(original: InitialAgentPodExecutionLookup, signal: AbortSignal): Promise<InitialAgentPodExecutionResult> {
       const started = performance.now(), call = captureCall(original)
-      return execute(call, started + call.remainingMs, signal, null, false)
+      return executeAgentPodCall(borrowed, observeOrCreate, call, started + call.remainingMs, signal, null, false)
+    },
+  })
+}
+
+/** Original command lookup under current controller authority; no prepared pins or CREATE authority. */
+export function createInitialAgentPodLookup(deployment: Readonly<{
+  pool: Pool; podConfig: AgentPodCreateConfig
+}>, https?: AgentPodCreateHttps) {
+  const pool = deployment.pool, connect = pool.connect.bind(pool)
+  const borrowed: Pool = Object.create(pool, { connect: { value: connect } })
+  const transport = createAgentPodCreateTransport(deployment.podConfig, https)
+  const observeOrCreate = transport.observeOrCreate.bind(transport)
+  return Object.freeze({
+    async lookup(original: InitialAgentPodLookupInput, signal: AbortSignal): Promise<InitialAgentPodExecutionResult> {
+      const started = performance.now(), call = captureOriginalLookup(original)
+      return executeAgentPodCall(borrowed, observeOrCreate, call, started + call.remainingMs, signal, null, false)
     },
   })
 }
