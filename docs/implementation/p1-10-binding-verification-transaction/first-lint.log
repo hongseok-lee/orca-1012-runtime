@@ -1,0 +1,21 @@
+
+  x eslint(prefer-template): Unexpected string concatenation.
+    ,-[src/main/durable-runtime/storage/binding-verification-transaction.test.mts:25:69]
+ 24 |   const unit = logicalId('runtime-unit', randomUUID()), member = logicalId('session', randomUUID())
+ 25 |   const binding = logicalId('storage-binding', randomUUID()), ref = 'synthetic-held:' + randomUUID()
+    :                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 26 |   // SAFETY: fixture-only immutable prepared evidence; it is not a physical pin
+    `----
+  help: Use template literals instead of string concatenation.
+
+  x eslint(prefer-template): Unexpected string concatenation.
+    ,-[src/main/durable-runtime/storage/binding-verification-transaction.test.mts:28:69]
+ 27 |   // issuer, authenticated observation, mount permission or production authority.
+ 28 |   const evidence = Object.freeze({ evidenceRef: ref, topologyPinId: 'synthetic-pin:' + randomUUID(),
+    :                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 29 |     candidate: Object.freeze({ domain: Object.freeze({ backendId: 'synthetic-backend', exportId: 'synthetic-export', pvUid: 'synthetic-pv' }),
+    `----
+  help: Use template literals instead of string concatenation.
+
+Found 0 warnings and 2 errors.
+Finished in 946ms on 2 files with 176 rules using 1 threads.

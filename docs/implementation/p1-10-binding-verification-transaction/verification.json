@@ -1,0 +1,124 @@
+{
+  "sourcePin": "b64f760cc361d5725083b22b6b4da9de302d7997",
+  "base": "bb4796f2cc23e7f7eae48fb590c450ac02705882",
+  "reviewedProductPin": "88c7ef424e759c33a61b3a6687682095cc8bd00c",
+  "productSourceUnchangedFromReviewedPin": true,
+  "lint": {
+    "firstOwned2Exit": 1,
+    "firstOwned2Diagnostics": 2,
+    "meaningUnchangedFixtureTemplateCorrection": "00580607837d8dfd984b8591d39764f75298a5eb24b2e62d9f8cb0049d163e57",
+    "finalChangedFixtureExit": 0,
+    "finalChangedFixtureDiagnostics": 0,
+    "successfulProductLintNotRepeated": true
+  },
+  "type": {
+    "wholeExit": 0,
+    "sourceInputs": 12,
+    "externalPaths": 210,
+    "mismatches": [],
+    "outside": [],
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0,
+    "strict": true
+  },
+  "callback": {
+    "originalExit": 1,
+    "originalTAPSHA256": "6c0dbf143a236ca7f0258f06668c89fddcb65348fa5fcde8cd3a63b9d02f26b6",
+    "originalFailure": "fixture observed spread clone breaks Object.isFrozen check of original product result",
+    "RootApprovedObserverCorrectionSHA256": "d31b7b93847bd5e6eaa78dafedbb14e0b40148523626d5072ad4fce360ec0250",
+    "finalExit": 0,
+    "productCallbacks": 1,
+    "rawTAPParentIncludedTests": 2,
+    "pass": 2,
+    "fail": 0,
+    "skipped": 0,
+    "runtimeSourceInputs": 8,
+    "mismatches": [],
+    "wrapper": {
+      "sourceSha256": "7a199a45068adfb95b10a0b574dde72280c2c5d12fc22c3e7276ea35a9f98085",
+      "originalBodySha256": "02d270371d700d97689f660d324ecdd1f8eeb9464e1d6cf256db690eb60686f7",
+      "wrapperSha256": "f48d07f2065032ac4e6501bb7b2613a6aeabfce83421a34e78d0c4d394ee241d",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    },
+    "actualRuntimePID": 41794,
+    "authorityAndSQLTransport": "synthetic prepared owner/SQL; real Store/verifier/engine; no PG server or physical pin issuer"
+  },
+  "hashes": {
+    "callback.tap": "7a1420ea57a09e3000789e982263b5f47b2c59f3174964f50c8df74c23f42814",
+    "pg.metafile.json": "b80d7c1b9a34baff8f04b8b896048869e0f66e4728998245917bb6f9ce509d3b",
+    "pg.actual-inputs.json": "62523d96c08608376f35a5cfc6e96c748f79415af3fc8c06f30f629af6477f33",
+    "pg.generated.cts": "f48d07f2065032ac4e6501bb7b2613a6aeabfce83421a34e78d0c4d394ee241d",
+    "pg.cjs": "6520e29ddcecaaa82124497d5e689e175060e188b28fbdba64a2155921134a27",
+    "actual-type-inputs.json": "9f8552c59ea59c414a484837ef65ea66f312edb77a9c8e6eaf27021e22ae2c0f",
+    "lint.log": "17f95d5581c6c55358d17645ed5e1d3ac3d0befbc55aa6e7c6bd618a80c7ab42",
+    "type.log": "39dbee7d68d57bf446278ed1e3f65b1c666ae95966abecb7f355d09fdf55bc99",
+    "run-state.json": "4c04e268dafce4aa47250f205dbcaee3bb0a8d6c5a6d02c83b5e6ed10a48b712",
+    "input-manifest.json": "fe426b44e31579a245e49ddb3d9e1e868f5f0ffe6f05b579a585af8d6b380780",
+    "known-pid-cleanup.json": "02e2ddf280995b5ab02d5086fa382fcf1a2ab952dd75762dc94778e62208e71b"
+  },
+  "knownPIDs": {
+    "at": "2026-10-16T00:27:34.565Z",
+    "pids": [
+      {
+        "pid": 41706,
+        "present": true,
+        "state": "Z (zombie)"
+      },
+      {
+        "pid": 41713,
+        "present": false,
+        "error": "ENOENT"
+      },
+      {
+        "pid": 41720,
+        "present": false,
+        "error": "ENOENT"
+      },
+      {
+        "pid": 41732,
+        "present": false,
+        "error": "ENOENT"
+      },
+      {
+        "pid": 41768,
+        "present": false,
+        "error": "ENOENT"
+      },
+      {
+        "pid": 41775,
+        "present": false,
+        "error": "ENOENT"
+      },
+      {
+        "pid": 41788,
+        "present": false,
+        "error": "ENOENT"
+      },
+      {
+        "pid": 41794,
+        "present": false,
+        "error": "ENOENT"
+      }
+    ]
+  },
+  "duplicateOwnerGET": 0,
+  "PG": 0,
+  "live": 0,
+  "NFS": 0,
+  "K8sMutation": 0,
+  "newPNG": 0,
+  "install": 0,
+  "wholeBuild": 0,
+  "automaticCallbackRetry": 0,
+  "RootAuthorizedFailedCallbackContinuation": 1,
+  "heavy": 0,
+  "newUsageCreditsStreamError": "미관측",
+  "physicalPinIssuerImplemented": false,
+  "productionOwnerImplementation": false,
+  "syntheticOnly": true,
+  "noActualPhysicalPinOrMountQualification": true,
+  "sourceReceiverCaptureCorrection": "Frozen lease own-data descriptors; invalid handoff retains same owner/lease without SQL or release",
+  "escapedEngineCorrection": "No observed database outcome: database:null/fixed sanitized engineError with retained same owner/lease"
+}

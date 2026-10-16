@@ -1,0 +1,29 @@
+{
+  "base": "bb4796f2cc23e7f7eae48fb590c450ac02705882",
+  "validatedSourcePin": "b64f760cc361d5725083b22b6b4da9de302d7997",
+  "reviewedProductPin": "88c7ef424e759c33a61b3a6687682095cc8bd00c",
+  "earlyInterfacePin": "2ddde4b7d575c0e7b6f4717853d1413049a8fa0e",
+  "ownedEntries": [
+    "100644 blob 48530b18e6fbf769f6dcc6e62a49a00102848c60\tsrc/main/durable-runtime/storage/binding-verification-transaction.test.mts",
+    "100644 blob 19cb90ec91611d25cd1432b20e0e1f49a4700988\tsrc/main/durable-runtime/storage/binding-verification-transaction.ts"
+  ],
+  "ownedFiles": {
+    "src/main/durable-runtime/storage/binding-verification-transaction.ts": {
+      "bytes": 7412,
+      "lines": 128,
+      "sha256": "176e03537edcffc3e9e3077c89e05039fdb6c2e93f4d539a99d3cded51e75525"
+    },
+    "src/main/durable-runtime/storage/binding-verification-transaction.test.mts": {
+      "bytes": 18346,
+      "lines": 263,
+      "sha256": "7a199a45068adfb95b10a0b574dde72280c2c5d12fc22c3e7276ea35a9f98085"
+    }
+  },
+  "exactDiffSHA256": "e72d3fc314a1fa537b15879e69635aec809cea6b5160dd89f70ccba7bf104d64",
+  "productUnchangedAfterReview": true,
+  "connectionStoreVerifierAuthoritySchemaChanged": false,
+  "physicalPinIssuerImplemented": false,
+  "rootContractPrivateSHA256": "1b82e45044a1dc6cf76fe0e8fdd6666cd89646ec58e0f71197b709158efc248a",
+  "rootContractPublicSHA256": "ada2d097ef8291e6f7d6d4df09ce99d1951c87b5e2c85382c081a70a68244fef",
+  "rebaseCount": 0
+}

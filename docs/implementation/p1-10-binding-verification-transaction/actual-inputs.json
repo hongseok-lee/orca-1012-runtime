@@ -1,0 +1,134 @@
+{
+  "sourcePin": "b64f760cc361d5725083b22b6b4da9de302d7997",
+  "typeSource": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "blob": "181384ff0bf130ae6ad1ff64e2d9043f08d76d18"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "blob": "11c0f09a0bfc3950a29465efa6d504b9e3207a75",
+      "bytes": 3357
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "blob": "2fc02747102fddc0f4ad669a6484c2382f7f5822",
+      "bytes": 2071
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+      "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+      "blob": "c52e24f98744a52eb3e945bdb9a6419a41d11118",
+      "bytes": 5248
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "bytes": 5525,
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+      "blob": "a2464e40c333c19705ed587480484fe43ae25f5b"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/evidence.ts",
+      "bytes": 2720,
+      "sha256": "b412fba81f4dcc4d18ecf63a8da32a2ad7724793f7892f0ad0f1e97a811ade18",
+      "blob": "f798b2e028bdf0b8beff492226bee07de03abe89"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "blob": "5437efd3e2466b6357d918fac84768479871e03e",
+      "bytes": 9074
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+      "blob": "1b0de8b5c6961f60315f714071e6cf627233dc43",
+      "bytes": 6238
+    },
+    {
+      "path": "src/main/durable-runtime/storage/store.ts",
+      "bytes": 24123,
+      "sha256": "d8bc3dc1696ab6e78c08993193ef21362110e744fc5a565e50c0f7f51019401f",
+      "blob": "539484b87cdf69a5f384c839eb7aefe08bc0629b"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification.ts",
+      "bytes": 6428,
+      "sha256": "25d74495545f81be0e846994d439fa441098acd9db67e01c25f3bf7bbc6b4fe2",
+      "blob": "221a63bf281ffadd9ee3b0d504deccc710bb5a85"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification-transaction.ts",
+      "bytes": 7412,
+      "sha256": "176e03537edcffc3e9e3077c89e05039fdb6c2e93f4d539a99d3cded51e75525",
+      "blob": "19cb90ec91611d25cd1432b20e0e1f49a4700988"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification-transaction.test.mts",
+      "bytes": 18346,
+      "sha256": "7a199a45068adfb95b10a0b574dde72280c2c5d12fc22c3e7276ea35a9f98085",
+      "blob": "48530b18e6fbf769f6dcc6e62a49a00102848c60"
+    }
+  ],
+  "externalTypePathsCount": 210,
+  "runtimeSource": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "bytes": 2071,
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4"
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "bytes": 6238,
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "bytes": 5525,
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification.ts",
+      "bytes": 6428,
+      "sha256": "25d74495545f81be0e846994d439fa441098acd9db67e01c25f3bf7bbc6b4fe2"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/store.ts",
+      "bytes": 24123,
+      "sha256": "d8bc3dc1696ab6e78c08993193ef21362110e744fc5a565e50c0f7f51019401f"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification-transaction.ts",
+      "bytes": 7412,
+      "sha256": "176e03537edcffc3e9e3077c89e05039fdb6c2e93f4d539a99d3cded51e75525"
+    }
+  ],
+  "runtimeExternal": [
+    "pg"
+  ],
+  "fixtureWrapper": {
+    "sourceSha256": "7a199a45068adfb95b10a0b574dde72280c2c5d12fc22c3e7276ea35a9f98085",
+    "originalBodySha256": "02d270371d700d97689f660d324ecdd1f8eeb9464e1d6cf256db690eb60686f7",
+    "wrapperSha256": "f48d07f2065032ac4e6501bb7b2613a6aeabfce83421a34e78d0c4d394ee241d",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "runtimeMetafileSHA256": "b80d7c1b9a34baff8f04b8b896048869e0f66e4728998245917bb6f9ce509d3b",
+  "runtimeBundleSHA256": "6520e29ddcecaaa82124497d5e689e175060e188b28fbdba64a2155921134a27",
+  "mismatches": []
+}
