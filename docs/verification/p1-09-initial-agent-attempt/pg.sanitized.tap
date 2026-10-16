@@ -1,0 +1,28 @@
+# 비공개 process/DB identity를 일반화한 원 TAP 사본입니다. 원문 SHA-256은 result.json에 보존합니다.
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":"<private-test-pid>","at":"2026-10-16T03:53:06.884Z"}
+# (node:<private-test-pid>) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: Root approved initial Agent reservation callback 1
+    # Subtest: initial attempt and complete protected writer reservation: focused SQL23 boundary
+    ok 1 - initial attempt and complete protected writer reservation: focused SQL23 boundary
+      ---
+      duration_ms: 896.117094
+      type: 'test'
+      ...
+    # {"databaseIdentityVerified":true,"providerCalls":0,"podCalls":0,"physicalIssuer":false,"ddl":0}
+    1..1
+ok 1 - Root approved initial Agent reservation callback 1
+  ---
+  duration_ms: 898.330393
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1390.916331
