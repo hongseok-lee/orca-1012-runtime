@@ -1,0 +1,75 @@
+{
+  "scope": "최초 Agent 생성 전 transaction-local RESERVED 예약의 합성 PG 검증이며 Pod/K8s 실행 허가가 아닙니다.",
+  "sourcePin": "cb85e8a8b0f9c4a43e7941502ef639f34b40af38",
+  "publicationBase": "2c6a990691b861e860b977a462ff45bb18a1096a",
+  "checks": {
+    "lint": {
+      "pin": "e524622ac27751b31b993088bee09de3877b16ad",
+      "ownedFiles": 2,
+      "exit": 0
+    },
+    "strictType": {
+      "pin": "cb85e8a8b0f9c4a43e7941502ef639f34b40af38",
+      "actualSourceCount": 27,
+      "exit": 0,
+      "sourceMismatch": 0
+    },
+    "pg": {
+      "productCallbacks": 1,
+      "harnessParentCallbacks": 1,
+      "tapPass": 2,
+      "tapFail": 0,
+      "exit": 0,
+      "startedAt": "2026-10-16T03:53:06.766Z",
+      "finishedAt": "2026-10-16T03:53:08.242Z",
+      "schemaLedgerCount": 23,
+      "schemaLedgerPreserved": true,
+      "originalRowsPreserved": true,
+      "ddl": 0
+    }
+  },
+  "actualRuntimeInputs": {
+    "count": 13,
+    "mismatch": 0,
+    "missing": 0,
+    "bundleSha256": "a96a6f848e54b8384f2f7713ed099e1e1eb907af0e6edda09ce7d12260de57c7",
+    "metafileSha256": "96769e54577b07c1eae1ce88272bb3f5b4b222c51b8d113c99c6119cc46b5d36",
+    "wrapper": {
+      "sourceSha256": "6a938673f68a075402f3c5717fb6a51162a2545d9c480f66ff358b1d0cbf6c83",
+      "originalBodySha256": "53f95a665fdded963022a75749ffd2a646ba10704598047fdaad281f8835bae1",
+      "wrapperSha256": "c765b1dfbb7f6fc1b536cce50ae31fa5107d018ae1443517a37159fab34a2818",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    }
+  },
+  "finalAlignment": {
+    "actualSourceUnionCount": 27,
+    "configurationCount": 7,
+    "delta": 0,
+    "retest": 0
+  },
+  "rawEvidence": {
+    "tapSha256": "8d3cd5ff538072d048176b8fe15134e1958ac811e6c7b3e05fafed0266cd0102",
+    "nativeTypeLogSha256": "4e83644da8ff5ac9bc5949c09e02015e5dfc663f7f25125cfe99210d416411b8",
+    "privateRawPreserved": true
+  },
+  "firstFailuresPreserved": [
+    "no-control-regex 1건 뒤 동일 charCodeAt 표현으로 교정했습니다.",
+    "첫 type의 실제 migrate 입력 누락과 readonly JSON/PayloadHash 진단을 보존하고 Root 수락 diff만 반영했습니다.",
+    "CJS top-level await 준비 오류 뒤 기존 outer test wrapper를 재사용했습니다. 원 callback body/assertion을 변경하지 않았습니다."
+  ],
+  "limitations": [
+    "Directory evidence와 controller nominal identity는 synthetic fixture입니다.",
+    "consumer PV와 서버 backing PV의 실제 매핑·physical pin issuer·old writer fencing은 미검증입니다.",
+    "실제 Pod/provider/admission/mount/Ready·controller actuator·HA·native 앱/새 화면 검증은 없습니다."
+  ],
+  "cleanup": {
+    "activeOwnedJobs": 0,
+    "uncollected": 0,
+    "heavy": 0,
+    "testChildrenAbsent": true,
+    "terminatedControlsMayRemainZombie": true
+  },
+  "usageCreditsStreamError": "이번 위임에서 새 원오류는 직접 관측하지 않았습니다."
+}

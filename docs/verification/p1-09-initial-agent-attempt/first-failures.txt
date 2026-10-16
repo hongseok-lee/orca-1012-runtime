@@ -1,0 +1,15 @@
+원 실패를 보존한 공개 진단 발췌입니다. 원 stdout/stderr와 actual inputs는 비공개 운영 증거에 있습니다.
+
+첫 lint: eslint(no-control-regex): Unexpected control characters
+
+첫 strict type:
+src/main/durable-runtime/runtime/initial-agent-attempt.pg.test.mts(7,32): error TS2307: Cannot find module '../db/migrate.ts' or its corresponding type declarations.
+src/main/durable-runtime/runtime/initial-agent-attempt.pg.test.mts(117,96): error TS2322: Type 'string' is not assignable to type 'PayloadHash'.
+src/main/durable-runtime/runtime/initial-agent-attempt.pg.test.mts(147,76): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/main/durable-runtime/runtime/initial-agent-attempt.ts(71,41): error TS2345: Argument of type '{ commandId: CommandId; executorId: ExecutorId; executionToken: ExecutionToken; controllerTerm: ControllerTerm; command: "ensureAttempt"; ... 4 more ...; bindings: readonly Readonly<...>[]; }' is not assignable to parameter of type 'JsonValue'.
+src/main/durable-runtime/runtime/initial-agent-attempt.ts(160,59): error TS2345: Argument of type '{ kind: string; operationId: LogicalId<"operation">; unitId: LogicalId<"runtime-unit">; attemptId: LogicalId<"attempt">; commandId: CommandId; ... 7 more ...; physicalPinIssued: boolean; }' is not assignable to parameter of type 'JsonValue'.
+src/main/durable-runtime/runtime/initial-agent-attempt.ts(208,31): error TS2345: Argument of type '{ kind: string; operationId: LogicalId<"operation">; unitId: LogicalId<"runtime-unit">; attemptId: LogicalId<"attempt">; commandId: CommandId; ... 7 more ...; physicalPinIssued: boolean; }' is not assignable to parameter of type 'JsonValue'.
+
+첫 PG 전처리: Top-level await is currently not supported with the "cjs" output format
+
+이후 Root가 수락한 최소 type 표현 교정과 기존 wrapper만 반영했습니다. SQL·assertion·원 callback body는 불변입니다.
