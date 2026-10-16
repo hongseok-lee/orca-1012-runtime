@@ -135,7 +135,7 @@ await test('fixed managed callbacks preserve the original worker context and set
   for (const scenario of ['PLAN_UNKNOWN', 'PROFILE_UNKNOWN', 'PROFILE_CLEANUP', 'ABORT_AFTER_PROFILE', 'WRONG_CLAIM', 'WRONG_CONTEXT'] as const) {
     await t.test(`${scenario}: no later owner, token reader or Pod request`, async () => {
       const f = await dispatchFixture(pool, expected), wire = harness([])
-      let worker: ControllerWorker | null = null, calls = 0
+      let worker: ControllerWorker | null = null, calls = 0, callbackSettled = false
       const fault = scenario === 'PLAN_UNKNOWN' ? { ordinal: 1, kind: 'COMMIT_UNKNOWN' } as const :
         scenario === 'PROFILE_UNKNOWN' ? { ordinal: 2, kind: 'COMMIT_UNKNOWN' } as const :
           scenario === 'PROFILE_CLEANUP' ? { ordinal: 2, kind: 'CLEANUP' } as const : null
@@ -145,13 +145,15 @@ await test('fixed managed callbacks preserve the original worker context and set
       worker = createControllerWorker(pool, workerPolicy, { planStep: dispatch.planStep,
         async executeCommitted(claim, signal, context) {
           calls++
-          await dispatch.executeCommitted(scenario === 'WRONG_CLAIM' ? { ...claim,
-            identity: { ...claim.identity, command: 'fenceAttempt' } } : claim, signal,
-          scenario === 'WRONG_CONTEXT' ? { ...context, runtimeUnitId: logicalId('runtime-unit', randomUUID()) } : context)
+          try {
+            await dispatch.executeCommitted(scenario === 'WRONG_CLAIM' ? { ...claim,
+              identity: { ...claim.identity, command: 'fenceAttempt' } } : claim, signal,
+            scenario === 'WRONG_CONTEXT' ? { ...context, runtimeUnitId: logicalId('runtime-unit', randomUUID()) } : context)
+          } finally { callbackSettled = true }
         }, lookupOriginal: dispatch.lookupOriginal })
       try {
         assert.equal(worker.start(), true)
-        await until(() => worker?.snapshot().phase === 'STOPPED')
+        await until(() => worker?.snapshot().phase === 'STOPPED' && callbackSettled)
       } finally { await worker.stop() }
       const snapshot = dispatch.snapshot()
       assert.equal(calls, 1); assert.equal(snapshot.status, 'FAILED')
