@@ -8,6 +8,8 @@
 
 `manifests.mjs`의 네 VAP/Binding 쌍은 SA 변경, 해당 SA를 쓰는 Pod, collector TokenRequest, 장기 token Secret을 각각 제한합니다. Old/new 객체와 optional 필드를 구분하며 `Fail`/`Deny` 및 보호된 namespace 이름 label을 사용합니다. TokenRequest는 정확 backend username·SA UID·600초·unbound 요청만 허용합니다. Backend wire는 audiences=[]를 유지하고 API server 기본값을 사용합니다. TokenREST가 audiences를 채운 뒤 admission하므로 CEL은 빈 배열이나 audience 집합을 제한하지 않습니다. 이 source의 출력은 실제 admission 검증을 대신하지 않습니다.
 
+2026-10-16의 별도 실제 403 조건 진단은 `I=1 O=1 N=1 S=1 U=1 E=1 B=0`이며 원 reader는 `boundObjectRef`를 생략합니다. Kubernetes API의 pointer JSON tag에는 `omitempty`가 없고 TokenREST는 nil을 unbound로 처리하므로 마지막 조건만 누락 또는 명시 null을 허용하도록 교정했습니다. 빈 객체를 포함한 비-null 객체는 계속 거절하며 나머지 issuer/namespace/SA UID/600초 조건은 유지합니다. 원 진단은 field 값을 수집하지 않았으므로 실제 응답의 `boundObjectRef` 값이 null이었다고 확정하지 않습니다. 이번 source 교정의 변경 lint·실제 policy/credential/collector 연결 검증은 아직 실행하지 않았습니다.
+
 `createCollectorIdentityInstaller(input, operatorApi)`는 기존 관리 API adapter의 `request` receiver를 capture합니다. Adapter가 기존 auth/TLS와 `timeoutMs`/AbortSignal 종료를 담당하며 HTTPS transport를 복제하거나 제품 runtime을 수정하지 않습니다. 현재 실행 entry나 CLI는 없습니다. `execute`·`rootExecutionApproved` 및 Root의 정확 수락 source pin이 일치해야 설치 메서드에 진입할 수 있습니다.
 
 설치 caller는 원 Root 계약 순서대로 SA 이름·소유 RBAC 이름 충돌을 확인한 뒤 SA CREATE를 한 번 수행합니다. 반환 UID의 credential guard를 생성·설치·한정 readback하고, 동결된 SA가 여전히 같은 UID/automount false인지 대조한 뒤 해당 SA의 Pod와 장기 token 연계 metadata 부재를 확인합니다. 기존 NFS guard 5쌍의 정확 UID/spec hash와 Root가 수락한 활성화 증거 hash가 필요합니다. Collector RBAC를 준비한 뒤 backend issuer Binding을 마지막에 생성합니다. 이 단계에서도 token 발급과 collector exec는 하지 않습니다.
