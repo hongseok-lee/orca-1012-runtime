@@ -27,7 +27,9 @@ export async function projectOpsUnit(tx: DurableTransaction, actor: OpsActor, id
         AND x.intake_status='UNKNOWN') AS unknown`, [id, actor.datasetName, actor.workspaceIds])
   const counts = result.rows[0]
   const mounts = await tx.query<{ id: string; access_state: string; epoch: string; writer_attempt_id: string | null;
+    backend_id: string; export_id: string; canonical_directory: string;
     grant_state: string | null; grant_attempt_id: string | null; grant_epoch: string | null; revoked_at: Date | null }>(`SELECT DISTINCT b.id,b.access_state,b.epoch,b.writer_attempt_id,
+      b.backend_id,b.export_id,b.canonical_directory,
       g.state AS grant_state,g.attempt_id AS grant_attempt_id,g.storage_epoch AS grant_epoch,g.revoked_at
       FROM durable_runtime.runtime_member_storage_bindings m JOIN durable_runtime.sessions s ON s.id=m.session_id
       JOIN durable_runtime.workspaces w ON w.id=s.workspace_id JOIN durable_runtime.storage_bindings b ON b.id=m.storage_binding_id
@@ -42,6 +44,7 @@ export async function projectOpsUnit(tx: DurableTransaction, actor: OpsActor, id
     resources: { desired: null, admitted: null, usage: null, peak: null, nextDownsizeAt: null },
     counts: { pendingMessages: counts.pending, inputComponents: counts.inputs, inFlight: counts.flight, historicalUnknown: counts.unknown },
     mounts: mounts.rows.map(row => ({ id: row.id, accessState: row.access_state, storageEpoch: row.epoch,
+      backendId: row.backend_id, exportId: row.export_id, canonicalDirectory: row.canonical_directory,
       writerAttemptId: row.writer_attempt_id, grant: row.grant_state && row.grant_attempt_id && row.grant_epoch
         ? { state: row.grant_state, attemptId: row.grant_attempt_id, storageEpoch: row.grant_epoch, revokedAt: opsTime(row.revoked_at) } : null })),
     availableActions: [{ action: 'wake', enabled: controllerConnected && original.unit.desired_mode !== 'DELETED',
