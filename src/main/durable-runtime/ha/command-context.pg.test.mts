@@ -76,7 +76,7 @@ await test('committed execute and original lookup receive the frozen original co
   const marker=Symbol('synthetic fixture provenance, not a production identity brand')
   // SAFETY: isolated fixture nominal identity from its real confirmed session;
   // this is not the private worker authentication issuer or provider proof.
-  const controller={ scope:lease.scope,owner:lease.owner,term:lease.term,[marker]:true } as VerifiedControllerIdentity
+  const controller={ scope:lease.scope,owner:lease.owner,term:lease.term,[marker]:true } as unknown as VerifiedControllerIdentity
   const expected=Object.freeze({ scope:controller.scope,owner:controller.owner,term:controller.term })
   const a=await fixture(pool,1), b=await fixture(pool,1)
   await requestUnitIntent(pool,await intent(pool,a)); await requestUnitIntent(pool,await intent(pool,b))
