@@ -1,0 +1,27 @@
+TAP version 13
+# Actual PG child identity and UTC are retained in private evidence.
+# (node:<private-pid>) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: Root approved initial Agent pin group transaction callback 1
+    # Subtest: initial reservation: complete prepared group survives until real transaction settlement
+    ok 1 - initial reservation: complete prepared group survives until real transaction settlement
+      ---
+      duration_ms: 452.952363
+      type: 'test'
+      ...
+    # Existing isolated DB/system/dataset and SQL23 ledger were verified; original rows/applied_at preserved. Synthetic prepared owner only; provider/Pod calls 0; DDL 0.
+    1..1
+ok 1 - Root approved initial Agent pin group transaction callback 1
+  ---
+  duration_ms: 455.621025
+  type: 'test'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1016.300715

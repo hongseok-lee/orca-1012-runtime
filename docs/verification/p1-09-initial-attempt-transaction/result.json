@@ -1,0 +1,50 @@
+{
+  "testedSourcePin": "50a49f523ab00995d806510304cba02f5445896f",
+  "alignedSourcePin": "8fe809fdd9ef372272e1773ff5d6f09dc4b09e97",
+  "base": "3397843166c9fee7ddda1b24639a5590d6bb4105",
+  "ownedModeBytesUnchanged": true,
+  "verification": {
+    "ownedLint": "PASS",
+    "strictType": "PASS",
+    "productPGCallbacks": 1,
+    "outerHarnessProductCallbacks": 0,
+    "tapTestsIncludingHarness": 2,
+    "tapFail": 0,
+    "startedAt": "2026-10-16T04:38:36.126Z",
+    "endedAt": "2026-10-16T04:38:37.099Z",
+    "sqlLedgerCount": 23,
+    "originalRowsAndLedgerAppliedAtPreserved": true,
+    "actualTypeSources": 28,
+    "actualPGSources": 14,
+    "actualSourceUnion": 28,
+    "configurationInputs": 7,
+    "actualInputDelta": [],
+    "sql23BytesModeUnchanged": true
+  },
+  "originalTAPSHA256": "3d701edb31ad65d51d8f4210ec8fbc2e03356f0cf39cdf832bbba87b7b8de41c",
+  "bundleSHA256": "da777b813563a32ac8e7238c59212cfde2be0fc333924e152e3ebc2010d823e7",
+  "metafileSHA256": "dab52e7c154cf74d1fafa0e8b90eeff3ca12aa37778d12bd9b58a4d66c96ddfc",
+  "wrapper": {
+    "sourceSha256": "fbff95e0ea68c95723c0a2998b53d08d9b4fc7b4f8842030731713fe221adb19",
+    "originalBodySha256": "388638caef836e1bf344de318e24b8a2137b8aa95ac8d0d571a90f32bf245b53",
+    "wrapperSha256": "47025a7a7bd46caf47b311aa5250845333ec56823f5f6fbd5ed5db27ff0c8906",
+    "parentProductCallbackCount": 0,
+    "productCallbacks": 1,
+    "assertionsChanged": false
+  },
+  "originalFailure": {
+    "phase": "lint",
+    "diagnostic": "TS(7060)",
+    "originalPin": "40286e61fd8fe7b9e1e44d7286585c218b208d17",
+    "correction": "One trailing comma in generic arrow inside .mts fixture"
+  },
+  "successfulChecksRepeated": 0,
+  "knownValidationChildrenAbsent": true,
+  "activeJobs": 0,
+  "heavy": 0,
+  "limits": [
+    "Synthetic prepared owner/directory authority/controller identity",
+    "Controlled actual PG transport delays/loss",
+    "No physical pin issuer/K8s authorization/Pod/provider/controller launcher/HA/native test"
+  ]
+}
