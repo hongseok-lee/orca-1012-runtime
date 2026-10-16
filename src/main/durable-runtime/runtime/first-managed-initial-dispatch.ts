@@ -11,7 +11,7 @@ import type { AgentPodCreateHttps } from '../lifecycle/agent-pod-create-types.ts
 import type { FirstManagedBindingOwnerConfig } from '../storage/first-managed-binding-owner.ts'
 import type { FirstManagedInitialResult } from '../storage/first-managed-initial-owner.ts'
 import type { ManagedLeafCollectorDependencies } from '../storage/managed-leaf-collector-types.ts'
-import { createAgentPodPlanner, type TrustedAgentPodRequest } from './agent-pod-plan.ts'
+import { createAgentPodPlanner } from './agent-pod-plan.ts'
 import { prepareAgentPodPlan, recordAgentPodPlan } from './agent-pod-plan-records.ts'
 import { agentPodInteger, agentPodText, agentPodUuid } from './agent-pod-policy.ts'
 import { CLOSED_AGENT_BOOTSTRAP, isClosedAgentBootstrap } from './closed-agent-bootstrap.ts'
@@ -22,7 +22,7 @@ import type { InitialAgentPodExecutionResult } from './initial-agent-pod-executi
 import { recordInitialAgentResourceProfile } from './initial-agent-resource-profile.ts'
 
 export type FirstManagedInitialDispatchConfig = Readonly<{
-  pool: Pool; policy: unknown; request: TrustedAgentPodRequest; policyRevision: string
+  pool: Pool; policy: unknown; request: unknown; policyRevision: string
   sessionId: string; actorId: string; originalAuditId: string; pinId: string
   binding: Readonly<{ bindingId: string; expectedRevision: string; storageEpoch: string }>
   executorId: ExecutorId; externalBudgetMs: number

@@ -42,7 +42,7 @@ async function rows() {
 type Seed = Awaited<ReturnType<typeof dispatchFixture>>
 async function requireUnused(f: Seed) {
   for (const table of ['attempts', 'execution_grants', 'resource_unit_state']) {
-    assert.equal((await pool.query(`SELECT 1 FROM durable_runtime.${table} WHERE runtime_unit_id=$1`, [f.config.request.identity.unitId])).rowCount, 0)
+    assert.equal((await pool.query(`SELECT 1 FROM durable_runtime.${table} WHERE runtime_unit_id=$1`, [f.plan.identity.unitId])).rowCount, 0)
   }
   assert.equal((await pool.query('SELECT 1 FROM durable_runtime.storage_namespace_holds WHERE id=$1', [f.config.pinId])).rowCount, 0)
 }
