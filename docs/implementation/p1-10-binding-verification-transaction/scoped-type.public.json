@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "preserveSymlinks": true,
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@shared/*": [
+        "./source/src/shared/*"
+      ],
+      "@main/*": [
+        "./source/src/main/*"
+      ],
+      "@renderer/*": [
+        "./source/src/renderer/src/*"
+      ]
+    },
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "<existing-cache>/node_modules/@types"
+    ]
+  },
+  "files": [
+    "./source/src/main/durable-runtime/storage/binding-verification-transaction.ts",
+    "./source/src/main/durable-runtime/storage/binding-verification-transaction.test.mts"
+  ]
+}

@@ -1,0 +1,48 @@
+# Public sanitized copy: original private stage prefix replaced; original hash is in verification.json.
+TAP version 13
+# {"phase":"ACTUAL_TEST_PROCESS","pid":41649,"at":"2026-10-16T00:24:39.447Z"}
+# Subtest: Root approved prepared binding pin lifetime callback 1
+    # Subtest: Prepared binding pin: actual transaction settlement gates ownership release
+    not ok 1 - Prepared binding pin: actual transaction settlement gates ownership release
+      ---
+      duration_ms: 12.685954
+      type: 'test'
+      location: '<private-synthetic-stage>/pg.cjs:1119:9'
+      failureType: 'testCodeFailure'
+      error: |-
+        The expression evaluated to a falsy value:
+        
+          ok(Object.isFrozen(committed))
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (<private-synthetic-stage>/pg.cjs:1150:27)
+        process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        async Test.run (node:internal/test_runner/test:1208:7)
+        async TestContext.<anonymous> (<private-synthetic-stage>/pg.cjs:1119:3)
+        async Test.run (node:internal/test_runner/test:1208:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      ...
+    1..1
+not ok 1 - Root approved prepared binding pin lifetime callback 1
+  ---
+  duration_ms: 14.401086
+  type: 'test'
+  location: '<private-synthetic-stage>/pg.cjs:1117:27'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 392.773575

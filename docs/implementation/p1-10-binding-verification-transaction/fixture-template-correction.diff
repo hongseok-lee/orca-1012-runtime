@@ -1,0 +1,17 @@
+diff --git a/src/main/durable-runtime/storage/binding-verification-transaction.test.mts b/src/main/durable-runtime/storage/binding-verification-transaction.test.mts
+index 9661a0e9..6488efb8 100644
+--- a/src/main/durable-runtime/storage/binding-verification-transaction.test.mts
++++ b/src/main/durable-runtime/storage/binding-verification-transaction.test.mts
+@@ -22,10 +22,10 @@ function fixture(options: {
+   const events: string[] = [], sql: string[] = [], connectionReleases: boolean[] = []
+   const state = { pinHeld: true, taken: false, takes: 0, releases: 0, connectCalls: 0, leaseGetterReads: 0 }
+   const unit = logicalId('runtime-unit', randomUUID()), member = logicalId('session', randomUUID())
+-  const binding = logicalId('storage-binding', randomUUID()), ref = 'synthetic-held:' + randomUUID()
++  const binding = logicalId('storage-binding', randomUUID()), ref = `synthetic-held:${randomUUID()}`
+   // SAFETY: fixture-only immutable prepared evidence; it is not a physical pin
+   // issuer, authenticated observation, mount permission or production authority.
+-  const evidence = Object.freeze({ evidenceRef: ref, topologyPinId: 'synthetic-pin:' + randomUUID(),
++  const evidence = Object.freeze({ evidenceRef: ref, topologyPinId: `synthetic-pin:${randomUUID()}`,
+     candidate: Object.freeze({ domain: Object.freeze({ backendId: 'synthetic-backend', exportId: 'synthetic-export', pvUid: 'synthetic-pv' }),
+       canonicalDirectory: '/synthetic-held-leaf', podUid: 'synthetic-server', generation: 'synthetic-1', device: '1', inode: '2' })
+   }) as VerifiedDirectoryEvidence
