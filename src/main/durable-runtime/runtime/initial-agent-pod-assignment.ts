@@ -5,17 +5,22 @@ import type { JsonValue } from "../db/atomic.ts";
 import { lockAggregates } from "../db/locks.ts";
 import type { AgentPodPlanRecord } from "../db/agent-pod-plan-record-rows.ts";
 import type { AgentPodCreateObservation } from "../lifecycle/agent-pod-create-types.ts";
-import { inventoryName, inventoryNamespace, inventoryOpaque } from "../lifecycle/kubernetes-identity.ts";
+import { inventoryOpaque } from "../lifecycle/kubernetes-identity.ts";
 import { readAgentPodPlan } from "./agent-pod-plan-records.ts";
-import { agentPodFields } from "./agent-pod-policy.ts";
 import type { UnauthorizedAgentPodPlan } from "./agent-pod-plan.ts";
 import { LockedGatewayAuthority, currentAuthoritySql } from "./gateway/authority.ts";
 import { assertOriginal } from "./gateway/store.ts";
 import { canonicalInput, inputDigest } from "./gateway/input.ts";
-import type { CommandClaim, CommandRow, GatewayContext } from "./gateway/types.ts";
+import type { CommandClaim, CommandId, CommandRow, GatewayContext } from "./gateway/types.ts";
+import { captureObservation, resourceSnapshot } from "./initial-agent-pod-observation.ts";
+import { readInitialAgentOriginalExecution, type InitialAgentOriginalExecution } from "./initial-agent-original-command.ts";
 
 export type InitialAgentPodTargetInput = Readonly<{ claim: CommandClaim; planDigest: string }>;
 export type InitialAgentPodAssignmentInput = InitialAgentPodTargetInput & Readonly<{
+  observation: AgentPodCreateObservation;
+}>;
+export type InitialAgentPodLookupInput = Readonly<{ commandId: CommandId; planDigest: string }>;
+export type InitialAgentPodLookupAssignmentInput = InitialAgentPodLookupInput & Readonly<{
   observation: AgentPodCreateObservation;
 }>;
 export type InitialAgentPodAssignmentTarget = Readonly<{
@@ -37,7 +42,7 @@ type AttemptRow = { id: string; execution_epoch: string; status: string; mode: s
   ready_at: Date | null; started_at: Date | null; stopped_at: Date | null };
 type UnitRow = { dataset_name: string; desired_mode: string; phase: string; execution_epoch: string;
   intent_revision: string; active_attempt_id: string | null; revision: string };
-type Captured = ReturnType<typeof capture>;
+type Captured = ReturnType<typeof capture> | ReturnType<typeof captureLookup>;
 const deny = (code: string): never => { throw new DurableDatabaseError(`INITIAL_AGENT_POD_${code}`); };
 const equal = (a: JsonValue, b: JsonValue): boolean => canonicalInput(a) === canonicalInput(b);
 function idFor(prefix: string): string {
@@ -60,47 +65,16 @@ function capture(originalContext: GatewayContext, original: InitialAgentPodTarge
       claim.controllerTerm !== context.controller.term || e.podTarget !== "CREATE_WITHOUT_POD" || e.expectedPodUid !== null) {
     return deny("INPUT");
   }
-  return Object.freeze({ context, claim, planDigest });
+  return Object.freeze({ kind: "CLAIM", context, claim, commandId: claim.commandId, planDigest });
 }
-function fields(value: unknown, required: readonly string[], optional: readonly string[] = []) {
-  if (typeof value !== "object" || value === null) { return deny("INPUT"); }
-  const own = Reflect.ownKeys(value);
-  if (own.some(key => typeof key !== "string" || ![...required, ...optional].includes(key)) ||
-      required.some(key => !own.includes(key))) { return deny("INPUT"); }
-  return agentPodFields(value, own.filter((key): key is string => typeof key === "string"));
-}
-function resourceSnapshot(value: unknown): JsonValue {
-  const record = fields(value, [], ["requests", "limits"]);
-  const result: Record<string, JsonValue> = {};
-  for (const key of ["requests", "limits"]) {
-    if (!record.has(key)) { continue; }
-    const quantitiesInput = fields(record.get(key), [], ["cpu", "memory", "ephemeral-storage"]);
-    const quantities: Record<string, JsonValue> = {};
-    for (const [name, quantity] of quantitiesInput) {
-      if (typeof quantity !== "string" || !/^[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+|[numkKMGTEP]i?)?$/u.test(quantity) ||
-          key === "limits" && (name === "cpu" || name === "memory")) { return deny("OBSERVATION"); }
-      quantities[name] = quantity;
-    }
-    result[key] = Object.freeze(quantities);
-  }
-  return Object.freeze(result);
-}
-function captureObservation(original: AgentPodCreateObservation) {
-  try {
-    const value = fields(original, ["kind", "disposition", "planDigest", "namespace", "name", "pod",
-      "postAttempts", "readinessObserved", "physicalPinVerified"], ["reason"]);
-    const disposition = value.get("disposition"), pod = agentPodFields(value.get("pod"),
-      ["uid", "resourceVersion", "desiredResources", "admittedResources"]);
-    if (value.get("kind") !== "AGENT_POD_CREATE_OBSERVATION" ||
-        (disposition !== "FOUND" && disposition !== "CREATED") ||
-        (value.get("postAttempts") !== 0 && value.get("postAttempts") !== 1) ||
-        value.get("readinessObserved") !== false || value.get("physicalPinVerified") !== false) { return deny("OBSERVATION"); }
-    const planDigest = value.get("planDigest");
-    if (typeof planDigest !== "string" || !/^[0-9a-f]{64}$/u.test(planDigest)) { return deny("OBSERVATION"); }
-    return Object.freeze({ planDigest, namespace: inventoryNamespace(value.get("namespace")), name: inventoryName(value.get("name")),
-      pod: Object.freeze({ uid: inventoryOpaque(pod.get("uid")), resourceVersion: inventoryOpaque(pod.get("resourceVersion")),
-        desiredResources: resourceSnapshot(pod.get("desiredResources")), admittedResources: resourceSnapshot(pod.get("admittedResources")) }) });
-  } catch { return deny("OBSERVATION"); }
+function captureLookup(originalContext: GatewayContext, original: InitialAgentPodLookupInput) {
+  const c = originalContext.controller;
+  const context: GatewayContext = Object.freeze({ runtimeUnitId: logicalId("runtime-unit", originalContext.runtimeUnitId),
+    operationId: logicalId("operation", originalContext.operationId), controller: Object.freeze({ ...c,
+      scope: inventoryOpaque(c.scope), owner: inventoryOpaque(c.owner), term: counter("controller-term", c.term) }) });
+  const commandId = logicalId("runtime-command", original.commandId), planDigest = original.planDigest;
+  if (typeof planDigest !== "string" || !/^[0-9a-f]{64}$/u.test(planDigest)) { return deny("INPUT"); }
+  return Object.freeze({ kind: "LOOKUP", context, commandId, planDigest });
 }
 function bodyField(value: JsonValue, key: string): unknown {
   if (typeof value !== "object" || value === null || Array.isArray(value)) { return deny("RESERVATION"); }
@@ -109,12 +83,13 @@ function bodyField(value: JsonValue, key: string): unknown {
   return descriptor.value;
 }
 async function validated(tx: DurableTransaction, captured: Captured, query: DurableTransaction["query"]) {
-  const { context, claim, planDigest } = captured, e = claim.identity.originalEnvelope;
+  const { context, commandId, planDigest } = captured;
   const record = await readAgentPodPlan(tx, context.operationId);
   if (!record || record.planDigest !== planDigest) { return deny("PLAN"); }
   const plan = record.plan, id = plan.identity, dataset = plan.pod.metadata.labels["orca.dev/dataset"];
-  if (id.operationId !== context.operationId || id.unitId !== context.runtimeUnitId ||
-      id.executionEpoch !== e.executionEpoch || id.intentRevision !== e.intentRevision) { return deny("PLAN"); }
+  if (id.operationId !== context.operationId || id.unitId !== context.runtimeUnitId) { return deny("PLAN"); }
+  if (captured.kind === "CLAIM" && (id.executionEpoch !== captured.claim.identity.originalEnvelope.executionEpoch ||
+      id.intentRevision !== captured.claim.identity.originalEnvelope.intentRevision)) { return deny("PLAN"); }
   const protectedBindings = plan.mountExpectations.protected;
   const members = async () => (await query<{ session_id: string }>(
     "SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1 ORDER BY session_id", [id.unitId])).rows.map(row => row.session_id);
@@ -138,19 +113,36 @@ async function validated(tx: DurableTransaction, captured: Captured, query: Dura
   const operation = (await query<{ kind: string; result: unknown; execution_epoch: string; intent_revision: string;
     controller_term: string; step_revision: string; expected_pod_uid: string | null; external_resource_name: string | null }>(
     "SELECT * FROM durable_runtime.operations WHERE id=$1 AND runtime_unit_id=$2", [id.operationId, id.unitId])).rows[0];
-  if (!unit || !operation || unit.dataset_name !== dataset || unit.desired_mode !== "RUNNING" || unit.active_attempt_id !== id.attemptId ||
-      unit.execution_epoch !== id.executionEpoch || unit.intent_revision !== id.intentRevision || operation.kind !== "WAKE" || operation.result !== null ||
-      operation.execution_epoch !== id.executionEpoch || operation.intent_revision !== id.intentRevision || operation.controller_term !== context.controller.term ||
-      operation.step_revision !== e.stepRevision || operation.expected_pod_uid !== null || operation.external_resource_name !== id.resourceName) { return deny("STALE"); }
-  const command = (await query<CommandRow>("SELECT * FROM durable_runtime.runtime_commands WHERE id=$1 FOR UPDATE", [claim.commandId])).rows[0];
+  function scope(e: InitialAgentOriginalExecution["identity"]["originalEnvelope"]): void {
+    if (id.executionEpoch !== e.executionEpoch || id.intentRevision !== e.intentRevision) { return deny("PLAN"); }
+    if (!unit || !operation || unit.dataset_name !== dataset || unit.desired_mode !== "RUNNING" || unit.active_attempt_id !== id.attemptId ||
+        unit.execution_epoch !== id.executionEpoch || unit.intent_revision !== id.intentRevision || operation.kind !== "WAKE" || operation.result !== null ||
+        operation.execution_epoch !== id.executionEpoch || operation.intent_revision !== id.intentRevision || operation.controller_term !== context.controller.term ||
+        operation.step_revision !== e.stepRevision || operation.expected_pod_uid !== null || operation.external_resource_name !== id.resourceName) { return deny("STALE"); }
+  }
+  if (captured.kind === "CLAIM") { scope(captured.claim.identity.originalEnvelope); }
+  const command = (await query<CommandRow>(`SELECT * FROM durable_runtime.runtime_commands
+    WHERE id=$1 AND runtime_unit_id=$2 AND operation_id=$3 FOR UPDATE`, [commandId, id.unitId, id.operationId])).rows[0];
   if (!command) { return deny("CLAIM"); }
-  assertOriginal(command, claim.identity);
+  let original: InitialAgentOriginalExecution;
+  if (captured.kind === "CLAIM") {
+    const claim = captured.claim;
+    assertOriginal(command, claim.identity);
+    if (command.executor_id !== claim.executorId || command.execution_token !== claim.executionToken) { return deny("CLAIM"); }
+    original = Object.freeze({ commandId, identity: claim.identity, executorId: claim.executorId,
+      executionToken: claim.executionToken, firstClaimControllerTerm: claim.controllerTerm });
+  } else {
+    original = await readInitialAgentOriginalExecution(authority, command);
+    scope(original.identity.originalEnvelope);
+  }
+  const e = original.identity.originalEnvelope;
   const profileRevision = plan.pod.metadata.annotations["orca.dev/resource-profile-revision"];
   if (command.operation_id !== id.operationId || command.runtime_unit_id !== id.unitId || command.state !== "EXECUTING" ||
-      command.executor_id !== claim.executorId || command.execution_token !== claim.executionToken || command.owner_controller_term !== context.controller.term ||
+      command.owner_controller_term !== context.controller.term || original.identity.command !== "ensureAttempt" ||
+      e.podTarget !== "CREATE_WITHOUT_POD" || e.expectedPodUid !== null ||
       !equal(command.input, { resourceName: id.resourceName,
         body: { mode: "COLD", planDigest, attemptId: id.attemptId, resourceProfileRevision: profileRevision } })) { return deny("CLAIM"); }
-  const prefix = `${id.operationId}:${planDigest}:${claim.commandId}`;
+  const prefix = `${id.operationId}:${planDigest}:${commandId}`;
   const reservationId = idFor(`initial-agent-attempt:v1:${prefix}:event`), assignmentId = idFor(`initial-agent-pod-assignment:v1:${prefix}:event`);
   const reservation = (await query<{ next_state: JsonValue }>(
     "SELECT next_state FROM durable_runtime.runtime_audit_events WHERE id=$1 AND kind='INITIAL_AGENT_ATTEMPT_RESERVED' AND runtime_unit_id=$2 AND operation_id=$3 AND attempt_id=$4",
@@ -173,9 +165,9 @@ async function validated(tx: DurableTransaction, captured: Captured, query: Dura
   const storageGrants = protectedBindings.filter(p => p.mode === "RW").map(p => ({ bindingId: p.bindingId,
     grantId: idFor(`initial-agent-attempt:v1:${prefix}:storage:${p.bindingId}`), storageEpoch: expected.find(b => b.bindingId === p.bindingId)!.storageEpoch }));
   const reservationEvent = { kind: "INITIAL_AGENT_ATTEMPT_RESERVED", operationId: id.operationId, unitId: id.unitId,
-    attemptId: id.attemptId, commandId: claim.commandId, planDigest,
-    reservationDigest: inputDigest({ commandId: claim.commandId, executorId: claim.executorId, executionToken: claim.executionToken,
-      controllerTerm: claim.controllerTerm, command: claim.identity.command, inputHash: claim.identity.inputHash,
+    attemptId: id.attemptId, commandId, planDigest,
+    reservationDigest: inputDigest({ commandId, executorId: original.executorId, executionToken: original.executionToken,
+      controllerTerm: original.firstClaimControllerTerm, command: original.identity.command, inputHash: original.identity.inputHash,
       envelope: { operationId: e.operationId, controllerTerm: e.controllerTerm, stepRevision: e.stepRevision,
         executionEpoch: e.executionEpoch, intentRevision: e.intentRevision, podTarget: e.podTarget, expectedPodUid: e.expectedPodUid },
       planDigest, expectedUnitRevision: String(BigInt(reservedRevision) - 1n), bindings: expected }),
@@ -225,7 +217,7 @@ function assignmentEvent(input: Captured, record: AgentPodPlanRecord, podUid: st
   desiredResources: JsonValue, admittedResources: JsonValue, unitRevision: string) {
   const id = record.plan.identity;
   return Object.freeze({ kind: "INITIAL_AGENT_POD_ASSIGNED", operationId: id.operationId, unitId: id.unitId,
-    attemptId: id.attemptId, commandId: input.claim.commandId, planDigest: input.planDigest, podUid, resourceVersion,
+    attemptId: id.attemptId, commandId: input.commandId, planDigest: input.planDigest, podUid, resourceVersion,
     desiredResources, admittedResources, unitRevision, state: "POD_ASSIGNED", gate: "CLOSED", providerReady: false, writerGrantActivated: false });
 }
 
@@ -239,11 +231,35 @@ export async function readInitialAgentPodAssignmentTarget(tx: DurableTransaction
     podUid: state.attempt.pod_uid, gate: "CLOSED", providerReady: false, writerGrantActivated: false });
 }
 
+/** Original command observation under the current controller. Issues no claim,
+ * token, reservation, grant or Pod CREATE capability. Caller owns settlement. */
+export async function readInitialAgentPodLookupTarget(tx: DurableTransaction, context: GatewayContext,
+  original: InitialAgentPodLookupInput): Promise<InitialAgentPodAssignmentTarget> {
+  const input = captureLookup(context, original), query = tx.query.bind(tx);
+  const state = await validated(tx, input, query);
+  return Object.freeze({ record: state.record, plan: state.record.plan, attemptId: state.attempt.id,
+    planDigest: input.planDigest, unitRevision: state.unit.revision, status: state.assignment ? "POD_ASSIGNED" : "RESERVED",
+    podUid: state.attempt.pod_uid, gate: "CLOSED", providerReady: false, writerGrantActivated: false });
+}
+
 /** Caller owns actual transaction settlement. API object UID/resources do not
  * authenticate an incarnation, open the gate, settle a command or activate RW. */
 export async function assignInitialAgentPod(tx: DurableTransaction, context: GatewayContext,
   original: InitialAgentPodAssignmentInput): Promise<InitialAgentPodAssignment> {
   const input = capture(context, original), observed = captureObservation(original.observation), query = tx.query.bind(tx);
+  return assignCaptured(tx, input, observed, query);
+}
+
+/** Links a FOUND/CREATED observation to the original reservation only. This
+ * lookup-only entry has no transport, CREATE path or claim issuance. */
+export async function assignInitialAgentPodLookup(tx: DurableTransaction, context: GatewayContext,
+  original: InitialAgentPodLookupAssignmentInput): Promise<InitialAgentPodAssignment> {
+  const input = captureLookup(context, original), observed = captureObservation(original.observation), query = tx.query.bind(tx);
+  return assignCaptured(tx, input, observed, query);
+}
+
+async function assignCaptured(tx: DurableTransaction, input: Captured, observed: ReturnType<typeof captureObservation>,
+  query: DurableTransaction["query"]): Promise<InitialAgentPodAssignment> {
   const state = await validated(tx, input, query), plan = state.record.plan;
   if (observed.planDigest !== input.planDigest || observed.namespace !== plan.pod.metadata.namespace ||
       observed.name !== plan.identity.resourceName || !equal(observed.pod.desiredResources, plan.pod.spec.containers[0].resources)) { return deny("OBSERVATION_CONFLICT"); }
