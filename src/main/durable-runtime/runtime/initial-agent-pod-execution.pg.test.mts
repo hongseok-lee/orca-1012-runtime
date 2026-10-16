@@ -65,7 +65,8 @@ function legacyClosedFixturePlan(current: UnauthorizedAgentPodPlan): Unauthorize
   value.podSpecSHA256 = createHash('sha256').update(JSON.stringify(value.pod.spec)).digest('hex')
   return value
 }
-async function seed(entrypoint: { command: readonly string[]; args: readonly string[] } = CLOSED_AGENT_BOOTSTRAP,
+async function seed(entrypoint: { command: readonly string[]; args: readonly string[] } = {
+  command: CLOSED_AGENT_BOOTSTRAP.command, args: CLOSED_AGENT_BOOTSTRAP.args },
   legacyClosedRead = false) {
   const unit = logicalId('runtime-unit', randomUUID()), operation = logicalId('operation', randomUUID()), attempt = randomUUID()
   const session = randomUUID(), agent = randomUUID(), workspace = randomUUID(), leaf = randomUUID(), bindingId = logicalId('storage-binding', randomUUID())
@@ -311,7 +312,7 @@ test('closed bootstrap working directory preserves checkout records and legacy l
   })
 
   await t.test('legacy canonical bytes and digest survive read and LOOKUP_ONLY while new CREATE stays closed', async () => {
-    const f = await seed(CLOSED_AGENT_BOOTSTRAP, true)
+    const f = await seed({ command: CLOSED_AGENT_BOOTSTRAP.command, args: CLOSED_AGENT_BOOTSTRAP.args }, true)
     const original = (await pool.query('SELECT plan::text AS bytes,plan_digest,pod_spec_sha256 FROM durable_runtime.agent_pod_plans WHERE operation_id=$1', [f.context.operationId])).rows
     const record = await withDurableTransaction(pool, tx => readAgentPodPlan(tx, f.context.operationId))
     assert.ok(record)
