@@ -69,7 +69,7 @@ test('actual startup inventory commits observation history without adopting targ
         url.pathname !== `/api/v1/namespaces/${namespace}/pods`) { response.writeHead(403); response.end(); return }
     response.writeHead(200, { 'content-type': 'application/json' })
     if (url.searchParams.get('watch') === 'true') {
-      watchRequests++; response.end(watchEvents.map(event => JSON.stringify(event) + '\n').join(''))
+      watchRequests++; response.end(watchEvents.map(event => `${JSON.stringify(event)}\n`).join(''))
     } else {
       response.end(JSON.stringify({ apiVersion: 'v1', kind: 'PodList', metadata: { resourceVersion: 'opaque-list-rv' }, items: listObjects }))
     }
