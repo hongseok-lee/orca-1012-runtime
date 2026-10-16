@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createAgentPodPlanner } from './agent-pod-plan.ts'
+import type { UnauthorizedAgentPodPlan } from './agent-pod-plan.ts'
 import { captureAgentPodPolicy } from './agent-pod-policy.ts'
 import { inventoryPod } from '../lifecycle/kubernetes-identity.ts'
 
@@ -21,6 +22,15 @@ function request(agent = 1, mode: 'RO' | 'RW' = 'RW') {
     profile: { revision: '7', cpuMilli: 777, memoryMi: 1024, ephemeralMi: 2048, temporaryMi: 256 } }
 }
 
+function claim(volume: UnauthorizedAgentPodPlan['pod']['spec']['volumes'][number]) {
+  assert.ok('persistentVolumeClaim' in volume)
+  return volume.persistentVolumeClaim
+}
+function readOnly(mount: UnauthorizedAgentPodPlan['pod']['spec']['containers'][number]['volumeMounts'][number]) {
+  assert.ok('readOnly' in mount)
+  return mount.readOnly
+}
+
 test('trusted Agent Pod plans preserve protected/shared boundaries without issuing authority', async t => {
   await t.test('two Agents use distinct exact protected claims and the same shared RW claim', () => {
     const planner = createAgentPodPlanner(policy()), a = planner.plan(request(1)), b = planner.plan(request(2))
@@ -32,18 +42,18 @@ test('trusted Agent Pod plans preserve protected/shared boundaries without issui
     assert.deepEqual(a.mountExpectations.shared, b.mountExpectations.shared)
     assert.equal(a.mountExpectations.protected[0].clientPath, '/agent')
     assert.equal(a.mountExpectations.shared.clientPath, '/shared')
-    assert.equal(a.pod.spec.volumes[0].persistentVolumeClaim?.claimName, 'protected-1')
-    assert.equal(a.pod.spec.volumes[1].persistentVolumeClaim?.claimName, 'shared-fixture')
+    assert.equal(claim(a.pod.spec.volumes[0]).claimName, 'protected-1')
+    assert.equal(claim(a.pod.spec.volumes[1]).claimName, 'shared-fixture')
     assert.equal(JSON.stringify(a.pod).includes('nfs.fixture.svc.cluster.local'), false)
     assert.equal(a.kind, 'UNAUTHORIZED_PLAN'); assert.equal(a.storageGrantIssued, false)
     assert.equal(a.physicalPinIssued, false); assert.equal(a.readinessObserved, false)
   })
   await t.test('RO protected mounts do not turn the common collaboration mount into RO', () => {
     const p = createAgentPodPlanner(policy()).plan(request(1, 'RO'))
-    assert.equal(p.pod.spec.volumes[0].persistentVolumeClaim?.readOnly, true)
-    assert.equal(p.pod.spec.containers[0].volumeMounts[0].readOnly, true)
-    assert.equal(p.pod.spec.volumes[1].persistentVolumeClaim?.readOnly, false)
-    assert.equal(p.pod.spec.containers[0].volumeMounts[1].readOnly, false)
+    assert.equal(claim(p.pod.spec.volumes[0]).readOnly, true)
+    assert.equal(readOnly(p.pod.spec.containers[0].volumeMounts[0]), true)
+    assert.equal(claim(p.pod.spec.volumes[1]).readOnly, false)
+    assert.equal(readOnly(p.pod.spec.containers[0].volumeMounts[1]), false)
     assert.equal(p.mountExpectations.shared.mode, 'RW')
   })
   await t.test('required security, Spot/amd64 placement and trusted requests are exact', () => {
@@ -57,7 +67,8 @@ test('trusted Agent Pod plans preserve protected/shared boundaries without issui
     assert.equal(s.restartPolicy, 'Never'); assert.equal(s.terminationGracePeriodSeconds, 25)
     assert.deepEqual(c.resources.requests, { cpu: '777m', memory: '1024Mi', 'ephemeral-storage': '2048Mi' })
     assert.deepEqual(c.resources.limits, { 'ephemeral-storage': '2048Mi' })
-    assert.deepEqual(s.volumes[2].emptyDir, { sizeLimit: '256Mi' })
+    const temporary = s.volumes[2]; assert.ok('emptyDir' in temporary)
+    assert.deepEqual(temporary.emptyDir, { sizeLimit: '256Mi' })
     assert.deepEqual(c.volumeMounts.map(m => m.mountPath), ['/agent', '/shared', '/tmp'])
     assert.equal('initContainers' in s, false); assert.equal('ephemeralContainers' in s, false)
     assert.equal(c.volumeMounts.some(m => 'subPath' in m || 'subPathExpr' in m), false)
@@ -152,11 +163,11 @@ test('trusted Agent Pod plans preserve protected/shared boundaries without issui
     const planner = createAgentPodPlanner(p), plan = planner.plan({ ...r, protectedBindings: [project, home] })
     assert.deepEqual(plan.mountExpectations.protected.map(binding => [binding.key, binding.clientPath, binding.claimName, binding.mode]),
       [['home', '/agent/home', 'protected-1', 'RW'], ['project', '/agent/project', 'protected-2', 'RO']])
-    assert.deepEqual(plan.pod.spec.containers[0].volumeMounts.map(m => [m.mountPath, m.readOnly ?? false]),
+    assert.deepEqual(plan.pod.spec.containers[0].volumeMounts.map(m => [m.mountPath, 'readOnly' in m ? m.readOnly : false]),
       [['/agent/home', false], ['/agent/project', true], ['/shared', false], ['/tmp', false]])
     assert.deepEqual(planner.plan({ ...r, protectedBindings: [home, project] }), plan)
     assert.equal(plan.pod.spec.volumes.length, 4)
-    assert.deepEqual(plan.pod.spec.volumes.slice(0, 3).map(v => v.persistentVolumeClaim?.claimName), ['protected-1', 'protected-2', 'shared-fixture'])
+    assert.deepEqual(plan.pod.spec.volumes.slice(0, 3).map(v => claim(v).claimName), ['protected-1', 'protected-2', 'shared-fixture'])
     for (const changed of [{ key: home.key }, { bindingId: home.bindingId }, { leafId: home.leafId, serverPath: home.serverPath },
       { claimName: home.claimName }, { claimUid: home.claimUid }, { pvUid: home.pvUid }]) {
       assert.throws(() => planner.plan({ ...r, protectedBindings: [home, { ...project, ...changed }] }), /AGENT_POD_MOUNT_SCOPE_INVALID/)
