@@ -60,7 +60,7 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
     await lockUnitMembers(tx, context.runtimeUnitId, members)
     const authority = await LockedGatewayAuthority.acquire(tx, context)
     const unit = (await tx.query<{ revision: string; intent_revision: string; execution_epoch: string;
-      active_attempt_id: string | null; desired_mode: string }>('SELECT * FROM durable_runtime.runtime_units WHERE id=$1', [context.runtimeUnitId])).rows[0]
+      active_attempt_id: string | null; desired_mode: string; phase: string }>('SELECT * FROM durable_runtime.runtime_units WHERE id=$1', [context.runtimeUnitId])).rows[0]
     let operation = (await tx.query<LifecycleOperation>('SELECT * FROM durable_runtime.operations WHERE id=$1', [context.operationId])).rows[0]
     const clock = (await tx.query<{ now: Date }>('SELECT clock_timestamp() AS now')).rows[0].now
     // Actual lease has already been locked/validated by the gateway. This
@@ -94,6 +94,62 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
       throw new DurableDatabaseError('LIFECYCLE_STEP_STALE')
     }
     if (operation.deadline_at && operation.deadline_at <= clock) {
+      // Only the initial WAKE with no accepted/planned/executed footprint can
+      // become terminal here. Pending commands already took the lookup branch.
+      const initial = request.step === 'ENSURE_ATTEMPT' && operation.kind === 'WAKE' &&
+        operation.step === 'INTENT_QUEUED' && operation.step_revision === '0' &&
+        operation.expected_pod_uid === null && unit.desired_mode === 'RUNNING' && unit.active_attempt_id === null
+      if (initial) {
+        const commands = await tx.query('SELECT id FROM durable_runtime.runtime_commands WHERE operation_id=$1 AND runtime_unit_id=$2 LIMIT 1',
+          [operation.id, context.runtimeUnitId])
+        const plans = await tx.query('SELECT operation_id FROM durable_runtime.agent_pod_plans WHERE operation_id=$1 AND runtime_unit_id=$2 LIMIT 1',
+          [operation.id, context.runtimeUnitId])
+        const attempts = await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 LIMIT 1', [context.runtimeUnitId])
+        const executions = await tx.query("SELECT id FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1 AND state<>'REVOKED' LIMIT 1", [context.runtimeUnitId])
+        // A Unit's write grants are identified through its attempts. Unrelated
+        // shared-space writers are not a no-effect signal for this operation.
+        const writers = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
+          JOIN durable_runtime.attempts a ON a.id=g.attempt_id
+          WHERE a.runtime_unit_id=$1 AND g.state<>'REVOKED' LIMIT 1`, [context.runtimeUnitId])
+        if (commands.rowCount === 0 && plans.rowCount === 0 && attempts.rowCount === 0 &&
+            executions.rowCount === 0 && writers.rowCount === 0) {
+          const reason = 'DEADLINE_EXPIRED_BEFORE_ACCEPTANCE'
+          const result = { state: 'FAILED', reason }
+          const failed = await tx.query<LifecycleOperation>(`UPDATE durable_runtime.operations SET step='FAILED',
+            step_revision=step_revision+1,revision=revision+1,result=$8::jsonb
+            WHERE id=$1 AND runtime_unit_id=$2 AND revision=$3 AND step_revision=$4 AND controller_term=$5
+            AND kind='WAKE' AND step='INTENT_QUEUED' AND result IS NULL AND expected_pod_uid IS NULL
+            AND execution_epoch=$6 AND intent_revision=$7 AND deadline_at<=$9::timestamptz
+            AND EXISTS(SELECT 1 FROM durable_runtime.controller_leases c WHERE c.scope=$10 AND c.owner=$11
+              AND c.term=$5 AND c.expires_at>clock_timestamp()) RETURNING *`,
+          [operation.id, context.runtimeUnitId, operation.revision, request.expectedStepRevision, context.controller.term,
+            operation.execution_epoch, operation.intent_revision, JSON.stringify(result), clock, context.controller.scope, context.controller.owner])
+          if (failed.rowCount !== 1) { throw new DurableDatabaseError('LIFECYCLE_STEP_STALE') }
+          const blocked = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units SET phase='BLOCKED',revision=revision+1
+            WHERE id=$1 AND revision=$2 AND desired_mode='RUNNING' AND active_attempt_id IS NULL
+            AND execution_epoch=$3 AND intent_revision=$4
+            AND EXISTS(SELECT 1 FROM durable_runtime.controller_leases c WHERE c.scope=$5 AND c.owner=$6
+              AND c.term=$7 AND c.expires_at>clock_timestamp()) RETURNING revision`,
+          [context.runtimeUnitId, request.expectedUnitRevision, operation.execution_epoch, operation.intent_revision,
+            context.controller.scope, context.controller.owner, context.controller.term])
+          if (blocked.rowCount !== 1) { throw new DurableDatabaseError('LIFECYCLE_STEP_STALE') }
+          const event: JsonValue = { kind: 'RECONCILE_OPERATION_DEADLINE_EXPIRED', operationId: operation.id,
+            runtimeUnitId: context.runtimeUnitId, state: 'FAILED', reason, phase: 'BLOCKED',
+            deadlineAt: operation.deadline_at.toISOString(), retryAt: operation.retry_at?.toISOString() ?? null,
+            executionEpoch: operation.execution_epoch, intentRevision: operation.intent_revision,
+            operationRevision: failed.rows[0].revision, stepRevision: failed.rows[0].step_revision,
+            unitRevision: blocked.rows[0].revision, terminalRecorded: true }
+          await appendAudit(tx, { actorId: context.controller.owner, runtimeUnitId: context.runtimeUnitId,
+            operationId: operation.id, kind: 'RECONCILE_OPERATION_DEADLINE_EXPIRED', reasonCode: reason,
+            previousState: { step: operation.step, stepRevision: operation.step_revision, operationRevision: operation.revision,
+              phase: unit.phase, unitRevision: unit.revision }, nextState: event, occurredAt: clock, receivedAt: clock,
+            producerId: operation.id, producerSeq: counter('sequence:producer', failed.rows[0].revision), evidenceRefs: [] })
+          await enqueueOutbox(tx, { eventId: logicalId('event', randomUUID()), aggregateId: context.runtimeUnitId,
+            aggregateKind: 'runtime-unit', revision: counter('row:runtime-unit', blocked.rows[0].revision), event })
+          return { disposition: 'DEADLINE_EXPIRED', operationId: operation.id, terminalRecorded: true,
+            state: 'FAILED', phase: 'BLOCKED', operationRevision: failed.rows[0].revision, unitRevision: blocked.rows[0].revision }
+        }
+      }
       return { disposition: 'DEADLINE_EXPIRED', operationId: operation.id }
     }
     if (operation.retry_at && operation.retry_at > clock) {
