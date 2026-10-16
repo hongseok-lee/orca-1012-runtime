@@ -63,7 +63,7 @@ type Operation = {
 };
 
 function text(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.length > 512 || /[\x00-\x1f\x7f]/u.test(value)) {
+  if (typeof value !== 'string' || !value || value.length > 512 || [...value].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
     throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_INVALID');
   }
   return value;
@@ -87,6 +87,20 @@ function safeBinding(result: BindingVerificationTransactionResult): SafeBindingR
     physicalPinIssuerImplemented: false });
 }
 function pinReleased(operation: Operation): boolean { return operation.pinState === 'RELEASED'; }
+function captureCall(original: FirstManagedBindingInput) {
+  try {
+    const scope: PreparedDirectoryObservationInput['scope'] = Object.freeze({
+      sessionId: logicalId('session', original.sessionId), unitId: logicalId('runtime-unit', original.unitId),
+      bindingId: logicalId('storage-binding', original.bindingId),
+      expectedUnitRevision: counter('row:runtime-unit', original.expectedUnitRevision),
+      expectedBindingRevision: counter('row:storage-binding', original.expectedBindingRevision), actorId: text(original.actorId) });
+    const pinId = logicalId('storage-namespace-pin', original.pinId), ownerToken = text(original.ownerToken);
+    return Object.freeze({ scope, pinId, ownerToken, hash: tokenHash(ownerToken), leafId: managedLeafUuid(original.leafId) });
+  } catch {
+    // An accessor can throw a secret; never propagate its raw exception.
+    throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_INVALID');
+  }
+}
 
 /** Server configuration only: no RPC registration, caller observation, injected
  * collector callback, live qualification or public authority/lease is exposed. */
@@ -258,13 +272,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
 
   return Object.freeze({
     verifyFirstBinding(originalInput: FirstManagedBindingInput, signal: AbortSignal): Promise<FirstManagedBindingResult> {
-      const scope: PreparedDirectoryObservationInput['scope'] = Object.freeze({
-        sessionId: logicalId('session', originalInput.sessionId), unitId: logicalId('runtime-unit', originalInput.unitId),
-        bindingId: logicalId('storage-binding', originalInput.bindingId),
-        expectedUnitRevision: counter('row:runtime-unit', originalInput.expectedUnitRevision),
-        expectedBindingRevision: counter('row:storage-binding', originalInput.expectedBindingRevision), actorId: text(originalInput.actorId) });
-      const pinId = logicalId('storage-namespace-pin', originalInput.pinId), ownerToken = text(originalInput.ownerToken);
-      const hash = tokenHash(ownerToken), leafId = managedLeafUuid(originalInput.leafId);
+      const { scope, pinId, ownerToken, hash, leafId } = captureCall(originalInput);
       if (leafId !== profile.leafId || !signal || typeof signal.addEventListener !== 'function') {
         throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_SCOPE');
       }
@@ -282,7 +290,9 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
       return run(operation, leafId, signal);
     },
     async releaseFailedPreparation(originalInput: Readonly<{ pinId: string; ownerToken: string }>): Promise<FirstManagedBindingResult> {
-      const pinId = logicalId('storage-namespace-pin', originalInput.pinId), hash = tokenHash(originalInput.ownerToken);
+      let pinId: string, hash: string;
+      try { pinId = logicalId('storage-namespace-pin', originalInput.pinId); hash = tokenHash(originalInput.ownerToken); }
+      catch { throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_INVALID'); }
       const operation = operations.get(pinId);
       if (!operation || operation.tokenHash !== hash) throw new FirstManagedBindingOwnerError('FIRST_MANAGED_OWNER_MISMATCH');
       if (!operation.releaseEligible || operation.handedOff || operation.releaseAttempted || operation.pinState !== 'HELD') {

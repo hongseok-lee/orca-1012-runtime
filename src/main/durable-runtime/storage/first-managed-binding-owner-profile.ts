@@ -37,7 +37,7 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 function text(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.length > 512 || /[\x00-\x1f\x7f]/u.test(value)) invalid();
+  if (typeof value !== 'string' || !value || value.length > 512 || [...value].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) invalid();
   return value;
 }
 function digest(value: unknown): string {
