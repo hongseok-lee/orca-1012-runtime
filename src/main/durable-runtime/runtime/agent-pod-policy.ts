@@ -2,7 +2,7 @@ import { isIP } from 'node:net'
 import { posix } from 'node:path'
 
 export class AgentPodPlanError extends Error {
-  constructor(readonly code: 'POLICY_INVALID' | 'INPUT_INVALID' | 'PROTECTED_BINDING_COUNT_UNSUPPORTED' | 'MOUNT_SCOPE_INVALID') {
+  constructor(readonly code: 'POLICY_INVALID' | 'INPUT_INVALID' | 'MOUNT_SCOPE_INVALID') {
     super(`AGENT_POD_${code}`)
     this.name = 'AgentPodPlanError'
   }
@@ -84,7 +84,7 @@ export function agentPodUuid(value: unknown): string {
 /** Server composition input only. Capture validates shape, not the caller's authority. */
 export function captureAgentPodPolicy(value: unknown) {
   try {
-    const input = agentPodFields(value, ['namespace', 'dataset', 'image', 'entrypoint', 'paths', 'nfsServer', 'protectedExportRoot', 'shared'])
+    const input = agentPodFields(value, ['namespace', 'dataset', 'image', 'entrypoint', 'paths', 'nfsServer', 'protectedExportRoot', 'protectedMounts', 'shared'])
     const namespace = agentPodName(input.get('namespace'), true), dataset = agentPodName(input.get('dataset'), true)
     const image = agentPodText(input.get('image'))
     if (!/^[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}$/u.test(image) || image.includes('://')) {
@@ -104,6 +104,26 @@ export function captureAgentPodPolicy(value: unknown) {
     for (const path of Object.values(paths)) {
       if (path === '/agent' || !agentPodWithin('/agent', path)) { throw new AgentPodPlanError('POLICY_INVALID') }
     }
+    const protectedMounts = agentPodArray(input.get('protectedMounts')).map(value => {
+      const mount = agentPodFields(value, ['key', 'clientPath'])
+      const key = agentPodName(mount.get('key'), true), clientPath = agentPodPath(mount.get('clientPath'))
+      if (!agentPodWithin('/agent', clientPath)) { throw new AgentPodPlanError('POLICY_INVALID') }
+      return Object.freeze({ key, clientPath })
+    }).sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
+    if (!protectedMounts.length) { throw new AgentPodPlanError('POLICY_INVALID') }
+    for (let i = 0; i < protectedMounts.length; i++) {
+      for (const other of protectedMounts.slice(0, i)) {
+        const mount = protectedMounts[i]
+        if (mount.key === other.key || agentPodWithin(mount.clientPath, other.clientPath) || agentPodWithin(other.clientPath, mount.clientPath)) {
+          throw new AgentPodPlanError('POLICY_INVALID')
+        }
+      }
+    }
+    for (const path of Object.values(paths)) {
+      if (protectedMounts.filter(mount => agentPodWithin(mount.clientPath, path)).length !== 1) {
+        throw new AgentPodPlanError('POLICY_INVALID')
+      }
+    }
     const nfsServer = agentPodText(input.get('nfsServer'))
     if (!isIP(nfsServer)) { agentPodName(nfsServer) }
     const protectedExportRoot = agentPodPath(input.get('protectedExportRoot'))
@@ -115,7 +135,7 @@ export function captureAgentPodPolicy(value: unknown) {
       throw new AgentPodPlanError('POLICY_INVALID')
     }
     return Object.freeze({ namespace, dataset, image, entrypoint: Object.freeze({ command, args }), paths,
-      nfsServer, protectedExportRoot, shared })
+      nfsServer, protectedExportRoot, protectedMounts: Object.freeze(protectedMounts), shared })
   } catch { throw new AgentPodPlanError('POLICY_INVALID') }
 }
 

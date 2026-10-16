@@ -9,13 +9,14 @@ function policy() {
   return { namespace: 'agent-fixture', dataset: 'dataset-fixture', image: `example.invalid/agent@sha256:${'1'.repeat(64)}`,
     entrypoint: { command: ['/opt/agent/entrypoint'], args: ['--resume-mode', 'cold', ''] },
     paths: { home: '/agent/home', claudeState: '/agent/home/.claude', codexState: '/agent/home/.codex', checkout: '/agent/project' },
+    protectedMounts: [{ key: 'main', clientPath: '/agent' }],
     nfsServer: 'nfs.fixture.svc.cluster.local', protectedExportRoot: '/exports/runtime-domains/dataset-fixture',
     shared: { claimName: 'shared-fixture', claimUid: 'shared-claim-opaque', pvUid: 'shared-pv-opaque', serverPath: '/exports/shared/dataset-fixture' } }
 }
 function request(agent = 1, mode: 'RO' | 'RW' = 'RW') {
   return { identity: { unitId: uuid(agent), operationId: uuid(agent + 10), attemptId: uuid(agent + 20),
     resourceName: `orca-unit-${uuid(agent + 10)}`, executionEpoch: '3', intentRevision: '5', specHash: 'a'.repeat(64) },
-    protectedBindings: [{ bindingId: uuid(agent + 30), leafId: uuid(agent + 40), claimName: `protected-${agent}`,
+    protectedBindings: [{ key: 'main', bindingId: uuid(agent + 30), leafId: uuid(agent + 40), claimName: `protected-${agent}`,
       claimUid: `protected-claim-opaque-${agent}`, pvUid: `protected-pv-opaque-${agent}`, serverPath: `/exports/runtime-domains/dataset-fixture/${uuid(agent + 40)}`, mode }],
     profile: { revision: '7', cpuMilli: 777, memoryMi: 1024, ephemeralMi: 2048, temporaryMi: 256 } }
 }
@@ -25,11 +26,11 @@ test('trusted Agent Pod plans preserve protected/shared boundaries without issui
     const planner = createAgentPodPlanner(policy()), a = planner.plan(request(1)), b = planner.plan(request(2))
     assert.notEqual(a.pod.metadata.name, b.pod.metadata.name)
     assert.equal(a.pod.metadata.name, request(1).identity.resourceName)
-    assert.equal(a.mountExpectations.protected.claimUid, 'protected-claim-opaque-1')
-    assert.notEqual(a.mountExpectations.protected.leafId, b.mountExpectations.protected.leafId)
-    assert.notEqual(a.mountExpectations.protected.claimName, b.mountExpectations.protected.claimName)
+    assert.equal(a.mountExpectations.protected[0].claimUid, 'protected-claim-opaque-1')
+    assert.notEqual(a.mountExpectations.protected[0].leafId, b.mountExpectations.protected[0].leafId)
+    assert.notEqual(a.mountExpectations.protected[0].claimName, b.mountExpectations.protected[0].claimName)
     assert.deepEqual(a.mountExpectations.shared, b.mountExpectations.shared)
-    assert.equal(a.mountExpectations.protected.clientPath, '/agent')
+    assert.equal(a.mountExpectations.protected[0].clientPath, '/agent')
     assert.equal(a.mountExpectations.shared.clientPath, '/shared')
     assert.equal(a.pod.spec.volumes[0].persistentVolumeClaim?.claimName, 'protected-1')
     assert.equal(a.pod.spec.volumes[1].persistentVolumeClaim?.claimName, 'shared-fixture')
@@ -130,14 +131,37 @@ test('trusted Agent Pod plans preserve protected/shared boundaries without issui
     assert.throws(() => createAgentPodPlanner({ ...policy(), entrypoint: { command: [], args: [] } }), /AGENT_POD_POLICY_INVALID/)
     assert.throws(() => createAgentPodPlanner({ ...policy(), nfsServer: 'https://private.invalid/' }), /AGENT_POD_POLICY_INVALID/)
   })
-  await t.test('multiple protected bindings are explicit unsupported input, not silently truncated', () => {
+  await t.test('all policy keys must appear exactly once without omission, extra mappings or aliasing', () => {
     const planner = createAgentPodPlanner(policy()), r = request()
-    assert.throws(() => planner.plan({ ...r, protectedBindings: [] }), /AGENT_POD_PROTECTED_BINDING_COUNT_UNSUPPORTED/)
-    assert.throws(() => planner.plan({ ...r, protectedBindings: [...r.protectedBindings, ...request(2).protectedBindings] }), /AGENT_POD_PROTECTED_BINDING_COUNT_UNSUPPORTED/)
-    // A planner does not enforce a new Session/Agent/leaf global 1:1 or grant a concurrent writer.
+    assert.throws(() => planner.plan({ ...r, protectedBindings: [] }), /AGENT_POD_MOUNT_SCOPE_INVALID/)
+    assert.throws(() => planner.plan({ ...r, protectedBindings: [...r.protectedBindings, ...request(2).protectedBindings] }), /AGENT_POD_MOUNT_SCOPE_INVALID/)
+    assert.throws(() => planner.plan({ ...r, protectedBindings: [{ ...r.protectedBindings[0], key: 'unknown' }] }), /AGENT_POD_MOUNT_SCOPE_INVALID/)
+    // Planning does not impose a global Session/Agent/leaf 1:1 or authorize a concurrent writer.
     const other = planner.plan({ ...request(2), protectedBindings: r.protectedBindings })
     assert.equal(other.kind, 'UNAUTHORIZED_PLAN'); assert.equal(other.storageGrantIssued, false)
-    assert.equal(other.mountExpectations.protected.bindingId, r.protectedBindings[0].bindingId)
+    assert.equal(other.mountExpectations.protected[0].bindingId, r.protectedBindings[0].bindingId)
+    for (const protectedMounts of [[], [{ key: 'home', clientPath: '/agent' }, { key: 'project', clientPath: '/agent/project' }],
+      [{ key: 'same', clientPath: '/agent/home' }, { key: 'same', clientPath: '/agent/project' }],
+      [{ key: 'home', clientPath: '/agent/home' }], [{ key: 'shared', clientPath: '/shared' }]]) {
+      assert.throws(() => createAgentPodPlanner({ ...policy(), protectedMounts }), /AGENT_POD_POLICY_INVALID/)
+    }
+  })
+  await t.test('separate home/provider and checkout bindings produce two protected mounts and shared', () => {
+    const p = policy(); p.protectedMounts = [{ key: 'home', clientPath: '/agent/home' }, { key: 'project', clientPath: '/agent/project' }]
+    const r = request(), home = { ...r.protectedBindings[0], key: 'home' }, project = { ...request(2).protectedBindings[0], key: 'project', mode: 'RO' as const }
+    const planner = createAgentPodPlanner(p), plan = planner.plan({ ...r, protectedBindings: [project, home] })
+    assert.deepEqual(plan.mountExpectations.protected.map(binding => [binding.key, binding.clientPath, binding.claimName, binding.mode]),
+      [['home', '/agent/home', 'protected-1', 'RW'], ['project', '/agent/project', 'protected-2', 'RO']])
+    assert.deepEqual(plan.pod.spec.containers[0].volumeMounts.map(m => [m.mountPath, m.readOnly ?? false]),
+      [['/agent/home', false], ['/agent/project', true], ['/shared', false], ['/tmp', false]])
+    assert.deepEqual(planner.plan({ ...r, protectedBindings: [home, project] }), plan)
+    assert.equal(plan.pod.spec.volumes.length, 4)
+    assert.deepEqual(plan.pod.spec.volumes.slice(0, 3).map(v => v.persistentVolumeClaim?.claimName), ['protected-1', 'protected-2', 'shared-fixture'])
+    for (const changed of [{ key: home.key }, { bindingId: home.bindingId }, { leafId: home.leafId, serverPath: home.serverPath },
+      { claimName: home.claimName }, { claimUid: home.claimUid }, { pvUid: home.pvUid }]) {
+      assert.throws(() => planner.plan({ ...r, protectedBindings: [home, { ...project, ...changed }] }), /AGENT_POD_MOUNT_SCOPE_INVALID/)
+    }
+    assert.throws(() => planner.plan({ ...r, protectedBindings: [home] }), /AGENT_POD_MOUNT_SCOPE_INVALID/)
   })
   await t.test('protected and shared cannot alias the same claim or PV identity', () => {
     const p = policy(), planner = createAgentPodPlanner(p)

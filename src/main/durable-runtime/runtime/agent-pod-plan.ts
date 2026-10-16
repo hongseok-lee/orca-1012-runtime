@@ -6,7 +6,7 @@ import type { CapturedAgentPodPolicy } from './agent-pod-policy.ts'
 
 export type TrustedAgentPodRequest = Readonly<{
   identity: Readonly<{ unitId: string; operationId: string; attemptId: string; resourceName: string; executionEpoch: string; intentRevision: string; specHash: string }>
-  protectedBindings: readonly Readonly<{ bindingId: string; leafId: string; claimName: string; claimUid: string; pvUid: string; serverPath: string; mode: 'RO' | 'RW' }>[]
+  protectedBindings: readonly Readonly<{ key: string; bindingId: string; leafId: string; claimName: string; claimUid: string; pvUid: string; serverPath: string; mode: 'RO' | 'RW' }>[]
   profile: Readonly<{ revision: string; cpuMilli: number; memoryMi: number; ephemeralMi: number; temporaryMi: number }>
 }>
 
@@ -21,24 +21,40 @@ function captureRequest(value: unknown, policy: CapturedAgentPodPolicy) {
     executionEpoch: counter('execution-epoch', agentPodText(ids.get('executionEpoch'))),
     intentRevision: counter('intent-revision', agentPodText(ids.get('intentRevision'))), specHash })
   const bindings = agentPodArray(input.get('protectedBindings'))
-  // The Session model permits multiple bindings. This first /agent planner cannot silently omit them.
-  if (bindings.length !== 1) { throw new AgentPodPlanError('PROTECTED_BINDING_COUNT_UNSUPPORTED') }
-  const b = agentPodFields(bindings[0], ['bindingId', 'leafId', 'claimName', 'claimUid', 'pvUid', 'serverPath', 'mode'])
-  const mode = b.get('mode')
-  if (mode !== 'RO' && mode !== 'RW') { throw new AgentPodPlanError('INPUT_INVALID') }
-  const protectedBinding = Object.freeze({ bindingId: logicalId('storage-binding', agentPodUuid(b.get('bindingId'))),
-    leafId: agentPodUuid(b.get('leafId')), claimName: agentPodName(b.get('claimName')), claimUid: agentPodText(b.get('claimUid')),
-    pvUid: agentPodText(b.get('pvUid')), serverPath: agentPodPath(b.get('serverPath')), mode })
-  if (protectedBinding.serverPath !== `${policy.protectedExportRoot}/${protectedBinding.leafId}` ||
-      protectedBinding.claimName === policy.shared.claimName || protectedBinding.claimUid === policy.shared.claimUid ||
-      protectedBinding.pvUid === policy.shared.pvUid || agentPodWithin(protectedBinding.serverPath, policy.shared.serverPath) ||
-      agentPodWithin(policy.shared.serverPath, protectedBinding.serverPath)) { throw new AgentPodPlanError('MOUNT_SCOPE_INVALID') }
+  if (bindings.length !== policy.protectedMounts.length) { throw new AgentPodPlanError('MOUNT_SCOPE_INVALID') }
+  const capturedBindings = bindings.map(value => {
+    const b = agentPodFields(value, ['key', 'bindingId', 'leafId', 'claimName', 'claimUid', 'pvUid', 'serverPath', 'mode'])
+    const mode = b.get('mode')
+    if (mode !== 'RO' && mode !== 'RW') { throw new AgentPodPlanError('INPUT_INVALID') }
+    const binding = Object.freeze({ key: agentPodName(b.get('key'), true), bindingId: logicalId('storage-binding', agentPodUuid(b.get('bindingId'))),
+      leafId: agentPodUuid(b.get('leafId')), claimName: agentPodName(b.get('claimName')), claimUid: agentPodText(b.get('claimUid')),
+      pvUid: agentPodText(b.get('pvUid')), serverPath: agentPodPath(b.get('serverPath')), mode })
+    if (!policy.protectedMounts.some(mount => mount.key === binding.key) ||
+        binding.serverPath !== `${policy.protectedExportRoot}/${binding.leafId}` ||
+        binding.claimName === policy.shared.claimName || binding.claimUid === policy.shared.claimUid || binding.pvUid === policy.shared.pvUid ||
+        agentPodWithin(binding.serverPath, policy.shared.serverPath) || agentPodWithin(policy.shared.serverPath, binding.serverPath)) {
+      throw new AgentPodPlanError('MOUNT_SCOPE_INVALID')
+    }
+    return binding
+  })
+  for (let i = 0; i < capturedBindings.length; i++) {
+    for (const other of capturedBindings.slice(0, i)) {
+      const b = capturedBindings[i]
+      if (b.key === other.key || b.bindingId === other.bindingId || b.leafId === other.leafId || b.claimName === other.claimName ||
+          b.claimUid === other.claimUid || b.pvUid === other.pvUid) { throw new AgentPodPlanError('MOUNT_SCOPE_INVALID') }
+    }
+  }
+  const protectedBindings = Object.freeze(policy.protectedMounts.map(mount => {
+    const binding = capturedBindings.find(binding => binding.key === mount.key)
+    if (!binding) { throw new AgentPodPlanError('MOUNT_SCOPE_INVALID') }
+    return Object.freeze({ ...binding, clientPath: mount.clientPath })
+  }))
   const p = agentPodFields(input.get('profile'), ['revision', 'cpuMilli', 'memoryMi', 'ephemeralMi', 'temporaryMi'])
   const profile = Object.freeze({ revision: counter('profile-revision', agentPodText(p.get('revision'))),
     cpuMilli: agentPodInteger(p.get('cpuMilli')), memoryMi: agentPodInteger(p.get('memoryMi')),
     ephemeralMi: agentPodInteger(p.get('ephemeralMi')), temporaryMi: agentPodInteger(p.get('temporaryMi')) })
   if (profile.temporaryMi > profile.ephemeralMi) { throw new AgentPodPlanError('INPUT_INVALID') }
-  return Object.freeze({ identity, protectedBinding, profile })
+  return Object.freeze({ identity, protectedBindings, profile })
 }
 
 const digest = (value: unknown): string => createHash('sha256').update(JSON.stringify(value)).digest('hex')
@@ -48,8 +64,7 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
   const policy = captureAgentPodPolicy(deploymentPolicy)
   return Object.freeze({ plan(value: unknown) {
     try {
-      const request = captureRequest(value, policy), { identity, protectedBinding, profile } = request
-      const protectedReadOnly = protectedBinding.mode === 'RO'
+      const request = captureRequest(value, policy), { identity, protectedBindings, profile } = request
       const spec = Object.freeze({ restartPolicy: 'Never', terminationGracePeriodSeconds: 25,
         hostNetwork: false, automountServiceAccountToken: false,
         nodeSelector: Object.freeze({ 'cloud.google.com/gke-spot': 'true', 'kubernetes.io/arch': 'amd64' }),
@@ -69,9 +84,11 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
             'ephemeral-storage': `${profile.ephemeralMi}Mi` }), limits: Object.freeze({ 'ephemeral-storage': `${profile.ephemeralMi}Mi` }) }),
           securityContext: Object.freeze({ allowPrivilegeEscalation: false, privileged: false, readOnlyRootFilesystem: true,
             capabilities: Object.freeze({ drop: Object.freeze(['ALL']) }) }),
-          volumeMounts: Object.freeze([Object.freeze({ name: 'protected', mountPath: '/agent', readOnly: protectedReadOnly }),
+          volumeMounts: Object.freeze([...protectedBindings.map((binding, index) => Object.freeze({
+            name: `protected-${index}`, mountPath: binding.clientPath, readOnly: binding.mode === 'RO' })),
             Object.freeze({ name: 'shared', mountPath: '/shared', readOnly: false }), Object.freeze({ name: 'temporary', mountPath: '/tmp' })]) })]),
-        volumes: Object.freeze([Object.freeze({ name: 'protected', persistentVolumeClaim: Object.freeze({ claimName: protectedBinding.claimName, readOnly: protectedReadOnly }) }),
+        volumes: Object.freeze([...protectedBindings.map((binding, index) => Object.freeze({ name: `protected-${index}`,
+          persistentVolumeClaim: Object.freeze({ claimName: binding.claimName, readOnly: binding.mode === 'RO' }) })),
           Object.freeze({ name: 'shared', persistentVolumeClaim: Object.freeze({ claimName: policy.shared.claimName, readOnly: false }) }),
           Object.freeze({ name: 'temporary', emptyDir: Object.freeze({ sizeLimit: `${profile.temporaryMi}Mi` }) })]) })
       const pod = Object.freeze({ apiVersion: 'v1', kind: 'Pod', metadata: Object.freeze({
@@ -81,7 +98,7 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
           'orca.dev/execution-epoch': identity.executionEpoch, 'orca.dev/intent-revision': identity.intentRevision,
           // This is the trusted logical desired-spec hash, not a newly issued authority proof.
           'orca.dev/spec-hash': identity.specHash, 'orca.dev/resource-profile-revision': profile.revision }) }), spec })
-      const mountExpectations = Object.freeze({ protected: Object.freeze({ ...protectedBinding, server: policy.nfsServer, clientPath: '/agent' }),
+      const mountExpectations = Object.freeze({ protected: Object.freeze(protectedBindings.map(binding => Object.freeze({ ...binding, server: policy.nfsServer }))),
         shared: Object.freeze({ ...policy.shared, server: policy.nfsServer, clientPath: '/shared', mode: 'RW' }) })
       return Object.freeze({ kind: 'UNAUTHORIZED_PLAN', identity, pod, mountExpectations, podSpecSHA256: digest(spec),
         readinessObserved: false, storageGrantIssued: false, physicalPinIssued: false })
