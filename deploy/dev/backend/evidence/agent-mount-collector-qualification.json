@@ -1,0 +1,361 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-agent-mount-collector-qualification-public-evidence",
+  "recordedAt": "2026-10-16T07:52:04.185922+00:00",
+  "privacy": "공개용으로 원 식별자·IP·계정·절대 운영 경로를 일반화했습니다. private 원문과 byte-identical인 사본이 아닙니다.",
+  "evidenceBasePin": "8900cb3e293c59eaf5e5386d4c30fe868d96e6a5",
+  "productSourcePin": "ff00e3538c66d7d617e21ede05f15c688dbd3778",
+  "sourceScope": "실제 포함된 원 제품 17개 파일만 증명하며 전체 checkout 일치를 주장하지 않습니다.",
+  "observedAt": {
+    "managementStartedAt": "2026-10-16T07:35:53.042Z",
+    "collectorStartedAt": "2026-10-16T07:36:03.302Z",
+    "collectorFinishedAt": "2026-10-16T07:36:03.706Z",
+    "managementFinishedAt": "2026-10-16T07:36:53.169Z"
+  },
+  "calls": {
+    "collector": 1,
+    "readOnlyAgentProbe": 1,
+    "normalAuthenticatedHttpStatuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "webSocketProtocol": "v5.channel.k8s.io",
+    "webSocketCloseCode": 1000,
+    "remoteStatus": "Success",
+    "stdoutBytes": 9835,
+    "stdoutSHA256": "9781f59363bbbb50293fea426ed08902b58d7ce74203450603372571acb9ffe6",
+    "extraCollectorOrProbe": 0
+  },
+  "originalPlan": {
+    "kind": "UNAUTHORIZED_PLAN",
+    "podUid": "<qualification-pod-uid>",
+    "planDigest": "f65e04c76dd43c3213c79a7630c049dd244e9e0e7fb1d95cb5a3f782d8405487",
+    "podBeforeAfterIncarnationMatched": true,
+    "pvcPvBeforeAfterIdentityMatched": true,
+    "protectedMode": "RO",
+    "sharedMode": "RW",
+    "idleEntrypoint": "/usr/local/bin/node -e setInterval(() => {}, 3600000)",
+    "imageDigest": "sha256:c68dafad77cf5c4f34d03d4d8cac2febca416a1a2bd9106c307bc7ae4c39f7b0",
+    "desiredResources": {
+      "requests": {
+        "cpu": "500m",
+        "memory": "512Mi",
+        "ephemeral-storage": "1024Mi"
+      },
+      "limits": {
+        "ephemeral-storage": "1024Mi"
+      }
+    },
+    "admittedResources": {
+      "limits": {
+        "ephemeral-storage": "1Gi"
+      },
+      "requests": {
+        "cpu": "500m",
+        "ephemeral-storage": "1Gi",
+        "memory": "512Mi"
+      }
+    },
+    "cpuMemoryLimitsOmitted": true,
+    "protectedHome": "/agent/home",
+    "providerStateContentsRead": false,
+    "serviceAccountAutomount": false
+  },
+  "mounts": [
+    {
+      "kind": "protected",
+      "clientPath": "/agent/home",
+      "realPath": "/agent/home",
+      "mode": "RO",
+      "filesystem": "nfs",
+      "nfsSource": "<nfs-service-ip>:<protected-leaf-export>",
+      "mountId": "<protected-consumer-mount-id>",
+      "mountDevice": "<protected-consumer-device>",
+      "clientStat": {
+        "device": "<protected-consumer-device>",
+        "inode": "<protected-consumer-inode>",
+        "uid": 1000,
+        "gid": 1000,
+        "mode": "0700"
+      },
+      "identityScope": "consumer-only",
+      "beforeAfterIdentityMatched": true
+    },
+    {
+      "kind": "shared",
+      "clientPath": "/shared",
+      "realPath": "/shared",
+      "mode": "RW",
+      "filesystem": "nfs",
+      "nfsSource": "<nfs-service-ip>:<shared-export>",
+      "mountId": "<shared-consumer-mount-id>",
+      "mountDevice": "<shared-consumer-device>",
+      "clientStat": {
+        "device": "<shared-consumer-device>",
+        "inode": "<shared-consumer-inode>",
+        "uid": 0,
+        "gid": 1000,
+        "mode": "0770"
+      },
+      "identityScope": "consumer-only",
+      "beforeAfterIdentityMatched": true
+    }
+  ],
+  "evidenceDigest": "3ec4fdde42d6b3f8581285f2f1e0c8ae49d018cc3452f1def696d404888b5ba5",
+  "probeDigest": "029de53aba147f60def8763433cd09507e11c1ea7d65e7620a89a9409512068a",
+  "reference": "agent-mount-sha256:3ec4fdde42d6b3f8581285f2f1e0c8ae49d018cc3452f1def696d404888b5ba5",
+  "provenance": {
+    "acceptedIncrementalHelperSHA256": "c05b28351c21ee41f524c7518900a82a184249823cd8813adedadcb7ed012c07",
+    "callerTransforms": 1,
+    "actualProductInputCount": 17,
+    "actualTotalInputCount": 18,
+    "inputMismatches": [],
+    "inputMissing": [],
+    "bundleSHA256": "7ab122cb3c7486eee360693991ff07d821373d608b99ee022070bf3b7b1b4324",
+    "metafileSHA256": "245b88ef8043e96a18ec984101e606029fb3c38450d9114b331ce1485ac4231e",
+    "originalBundleSHA256": "22d19189e532e3c127757521d1342a4621fe84bd1d5e6a3d57e1e63d31f30a6b",
+    "actualProductInputs": [
+      {
+        "path": "src/shared/durable-runtime/identity.ts",
+        "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+        "bytes": 3357
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+        "sha256": "575f1607631fe6c47f484b06e3145ccba2054468d77570fa7d85a5826ebfed8f",
+        "bytes": 7365
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+        "sha256": "9439fe2e23e04dd49954a0adece4170516c0c7f5c2fa9aff2de6c24cf1e39711",
+        "bytes": 9397
+      },
+      {
+        "path": "src/main/durable-runtime/db/connection.ts",
+        "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+        "bytes": 6387
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+        "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+        "bytes": 2182
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+        "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0",
+        "bytes": 3952
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/agent-pod-create-types.ts",
+        "sha256": "d0bd432e98dc177f8cbd26ff09d8edb48c0b787f6a3d7a8bdc2c4b7a0ee432a4",
+        "bytes": 1705
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/agent-pod-create-projection.ts",
+        "sha256": "5a543d9a46819b0894babebc4e7b5a77725c30dd14d2e9688ed6db693c405466",
+        "bytes": 12317
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+        "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb",
+        "bytes": 2786
+      },
+      {
+        "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+        "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835",
+        "bytes": 5290
+      },
+      {
+        "path": "src/main/durable-runtime/lifecycle/agent-pod-create-transport.ts",
+        "sha256": "7d8d8269ce415e9f72dbc297422940e0d59ee21c080c657925173ed9be7bca95",
+        "bytes": 4780
+      },
+      {
+        "path": "src/main/durable-runtime/storage/agent-mount-collector-types.ts",
+        "sha256": "cc05709ff1f6277c0ba77e8ac76b55cf73793e9331815f0e9cc7b9c3c01ff621",
+        "bytes": 3439
+      },
+      {
+        "path": "src/main/durable-runtime/storage/agent-mount-collector-projection.ts",
+        "sha256": "6270649c54129652c80c52a0634e828a0b42a12ebd04498c84ce865881f5072e",
+        "bytes": 10172
+      },
+      {
+        "path": "src/main/durable-runtime/storage/canonical.ts",
+        "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+        "bytes": 5525
+      },
+      {
+        "path": "src/main/durable-runtime/storage/agent-mount-collector-probe.ts",
+        "sha256": "40b5d4169ea92d854dff3ac62709e76b2a9fdd3d08580f0ee7d1755f83398843",
+        "bytes": 7903
+      },
+      {
+        "path": "src/main/durable-runtime/storage/agent-mount-collector-exec.ts",
+        "sha256": "4ac4f9dcb637358f1393e13da13e2ba2d1e86535d2fe2d6f4cdd68074cf6c757",
+        "bytes": 6287
+      },
+      {
+        "path": "src/main/durable-runtime/storage/agent-mount-collector.ts",
+        "sha256": "18e65c2bd3202cc6d4ea374aab4302bf8ba7b00bbe6867e486b29f920816c08a",
+        "bytes": 7954
+      }
+    ]
+  },
+  "cleanup": {
+    "complete": true,
+    "objects": [
+      {
+        "kind": "RoleBinding",
+        "object": "qualification-reader-binding",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "ClusterRoleBinding",
+        "object": "qualification-pv-binding",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "Role",
+        "object": "qualification-reader-role",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "ClusterRole",
+        "object": "qualification-pv-role",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "Pod",
+        "object": "qualification-pod",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "PersistentVolumeClaim",
+        "object": "protected-claim",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "PersistentVolumeClaim",
+        "object": "shared-claim",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "PersistentVolume",
+        "object": "protected-consumer-pv",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "PersistentVolume",
+        "object": "shared-consumer-pv",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      },
+      {
+        "kind": "Namespace",
+        "object": "qualification-namespace",
+        "status": "API_ABSENT",
+        "uidPrecondition": true,
+        "physicalFence": false
+      }
+    ],
+    "totalCreatedAcrossQualification": 10,
+    "reusedOwnedStorageObjects": 5,
+    "createdInCpu500Continuation": 5,
+    "normalPodGraceSeconds": 25,
+    "callerProcessesAbsent": true,
+    "controlProcessAbsent": true,
+    "heavyRunning": 0,
+    "forceDelete": 0,
+    "nfsFileOrLeafOrBackingDeletion": 0
+  },
+  "originalFailures": [
+    {
+      "phase": "original-nfs-gate",
+      "at": "2026-10-16T06:35:40.161Z",
+      "kind": "NotFound",
+      "getCount": 2,
+      "createdObjects": 0,
+      "collectorCalls": 0,
+      "result": "Root가 별도 6 GET의 새 target을 수락한 뒤 expected metadata만 갱신했습니다."
+    },
+    {
+      "phase": "original-pod-create",
+      "at": "2026-10-16T06:45:02.992Z",
+      "kind": "GKE Warden anti-affinity minimum CPU rejection",
+      "requestedCpuMilli": 250,
+      "requiredCpuMilli": 500,
+      "collectorCalls": 0,
+      "result": "원 namespace/PVC2/PV2와 bundle을 보존하고 exact Pod GET1의 부재 확인 뒤 CPU500 한정 continuation을 배분받았습니다."
+    }
+  ],
+  "authority": {
+    "namespacePin": false,
+    "writerGrantIssued": false,
+    "providerReady": false,
+    "physicalFence": false
+  },
+  "limits": [
+    "한 qualification Pod의 한 시점 consumer mount 관측입니다.",
+    "NFS 파일·marker 쓰기, 쓰기 격리·공용 동시쓰기·잠금 시험은 하지 않았습니다.",
+    "성공 exec status와 socket close는 production writer fencing 또는 namespace 수명 pin이 아닙니다.",
+    "Pod API 부재는 old writer physical proof가 아닙니다.",
+    "production mount authority·controller 자동생성·native provider·old writer·HA·P1-10/13 전체 합격은 아닙니다."
+  ],
+  "unchanged": {
+    "productSourceChanges": 0,
+    "pgMutation": 0,
+    "providerCalls": 0,
+    "nfsServerExec": 0,
+    "install": 0,
+    "newImageBuild": 0,
+    "successfulSuiteRepeated": 0,
+    "newScreenshot": 0,
+    "liveRuntimeRestart": 0
+  },
+  "privateOriginalSHA256": {
+    "collectorResult": "2191cebd00765d46120d01cfb7d96bfaea4014f70a894e2571f229ee5594b627",
+    "probeStdout": "9781f59363bbbb50293fea426ed08902b58d7ce74203450603372571acb9ffe6",
+    "transportFinal": "fdc6ae766b1df41c14ecfda1d0ef9666833f4ef76fdae691d1740e8ef9634a48",
+    "transportAtReturn": "6efa7fe752ac34769cf1bcdc2d461573d70dd3c67e3a495a652b866e98da2370",
+    "incrementalImportProvenance": "fed8f10f3a6633fa90aa2e464de9f736830349dbe4470ac0559dc036c60bd39e",
+    "incrementalMetafile": "245b88ef8043e96a18ec984101e606029fb3c38450d9114b331ce1485ac4231e",
+    "runState": "1252d25f3c38630d6659801c8421af6f1990df35d65f624d6f3afb41aef233f7",
+    "callerRecall": "1e88e5449dd34ac6fc23817314821e487a2adbb00efebe0f38d7e5bee40bb689",
+    "originalNotFound": "15c23fba7b0e45464b4fc75808bebbbf5f5ed4ecb6b8de87e175f97045faa127",
+    "originalWarden": "9cb901ad69f991323383e2e45fe0e574b11005d742038e32b229b7c3af0ea377"
+  },
+  "historicalScreenshot": {
+    "path": "deploy/dev/backend/evidence/controller-dev-connection.png",
+    "sourceCommit": "805b0da68ed49572d4f2e45a57712fd84dbbf419",
+    "capturedAt": "2026-10-16T01:58:40.109Z",
+    "sha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+    "limit": "당시 Expo Web 연결·한국어 Ops·Unit summary 화면입니다. 이번 actual Agent mount·상세 dialog·native 기기 합격 증거가 아닙니다."
+  },
+  "usageCreditsStreamErrorObserved": false
+}
