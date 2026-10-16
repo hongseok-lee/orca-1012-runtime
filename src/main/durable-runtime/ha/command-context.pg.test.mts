@@ -67,7 +67,7 @@ await test('committed execute and original lookup receive the frozen original co
   const control=(await pool.query(`SELECT c.scope,c.owner,c.term,c.revision,c.expires_at,
     clock_timestamp() AS pg_clock,coalesce(c.expires_at>clock_timestamp(),false) AS unexpired
     FROM (SELECT 1) guard LEFT JOIN durable_runtime.controller_leases c ON c.scope=$1`,[CONTROLLER_SCOPE])).rows[0]
-  await writeFile(leaseEvidencePath,JSON.stringify({ scope:CONTROLLER_SCOPE,control })+'\n',{ flag:'wx',mode:0o600 })
+  await writeFile(leaseEvidencePath,`${JSON.stringify({ scope:CONTROLLER_SCOPE,control })}\n`,{ flag:'wx',mode:0o600 })
   assert.equal(control.unexpired,false,'existing isolated control lease must be expired/absent before acquire')
   const before=await originalRows()
   assert.equal((await session.acquire()).status,'ACTIVE')
