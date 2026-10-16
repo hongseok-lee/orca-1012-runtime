@@ -75,7 +75,7 @@ export function createAgentMountCollector(caller: AgentMountCollectorConfig, dep
     try {
       check()
       let supply: Promise<string>
-      try { supply = Promise.resolve(reader(controller.signal)) }
+      try { supply = Promise.resolve(reader.call(config, controller.signal)) }
       catch { throw new AgentMountCollectorError('CREDENTIAL_FAILED') }
       try { bearer = await awaitPodAuthValue(supply, controller.signal) }
       catch { check(); throw new AgentMountCollectorError('CREDENTIAL_FAILED') }
@@ -94,7 +94,8 @@ export function createAgentMountCollector(caller: AgentMountCollectorConfig, dep
         planDigest: input.original.planDigest, pod, finalPod, storage: first, finalStorage: last, mounts,
         observedAt: new Date().toISOString(), probeDigest: agentMountProbeSha256,
         namespacePin: false as const, writerGrantIssued: false as const, providerReady: false as const }
-      const evidenceDigest = createHash('sha256').update(canonicalInput(evidence)).digest('hex')
+      const evidenceDigest = createHash('sha256').update(canonicalInput({ ...evidence,
+        storage: [...first], finalStorage: [...last], mounts: [...mounts] })).digest('hex')
       check()
       return Object.freeze({ ...evidence, evidenceDigest, reference: `agent-mount-sha256:${evidenceDigest}` })
     } catch (error) {

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import type { ClientOptions } from 'ws'
+import type { JsonValue } from '../db/atomic.ts'
 import { canonicalInput } from '../runtime/gateway/input.ts'
 import { createAgentPodPlanner } from '../runtime/agent-pod-plan.ts'
 import { harness, reviewerToken } from '../runtime/kubernetes-pod-auth-fixtures.mts'
@@ -25,7 +26,8 @@ export function original(mode: 'RO' | 'RW' = 'RO', multiple = false) {
     resourceName: `orca-unit-${uuid(11)}`, executionEpoch: '3', intentRevision: '5', specHash: 'a'.repeat(64) },
     protectedBindings: multiple ? [binding(1, 'home', 'RW'), binding(2, 'project', mode)] : [binding(1, 'main', mode)],
     profile: { revision: '7', cpuMilli: 777, memoryMi: 1024, ephemeralMi: 2048, temporaryMi: 256 } })
-  return { plan, planDigest: createHash('sha256').update(canonicalInput(plan)).digest('hex'), recordedAt: '2026-10-16T04:23:00.000Z' }
+  const json: JsonValue = JSON.parse(JSON.stringify(plan))
+  return { plan, planDigest: createHash('sha256').update(canonicalInput(json)).digest('hex'), recordedAt: '2026-10-16T04:23:00.000Z' }
 }
 export function models(mode: 'RO' | 'RW' = 'RO', multiple = false) {
   const record = original(mode, multiple), podUid = uuid(80), plan = record.plan
