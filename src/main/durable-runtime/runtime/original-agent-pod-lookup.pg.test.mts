@@ -185,7 +185,7 @@ function compose(f: Fixture, h: ReturnType<typeof harness>, db = observedPool())
     assert.equal(db.state.clients, 0, 'original target COMMIT/cleanup must precede HTTPS')
     assert.equal(db.state.transactions, 0, 'HTTP holds no DB transaction')
     assert.equal(args[1].method, 'GET', 'this factory must never POST even for RESERVED with no UID')
-    assert.ok(args[0].pathname.endsWith('/pods/' + f.plan.identity.resourceName))
+    assert.ok(args[0].pathname.endsWith(`/pods/${f.plan.identity.resourceName}`))
     return request(...args)
   } }
   const lookup = createInitialAgentPodLookup({ pool: db.pool,
@@ -219,7 +219,7 @@ test('adopted original Agent command uses only GET and assigns or replays its or
   const control = (await pool.query(`SELECT c.scope,c.owner,c.term,c.revision,c.expires_at,
     clock_timestamp() AS pg_clock,coalesce(c.expires_at>clock_timestamp(),false) AS unexpired
     FROM (SELECT 1) guard LEFT JOIN durable_runtime.controller_leases c ON c.scope=$1`, [CONTROLLER_SCOPE])).rows[0]
-  await writeFile(leaseEvidence, JSON.stringify({ actual, control }) + '\n', { flag: 'wx', mode: 0o600 })
+  await writeFile(leaseEvidence, `${JSON.stringify({ actual, control })}\n`, { flag: 'wx', mode: 0o600 })
   assert.equal(control.unexpired, false, 'normal isolated lease acquire only; no expiry/reset mutation')
   const originals = await originalRows()
   async function nextController(): Promise<VerifiedControllerIdentity> {
@@ -278,7 +278,7 @@ test('adopted original Agent command uses only GET and assigns or replays its or
   assert.equal(unknownHttp.requests.length, 1); unknownHttp.assertCleanup()
   assert.deepEqual(await commandSnapshot(f), before)
 
-  const uid = 'synthetic-original-pod:' + randomUUID()
+  const uid = `synthetic-original-pod:${randomUUID()}`
   const pod = { ...f.plan.pod, metadata: { ...f.plan.pod.metadata, uid, resourceVersion: 'synthetic-get-1' } }
   const foundHttp = harness([{ status: 200, body: pod }, { status: 200, body: pod }]), found = compose(f, foundHttp)
   const assigned = await found.lookup.lookup(input, signal)
