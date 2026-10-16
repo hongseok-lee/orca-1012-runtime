@@ -68,7 +68,7 @@ function selector(value: unknown): Readonly<Record<string, string>> {
     const parts = key.split("/");
     if (parts.length > 2) { invalid(); }
     if (parts.length === 2) { name(parts[0]); }
-    string(parts[parts.length - 1], /^[A-Za-z0-9](?:[-A-Za-z0-9_.]*[A-Za-z0-9])?$/, 63);
+    string(parts.at(-1), /^[A-Za-z0-9](?:[-A-Za-z0-9_.]*[A-Za-z0-9])?$/, 63);
     if (typeof item !== "string" || item.length > 63 ||
         (item !== "" && !/^[A-Za-z0-9](?:[-A-Za-z0-9_.]*[A-Za-z0-9])?$/.test(item))) { invalid(); }
     return [key, item];

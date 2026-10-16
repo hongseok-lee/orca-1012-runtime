@@ -15,7 +15,7 @@ test("unqualified namespace guard generation and API request data (not CEL enfor
   await t.test("deterministic output, stable sorted inputs, Deny/Fail and exact namespace only", () => {
     const first = createNamespaceFreezePolicyBundle(input);
     const second = createNamespaceFreezePolicyBundle({ ...input,
-      service: { ...input.service, selector: Object.fromEntries(Object.entries(input.service.selector).reverse()) } });
+      service: { ...input.service, selector: Object.fromEntries(Object.entries(input.service.selector).toReversed()) } });
     assert.equal(JSON.stringify(first), JSON.stringify(second));
     assert.equal(first.kind, "UNQUALIFIED_NAMESPACE_GUARD_BUNDLE");
     assert.equal(first.enforcementVerified, false); assert.equal(first.physicalPinIssued, false);
@@ -51,7 +51,7 @@ test("unqualified namespace guard generation and API request data (not CEL enfor
     assert.equal(touched, false);
   });
   await t.test("CEL literals retain injection bytes as quoted data, never caller expressions", () => {
-    const injection = '\" || true || \"\\\n';
+    const injection = '" || true || "\\\n';
     assert.equal(celLiteral(injection), JSON.stringify(injection));
     assert.equal(JSON.parse(celLiteral(injection)), injection);
     const bundle = createNamespaceFreezePolicyBundle(input);
