@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-16T01:58:40.109Z",
+  "artifactSha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+  "artifactBytes": 113773,
+  "originalPngUnedited": true,
+  "originalProvenanceSha256": "4e87cc4e8b9a192860fcda7a84328af8e3fda62e5d7d289f4372aa92e2ec5380",
+  "viewerHandoffSha256": "f3e1699577d49b4da672c7c5af8422b9eb56669d0796c7d17c0e8c6c7b621e0a",
+  "rootVisualAccepted": true,
+  "rootContractReference": "docs/plans/orca-1012-dispatch-controller-dev-evidence.md",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "DPR": 1,
+  "isMobile": true,
+  "hasTouch": true,
+  "routePattern": "/h/:paired-host/session/:worktree",
+  "queryKeys": [
+    "name"
+  ],
+  "rawExpoUrlPublished": false,
+  "opsRoutePattern": "/ops/",
+  "runtimeEvidenceSourcePin": "8ff3168ebb6a7c0f92abe88c4c94f46742bfe5d1",
+  "runtimeSourcePinBoundary": "승인된 delta5와 기존220개 후보 범위의 참조이며 전체 checkout 일치가 아닙니다.",
+  "viewerHistoricalSourceReferences": {
+    "validatedProductSourcePin": "f0f679e1721ce2a840394998f9feebbd8539fb54",
+    "clientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "clientFrameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+    "clientFrameManifestSHA256": "3f48db1377ea638094ea453ddaf4d19f1dc4694c096f324e4b4c44de32bc8b2c"
+  },
+  "actualVisibleState": "overview와 닫힌 Unit summary 카드",
+  "originalHelperState": "detail",
+  "originalStateDoesNotProveDetailDialog": true,
+  "detailDialogVisible": false,
+  "detailGetOrContentsQualified": false,
+  "visible": [
+    "연결됨",
+    "한글 운영 현황",
+    "Runtime Unit 1",
+    "RUNNING 카드"
+  ],
+  "captureCount": 1,
+  "phoneClicks": 1,
+  "summaryTaps": 0,
+  "detailTaps": 0,
+  "upDrags": 0,
+  "contextClosed": true,
+  "browserClosed": true,
+  "privateAuthUnchanged": true,
+  "actualDevelopmentUI": true,
+  "synthetic": false,
+  "nativeIPhone": false,
+  "automaticAuthQualified": false,
+  "playwright": "1.59.1",
+  "chromium": "147.0.7727.15",
+  "freshRuntimeListWatchProven": false,
+  "newChromePidObserved": false,
+  "repositoryPin": "e7e46480af245df182354fd0f5ad859d495cb4c7",
+  "currentNamespaceManagementResultScreen": false,
+  "newCapture": false
+}
