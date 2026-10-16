@@ -1,0 +1,23 @@
+--- a/src/main/durable-runtime/runtime/initial-agent-pod-assignment.pg.test.mts
++++ b/src/main/durable-runtime/runtime/initial-agent-pod-assignment.pg.test.mts
+@@ -1,6 +1,7 @@
+ import assert from "node:assert/strict";
+ import { createHash, randomUUID } from "node:crypto";
+ import { test } from "node:test";
++import type { QueryResultRow } from "pg";
+ import { createDurablePool, DurableDatabaseError, withDurableTransaction } from "../db/connection.ts";
+ import { readMigrations } from "../db/migrate.ts";
+ import { counter, logicalId } from "../../../shared/durable-runtime/identity.ts";
+@@ -240,8 +241,10 @@
+   const captured = await seed(), mutable = structuredClone({ claim: captured.request.claim,
+     planDigest: captured.request.planDigest, observation: observation(captured) });
+   const capturedResult = await withDurableTransaction(pool, async tx => {
+-    const originalQuery = tx.query, entered = Promise.withResolvers<void>(), gate = Promise.withResolvers<void>();
+-    tx.query = async function(sql, values) { entered.resolve(); await gate.promise; return Reflect.apply(originalQuery, tx, [sql, values]); };
++    const originalQuery = tx.query, query = originalQuery.bind(tx), entered = Promise.withResolvers<void>(), gate = Promise.withResolvers<void>();
++    tx.query = async function<Row extends QueryResultRow = QueryResultRow>(sql: string, values: readonly unknown[] = []) {
++      entered.resolve(); await gate.promise; return query<Row>(sql, values);
++    };
+     const pending = assignInitialAgentPod(tx, captured.context, mutable);
+     const settled = pending.then(() => undefined, () => undefined);
+     try {

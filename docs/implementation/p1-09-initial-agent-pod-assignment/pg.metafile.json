@@ -1,0 +1,559 @@
+{
+  "inputs": {
+    "src/main/durable-runtime/db/connection.ts": {
+      "bytes": 6387,
+      "imports": [
+        {
+          "path": "pg",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/db/migrate.ts": {
+      "bytes": 3136,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "./connection.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/shared/durable-runtime/identity.ts": {
+      "bytes": 3357,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/agent-pod-policy.ts": {
+      "bytes": 7365,
+      "imports": [
+        {
+          "path": "node:net",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/agent-pod-plan.ts": {
+      "bytes": 9397,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-policy.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/gateway/input.ts": {
+      "bytes": 2182,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../../db/connection.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/db/locks.ts": {
+      "bytes": 2071,
+      "imports": [
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "./connection.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/gateway/authority.ts": {
+      "bytes": 5150,
+      "imports": [
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/locks.ts",
+          "kind": "import-statement",
+          "original": "../../db/locks.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/agent-pod-plan-records.ts": {
+      "bytes": 13515,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-plan.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-policy.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+          "kind": "import-statement",
+          "original": "./gateway/input.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "kind": "import-statement",
+          "original": "./gateway/authority.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/gateway/store.ts": {
+      "bytes": 9729,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "kind": "import-statement",
+          "original": "./authority.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+          "kind": "import-statement",
+          "original": "./input.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/initial-agent-attempt.ts": {
+      "bytes": 19046,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/locks.ts",
+          "kind": "import-statement",
+          "original": "../db/locks.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-plan-records.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "kind": "import-statement",
+          "original": "./gateway/authority.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+          "kind": "import-statement",
+          "original": "./gateway/store.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+          "kind": "import-statement",
+          "original": "./gateway/input.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/gateway/claim.ts": {
+      "bytes": 7342,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "kind": "import-statement",
+          "original": "./authority.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+          "kind": "import-statement",
+          "original": "./input.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+          "kind": "import-statement",
+          "original": "./store.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/lifecycle/kubernetes-identity.ts": {
+      "bytes": 3952,
+      "imports": [
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/initial-agent-pod-assignment.ts": {
+      "bytes": 24095,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/locks.ts",
+          "kind": "import-statement",
+          "original": "../db/locks.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+          "kind": "import-statement",
+          "original": "../lifecycle/kubernetes-identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-plan-records.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-policy.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "kind": "import-statement",
+          "original": "./gateway/authority.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+          "kind": "import-statement",
+          "original": "./gateway/store.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+          "kind": "import-statement",
+          "original": "./gateway/input.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/runtime/src/main/durable-runtime/runtime/initial-agent-pod-assignment.pg.test.mts.generated.cts": {
+      "bytes": 23901,
+      "imports": [
+        {
+          "path": "node:assert/strict",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:test",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/migrate.ts",
+          "kind": "import-statement",
+          "original": "../db/migrate.ts"
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-plan.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+          "kind": "import-statement",
+          "original": "./agent-pod-plan-records.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/initial-agent-attempt.ts",
+          "kind": "import-statement",
+          "original": "./initial-agent-attempt.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+          "kind": "import-statement",
+          "original": "./gateway/authority.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+          "kind": "import-statement",
+          "original": "./gateway/store.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/claim.ts",
+          "kind": "import-statement",
+          "original": "./gateway/claim.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+          "kind": "import-statement",
+          "original": "./gateway/input.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/runtime/initial-agent-pod-assignment.ts",
+          "kind": "import-statement",
+          "original": "./initial-agent-pod-assignment.ts"
+        }
+      ],
+      "format": "cjs"
+    }
+  },
+  "outputs": {
+    "../pg.cjs": {
+      "imports": [
+        {
+          "path": "node:assert/strict",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:test",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "pg",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:net",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "src/main/durable-runtime/runtime/src/main/durable-runtime/runtime/initial-agent-pod-assignment.pg.test.mts.generated.cts",
+      "inputs": {
+        "src/main/durable-runtime/runtime/src/main/durable-runtime/runtime/initial-agent-pod-assignment.pg.test.mts.generated.cts": {
+          "bytesInOutput": 22882
+        },
+        "src/main/durable-runtime/db/connection.ts": {
+          "bytesInOutput": 4846
+        },
+        "src/main/durable-runtime/db/migrate.ts": {
+          "bytesInOutput": 649
+        },
+        "src/shared/durable-runtime/identity.ts": {
+          "bytesInOutput": 621
+        },
+        "src/main/durable-runtime/runtime/agent-pod-plan.ts": {
+          "bytesInOutput": 8967
+        },
+        "src/main/durable-runtime/runtime/agent-pod-policy.ts": {
+          "bytesInOutput": 7011
+        },
+        "src/main/durable-runtime/runtime/agent-pod-plan-records.ts": {
+          "bytesInOutput": 12478
+        },
+        "src/main/durable-runtime/runtime/gateway/input.ts": {
+          "bytesInOutput": 1769
+        },
+        "src/main/durable-runtime/db/locks.ts": {
+          "bytesInOutput": 1360
+        },
+        "src/main/durable-runtime/runtime/gateway/authority.ts": {
+          "bytesInOutput": 3623
+        },
+        "src/main/durable-runtime/runtime/initial-agent-attempt.ts": {
+          "bytesInOutput": 16282
+        },
+        "src/main/durable-runtime/runtime/gateway/store.ts": {
+          "bytesInOutput": 6361
+        },
+        "src/main/durable-runtime/runtime/gateway/claim.ts": {
+          "bytesInOutput": 2224
+        },
+        "src/main/durable-runtime/runtime/initial-agent-pod-assignment.ts": {
+          "bytesInOutput": 20515
+        },
+        "src/main/durable-runtime/lifecycle/kubernetes-identity.ts": {
+          "bytesInOutput": 1079
+        }
+      },
+      "bytes": 113192
+    }
+  }
+}
