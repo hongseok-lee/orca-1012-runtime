@@ -26,7 +26,7 @@ function fakeOperator(input, mutate = () => {}) {
     if (options.method === 'POST') {
       const value = structuredClone(options.body)
       value.metadata.uid = uid(++serial); value.metadata.generation = 1
-      if (value.kind === 'ValidatingAdmissionPolicy') value.status = { observedGeneration: 1, typeChecking: { expressionWarnings: [] } }
+      if (value.kind === 'ValidatingAdmissionPolicy') { value.status = { observedGeneration: 1, typeChecking: { expressionWarnings: [] } } }
       stored.set(`${options.path}/${value.metadata.name}`, value)
       response = { statusCode: 201, body: value }
     } else if (options.path.includes('?fieldSelector=') || options.path.endsWith('/secrets')) {
@@ -66,7 +66,7 @@ test('operator caller captures input and enables issuer binding only after guard
 })
 test('existing deterministic identity is never adopted or overwritten', async () => {
   const input = fixtureInput(), fake = fakeOperator(input, (options, response) => {
-    if (options.method === 'GET' && options.path.endsWith('/serviceaccounts/orca-storage-collector')) response.statusCode = 200
+    if (options.method === 'GET' && options.path.endsWith('/serviceaccounts/orca-storage-collector')) { response.statusCode = 200 }
   })
   const result = await createCollectorIdentityInstaller(input, fake.api).install(approval, new AbortController().signal)
   assert.equal(result.errorCode, 'OWNED_NAME_COLLISION')
@@ -74,7 +74,7 @@ test('existing deterministic identity is never adopted or overwritten', async ()
 })
 test('uncertain bootstrap is recalled once without POST retry or raw error disclosure', async () => {
   const input = fixtureInput(), fake = fakeOperator(input, options => {
-    if (options.method === 'POST') throw new Error('private-fixture-error-must-not-leak')
+    if (options.method === 'POST') { throw new Error('private-fixture-error-must-not-leak') }
   })
   const result = await createCollectorIdentityInstaller(input, fake.api).install(approval, new AbortController().signal)
   assert.equal(result.errorCode, 'CREATE_UNCERTAIN_NO_RETRY')
@@ -102,8 +102,8 @@ test('HTTP 5xx bootstrap result is recalled once and never adopted or POSTed aga
 })
 test('201 without verifiable identity is recalled once without accepting the recalled UID', async () => {
   const input = fixtureInput(), fake = fakeOperator(input, (options, response) => {
-    if (options.method === 'POST') response.body = { ...response.body,
-      metadata: { ...response.body.metadata, uid: undefined } }
+    if (options.method === 'POST') { response.body = { ...response.body,
+      metadata: { ...response.body.metadata, uid: undefined } } }
   })
   const result = await createCollectorIdentityInstaller(input, fake.api).install(approval, new AbortController().signal)
   const postIndex = fake.calls.findIndex(call => call.method === 'POST')
@@ -119,8 +119,8 @@ test('201 without verifiable identity is recalled once without accepting the rec
 })
 test('metadata negotiation failure closes before granting RBAC and never returns Secret content', async () => {
   const input = fixtureInput(), fake = fakeOperator(input, (options, response) => {
-    if (options.path.endsWith('/secrets')) response.body = { apiVersion: 'v1', kind: 'SecretList',
-      items: [{ data: { fixture: 'must-not-leak' } }] }
+    if (options.path.endsWith('/secrets')) { response.body = { apiVersion: 'v1', kind: 'SecretList',
+      items: [{ data: { fixture: 'must-not-leak' } }] } }
   })
   const result = await createCollectorIdentityInstaller(input, fake.api).install(approval, new AbortController().signal)
   assert.equal(result.errorCode, 'METADATA_ONLY_RESPONSE_REQUIRED')

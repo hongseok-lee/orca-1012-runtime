@@ -15,23 +15,23 @@ export class CollectorIdentityError extends Error {
 export function fail(code) { throw new CollectorIdentityError(code) }
 export function freeze(value) {
   if (value && typeof value === 'object') {
-    for (const child of Object.values(value)) freeze(child)
+    for (const child of Object.values(value)) { freeze(child) }
     Object.freeze(value)
   }
   return value
 }
 function resourceName(value) {
-  if (typeof value !== 'string' || value.length > 253 || !names.test(value)) fail('CONFIG_INVALID')
+  if (typeof value !== 'string' || value.length > 253 || !names.test(value)) { fail('CONFIG_INVALID') }
   return value
 }
 function resource(value) {
-  if (!value || !uuid.test(value.uid ?? '')) fail('CONFIG_INVALID')
+  if (!value || !uuid.test(value.uid ?? '')) { fail('CONFIG_INVALID') }
   return { name: resourceName(value.name), uid: value.uid }
 }
 export function captureResourceInput(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) ||
       value.namespace !== namespace || value.collectorName !== collectorName ||
-      value.issuerName !== issuerName || !/^[0-9a-f]{40}$/u.test(value.rootAcceptedSourcePin ?? '')) fail('CONFIG_INVALID')
+      value.issuerName !== issuerName || !/^[0-9a-f]{40}$/u.test(value.rootAcceptedSourcePin ?? '')) { fail('CONFIG_INVALID') }
   return freeze({ namespace, collectorName, issuerName, rootAcceptedSourcePin: value.rootAcceptedSourcePin,
     backingPvc: resource(value.backingPvc), backingPv: resource(value.backingPv),
     helperConfigMap: resource(value.helperConfigMap) })
@@ -39,18 +39,18 @@ export function captureResourceInput(value) {
 export function captureInput(value) {
   const config = captureResourceInput(value)
   if (!/^sha256:[0-9a-f]{64}$/u.test(value.rootAcceptedNfsActivationEvidenceRef ?? '') ||
-      !Array.isArray(value.nfsGuardObjects) || value.nfsGuardObjects.length !== 10) fail('CONFIG_INVALID')
+      !Array.isArray(value.nfsGuardObjects) || value.nfsGuardObjects.length !== 10) { fail('CONFIG_INVALID') }
   const nfsGuardObjects = value.nfsGuardObjects.map(item => {
     const identity = resource(item)
     if (!['ValidatingAdmissionPolicy', 'ValidatingAdmissionPolicyBinding'].includes(item.kind) ||
-        !identity.name.startsWith('orca-namespace-orca-dev-') || !hash.test(item.specSHA256 ?? '')) fail('CONFIG_INVALID')
+        !identity.name.startsWith('orca-namespace-orca-dev-') || !hash.test(item.specSHA256 ?? '')) { fail('CONFIG_INVALID') }
     return { ...identity, kind: item.kind, specSHA256: item.specSHA256 }
   })
   if (new Set(nfsGuardObjects.map(item => `${item.kind}/${item.name}`)).size !== 10 ||
-      nfsGuardObjects.filter(item => item.kind === 'ValidatingAdmissionPolicy').length !== 5) fail('CONFIG_INVALID')
+      nfsGuardObjects.filter(item => item.kind === 'ValidatingAdmissionPolicy').length !== 5) { fail('CONFIG_INVALID') }
   const policies = nfsGuardObjects.filter(item => item.kind === 'ValidatingAdmissionPolicy').map(item => item.name).sort()
   const bindings = nfsGuardObjects.filter(item => item.kind === 'ValidatingAdmissionPolicyBinding').map(item => item.name).sort()
-  if (JSON.stringify(policies) !== JSON.stringify(bindings)) fail('CONFIG_INVALID')
+  if (JSON.stringify(policies) !== JSON.stringify(bindings)) { fail('CONFIG_INVALID') }
   return freeze({ ...config, rootAcceptedNfsActivationEvidenceRef: value.rootAcceptedNfsActivationEvidenceRef, nfsGuardObjects })
 }
 function object(apiVersion, kind, name, spec, namespaced = false) {
@@ -99,7 +99,7 @@ function longToken(objectName) {
 }
 /** UID is returned by the single bootstrap CREATE; it is never predicted or replaced. */
 export function credentialGuards(collectorUid) {
-  if (!uuid.test(collectorUid ?? '')) fail('COLLECTOR_UID_INVALID')
+  if (!uuid.test(collectorUid ?? '')) { fail('COLLECTOR_UID_INVALID') }
   return freeze([
     ...guard('sa', [rule(['serviceaccounts'], ['CREATE', 'UPDATE', 'DELETE'])],
       `!(request.name == ${literal(collectorName)} || ${targetsServiceAccount('object')} || ${targetsServiceAccount('oldObject')})`),
