@@ -12,7 +12,7 @@ import { LockedGatewayAuthority, currentAuthoritySql } from "./gateway/authority
 import { assertOriginal } from "./gateway/store.ts";
 import { canonicalInput, inputDigest } from "./gateway/input.ts";
 import type { CommandClaim, CommandId, CommandRow, GatewayContext } from "./gateway/types.ts";
-import { captureObservation } from "./initial-agent-pod-observation.ts";
+import { captureObservation, resourceSnapshot } from "./initial-agent-pod-observation.ts";
 import { readInitialAgentOriginalExecution, type InitialAgentOriginalExecution } from "./initial-agent-original-command.ts";
 
 export type InitialAgentPodTargetInput = Readonly<{ claim: CommandClaim; planDigest: string }>;

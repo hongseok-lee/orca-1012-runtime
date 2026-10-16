@@ -12,7 +12,7 @@ function fields(value: unknown, required: readonly string[], optional: readonly 
       required.some(key => !own.includes(key))) { return deny("INPUT"); }
   return agentPodFields(value, own.filter((key): key is string => typeof key === "string"));
 }
-function resourceSnapshot(value: unknown): JsonValue {
+export function resourceSnapshot(value: unknown): JsonValue {
   const record = fields(value, [], ["requests", "limits"]);
   const result: Record<string, JsonValue> = {};
   for (const key of ["requests", "limits"]) {
