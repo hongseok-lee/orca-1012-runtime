@@ -1,7 +1,9 @@
-import { constants, closeSync, fstatSync, openSync, readSync } from 'node:fs'
+import { readOrcadControllerCredential as credential } from './orcad-controller-credential.ts'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host.ts'
 import type { AbortableInventoryTransport } from '../durable-runtime/ha/pass.ts'
 import type { ControllerWorker, ControllerWorkerSnapshot } from '../durable-runtime/ha/worker.ts'
+import type { FirstManagedInitialDispatchSnapshot } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
+import type { prepareOrcadFirstManagedInitial } from './orcad-first-managed-initial.ts'
 import { persistControllerInventoryObservation } from '../durable-runtime/lifecycle/controller-inventory-observation.ts'
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
@@ -23,38 +25,20 @@ export type OrcadControllerSnapshot = Readonly<{
   worker: ControllerWorkerSnapshot | null
   latestObservation: OrcadControllerObservation | null
   lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY'; code: string }> | null
+  firstManagedInitial?: FirstManagedInitialDispatchSnapshot
 }>
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
 }>
 
-// Local bytes only, no download, exec plugin, env credential, or outward bytes accessor.
-// Following a projected token/CA symlink is intentional: the private JSON has a different NOFOLLOW boundary.
-function credential(path: string, kind: 'CA' | 'TOKEN'): Buffer {
-  const code = `CONTROLLER_STARTUP_${kind}_FILE`, limit = 1024 * 1024
-  let fd: number | undefined
-  try {
-    fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK)
-    const before = fstatSync(fd)
-    if (!before.isFile() || before.size < 1 || before.size > limit) { invalidOrcadControllerConfig(code) }
-    const buffer = Buffer.alloc(limit + 1)
-    let used = 0, count: number
-    do { count = readSync(fd, buffer, used, buffer.length - used, null); used += count } while (count && used < buffer.length)
-    if (!used || used > limit) { invalidOrcadControllerConfig(code) }
-    return Buffer.from(buffer.subarray(0, used))
-  } catch (error) {
-    if (error instanceof OrcadControllerConfigurationError) { throw error }
-    return invalidOrcadControllerConfig(code)
-  } finally {
-    if (fd !== undefined) { try { closeSync(fd) } catch { invalidOrcadControllerConfig(code) } }
-  }
-}
-
 /** Real PR58 transport, with owned file readers. Raw CA/token bytes never enter snapshots/errors or an exported accessor. */
 export async function prepareOrcadControllerInventory(input: OrcadControllerConfig): Promise<AbortableInventoryTransport> {
   const config = captureOrcadControllerConfig(input)
   const ca = Buffer.from(credential(config.inventory.caFile, 'CA'))
+  return prepareOrcadControllerInventoryWithCA(config, ca)
+}
+async function prepareOrcadControllerInventoryWithCA(config: OrcadControllerConfig, ca: Buffer): Promise<AbortableInventoryTransport> {
   try {
     const { createKubernetesInventoryTransport } = await import('../durable-runtime/lifecycle/kubernetes-inventory.ts')
     const transport = createKubernetesInventoryTransport({ ...config.inventory, ca,
@@ -88,6 +72,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
   let starting: Promise<void> | null = null, completion: Promise<void> | null = null
   let latestObservation: OrcadControllerObservation | null = null
   let lastFailure: OrcadControllerSnapshot['lastFailure'] = null
+  let firstManagedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
   let total = 0, list = 0, watch = 0
   return Object.freeze({
     readConfig,
@@ -110,7 +95,20 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
           invalidOrcadControllerConfig('CONTROLLER_STARTUP_CATALOG')
         }
         captured.assertCurrentHost()
-        const transport = await prepareOrcadControllerInventory(config)
+        // Explicit target startup captures CA once; both consumers own copies
+        // of these exact bytes. Unset configuration retains the original path.
+        const ca = config.firstManagedInitial ? Buffer.from(credential(config.inventory.caFile, 'CA')) : null
+        const transport = ca ? await prepareOrcadControllerInventoryWithCA(config, ca)
+          : await prepareOrcadControllerInventory(config)
+        let selectedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
+        if (config.firstManagedInitial) {
+          const { prepareOrcadFirstManagedInitial: prepareInitial } = await import('./orcad-first-managed-initial.ts')
+          if (closing) { return }
+          captured.assertCurrentHost()
+          if (!ca) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
+          selectedInitial = prepareInitial(config, captured.pool, ca)
+          if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
+        }
         // Dataset 전체 queue 소비를 서버가 명시적으로 선택합니다. 원 transaction에서 claim 뒤 payload를 검증합니다.
         // Payload 없는 head로 kind를 추정하거나 새 권한을 만들지 않습니다.
         const selectedEventWork = config.structuredOutput ? Object.freeze({
@@ -119,8 +117,20 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         }) : null
         if (closing) { return }
         captured.assertCurrentHost()
-        // Plan/execute/lookup 대체 callback이나 별도 queue 소비 loop는 만들지 않습니다.
+        firstManagedInitial = selectedInitial
+        const initial = selectedInitial
+        const planStep = initial?.planStep.bind(initial), executeCommitted = initial?.executeCommitted.bind(initial)
+        const lookupOriginal = initial?.lookupOriginal.bind(initial)
+        function requireCallback(signal?: AbortSignal): void {
+          if (closing || signal?.aborted) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CLOSED') }
+          captured.assertCurrentHost()
+        }
         worker = createControllerWorker(captured.pool, config.policy, {
+          ...(planStep && executeCommitted && lookupOriginal ? {
+            planStep: (...args: Parameters<typeof planStep>) => { requireCallback(); return planStep(...args) },
+            executeCommitted: (...args: Parameters<typeof executeCommitted>) => { requireCallback(args[1]); return executeCommitted(...args) },
+            lookupOriginal: (...args: Parameters<typeof lookupOriginal>) => { requireCallback(args[1]); return lookupOriginal(...args) }
+          } : {}),
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source, pass) {
             if (closing || pass.signal.aborted) { invalidOrcadControllerConfig('CONTROLLER_INVENTORY_ABORTED') }
@@ -172,6 +182,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
       })
       return completion
     },
-    controllerSnapshot(): OrcadControllerSnapshot { return Object.freeze({ worker: worker?.snapshot() ?? null, latestObservation, lastFailure }) }
+    controllerSnapshot(): OrcadControllerSnapshot { return Object.freeze({ worker: worker?.snapshot() ?? null, latestObservation, lastFailure,
+      ...(firstManagedInitial ? { firstManagedInitial: firstManagedInitial.snapshot() } : {}) }) }
   })
 }
