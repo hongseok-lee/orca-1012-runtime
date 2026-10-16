@@ -1,0 +1,115 @@
+{
+  "description": "실제 기존 인증의 Expo Web Browser Tab에서 wheel 교정 뒤 dialog 내부 이동과 Sessions·Tabs를 확인한 원 화면입니다.",
+  "sourcePin": "39bdb56183d42e940fb3147270785637cbcdd2d0",
+  "captureEnvironment": {
+    "client": "Expo Web",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "DPR": 1
+    },
+    "nativeIPhone": false,
+    "authentication": "기존 인증을 재사용했고 새 pairing이나 자격 발급은 하지 않았습니다."
+  },
+  "backend": {
+    "generation": 4,
+    "orcadSHA256": "373ee0374f91c8f656fb767ef1f794d7cdb72cd0d9a88e56e69d8257f5552b0d",
+    "wholeCheckoutGitIdentityProven": false,
+    "readinessEvidenceSHA256": "fdad2e86604ac39ddd7a4fb8a1bf25d5f511f77857ff15dcf66b31f8d33a1c2f",
+    "basis": "Root가 수락한 실제 generation readiness/artifact 원자료를 Client 실행 입력에 결합했습니다. Client의 독립 API 재검증은 아닙니다."
+  },
+  "viewer": {
+    "startedAt": "2026-10-16T08:47:12.225Z",
+    "finishedAt": "2026-10-16T08:49:44.353Z",
+    "exitCode": 0,
+    "summaryTaps": 1,
+    "detailTaps": 1,
+    "upDrags": 2,
+    "frameRereads": 0,
+    "PNGCount": 2,
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalAuthenticationStateUnchanged": true,
+    "cleanupLimit": "소유 helper의 부재와 supervisor의 종료 상태를 확인했습니다. 남은 모든 browser process의 부재를 독립 측정한 것은 아닙니다."
+  },
+  "screenshots": [
+    {
+      "path": "docs/evidence/p1-27-browser-wheel-target/dialog-sessions-tabs-1.png",
+      "capturedAt": "2026-10-16T08:49:41.746Z",
+      "sha256": "219a695d13bdbf7c799e29be876c598bb82ee31fb4a4ac2ceeeb27d9fe2e0d8f",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "DPR": 1
+    },
+    {
+      "path": "docs/evidence/p1-27-browser-wheel-target/dialog-sessions-tabs-2.png",
+      "capturedAt": "2026-10-16T08:49:44.171Z",
+      "sha256": "323cfed50c38ce2609345f34bd8f43109ccf04095f66e94e8e61697a5c49ff49",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "DPR": 1
+    }
+  ],
+  "observations": {
+    "dialogScroll": "배경 header 위치가 유지되는 동안 dialog 내부에 Sessions·Tabs가 나타났습니다.",
+    "sessions": "OPEN·revision 0인 행이 보입니다.",
+    "tabs": "browser·OPEN·Session 없음인 행이 보입니다. 두 번째 PNG의 다음 Tab 일부는 전체 상태를 확인하지 못했습니다.",
+    "mount": "두 PNG에 mount section이 보이지 않아 미확인입니다. 빈 목록으로 판정하지 않습니다.",
+    "loadingOrError": "직접 판독한 최종 PNG에 로딩/오류 문구가 보이지 않았습니다.",
+    "rootAcceptance": "Root가 두 원 PNG를 직접 읽고 dialog 내부 이동·Sessions·Tabs의 표시 범위를 수락했습니다. 원 인계의 수락 대기 문구는 인계 당시 상태입니다."
+  },
+  "limits": [
+    "이 두 장은 하단 전체 렌더 완료나 정확한 API 응답 성공을 증명하지 않습니다.",
+    "Helper는 transport 명령의 완료 응답을 계측하지 않습니다.",
+    "Mount authority·physical pin·native iPhone/Mac·HA·P1-27 전체 합격을 주장하지 않습니다.",
+    "추가 viewer·gesture·capture·pairing·제품 변경·시험을 이 게시 작업에서 수행하지 않았습니다."
+  ],
+  "privateSourceHandoffSHA256": "1825a9222f8af09d208717f358111c0c70fa7da31e13090f52a3b8502df7d60c",
+  "followup": {
+    "description": "별도 소유 viewer에서 같은 중앙 Ops 탭의 남은 현재 상태를 읽었습니다. 앞선 성공 click·gesture를 재실행하지 않았습니다.",
+    "startedAt": "2026-10-16T08:55:07.744Z",
+    "finishedAt": "2026-10-16T08:55:49.019Z",
+    "exitCode": 0,
+    "actions": {
+      "summaryTaps": 0,
+      "detailTaps": 0,
+      "upDrags": 0,
+      "frameRereads": 0,
+      "phoneDisplayPreparationClicks": 1,
+      "newPairing": 0,
+      "PNGCount": 1
+    },
+    "screenshot": {
+      "path": "docs/evidence/p1-27-browser-wheel-target/dialog-current-read.png",
+      "capturedAt": "2026-10-16T08:55:48.800Z",
+      "sha256": "8b9480c0aba643b1c31955ddc13545312c7442f0aea6968914eb99b3a10ccdc1",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "DPR": 1
+      }
+    },
+    "observations": {
+      "sessions": "OPEN·revision 0인 행이 보입니다.",
+      "tabs": "browser/OPEN 2개와 terminal/OPEN 1개인 총 3개 행이 보입니다.",
+      "mount": "Mount 저장 상태 제목과 첫 ID 일부만 보입니다. Mode·경로·소유권은 잘려 있어 미확인이며 빈 목록으로 판정하지 않습니다.",
+      "rootAcceptance": "Root가 원 PNG를 직접 읽고 위 표시 범위를 수락했습니다."
+    },
+    "cleanup": {
+      "contextClosed": true,
+      "browserClosed": true,
+      "originalAuthenticationStateUnchanged": true,
+      "ownedHelperAbsent": true,
+      "supervisorExitedZombie": true,
+      "remainingAllBrowserProcessesIndependentlyMeasured": false
+    },
+    "runtimeGeneration": 4,
+    "readinessReused": true,
+    "newRuntimeApiOrPGValidation": false,
+    "sourceHandoffSHA256": "0d8655a5f783deb488b6fd9022fe9ec84df907ab212136442195e1cd8f10c7ae"
+  }
+}
