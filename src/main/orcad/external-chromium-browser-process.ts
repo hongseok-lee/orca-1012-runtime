@@ -21,7 +21,8 @@ import {
 } from './external-chromium-tab-projection'
 import { ExternalChromiumTabRegistry } from './external-chromium-tab-registry'
 import { ExternalChromiumScreencastSubscribers } from './external-chromium-screencast-subscribers'
-import { Screencast } from '../../shared/rpc-contract/browser-params'
+import { ExternalChromiumPointer } from './external-chromium-pointer'
+import { MouseXY, MouseWheel, Screencast } from '../../shared/rpc-contract/browser-params'
 import { BrowserTabCreateParams } from '../../shared/rpc-contract/browser-tab-create-params'
 import { resolveBrowserTabCreateFocus } from '../runtime/browser-tab-create-publication'
 import type { BrowserScreencastResult } from '../../shared/runtime-types'
@@ -41,13 +42,20 @@ export class ExternalChromiumBrowserProcess {
   private readonly session: ExternalChromiumBrowserSession
   private readonly tabs: ExternalChromiumTabRegistry
   private readonly screencasts: ExternalChromiumScreencastSubscribers
+  private readonly pointer: ExternalChromiumPointer
   private queue: Promise<void> = Promise.resolve()
   private available = false
 
   constructor(agentBrowserPath: string, launch: ExternalChromiumLaunch, statePath: string, environment: NodeJS.ProcessEnv = process.env) {
     this.session = new ExternalChromiumBrowserSession(agentBrowserPath, launch, statePath, environment)
     this.screencasts = new ExternalChromiumScreencastSubscribers(this.session.cdp)
-    this.tabs = new ExternalChromiumTabRegistry(this.session, page => this.screencasts.stopPage(page))
+    this.pointer = new ExternalChromiumPointer(this.session.cdp)
+    this.tabs = new ExternalChromiumTabRegistry(this.session, page => {
+      this.pointer.forgetPage(page)
+      return this.screencasts.stopPage(page)
+    })
+    this.session.cdp.onFailure(() => this.pointer.clear())
+    this.session.cdp.onGenerationChanged(() => this.pointer.clear())
   }
 
   async start(): Promise<void> {
@@ -72,6 +80,13 @@ export class ExternalChromiumBrowserProcess {
             return this.enqueue(() => this.invoke(host, property, [capturedParams, capturedCaller]))
           }
         }
+        if (property === 'browserMouseMove' || property === 'browserMouseWheel') {
+          return (params: unknown) => {
+            const capturedParams = Object.freeze(property === 'browserMouseMove'
+              ? MouseXY.parse(params ?? {}) : MouseWheel.parse(params ?? {}))
+            return this.enqueue(() => this.invoke(host, property, [capturedParams]))
+          }
+        }
         return (...args: unknown[]) => this.enqueue(() => this.invoke(host, property, args))
       }
     })
@@ -82,6 +97,7 @@ export class ExternalChromiumBrowserProcess {
 
   async stop(): Promise<void> {
     this.available = false
+    this.pointer.clear()
     const authStopped = this.tabs.stopOpsAuth()
     await this.enqueue(async () => {
       await authStopped
@@ -177,6 +193,9 @@ export class ExternalChromiumBrowserProcess {
     }
 
     const page = await this.tabs.resolveTargetPage(host, params, true)
+    if (method === 'browserMouseWheel') {
+      return this.pointer.wheel(page, MouseWheel.parse(params))
+    }
     if (method === 'browserSnapshot') {
       return this.snapshot(page)
     }
@@ -220,7 +239,9 @@ export class ExternalChromiumBrowserProcess {
         `${method} is not supported by this browser provider.`
       )
     }
-    const result = await this.session.run(command)
+    const result = method === 'browserMouseMove'
+      ? await this.pointer.move(page, MouseXY.parse(params), () => this.session.run(command))
+      : await this.session.run(command)
     return normalizeExternalChromiumCommandResult(method, params, result)
   }
 
