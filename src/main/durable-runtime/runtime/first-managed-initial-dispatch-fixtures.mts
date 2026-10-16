@@ -18,10 +18,10 @@ import type { FirstManagedInitialDispatchConfig } from './first-managed-initial-
 /** Additive isolated setup only; no controller/claim/plan/profile or proof is fabricated here. */
 export async function dispatchFixture(pool: Pool, expected: InitialFixtureDatabase) {
   await requireInitialFixtureDatabase(pool, expected)
-  const f = firstManagedFixture(), agent = randomUUID(), workspace = randomUUID()
+  const f = firstManagedFixture(), agent = randomUUID(), workspace = randomUUID(), bindingUuid = randomUUID()
   const original: FirstManagedBindingInput = {
     sessionId: logicalId('session', randomUUID()), unitId: logicalId('runtime-unit', randomUUID()),
-    bindingId: logicalId('storage-binding', randomUUID()), expectedUnitRevision: counter('row:runtime-unit', '0'),
+    bindingId: logicalId('storage-binding', bindingUuid), expectedUnitRevision: counter('row:runtime-unit', '0'),
     expectedBindingRevision: counter('row:storage-binding', '0'), actorId: 'fixture-first-managed-dispatch',
     pinId: randomUUID(), ownerToken: `fixture-original-owner:${randomUUID()}`, leafId: f.leafId,
   }
@@ -40,7 +40,7 @@ export async function dispatchFixture(pool: Pool, expected: InitialFixtureDataba
   const verified = await createFirstManagedBindingOwner(pool, f.settings, f.wire.dependencies).verifyFirstBinding(original, new AbortController().signal)
   assert.equal(verified.outcome, 'VERIFIED'); assert.equal(verified.pin.state, 'RELEASED')
   assert.ok(verified.audit?.ok)
-  const members = { unit: original.unitId, sessions: [original.sessionId], binding: original.bindingId }
+  const members = { unit: original.unitId, sessions: [original.sessionId], binding: bindingUuid }
   const queued = await requestUnitIntent(pool, await intent(pool, members))
   assert.equal(queued.status, 'COMMITTED')
   const operation = (await pool.query<LifecycleOperation>('SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND result IS NULL', [original.unitId])).rows[0]

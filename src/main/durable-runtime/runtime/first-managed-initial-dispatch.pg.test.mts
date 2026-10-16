@@ -84,7 +84,7 @@ await test('fixed managed callbacks preserve the original worker context and set
         const count = db.connects, step = dispatch.planStep(operation, unit)
         if (step) {
           assert.equal(dispatch.planStep({ ...operation, kind: 'SLEEP' }, unit), null)
-          assert.equal(dispatch.planStep(operation, { ...unit, id: randomUUID() }), null)
+          assert.equal(dispatch.planStep(operation, { ...unit, id: logicalId('runtime-unit', randomUUID()) }), null)
           assert.equal(dispatch.planStep({ ...operation, external_resource_name: 'different-resource' }, unit), null)
           const again = dispatch.planStep(operation, unit); assert.ok(again)
           assert.notEqual(step.mutationKey, again.mutationKey)
