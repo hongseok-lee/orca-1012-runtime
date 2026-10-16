@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
+import { writeFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
 import { readMigrations } from '../db/migrate.ts'
@@ -19,9 +20,10 @@ const database=process.env.ORCA_CONTROLLER_COMMAND_CONTEXT_DATABASE
 const oid=process.env.ORCA_CONTROLLER_COMMAND_CONTEXT_DATABASE_OID
 const system=process.env.ORCA_CONTROLLER_COMMAND_CONTEXT_SYSTEM_IDENTIFIER
 const migrationsPath=process.env.ORCA_CONTROLLER_COMMAND_CONTEXT_MIGRATIONS
+const leaseEvidencePath=process.env.ORCA_CONTROLLER_COMMAND_CONTEXT_LEASE_EVIDENCE
 if (process.env.ORCA_CONTROLLER_COMMAND_CONTEXT_APPROVED!=='root-first-verification' ||
     !database || database==='orca_dev' || !/^orca_[a-z0-9_]+$/u.test(database) || database!==process.env.PGDATABASE ||
-    !oid || !/^[1-9][0-9]*$/u.test(oid) || !system || !/^[0-9]+$/u.test(system) || !migrationsPath) {
+    !oid || !/^[1-9][0-9]*$/u.test(oid) || !system || !/^[0-9]+$/u.test(system) || !migrationsPath || !leaseEvidencePath) {
   throw new Error('Root-approved existing isolated DB/OID/system/migration inputs required')
 }
 const pool=createDurablePool({ database,max:3,connectionTimeoutMillis:5000,statement_timeout:5000,
@@ -60,8 +62,13 @@ await test('committed execute and original lookup receive the frozen original co
   const migrations=await readMigrations(migrationsPath)
   const ledger=(await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
   assert.deepEqual(ledger.map(row=>[row.version,row.checksum]),migrations.map(row=>[row.version,row.checksum]))
-  // Refuse to repurpose an earlier controller scope/lease row in the assigned DB.
-  assert.equal((await pool.query('SELECT scope FROM durable_runtime.controller_leases WHERE scope=$1',[CONTROLLER_SCOPE])).rowCount,0)
+  // Root permits this isolated control row's normal acquire/release only.
+  // Record the actual PG clock/expiry privately; never expire/delete it here.
+  const control=(await pool.query(`SELECT c.scope,c.owner,c.term,c.revision,c.expires_at,
+    clock_timestamp() AS pg_clock,coalesce(c.expires_at>clock_timestamp(),false) AS unexpired
+    FROM (SELECT 1) guard LEFT JOIN durable_runtime.controller_leases c ON c.scope=$1`,[CONTROLLER_SCOPE])).rows[0]
+  await writeFile(leaseEvidencePath,JSON.stringify({ scope:CONTROLLER_SCOPE,control })+'\n',{ flag:'wx',mode:0o600 })
+  assert.equal(control.unexpired,false,'existing isolated control lease must be expired/absent before acquire')
   const before=await originalRows()
   assert.equal((await session.acquire()).status,'ACTIVE')
   const lease=session.lease; assert.ok(lease)
