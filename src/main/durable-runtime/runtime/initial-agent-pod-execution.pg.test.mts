@@ -55,13 +55,13 @@ async function originalRows() {
 }
 
 // Only the additive seed needed by this integration. Reservation/assignment SQL stays in its actual modules.
-async function seed() {
+async function seed(entrypoint = { command: ['/usr/local/bin/node'], args: ['-e', 'setInterval(() => {}, 3600000)'] }) {
   const unit = logicalId('runtime-unit', randomUUID()), operation = logicalId('operation', randomUUID()), attempt = randomUUID()
   const session = randomUUID(), agent = randomUUID(), workspace = randomUUID(), leaf = randomUUID(), bindingId = logicalId('storage-binding', randomUUID())
   const exportId = `synthetic-execution-export:${randomUUID()}`, reference = `synthetic-execution-directory:${bindingId}`
   const context: GatewayContext = Object.freeze({ runtimeUnitId: unit, operationId: operation, controller })
   const plan = createAgentPodPlanner({ namespace, dataset, image: `example.invalid/agent@sha256:${'1'.repeat(64)}`,
-    entrypoint: { command: ['/usr/local/bin/node'], args: ['-e', 'setInterval(() => {}, 3600000)'] },
+    entrypoint,
     paths: { home: '/agent/home', claudeState: '/agent/home/.claude', codexState: '/agent/home/.codex', checkout: '/agent/project' },
     protectedMounts: [{ key: 'all', clientPath: '/agent' }], nfsServer: 'nfs.fixture.svc.cluster.local',
     protectedExportRoot: `/exports/runtime-domains/${dataset}`,
@@ -191,6 +191,21 @@ test('actual committed initial reservation connects once to idle Pod observation
   assert.equal(replay.assignment.value.disposition, 'REPLAYED')
   assert.equal(replay.assignment.value.unitRevision, assigned.assignment.value.unitRevision)
   assert.deepEqual(await originalRows(), beforeReplay); laterHttp.assertCleanup()
+
+  const otherBootstrap = await seed({ command: ['/opt/agent/entrypoint'], args: ['--cold'] })
+  const blockedHttp = harness([]), blocked = compose(otherBootstrap, blockedHttp)
+  const refused = await blocked.executor.start(start(otherBootstrap), new AbortController().signal)
+  assert.equal(refused.reservation?.database?.ok, true)
+  if (!refused.reservation?.database?.ok) { throw new Error('original reservation result was not preserved') }
+  assert.equal(refused.reservation.database.settlement, 'COMMITTED')
+  assert.equal(refused.reservation.database.commitOutcome, 'ACKNOWLEDGED')
+  assert.equal(refused.reservation.database.value.disposition, 'RESERVED')
+  assert.equal(refused.reservation.pins.disposition, 'RELEASED'); assert.equal(blocked.held.state.releases, 1)
+  assert.ok(refused.error instanceof DurableDatabaseError); assert.equal(refused.error.code, 'INITIAL_AGENT_EXECUTION_BOOTSTRAP')
+  assert.equal(refused.observation, null); assert.equal(refused.assignment, null)
+  assert.equal(refused.createRequested, false); assert.equal(blockedHttp.requests.length, 0)
+  assert.equal(refused.gate, 'CLOSED'); assert.equal(refused.providerReady, false); assert.equal(refused.writerGrantActivated, false)
+  blockedHttp.assertCleanup()
 
   const uncertain = await seed(), uncertainHttp = harness([{ status: 404 }, { errorCode: 'ECONNRESET' }]), un = compose(uncertain, uncertainHttp)
   const unknown = await un.executor.start(start(uncertain), new AbortController().signal)
