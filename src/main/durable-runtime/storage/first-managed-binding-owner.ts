@@ -70,7 +70,9 @@ function text(value: unknown): string {
 }
 function tokenHash(value: unknown): string {
   const token = text(value);
-  if (token.length < 32) throw new FirstManagedBindingOwnerError('FIRST_MANAGED_TOKEN_INVALID');
+  if (token.length < 32) {
+    throw new FirstManagedBindingOwnerError('FIRST_MANAGED_TOKEN_INVALID');
+  }
   return createHash('sha256').update(token).digest('hex');
 }
 function confirmed<T>(result: DurableTransactionResult<T>): result is Extract<DurableTransactionResult<T>, { ok: true }> {
@@ -138,7 +140,9 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
   }
 
   async function releaseOwned(operation: Operation): Promise<void> {
-    if (operation.releaseAttempted) throw new FirstManagedBindingOwnerError('FIRST_MANAGED_RELEASE_ALREADY_ATTEMPTED');
+    if (operation.releaseAttempted) {
+      throw new FirstManagedBindingOwnerError('FIRST_MANAGED_RELEASE_ALREADY_ATTEMPTED');
+    }
     operation.releaseAttempted = true;
     operation.releaseEligible = false;
     let released;
@@ -263,7 +267,9 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
     }
     const succeeded = verified.database && confirmed(verified.database) && !verified.database.cleanupFailed &&
       verified.pin.disposition === 'RELEASED' && pinReleased(operation) && !operation.reconciliation;
-    if (succeeded) return result(operation, 'VERIFY', 'VERIFIED');
+    if (succeeded) {
+      return result(operation, 'VERIFY', 'VERIFIED');
+    }
     operation.reconciliation ||= verified.pin.disposition === 'RETAINED' || verified.engineError !== null ||
       verified.database === null || verified.database.cleanupFailed || verified.database.settlement === 'UNCONFIRMED' ||
       verified.database.commitOutcome === 'UNKNOWN';
@@ -278,7 +284,9 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
       }
       const existing = operations.get(pinId);
       if (existing) {
-        if (existing.tokenHash !== hash) throw new FirstManagedBindingOwnerError('FIRST_MANAGED_OWNER_MISMATCH');
+        if (existing.tokenHash !== hash) {
+          throw new FirstManagedBindingOwnerError('FIRST_MANAGED_OWNER_MISMATCH');
+        }
         return Promise.resolve(result(existing, 'HOLD', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_PIN_ALREADY_ATTEMPTED'));
       }
       const operation: Operation = { holdInput: Object.freeze({ ...profile.profile, digest: accepted.digest,
@@ -294,7 +302,9 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
       try { pinId = logicalId('storage-namespace-pin', originalInput.pinId); hash = tokenHash(originalInput.ownerToken); }
       catch { throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_INVALID'); }
       const operation = operations.get(pinId);
-      if (!operation || operation.tokenHash !== hash) throw new FirstManagedBindingOwnerError('FIRST_MANAGED_OWNER_MISMATCH');
+      if (!operation || operation.tokenHash !== hash) {
+        throw new FirstManagedBindingOwnerError('FIRST_MANAGED_OWNER_MISMATCH');
+      }
       if (!operation.releaseEligible || operation.handedOff || operation.releaseAttempted || operation.pinState !== 'HELD') {
         return result(operation, 'RELEASE', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_RELEASE_NOT_ELIGIBLE');
       }

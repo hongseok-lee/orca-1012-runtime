@@ -36,36 +36,50 @@ function observedPool(mode: Mode, barrier?: { reached: ReturnType<typeof deferre
   const active = new Set<number>(), events: string[] = [];
   let connects = 0, ends = 0;
   const facade = new Proxy(pool, { get(target, key) {
-    if (key === 'end') return () => { ends++; throw new Error('Borrowed pool must not end'); };
-    if (key !== 'connect') return Reflect.get(target, key, target);
+    if (key === 'end') {
+      return () => { ends++; throw new Error('Borrowed pool must not end'); };
+    }
+    if (key !== 'connect') {
+      return Reflect.get(target, key, target);
+    }
     return async () => {
       const ordinal = ++connects, client = await pool.connect(); active.add(ordinal); events.push(`CONNECT${ordinal}`);
       let unknown = false;
       return new Proxy(client, { get(original, property) {
-        if (property === 'query') return async (...args: unknown[]) => {
-          const sql = args[0];
-          if (mode === 'audit-rollback' && ordinal === 2 && typeof sql === 'string' && sql.includes('FROM durable_runtime.storage_namespace_profiles')) {
-            throw new DurableDatabaseError('FIXTURE_AUDIT_ROLLBACK');
-          }
-          if (sql === 'COMMIT' && ordinal === 3 && barrier) {
-            events.push('BINDING_BEFORE_COMMIT'); barrier.reached.resolve(undefined); await barrier.release.promise;
-          }
-          const value = await Reflect.apply(original.query, original, args);
-          if (sql === 'COMMIT') events.push(`COMMIT${ordinal}`);
-          if (sql === 'COMMIT' && (mode === 'hold-unknown' && ordinal === 1 || mode === 'audit-unknown' && ordinal === 2)) {
-            unknown = true; return { ...value, command: 'UNCONFIRMED' };
-          }
-          if (sql === 'ROLLBACK' && unknown) return { ...value, command: 'UNCONFIRMED' };
-          return value;
-        };
-        if (property === 'release') return (...args: unknown[]) => {
-          Reflect.apply(original.release, original, args); active.delete(ordinal); events.push(`CLEANUP${ordinal}`);
-          if (mode === 'hold-cleanup' && ordinal === 1) throw new Error('Synthetic cleanup failure');
-        };
+        if (property === 'query') {
+          return async (...args: unknown[]) => {
+            const sql = args[0];
+            if (mode === 'audit-rollback' && ordinal === 2 && typeof sql === 'string' && sql.includes('FROM durable_runtime.storage_namespace_profiles')) {
+              throw new DurableDatabaseError('FIXTURE_AUDIT_ROLLBACK');
+            }
+            if (sql === 'COMMIT' && ordinal === 3 && barrier) {
+              events.push('BINDING_BEFORE_COMMIT'); barrier.reached.resolve(undefined); await barrier.release.promise;
+            }
+            const value = await Reflect.apply(original.query, original, args);
+            if (sql === 'COMMIT') {
+              events.push(`COMMIT${ordinal}`);
+            }
+            if (sql === 'COMMIT' && (mode === 'hold-unknown' && ordinal === 1 || mode === 'audit-unknown' && ordinal === 2)) {
+              unknown = true; return { ...value, command: 'UNCONFIRMED' };
+            }
+            if (sql === 'ROLLBACK' && unknown) {
+              return { ...value, command: 'UNCONFIRMED' };
+            }
+            return value;
+          };
+        }
+        if (property === 'release') {
+          return (...args: unknown[]) => {
+            Reflect.apply(original.release, original, args); active.delete(ordinal); events.push(`CLEANUP${ordinal}`);
+            if (mode === 'hold-cleanup' && ordinal === 1) {
+              throw new Error('Synthetic cleanup failure');
+            }
+          };
+        }
         return Reflect.get(original, property, original);
-      });
+      } });
     };
-  });
+  } });
   return { pool: facade, active, events, get connects() { return connects; }, get ends() { return ends; } };
 }
 
