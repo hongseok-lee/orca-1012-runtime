@@ -1,0 +1,569 @@
+{
+  "schemaVersion": 1,
+  "kind": "ISOLATED_NAMESPACE_ADMISSION_QUALIFICATION_EVIDENCE",
+  "recordedAt": "2026-10-16T08:15:27.021365+00:00",
+  "documentBase": "aae9f82391b181d0fafe0d2ca96703c25efd93f5",
+  "productPins": {
+    "originalGenerator": "2f235c1d09545a20f626dc3d95a2996d028129bb",
+    "correctedGenerator": "c47f276417b2e9bcfdda25bd5d2d787d0a117882",
+    "correctionPR": "https://github.com/hongseok-lee/orca-1012-runtime/pull/126",
+    "rootCorrectionAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/126#issuecomment-6210392630",
+    "rootQualificationAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/126#issuecomment-6210640677"
+  },
+  "scope": "실제 Kubernetes API의 격리 synthetic profile 최초 요청 결과입니다. 실제 제품 namespace와 provider/NFS 실행, production guard 및 physical pin 증거와 구분합니다.",
+  "runs": [
+    {
+      "phase": "first-activation",
+      "startedAt": "2026-10-16T06:28:08.994465Z",
+      "finishedAt": "2026-10-16T06:28:13.655468Z",
+      "exitCode": 0,
+      "apiRequests": 36,
+      "result": "정책/Binding dry-run 10 건과 격리 설치 뒤 첫 CM 201을 전파 중 원결과로 보존하고 두 번째 정확 VAP403을 확인했습니다.",
+      "reference": "first-activation"
+    },
+    {
+      "phase": "first-cases",
+      "startedAt": "2026-10-16T06:30:39.755273Z",
+      "finishedAt": "2026-10-16T06:30:44.360580Z",
+      "exitCode": 1,
+      "apiRequests": 80,
+      "result": "RS scale404는 정책 증거가 아닙니다. PVC CREATE의 VAP 403 뒤 없는 Service PUT에서 create 권한의 비정책 RBAC403으로 중단했습니다.",
+      "reference": "first-cases"
+    },
+    {
+      "phase": "remainder-1",
+      "startedAt": "2026-10-16T06:44:44.378493Z",
+      "finishedAt": "2026-10-16T06:44:50.632344Z",
+      "exitCode": 1,
+      "apiRequests": 89,
+      "result": "ordinary CM 201과 selector/PVC/RS-owner 위조3 VAP 403 뒤 recovery CREATE422의 no such key: subResource에서 중단했습니다.",
+      "reference": "remainder-1-result"
+    },
+    {
+      "phase": "remainder-2",
+      "startedAt": "2026-10-16T07:37:27.626226+00:00",
+      "finishedAt": "2026-10-16T07:37:36.161035+00:00",
+      "exitCode": 1,
+      "apiRequests": 97,
+      "result": "PR126 source1 교정 뒤 recovery CREATE 201, 실제 미배치 Pod1과 annotation200·보호 변경/삭제 VAP403을 확인했습니다. Recovery DELETE의 body dryRun 누락으로 실제 DELETE200 뒤 첫 CONNECT 전 Pod404에서 중단했습니다.",
+      "reference": "remainder-2-result"
+    },
+    {
+      "phase": "remainder-3",
+      "startedAt": "2026-10-16T07:58:14.446558+00:00",
+      "finishedAt": "2026-10-16T07:58:26.480406+00:00",
+      "exitCode": 0,
+      "apiRequests": 117,
+      "result": "Endpoint 4 건와 CONNECT 12 건를 원결과로 회수했고 각 400 한계를 분리했습니다. 완료된 recovery/oldObject 사례는 재실행하지 않았습니다.",
+      "reference": "remainder-3-result"
+    }
+  ],
+  "originalFailures": [
+    {
+      "case": "fixed-rs-scale",
+      "status": 404,
+      "classification": "NOT_FOUND_NOT_POLICY_PROOF",
+      "reference": "first-rs-not-found"
+    },
+    {
+      "case": "fixed-service-update",
+      "status": 403,
+      "classification": "NON_POLICY_RBAC_FORBIDDEN",
+      "messageBoundary": "cannot create resource \"services\"",
+      "reference": "first-service-rbac-forbidden"
+    },
+    {
+      "case": "recovery-exact-pod-dryrun",
+      "status": 422,
+      "classification": "ACTUAL_CEL_EVALUATION_ERROR",
+      "exactError": "no such key: subResource",
+      "correction": "PR126은 main Pod 요청에서 optional subResource가 생략된 경우를 존재 확인으로 처리한 제품1줄 교정입니다.",
+      "reference": "remainder-1-recovery-cel-error"
+    },
+    {
+      "case": "recovery-pod-delete-dryrun",
+      "status": 200,
+      "originalCallerDecision": "DRYRUN_ALLOWED",
+      "acceptedClassification": "ACTUAL_NON_DRY_RUN_DELETE_200",
+      "cause": "원 DELETE URL에 dryRun=All만 있었고 body DeleteOptions에 dryRun이 없었습니다. Body가 있는 DELETE는 body에서 dryRun을 읽으므로 원200을 비변경 dry-run 성공으로 수락하지 않습니다.",
+      "references": [
+        "remainder-2-recovery-delete-response",
+        "remainder-2-recovery-delete-options",
+        "remainder-2-delete-classification-correction",
+        "remainder-2-pod-not-found"
+      ],
+      "bodyCorrection": {
+        "dryRun": [
+          "All"
+        ],
+        "correctedForFutureReuse": true,
+        "caseReplayed": false,
+        "nonMutatingDryRunRetested": false,
+        "normalCleanupUnchanged": true
+      }
+    }
+  ],
+  "caseResults": [
+    {
+      "case": "activation-fixed-configmap-remainder-3-1",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:19.538Z",
+      "reference": "case-activation-fixed-configmap-remainder-3-1",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "collector-exact-ensure-leaf",
+      "httpStatus": 400,
+      "outcome": "UNSCHEDULED_POD_REJECTED_NO_STREAM_POLICY_EVALUATION_NOT_INDEPENDENTLY_PROVEN",
+      "sourceTime": "2026-10-16T07:58:21.099Z",
+      "reference": "case-collector-exact-ensure-leaf",
+      "policyAllowVerified": false
+    },
+    {
+      "case": "collector-exact-inspect",
+      "httpStatus": 400,
+      "outcome": "UNSCHEDULED_POD_REJECTED_NO_STREAM_POLICY_EVALUATION_NOT_INDEPENDENTLY_PROVEN",
+      "sourceTime": "2026-10-16T07:58:20.922Z",
+      "reference": "case-collector-exact-inspect",
+      "policyAllowVerified": false
+    },
+    {
+      "case": "endpoint-identity-endpoints-create",
+      "httpStatus": 201,
+      "outcome": "DRYRUN_ALLOWED",
+      "sourceTime": "2026-10-16T07:58:20.034Z",
+      "reference": "case-endpoint-identity-endpoints-create",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "endpoint-identity-endpointslice-create",
+      "httpStatus": 201,
+      "outcome": "DRYRUN_ALLOWED",
+      "sourceTime": "2026-10-16T07:58:20.227Z",
+      "reference": "case-endpoint-identity-endpointslice-create",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "ordinary-named-port-prefix-shape",
+      "httpStatus": 400,
+      "outcome": "MISSING_POD_OR_API_SHAPE_NOT_LIVE_PROXY_PROOF",
+      "sourceTime": "2026-10-16T07:58:21.934Z",
+      "reference": "case-ordinary-named-port-prefix-shape",
+      "policyAllowVerified": false
+    },
+    {
+      "case": "ordinary-numeric-proxy",
+      "httpStatus": 400,
+      "outcome": "MISSING_POD_OR_API_SHAPE_NOT_LIVE_PROXY_PROOF",
+      "sourceTime": "2026-10-16T07:58:21.843Z",
+      "reference": "case-ordinary-numeric-proxy",
+      "policyAllowVerified": false
+    },
+    {
+      "case": "ordinary-qualified-port-prefix-shape",
+      "httpStatus": 400,
+      "outcome": "MISSING_POD_OR_API_SHAPE_NOT_LIVE_PROXY_PROOF",
+      "sourceTime": "2026-10-16T07:58:22.022Z",
+      "reference": "case-ordinary-qualified-port-prefix-shape",
+      "policyAllowVerified": false
+    },
+    {
+      "case": "product-attach",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.474Z",
+      "reference": "case-product-attach",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-endpoints-create",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:19.989Z",
+      "reference": "case-product-endpoints-create",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-endpointslice-create",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:20.120Z",
+      "reference": "case-product-endpointslice-create",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-extra-argv",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.329Z",
+      "reference": "case-product-extra-argv",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-modified-argv",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.266Z",
+      "reference": "case-product-modified-argv",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-portforward",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.555Z",
+      "reference": "case-product-portforward",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-protected-proxy",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.636Z",
+      "reference": "case-product-protected-proxy",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-qualified-protected-proxy",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.749Z",
+      "reference": "case-product-qualified-protected-proxy",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-rs-owner-forgery",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:19.945Z",
+      "reference": "case-product-rs-owner-forgery",
+      "policyAllowVerified": null
+    },
+    {
+      "case": "product-shell",
+      "httpStatus": 403,
+      "outcome": "VAP_FORBIDDEN",
+      "sourceTime": "2026-10-16T07:58:21.167Z",
+      "reference": "case-product-shell",
+      "policyAllowVerified": null
+    }
+  ],
+  "responseSummary": {
+    "endpointRequests": 4,
+    "endpointProductVAPForbidden": 2,
+    "endpointIdentityDryRun201": 2,
+    "connectAPIRequests": 12,
+    "connectNegativeVAPForbidden": 7,
+    "collectorExactPendingNoHost400": 2,
+    "ordinaryProxyWardenAPI400": 3,
+    "execAPIRequests": 5,
+    "remoteExecStreamsOpened": 0,
+    "remoteCommandsExecuted": 0,
+    "liveProxyConnectivityVerified": false,
+    "collectorAllowPolicyIndependentlyVerified": false
+  },
+  "cleanup": [
+    {
+      "phase": "first-cases",
+      "ownedObjects": 19,
+      "namespaceFinalHTTPStatus": 404,
+      "namespaceFinalReason": "NotFound",
+      "namespaceFinalObservedAt": "2026-10-16T06:33:44.044Z",
+      "normalDeleteAndImmediateTerminatingRecordedSeparately": true,
+      "identities": "원 identity는 비공개 원자료에 보존했으며 각 재생성 incarnation을 구분했습니다."
+    },
+    {
+      "phase": "remainder-1",
+      "ownedObjects": 19,
+      "namespaceFinalHTTPStatus": 404,
+      "namespaceFinalReason": "NotFound",
+      "namespaceFinalObservedAt": "2026-10-16T07:22:59.087Z",
+      "normalDeleteAndImmediateTerminatingRecordedSeparately": true,
+      "identities": "원 identity는 비공개 원자료에 보존했으며 각 재생성 incarnation을 구분했습니다."
+    },
+    {
+      "phase": "remainder-2",
+      "ownedObjects": 20,
+      "namespaceFinalHTTPStatus": 404,
+      "namespaceFinalReason": "NotFound",
+      "namespaceFinalObservedAt": "2026-10-16T07:46:46.809Z",
+      "normalDeleteAndImmediateTerminatingRecordedSeparately": true,
+      "identities": "원 identity는 비공개 원자료에 보존했으며 각 재생성 incarnation을 구분했습니다."
+    },
+    {
+      "phase": "remainder-3",
+      "ownedObjects": 20,
+      "namespaceFinalHTTPStatus": 404,
+      "namespaceFinalReason": "NotFound",
+      "namespaceFinalObservedAt": "2026-10-16T08:02:47.444Z",
+      "normalDeleteAndImmediateTerminatingRecordedSeparately": true,
+      "identities": "원 identity는 비공개 원자료에 보존했으며 각 재생성 incarnation을 구분했습니다."
+    }
+  ],
+  "historicalScreenshot": {
+    "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/805b0da68ed49572d4f2e45a57712fd84dbbf419/deploy/dev/backend/evidence/controller-dev-connection.png",
+    "provenanceURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/805b0da68ed49572d4f2e45a57712fd84dbbf419/deploy/dev/backend/evidence/controller-dev-connection.provenance.json",
+    "capturedAt": "2026-10-16T01:58:40.109Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "sha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+    "caption": "Guard 적용 전 generation 1의 Expo Web 목록을 보여 주는 역사 화면입니다. 이번 admission/CONNECT 허용, 실제 exec, physical pin 또는 native iPhone 합격 증거가 아닙니다.",
+    "newCaptureCount": 0,
+    "assetChanged": false
+  },
+  "limits": [
+    "정책 typeChecking 경고0·manifest 접수는 실제 recovery/CONNECT 허용 전체의 증명이 아닙니다.",
+    "RS scale404와 없는 Service의 RBAC403, 기반 없는 NetworkPolicy UPDATE는 고정 자원 거절 합격으로 세지 않았습니다.",
+    "EndpointSlice의 기존 label 제거 oldObject branch는 미검증입니다.",
+    "collector exact inspect/ensure-leaf의 미배치400은 실제 허용 CONNECT나 stream/명령 실행 합격이 아닙니다.",
+    "ordinary numeric/named/qualified proxy의 Warden400은 실제 통신 가용성 또는 VAP 허용 합격이 아닙니다.",
+    "DELETE body 교정은 재사용 방지용 준비이며 실제 비변경 dry-run 재시험은 하지 않았습니다.",
+    "실제 제품 credential/impersonation 경계, production namespace freeze, admitted mutation drain, physical pin, production controller, old writer 및 HA는 미완료입니다."
+  ],
+  "publicationOnly": {
+    "changedArtifacts": 2,
+    "productChanges": 0,
+    "newTests": 0,
+    "newEnvironmentQueries": 0,
+    "newPolicyOrPodOperations": 0,
+    "newScreenshots": 0,
+    "newBuildsOrInstalls": 0,
+    "heavySlots": 0
+  },
+  "physicalPinIssued": false,
+  "productionGuardActivated": false,
+  "fullP1_10Accepted": false,
+  "originalReferences": [
+    {
+      "id": "first-activation",
+      "locator": "<private-namespace-freeze-evidence>/activation-handoff/worker-result.json",
+      "sha256": "ed5db1efe0120b644a41b4c476c446a2d31a493273c41197fddcaff387c3db3e",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-cm-propagation-201",
+      "locator": "<private-namespace-freeze-evidence>/run/results/activation-fixed-configmap-1.json",
+      "sha256": "8e62f728f986803cdefec06f59a12f02859579f1fb14de2db1bfc7d76aa9d547",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-cm-vap-forbidden",
+      "locator": "<private-namespace-freeze-evidence>/run/results/activation-fixed-configmap-2.json",
+      "sha256": "068199d7eb2fd58fe29126a9da8859b30b8f9f87f8c8d4e5dca71d1e13030643",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-rs-not-found",
+      "locator": "<private-namespace-freeze-evidence>/run/results/fixed-rs-scale.json",
+      "sha256": "e6a73419469957b42a21fcb32a69855488a1a20f80614ddc17a9ecc57d05e670",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-pvc-vap-forbidden",
+      "locator": "<private-namespace-freeze-evidence>/run/results/fixed-pvc-create.json",
+      "sha256": "9fb8ad2548275a9e99b98a2727db47b693171f517495306ce41f8c5b1a323a82",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-service-rbac-forbidden",
+      "locator": "<private-namespace-freeze-evidence>/run/results/fixed-service-update.json",
+      "sha256": "acd812ddeb9576d4a1600e7abef17bb2002a74f49adceef3821e5fcc066d7a70",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-cases",
+      "locator": "<private-namespace-freeze-evidence>/cases-handoff/worker-result.json",
+      "sha256": "abe32de455a0e7b3392c5f7251fa7b488fa25778a08ff7cdbd682bd607a8e284",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "first-namespace-final",
+      "locator": "<private-namespace-freeze-evidence>/namespace-final-read/worker-result.json",
+      "sha256": "251907767c1b8ee4bf22eafe7f1503f40795a2de3fcdeaa6950c785c1f334ee7",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-1-recovery-cel-error",
+      "locator": "<private-namespace-freeze-evidence>/remainder-1/run/results/recovery-exact-pod-dryrun.json",
+      "sha256": "060a0295e34d3c89d4651fd8d7f8a5b04710e7bd6f11a87bd7398dbdd7c43c2b",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-1-result",
+      "locator": "<private-namespace-freeze-evidence>/remainder-1/execution-handoff/worker-result.json",
+      "sha256": "c0005a54794fc19eba217fb2fe9e81d6ce02b9c264e4b5de786ca3caa30f1d8b",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-1-namespace-final",
+      "locator": "<private-namespace-freeze-evidence>/remainder-1/namespace-final-read/worker-result.json",
+      "sha256": "0f35dae15d9cf27d8317a9518610f6332f34086b56c9a0fc7637013b31e6b940",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-result",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/execution-handoff/worker-result.json",
+      "sha256": "67fd907a77b6e1a06b1e0ba049fbf6bd93830461bbb8c37cfd9cfa73e238ef24",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-recovery-delete-response",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/run/results/recovery-pod-delete-dryrun.json",
+      "sha256": "9602ba04ab3a5fb630167568d671a6a65368f9f286adb99a6a2c88516f8d1ce5",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-recovery-delete-options",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/run/results/recovery-pod-delete-dryrun.request-object.json",
+      "sha256": "6f8e107e1e9c667aa3094447126f6fcf7e05a7a329a502444e5d7f6c9a15b7dd",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-delete-classification-correction",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/recovery-delete-classification-correction.json",
+      "sha256": "ce30d49f9ff80c39a67dd5b8593564230e6fd4f5a564a2417da028d5164040e5",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-pod-not-found",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/run/results/pending-before-collector-exact-inspect.json",
+      "sha256": "e32b3bffd29ce6516eb3a0bc843f163e66ae51292271ecbcc0cc4299c282eec9",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-namespace-final",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/namespace-final-read/worker-result.json",
+      "sha256": "f20292fc190d6d0b974a28fe5f27de24cb0ee64722fb48f1fc3a6bb84122bfed",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-3-result",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/execution-handoff.json",
+      "sha256": "f6f1b33337bc84847713059cfa516646cced8435f5a7a4019fb3ccc64c0cab68",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "remainder-3-namespace-final",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/namespace-final-read/worker-result.json",
+      "sha256": "97797c4a8412ddfb708212f360d9b56f7b1c7e819faf4c4e485a2db24817c942",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "corrected-source-delta",
+      "locator": "<private-namespace-freeze-evidence>/remainder-2/source-delta-manifest.json",
+      "sha256": "0a7b86ccd382b6b18d497065441172f4d35f6135890b49b49a7334cc4dac2d45",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-activation-fixed-configmap-remainder-3-1",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/activation-fixed-configmap-remainder-3-1.json",
+      "sha256": "fbb0702ab535d598fbf10108729a79998d24f4896e839fbd08b004aab8bce535",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-collector-exact-ensure-leaf",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/collector-exact-ensure-leaf.json",
+      "sha256": "3790b493cd3c3c7851b341cc7256d3bae70d84ddd2d8a1b0bb8439cd4fb97b39",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-collector-exact-inspect",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/collector-exact-inspect.json",
+      "sha256": "0083e17f97f6af8d1d60407d5943918354eeb637e84e6de69650f02c73f6ad3b",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-endpoint-identity-endpoints-create",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/endpoint-identity-endpoints-create.json",
+      "sha256": "1492efefc34f520ddec5ef06fe33dcbc94d3cf8c7ae1d3dcc9e6dbd96e0f611a",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-endpoint-identity-endpointslice-create",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/endpoint-identity-endpointslice-create.json",
+      "sha256": "708f6be323f6d036d682c795f6f3cfb39cafe7a285744914f0165c336535b38e",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-ordinary-named-port-prefix-shape",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/ordinary-named-port-prefix-shape.json",
+      "sha256": "eb147193681c52a5ab75a57afba3a638d2854f3f7bce8e6f1f2f3cfc8cd5cf53",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-ordinary-numeric-proxy",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/ordinary-numeric-proxy.json",
+      "sha256": "2acc72ea1cc645ae7a96a65bfde860a5e28f79834c6c7cdb49ce784ecd972748",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-ordinary-qualified-port-prefix-shape",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/ordinary-qualified-port-prefix-shape.json",
+      "sha256": "4779809ea440c2b1da5c6f9de2ce001768e3df5e0e33f94ad39484f57b289a61",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-attach",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-attach.json",
+      "sha256": "f381118d96e1a2d47cdf2aabc0ea5bc07f2767f47c8ad6a48e9a02c857425512",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-endpoints-create",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-endpoints-create.json",
+      "sha256": "a06a87289d212ac18a2e4eb6ec75c89603d947b66c46ee0ab2e87daa71c45faf",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-endpointslice-create",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-endpointslice-create.json",
+      "sha256": "f82b42435c35ebc5ba6d1076476d40a1ccee20d73ac2193f66220d05bdf3d888",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-extra-argv",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-extra-argv.json",
+      "sha256": "8b3bda129d5612d4e508291ef5f8fce025043b52c257d14963f6559f0c5a3a77",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-modified-argv",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-modified-argv.json",
+      "sha256": "a005a4ba34f18abc7fac6d52692d5399a55581184794a20c31cef5b1f1a583d4",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-portforward",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-portforward.json",
+      "sha256": "cc7c1cd86a97c137ec04bd9b236c0eac64217496277c536985f1706171a3bed5",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-protected-proxy",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-protected-proxy.json",
+      "sha256": "bba1c586ba9d14fcffb1206a357db8b0dfb848b378c4e1fd3548f3e3df554fbe",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-qualified-protected-proxy",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-qualified-protected-proxy.json",
+      "sha256": "26db8c50ff3a377604695d76f24ef3934ecd32371376b665168d1e77fa5f526b",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-rs-owner-forgery",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-rs-owner-forgery.json",
+      "sha256": "e92389460d3e0b7094663c61896de0c0220f7c964e5dfab181ea022e1dbdcb2f",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    },
+    {
+      "id": "case-product-shell",
+      "locator": "<private-namespace-freeze-evidence>/remainder-3/run/results/product-shell.json",
+      "sha256": "14971705801d95cafb3047297ae3964aa6afcd6fd23871f59ad79288c25a3a63",
+      "access": "비공개 운영 증거에 보존되어 있으며 이 PR에는 원문을 복사하지 않았습니다."
+    }
+  ]
+}
