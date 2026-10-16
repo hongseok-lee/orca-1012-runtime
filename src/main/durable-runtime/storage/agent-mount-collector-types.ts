@@ -1,4 +1,5 @@
 import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
+import type { JsonValue } from '../db/atomic.ts'
 import type { KubernetesPodAuthHttps } from '../runtime/kubernetes-pod-auth-types.ts'
 import type { ManagedLeafSocket } from './managed-leaf-collector-types.ts'
 import type { ClientOptions } from 'ws'
@@ -30,7 +31,7 @@ export type AgentMountExpectation = Readonly<{
 export type AgentMountPodIncarnation = Readonly<{
   uid: string; name: string; resourceVersion: string; nodeName: string; containerName: string
   containerId: string; imageId: string; restartCount: number; startedAt: string
-  admittedResources: import('../db/atomic.ts').JsonValue
+  admittedResources: JsonValue
 }>
 export type AgentMountStorage = Readonly<{
   expected: AgentMountExpectation

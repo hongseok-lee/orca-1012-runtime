@@ -118,7 +118,7 @@ test('Agent mount collector rejects original Pod/PVC/PV substitutions and change
       const f = fixture(), pvc = body(f, 5), pv = body(f, 6), spec = inventoryRecord(pv.spec)
       if (change === 'pvcUid') { inventoryRecord(pvc.metadata).uid = 'replacement' }
       if (change === 'pvUid') { inventoryRecord(pv.metadata).uid = 'replacement' }
-      if (change === 'export') { inventoryRecord(spec.nfs).path = String(inventoryRecord(spec.nfs).path) + '/other' }
+      if (change === 'export') { inventoryRecord(spec.nfs).path = `${String(inventoryRecord(spec.nfs).path)}/other` }
       if (change === 'mode') { inventoryRecord(spec.nfs).readOnly = true }
       if (change === 'volumeName') { inventoryRecord(pvc.spec).volumeName = 'different-nfs-pv' }
       await rejected(f, change === 'mode' ? 'STORAGE_CHANGED' : 'STORAGE_IDENTITY')
@@ -134,7 +134,7 @@ test('Agent probe rejects uncertain or mismatched consumer mount state', async t
       if (change === 'parent-export') { mountinfo(f, info => info.replace(f.expectations[0].serverPath, '/exports/runtime-domains/dataset-fixture')) }
       if (change === 'protected-rw') { mountinfo(f, info => info.replace('/agent ro', '/agent rw')) }
       if (change === 'shared-ro') { mountinfo(f, info => info.replace('/shared rw', '/shared ro')) }
-      if (change === 'nested') { mountinfo(f, info => info + '\n90 10 0:90 / /agent/nested rw - tmpfs none rw') }
+      if (change === 'nested') { mountinfo(f, info => `${info}\n90 10 0:90 / /agent/nested rw - tmpfs none rw`) }
       if (change === 'non-nfs') { mountinfo(f, info => info.replace(' - nfs4 ', ' - ext4 ')) }
       if (change === 'device') { r.before.stat.device = '99'; r.before.lstat.device = '99'; r.after = structuredClone(r.before) }
       if (change === 'symlink') { r.before.lstat.symlink = true }
