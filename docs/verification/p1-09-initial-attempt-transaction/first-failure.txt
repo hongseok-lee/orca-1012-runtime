@@ -1,0 +1,13 @@
+
+  x TS(7060): This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.
+     ,-[src/main/durable-runtime/runtime/initial-agent-attempt-transaction.pg.test.mts:215:18]
+ 214 |   const checkout=boundary(), commit=boundary(), rollback=boundary(), settlements: Promise<void>[]=[]
+ 215 |   const observe=<T>(pending: Promise<T>): Promise<T> => {
+     :                  ^
+ 216 |     settlements.push(pending.then(()=>undefined,()=>undefined))
+     `----
+
+Found 0 warnings and 1 error.
+Finished in 198ms on 2 files with 176 rules using 1 threads.
+
+원 진단을 보존했습니다. observe=<T>를 observe=<T,>로 교정했습니다. trailing comma 한 글자만 추가했으며 assertion·SQL·제품 의미는 불변입니다.
