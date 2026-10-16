@@ -67,7 +67,10 @@ function pods(input: NamespaceFreezePolicyInput): Policy {
   ], `!variables.protected || ((!has(request.subResource) || request.subResource == "") && (` +
     `(request.operation == "CREATE" && ${recoveryPod(input)}) || ` +
     `(request.operation == "UPDATE" && ${metadataOnlyPodUpdate(input)}) || ` +
-    `(request.operation == "DELETE" && request.userInfo.username in ${celLiteral(input.recoveryUsernames)})))`);
+    `(request.operation == "DELETE" && (request.userInfo.username in ${celLiteral(input.recoveryUsernames)} || ` +
+    `(oldObject != null && has(oldObject.spec) && has(oldObject.spec.nodeName) && oldObject.spec.nodeName != "" && ` +
+    `has(request.userInfo) && has(request.userInfo.username) && request.userInfo.username == "system:node:" + oldObject.spec.nodeName && ` +
+    `has(request.userInfo.groups) && "system:nodes" in request.userInfo.groups)))))`);
 }
 function exec(input: NamespaceFreezePolicyInput): Policy {
   return policy(input, "exec", [rule("", ["pods/exec"], ["CONNECT"])], [],
