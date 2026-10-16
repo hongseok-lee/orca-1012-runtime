@@ -3,7 +3,7 @@ import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host.ts'
 import type { AbortableInventoryTransport } from '../durable-runtime/ha/pass.ts'
 import type { ControllerWorker, ControllerWorkerSnapshot } from '../durable-runtime/ha/worker.ts'
 import type { FirstManagedInitialDispatchSnapshot } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
-import type { prepareOrcadFirstManagedInitial } from './orcad-first-managed-initial.ts'
+import type { prepareOrcadFirstManagedInitial, captureOrcadFirstManagedCallbacks } from './orcad-first-managed-initial.ts'
 import { persistControllerInventoryObservation } from '../durable-runtime/lifecycle/controller-inventory-observation.ts'
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
@@ -101,13 +101,16 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         const transport = ca ? await prepareOrcadControllerInventoryWithCA(config, ca)
           : await prepareOrcadControllerInventory(config)
         let selectedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
+        let selectedCallbacks: ReturnType<typeof captureOrcadFirstManagedCallbacks> | null = null
         if (config.firstManagedInitial) {
-          const { prepareOrcadFirstManagedInitial: prepareInitial } = await import('./orcad-first-managed-initial.ts')
+          const { prepareOrcadFirstManagedInitial: prepareInitial, captureOrcadFirstManagedCallbacks: captureCallbacks } =
+            await import('./orcad-first-managed-initial.ts')
           if (closing) { return }
           captured.assertCurrentHost()
           if (!ca) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedInitial = prepareInitial(config, captured.pool, ca)
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
+          selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
         // Dataset 전체 queue 소비를 서버가 명시적으로 선택합니다. 원 transaction에서 claim 뒤 payload를 검증합니다.
         // Payload 없는 head로 kind를 추정하거나 새 권한을 만들지 않습니다.
@@ -118,19 +121,8 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         if (closing) { return }
         captured.assertCurrentHost()
         firstManagedInitial = selectedInitial
-        const initial = selectedInitial
-        const planStep = initial?.planStep.bind(initial), executeCommitted = initial?.executeCommitted.bind(initial)
-        const lookupOriginal = initial?.lookupOriginal.bind(initial)
-        function requireCallback(signal?: AbortSignal): void {
-          if (closing || signal?.aborted) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CLOSED') }
-          captured.assertCurrentHost()
-        }
         worker = createControllerWorker(captured.pool, config.policy, {
-          ...(planStep && executeCommitted && lookupOriginal ? {
-            planStep: (...args: Parameters<typeof planStep>) => { requireCallback(); return planStep(...args) },
-            executeCommitted: (...args: Parameters<typeof executeCommitted>) => { requireCallback(args[1]); return executeCommitted(...args) },
-            lookupOriginal: (...args: Parameters<typeof lookupOriginal>) => { requireCallback(args[1]); return lookupOriginal(...args) }
-          } : {}),
+          ...(selectedCallbacks ?? {}),
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source, pass) {
             if (closing || pass.signal.aborted) { invalidOrcadControllerConfig('CONTROLLER_INVENTORY_ABORTED') }

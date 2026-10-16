@@ -35,6 +35,24 @@ function projectedBearer(path: string, signal: AbortSignal): string {
   return token
 }
 
+/** Trusted startup-only capture of the real composer's three callbacks. No
+ * public input, identity, lease, transaction or external effect is issued. */
+export function captureOrcadFirstManagedCallbacks(initial: ReturnType<typeof createFirstManagedInitialDispatch>,
+  owner: Readonly<{ isClosing(): boolean; assertCurrentHost(): void }>) {
+  const isClosing = owner.isClosing.bind(owner), assertCurrentHost = owner.assertCurrentHost.bind(owner)
+  const planStep = initial.planStep.bind(initial), executeCommitted = initial.executeCommitted.bind(initial)
+  const lookupOriginal = initial.lookupOriginal.bind(initial)
+  function requireCallback(signal?: AbortSignal): void {
+    if (isClosing() || signal?.aborted) { deny('CONTROLLER_FIRST_MANAGED_CLOSED') }
+    assertCurrentHost()
+  }
+  return Object.freeze({
+    planStep: (...args: Parameters<typeof planStep>) => { requireCallback(); return planStep(...args) },
+    executeCommitted: (...args: Parameters<typeof executeCommitted>) => { requireCallback(args[1]); return executeCommitted(...args) },
+    lookupOriginal: (...args: Parameters<typeof lookupOriginal>) => { requireCallback(args[1]); return lookupOriginal(...args) }
+  })
+}
+
 /** One private target configuration. No raw token, Pool, callback, identity or
  * transport is decoded from JSON. Only the existing strict planner composes
  * policy/request; this loader supplies the original captured inventory CA. */
