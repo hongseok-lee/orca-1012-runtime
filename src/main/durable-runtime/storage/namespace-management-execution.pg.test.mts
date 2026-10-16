@@ -4,7 +4,7 @@ import { test } from "node:test";
 import type { Pool } from "pg";
 import { createDurablePool, DurableDatabaseError, withDurableTransaction } from "../db/connection.ts";
 import { readMigrations } from "../db/migrate.ts";
-import { acquireNamespaceHold, beginNamespaceManagement, readNamespaceManagement,
+import { acquireNamespaceHold, readNamespaceManagement,
   registerNamespaceProfile, releaseNamespaceHold } from "./namespace-holds.ts";
 import type { NamespaceManagementInput, NamespaceProfileInput, NamespaceTransactionResult } from "./namespace-holds.ts";
 import { executeNamespaceManagement } from "./namespace-management-execution.ts";
