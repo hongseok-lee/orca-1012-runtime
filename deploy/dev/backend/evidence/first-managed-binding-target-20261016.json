@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "sourcePin": "86223828a1517d5457005cd31aa2f40ca177691b",
+  "observationCutoff": "2026-10-16T16:07:49.216Z",
+  "scope": "서버 운영자의 최초 논리 managed 대상 등록·읽기 전용 후처리·최초 binding owner 검증입니다.",
+  "authorization": "C1 서버 운영자 orca-dev-bootstrap과 새 repository 1개 scope를 사용했습니다. 공개 RPC 인증 결과는 이 증거에 포함되지 않습니다.",
+  "repository": {
+    "id": "orca-1012-managed-project",
+    "displayName": "Orca 1012 Managed",
+    "kind": "folder",
+    "executionHostId": "local",
+    "path": "/agent/checkout"
+  },
+  "target": {
+    "workspaceId": "d9cbb30f-5f13-44d7-9d43-a5b6b84f3420",
+    "publicWorkspaceId": "orca-1012-managed-project::/agent/checkout::workspace:d9cbb30f-5f13-44d7-9d43-a5b6b84f3420",
+    "sessionId": "afe07849-bd92-484b-99b3-7774c0451110",
+    "unitId": "456de729-7b40-4cd2-810e-92674904724a",
+    "bindingId": "c9dbe650-4d3f-49d6-8854-d688d8accab1",
+    "sessionRevision": "0",
+    "unitRevision": "1",
+    "bindingRevision": "0",
+    "sessionFence": "0",
+    "bindingEpoch": "0",
+    "accessState": "UNVERIFIED"
+  },
+  "namespaceProfile": {
+    "id": "81575d0d-57c2-40c4-b602-270e7a0460ec",
+    "generation": "1",
+    "qualificationDigest": "f93812ce4329a4b6cf8b28d9d18510f8cec2cb01cc6488153b0072548690f8c6",
+    "state": "ACTIVE"
+  },
+  "storage": {
+    "datasetName": "orca-1012-dev-v1",
+    "backendIdentity": "private exact backendId를 고정하고 원 실행에서 대조했습니다. 공개 사본에는 실제 cloud 식별자를 게시하지 않습니다.",
+    "exportId": "managed-runtime-domains",
+    "canonicalDirectory": "/orca-1012-dev-v1/d2b67942-4a81-4edf-9e45-b611460d0e1b",
+    "localDirectory": "/agent",
+    "agentHomeRoot": "/agent/homes",
+    "worktreeRoot": "/agent/worktrees",
+    "pathsAreLogicalReservations": true
+  },
+  "originalInvocation": {
+    "callerPid": 9502,
+    "finishedAt": "2026-10-16T15:53:49.801Z",
+    "exitCode": 1,
+    "completed": false,
+    "failureCode": "CREATION_RECEIPT_MISMATCH",
+    "commits": [
+      {
+        "stage": "register-profile",
+        "acknowledgedAt": "2026-10-16T15:53:49.433Z",
+        "command": "COMMIT",
+        "receiptWritten": false
+      },
+      {
+        "stage": "register-repository",
+        "acknowledgedAt": "2026-10-16T15:53:49.469Z",
+        "command": "COMMIT",
+        "receiptWritten": true
+      },
+      {
+        "stage": "create-workspace",
+        "acknowledgedAt": "2026-10-16T15:53:49.760Z",
+        "command": "COMMIT",
+        "receiptWritten": true
+      }
+    ],
+    "poolEnded": true,
+    "cleanupFailed": false,
+    "invocations": 1
+  },
+  "receiptComparison": {
+    "canonicalResponseHash": "3b3c395ddd25ff8b90453502867ad00ac05f2198048cf5bc12fcb0824b4d924f",
+    "savedCreationJSONMatchesStoredReceipt": true,
+    "cause": "원 제품의 null-prototype 응답과 PG JSONB 객체를 strict 비교한 하네스 판정 차이입니다. 원 exit 1은 보존합니다.",
+    "receipts": {
+      "registrationReceipt": {
+        "status": "FOUND",
+        "method": "catalog.register-project",
+        "operationKey": "orca-1012-managed-register-20261016-v1",
+        "payloadHash": "a407f1d9a15c906b4d08c48883616aa869af69cec5c5738fa08f327a149cf056",
+        "recordedAt": "2026-10-16T15:53:49.465Z"
+      },
+      "creationReceipt": {
+        "status": "FOUND",
+        "method": "worktree.create",
+        "operationKey": "orca-1012-managed-create-20261016-v1",
+        "payloadHash": "a7271fa791db1a2341d2f81f76d800fbe9d55fcbf6685db3a245e230db08ee41",
+        "recordedAt": "2026-10-16T15:53:49.756Z"
+      }
+    }
+  },
+  "readOnlyReconciliation": {
+    "callerPid": 9568,
+    "finishedAt": "2026-10-16T16:07:49.275Z",
+    "exitCode": 0,
+    "completed": true,
+    "transactionReadOnly": "on",
+    "acceptedPrivateDatabaseIdentityMatched": true,
+    "datasetName": "orca-1012-dev-v1",
+    "ledgerCount": 23,
+    "ledgerVersionChecksumAppliedAtUnchanged": true,
+    "rawUiPayloadUnchanged": true,
+    "legacyRepositoryUnchanged": true,
+    "memberCount": 1,
+    "profileCount": 1,
+    "domainCount": 1,
+    "bindingCount": 1,
+    "holds": "0",
+    "poolEnded": true,
+    "cleanupFailed": false,
+    "invocations": 1,
+    "mutations": 0
+  },
+  "unusedHistory": {
+    "attempts": "0",
+    "execution_grants": "0",
+    "write_grants": "0",
+    "seals": "0",
+    "mounts": "0"
+  },
+  "bundleProvenance": {
+    "bundleSHA256": "cfd1590e128f6d9c8905ae245a975c261fea6db5fd1c7cf6b43e039643c451eb",
+    "metafileSHA256": "d29622014c80c9f69aab1bbcb47a0b1968bfa503acedb878c7b61b33671ab9c8",
+    "actualInputManifestSHA256": "e6b9c2c7b009f15e7a36c7a666723b555b2f3036ce25e111790516a6108f27d1",
+    "actualProductValueInputs": 259,
+    "fixedGitBlobShaModeMismatches": 0,
+    "externalPackages": [
+      "pg",
+      "zod"
+    ],
+    "wholeCheckoutRevisionProven": false,
+    "fullTypeChecked": false
+  },
+  "preservation": {
+    "originalExit1Preserved": true,
+    "originalRunPreserved": true,
+    "originalBundlePinMismatchPreserved": true,
+    "mutationsReissued": 0,
+    "newIdsIssuedForRetry": 0,
+    "deleteOrReset": 0,
+    "rawUiAndFullReceiptsPubliclyIncluded": false
+  },
+  "scopeAtCutoff": {
+    "ownerInvoked": false,
+    "holdAcquired": false,
+    "collectorInvoked": false,
+    "AgentPodCreated": false,
+    "providerProcessStarted": false,
+    "writerActivated": false,
+    "homeFilesCreated": false
+  },
+  "pendingEvidence": [
+    "새 managed 대상의 기존 인증 UI 연결·화면은 아직 대기 중입니다."
+  ],
+  "notCompleted": [
+    "실제 Agent 홈 mount",
+    "oldwriter 차단",
+    "writer fencing 전체",
+    "Spot/HA 장애 인수",
+    "native iPhone/Mac"
+  ],
+  "historicalScreenshot": {
+    "path": "deploy/dev/backend/evidence/controller-dev-connection.png",
+    "immutableCommit": "805b0da68ed49572d4f2e45a57712fd84dbbf419",
+    "capturedAt": "2026-10-16T01:58:40.109Z",
+    "sha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+    "scope": "당시 개발 서버 접속 화면이며 새 managed 대상·owner·후속 UI 검증은 포함하지 않습니다."
+  },
+  "newExecutionForThisEvidencePR": {
+    "productTest": 0,
+    "PGQuery": 0,
+    "capture": 0,
+    "runtimeRestart": 0
+  },
+  "usageCreditsStream": "해당 실제 실행과 이 증거 준비에서 새 usage limit·credits·stream 중단 원오류는 미관측입니다.",
+  "ownerVerification": {
+    "sourcePin": "86223828a1517d5457005cd31aa2f40ca177691b",
+    "callerPid": 9663,
+    "startedAt": "2026-10-16T16:13:52.141Z",
+    "finishedAt": "2026-10-16T16:13:53.308Z",
+    "exitCode": 0,
+    "invocations": 1,
+    "retry": 0,
+    "callerSHA256": "423c510c6747d307fa6f7ab4ee6d5279c0559c4e8a3a877db941e8f2a59cdacb",
+    "bundleSHA256": "ba522a086a6eeddcdcdc9d9b49fff587c3f7aaf4018ad5976d6dff556885d970",
+    "acceptedTargetSHA256": "0f0b769ff8a8d0693481c33150f65a3ea63b45358b39d15cf3d47708827e247c",
+    "settlements": {
+      "hold": {
+        "ok": true,
+        "settlement": "COMMITTED",
+        "commitOutcome": "ACKNOWLEDGED",
+        "cleanupFailed": false
+      },
+      "audit": {
+        "ok": true,
+        "settlement": "COMMITTED",
+        "commitOutcome": "ACKNOWLEDGED",
+        "cleanupFailed": false
+      },
+      "binding": {
+        "ok": true,
+        "settlement": "COMMITTED",
+        "commitOutcome": "ACKNOWLEDGED",
+        "cleanupFailed": false
+      },
+      "release": {
+        "ok": true,
+        "settlement": "COMMITTED",
+        "commitOutcome": "ACKNOWLEDGED",
+        "cleanupFailed": false
+      }
+    },
+    "pinId": "618ca98a-4338-4c11-92aa-e936ad10ca54",
+    "pinState": "RELEASED",
+    "auditId": "824bd957-78ab-437b-8659-a69432e35c29",
+    "evidenceRef": "first-managed-binding:sha256:495fc8738c4c29a96a752b9d5e49327f6fe8b35aaa2e7f4f53bdfc479c2389a0",
+    "observationRef": "managed-leaf-observation:sha256:8ca050a7eddc257f48a24932f670bd6b965f04b7bf637071f26c9ab46027da64",
+    "bindingId": "c9dbe650-4d3f-49d6-8854-d688d8accab1",
+    "bindingRevision": "1",
+    "bindingEpoch": "0",
+    "accessState": "VERIFIED",
+    "identityVerifiedAt": "2026-10-16T16:13:53.232Z",
+    "membershipCount": 1,
+    "ledger23Unchanged": true,
+    "acceptedPrivateDatabaseIdentityMatched": true,
+    "unusedHistory": {
+      "attempts": "0",
+      "execution_grants": "0",
+      "write_grants": "0",
+      "seals": "0",
+      "mounts": "0"
+    },
+    "poolEnded": true,
+    "activeClients": [],
+    "cleanupFailed": false,
+    "knownProcess": {
+      "pid": 9663,
+      "status": "ABSENT",
+      "observedAt": "2026-10-16T16:15:36.439Z"
+    },
+    "physicalPinIssuerImplemented": false,
+    "generalMountOrHAOrNativeAcceptance": false,
+    "providerOrWriterActivation": 0,
+    "PodOrPolicyMutation": 0,
+    "reviewedSourceReferences": 20,
+    "rootReportedReferenceMismatches": 0,
+    "provenance": "Root가 수락한 원 owner 인계 자료에서 공개 허용 필드만 선택했습니다. 원 ownerToken·자격·입력/설정 전체는 포함하지 않습니다."
+  }
+}
