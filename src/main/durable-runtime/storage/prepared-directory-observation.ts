@@ -29,7 +29,7 @@ function record(value: unknown): Record<string, unknown> {
   return value;
 }
 function text(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.length > 512 || /[\x00-\x1f\x7f]/.test(value)) {
+  if (typeof value !== 'string' || !value || value.length > 512 || [...value].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
     deny('DIRECTORY_OBSERVATION_INPUT');
   }
   return value;
