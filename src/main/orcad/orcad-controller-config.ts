@@ -12,6 +12,7 @@ export type OrcadControllerConfig = Readonly<{
     requestTimeoutMs: number; watchTimeoutSeconds: number; listLimit: number }>
   policy: ControllerWorkerPolicy
   structuredOutput?: Readonly<{ claimDurationMs: number }>
+  firstManagedInitial?: Readonly<{ configFile: string }>
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -64,10 +65,14 @@ function apiOrigin(value: unknown): string {
 /** All keys/scalars/policies detach synchronously. No Pool, token, external identity or config default is accepted. */
 export function captureOrcadControllerConfig(value: unknown): OrcadControllerConfig {
   const hasStructuredOutput = value !== null && typeof value === 'object' && Object.hasOwn(value, 'structuredOutput')
-  const input = record(value, hasStructuredOutput
-    ? ['datasetName', 'inventory', 'policy', 'structuredOutput'] : ['datasetName', 'inventory', 'policy'])
+  const hasFirstManagedInitial = value !== null && typeof value === 'object' && Object.hasOwn(value, 'firstManagedInitial')
+  const input = record(value, ['datasetName', 'inventory', 'policy',
+    ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : [])])
   const structuredOutput = hasStructuredOutput
     ? Object.freeze({ claimDurationMs: positive(record(input.structuredOutput, ['claimDurationMs']).claimDurationMs, true) })
+    : undefined
+  const firstManagedInitial = hasFirstManagedInitial
+    ? Object.freeze({ configFile: absolute(record(input.firstManagedInitial, ['configFile']).configFile) })
     : undefined
   const inventory = record(input.inventory, ['apiOrigin', 'namespace', 'dataset', 'caFile', 'tokenFile',
     'requestTimeoutMs', 'watchTimeoutSeconds', 'listLimit'])
@@ -81,6 +86,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   if (renewIntervalMs >= durationMs) { invalidOrcadControllerConfig() }
   return Object.freeze({ datasetName: dataset,
     ...(structuredOutput ? { structuredOutput } : {}),
+    ...(firstManagedInitial ? { firstManagedInitial } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),
@@ -91,7 +97,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
 }
 
 // JSON.parse alone accepts duplicate object keys. Scan its already valid grammar to reject duplicates at every depth.
-function uniqueJson(source: string): unknown {
+export function parseUniqueOrcadControllerJson(source: string): unknown {
   const value: unknown = JSON.parse(source)
   let offset = 0
   const whitespace = () => { while (/\s/u.test(source[offset] ?? '') && offset < source.length) { offset++ } }
@@ -130,7 +136,7 @@ function uniqueJson(source: string): unknown {
 }
 
 /** Private config has a strict no-symlink identity boundary and a bounded read even if the file grows. */
-function readPrivateConfig(path: string): Buffer {
+export function readPrivateOrcadControllerConfigBytes(path: string): Buffer {
   const code = 'CONTROLLER_STARTUP_PRIVATE_FILE'
   let fd: number | undefined
   try {
@@ -162,8 +168,8 @@ export function readOrcadControllerConfig(): OrcadControllerConfig | null {
   const path = process.env.ORCA_DURABLE_CONTROLLER_CONFIG
   if (path === undefined) { return null }
   try {
-    const bytes = readPrivateConfig(absolute(path))
-    return captureOrcadControllerConfig(uniqueJson(bytes.toString('utf8')))
+    const bytes = readPrivateOrcadControllerConfigBytes(absolute(path))
+    return captureOrcadControllerConfig(parseUniqueOrcadControllerJson(bytes.toString('utf8')))
   } catch (error) {
     if (error instanceof OrcadControllerConfigurationError) { throw error }
     return invalidOrcadControllerConfig('CONTROLLER_STARTUP_CONFIG_FILE')
