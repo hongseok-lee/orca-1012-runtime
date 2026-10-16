@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "kind": "FIXED_PROFILE_ACTIVATION_NARROW_ENFORCEMENT_EVIDENCE",
+  "recordedAt": "2026-10-16T10:34:25.430044+00:00",
+  "documentBase": "6a1102c81ebe7001786efb3ca6c98a5e0c59fba8",
+  "productSourceMain": "37ce850a652383731fbd9e3c4713ef37bdf614a9",
+  "productCorrectionPR": "https://github.com/hongseok-lee/orca-1012-runtime/pull/130",
+  "scope": "고정 개발 NFS의 VAP 5개와 Binding 5개 설치 및 원 UID/spec 대조, 고정 CM과 관리자 Pod dry-run의 정확 VAP 거절 및 동일 UID 생존을 기록합니다. 실제 운영 식별자는 일반화했습니다.",
+  "rootAcceptanceReference": "root-acceptance",
+  "rootAcceptanceSHA256": "7441285b8823f556a6fa201a2b6eb004b0d821d0fc985eb411fc4eb0e30cf4b6",
+  "policyCount": 5,
+  "bindingCount": 5,
+  "guardObjects": [
+    {
+      "kind": "ValidatingAdmissionPolicy",
+      "alias": "fixed-vap",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "0e60c5a50caa7bdcfe406d0b40358e397a0e57c2321047fcfe71a325f34c282c",
+      "readbackReference": "guard-readback-1"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicy",
+      "alias": "pods-vap",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "a95517afff7a65960e1e7cd6f1783ae8e8bb2a5b5fed764857b9c3ab05f2452b",
+      "readbackReference": "guard-readback-2"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicy",
+      "alias": "exec-vap",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "6f2907b2d98c66ec38d6d3aa2cb3b9482e123e7da333bde4109b9df5c088dcf2",
+      "readbackReference": "guard-readback-3"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicy",
+      "alias": "connect-vap",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "71ced9d8a12ff0e035cf8daae2dd470456b69ee675f5bc5e2546a6fc0de94295",
+      "readbackReference": "guard-readback-4"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicy",
+      "alias": "endpoints-vap",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "34d76154f0905e77a7d6e10b829fd65bdd379350e86a2e051529cd9eaa5e78ed",
+      "readbackReference": "guard-readback-5"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "alias": "fixed-binding",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "5b1ec3eb25c5a79971cdcf8aca5a40dfbce8d5e1d342bc9b2414a744bc7ddf8d",
+      "readbackReference": "guard-readback-6"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "alias": "pods-binding",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "acacc3d67e758256fa51093449766659ebcb89f5397d777097d47e81582d3405",
+      "readbackReference": "guard-readback-7"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "alias": "exec-binding",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "02bafc161e36557073db0b5d91e8de7046856b5df04dc6372b4dd4e7ddd414a6",
+      "readbackReference": "guard-readback-8"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "alias": "connect-binding",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "b886aacf50105cec505e923d21aa09529ed289bdcff9b979f5dc43ed1d02fd4e",
+      "readbackReference": "guard-readback-9"
+    },
+    {
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "alias": "endpoints-binding",
+      "uidIdentityMatched": true,
+      "uidPubliclyOmitted": true,
+      "specSHA256": "ffcef2767e8a709cf29129bf258937b15076b4fff50a52a8ca55e29620177446",
+      "readbackReference": "guard-readback-10"
+    }
+  ],
+  "runs": [
+    {
+      "phase": "first-installation",
+      "startedAt": "2026-10-16T09:54:06.395748+00:00",
+      "finishedAt": "2026-10-16T09:54:07.592572+00:00",
+      "exitCode": 1,
+      "apiRequests": 12,
+      "result": "고정 VAP 1개 POST 201 뒤 GKE spec 차이로 중단했습니다.",
+      "processFinished": true,
+      "heavyReturned": true,
+      "pidPubliclyOmitted": true
+    },
+    {
+      "phase": "remaining-first-installation",
+      "startedAt": "2026-10-16T10:02:56.057671+00:00",
+      "finishedAt": "2026-10-16T10:02:58.330662+00:00",
+      "exitCode": 1,
+      "apiRequests": 29,
+      "result": "원 fixed VAP를 인수하고 남은 9개를 최초 생성했지만 첫 CM dry-run HTTP 200으로 거절을 확인하지 못했습니다.",
+      "processFinished": true,
+      "heavyReturned": true,
+      "pidPubliclyOmitted": true
+    },
+    {
+      "phase": "guard-observation-and-failed-check",
+      "startedAt": "2026-10-16T10:14:31.703959+00:00",
+      "finishedAt": "2026-10-16T10:14:34.910191+00:00",
+      "exitCode": 1,
+      "apiRequests": 13,
+      "result": "원 10개 UID/spec과 VAP 5개 상태 및 fixed CM VAP 403을 확인했으나 이전 Pod의 두 404로 Node 요청 없이 중단했습니다.",
+      "processFinished": true,
+      "heavyReturned": true,
+      "pidPubliclyOmitted": true
+    },
+    {
+      "phase": "current-pod-first-check",
+      "startedAt": "2026-10-16T10:24:26.170310+00:00",
+      "finishedAt": "2026-10-16T10:24:26.769174+00:00",
+      "exitCode": 1,
+      "apiRequests": 3,
+      "result": "현재 Pod의 관리자 Pods VAP 403과 동일 UID GET 200을 확인했고 Node 요청은 플랫폼 impersonation 403으로 거절됐습니다.",
+      "processFinished": true,
+      "heavyReturned": true,
+      "pidPubliclyOmitted": true
+    }
+  ],
+  "metadataObservation": {
+    "startedAt": "2026-10-16T10:17:58.628476+00:00",
+    "finishedAt": "2026-10-16T10:17:59.498747+00:00",
+    "logicalGETCount": 6,
+    "allSucceeded": true,
+    "sameDeploymentReplicaSetServiceAndBackingIdentity": true,
+    "sameImageMountAndVolumes": true,
+    "oneCurrentPodRunningReady": true,
+    "restartCount": 0,
+    "containerStartedAt": "2026-10-16T09:28:30Z",
+    "readyEndpointTargetsCurrentUID": true,
+    "newMountExecVerified": false,
+    "references": [
+      "current-metadata-index",
+      "current-metadata-comparison"
+    ]
+  },
+  "originalFailures": [
+    {
+      "phase": "first-installation",
+      "classification": "EXACT_SPEC_MISMATCH_AFTER_FIRST_VAP_CREATE",
+      "differences": [
+        "기대 spec의 namespaceSelector에 없던 GKE 관리 namespace 12개의 NotIn 조건이 원 readback에 추가됐습니다.",
+        "원 variables=[]는 API readback에서 생략됐습니다."
+      ],
+      "correction": "Root가 원 readback의 정확 관리 namespace 12개와 빈 variables 생략만 기대 spec에 고정하도록 수락했습니다. 원 bundle, API 응답과 nonempty 변수는 변경하지 않았습니다.",
+      "references": [
+        "first-result",
+        "first-spec-readback"
+      ]
+    },
+    {
+      "phase": "remaining-first-installation",
+      "httpStatus": 200,
+      "classification": "ACTIVATION_NOT_OBSERVED_HTTP200",
+      "causeEstablished": false,
+      "reference": "first-cm-200"
+    },
+    {
+      "phase": "guard-observation-and-failed-check",
+      "httpStatus": 404,
+      "classification": "PRIOR_TARGET_NOT_FOUND_NOT_POLICY_PROOF",
+      "nodeRequestAttempted": false,
+      "references": [
+        "prior-pod-admin-404",
+        "prior-pod-get-404"
+      ]
+    },
+    {
+      "phase": "current-pod-first-check",
+      "httpStatus": 403,
+      "classification": "PLATFORM_IMPERSONATION_FORBIDDEN_NOT_CEL_DECISION",
+      "exactErrorBoundary": "GKE Warden authz [denied by user-impersonation-limitation]: impersonating system identities is not allowed",
+      "normalNodeAdmissionAllowVerified": false,
+      "nodeCELEvaluationFailureObserved": false,
+      "reference": "node-platform-403"
+    }
+  ],
+  "acceptedObservations": {
+    "allTenOriginalUIDAndExactSpecMatched": true,
+    "fivePoliciesObservedGeneration": 1,
+    "fivePoliciesGeneration": 1,
+    "fivePoliciesTypeCheckingPresent": true,
+    "fivePoliciesExpressionWarningCount": 0,
+    "fixedCM": {
+      "httpStatus": 403,
+      "reason": "Forbidden",
+      "exactExpectedVapAndBindingMatched": true,
+      "sourceTime": "2026-10-16T10:14:34.768Z",
+      "reference": "fixed-cm-403"
+    },
+    "currentPodAdminDELETE": {
+      "httpStatus": 403,
+      "reason": "Forbidden",
+      "exactExpectedVapAndBindingMatched": true,
+      "sourceTime": "2026-10-16T10:24:26.553Z",
+      "reference": "pods-admin-403"
+    },
+    "currentPodSurvivalGET": {
+      "httpStatus": 200,
+      "sameUIDAndNodeMatched": true,
+      "deletionTimestamp": null,
+      "sourceTime": "2026-10-16T10:24:26.739Z",
+      "reference": "current-pod-survival-200"
+    }
+  },
+  "dryRunBoundary": {
+    "bothDELETEQueryAndBodyDryRunAll": true,
+    "exactUIDPrecondition": true,
+    "actualPodDeleteCount": 0,
+    "policyFirstPOSTCount": 10,
+    "policyRePOSTCount": 0,
+    "automaticCleanupCount": 0,
+    "automaticRetryCount": 0,
+    "privilegeBypassCount": 0,
+    "roleOrTokenCreatedByThisTask": false,
+    "remoteExecStreams": 0,
+    "finalHeavySlots": 0,
+    "finalOwnedJobs": 0
+  },
+  "historicalScreenshot": {
+    "url": "https://raw.githubusercontent.com/hongseok-lee/orca-1012-runtime/805b0da68ed49572d4f2e45a57712fd84dbbf419/deploy/dev/backend/evidence/controller-dev-connection.png",
+    "provenanceURL": "https://github.com/hongseok-lee/orca-1012-runtime/blob/805b0da68ed49572d4f2e45a57712fd84dbbf419/deploy/dev/backend/evidence/controller-dev-connection.provenance.json",
+    "capturedAt": "2026-10-16T01:58:40.109Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "sha256": "b29541710eabcb20a17eed244cdfce476cc8469353ca8c252a85486746ae0893",
+    "caption": "2026-10-16T01:58:40.109Z에 촬영한 guard 적용 전 generation 1의 Expo Web 목록입니다. 이번 fixed/pods VAP 거절, Node 허용, 실제 exec, physical pin 또는 native iPhone 합격 증거가 아닙니다.",
+    "newCaptureCount": 0,
+    "assetChanged": false
+  },
+  "limits": [
+    "정상 Node DELETE는 GKE의 system:nodes impersonation 제한으로 실제 admission 허용을 확인하지 못했습니다. 이를 CEL 평가 실패나 정책 예외 불합격으로 단정하지 않습니다.",
+    "고정 CM과 현재 Pod의 관리자 DELETE 한정 거절 및 관측 시점 동일 UID 생존만 확인했습니다. 전체 정책 matrix나 모든 API server 전파 완료를 증명하지 않습니다.",
+    "현재 incarnation의 실제 collector exec와 전용 자격 발급 및 namespace mutation drain은 이번 증거 범위가 아닙니다.",
+    "PV와 Node의 일반 관리 권한, physical pin, production controller, 실제 launcher, 이전 writer 차단, HA 및 native iPhone 합격은 미완료입니다.",
+    "첫 HTTP 200의 원인을 전파 지연으로 확정하지 않았으며, 이전 Pod의 404에서 삭제 원인이나 현재 backing 장애를 추정하지 않았습니다.",
+    "기존 원 source, bundle, 결과와 역사 PNG는 보존했습니다. 이 PR에서는 제품 코드, 정책, 런타임, 시험과 이미지를 변경하지 않았습니다."
+  ],
+  "sourceContracts": {
+    "publicCommonSHA256": "f2acf303ccf1caf758959f01ec3aa28e83e75cb86bf27cef677f644b2be21041",
+    "p110SHA256": "068b371bd7fe540b116a7a8fc384fad99350d633acf3125426f0ee40df349a39",
+    "privateActivationContractSHA256": "926de741d51c4082ef4effd6e6e1bd30672f028fa62e0713f78fb5427fe5ec26",
+    "publicGeneralizedActivationContractSHA256": "0c967693e1fccb1ad52d15c1cf86588c54d4367ea620b18811fb64a0499ea4b9",
+    "privateOriginalUnchanged": true
+  },
+  "references": [
+    {
+      "id": "root-acceptance",
+      "locator": "<private-fixed-profile-evidence>/root-activation-acceptance.private.json",
+      "sha256": "7441285b8823f556a6fa201a2b6eb004b0d821d0fc985eb411fc4eb0e30cf4b6",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "source-manifest",
+      "locator": "<private-fixed-profile-evidence>/source-manifest.json",
+      "sha256": "5af57da0456343fa08e0a752573a9bfcddfcfb699a5d9e9c2f9fd2943f524bf6",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "original-bundle",
+      "locator": "<private-fixed-profile-evidence>/bundle.private.json",
+      "sha256": "7f70e581ba9f8a4ad6bd0fa372fc48146b20c346ad98ed9874fe696fafef0236",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "first-result",
+      "locator": "<private-fixed-profile-evidence>/first-execution-handoff.private.json",
+      "sha256": "566e6b3e9f4381aac2135390a559396d47b0531e00661978d719d806a559b09c",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "first-spec-readback",
+      "locator": "<private-fixed-profile-evidence>/activation-run/results/readback-0.json",
+      "sha256": "01e6d2766b6beb7eed38a980901109175e287120dfcfeec5709e4758af671e7c",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "remainder-1-result",
+      "locator": "<private-fixed-profile-evidence>/remainder-1/execution-handoff.private.json",
+      "sha256": "81d9b406365cfa223be76e834f0048fd186aeafd47c6547452177b241127984d",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "first-cm-200",
+      "locator": "<private-fixed-profile-evidence>/remainder-1/activation-run/results/activation-configmap-deny.json",
+      "sha256": "dc68b80357e0c2a47eb29c99b51e28c51f23743dd37c51bfe7b9c3c3c8a33b42",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "remainder-2-result",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/execution-handoff.private.json",
+      "sha256": "0aa43d1fee287ec36ea540e01f5f79e3556db4436d580aca94976ad2e342a912",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "fixed-cm-403",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/activation-configmap-deny.json",
+      "sha256": "9e27b27fe206512544d5e90bd88d3d7d3f6a6122324c3fd8e5a3f0773e87cba5",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "prior-pod-admin-404",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/admin-delete-dryrun-deny.json",
+      "sha256": "4bae9b4f3743346e92fa39e6fe5d5424d91d3c0f829bb8d8bdc6bd0b2901e7e0",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "prior-pod-get-404",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/node-delete-survival.json",
+      "sha256": "7a9329e281c0894403d7c301b64779e5c8feac356d4bc4ce9d0f326d853177f9",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "current-metadata-index",
+      "locator": "<private-fixed-profile-evidence>/current-six-get/index.json",
+      "sha256": "918d44d3153a80e96a785696930018c0b765395e77ab5ca23c9e3ff983d2a5a2",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "current-metadata-comparison",
+      "locator": "<private-fixed-profile-evidence>/current-six-get/identity-comparison.private.json",
+      "sha256": "a2a4557298d9320e1ae3a169db5728c2c5674cab97b5c19067ec94f6ceccdb1f",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "remainder-3-result",
+      "locator": "<private-fixed-profile-evidence>/remainder-3/execution-handoff.private.json",
+      "sha256": "14a11a61564ae631e4c32e7426fa7ce6dc718f5aa93b3058daae73a4c477dee5",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "pods-admin-403",
+      "locator": "<private-fixed-profile-evidence>/remainder-3/activation-run/results/admin-delete-dryrun-deny.json",
+      "sha256": "e814698a315b3147dcdaf96438d791140b52dce97a7ebf3a3f42fba1556c794d",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "node-platform-403",
+      "locator": "<private-fixed-profile-evidence>/remainder-3/activation-run/results/node-delete-dryrun.json",
+      "sha256": "d387f0c90246ce82fcdd7c16aa0be38c292345151e900f6392752381f36e8938",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "current-pod-survival-200",
+      "locator": "<private-fixed-profile-evidence>/remainder-3/activation-run/results/node-delete-survival.json",
+      "sha256": "2d9803c8123c899cdeec19235b9ac70f8a9eda784d64ea8df768bd4f51ee1204",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-1",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-0.json",
+      "sha256": "0926195a3ac808515a3f0e70ae4f3abdaaa7afd18be76725cd47d79e77cf84ae",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-2",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-1.json",
+      "sha256": "76e6d65ae91277b2402911b312a3c78568dca5ccfb425f24280fc48c251b0a4b",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-3",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-2.json",
+      "sha256": "16e0e5fa98a76eeaef1d43aea0adf2b8e2e6565d86b8073ced9db1669f5ea2d5",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-4",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-3.json",
+      "sha256": "b6b373c3c8728029370e4d1be6ff3e1e0d97a94c8afc9b892582d0f7547f7b32",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-5",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-4.json",
+      "sha256": "d10b250cef68c1cf3ef12c91de4690078e296e3c5d96922f521ac8ffbe4cab93",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-6",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-5.json",
+      "sha256": "76bd1f44a943889db83615d6733c5d7ab01730a043aeb2a88019b08ba65f2bbe",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-7",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-6.json",
+      "sha256": "9cb0b686aad4689a3ba29a10b0f5492c683c2de94263de60400b05c986b028ec",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-8",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-7.json",
+      "sha256": "691dbbc888ef06e502397298a845835443eb015388228cea471f630d9d04c6a3",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-9",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-8.json",
+      "sha256": "dcf3d7589583514a4385e6fed222c0f8ceeca8159e86a272a27be8e8b25215a1",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    },
+    {
+      "id": "guard-readback-10",
+      "locator": "<private-fixed-profile-evidence>/remainder-2/activation-run/results/observe-9.json",
+      "sha256": "ec1d9b1f5509d8925a91a72eac4ad8949bc7c8c844cde20f28083bdf127849f4",
+      "access": "비공개 원자료의 hash 포인터이며 원문과 운영 식별자는 공개하지 않았습니다."
+    }
+  ]
+}
