@@ -69,16 +69,16 @@ export async function runUnhandledWakeExpiryPassCases(t: TestContext, pool: Pool
       const before = await state(pool, f)
       let plannerCalls = 0, dueQueries = 0
       const observed = observedPool(pool, async (sql, _values, _client, execute) => {
-        if (sql.includes('SELECT u.id FROM durable_runtime.runtime_units u')) dueQueries++
+        if (sql.includes('SELECT u.id FROM durable_runtime.runtime_units u')) { dueQueries++ }
         return execute()
       })
       const request: ControllerPassRequest = { ...options,
-        ...(mode === 'null planner' ? { planStep: (_operation, unit) => { if (unit.id === f.unit) plannerCalls++; return null } } : {}) }
+        ...(mode === 'null planner' ? { planStep: (_operation, unit) => { if (unit.id === f.unit) { plannerCalls++; } return null } } : {}) }
       const result = await runControllerPass(observed, session, request)
       assert.equal(result.status, 'FINISHED')
       assert.ok(result.items.some(item => item.identity === f.operationId && item.disposition === 'DEADLINE_EXPIRED'))
       assert.equal(plannerCalls, 0)
-      if (mode === 'no planner with future retry') assert.equal(dueQueries, 0)
+      if (mode === 'no planner with future retry') { assert.equal(dueQueries, 0) }
       const after = await state(pool, f)
       assert.equal(after.unit.phase, 'BLOCKED')
       assert.equal(BigInt(after.unit.revision), BigInt(before.unit.revision) + 1n)
@@ -102,7 +102,7 @@ export async function runUnhandledWakeExpiryPassCases(t: TestContext, pool: Pool
     const before = await state(pool, f)
     let effects = 0, dueQueries = 0
     const observed = observedPool(pool, async (sql, _values, _client, execute) => {
-      if (sql.includes('SELECT u.id FROM durable_runtime.runtime_units u')) dueQueries++
+      if (sql.includes('SELECT u.id FROM durable_runtime.runtime_units u')) { dueQueries++ }
       return execute()
     })
     const unsupported = await runControllerPass(observed, session, {
@@ -128,7 +128,7 @@ export async function runUnhandledWakeExpiryPassCases(t: TestContext, pool: Pool
       expectedStepRevision: counter('step-revision', initial.operation.step_revision),
       step: 'ENSURE_ATTEMPT', executorId: executor, input: { fixtureOnly: 'original-command-preservation' } })
     assert.equal(prepared.execution.disposition, 'COMMITTED_EXECUTE')
-    if (prepared.execution.disposition !== 'COMMITTED_EXECUTE') throw new Error('Original fixture command claim required')
+    if (prepared.execution.disposition !== 'COMMITTED_EXECUTE') { throw new Error('Original fixture command claim required') }
     const originalId = prepared.execution.claim.commandId
     await pool.query("UPDATE durable_runtime.operations SET deadline_at=clock_timestamp()-interval '1 minute' WHERE id=$1", [f.operationId])
     let lookups = 0
@@ -210,7 +210,7 @@ test('planner-independent WAKE expiry shares one actual controller session acros
     { revision: 'unhandled-wake-expiry-fixture-v1', durationMs: leaseDurationMs })
   let confirmed: LeaseRecord | null = null, released = false, poolEnded = false, releaseErrorCode: string | null = null
   const evidence = (name: string, value: unknown) => writeFile(path.join(evidenceDirectory, name),
-    JSON.stringify(value, null, 2) + '\n', { flag: 'wx', mode: 0o600 })
+    `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o600 })
   t.after(async () => {
     try {
       if (confirmed) {
@@ -236,10 +236,10 @@ test('planner-independent WAKE expiry shares one actual controller session acros
     return row
   })
   const acquired = await session.acquire()
-  if (acquired.status === 'ACTIVE') confirmed = acquired.lease
+  if (acquired.status === 'ACTIVE') { confirmed = acquired.lease }
   await evidence('lease-acquire.private.json', { phase: 'ACQUIRE', at: new Date().toISOString(), pid: process.pid, result: acquired })
   assert.equal(acquired.status, 'ACTIVE')
-  if (acquired.status !== 'ACTIVE') throw new Error('Actual normal session acquisition required')
+  if (acquired.status !== 'ACTIVE') { throw new Error('Actual normal session acquisition required') }
   assert.equal(acquired.transition, 'ACQUIRED')
   const current = await session.assertCurrent(pool, acquired.lease, new AbortController().signal)
   await evidence('lease-assert-current.private.json', { phase: 'ASSERT_CURRENT', at: new Date().toISOString(), pid: process.pid, lease: current })
