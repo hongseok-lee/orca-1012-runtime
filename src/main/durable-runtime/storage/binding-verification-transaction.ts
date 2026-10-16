@@ -83,10 +83,10 @@ export async function verifyBindingWithPreparedPin(
   if (!lease || !Object.isFrozen(lease) || lease.evidence !== evidence || typeof lease.release !== 'function') {
     return notStarted('STORAGE_PIN_HANDOFF_INVALID', 'INVALID_HANDOFF', lease ?? null);
   }
-  const release = lease.release.bind(lease);
+  const heldLease = lease, release = heldLease.release.bind(heldLease);
   const retained = (reason: 'UNCONFIRMED' | 'RELEASE_FAILED',
     releaseError: DurableDatabaseError | null = null): BindingPinDisposition => Object.freeze({
-    disposition: 'RETAINED', reason, releaseError, retainedOwner: owner, retainedLease: lease,
+    disposition: 'RETAINED', reason, releaseError, retainedOwner: owner, retainedLease: heldLease,
   });
   // Borrow the original pool, capture its receiver, and never end it here.
   const borrowed: Pool = Object.create(pool, { connect: { value: connect } });
