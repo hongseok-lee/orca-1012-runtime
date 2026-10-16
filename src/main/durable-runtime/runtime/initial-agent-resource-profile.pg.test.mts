@@ -199,7 +199,7 @@ await test('initial Agent declared resource profile: atomic data-only record and
   await withDurableTransaction(pool,async tx => {
     await identity(tx)
     await tx.query(`INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision)
-      SELECT $1,revision,container_resources || jsonb_build_object('sourceRef',$3::text,'profileId',$4::text,'runtimeUnitId',$1::text),policy_revision
+      SELECT $1::uuid,revision,container_resources || jsonb_build_object('sourceRef',$3::text,'profileId',$4::text,'runtimeUnitId',($1::uuid)::text),policy_revision
       FROM durable_runtime.resource_profiles WHERE runtime_unit_id=$2`,
     [partial.context.runtimeUnitId,a.context.runtimeUnitId,`initial-agent-plan:v1:${partial.input.planDigest}`,
       `initial-agent-profile:v1:${partial.context.runtimeUnitId}:7`])
