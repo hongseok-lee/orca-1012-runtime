@@ -82,11 +82,11 @@ export function installOrcadControllerDiagnostics(owner: ControllerDiagnosticOwn
       observedAt = now().toISOString()
       const snapshot = read()
       if (closed) { return null }
-      line = JSON.stringify({ type: 'orca_controller_diagnostic', observedAt, pid, ...project(snapshot) }) + '\n'
+      line = `${JSON.stringify({ type: 'orca_controller_diagnostic', observedAt, pid, ...project(snapshot) })}\n`
     } catch {
       if (closed) { return null }
-      line = JSON.stringify({ type: 'orca_controller_diagnostic', observedAt, pid,
-        failure: { code: 'CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED' } }) + '\n'
+      line = `${JSON.stringify({ type: 'orca_controller_diagnostic', observedAt, pid,
+        failure: { code: 'CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED' } })}\n`
     }
     if (closed) { return null }
     try { write(line) }

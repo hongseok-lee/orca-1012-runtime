@@ -162,24 +162,16 @@ async function startOrcadRuntime(
     await import('../runtime/agent-control-adapter')
 
   let rpc: InstanceType<typeof OrcaRuntimeRpcServer> | null = null
-  let durableCatalog: startup.OrcadDurableCatalog | null = null
-  let removeControllerDiagnostics = (): void => {}
+  let durableCatalog: startup.OrcadDurableCatalog | null = null, removeControllerDiagnostics = (): void => {}
   let uninstallHookStatusRepublish = (): void => {}
   let uninstallObservedStatusIdentity = (): void => {}
-  registerCleanup(() => {
-    removeControllerDiagnostics()
-    return stopOrcadRuntimeWithDurableCatalog({
-      stopRpc: () => rpc?.stop(), stopAgentControlAdapter, stopDaemon: stopOrcadDaemon,
-      uninstallObservedStatusIdentity: () => uninstallObservedStatusIdentity(),
-      uninstallHookStatusRepublish: () => uninstallHookStatusRepublish(),
-      stopAgentHookServer: () => agentHookServer.stop(),
-      stopDurableCatalog: () => durableCatalog?.stop()
-    })
-  })
-  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => {
-    durableCatalog = catalog
-    removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog)
-  })
+  registerCleanup(() => { removeControllerDiagnostics(); return stopOrcadRuntimeWithDurableCatalog({
+    stopRpc: () => rpc?.stop(), stopAgentControlAdapter, stopDaemon: stopOrcadDaemon,
+    uninstallObservedStatusIdentity: () => uninstallObservedStatusIdentity(),
+    uninstallHookStatusRepublish: () => uninstallHookStatusRepublish(),
+    stopAgentHookServer: () => agentHookServer.stop(), stopDurableCatalog: () => durableCatalog?.stop()
+  }) })
+  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) })
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
       headless: browserProvider !== null, screencast: browserProvider?.kind === 'chromium',
