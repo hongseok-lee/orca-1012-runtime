@@ -21,6 +21,12 @@ export type AbortableInventoryTransport = {
   watch(resourceVersion: string, signal: AbortSignal): ReturnType<ListWatchTransport['watch']>
   get(namespace: string, name: string, signal: AbortSignal): ReturnType<ListWatchTransport['get']>
 }
+export type ControllerInventoryContext = Readonly<{
+  controller: VerifiedControllerIdentity
+  signal: AbortSignal
+}>
+/** The private live worker supplies context. Existing two-argument sinks remain assignable. */
+export type ControllerInventorySink = (...args: [...Parameters<ObservationSink>, ControllerInventoryContext]) => Promise<void>
 export type ControllerPassRequest = {
   readonly controller: VerifiedControllerIdentity
   readonly maximumWork: number
@@ -33,7 +39,7 @@ export type ControllerPassRequest = {
   } | null
   readonly executeCommitted?: (claim: CommandClaim, signal: AbortSignal) => Promise<void>
   readonly lookupOriginal?: (command: TakeoverCommand, signal: AbortSignal) => Promise<void>
-  readonly inventory?: { readonly transport: AbortableInventoryTransport; readonly sink: ObservationSink }
+  readonly inventory?: { readonly transport: AbortableInventoryTransport; readonly sink: ControllerInventorySink }
 }
 export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVENTORY';
   readonly identity: string; readonly disposition: string }
@@ -223,9 +229,12 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
         await gate()
         // Caller supplies P113's actual guarded observation persistence. A
         // read inventory, absent object or Ready string is never stop proof.
-        await sink(event, source)
+        await sink(event, source, Object.freeze({ controller: request.controller, signal }))
         await gate()
       }))
+      if (inventory.status === 'UNVERIFIABLE' && inventory.reason === 'PERSISTENCE_FAILED') {
+        throw new DurableDatabaseError(`CONTROLLER_INVENTORY_${inventory.reason}`)
+      }
       items.push({ kind: 'INVENTORY', identity: startingLease.scope, disposition: inventory.status })
     }
     await gate()
