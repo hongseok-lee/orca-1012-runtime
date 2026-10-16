@@ -58,7 +58,7 @@ test('operator caller captures input and enables issuer binding only after guard
   assert.equal(posts.at(-1).body.kind, 'RoleBinding')
   assert.equal(posts.at(-1).body.metadata.name, 'orca-storage-collector-issuer')
   const role = posts.find(call => call.body.kind === 'Role' && call.body.metadata.name === 'orca-storage-collector-read')
-  assert.deepEqual(role.body.rules[1].resourceNames, ['fixture-backing'])
+  assert.deepEqual(role.body.rules[2].resourceNames, ['fixture-backing'])
   assert.equal(fake.calls.filter(call => call.accept.includes('PartialObjectMetadataList')).length, 2)
   assert.equal(fake.calls.some(call => call.path.endsWith('/token')), false)
   assert.equal(result.issuedTokens, 0)
@@ -141,7 +141,8 @@ test('manifests retain read-only collector and single named TokenRequest scopes'
   const objects = leastPrivilegeRbac(fixtureInput())
   assert.equal(bootstrapServiceAccount().automountServiceAccountToken, false)
   assert.equal(credentialGuards(uid(300)).length, 8)
-  assert.deepEqual(objects[0].rules[0], { apiGroups: [''], resources: ['pods', 'pods/exec'], verbs: ['get'] })
+  assert.deepEqual(objects[0].rules[0], { apiGroups: [''], resources: ['pods'], verbs: ['get'] })
+  assert.deepEqual(objects[0].rules[1], { apiGroups: [''], resources: ['pods/exec'], verbs: ['get', 'create'] })
   assert.deepEqual(objects[2].rules, [{ apiGroups: [''], resources: ['serviceaccounts/token'],
     resourceNames: ['orca-storage-collector'], verbs: ['create'] }])
   assert.equal(objects.some(object => object.rules?.some(rule => rule.resources.includes('*') || rule.verbs.includes('*'))), false)
