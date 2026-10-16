@@ -1,0 +1,36 @@
+{
+  "base": "44e9d6987fbfc1abeac675a593438e72d40ad27f",
+  "validatedSourcePin": "1f811e2cbdb77cfdab1e897d98d8ded16d675756",
+  "earlySourcePin": "4c708a6b356eba9b5b4cf4d71d7a676429f8b5d4",
+  "completionReplayCorrectionPin": "ccc03f743a8dff7ceb7d894f3e70bc329775d27a",
+  "ownedFiles": {
+    "src/main/durable-runtime/storage/namespace-holds.ts": {
+      "sha256": "ac417234877955fff87b75c3ef94e79ae42b845759cd5e2c8c12a02e72ab331a",
+      "bytes": 17784,
+      "blob": "3fc71694d6d340551738edbab511feaef34fcd67",
+      "mode": "100644"
+    },
+    "src/main/durable-runtime/storage/namespace-holds.pg.test.mts": {
+      "sha256": "a4eb6cf903cbcefdf14030b9ad0c1952613e8ae371ea364dbfa71789a255706b",
+      "bytes": 18142,
+      "blob": "a4fbc761c7a21502ffcfe0fa5146648e6c8d3afd",
+      "mode": "100644"
+    },
+    "src/main/durable-runtime/db/migrations/022-storage-namespace-holds.sql": {
+      "sha256": "cf30157eb48efac48067defe45fbcb998d77923500a2b9d891de0b261fbbdbee",
+      "bytes": 8724,
+      "blob": "006d3748a7ebcbd91bf60bb415e073a376dda6e3",
+      "mode": "100644"
+    }
+  },
+  "ownedGitEntries": [
+    "100644 blob 006d3748a7ebcbd91bf60bb415e073a376dda6e3\tsrc/main/durable-runtime/db/migrations/022-storage-namespace-holds.sql",
+    "100644 blob a4fbc761c7a21502ffcfe0fa5146648e6c8d3afd\tsrc/main/durable-runtime/storage/namespace-holds.pg.test.mts",
+    "100644 blob 3fc71694d6d340551738edbab511feaef34fcd67\tsrc/main/durable-runtime/storage/namespace-holds.ts"
+  ],
+  "exactSourceDiffSHA256": "591d24dd94874652e7091622d69a6f3e7f4907e2fa089fbd69f56a18e65f0b53",
+  "existingMigration001Through021Changed": false,
+  "existingConnectionStoreAuthorityWriterPolicyChanged": false,
+  "migrationRegistryChanged": false,
+  "migrationDiscovery": "Existing readMigrations automatically discovers numbered SQL files."
+}

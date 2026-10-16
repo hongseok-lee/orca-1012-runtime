@@ -1,0 +1,188 @@
+{
+  "sourcePin": "1f811e2cbdb77cfdab1e897d98d8ded16d675756",
+  "base": "44e9d6987fbfc1abeac675a593438e72d40ad27f",
+  "firstLint": {
+    "sourcePin": "ccc03f743a8dff7ceb7d894f3e70bc329775d27a",
+    "exit": 1,
+    "productDiagnostics": 2,
+    "fixtureDiagnostics": 0,
+    "rawLintSHA256": "ec06962ff3ca4f4046bbca3ce58d581621937e399896e55c740096fb48921c3c",
+    "typeBundleDdlPgEntered": false
+  },
+  "correction": {
+    "rootApproved": true,
+    "exactDiffSHA256": "33ead6675d96997a5d56383657ea55c2f80eae793c5c6c85b5b1155a27c01bc8",
+    "predicate": "Same U+0000 through U+001F rejection; no suppression or relaxed rule.",
+    "fixtureAndSqlUnchanged": true
+  },
+  "lint": {
+    "changedProduct": 1,
+    "exit": 0,
+    "fixtureRepeated": false
+  },
+  "type": {
+    "strict": true,
+    "sourceInputs": 8,
+    "externalPaths": 210,
+    "ownedDiagnostics": 0,
+    "externalDiagnostics": 0,
+    "wholeExit": 0,
+    "mismatches": [],
+    "outside": []
+  },
+  "callback": {
+    "productCallbacks": 1,
+    "parentProductCallbackCount": 0,
+    "tapPass": 2,
+    "tapFail": 0,
+    "tapSkipped": 0,
+    "exit": 0,
+    "actualRuntimePID": 42702,
+    "rawTapSHA256": "584d34e36214817f53620f007c8a28ec478e62f839cab1cb1806860686ea9d06"
+  },
+  "runtime": {
+    "sourceInputs": 6,
+    "mismatches": [],
+    "external": [
+      "pg",
+      "zod"
+    ],
+    "wrapper": {
+      "sourceSha256": "a4eb6cf903cbcefdf14030b9ad0c1952613e8ae371ea364dbfa71789a255706b",
+      "originalBodySha256": "3b8ff56d2c69fd4d4c4b16a36c9d7f2688b5129e29ded6b5a112a54fb427db20",
+      "wrapperSha256": "069a8509b1fdd573461b654c6226b26dd5e0ec6e5e725b8f12d67003a162c774",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    },
+    "metafileSHA256": "67dfa64408f35e5e67388d3bfad21543813a608536aec077dbc6609caf1d2551",
+    "bundleSHA256": "b8a16c8eb01f75dca1ed3046d22494fdc916fd4e8ce299b887144c9cd3062904"
+  },
+  "database": {
+    "dedicatedIsolatedDatabase": true,
+    "actualDatabaseSystemOidDatasetMatched": true,
+    "ledgerBefore": 21,
+    "ledgerAfter": 22,
+    "originalLedger21Unchanged": true,
+    "migration022Checksum": "cf30157eb48efac48067defe45fbcb998d77923500a2b9d891de0b261fbbdbee",
+    "migration022AppliedAt": "2026-10-16T01:06:42.837Z",
+    "first022Committed": true,
+    "originalRowsBefore": 256,
+    "rowsAfter": 300,
+    "originalRowsPreserved": true,
+    "newNamespaceProfiles": 4,
+    "originalRowsOrImmutableTriggersMutated": false
+  },
+  "jobs": [
+    {
+      "name": "stage",
+      "pid": 42594,
+      "startedAt": "2026-10-16T01:06:39.327Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T01:06:39.431Z",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "lint",
+      "pid": 42601,
+      "startedAt": "2026-10-16T01:06:39.435Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T01:06:39.767Z",
+      "logSHA256": "f57dd034db92d971fcf892f100b69c99e0a5155352a459524195f8d1b476a2a2"
+    },
+    {
+      "name": "type",
+      "pid": 42613,
+      "startedAt": "2026-10-16T01:06:39.770Z",
+      "observedDirectChildren": [],
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T01:06:41.515Z",
+      "logSHA256": "be4f4bdf73183fbcf26a309edf5f5872ee3a8a744fbf75bc4aa4c9135639688a"
+    },
+    {
+      "name": "type-input-guard",
+      "pid": 42672,
+      "startedAt": "2026-10-16T01:06:41.519Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T01:06:41.772Z",
+      "logSHA256": "ae84f7ed4d611d52ecf3935de9bad576dc417f70bf5a0206cc6ec11fe2e28975"
+    },
+    {
+      "name": "prepare-pg",
+      "pid": 42679,
+      "startedAt": "2026-10-16T01:06:41.775Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T01:06:41.949Z",
+      "logSHA256": "a996132c260793d9bab7646ddea3a5c78d29e709615d22fd50672e19c6f9972c"
+    },
+    {
+      "name": "pg",
+      "pid": 42696,
+      "startedAt": "2026-10-16T01:06:42.310Z",
+      "exit": 0,
+      "signal": null,
+      "endedAt": "2026-10-16T01:06:43.519Z",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "controlPID": 42587,
+  "startedAt": "2026-10-16T01:06:39.319Z",
+  "endedAt": "2026-10-16T01:06:43.555Z",
+  "cleanup": {
+    "at": "2026-10-16T01:07:42.532Z",
+    "rows": [
+      {
+        "pid": 42587,
+        "comm": "MainThread",
+        "state": "Z"
+      },
+      {
+        "pid": 42594,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 42601,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 42613,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 42672,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 42679,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 42696,
+        "status": "ABSENT"
+      },
+      {
+        "pid": 42702,
+        "status": "ABSENT"
+      }
+    ]
+  },
+  "physicalNamespacePinIssuerImplemented": false,
+  "productionOwnerImplemented": false,
+  "managementActuatorImplemented": false,
+  "unknownFault": "실제 PG COMMIT 응답을 합성 wrapper로 가리고 cleanup 응답도 실패시킨 집중 fixture입니다. 실제 네트워크 장애 실증이 아닙니다.",
+  "heavy": 0,
+  "live": 0,
+  "NFS": 0,
+  "K8sMutation": 0,
+  "newPNG": 0,
+  "install": 0,
+  "wholeBuild": 0,
+  "runtimeRestart": 0,
+  "successSuiteRepeated": 0,
+  "newUsageCreditsStreamError": "미관측"
+}
