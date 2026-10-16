@@ -120,10 +120,11 @@ function fixture(options: {
   return { run, state, events, sql, connectionReleases, poolObject, input, owner, lease, binding }
 }
 
-function observed(result: BindingVerificationTransactionResult) {
+function observed(result: BindingVerificationTransactionResult): asserts result is BindingVerificationTransactionResult & {
+  database: NonNullable<BindingVerificationTransactionResult['database']>
+} {
   assert.equal(result.engineError, null)
   assert.ok(result.database)
-  return { ...result, database: result.database }
 }
 
 await test('Prepared binding pin: actual transaction settlement gates ownership release', async () => {
@@ -138,7 +139,7 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
   delayedCommit.poolObject.connect = async () => { throw new Error('late borrowed method replacement') }
   Object.assign(delayedCommit.input, { directoryEvidenceRef: 'changed-after-await', actorId: 'changed', bindingId: logicalId('storage-binding', randomUUID()) })
   commit.resolve()
-  const committed = observed(await pending)
+  const committed = await pending; observed(committed)
   assert.equal(committed.database.ok, true); assert.equal(committed.database.settlement, 'COMMITTED')
   assert.equal(committed.database.commitOutcome, 'ACKNOWLEDGED'); assert.equal(committed.database.cleanupFailed, false)
   if (committed.database.ok) { assert.equal(committed.database.value.id, delayedCommit.binding) }
@@ -165,7 +166,7 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
     assert.equal(delayedRollback.state.releases, 0, 'callback failure/abort is not a release boundary')
     assert.equal(delayedRollback.state.pinHeld, true)
     rollback.resolve()
-    const rolledBack = observed(await result)
+    const rolledBack = await result; observed(rolledBack)
     assert.equal(rolledBack.database.settlement, 'ROLLED_BACK'); assert.equal(rolledBack.database.commitOutcome, 'NOT_ATTEMPTED')
     if (!rolledBack.database.ok) { assert.equal(rolledBack.database.error, first) }
     assert.equal(rolledBack.pin.disposition, 'RELEASED'); assert.equal(delayedRollback.state.releases, 1)
@@ -173,7 +174,7 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
   }
 
   const checkoutError = new DurableDatabaseError('08006'), noCheckout = fixture({ checkoutError })
-  const notStarted = observed(await noCheckout.run())
+  const notStarted = await noCheckout.run(); observed(notStarted)
   assert.equal(notStarted.database.settlement, 'NOT_STARTED'); assert.equal(notStarted.database.commitOutcome, 'NOT_ATTEMPTED')
   assert.deepEqual(noCheckout.sql, []); assert.deepEqual(noCheckout.connectionReleases, [])
   assert.equal(notStarted.pin.disposition, 'RELEASED'); assert.equal(noCheckout.state.releases, 1)
@@ -185,14 +186,14 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
   const unknownPending = unknown.run(); await rollbackEntered.promise
   assert.equal(unknown.state.pinHeld, true); assert.equal(unknown.state.releases, 0)
   rollback.resolve()
-  const terminatedUnknown = observed(await unknownPending)
+  const terminatedUnknown = await unknownPending; observed(terminatedUnknown)
   assert.equal(terminatedUnknown.database.settlement, 'ROLLED_BACK'); assert.equal(terminatedUnknown.database.commitOutcome, 'UNKNOWN')
   assert.equal(terminatedUnknown.database.cleanupFailed, true)
   if (!terminatedUnknown.database.ok) { assert.equal(terminatedUnknown.database.error, commitError) }
   assert.equal(terminatedUnknown.pin.disposition, 'RELEASED'); assert.equal(unknown.state.releases, 1)
 
   const uncertain = fixture({ commitError, rollbackError: new Error('synthetic rollback transport failure') })
-  const retained = observed(await uncertain.run())
+  const retained = await uncertain.run(); observed(retained)
   assert.equal(retained.database.settlement, 'UNCONFIRMED'); assert.equal(retained.database.commitOutcome, 'UNKNOWN')
   assert.deepEqual(uncertain.connectionReleases, [true]); assert.equal(uncertain.state.releases, 0)
   assert.equal(uncertain.state.pinHeld, true); assert.equal(retained.pin.disposition, 'RETAINED')
@@ -210,7 +211,7 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
   await releaseStarted.promise
   assert.equal(failedRelease.state.pinHeld, true); assert.equal(failedRelease.state.releases, 1)
   releaseGate.resolve()
-  const commitWithRetainedPin = observed(await releasePending)
+  const commitWithRetainedPin = await releasePending; observed(commitWithRetainedPin)
   assert.equal(commitWithRetainedPin.database.settlement, 'COMMITTED'); assert.equal(commitWithRetainedPin.database.commitOutcome, 'ACKNOWLEDGED')
   assert.equal(commitWithRetainedPin.database.cleanupFailed, true); assert.equal(commitWithRetainedPin.pin.disposition, 'RETAINED')
   assert.equal(failedRelease.state.releases, 1, 'no automatic second release')
@@ -223,7 +224,7 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
 
   for (const invalidHandoff of ['evidence-getter', 'release-getter', 'mutable'] as const) {
     const invalid = fixture({ invalidHandoff })
-    const invalidResult = observed(await invalid.run())
+    const invalidResult = await invalid.run(); observed(invalidResult)
     assert.equal(invalid.state.taken, true); assert.equal(invalid.state.pinHeld, true)
     assert.equal(invalid.state.connectCalls, 0); assert.deepEqual(invalid.sql, [])
     assert.equal(invalid.state.releases, 0); assert.equal(invalid.state.leaseGetterReads, 0)
@@ -252,7 +253,7 @@ await test('Prepared binding pin: actual transaction settlement gates ownership 
   } else { assert.fail('escaped engine failure must retain its transferred pin handle') }
 
   const noTake = fixture({ takeError: new Error('synthetic atomic owner rejection') })
-  const failedTake = observed(await noTake.run())
+  const failedTake = await noTake.run(); observed(failedTake)
   assert.equal(failedTake.database.settlement, 'NOT_STARTED'); assert.equal(noTake.state.connectCalls, 0)
   assert.equal(noTake.state.pinHeld, true); assert.equal(noTake.state.releases, 0)
   if (failedTake.pin.disposition === 'RETAINED') {
