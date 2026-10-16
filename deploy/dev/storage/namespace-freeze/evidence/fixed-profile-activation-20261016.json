@@ -263,7 +263,7 @@
     "publicCommonSHA256": "f2acf303ccf1caf758959f01ec3aa28e83e75cb86bf27cef677f644b2be21041",
     "p110SHA256": "068b371bd7fe540b116a7a8fc384fad99350d633acf3125426f0ee40df349a39",
     "privateActivationContractSHA256": "926de741d51c4082ef4effd6e6e1bd30672f028fa62e0713f78fb5427fe5ec26",
-    "publicGeneralizedActivationContractSHA256": "0c967693e1fccb1ad52d15c1cf86588c54d4367ea620b18811fb64a0499ea4b9",
+    "publicGeneralizedActivationContractSHA256": "5b352154497e5ef72fddebf1d85577bb99e04475c32f2c0ae0790be43db6e500",
     "privateOriginalUnchanged": true
   },
   "references": [

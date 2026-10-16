@@ -46,7 +46,7 @@ Root의 한정 수락 원문 SHA는 `7441285b8823f556a6fa201a2b6eb004b0d821d0fc9
 
 ## 현재 실행 계약 전문의 공개 일반화 사본
 
-원 계약 SHA는 `926de741d51c4082ef4effd6e6e1bd30672f028fa62e0713f78fb5427fe5ec26`입니다. 아래는 운영 식별자와 비공개 경로를 일반화한 전문이며, 그 SHA는 `0c967693e1fccb1ad52d15c1cf86588c54d4367ea620b18811fb64a0499ea4b9`입니다. 원 계약은 변경하지 않았습니다.
+원 계약 SHA는 `926de741d51c4082ef4effd6e6e1bd30672f028fa62e0713f78fb5427fe5ec26`입니다. 아래는 운영 식별자와 비공개 경로를 일반화한 전문이며, 그 SHA는 `5b352154497e5ef72fddebf1d85577bb99e04475c32f2c0ae0790be43db6e500`입니다. 원 계약은 변경하지 않았습니다.
 
 <details>
 <summary>Root 실행 계약 전문</summary>
@@ -89,7 +89,7 @@ Root가 caller6372946f 전문과 HTTPS diff8fe8bdcf를 읽었다. 실제 실행�
 
 ## 2026-10-16 09:53 UTC 실제 최초 적용 배분
 
-PR130 병합 main37ce850a652383731fbd9e3c4713ef37bdf614a9의 원 source9와 Git bytes 불일치0, seal35파일 hash 불일치0을 Root가 독립 대조했다. 원 generator3의 순수 render1/exit0·bundle7f70e581과 caller 전체/API client·최종 배열정렬 diff78a5fc1f를 읽었다. actor 집합과 profile/metadata/원 ConfigMap body는 불변이다. 원 Node DELETE 입력은 관리자 거절 검사 metadata만 추가했으며 두 query/body All와 UID86af050a를 확인했다.
+PR130 병합 main37ce850a652383731fbd9e3c4713ef37bdf614a9의 원 source9와 Git bytes 불일치0, seal35파일 hash 불일치0을 Root가 독립 대조했다. 원 generator3의 순수 render1/exit0·bundle7f70e581과 caller 전체/API client·최종 배열정렬 diff78a5fc1f를 읽었다. actor 집합과 profile/metadata/원 ConfigMap body는 불변이다. 원 Node DELETE 입력은 관리자 거절 검사 metadata만 추가했으며 두 query/body All와 UID <private-resource-uid>를 확인했다.
 
 실행 담당자에 **heavy1**로 다음 단일 최초 명령을 배분한다: `node <private-fixed-profile-evidence>/activation-caller.mjs --execute-root-reviewed d9756c7a8038e5743059e0336b094f3e6ddc41b1bb4b4938813297e58e4401c6`. 정확 caller5f7425af/APIclientd2451aa6/bundle7f70e581과 원 source pin을 고정한다. 기존 activation-run/이미 시작한 PID가 있으면 중복 실행하지 않고 결과를 회수한다. 원 소유PID·시작/종료/exit/stdout/stderr·fsync ledger·생성UID·원spec/status·두거절/Nodedryrun/동일UIDGET을 보존한다. 새 Pod를 추정 대체하거나 권한을 넓히지 않는다.
 
@@ -97,7 +97,7 @@ PR130 병합 main37ce850a652383731fbd9e3c4713ef37bdf614a9의 원 source9와 Git 
 
 ## 2026-10-16 09:57 UTC 최초 실제 응답 차이·남은9객체 준비
 
-최초 PID <private-process>/09:54:06.395748–09:54:07.592572Z exit1을 Root가 원ledger/readback으로 확인했다. VAP fixed 한 개만201/UID <private-resource-uid>-84d2-419a-a3de-51dd6359191a/generation1, Binding0·다른VAP0·CM/DELETE/PodGET0이다. 원실패와 생성객체를 보존하며 첫명령을 재실행하지 않는다.
+최초 PID <private-process>/09:54:06.395748–09:54:07.592572Z exit1을 Root가 원ledger/readback으로 확인했다. VAP fixed 한 개만201/UID <private-resource-uid>/generation1, Binding0·다른VAP0·CM/DELETE/PodGET0이다. 원실패와 생성객체를 보존하며 첫명령을 재실행하지 않는다.
 
 Root exact diff는 두 차이다. (1) GKE가 VAP matchConstraints.namespaceSelector에 metadata.name NotIn의 **원응답12개 관리namespace**를 넣었다. [GKE 공식 security 문서](https://cloud.google.com/kubernetes-engine/docs/concepts/autopilot-security)는 Autopilot이 VAP의 관리namespace 제외를 보정한다고 명시한다. 원12개에는 orca-dev가 없고, 원exact namespace condition과 Binding의보호label범위도그대로다. (2) 원 variables=[]는 응답에서 생략됐다. 빈 변수목록의 JSON 생략이며 nonempty변수는 그대로대조한다. 그외 spec/원UID는같다. Status={}는원시점자료이고 typeChecking합격이아니다.
 
@@ -135,7 +135,7 @@ Root가 remainder-2 원13응답/ledger를 읽었다. 원10정책 UID/spec과 VAP
 
 ## 2026-10-16 10:23 UTC 현재 <current-pod>의 남은 dry-run 배분
 
-Root가 지정6 GET 원자료와 비교 a2a45572를 읽었다. 현재 <current-pod>/UID <private-resource-uid>-985d-4afe-934a-a0cc097e0429·Node <current-node>·started09:28:30Z/Ready/restart0, 원Deployment/RS/Service/PVC/PV/image/mount identity와 Endpoint10.77.1.6 연결을 수락했다. 현재 metadata를 백엔드 담당자/인프라 담당자/정책 담당자에 공유했다. 이전<prior-pod>404는 그대로 보존한다.
+Root가 지정6 GET 원자료와 비교 a2a45572를 읽었다. 현재 <current-pod>/UID <private-resource-uid>·Node <current-node>·started09:28:30Z/Ready/restart0, 원Deployment/RS/Service/PVC/PV/image/mount identity와 Endpoint <private-endpoint> 연결을 수락했다. 현재 metadata를 백엔드 담당자/인프라 담당자/정책 담당자에 공유했다. 이전<prior-pod>404는 그대로 보존한다.
 
 Caller ecec4ee6/diff eac5c5d1의 전문을 읽고 새 seal d7a4d8ede22e1133e96094a1c47146923474896b425245a77fd8af5950bf4173의 모든 고정입력 hash/bytes 불일치0을 확인했다. 완료 정책/CM 호출은 제거됐고 원 query/body dryRunAll·현재 UID 사전조건이 유지된다. 실행 담당자에 heavy1로 `node <private-fixed-profile-evidence>/remainder-3/activation-caller.mjs --execute-root-reviewed d7a4d8ede22e1133e96094a1c47146923474896b425245a77fd8af5950bf4173` 한 번을 배분한다. 관리자 dry-run exact pods403일 때만 ownNode dry-run, finally 같은UID GET의 최대3요청이다. 기존run이면 결과회수·정책/권한변경/실제삭제/재시도0. Node플랫폼거절/Pod교체는 원결과로 분리한다.
 
