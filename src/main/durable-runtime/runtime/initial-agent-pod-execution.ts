@@ -13,6 +13,10 @@ import { assignInitialAgentPod, assignInitialAgentPodLookup, readInitialAgentPod
   readInitialAgentPodLookupTarget } from './initial-agent-pod-assignment.ts'
 import { agentPodWithin } from './agent-pod-policy.ts'
 import { CLOSED_AGENT_BOOTSTRAP, isClosedAgentBootstrap } from './closed-agent-bootstrap.ts'
+import { createFirstManagedInitialReservationOwner } from '../storage/first-managed-initial-owner.ts'
+import type { FirstManagedInitialInput, FirstManagedInitialResult } from '../storage/first-managed-initial-owner.ts'
+import type { FirstManagedBindingOwnerConfig } from '../storage/first-managed-observation-source.ts'
+import type { ManagedLeafCollectorDependencies } from '../storage/managed-leaf-collector-types.ts'
 
 export type InitialAgentPodExecutionStart = Readonly<{
   context: GatewayContext
@@ -189,6 +193,79 @@ export function createInitialAgentPodLookup(deployment: Readonly<{
     async lookup(original: InitialAgentPodLookupInput, signal: AbortSignal): Promise<InitialAgentPodExecutionResult> {
       const started = performance.now(), call = captureOriginalLookup(original)
       return executeAgentPodCall(borrowed, observeOrCreate, call, started + call.remainingMs, signal, null, false)
+    },
+  })
+}
+
+export type FirstManagedInitialAgentPodStart = FirstManagedInitialInput & Readonly<{ remainingMs: number }>
+export type FirstManagedInitialAgentPodExecutionResult = Readonly<{
+  preparation: FirstManagedInitialResult
+  execution: InitialAgentPodExecutionResult | null
+  gate: 'CLOSED'; providerReady: false; writerGrantActivated: false
+}>
+
+/** A private conversion of the owned owner's actual fully-released result only.
+ * No retained handles, success callback or caller-supplied authority crosses it. */
+function releasedFirstManagedReservation(preparation: FirstManagedInitialResult): InitialAgentAttemptTransactionResult | null {
+  const reserved = preparation.reservation, database = reserved?.database
+  const released = preparation.release
+  if (preparation.phase !== 'RESERVATION' || preparation.outcome !== 'RESERVED' ||
+      preparation.pin.state !== 'RELEASED' || !preparation.pin.handedOff || !reserved || reserved.engineError ||
+      reserved.pins.disposition !== 'RELEASED' || reserved.pins.releaseError !== null ||
+      !database || !database.ok || database.settlement !== 'COMMITTED' || database.commitOutcome !== 'ACKNOWLEDGED' ||
+      database.cleanupFailed || database.value.disposition !== 'RESERVED' ||
+      !released || !released.database.ok || released.database.settlement !== 'COMMITTED' ||
+      released.database.commitOutcome !== 'ACKNOWLEDGED' || released.database.cleanupFailed ||
+      (released.disposition?.status !== 'RELEASED' && released.disposition?.status !== 'ALREADY_RELEASED')) { return null }
+  return Object.freeze({ database, engineError: reserved.engineError,
+    pins: Object.freeze({ disposition: 'RELEASED', releaseError: null, retainedOwner: null, retainedLease: null }),
+    kubernetesExecutionAuthorized: false, physicalPinIssuerImplemented: false })
+}
+
+/** Dedicated server composition: fresh managed revalidation/reservation before
+ * closed bootstrap. It neither opens the gate nor qualifies later mount lifetime. */
+export function createFirstManagedInitialAgentPodExecution(deployment: Readonly<{
+  pool: Pool; podConfig: AgentPodCreateConfig; firstManagedDirectory: FirstManagedBindingOwnerConfig
+}>, https?: AgentPodCreateHttps, collectorDependencies?: ManagedLeafCollectorDependencies) {
+  const pool = deployment.pool, connect = pool.connect.bind(pool)
+  const borrowed: Pool = Object.create(pool, { connect: { value: connect, configurable: true } })
+  const transport = createAgentPodCreateTransport(deployment.podConfig, https)
+  const observeOrCreate = transport.observeOrCreate.bind(transport)
+  const owner = createFirstManagedInitialReservationOwner(borrowed, deployment.firstManagedDirectory, collectorDependencies)
+  const reserve = owner.reserveInitialAttempt.bind(owner)
+  return Object.freeze({
+    async start(original: FirstManagedInitialAgentPodStart, signal: AbortSignal): Promise<FirstManagedInitialAgentPodExecutionResult> {
+      const started = performance.now()
+      let call: CapturedCall, input: FirstManagedInitialInput
+      try {
+        const supplied = original.attempt
+        call = captureCall({ context: original.context, claim: supplied.claim,
+          planDigest: supplied.planDigest, remainingMs: original.remainingMs })
+        input = Object.freeze({ sessionId: original.sessionId, actorId: original.actorId,
+          originalAuditId: original.originalAuditId, pinId: original.pinId, ownerToken: original.ownerToken,
+          context: call.context, attempt: Object.freeze({ claim: call.claim, planDigest: call.planDigest,
+            expectedUnitRevision: supplied.expectedUnitRevision,
+            bindings: Object.freeze(supplied.bindings.map(b => Object.freeze({ bindingId: b.bindingId,
+              expectedRevision: b.expectedRevision, storageEpoch: b.storageEpoch }))) }) })
+      } catch { throw new DurableDatabaseError('INITIAL_AGENT_EXECUTION_INPUT') }
+      const deadline = started + call.remainingMs, controller = new AbortController()
+      const abort = () => controller.abort(), addAbort = signal.addEventListener.bind(signal), removeAbort = signal.removeEventListener.bind(signal)
+      if (signal.aborted) { throw new AgentPodCreateError('ABORTED') }
+      if (performance.now() >= deadline) { throw new AgentPodCreateError('TIMEOUT') }
+      const timer = setTimeout(abort, Math.max(0, deadline - performance.now()))
+      addAbort('abort', abort, { once: true })
+      if (signal.aborted) { controller.abort() }
+      try {
+        let preparation: FirstManagedInitialResult
+        try { preparation = await reserve(input, controller.signal) }
+        catch { throw new DurableDatabaseError('INITIAL_AGENT_RESERVATION_FAILED') }
+        const reservation = releasedFirstManagedReservation(preparation)
+        const execution = reservation ? await executeAgentPodCall(borrowed, observeOrCreate, call,
+          deadline, controller.signal, reservation, true) : null
+        return Object.freeze({ preparation, execution, gate: 'CLOSED', providerReady: false, writerGrantActivated: false })
+      } finally {
+        clearTimeout(timer); removeAbort('abort', abort); controller.abort()
+      }
     },
   })
 }
