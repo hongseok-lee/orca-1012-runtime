@@ -194,13 +194,17 @@ async function operation(tx: DurableTransaction, input: ReturnType<typeof captur
   exactOperation(found.rows[0], input);
   return found.rows[0];
 }
+function completed(input: NamespaceProfileInput, op: OperationRow): NamespaceDisposition {
+  return disposition({ ...input, generation: op.target_generation, digest: op.target_digest },
+    "ALREADY_COMPLETED", null, op.id);
+}
 export function readNamespaceManagement(pool: Pool, original: NamespaceManagementInput): Promise<NamespaceTransactionResult> {
   const input = captureManagement(original);
   return execute(pool, async (tx) => {
     await profile(tx, input);
     const op = await operation(tx, input);
-    const status = op.state === "COMPLETED" ? "ALREADY_COMPLETED" :
-      op.state === "APPLYING" ? "LOOKUP_REQUIRED" : await held(tx, input.profileId) ? "WAITING" : "READY_TO_CLAIM";
+    if (op.state === "COMPLETED") { return completed(input, op); }
+    const status = op.state === "APPLYING" ? "LOOKUP_REQUIRED" : await held(tx, input.profileId) ? "WAITING" : "READY_TO_CLAIM";
     return disposition(input, status, null, input.operationId);
   });
 }
@@ -212,8 +216,8 @@ export function beginNamespaceManagement(pool: Pool, original: NamespaceManageme
     const old = await query<OperationRow>("SELECT * FROM durable_runtime.storage_namespace_management_operations WHERE id=$1", [input.operationId]);
     if (old.rowCount) {
       exactOperation(old.rows[0], input);
-      const status = old.rows[0].state === "COMPLETED" ? "ALREADY_COMPLETED" :
-        old.rows[0].state === "APPLYING" ? "LOOKUP_REQUIRED" : await held(tx, input.profileId) ? "WAITING" : "READY_TO_CLAIM";
+      if (old.rows[0].state === "COMPLETED") { return completed(input, old.rows[0]); }
+      const status = old.rows[0].state === "APPLYING" ? "LOOKUP_REQUIRED" : await held(tx, input.profileId) ? "WAITING" : "READY_TO_CLAIM";
       return disposition(input, status, null, input.operationId);
     }
     exactVersion(row, input);
@@ -231,7 +235,7 @@ export function claimNamespaceManagement(pool: Pool, original: NamespaceManageme
     const query = tx.query.bind(tx);
     const row = await profile(tx, input);
     const op = await operation(tx, input);
-    if (op.state === "COMPLETED") { return disposition(input, "ALREADY_COMPLETED", null, input.operationId); }
+    if (op.state === "COMPLETED") { return completed(input, op); }
     if (op.state === "APPLYING") { return disposition(input, "LOOKUP_REQUIRED", null, input.operationId); }
     exactVersion(row, input);
     if (row.state !== "DRAINING" || row.management_operation_id !== input.operationId) { deny("NAMESPACE_OPERATION_CONFLICT"); }
@@ -255,7 +259,7 @@ export function completeNamespaceManagement(pool: Pool, original: NamespaceManag
     const query = tx.query.bind(tx);
     const row = await profile(tx, input);
     const op = await operation(tx, input);
-    if (op.state === "COMPLETED") { return disposition(input, "ALREADY_COMPLETED", null, input.operationId); }
+    if (op.state === "COMPLETED") { return completed(input, op); }
     exactVersion(row, input);
     if (row.state !== "APPLYING" || op.state !== "APPLYING" || row.management_operation_id !== input.operationId) { deny("NAMESPACE_OPERATION_NOT_CLAIMED"); }
     await query("UPDATE durable_runtime.storage_namespace_management_operations SET state='COMPLETED',completed_at=clock_timestamp() WHERE id=$1", [input.operationId]);

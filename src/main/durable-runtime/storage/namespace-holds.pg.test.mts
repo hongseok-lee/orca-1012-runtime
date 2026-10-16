@@ -87,7 +87,7 @@ const hold = (value: NamespaceProfileInput): NamespaceHoldInput => ({
 });
 const management = (value: NamespaceProfileInput): NamespaceManagementInput => ({
   ...value, operationId: randomUUID(), ownerToken: `synthetic-secret:${randomUUID()}`,
-  targetGeneration: "1", targetDigest: hash(`next:${randomUUID()}`)
+  targetGeneration: (BigInt(value.generation) + 1n).toString(), targetDigest: hash(`next:${randomUUID()}`)
 });
 async function history(id: string) {
   return (await pool.query<{ audit: string; outbox: string }>(`SELECT
@@ -209,11 +209,35 @@ await test("Namespace holds: first migration022 and focused durable management b
   assert.deepEqual(await history(a.profileId), beforeClaimReplay);
   const appliedResult = { status: "APPLIED", profileId: a.profileId, operationId: aChange.operationId,
     generation: a.generation, targetGeneration: aChange.targetGeneration, targetDigest: aChange.targetDigest } as const;
-  committed(await completeNamespaceManagement(pool, aChange, appliedResult), "COMPLETED");
-  committed(await completeNamespaceManagement(pool, aChange, appliedResult), "ALREADY_COMPLETED");
+  const firstCompleted = committed(await completeNamespaceManagement(pool, aChange, appliedResult), "COMPLETED");
+  assert.equal(firstCompleted.generation, aChange.targetGeneration);
+  assert.equal(firstCompleted.digest, aChange.targetDigest);
+  const checkCompletedReplay = async () => {
+    for (const replay of [readNamespaceManagement, beginNamespaceManagement, claimNamespaceManagement]) {
+      const value = committed(await replay(pool, aChange), "ALREADY_COMPLETED");
+      assert.equal(value.generation, aChange.targetGeneration);
+      assert.equal(value.digest, aChange.targetDigest);
+    }
+    const value = committed(await completeNamespaceManagement(pool, aChange, appliedResult), "ALREADY_COMPLETED");
+    assert.equal(value.generation, aChange.targetGeneration);
+    assert.equal(value.digest, aChange.targetDigest);
+  };
+  await checkCompletedReplay();
   committed(await readNamespaceHold(pool, aHold), "ALREADY_RELEASED");
   failed(await acquireNamespaceHold(pool, hold(a)), "NAMESPACE_PROFILE_STALE");
-  committed(await acquireNamespaceHold(pool, hold({ ...a, generation: "1", digest: aChange.targetDigest })), "ACQUIRED");
+  const nextProfile = { ...a, generation: "1", digest: aChange.targetDigest }, nextHold = hold(nextProfile);
+  committed(await acquireNamespaceHold(pool, nextHold), "ACQUIRED");
+  committed(await releaseNamespaceHold(pool, nextHold), "RELEASED");
+  const nextChange = management(nextProfile);
+  committed(await beginNamespaceManagement(pool, nextChange), "READY_TO_CLAIM");
+  committed(await claimNamespaceManagement(pool, nextChange), "EXECUTE");
+  const secondCompleted = committed(await completeNamespaceManagement(pool, nextChange, {
+    status: "APPLIED", profileId: a.profileId, operationId: nextChange.operationId,
+    generation: nextProfile.generation, targetGeneration: nextChange.targetGeneration, targetDigest: nextChange.targetDigest
+  }), "COMPLETED");
+  assert.equal(secondCompleted.generation, "2");
+  await checkCompletedReplay(); // Original operation remains generation1, never current generation2.
+  committed(await readNamespaceHold(pool, aHold), "ALREADY_RELEASED");
 
   // Drain owns the lock first; the new acquisition must fail without a row.
   const bChange = management(b), bHold = hold(b), drainedGate = deferred(), drainedEntered = deferred();
