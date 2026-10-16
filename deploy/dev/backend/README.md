@@ -148,3 +148,52 @@ UI checkpoint claim. Stage 2 records the corrected PID as its predecessor;
 stage 3 restores the original bytes and bundle hash. The first stage 3 API
 attempt failed with a connection error; a later normal encrypted `status.get`
 succeeded after readiness was independently observed. Retain both results.
+
+## 개발환경 controller inventory 연결 준비
+
+이 절과 `inventory-rbac.yaml`, Pod의 projected mount는 2026-10-16 Root 계약에 따른 **source 후보**입니다. 아직 apply·credential 발급·Pod 교체·controller 시작·server dry-run·시험을 수행하지 않았습니다. 기존 개발 watch와 NFS source/dependency/private 설정을 보존한 실제 연결은 최종 source와 복구 명령을 Root가 검토한 뒤 별도로 수행합니다.
+
+전용 ServiceAccount `orca-backend-inventory`와 같은 `orca-dev` namespace의 Role/RoleBinding을 사용합니다. Role은 core `pods`의 `get`, `list`, `watch`만 허용합니다. Secret·exec·Pod mutation·nodes·cluster 권한은 없으며 Agent workload에 이 계정을 부여하지 않습니다. Pod와 ServiceAccount의 자동 token mount는 모두 false입니다. 명시한 `controller-credentials` projected volume만 backend 컨테이너의 `/var/run/orca-controller`에 read-only로 mount합니다.
+
+| Projected 파일 | Source와 설정 |
+|---|---|
+| `token` | serviceAccountToken, expirationSeconds 3600. `audience`를 생략해 Kubernetes API server의 기본 audience를 사용합니다. 임의 외부 audience를 지정하지 않습니다. |
+| `ca.crt` | 같은 namespace의 기존 `kube-root-ca.crt` ConfigMap의 `ca.crt` key입니다. |
+| `namespace` | downward API의 `metadata.namespace`입니다. |
+
+Projected `defaultMode`는 0444(JSON 정수 292)로 UID 1000이 읽을 수 있게 합니다. 새 mount에는 subPath를 쓰지 않으므로 kubelet의 projected token rotation을 그대로 읽습니다. [Kubernetes 공식 projected volume 문서](https://kubernetes.io/docs/concepts/storage/projected-volumes/#serviceaccounttoken)의 API server 기본 audience와 kubelet rotation 의미를 따릅니다. Token/CA 내용은 source·PR·로그에 넣지 않습니다. 기존 두 NFS subPath와 이미지·requests·CPU/memory limit 미설정·Spot/amd64·HOME·Service·termination 설정은 유지합니다.
+
+Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600으로 두며 symlink는 허용하지 않습니다. 해당 경로를 `ORCA_DURABLE_CONTROLLER_CONFIG`로 지정하는 실제 작업은 아직 수행하지 않았습니다. 실제 API origin은 cluster CA와 맞는 in-cluster HTTPS origin을 사용하며 TLS 검증을 완화하거나 admin credential을 복사하지 않습니다. 아래 예제의 키는 현재 `OrcadControllerConfig`와 같고 `structuredOutput`은 포함하지 않습니다. 예제는 활성화 성공이나 실제 적용 증거가 아닙니다.
+
+```json
+{
+  "datasetName": "orca-1012-dev-v1",
+  "inventory": {
+    "apiOrigin": "https://kubernetes.default.svc",
+    "namespace": "orca-dev",
+    "dataset": "orca-1012-dev-v1",
+    "caFile": "/var/run/orca-controller/ca.crt",
+    "tokenFile": "/var/run/orca-controller/token",
+    "requestTimeoutMs": 10000,
+    "watchTimeoutSeconds": 5,
+    "listLimit": 100
+  },
+  "policy": {
+    "lease": {
+      "revision": "orca-dev-controller-inventory-v1",
+      "durationMs": 30000
+    },
+    "renewIntervalMs": 10000,
+    "standbyPollIntervalMs": 5000,
+    "passPollIntervalMs": 1000,
+    "maximumWork": 32,
+    "externalBudgetMs": 12000
+  }
+}
+```
+
+현재 Backend는 Deployment owner가 없는 독립 Pod입니다. SA/volume 같은 불변 spec 필드를 실제 반영하려면 Root가 정확 UID 조건의 정상 종료와 Pod 재생성, 같은 NFS source/dependency/private 설정·watch 복구를 함께 배분해야 합니다. 기존 lock의 owner와 Pod UID를 대조하는 위 복구 절차를 유지하며 원 runner/runtime이 종료됐다는 근거 없이 lock을 삭제하지 않습니다. 새 설치·cache 복사·container/release image build를 이 준비의 부수 작업으로 추가하지 않습니다.
+
+읽기 전용 준비 관측의 시각은 2026-10-16 Backend GET 00:15:33 UTC, 도구 metadata 종료 00:16:49 UTC, entry/config/live PG 관측 종료 01:03:31.611 UTC입니다. 당시 controller selector는 unset이었고, live PG ledger는 001–019였습니다. 이는 source 반영·migration·controller 활성화 성공이 아닙니다. 현재 PID·source/cache/config 경로·원 argv·정확 file hash와 복구 원자료는 private 운영 인계에 보존했으며 공개 문서에 인증/운영 식별 원문을 추가하지 않습니다. 기존 2026-10-15 19:53:29.593 UTC의 수락된 PNG는 당시 개발 화면이며 이번 source 후보의 새 화면 시험이 아닙니다.
+
+이번 준비는 개발환경 controller의 읽기 전용 inventory 연결 범위입니다. 실제 launcher create/delete, trusted specHash 영속화, namespace physical pin·old writer 차단·writer grant, Spot active/standby 장애 인수와 native 기기 합격은 미완료입니다.
