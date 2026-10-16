@@ -122,7 +122,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         captured.assertCurrentHost()
         firstManagedInitial = selectedInitial
         worker = createControllerWorker(captured.pool, config.policy, {
-          ...(selectedCallbacks ?? {}),
+          ...selectedCallbacks,
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source, pass) {
             if (closing || pass.signal.aborted) { invalidOrcadControllerConfig('CONTROLLER_INVENTORY_ABORTED') }
