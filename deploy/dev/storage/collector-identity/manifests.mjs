@@ -66,8 +66,14 @@ function rule(resources, operations) {
 }
 function guard(suffix, resourceRules, expression) {
   const name = `orca-storage-collector-${suffix}`
+  // Exact GKE development readback; changes stop the caller's exact-spec gate.
+  const namespaceSelector = { matchExpressions: [{ key: 'kubernetes.io/metadata.name', operator: 'NotIn', values: [
+    'kube-system', 'gke-gmp-system', 'gke-managed-cim', 'gke-managed-volumepopulator',
+    'gke-managed-checkpointing', 'gke-managed-parallelstorecsi', 'gke-managed-lustrecsi', 'gke-managed-otel',
+    'gke-managed-mldiagnostics', 'gke-managed-networking-dra-driver', 'gke-managed-pod-snapshots', 'gke-managed-ambient',
+  ] }] }
   const policy = object('admissionregistration.k8s.io/v1', 'ValidatingAdmissionPolicy', name, { spec: {
-    failurePolicy: 'Fail', matchConstraints: { matchPolicy: 'Exact', namespaceSelector: {}, objectSelector: {}, resourceRules },
+    failurePolicy: 'Fail', matchConstraints: { matchPolicy: 'Exact', namespaceSelector, objectSelector: {}, resourceRules },
     matchConditions: [{ name: 'exact-namespace', expression: `request.namespace == ${literal(namespace)}` }],
     validations: [{ expression, message: 'Dedicated collector credential guard rejected this request', reason: 'Forbidden' }],
   } })

@@ -16,6 +16,8 @@ Pod 연계 확인과 Secret 조회는 `PartialObjectMetadataList` Accept를 요�
 
 NFS guard의 `specSHA256`은 `specDigest`의 정렬된 JSON SHA-256입니다. 기존 G03 출력과 실제 적용/readback이 확정되기 전에는 설치 input을 활성화하지 않습니다. Credential guard readback의 spec 일치·typeChecking/status는 설치 준비 gate이며 실제 거절 또는 허용 exec 합격이 아닙니다.
 
+2026-10-16 09:54:07.568 UTC의 기존 GKE VAP readback에서 관리 namespace 12개의 `NotIn` 주입을 관측했고 Root가 대조했습니다. 이 개발 전용 출력은 같은 12개를 명시합니다. `orca-dev` exact namespace condition과 Binding의 보호된 namespace label은 유지합니다. 목록이나 다른 spec이 달라지면 exact readback으로 중단하며 응답 필드를 삭제하거나 임의 집합으로 정규화하지 않습니다. 이 관측은 새 credential guard의 실제 적용·CEL·권한 검증이 아닙니다.
+
 CREATE timeout/응답 유실·HTTP 5xx·identity를 확인할 수 없는 201은 정확 원 이름 GET 최대 한 번으로 회수하고 중단합니다. 취소된 signal 뒤에는 새 GET을 강제하지 않습니다. 회수 UID는 관측이며 소유권으로 채택하지 않습니다. POST 재호출·기존 객체 덮기·자동 삭제/rollback은 없습니다. 원 CREATE intent와 불명 효과·회수 결과 및 생성 UID ledger를 Root에 제출하며 관리자의 정책 제거는 별도 break-glass입니다. 이 caller는 다른 주체가 부여한 전체 effective RBAC를 감사하지 않습니다.
 
 `identity.test.mjs`는 domain caller의 작은 fixture source입니다. 현재 lint/type/value·CEL·권한·remote 검증은 실행하지 않았습니다. 기존 collector/HTTPS 성공 suite, 설치, 이미지 빌드, 새 화면은 반복하지 않습니다.
