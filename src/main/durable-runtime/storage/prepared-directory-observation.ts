@@ -46,7 +46,7 @@ function decimal(value: unknown, positive = false): string {
 }
 // Fixed field projection only: no raw response, credential, arbitrary properties,
 // toJSON hook, or mutable caller object is retained. This does not authenticate it.
-function captureObservation(value: unknown): AuthenticatedManagedLeafObservation {
+export function captureAuthenticatedManagedLeafObservation(value: unknown): AuthenticatedManagedLeafObservation {
   const raw = record(value), candidate = record(raw.candidate), domain = record(candidate.domain);
   const pod = record(raw.pod), storage = record(raw.storage);
   const pvc = record(storage.pvc), pv = record(storage.pv), helper = record(storage.helper);
@@ -100,7 +100,7 @@ function capture(original: PreparedDirectoryObservationInput) {
         expectedUnitRevision: counter('row:runtime-unit', scope.expectedUnitRevision),
         expectedBindingRevision: counter('row:storage-binding', scope.expectedBindingRevision), actorId: text(scope.actorId) }),
       qualificationRef: text(original.qualificationRef), evidenceRef: text(original.evidenceRef),
-      observation: captureObservation(original.observation),
+      observation: captureAuthenticatedManagedLeafObservation(original.observation),
     });
   } catch (error) {
     if (error instanceof DurableDatabaseError) { throw error; }

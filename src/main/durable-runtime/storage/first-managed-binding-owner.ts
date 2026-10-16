@@ -2,10 +2,9 @@ import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { DurableDatabaseError, DurableTransactionResult } from '../db/connection.ts';
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts';
-import { createManagedLeafCredentialReader, type ManagedLeafCredentialConfig } from './managed-leaf-credential.ts';
-import { createManagedLeafCollector, ManagedLeafCollectorError } from './managed-leaf-collector.ts';
-import { captureManagedLeafConfig, managedLeafUuid } from './managed-leaf-collector-config.ts';
-import type { ManagedLeafCollectorConfig, ManagedLeafCollectorDependencies,
+import { ManagedLeafCollectorError } from './managed-leaf-collector.ts';
+import { managedLeafUuid } from './managed-leaf-collector-config.ts';
+import type { ManagedLeafCollectorDependencies,
   AuthenticatedManagedLeafObservation } from './managed-leaf-collector-types.ts';
 import { acquireNamespaceHold, releaseNamespaceHold, type NamespaceHoldInput,
   type NamespaceTransactionResult } from './namespace-holds.ts';
@@ -14,15 +13,11 @@ import { recordPreparedDirectoryObservation, type PreparedDirectoryObservationIn
 import { verifyBindingWithPreparedPin, type BindingVerificationTransactionResult,
   type PreparedBindingPinOwner, type PreparedBindingPinLease } from './binding-verification-transaction.ts';
 import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence } from './evidence.ts';
-import { captureFirstManagedBindingProfile, requireProfileCollectorIdentity,
-  FirstManagedBindingOwnerError } from './first-managed-binding-owner-profile.ts';
+import { captureFirstManagedBindingProfile, FirstManagedBindingOwnerError } from './first-managed-binding-owner-profile.ts';
+import { createFirstManagedObservationSource, requireFirstManagedObservation,
+  type FirstManagedBindingOwnerConfig } from './first-managed-observation-source.ts';
 
-export type FirstManagedBindingOwnerConfig = Readonly<{
-  acceptedProfileBytes: Uint8Array;
-  expectedProfileDigest: string;
-  credential: ManagedLeafCredentialConfig;
-  collector: Omit<ManagedLeafCollectorConfig, 'readReviewerBearer'>;
-}>;
+export type { FirstManagedBindingOwnerConfig } from './first-managed-observation-source.ts';
 export type FirstManagedBindingInput = PreparedDirectoryObservationInput['scope'] & Readonly<{
   pinId: string; ownerToken: string; leafId: string;
 }>;
@@ -115,17 +110,8 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
   const profile = accepted.record;
   const connect = pool.connect.bind(pool);
   const borrowed: Pool = Object.create(pool, { connect: { value: connect, configurable: true } });
-  const sourceCredential = original.credential;
-  const credential: ManagedLeafCredentialConfig = Object.freeze({ apiOrigin: sourceCredential.apiOrigin,
-    ca: Buffer.from(sourceCredential.ca), namespace: sourceCredential.namespace,
-    serviceAccountName: sourceCredential.serviceAccountName, serviceAccountUid: sourceCredential.serviceAccountUid,
-    timeoutMs: sourceCredential.timeoutMs, readIssuerBearer: sourceCredential.readIssuerBearer.bind(sourceCredential) });
-  const reader = createManagedLeafCredentialReader(credential, dependencies?.https);
-  const collectorConfig = captureManagedLeafConfig({ ...original.collector, ca: Buffer.from(original.collector.ca),
-    readReviewerBearer: reader.readReviewerBearer });
-  requireProfileCollectorIdentity(profile, collectorConfig, credential);
-  const collector = createManagedLeafCollector(collectorConfig, dependencies);
-  const collect = collector.collect.bind(collector), acquire = acquireNamespaceHold,
+  const source = createFirstManagedObservationSource(original, accepted, dependencies);
+  const collect = source.collect, acquire = acquireNamespaceHold,
     recordObservation = recordPreparedDirectoryObservation, verify = verifyBindingWithPreparedPin,
     release = releaseNamespaceHold;
   const operations = new Map<string, Operation>();
@@ -164,24 +150,6 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
     throw new FirstManagedBindingOwnerError('FIRST_MANAGED_RELEASE_NOT_CONFIRMED');
   }
 
-  function checkObservation(observation: AuthenticatedManagedLeafObservation, leafId: string): void {
-    const candidate = observation.candidate, storage = observation.storage;
-    if (observation.kind !== 'AUTHENTICATED_MANAGED_LEAF_OBSERVATION' || observation.namespacePin !== false ||
-        observation.dataset !== profile.profile.datasetName || observation.leafId !== leafId ||
-        observation.clusterIdentityRef !== profile.collector.clusterIdentityRef || observation.namespace !== profile.collector.namespace ||
-        observation.reference !== `managed-leaf-observation:sha256:${observation.evidenceDigest}` ||
-        !/^[a-f0-9]{64}$/u.test(observation.evidenceDigest) ||
-        candidate.canonicalDirectory !== `/${profile.profile.datasetName}/${leafId}` ||
-        candidate.domain.backendId !== profile.profile.backendId || candidate.domain.exportId !== profile.profile.exportId ||
-        candidate.domain.pvUid !== profile.storage.pvUid ||
-        storage.pvc.name !== profile.storage.pvcName || storage.pvc.uid !== profile.storage.pvcUid ||
-        storage.pv.name !== profile.storage.pvName || storage.pv.uid !== profile.storage.pvUid ||
-        storage.pv.csiDriver !== profile.storage.csiDriver || storage.pv.volumeHandle !== profile.storage.volumeHandle ||
-        storage.helper.name !== profile.collector.helperConfigMapName || storage.helper.uid !== profile.collector.helperConfigMapUid ||
-        storage.helper.sha256 !== profile.collector.helperSha256) {
-      throw new FirstManagedBindingOwnerError('FIRST_MANAGED_OBSERVATION_SCOPE');
-    }
-  }
 
   async function run(operation: Operation, leafId: string, signal: AbortSignal): Promise<FirstManagedBindingResult> {
     try { operation.hold = await acquire(borrowed, operation.holdInput); }
@@ -202,7 +170,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
     try {
       observation = await collect(leafId, signal);
       operation.observationRef = observation.reference;
-      checkObservation(observation, leafId);
+      requireFirstManagedObservation(profile, observation, leafId);
     } catch (error) {
       operation.releaseEligible = error instanceof ManagedLeafCollectorError || error instanceof FirstManagedBindingOwnerError;
       operation.reconciliation = !operation.releaseEligible;
