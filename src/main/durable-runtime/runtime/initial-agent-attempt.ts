@@ -72,7 +72,7 @@ export async function reserveInitialAgentAttempt(tx: DurableTransaction, origina
     executionToken: claim.executionToken, controllerTerm: claim.controllerTerm, command: claim.identity.command,
     inputHash: claim.identity.inputHash, envelope: { operationId: e.operationId, controllerTerm: e.controllerTerm,
       stepRevision: e.stepRevision, executionEpoch: e.executionEpoch, intentRevision: e.intentRevision,
-      podTarget: e.podTarget, expectedPodUid: e.expectedPodUid }, planDigest, expectedUnitRevision, bindings: expected })
+      podTarget: e.podTarget, expectedPodUid: e.expectedPodUid }, planDigest, expectedUnitRevision, bindings: [...expected] })
   const record = await readAgentPodPlan(tx, context.operationId)
   if (!record || record.planDigest !== planDigest) { return deny('PLAN') }
   const plan = record.plan, identity = plan.identity, dataset = plan.pod.metadata.labels['orca.dev/dataset']
@@ -144,7 +144,7 @@ export async function reserveInitialAgentAttempt(tx: DurableTransaction, origina
   const unitRevision = String(BigInt(expectedUnitRevision) + 1n)
   const event = { kind: 'INITIAL_AGENT_ATTEMPT_RESERVED', operationId: identity.operationId, unitId: identity.unitId,
     attemptId: identity.attemptId, commandId: claim.commandId, planDigest, reservationDigest, executionGrantId,
-    storageGrants, unitRevision, state: 'RESERVED', kubernetesExecutionAuthorized: false, physicalPinIssued: false }
+    storageGrants: [...storageGrants], unitRevision, state: 'RESERVED', kubernetesExecutionAuthorized: false, physicalPinIssued: false }
   const old = (await query<{ next_state: JsonValue }>(
     "SELECT next_state FROM durable_runtime.runtime_audit_events WHERE id=$1 AND kind='INITIAL_AGENT_ATTEMPT_RESERVED'", [eventId])).rows[0]
   const attempts = (await query<{ id: string; status: string; mode: string; pod_uid: string | null; incarnation: string | null;

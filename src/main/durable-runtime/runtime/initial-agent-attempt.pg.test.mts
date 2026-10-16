@@ -13,6 +13,7 @@ import { LockedGatewayAuthority } from './gateway/authority.ts'
 import { submitCommand, originalIdentity } from './gateway/store.ts'
 import { claimCommand } from './gateway/claim.ts'
 import { inputDigest } from './gateway/input.ts'
+import type { PayloadHash } from './runtime-evidence.ts'
 import type { GatewayContext, VerifiedControllerIdentity, ExecutorId } from './gateway/types.ts'
 import { reserveInitialAgentAttempt, type InitialAgentAttemptInput } from './initial-agent-attempt.ts'
 
@@ -114,7 +115,8 @@ async function seed(bindings = [binding('home','RW'),binding('project','RW'),bin
       planDigest: commandPlanDigest ?? stored.record.planDigest, attemptId: plan.identity.attemptId,
       resourceProfileRevision: plan.pod.metadata.annotations['orca.dev/resource-profile-revision'] } }
     const locked = await LockedGatewayAuthority.acquire(tx, context)
-    const submitted = await submitCommand(locked, { command: 'ensureAttempt', envelope, input, inputHash: inputDigest(input), predecessor: { kind:'NONE' } })
+    // SAFETY: fixture SHA-256 digest only; this brand supplies no external authority.
+    const submitted = await submitCommand(locked, { command: 'ensureAttempt', envelope, input, inputHash: inputDigest(input) as PayloadHash, predecessor: { kind:'NONE' } })
     // SAFETY: synthetic fixture executor string only, never a workload authentication issuer.
     const executor = `synthetic-executor:${operation}` as ExecutorId
     const claimed = await claimCommand(locked, originalIdentity(submitted.command), executor)
