@@ -251,7 +251,8 @@ test('planner-independent WAKE expiry shares one actual controller session acros
   // from becoming candidates in a later global pass. No snapshot/session filter.
   await runUnhandledWakeExpiryPassCases(t, pool, session, controller)
   await session.assertCurrent(pool, acquired.lease, new AbortController().signal)
-  await runInitialWakeExpiryCases(t, pool, controller, databaseOid)
+  await runInitialWakeExpiryCases(t, pool, controller, {
+    database, oid: databaseOid, system: '7696101282789175327' })
   // The DB cases cover stale lease/CAS directly. Do not run another pass here.
   t.diagnostic(JSON.stringify({ databaseOid: actual.oid, system: actual.system, backendPid: actual.pid,
     actualSessionAcquireCalls: 1, forcedLeaseChanges: 0, fakeSession: false, providerCalls: 0, podCalls: 0,
