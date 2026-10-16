@@ -58,7 +58,7 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
     if (!approval || approval.execute !== true || approval.rootExecutionApproved !== true ||
         approval.rootAcceptedSourcePin !== config.rootAcceptedSourcePin) fail('ROOT_EXECUTION_APPROVAL_REQUIRED')
     const state = { kind: 'COLLECTOR_IDENTITY_INSTALLATION', rootAcceptedSourcePin: config.rootAcceptedSourcePin,
-      phase: 'PREFLIGHT', startedAt: new Date().toISOString(), created: [], observations: [],
+      phase: 'PREFLIGHT', startedAt: new Date().toISOString(), createIntents: [], created: [], observations: [],
       issuedTokens: 0, physicalPinIssued: false, actualCollectorExec: 0 }
     async function api(method, path, body, accept = 'application/json') {
       if (signal.aborted) fail('ABORTED')
@@ -76,6 +76,9 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
       if (response.statusCode !== 404) fail(response.statusCode === 200 ? 'OWNED_NAME_COLLISION' : 'PREFLIGHT_HTTP_FAILED')
     }
     async function create(object) {
+      const intent = { kind: object.kind, name: object.metadata.name,
+        ...(object.metadata.namespace ? { namespace } : {}), uid: null, attemptedAt: new Date().toISOString() }
+      state.createIntents.push(intent)
       let response
       try { response = await api('POST', collection(object), object) } catch {
         // Exactly one result recall; never POST again, delete, or silently adopt an uncertain CREATE.
@@ -87,8 +90,10 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
         } catch { state.observations.push({ phase: 'UNCERTAIN_CREATE_RECALL_FAILED', kind: object.kind, name: object.metadata.name }) }
         fail('CREATE_UNCERTAIN_NO_RETRY')
       }
+      intent.statusCode = response.statusCode
       if (response.statusCode !== 201) fail('CREATE_HTTP_FAILED')
       const captured = identity(response.body, object)
+      intent.uid = captured.uid
       state.created.push(captured)
       if (object.kind === 'ServiceAccount' && (response.body.automountServiceAccountToken !== false ||
           (response.body.secrets ?? []).length !== 0)) fail('BOOTSTRAP_SERVICE_ACCOUNT_CHANGED')
