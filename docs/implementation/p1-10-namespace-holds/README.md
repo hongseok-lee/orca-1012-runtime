@@ -32,3 +32,7 @@
 ![2026-10-14 13:33:04.734 UTC의 기존 Expo Web Workspace 화면. 이번 namespace hold 결과 화면이 아닙니다.](https://github.com/hongseok-lee/orca-1012-runtime/blob/44e9d6987fbfc1abeac675a593438e72d40ad27f/docs/implementation/p1-16-c3-first-ui/workspace-created-first.png)
 
 기존 Root 수락 PNG SHA256 `53990a5ab41bfafed707ee5a02b7fbdd67fe1a977d994cbce63a07f58f8cf00a`, 390×844를 역사 환경 자료로만 참조했습니다. [정확 시각·source·한계](historical-environment-provenance.json)를 보존하며 새 촬영/앱 접속은 0입니다. 이번 namespace hold의 UI·실기기·provider·NFS 물리 pin·old writer 차단·관리 actuator·HA/공개 통합 합격을 주장하지 않습니다. 공유 public/registry는 수정하지 않았습니다. 새 usage/credits/stream 중단은 이번 turn에서 미관측이며, Root가 원 결과·최종 PR을 검토해 수락/merge합니다.
+
+## PR base 정렬
+
+Root 지정 main `031d461ad45cec0ac0a8c8f0350d558f111da379`로 한 번 정렬했습니다. [정렬 전후 blob·mode와 실제 입력 비교](base-alignment.json)에서 소유 3개·실제 type 입력 8개·runtime 입력 6개 및 기존 공개 증거 13개의 bytes가 유지됐고, runtime 의존 delta는 0입니다. 검증 source `1f811e2c`의 결과를 재사용하며 성공한 PG/type/lint를 반복하지 않았습니다.

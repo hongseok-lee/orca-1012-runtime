@@ -1,0 +1,60 @@
+{
+  "validatedSourcePin": "1f811e2cbdb77cfdab1e897d98d8ded16d675756",
+  "originalPublicationRef": "afa51d56b6b1cadc662a6d66f64319ebcccf7797",
+  "oldBase": "44e9d6987fbfc1abeac675a593438e72d40ad27f",
+  "targetBase": "031d461ad45cec0ac0a8c8f0350d558f111da379",
+  "alignedHead": "6b92ff66659cef3deb57ac5cf72b867f05acf846",
+  "ownedFiles": [
+    "src/main/durable-runtime/storage/namespace-holds.ts",
+    "src/main/durable-runtime/storage/namespace-holds.pg.test.mts",
+    "src/main/durable-runtime/db/migrations/022-storage-namespace-holds.sql"
+  ],
+  "actualTypePaths": [
+    "src/main/durable-runtime/db/connection.ts",
+    "src/shared/durable-runtime/identity.ts",
+    "src/main/durable-runtime/db/locks.ts",
+    "src/main/durable-runtime/db/atomic.ts",
+    "src/main/durable-runtime/journal/store.ts",
+    "src/main/durable-runtime/storage/namespace-holds.ts",
+    "src/main/durable-runtime/db/migrate.ts",
+    "src/main/durable-runtime/storage/namespace-holds.pg.test.mts"
+  ],
+  "actualRuntimePaths": [
+    "src/main/durable-runtime/db/connection.ts",
+    "src/main/durable-runtime/db/migrate.ts",
+    "src/main/durable-runtime/db/locks.ts",
+    "src/shared/durable-runtime/identity.ts",
+    "src/main/durable-runtime/journal/store.ts",
+    "src/main/durable-runtime/storage/namespace-holds.ts"
+  ],
+  "beforeBlobModeEntries": [
+    "100644 blob 5437efd3e2466b6357d918fac84768479871e03e\tsrc/main/durable-runtime/db/atomic.ts",
+    "100644 blob 181384ff0bf130ae6ad1ff64e2d9043f08d76d18\tsrc/main/durable-runtime/db/connection.ts",
+    "100644 blob 2fc02747102fddc0f4ad669a6484c2382f7f5822\tsrc/main/durable-runtime/db/locks.ts",
+    "100644 blob 9172ba37b4578252a8bb94244083a0d119037bc8\tsrc/main/durable-runtime/db/migrate.ts",
+    "100644 blob 006d3748a7ebcbd91bf60bb415e073a376dda6e3\tsrc/main/durable-runtime/db/migrations/022-storage-namespace-holds.sql",
+    "100644 blob 1b0de8b5c6961f60315f714071e6cf627233dc43\tsrc/main/durable-runtime/journal/store.ts",
+    "100644 blob a4fbc761c7a21502ffcfe0fa5146648e6c8d3afd\tsrc/main/durable-runtime/storage/namespace-holds.pg.test.mts",
+    "100644 blob 3fc71694d6d340551738edbab511feaef34fcd67\tsrc/main/durable-runtime/storage/namespace-holds.ts",
+    "100644 blob 11c0f09a0bfc3950a29465efa6d504b9e3207a75\tsrc/shared/durable-runtime/identity.ts"
+  ],
+  "afterBlobModeEntries": [
+    "100644 blob 5437efd3e2466b6357d918fac84768479871e03e\tsrc/main/durable-runtime/db/atomic.ts",
+    "100644 blob 181384ff0bf130ae6ad1ff64e2d9043f08d76d18\tsrc/main/durable-runtime/db/connection.ts",
+    "100644 blob 2fc02747102fddc0f4ad669a6484c2382f7f5822\tsrc/main/durable-runtime/db/locks.ts",
+    "100644 blob 9172ba37b4578252a8bb94244083a0d119037bc8\tsrc/main/durable-runtime/db/migrate.ts",
+    "100644 blob 006d3748a7ebcbd91bf60bb415e073a376dda6e3\tsrc/main/durable-runtime/db/migrations/022-storage-namespace-holds.sql",
+    "100644 blob 1b0de8b5c6961f60315f714071e6cf627233dc43\tsrc/main/durable-runtime/journal/store.ts",
+    "100644 blob a4fbc761c7a21502ffcfe0fa5146648e6c8d3afd\tsrc/main/durable-runtime/storage/namespace-holds.pg.test.mts",
+    "100644 blob 3fc71694d6d340551738edbab511feaef34fcd67\tsrc/main/durable-runtime/storage/namespace-holds.ts",
+    "100644 blob 11c0f09a0bfc3950a29465efa6d504b9e3207a75\tsrc/shared/durable-runtime/identity.ts"
+  ],
+  "owned3BlobModeUnchanged": true,
+  "actualType8Delta": [],
+  "actualRuntime6DependencyDelta": [],
+  "public13BlobModeUnchanged": true,
+  "ownedDiffByteIdentical": true,
+  "ownedDiffSHA256": "591d24dd94874652e7091622d69a6f3e7f4907e2fa089fbd69f56a18e65f0b53",
+  "rebaseCount": 1,
+  "productChecksRepeated": false
+}
