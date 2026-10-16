@@ -199,6 +199,9 @@ function boundary() {
   const entered=Promise.withResolvers<void>(), gate=Promise.withResolvers<void>()
   return { entered:entered.promise, open:gate.resolve, control:{ entered:entered.resolve,wait:gate.promise } }
 }
+async function waitEntered(gate: ReturnType<typeof boundary>, pending: Promise<unknown>): Promise<void> {
+  await Promise.race([gate.entered,pending.then(()=>{ throw new Error('fixture transaction ended before expected boundary') })])
+}
 function retained(result: InitialAgentAttemptTransactionResult, pins: Group, reason: string) {
   assert.equal(result.pins.disposition,'RETAINED'); assert.equal(pins.state.held.size,pins.evidence.length)
   if (result.pins.disposition!=='RETAINED') { assert.fail('whole group must remain held') }
@@ -208,7 +211,16 @@ function retained(result: InitialAgentAttemptTransactionResult, pins: Group, rea
 }
 
 await test('initial reservation: complete prepared group survives until real transaction settlement', async t => {
-  t.after(() => pool.end())
+  const checkout=boundary(), commit=boundary(), rollback=boundary(), settlements: Promise<void>[]=[]
+  const observe=<T>(pending: Promise<T>): Promise<T> => {
+    settlements.push(pending.then(()=>undefined,()=>undefined))
+    return pending
+  }
+  t.after(async()=>{
+    checkout.open(); commit.open(); rollback.open()
+    await Promise.all(settlements)
+    await pool.end()
+  })
   const actual=await withDurableTransaction(pool,identity), migrations=await readMigrations(migrationPath)
   assert.equal(migrations.length,23)
   const ledger=(await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
@@ -248,13 +260,13 @@ await test('initial reservation: complete prepared group survives until real tra
   if (missing.database && !missing.database.ok) { assert.equal(missing.database.error.code,'INITIAL_AGENT_DIRECTORY') }
   assert.deepEqual(await counts(f),empty)
 
-  const pins=group(references), checkout=boundary(), commit=boundary()
+  const pins=group(references)
   const borrowed=transport(pins,{ checkout:checkout.control,commit:commit.control })
   const mutable=structuredClone(f.request), mutableContext={ ...f.context,controller:{ ...controller } }, mutableRefs=[...references]
   let delivered=false
-  const pending=reserveInitialAgentAttemptWithPreparedPins(borrowed.pool,mutableContext,mutable,authority,mutableRefs,pins.owner)
-    .then(result=>{ delivered=true; return result })
-  assert.equal(pins.state.transferred,true); await checkout.entered
+  const pending=observe(reserveInitialAgentAttemptWithPreparedPins(borrowed.pool,mutableContext,mutable,authority,mutableRefs,pins.owner)
+    .then(result=>{ delivered=true; return result }))
+  assert.equal(pins.state.transferred,true); await waitEntered(checkout,pending)
   // The wrapper must capture before the first checkout await, not merely rely
   // on the core's later capture when the engine invokes its callback.
   borrowed.pool.connect=async()=>{ throw new Error('late connect replacement') }
@@ -262,7 +274,7 @@ await test('initial reservation: complete prepared group survives until real tra
   Object.assign(mutable.claim,{ executionToken:logicalId('runtime-command-execution',randomUUID()) })
   Object.assign(mutable.claim.identity.originalEnvelope,{ executionEpoch:counter('execution-epoch','999') })
   Object.assign(mutableContext.controller,{ owner:'changed-after-checkout' }); mutableRefs.length=0
-  checkout.open(); await commit.entered
+  checkout.open(); await waitEntered(commit,pending)
   assert.equal(delivered,false); assert.equal(pins.state.held.size,3); assert.equal(pins.state.releases,0)
   commit.open()
   const first=await pending
@@ -285,9 +297,9 @@ await test('initial reservation: complete prepared group survives until real tra
   assert.equal(notStarted.database?.settlement,'NOT_STARTED'); assert.equal(notStarted.pins.disposition,'RELEASED')
   assert.equal(noCheckoutPins.state.releases,1); assert.equal(noCheckoutPins.state.held.size,0)
 
-  const rollbackPins=group(references), rollback=boundary(), rollbackPool=transport(rollbackPins,{ rollback:rollback.control })
-  const rejected=run(rollbackPins,rollbackPool.pool,{ ...f.request,planDigest:'0'.repeat(64) })
-  await rollback.entered
+  const rollbackPins=group(references), rollbackPool=transport(rollbackPins,{ rollback:rollback.control })
+  const rejected=observe(run(rollbackPins,rollbackPool.pool,{ ...f.request,planDigest:'0'.repeat(64) }))
+  await waitEntered(rollback,rejected)
   assert.equal(rollbackPins.state.held.size,3); assert.equal(rollbackPins.state.releases,0)
   rollback.open()
   const rolledBack=await rejected
