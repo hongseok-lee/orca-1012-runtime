@@ -114,7 +114,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
   const accepted = captureFirstManagedBindingProfile(original.acceptedProfileBytes, original.expectedProfileDigest);
   const profile = accepted.record;
   const connect = pool.connect.bind(pool);
-  const borrowed: Pool = Object.create(pool, { connect: { value: connect } });
+  const borrowed: Pool = Object.create(pool, { connect: { value: connect, configurable: true } });
   const sourceCredential = original.credential;
   const credential: ManagedLeafCredentialConfig = Object.freeze({ apiOrigin: sourceCredential.apiOrigin,
     ca: Buffer.from(sourceCredential.ca), namespace: sourceCredential.namespace,
