@@ -3,7 +3,7 @@ import { randomUUID, createHash } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import type { Pool, PoolClient, QueryResultRow } from 'pg'
-import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
+import { createDurablePool, DurableDatabaseError, withDurableTransaction } from '../db/connection.ts'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence } from '../storage/evidence.ts'
 import { createAgentPodPlanner } from './agent-pod-plan.ts'
@@ -155,7 +155,7 @@ async function claimAndReserve(f: Fixture, controller: VerifiedControllerIdentit
   return { ...f, context, request, reservation, command: { ...f.command, state: "EXECUTING" as const } };
 }
 
-function observedPool() {
+function observedPool(failure: 'NONE' | 'COMMIT_UNCONFIRMED' | 'CLEANUP_FAILED' = 'NONE') {
   const connect = pool.connect.bind(pool), state = { clients: 0, transactions: 0 }
   const borrowed: Pool = Object.create(pool, { connect: { value: async () => {
     const client = await connect(), query = client.query.bind(client), release = client.release.bind(client)
@@ -163,19 +163,24 @@ function observedPool() {
     let active = false
     const wrapped: PoolClient = Object.create(client, {
       query: { value: async function<Row extends QueryResultRow = QueryResultRow>(sql: string, values: readonly unknown[] = []) {
+        if (failure === 'COMMIT_UNCONFIRMED' && sql === 'ROLLBACK') { throw new DurableDatabaseError('08006') }
         const result = await query<Row>(sql, [...values])
         if (sql.startsWith('BEGIN')) { active = true; state.transactions++ }
         if ((sql === 'COMMIT' || sql === 'ROLLBACK') && active) { active = false; state.transactions-- }
+        if (failure === 'COMMIT_UNCONFIRMED' && sql === 'COMMIT') { throw new DurableDatabaseError('08006') }
         return result
       } },
-      release: { value: (destroy: boolean) => { state.clients--; release(destroy) } },
+      release: { value: (destroy: boolean) => {
+        state.clients--; release(destroy)
+        if (failure === 'CLEANUP_FAILED') { throw new DurableDatabaseError('DB_FAILURE') }
+      } },
     })
     return wrapped
   } } })
   return { pool: borrowed, state }
 }
-function compose(f: Fixture, h: ReturnType<typeof harness>) {
-  const db = observedPool(), request = h.transport.request.bind(h.transport)
+function compose(f: Fixture, h: ReturnType<typeof harness>, db = observedPool()) {
+  const request = h.transport.request.bind(h.transport)
   const https = { request(...args: Parameters<typeof request>) {
     assert.equal(db.state.clients, 0, 'original target COMMIT/cleanup must precede HTTPS')
     assert.equal(db.state.transactions, 0, 'HTTP holds no DB transaction')
@@ -240,6 +245,24 @@ test('adopted original Agent command uses only GET and assigns or replays its or
   assert.equal(denied.phase, 'TARGET'); assert.equal(denied.target?.ok, false)
   assert.equal(denied.createRequested, false); assert.equal(denied.reservation, null)
   assert.equal(staleHttp.requests.length, 0); assert.equal(stale.db.state.clients, 0)
+
+  // Synthetic lost COMMIT/release acknowledgement after the real read-only target transaction.
+  // The owned client still settles/releases; neither failure may reach HTTPS.
+  for (const failure of ['COMMIT_UNCONFIRMED', 'CLEANUP_FAILED'] as const) {
+    const noHttp = harness([]), closed = compose(f, noHttp, observedPool(failure))
+    const stopped = await closed.lookup.lookup(input, signal)
+    assert.equal(stopped.phase, 'TARGET'); assert.equal(stopped.observation, null); assert.equal(stopped.assignment, null)
+    assert.equal(stopped.reservation, null); assert.equal(stopped.createRequested, false)
+    if (failure === 'COMMIT_UNCONFIRMED') {
+      assert.equal(stopped.target?.ok, false); assert.equal(stopped.target?.commitOutcome, 'UNKNOWN')
+      assert.equal(stopped.target?.settlement, 'UNCONFIRMED')
+    } else {
+      assert.equal(stopped.target?.ok, true); assert.equal(stopped.target?.settlement, 'COMMITTED')
+      assert.equal(stopped.target?.cleanupFailed, true)
+    }
+    assert.equal(noHttp.requests.length, 0); assert.equal(closed.db.state.clients, 0)
+    assert.equal(closed.db.state.transactions, 0); assert.deepEqual(await commandSnapshot(f), before)
+  }
 
   const absentHttp = harness([{ status: 404 }]), absent = compose(f, absentHttp)
   const missing = await absent.lookup.lookup(input, signal)
