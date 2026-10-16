@@ -1,0 +1,351 @@
+{
+  "kind": "INITIAL_AGENT_POD_EXECUTION_SCOPED_VERIFICATION",
+  "productRevision": "1dbd43ba2fb5e0c0560d463e82683c24cbb47290",
+  "testedRevision": "c471eb18c7fb6b1ad34fe692d9793f69acbb1011",
+  "baseRevision": "6ba8efeb298386ac505bb17242a641aa7012adc3",
+  "actualInputUnion": 38,
+  "sourceInputs": [
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "bytes": 6387,
+      "mode": "100644"
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/runtime-evidence.ts",
+      "sha256": "6aea8841a0d492a281247287b2384ee47061b56772a4862d53e2c32d79e523fa",
+      "bytes": 5248,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6",
+      "bytes": 5525,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/evidence.ts",
+      "sha256": "b412fba81f4dcc4d18ecf63a8da32a2ad7724793f7892f0ad0f1e97a811ade18",
+      "bytes": 2720,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40",
+      "bytes": 9074,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/observation-rows.ts",
+      "sha256": "0873b46a2213790944fbc8ca7ea23926fad40656f4f9db67cc47f783a1933c13",
+      "bytes": 1439,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/resources/evidence/types.ts",
+      "sha256": "89f9830c495218e5c8fc9b33b77d5931914d45d5db736847784f32b684216349",
+      "bytes": 5854,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/structured-session-rows.ts",
+      "sha256": "15bd86d1c65d6584228bdabdbd0aa90b4da64bbb95553dab49fb8ece5d351329",
+      "bytes": 1022,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/terminal-input-rows.ts",
+      "sha256": "167d108ad093ce69d27257c60245b2140d515d997c23aba4656e9fe6bf67a1d4",
+      "bytes": 880,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/failure-evidence-rows.ts",
+      "sha256": "2687026d2d25b0b7d30be3b1089bf213931e40645b17133578b96610637d5c11",
+      "bytes": 2374,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/resource-allocation-rows.ts",
+      "sha256": "1d4f77efb305f7b2504f1f5eb33c13817300520dfac7ad548950a7d796044948",
+      "bytes": 3101,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/rows.ts",
+      "sha256": "0288d809820312eeabb0ca995ef5a356d6a39e33d170e47741f4140910836263",
+      "bytes": 7855,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/command-types.ts",
+      "sha256": "3081e24d2502e153708fca4b45b78eba1031b86351a43b1ef36732a2fc12b8fe",
+      "bytes": 2818,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/types.ts",
+      "sha256": "383e7f09f7d70e097c81c0f69155745274ca8ff76c6765419376ff4c1c7399b3",
+      "bytes": 3895,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+      "sha256": "575f1607631fe6c47f484b06e3145ccba2054468d77570fa7d85a5826ebfed8f",
+      "bytes": 7365,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+      "sha256": "9439fe2e23e04dd49954a0adece4170516c0c7f5c2fa9aff2de6c24cf1e39711",
+      "bytes": 9397,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/db/agent-pod-plan-record-rows.ts",
+      "sha256": "a24318678c062dbdebcfb967b7d8160b182a68057940ff309e7d7c0a4156acfb",
+      "bytes": 1291,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+      "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1",
+      "bytes": 2182,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76",
+      "bytes": 5150,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+      "sha256": "986d4c74540bfef7f911e7c3616ee0ff57d0caf56cb6b8afca10874130bdafbf",
+      "bytes": 13515,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+      "sha256": "778330564d02ec4835fcd7734f0116ddce748afd10490b2c494857d82b19b623",
+      "bytes": 9729,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-attempt.ts",
+      "sha256": "e3c3ce0a19aef04e887392defc33e6d6e2cb040b41b39aefb9f20041d8aff929",
+      "bytes": 19046,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-attempt-transaction.ts",
+      "sha256": "b812c1385668846d8e476fb3d95d4743822bd2147d4127a38d4084af7f92b4dc",
+      "bytes": 9283,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/claim.ts",
+      "sha256": "3c6c91d7ec48131c698c0f1df8fceb7b481219f75ea9b0123a038766c14ad7d4",
+      "bytes": 7342,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb",
+      "bytes": 2786,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-fixtures.mts",
+      "sha256": "ba134dacea911c09020ee4c8f1a28fdf60ac40427fb4a34e9a3564b7b0a1ec82",
+      "bytes": 5129,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+      "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835",
+      "bytes": 5290,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/watch.ts",
+      "sha256": "b07109f855ad9a0504a01446ff2c3accb2f77c55670926678fa8617f04a7bdf5",
+      "bytes": 8660,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+      "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0",
+      "bytes": 3952,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create-types.ts",
+      "sha256": "d0bd432e98dc177f8cbd26ff09d8edb48c0b787f6a3d7a8bdc2c4b7a0ee432a4",
+      "bytes": 1705,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create-projection.ts",
+      "sha256": "5a543d9a46819b0894babebc4e7b5a77725c30dd14d2e9688ed6db693c405466",
+      "bytes": 12317,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create-transport.ts",
+      "sha256": "7d8d8269ce415e9f72dbc297422940e0d59ee21c080c657925173ed9be7bca95",
+      "bytes": 4780,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/agent-pod-create.ts",
+      "sha256": "b8204619bae439edd86f2e6b5b1a9dda80e2d3a54f1dc0f278366e6493271fed",
+      "bytes": 6714,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-pod-assignment.ts",
+      "sha256": "9b0efb548d9f4df549ed78aa2b65c0018b96d7f7ab692dee6bcc4802d23b6284",
+      "bytes": 24095,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-pod-execution.ts",
+      "sha256": "bab5c4aba0ea9c36a2310e536244c03de6bdd78f9ba40f42ad357b483cac7d7b",
+      "bytes": 10172,
+      "mode": "100644"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-pod-execution.pg.test.mts",
+      "sha256": "0834f5cc9fe0c01ea14c88307cae2e7ba0f0d0c9f39ac20d6ee633b253bf2531",
+      "bytes": 19551,
+      "mode": "100644"
+    }
+  ],
+  "configurationInputs": [
+    {
+      "path": ".oxlintrc.json",
+      "sha256": "c9937ad53bdaa27b1289b9e46ecd55d13151f3e1f619a78e35c88363b585096e",
+      "mode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/app-store-performance.mjs",
+      "sha256": "4285aba06eb207c6f693a00384677fcc223567e6c15c4662ec83a7f275780cdb",
+      "mode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/mobile-pairing-qrcode-import.mjs",
+      "sha256": "813c5dbd6908a4a4ce1bbbd3da525cb809bbd05a422dc5ccb3c9376202d290d7",
+      "mode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/quadratic-buffer-concat.mjs",
+      "sha256": "88cc326f7d8bc550526e086d9911dc6725d495aa2077943dfcf1580d7216baa6",
+      "mode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/renderer-scrollbar-style.mjs",
+      "sha256": "c9f023a8a56a97db0fb781fbef6acdf6d4139e6f406430475973d103b50f542e",
+      "mode": "100644"
+    },
+    {
+      "path": "config/oxlint-plugins/sort-comparator-performance.mjs",
+      "sha256": "aabed8f9985d8a7f84dfa04721b6d68bcf89f2492d41509ed8d30982081128f0",
+      "mode": "100644"
+    },
+    {
+      "path": "package.json",
+      "sha256": "9793ff6351cb46cc05f13ecb10a5e706d6d1e3507de1d610b51000463b30f5f8",
+      "mode": "100644"
+    }
+  ],
+  "scopedCompilerConfigurationSha256": "e62bb31372f7c4003d7b56392f0fbff7dac515db90dd2db48085f4b85dea48c9",
+  "sourceOrModeDifferencesAfterAlignment": 0,
+  "verification": {
+    "firstLint": {
+      "startedUtc": "2026-10-16T05:19:24.360Z",
+      "finishedUtc": "2026-10-16T05:19:25.039Z",
+      "exit": 1,
+      "diagnostics": 1,
+      "rule": "eslint/no-control-regex",
+      "correction": "원 제어 문자 판정과 같은 문자 코드 비교로 교정했으며 suppression과 assertion 변경은 없습니다."
+    },
+    "changedLint": {
+      "files": 1,
+      "pid": 4580,
+      "startedUtc": "2026-10-16T05:20:49.118Z",
+      "finishedUtc": "2026-10-16T05:20:49.576Z",
+      "exit": 0
+    },
+    "scopedStrictType": {
+      "pid": 4592,
+      "startedUtc": "2026-10-16T05:20:49.579Z",
+      "finishedUtc": "2026-10-16T05:20:51.413Z",
+      "exit": 0,
+      "sourceInputs": 38,
+      "externalInputs": 167,
+      "missingOrHashMismatch": 0
+    },
+    "integration": {
+      "callbackPid": 4677,
+      "callbackStartedUtc": "2026-10-16T05:20:51.862Z",
+      "parentFinishedUtc": "2026-10-16T05:20:53.457Z",
+      "exit": 0,
+      "callbacks": 1,
+      "pass": 1,
+      "fail": 0,
+      "skip": 0,
+      "actualBundleInputs": 23,
+      "tapSha256": "68838737f29baa9dff4acb2e59b7283be14f8b92f96a95a1fc32a1c4eaa667f4",
+      "postgres": "기존 isolated DB를 사용했으며 실제 database/OID/system/dataset identity를 fixture에서 확인했습니다.",
+      "ledgerRows": 23,
+      "ledgerChecksumAndAppliedAtUnchangedByAssertion": true,
+      "originalRowMultisetTablesCheckedByAssertion": 20,
+      "rawBeforeAfterSnapshotsSaved": false,
+      "warning": "pgpass deprecation warning을 원 TAP에 보존했습니다."
+    }
+  },
+  "cleanup": {
+    "observedUtc": "2026-10-16T05:23:09.511Z",
+    "controllersZombie": [
+      4511,
+      4573
+    ],
+    "childrenAbsent": [
+      4518,
+      4580,
+      4592,
+      4658,
+      4671,
+      4677
+    ],
+    "heavy": 0
+  },
+  "notPerformed": [
+    "실제 Kubernetes API 호출과 Pod 생성은 수행하지 않았습니다.",
+    "실제 provider와 native 실행은 수행하지 않았습니다.",
+    "물리 namespace와 pin 발급은 구현하거나 실행하지 않았습니다.",
+    "Grant를 활성화하지 않았습니다.",
+    "DDL과 migration 적용은 수행하지 않았습니다.",
+    "가동 source를 동기화하지 않았습니다.",
+    "의존성 설치와 image build는 수행하지 않았습니다.",
+    "통과한 suite를 반복하지 않았습니다."
+  ],
+  "limitations": [
+    "원행과 ledger 보존은 원 fixture assertion과 TAP/source를 근거로 하며 별도 before/after snapshot artifact는 없습니다.",
+    "전체 행 수나 전체 32개 표를 독립 snapshot 파일 비교로 확인했다고 주장하지 않습니다.",
+    "Factory는 실제 controller/RPC와 미연결이며 활성화 전에 실제 physical 전제를 충족해야 합니다."
+  ]
+}
