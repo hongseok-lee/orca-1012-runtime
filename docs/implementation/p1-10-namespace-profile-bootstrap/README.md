@@ -2,11 +2,11 @@
 
 새 backend/export로 최초 namespace profile을 등록하면 기존 `registerNamespaceProfile`은 domain 잠금 전에 대상 row가 없어 `LOCK_TARGET_MISSING`으로 실패한다. 같은 기존 transaction에서 정확 backend/export의 domain을 `INSERT ... ON CONFLICT DO NOTHING`으로 먼저 확보한 뒤 원 domain lock·profile/version/audit/outbox 처리를 수행하도록 2줄만 추가했다. 이 domain은 논리 잠금 키이며 물리 directory 자격·VERIFIED binding·writer 권한이 아니다.
 
-고정 기준은 `e036bee08083750345796596d1e330280cd86c3c`다. 제품은 `d3fbc48238d8378b8d6196258e5c9a1c8fa6730b`, fixture 포함 source는 `10aa727fd67c847dfda3b003b778ba4edd10658b`다. 제품 diff는 register 함수의 2줄 추가뿐이며 다른 함수·전역 lock·schema·proof는 변경하지 않았다. 파일 hash와 source 입력은 [source-status.json](source-status.json)에 기록했다.
+고정 기준은 `e036bee08083750345796596d1e330280cd86c3c`다. 제품은 `d3fbc48238d8378b8d6196258e5c9a1c8fa6730b`, fixture 포함 source는 `9839357ab2057bf320d842aad69361386ac0bd2f`다. 제품 diff는 register 함수의 2줄 추가뿐이며 다른 함수·전역 lock·schema·proof는 변경하지 않았다. 파일 hash와 source 입력은 [source-status.json](source-status.json)에 기록했다.
 
 ## 현재 검증 상태와 준비 범위
 
-새 PG callback source 1개, 125줄을 준비했다. 새 domain/profile의 실제 확정 등록, 동일 입력 ALREADY_REGISTERED에서 revision/version/audit/outbox 불변, 같은 profile에 다른 domain을 제시한 scope 충돌에서 전체 rollback과 새 domain 부재를 확인하도록 작성했다. Fixture가 domain을 별도 INSERT하지 않고 제품 함수만 호출한다. 기존 affected 5표의 원행과 ledger23 보존을 확인한다.
+새 PG callback source 1개, 125줄을 준비했다. 실행 전 source 대조에서 `to_jsonb`의 numeric generation을 캡처한 decimal string과 비교하도록 명시적으로 문자열화했다. 이는 아직 실행하지 않은 fixture 준비 교정이며 원 런타임 실패는 아니다. 새 domain/profile의 실제 확정 등록, 동일 입력 ALREADY_REGISTERED에서 revision/version/audit/outbox 불변, 같은 profile에 다른 domain을 제시한 scope 충돌에서 전체 rollback과 새 domain 부재를 확인하도록 작성했다. Fixture가 domain을 별도 INSERT하지 않고 제품 함수만 호출한다. 기존 affected 5표의 원행과 ledger23 보존을 확인한다.
 
 지금 lint/type/PG/remote/DDL/collector/설치/build 실행은 모두 0이다. 새 성공 TAP나 actual type/metafile는 아직 없다. 기존 namespace/owner/collector suite와 완료된 PR138 검증은 반복하지 않는다. Backend의 같은 전용 DB 사용 종료 뒤 Root가 최초 집중 검증을 직렬 배분한다.
 

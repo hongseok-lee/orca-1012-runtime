@@ -1,6 +1,6 @@
 {
   "fixedBase": "e036bee08083750345796596d1e330280cd86c3c",
-  "sourcePin": "10aa727fd67c847dfda3b003b778ba4edd10658b",
+  "sourcePin": "9839357ab2057bf320d842aad69361386ac0bd2f",
   "productPin": "d3fbc48238d8378b8d6196258e5c9a1c8fa6730b",
   "phase": "SOURCE_ONLY_NOT_EXECUTED",
   "ownedFiles": [
@@ -17,9 +17,9 @@
     },
     {
       "path": "src/main/durable-runtime/storage/namespace-profile-bootstrap.pg.test.mts",
-      "bytes": 7598,
-      "sha256": "24877e9b601b50a52004bcd96cd6996a834473d1e1cec4e44d31e385d79361c8",
-      "blob": "1166689c79c990265e7cb794d830fb861b1f9b8f",
+      "bytes": 7606,
+      "sha256": "175d059e48270fa1b2772754abfda545b771b5deba63a03af729044e178a8023",
+      "blob": "18e1f675b1fc8a8521496c6d9efa1e17544e8b68",
       "mode": "100644"
     },
     {
