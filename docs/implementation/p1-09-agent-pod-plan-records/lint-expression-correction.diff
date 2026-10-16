@@ -1,0 +1,29 @@
+--- a/src/main/durable-runtime/runtime/agent-pod-plan-records.ts
++++ b/src/main/durable-runtime/runtime/agent-pod-plan-records.ts
+@@ -24,7 +24,7 @@
+   if (Array.isArray(value)) { result = agentPodArray(value).map(item => snapshot(item, ancestors)) }
+   else {
+     if (Object.getPrototypeOf(value) !== Object.prototype) { return invalid() }
+-    const object: { [key: string]: JsonValue } = {}
++    const object: Record<string, JsonValue> = {}
+     for (const key of Reflect.ownKeys(value)) {
+       if (typeof key !== 'string') { return invalid() }
+       const descriptor = Object.getOwnPropertyDescriptor(value, key)
+@@ -62,7 +62,7 @@
+     const resources = agentPodFields(container.get('resources'), ['requests','limits'])
+     const requests = agentPodFields(resources.get('requests'), ['cpu','memory','ephemeral-storage'])
+     const volumes = agentPodArray(spec.get('volumes'))
+-    const temporary = agentPodFields(volumes[volumes.length - 1], ['name','emptyDir'])
++    const temporary = agentPodFields(volumes.at(-1), ['name','emptyDir'])
+     const emptyDir = agentPodFields(temporary.get('emptyDir'), ['sizeLimit'])
+     const mounts = agentPodFields(p.get('mountExpectations'), ['protected','shared'])
+     const protectedBindings = agentPodArray(mounts.get('protected')).map(item => {
+@@ -99,7 +99,7 @@
+       row.dataset_name !== captured.dataset || row.attempt_id !== id.attemptId || row.execution_epoch !== id.executionEpoch ||
+       row.intent_revision !== id.intentRevision || row.namespace !== plan.pod.metadata.namespace || row.resource_name !== id.resourceName ||
+       row.spec_hash !== id.specHash || row.pod_spec_sha256 !== plan.podSpecSHA256 || !(row.recorded_at instanceof Date) ||
+-      !Number.isFinite(row.recorded_at.getTime())) { throw new Error() }
++      !Number.isFinite(row.recorded_at.getTime())) { throw new Error('Invalid stored Agent Pod plan') }
+     return Object.freeze({ plan, planDigest: captured.planDigest, recordedAt: row.recorded_at.toISOString() })
+   } catch { throw new DurableDatabaseError('AGENT_POD_PLAN_RECORD_INVALID') }
+ }

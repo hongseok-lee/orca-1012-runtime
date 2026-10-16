@@ -1,0 +1,31 @@
+
+  x typescript(consistent-indexed-object-style): A record is preferred over an index signature.
+    ,-[src/main/durable-runtime/runtime/agent-pod-plan-records.ts:27:21]
+ 26 |     if (Object.getPrototypeOf(value) !== Object.prototype) { return invalid() }
+ 27 |     const object: { [key: string]: JsonValue } = {}
+    :                     ^^^^^^^^^^^^^^^^^^^^^^^^
+ 28 |     for (const key of Reflect.ownKeys(value)) {
+    `----
+  help: Use a record type such as `Record<string, unknown>` instead of an index signature.
+
+  x unicorn(prefer-at): Prefer `.at()` over `[index]`.
+    ,-[src/main/durable-runtime/runtime/agent-pod-plan-records.ts:65:38]
+ 64 |     const volumes = agentPodArray(spec.get('volumes'))
+ 65 |     const temporary = agentPodFields(volumes[volumes.length - 1], ['name','emptyDir'])
+    :                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 66 |     const emptyDir = agentPodFields(temporary.get('emptyDir'), ['sizeLimit'])
+    `----
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  x unicorn(error-message): Pass a message to the Error constructor.
+     ,-[src/main/durable-runtime/runtime/agent-pod-plan-records.ts:102:60]
+ 101 |       row.spec_hash !== id.specHash || row.pod_spec_sha256 !== plan.podSpecSHA256 || !(row.recorded_at instanceof Date) ||
+ 102 |       !Number.isFinite(row.recorded_at.getTime())) { throw new Error() }
+     :                                                            ^^^^^^^^^^^
+ 103 |     return Object.freeze({ plan, planDigest: captured.planDigest, recordedAt: row.recorded_at.toISOString() })
+     `----
+  help: A descriptive message makes the error easier to debug when it is caught or logged.
+
+Found 0 warnings and 3 errors.
+Finished in 342ms on 3 files with 176 rules using 1 threads.
