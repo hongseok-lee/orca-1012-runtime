@@ -1,0 +1,91 @@
+{
+  "result": "ROOT_ACCEPTED_LIST_DETAIL_MOUNT_UNCONFIRMED",
+  "observedAt": "2026-10-16T16:35:49.625Z",
+  "targetUnitId": "456de729-7b40-4cd2-810e-92674904724a",
+  "managedWorkspaceId": "d9cbb30f-5f13-44d7-9d43-a5b6b84f3420",
+  "managedPublicWorkspaceId": "orca-1012-managed-project::/agent/checkout::workspace:d9cbb30f-5f13-44d7-9d43-a5b6b84f3420",
+  "targetSessionId": "afe07849-bd92-484b-99b3-7774c0451110",
+  "targetBindingId": "c9dbe650-4d3f-49d6-8854-d688d8accab1",
+  "rootAcceptedRuntime": {
+    "generation": 1,
+    "runtimePID": 10133,
+    "runnerPID": 10089,
+    "artifactSHA256": "99aceb02fd005a6e75b2f67318b8599d17b816d232bdb70b1f7ba91535536eea",
+    "version": "0.1.0+0b254e661182"
+  },
+  "sourceProvenance": {
+    "installedClientSourcePin": "8edb42e16caf0ddaa840dc16e4e886e6acaca328",
+    "frameSourcePin": "3817fb489ff9539aa1c0187170e842bed539c691",
+    "opsMobileDetailSourcePin": "ba5b58931fe054e3054ff04481bd41cd5422b4ee",
+    "sourceDeltaPin": "80eff45fe6395ed40dc3106e7d874e584969b80c",
+    "wholeCheckoutGitIdentityProven": false
+  },
+  "observations": [
+    "목록과 펼친 카드 및 상세 dialog 첫 위치의 원 stream frame에서 새 Unit UUID 전체를 확인했습니다.",
+    "Sessions/Tabs의 원 frame 및 최종 PNG에서 정확 Session을 확인했습니다.",
+    "상세 첫 위치에는 RUNNING / ABSENT 및 Pod 없음이 표시됐습니다.",
+    "최종 PNG는 Sessions/Tabs까지만 보이며 Mount 저장 상태·경로·VERIFIED 값은 화면에서 확인하지 못했습니다."
+  ],
+  "counts": {
+    "viewer": 1,
+    "summaryTaps": 1,
+    "detailTaps": 1,
+    "upDrags": 2,
+    "finalPNG": 1,
+    "frameRereads": 0,
+    "directRPC": 0,
+    "extraPG": 0,
+    "extraAPIProbe": 0,
+    "newSyntax": 0,
+    "restart": 0
+  },
+  "pngSHA256": "b20a4fde407f806d28f13733141b802b9b9c456769e67a0b9c67552913259435",
+  "exitCode": 0,
+  "cleanup": {
+    "contextClosed": true,
+    "browserClosed": true,
+    "authStateUnchanged": true,
+    "ownedChildAbsent": true,
+    "supervisorExitedZombieParent1": true
+  },
+  "limits": [
+    "Mount 표시 확인은 미완료입니다.",
+    "저장소 physical mount/writer/provider/HA/native 성공으로 표시하지 않습니다.",
+    "같은 viewer를 재실행하거나 추가 촬영하지 않았습니다."
+  ],
+  "usageCreditsStreamOriginalError": "미관측",
+  "rootVisualReview": {
+    "accepted": [
+      "전체 Unit UUID를 확인한 현재 목록과 상세 연결",
+      "Session afe07849-bd92-484b-99b3-7774c0451110의 OPEN/revision 0 표시",
+      "RUNNING / ABSENT 및 Pod 없음 표시"
+    ],
+    "unconfirmed": [
+      "Mount 저장 상태 및 경로 표시",
+      "physical mount/provider/writer/HA/native"
+    ],
+    "newViewerOrCaptureAuthorized": false
+  },
+  "images": [
+    {
+      "file": "managed-unit-summary-stream-original.jpg",
+      "kind": "ORIGINAL_BROWSER_STREAM_FRAME_JPG",
+      "playwrightScreenshot": false,
+      "reencoded": false,
+      "sha256": "163ebfc90690cc1de9b3d6f2a2f396d67d4d770df2c890eebe2c5ab2b7b4a115",
+      "stage": "summary",
+      "jobStartedAt": "2026-10-16T16:32:29.298Z",
+      "frameObservationAt": "2026-10-16T16:32:38.795Z",
+      "observation": "전체 Unit456de729-7b40-4cd2-810e-92674904724a가 카드 summary의 두 줄에 보입니다."
+    },
+    {
+      "file": "managed-unit-detail-first-playwright.png",
+      "kind": "PLAYWRIGHT_SCREENSHOT_PNG",
+      "playwrightScreenshot": true,
+      "reencoded": false,
+      "sha256": "b20a4fde407f806d28f13733141b802b9b9c456769e67a0b9c67552913259435",
+      "capturedAt": "2026-10-16T16:35:49.461Z",
+      "observation": "정확 Session과 Tabs가 보이며 Mount에는 도달하지 못한 최종 화면입니다."
+    }
+  ]
+}
