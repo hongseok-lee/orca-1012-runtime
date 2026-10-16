@@ -1,0 +1,237 @@
+{
+  "inputs": {
+    "src/main/durable-runtime/db/connection.ts": {
+      "bytes": 6387,
+      "imports": [
+        {
+          "path": "pg",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/db/migrate.ts": {
+      "bytes": 3136,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "./connection.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/db/locks.ts": {
+      "bytes": 2071,
+      "imports": [
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "./connection.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/shared/durable-runtime/identity.ts": {
+      "bytes": 3357,
+      "imports": [],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/journal/store.ts": {
+      "bytes": 6238,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/locks.ts",
+          "kind": "import-statement",
+          "original": "../db/locks.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/storage/namespace-holds.ts": {
+      "bytes": 17784,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/locks.ts",
+          "kind": "import-statement",
+          "original": "../db/locks.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/journal/store.ts",
+          "kind": "import-statement",
+          "original": "../journal/store.ts"
+        },
+        {
+          "path": "src/shared/durable-runtime/identity.ts",
+          "kind": "import-statement",
+          "original": "../../../shared/durable-runtime/identity.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/main/durable-runtime/storage/src/main/durable-runtime/storage/namespace-holds.pg.test.mts.generated.cts": {
+      "bytes": 18253,
+      "imports": [
+        {
+          "path": "node:assert/strict",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:test",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:timers/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/main/durable-runtime/db/connection.ts",
+          "kind": "import-statement",
+          "original": "../db/connection.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/db/migrate.ts",
+          "kind": "import-statement",
+          "original": "../db/migrate.ts"
+        },
+        {
+          "path": "src/main/durable-runtime/storage/namespace-holds.ts",
+          "kind": "import-statement",
+          "original": "./namespace-holds.ts"
+        }
+      ],
+      "format": "cjs"
+    }
+  },
+  "outputs": {
+    "../pg.cjs": {
+      "imports": [
+        {
+          "path": "node:assert/strict",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:test",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:timers/promises",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "pg",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:crypto",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "src/main/durable-runtime/storage/src/main/durable-runtime/storage/namespace-holds.pg.test.mts.generated.cts",
+      "inputs": {
+        "src/main/durable-runtime/storage/src/main/durable-runtime/storage/namespace-holds.pg.test.mts.generated.cts": {
+          "bytesInOutput": 17396
+        },
+        "src/main/durable-runtime/db/connection.ts": {
+          "bytesInOutput": 4849
+        },
+        "src/main/durable-runtime/db/migrate.ts": {
+          "bytesInOutput": 2685
+        },
+        "src/main/durable-runtime/storage/namespace-holds.ts": {
+          "bytesInOutput": 14048
+        },
+        "src/main/durable-runtime/db/locks.ts": {
+          "bytesInOutput": 1360
+        },
+        "src/main/durable-runtime/journal/store.ts": {
+          "bytesInOutput": 2012
+        },
+        "src/shared/durable-runtime/identity.ts": {
+          "bytesInOutput": 621
+        }
+      },
+      "bytes": 44837
+    }
+  }
+}

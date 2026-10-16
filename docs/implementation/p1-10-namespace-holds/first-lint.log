@@ -1,0 +1,25 @@
+
+  x eslint(no-control-regex): Unexpected control characters
+    ,-[src/main/durable-runtime/storage/namespace-holds.ts:45:70]
+ 44 | function text(value: string): string {
+ 45 |   if (typeof value !== "string" || !value || value.length > 512 || /[\x00-\x1f]/.test(value)) {
+    :                                                                      ^^|^ ^^|^
+    :                                                                        |    `-- 'U+001F' is a control character.
+    :                                                                        `-- 'U+0000' is a control character.
+ 46 |     deny("NAMESPACE_INPUT_INVALID");
+    `----
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  x eslint(no-control-regex): Unexpected control characters
+    ,-[src/main/durable-runtime/storage/namespace-holds.ts:55:81]
+ 54 | function tokenHash(value: string): string {
+ 55 |   if (typeof value !== "string" || value.length < 32 || value.length > 512 || /[\x00-\x1f]/.test(value)) {
+    :                                                                                 ^^|^ ^^|^
+    :                                                                                   |    `-- 'U+001F' is a control character.
+    :                                                                                   `-- 'U+0000' is a control character.
+ 56 |     deny("NAMESPACE_TOKEN_INVALID");
+    `----
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+Found 0 warnings and 2 errors.
+Finished in 431ms on 2 files with 176 rules using 1 threads.
