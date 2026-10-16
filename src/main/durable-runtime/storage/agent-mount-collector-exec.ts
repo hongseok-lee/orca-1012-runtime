@@ -18,7 +18,7 @@ export function agentMountExecUrl(config: AgentMountCollectorConfig, input: Capt
   return url
 }
 
-/** V5 close frames half-close streams; normal socket close supplies EOF for remaining streams. */
+/** V5 close frames half-close streams; closing transport does not prove a remote NFS syscall has ended. */
 export function collectAgentMountExec(open: AgentMountCollectorDependencies['openWebSocket'],
   config: AgentMountCollectorConfig, input: CapturedAgentMountInput, reviewer: string, signal: AbortSignal,
   absoluteDeadline: number): Promise<string> {
@@ -99,6 +99,7 @@ export function collectAgentMountExec(open: AgentMountCollectorDependencies['ope
         // ws forwards false to Node HTTPS; @types/ws 8.18.1 omits this supported value.
         ca, rejectUnauthorized: true, agent: false as unknown as ClientOptions['agent'], followRedirects: false,
         handshakeTimeout: Math.max(1, Math.ceil(remainingMs)), perMessageDeflate: false,
+        maxPayload: agentMountOutputLimit + 1,
         headers: { Authorization: `Bearer ${reviewer}` },
       })
       socket.on('error', failed).once('close', closed)

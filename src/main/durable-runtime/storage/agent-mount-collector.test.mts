@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { getEventListeners } from 'node:events'
 import { setTimeout as delay } from 'node:timers/promises'
+import { Script } from 'node:vm'
 import { createAgentMountCollector } from './agent-mount-collector.ts'
 import { agentMountOutputLimit, agentMountProbeSource, agentMountProbeSha256 } from './agent-mount-collector-probe.ts'
 import { deferred } from '../runtime/kubernetes-pod-auth-fixtures.mts'
@@ -23,6 +24,10 @@ function mountinfo(f: ReturnType<typeof fixture>, change: (info: string) => stri
   f.output.mountinfoBefore = info; f.output.mountinfoAfter = info
 }
 
+test('fixed embedded probe parses as JavaScript without running its filesystem operations', () => {
+  assert.doesNotThrow(() => new Script(agentMountProbeSource, { filename: 'agent-mount-probe.cjs' }))
+})
+
 test('Agent consumer mount observation preserves original bindings without issuing authority', async t => {
   for (const mode of ['RO', 'RW'] as const) {
     await t.test(`original protected ${mode} and common shared RW use exact claims and fixed probe`, async () => {
@@ -40,6 +45,7 @@ test('Agent consumer mount observation preserves original bindings without issui
       assert.deepEqual(f.opened[0].url.searchParams.getAll('command'), ['/usr/local/bin/node', '-e', agentMountProbeSource, '{"roots":["/agent","/shared"]}'])
       assert.equal(f.opened[0].url.searchParams.get('container'), 'agent')
       assert.equal(f.opened[0].options.rejectUnauthorized, true); assert.equal(f.opened[0].options.followRedirects, false)
+      assert.equal(f.opened[0].options.maxPayload, agentMountOutputLimit + 1)
       assert.equal(f.api.requests.every(r => r.options.method === 'GET'), true)
       assert.equal(JSON.stringify(result).includes(reviewerToken), false)
       assert.equal(getEventListeners(s, 'abort').length, 0); await f.assertCleanup()
