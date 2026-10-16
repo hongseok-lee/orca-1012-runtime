@@ -114,6 +114,14 @@ function capturePlan(original: unknown) {
     return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset, legacyClosedRead })
   } catch { return invalid() }
 }
+
+/** Pure strict preparation only; the digest is data, not execution authority. */
+export function prepareAgentPodPlan(original: unknown): Readonly<{ plan: UnauthorizedAgentPodPlan; planDigest: string }> {
+  const captured = capturePlan(original)
+  if (captured.legacyClosedRead) { return invalid() }
+  return Object.freeze({ plan: captured.plan, planDigest: captured.planDigest })
+}
+
 function projection(row: AgentPodPlanRow): AgentPodPlanRecord {
   try {
     const captured = capturePlan(row.plan), { plan } = captured, id = plan.identity
