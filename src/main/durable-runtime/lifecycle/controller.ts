@@ -208,7 +208,8 @@ async function recordInitialWakeExpiry(tx: DurableTransaction, request: InitialW
   const { context } = request
   const { unit, clock } = state
   let { operation } = state
-  if (operation.deadline_at === null || operation.deadline_at > clock) {
+  const deadlineAt = operation.deadline_at
+  if (deadlineAt === null || deadlineAt > clock) {
     return { disposition: 'DEADLINE_NOT_EXPIRED', operationId: operation.id }
   }
   // Only the initial WAKE with no accepted/planned/executed footprint can
@@ -253,7 +254,7 @@ async function recordInitialWakeExpiry(tx: DurableTransaction, request: InitialW
       if (blocked.rowCount !== 1) { throw new DurableDatabaseError('LIFECYCLE_STEP_STALE') }
       const event: JsonValue = { kind: 'RECONCILE_OPERATION_DEADLINE_EXPIRED', operationId: operation.id,
         runtimeUnitId: context.runtimeUnitId, state: 'FAILED', reason, phase: 'BLOCKED',
-        deadlineAt: operation.deadline_at.toISOString(), retryAt: operation.retry_at?.toISOString() ?? null,
+        deadlineAt: deadlineAt.toISOString(), retryAt: operation.retry_at?.toISOString() ?? null,
         executionEpoch: operation.execution_epoch, intentRevision: operation.intent_revision,
         operationRevision: failed.rows[0].revision, stepRevision: failed.rows[0].step_revision,
         unitRevision: blocked.rows[0].revision, terminalRecorded: true }
