@@ -265,7 +265,7 @@ await test("Namespace management execution: focused post-COMMIT adapter boundari
     [beginAckInput, 1, "BEGIN", "READY_TO_CLAIM"],
     [claimAckInput, 2, "CLAIM", "LOOKUP_REQUIRED"],
   ] as const) {
-    const beforeCallbacks = applyCalls + lookupCalls;
+    const beforeCallbacks: number = applyCalls + lookupCalls;
     const unknown = await executeNamespaceManagement(wire({ hideCommitAt, observations }), input, appliedPort);
     assert.equal(unknown.database?.database.ok, false);
     assert.equal(unknown.database?.database.settlement, "UNCONFIRMED");
