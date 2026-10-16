@@ -64,7 +64,7 @@ function fixedResource(input: NamespaceFreezePolicyInput): Policy {
 function pods(input: NamespaceFreezePolicyInput): Policy {
   return policy(input, "pods", [rule("", ["pods", "pods/ephemeralcontainers", "pods/resize"], ["CREATE", "UPDATE", "DELETE"])], [
     { name: "protected", expression: `${protectedPod("object", input)} || ${protectedPod("oldObject", input)}` },
-  ], `!variables.protected || (request.subResource == "" && (` +
+  ], `!variables.protected || ((!has(request.subResource) || request.subResource == "") && (` +
     `(request.operation == "CREATE" && ${recoveryPod(input)}) || ` +
     `(request.operation == "UPDATE" && ${metadataOnlyPodUpdate(input)}) || ` +
     `(request.operation == "DELETE" && request.userInfo.username in ${celLiteral(input.recoveryUsernames)})))`);
