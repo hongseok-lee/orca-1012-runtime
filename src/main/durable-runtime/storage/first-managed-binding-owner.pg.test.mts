@@ -23,6 +23,14 @@ if (process.env.ORCA_FIRST_MANAGED_BINDING_APPROVED !== 'root-first-verification
 }
 const pool = createDurablePool({ database, max: 4, application_name: 'first-managed-binding-owner-first' });
 type Mode = 'normal' | 'hold-unknown' | 'hold-cleanup' | 'audit-unknown' | 'audit-rollback';
+async function bounded<T>(promise: Promise<T>, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), 10000);
+  });
+  try { return await Promise.race([promise, timeout]); }
+  finally { clearTimeout(timer); }
+}
 
 function observedPool(mode: Mode, barrier?: { reached: ReturnType<typeof deferred<void>>; release: ReturnType<typeof deferred<void>> }) {
   const active = new Set<number>(), events: string[] = [];
@@ -98,6 +106,7 @@ await test('first managed owner integrates held original collection, prepared au
     (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
     (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0];
   assert.deepEqual(identity, { database, oid, system });
+  assert.deepEqual((await pool.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows, [{ dataset_name: 'orca-1012-dev-v1' }]);
   const ledger = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows;
   const migrations = await readMigrations(migrationsPath);
   assert.deepEqual(ledger.map(row => [row.version, row.checksum]), migrations.map(row => [row.version, row.checksum]));
@@ -116,18 +125,25 @@ await test('first managed owner integrates held original collection, prepared au
     } };
     const owner = createFirstManagedBindingOwner(observer.pool, f.settings, dependencies);
     const pending = owner.verifyFirstBinding(input, new AbortController().signal);
-    await barrier.reached.promise;
-    assert.equal(await held(input.pinId), 'HELD'); assert.equal((await binding(input.bindingId)).access_state, 'UNVERIFIED');
-    const prepared = await audit(input.pinId); assert.equal(prepared.length, 1);
-    assert.equal(prepared[0].next_state.qualificationRef, f.record.qualificationRef);
-    assert.equal(prepared[0].next_state.digest, f.settings.expectedProfileDigest);
-    const observedCandidate = prepared[0].next_state.observation.candidate;
-    assert.equal(observedCandidate.podUid, f.wire.configuration.podUid);
-    assert.match(observedCandidate.generation, /^[a-f0-9]{64}$/u);
-    assert.equal(observedCandidate.device, '66317'); assert.equal(observedCandidate.inode, '400');
-    assert.equal(observer.connects, 3);
-    barrier.release.resolve(undefined);
-    const result = await pending;
+    let result: Awaited<typeof pending> | undefined;
+    try {
+      await bounded(Promise.race([barrier.reached.promise, pending.then(() => {
+        throw new Error('Owner completed before the binding COMMIT barrier');
+      })]), 'Binding COMMIT barrier was not reached');
+      assert.equal(await held(input.pinId), 'HELD'); assert.equal((await binding(input.bindingId)).access_state, 'UNVERIFIED');
+      const prepared = await audit(input.pinId); assert.equal(prepared.length, 1);
+      assert.equal(prepared[0].next_state.qualificationRef, f.record.qualificationRef);
+      assert.equal(prepared[0].next_state.digest, f.settings.expectedProfileDigest);
+      const observedCandidate = prepared[0].next_state.observation.candidate;
+      assert.equal(observedCandidate.podUid, f.wire.configuration.podUid);
+      assert.match(observedCandidate.generation, /^[a-f0-9]{64}$/u);
+      assert.equal(observedCandidate.device, '66317'); assert.equal(observedCandidate.inode, '400');
+      assert.equal(observer.connects, 3);
+    } finally {
+      barrier.release.resolve(undefined);
+      result = await bounded(pending, 'Owner did not settle after the binding barrier was released');
+    }
+    assert.ok(result);
     assert.equal(result.outcome, 'VERIFIED'); assert.equal(result.pin.state, 'RELEASED'); assert.equal(result.pin.handedOff, true);
     assert.equal(result.binding?.database?.settlement, 'COMMITTED'); assert.equal(result.release?.database.commitOutcome, 'ACKNOWLEDGED');
     assert.equal(await held(input.pinId), 'RELEASED');
