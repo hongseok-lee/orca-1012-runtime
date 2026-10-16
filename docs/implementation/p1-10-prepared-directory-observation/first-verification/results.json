@@ -1,0 +1,110 @@
+{
+  "sourcePin": "30d96e2981eb8045c40e355a2b3cca3fb61e0d77",
+  "actualOrder": [
+    "type",
+    "PG",
+    "lint"
+  ],
+  "runnerPreparationError": "Reused continuation runner omitted first lint; completed type/PG were not repeated; first owned lint was subsequently run once.",
+  "type": {
+    "exit": 0,
+    "sourceInputs": 15,
+    "externalInputs": 211,
+    "mismatches": [],
+    "outside": []
+  },
+  "PG": {
+    "exit": 0,
+    "actualCallbackPid": 8277,
+    "callbackCount": 1,
+    "parentProductCallbackCount": 0,
+    "tapPass": 2,
+    "tapFail": 0,
+    "actualSourceInputs": 6,
+    "metafileInputs": 7,
+    "mismatches": [],
+    "wrapper": {
+      "sourceSha256": "c0e2efc784b0b3d09ff962ff6b71885f0fe28b92754cf67d3c9eb3beaeae6efb",
+      "originalBodySha256": "81ea3f4f97b3704e909ea2c54df75dc3aaf98563e39a928d55f6f157bfd93571",
+      "wrapperSha256": "6df2ef893a76f7cabe45e09a41a2b5c9a9841601b79fd1ddc70fe7ef6b714406",
+      "parentProductCallbackCount": 0,
+      "productCallbacks": 1,
+      "assertionsChanged": false
+    },
+    "tapSHA256": "3119423defccd88af1018d23ec716c521742cd3ca30a6e126a0dc737ea402894",
+    "bundleSHA256": "7db48722a5c6dfc5f6f182a4cdb08a82729f60d86b9a77480e3671627c5c2e5d"
+  },
+  "lint": {
+    "sourcePin": "30d96e2981eb8045c40e355a2b3cca3fb61e0d77",
+    "controlPID": 8321,
+    "pid": 8328,
+    "startedAt": "2026-10-16T13:56:45.835Z",
+    "phase": "FIRST_LINT",
+    "finished": true,
+    "heavy": 0,
+    "exit": 1,
+    "signal": null,
+    "endedAt": "2026-10-16T13:56:46.203Z",
+    "logSha256": "8806b4475083ed914edbec56ba196c46dd1f340e18a7ce9ee98461dd7f5c16ab"
+  },
+  "database": {
+    "ledgerCount": 23,
+    "ledger23Unchanged": true,
+    "originalRowsPreserved": true,
+    "originalRows": 985,
+    "afterRows": 1040,
+    "tableCount": 32,
+    "DDL": 0,
+    "schemaAppliedThisRun": false
+  },
+  "identityGuard": "Original exact isolated DB/OID/system/dataset matched; same runner backend PID before/after and same fixture Pool before/after. Exact private identity evidence retained.",
+  "cleanup": {
+    "at": "2026-10-16T13:57:43.150Z",
+    "pids": [
+      {
+        "pid": 8175,
+        "state": "Z",
+        "parent": 1,
+        "ticks": "27083314"
+      },
+      {
+        "pid": 8182,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8189,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8240,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8247,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8254,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8271,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8277,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8321,
+        "state": "ABSENT"
+      },
+      {
+        "pid": 8328,
+        "state": "ABSENT"
+      }
+    ],
+    "heavy": 0
+  },
+  "usageCreditsStreamErrorObserved": false
+}

@@ -1,0 +1,15 @@
+{
+  "originalRawTapSHA256": "3119423defccd88af1018d23ec716c521742cd3ca30a6e126a0dc737ea402894",
+  "publicSanitizedTapSHA256": "c977ac73d4c1d6b6b184a44cd811f94567a6c3db0925a72a46c09ed9e525510a",
+  "redactions": [
+    "isolated database name",
+    "database OID",
+    "system identifier"
+  ],
+  "syntheticObservationOnly": true,
+  "physicalQualification": false,
+  "bindingVerifierCalled": false,
+  "actualCollectorCalled": false,
+  "sourceAndAssertionsUnchanged": true,
+  "publicRunnerExcerpt": "Exact original control flow; private shared tools prefix generalized. Full original runner retained privately."
+}

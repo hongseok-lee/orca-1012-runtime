@@ -1,0 +1,87 @@
+{
+  "base": "4ea6fdb92e0741f66455f77bc4b6eff602bfbe82",
+  "sourcePin": "1e9b3774a44a1f2946efa372fdb43010eb5395d7",
+  "productPin": "d57d4c359ce2c2305de660db302c210d3d4192e6",
+  "phase": "FIRST_TYPE_PG_PASS_ORIGINAL_LINT_FAIL_CORRECTED_PRODUCT_LINT_PASS",
+  "sourceInputs": [
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.ts",
+      "mode": "100644",
+      "blob": "8ddde40f3168e95776d3845298765197f40612aa",
+      "sha256": "ebe9cddf44b1824de684922287f7339afbcebfab03bfdf24263a5271d67c1d45",
+      "bytes": 9876,
+      "owned": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.pg.test.mts",
+      "mode": "100644",
+      "blob": "a90f43e3cddb1b67cc0fd40ec5733be268729a95",
+      "sha256": "c0e2efc784b0b3d09ff962ff6b71885f0fe28b92754cf67d3c9eb3beaeae6efb",
+      "bytes": 16083,
+      "owned": true
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-holds.ts",
+      "mode": "100644",
+      "blob": "3fc71694d6d340551738edbab511feaef34fcd67",
+      "sha256": "ac417234877955fff87b75c3ef94e79ae42b845759cd5e2c8c12a02e72ab331a",
+      "bytes": 17784,
+      "owned": false
+    },
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "mode": "100644",
+      "blob": "181384ff0bf130ae6ad1ff64e2d9043f08d76d18",
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e",
+      "bytes": 6387,
+      "owned": false
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "mode": "100644",
+      "blob": "2fc02747102fddc0f4ad669a6484c2382f7f5822",
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4",
+      "bytes": 2071,
+      "owned": false
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "mode": "100644",
+      "blob": "1b0de8b5c6961f60315f714071e6cf627233dc43",
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb",
+      "bytes": 6238,
+      "owned": false
+    },
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "mode": "100644",
+      "blob": "11c0f09a0bfc3950a29465efa6d504b9e3207a75",
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154",
+      "bytes": 3357,
+      "owned": false
+    }
+  ],
+  "inputBasis": "Direct value import closure checked from source; no esbuild execution/metafile or type closure qualification yet.",
+  "runtimeExternal": [
+    "pg"
+  ],
+  "schemaApply": false,
+  "callbackCount": 1,
+  "lintRuns": 2,
+  "typeRuns": 1,
+  "remoteRuns": "One first type/PG job plus first owned lint and corrected product-only lint; no successful type/PG repetition.",
+  "collectorRuns": 0,
+  "physicalQualification": false,
+  "newUsageCreditsStreamErrorObserved": false,
+  "firstVerifiedPin": "30d96e2981eb8045c40e355a2b3cca3fb61e0d77",
+  "correctedProductPin": "2d0f4a1066a09bb92717510604b33bf5754cd9e4",
+  "correctedProductSHA256": "4b4bca132b052a4182068d911d5969932ca22bea0909e3f8f964416b73e1056e",
+  "sourceInputsBasis": "Original source-stage input list retained; actual first type/runtime inputs are in first-verification/actual-source-inputs.json. Corrected product changed only the accepted equivalent control-character predicate.",
+  "actualOrder": [
+    "type",
+    "PG",
+    "first owned lint FAIL",
+    "equivalent source correction",
+    "changed product lint PASS"
+  ]
+}
