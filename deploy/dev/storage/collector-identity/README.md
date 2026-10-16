@@ -6,7 +6,7 @@
 
 원 `managed-leaf-collector.ts`의 Pod GET, 정확 backing PVC GET, PV GET, helper ConfigMap GET과 `managed-leaf-collector-exec.ts`의 WebSocket GET handshake만 허용합니다. Collector Role에 list/watch/create/patch/delete·Secret·RBAC·TokenRequest 권한은 없습니다. PV GET은 별도 ClusterRole의 정확 이름 하나로 제한합니다. 기존 inventory Role을 수정하지 않고, 별도 issuer Role은 `orca-storage-collector` 이름의 `serviceaccounts/token` CREATE만 허용합니다.
 
-`manifests.mjs`의 네 VAP/Binding 쌍은 SA 변경, 해당 SA를 쓰는 Pod, collector TokenRequest, 장기 token Secret을 각각 제한합니다. Old/new 객체와 optional 필드를 구분하며 `Fail`/`Deny` 및 보호된 namespace 이름 label을 사용합니다. TokenRequest는 정확 backend username·SA UID·600초·빈 audiences·unbound 요청만 허용합니다. 이 source의 출력은 실제 admission 검증을 대신하지 않습니다.
+`manifests.mjs`의 네 VAP/Binding 쌍은 SA 변경, 해당 SA를 쓰는 Pod, collector TokenRequest, 장기 token Secret을 각각 제한합니다. Old/new 객체와 optional 필드를 구분하며 `Fail`/`Deny` 및 보호된 namespace 이름 label을 사용합니다. TokenRequest는 정확 backend username·SA UID·600초·unbound 요청만 허용합니다. Backend wire는 audiences=[]를 유지하고 API server 기본값을 사용합니다. TokenREST가 audiences를 채운 뒤 admission하므로 CEL은 빈 배열이나 audience 집합을 제한하지 않습니다. 이 source의 출력은 실제 admission 검증을 대신하지 않습니다.
 
 `createCollectorIdentityInstaller(input, operatorApi)`는 기존 관리 API adapter의 `request` receiver를 capture합니다. Adapter가 기존 auth/TLS와 `timeoutMs`/AbortSignal 종료를 담당하며 HTTPS transport를 복제하거나 제품 runtime을 수정하지 않습니다. 현재 실행 entry나 CLI는 없습니다. `execute`·`rootExecutionApproved` 및 Root의 정확 수락 source pin이 일치해야 설치 메서드에 진입할 수 있습니다.
 
@@ -16,6 +16,6 @@ Pod 연계 확인과 Secret 조회는 `PartialObjectMetadataList` Accept를 요�
 
 NFS guard의 `specSHA256`은 `specDigest`의 정렬된 JSON SHA-256입니다. 기존 G03 출력과 실제 적용/readback이 확정되기 전에는 설치 input을 활성화하지 않습니다. Credential guard readback의 spec 일치·typeChecking/status는 설치 준비 gate이며 실제 거절 또는 허용 exec 합격이 아닙니다.
 
-CREATE timeout/응답 유실은 정확 원 이름 GET 한 번으로 회수하고 중단합니다. POST 재호출·기존 객체 덮기·자동 삭제/rollback은 없습니다. 남은 생성 UID ledger와 실패를 Root에 제출하며 관리자의 정책 제거는 별도 break-glass입니다. 이 caller는 다른 주체가 부여한 전체 effective RBAC를 감사하지 않습니다.
+CREATE timeout/응답 유실·HTTP 5xx·identity를 확인할 수 없는 201은 정확 원 이름 GET 최대 한 번으로 회수하고 중단합니다. 취소된 signal 뒤에는 새 GET을 강제하지 않습니다. 회수 UID는 관측이며 소유권으로 채택하지 않습니다. POST 재호출·기존 객체 덮기·자동 삭제/rollback은 없습니다. 원 CREATE intent와 불명 효과·회수 결과 및 생성 UID ledger를 Root에 제출하며 관리자의 정책 제거는 별도 break-glass입니다. 이 caller는 다른 주체가 부여한 전체 effective RBAC를 감사하지 않습니다.
 
 `identity.test.mjs`는 domain caller의 작은 fixture source입니다. 현재 lint/type/value·CEL·권한·remote 검증은 실행하지 않았습니다. 기존 collector/HTTPS 성공 suite, 설치, 이미지 빌드, 새 화면은 반복하지 않습니다.

@@ -75,24 +75,42 @@ export function createCollectorIdentityInstaller(rawInput, operatorApi) {
       const response = await api('GET', objectPath(object))
       if (response.statusCode !== 404) fail(response.statusCode === 200 ? 'OWNED_NAME_COLLISION' : 'PREFLIGHT_HTTP_FAILED')
     }
+    async function recallUncertainCreate(object, intent, originalCode) {
+      intent.effect = 'UNKNOWN'
+      intent.failureCode = originalCode
+      // Cancellation never starts a fresh GET. A recalled UID is an observation, never accepted ownership.
+      if (signal.aborted) {
+        state.observations.push({ phase: 'UNCERTAIN_CREATE_RECALL_SKIPPED_ABORTED', kind: object.kind, name: object.metadata.name })
+        fail('ABORTED')
+      }
+      try {
+        const recovered = await api('GET', objectPath(object))
+        const observation = { phase: 'UNCERTAIN_CREATE_RECALL', kind: object.kind,
+          name: object.metadata.name, statusCode: recovered.statusCode, ownershipAccepted: false }
+        if (recovered.statusCode === 200) {
+          try { Object.assign(observation, identity(recovered.body, object), { identityConfirmed: true }) }
+          catch { observation.identityConfirmed = false }
+        }
+        state.observations.push(observation)
+      } catch { state.observations.push({ phase: 'UNCERTAIN_CREATE_RECALL_FAILED', kind: object.kind, name: object.metadata.name }) }
+      fail('CREATE_UNCERTAIN_NO_RETRY')
+    }
     async function create(object) {
       const intent = { kind: object.kind, name: object.metadata.name,
         ...(object.metadata.namespace ? { namespace } : {}), uid: null, attemptedAt: new Date().toISOString() }
       state.createIntents.push(intent)
       let response
-      try { response = await api('POST', collection(object), object) } catch {
-        // Exactly one result recall; never POST again, delete, or silently adopt an uncertain CREATE.
-        try {
-          const recovered = await api('GET', objectPath(object))
-          state.observations.push({ phase: 'UNCERTAIN_CREATE_RECALL', kind: object.kind,
-            name: object.metadata.name, statusCode: recovered.statusCode,
-            ...(recovered.statusCode === 200 ? identity(recovered.body, object) : {}) })
-        } catch { state.observations.push({ phase: 'UNCERTAIN_CREATE_RECALL_FAILED', kind: object.kind, name: object.metadata.name }) }
-        fail('CREATE_UNCERTAIN_NO_RETRY')
+      try { response = await api('POST', collection(object), object) } catch (error) {
+        return recallUncertainCreate(object, intent, error.code)
       }
       intent.statusCode = response.statusCode
+      if (response.statusCode >= 500 && response.statusCode <= 599) {
+        return recallUncertainCreate(object, intent, 'CREATE_HTTP5XX_UNKNOWN')
+      }
       if (response.statusCode !== 201) fail('CREATE_HTTP_FAILED')
-      const captured = identity(response.body, object)
+      let captured
+      try { captured = identity(response.body, object) }
+      catch { return recallUncertainCreate(object, intent, 'RESOURCE_IDENTITY_INVALID') }
       intent.uid = captured.uid
       state.created.push(captured)
       if (object.kind === 'ServiceAccount' && (response.body.automountServiceAccountToken !== false ||

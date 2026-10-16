@@ -105,8 +105,7 @@ export function credentialGuards(collectorUid) {
       `has(object.metadata.name) && object.metadata.name == ${literal(collectorName)} && ` +
       `has(object.metadata.namespace) && object.metadata.namespace == ${literal(namespace)} && ` +
       `has(object.metadata.uid) && object.metadata.uid == ${literal(collectorUid)} && ` +
-      `has(object.spec.expirationSeconds) && object.spec.expirationSeconds == 600 && ` +
-      `(!has(object.spec.audiences) || size(object.spec.audiences) == 0) && !has(object.spec.boundObjectRef))`),
+      `has(object.spec.expirationSeconds) && object.spec.expirationSeconds == 600 && !has(object.spec.boundObjectRef))`),
     ...guard('secret', [rule(['secrets'], ['CREATE', 'UPDATE'])],
       `!(${longToken('object')} || ${longToken('oldObject')})`),
   ])

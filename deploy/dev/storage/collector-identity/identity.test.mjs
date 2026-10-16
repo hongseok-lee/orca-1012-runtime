@@ -82,6 +82,41 @@ test('uncertain bootstrap is recalled once without POST retry or raw error discl
   assert.equal(result.observations[0].phase, 'UNCERTAIN_CREATE_RECALL')
   assert.equal(JSON.stringify(result).includes('private-fixture-error'), false)
 })
+test('HTTP 5xx bootstrap result is recalled once and never adopted or POSTed again', async () => {
+  const input = fixtureInput(), fake = fakeOperator(input, (options, response) => {
+    if (options.method === 'POST') {
+      response.statusCode = 503
+      response.body = { kind: 'Status', code: 503 }
+    }
+  })
+  const result = await createCollectorIdentityInstaller(input, fake.api).install(approval, new AbortController().signal)
+  const postIndex = fake.calls.findIndex(call => call.method === 'POST')
+  assert.equal(fake.calls.filter(call => call.method === 'POST').length, 1)
+  assert.equal(fake.calls.slice(postIndex + 1).filter(call => call.method === 'GET').length, 1)
+  assert.equal(result.errorCode, 'CREATE_UNCERTAIN_NO_RETRY')
+  assert.equal(result.createIntents[0].statusCode, 503)
+  assert.equal(result.createIntents[0].effect, 'UNKNOWN')
+  assert.equal(result.created.length, 0)
+  assert.equal(result.observations[0].identityConfirmed, true)
+  assert.equal(result.observations[0].ownershipAccepted, false)
+})
+test('201 without verifiable identity is recalled once without accepting the recalled UID', async () => {
+  const input = fixtureInput(), fake = fakeOperator(input, (options, response) => {
+    if (options.method === 'POST') response.body = { ...response.body,
+      metadata: { ...response.body.metadata, uid: undefined } }
+  })
+  const result = await createCollectorIdentityInstaller(input, fake.api).install(approval, new AbortController().signal)
+  const postIndex = fake.calls.findIndex(call => call.method === 'POST')
+  assert.equal(fake.calls.filter(call => call.method === 'POST').length, 1)
+  assert.equal(fake.calls.slice(postIndex + 1).filter(call => call.method === 'GET').length, 1)
+  assert.equal(result.errorCode, 'CREATE_UNCERTAIN_NO_RETRY')
+  assert.equal(result.createIntents[0].statusCode, 201)
+  assert.equal(result.createIntents[0].failureCode, 'RESOURCE_IDENTITY_INVALID')
+  assert.equal(result.createIntents[0].uid, null)
+  assert.equal(result.created.length, 0)
+  assert.equal(result.observations[0].identityConfirmed, true)
+  assert.equal(result.observations[0].ownershipAccepted, false)
+})
 test('metadata negotiation failure closes before granting RBAC and never returns Secret content', async () => {
   const input = fixtureInput(), fake = fakeOperator(input, (options, response) => {
     if (options.path.endsWith('/secrets')) response.body = { apiVersion: 'v1', kind: 'SecretList',
