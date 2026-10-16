@@ -35,7 +35,7 @@ type UnitRow = { revision: string; active_attempt_id: string | null; dataset_nam
   execution_epoch: string; intent_revision: string; desired_mode: string }
 const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIAL_AGENT_${suffix}`) }
 function text(value: string): string {
-  if (typeof value !== 'string' || !value || /[\x00-\x1f\x7f]/u.test(value)) { return deny('INPUT') }
+  if (typeof value !== 'string' || !value || Array.from(value).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) { return deny('INPUT') }
   return value
 }
 function idFor(value: string): string {
