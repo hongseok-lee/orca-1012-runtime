@@ -105,11 +105,13 @@ export async function recordInitialAgentResourceProfile(tx: DurableTransaction, 
     return deny('NOT_INITIAL')
   }
   const eventId = eventIdentity(id.unitId, revision)
+  const temporary = plan.pod.spec.volumes.find(volume => volume.name === 'temporary')
+  if (!temporary || !('emptyDir' in temporary)) { return deny('PLAN') }
   const event = { kind, unitId: id.unitId, operationId: id.operationId, profileRevision: revision, policyRevision,
     planDigest, podSpecSHA256: plan.podSpecSHA256, shapeDigest, unitRevision: unit.revision,
     ephemeralStorageRequest: plan.pod.spec.containers[0].resources.requests['ephemeral-storage'],
     ephemeralStorageLimit: plan.pod.spec.containers[0].resources.limits['ephemeral-storage'],
-    temporarySizeLimit: plan.pod.spec.volumes.at(-1)?.emptyDir?.sizeLimit,
+    temporarySizeLimit: temporary.emptyDir.sizeLimit,
     admissionObserved: false, executionAuthorized: false }
   const body = canonicalInput(event)
   const profiles = (await query<{ revision: string; policy_revision: string; container_resources: JsonValue;
