@@ -191,7 +191,7 @@ test('fixed stored Agent Pod transport observes original identity and never retr
   })
   await t.test('one total timeout or caller abort destroys pending POST and prevents a retry', async () => {
     for (const timed of [false, true]) {
-      const h = harness([{ status: 404 }, { stallBody: true }]), signal = new AbortController()
+      const h = harness([{ status: 404 }, { status: 201, stallBody: true }]), signal = new AbortController()
       const promise = createAgentPodCreateTransport({ ...config(), timeoutMs: timed ? 15 : 1000 }, h.transport)
         .observeOrCreate(input(), signal.signal)
       await h.reached[1]?.promise
