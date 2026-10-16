@@ -120,7 +120,7 @@ export function createInitialAgentPodExecution(deployment: Readonly<{
         bindings: Object.freeze(supplied.bindings.map(b => Object.freeze({ bindingId: b.bindingId,
           expectedRevision: b.expectedRevision, storageEpoch: b.storageEpoch }))) })
       const references = Object.freeze(original.directoryEvidenceReferences.map(reference => {
-        if (typeof reference !== 'string' || !reference || /[\u0000-\u001f\u007f]/u.test(reference)) {
+        if (typeof reference !== 'string' || !reference || Array.from(reference).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
           throw new DurableDatabaseError('INITIAL_AGENT_EXECUTION_REFERENCE')
         }
         return reference
