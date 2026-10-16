@@ -24,7 +24,7 @@ test('actual startup inventory commits observation history without adopting targ
   const observer = createDurablePool({ max: 2, connectionTimeoutMillis: 5000, statement_timeout: 5000 })
   const directory = mkdtempSync(path.join(tmpdir(), 'orca-inventory-persistence-'))
   const sockets = new Set<Socket>(), owners: OrcadControllerOwner[] = []
-  const unit = randomUUID(), operation = randomUUID(), attempt = randomUUID(), uid = `fixture-pod-${randomUUID()}`
+  const unit = randomUUID(), operation = randomUUID(), foreignOperation = randomUUID(), attempt = randomUUID(), uid = `fixture-pod-${randomUUID()}`
   const namespace = 'fixture-controller-observation', name = `orca-unit-${operation}`
   const credential = 'fixture-controller-observation-only'
   let listObjects: unknown[] = [], watchEvents: unknown[] = [], watchRequests = 0
@@ -32,7 +32,7 @@ test('actual startup inventory commits observation history without adopting targ
   let held = gate()
   const inventoryClients = new WeakSet<object>()
   const pool = observedPool(actual, async (sql, values, client, execute) => {
-    if (sql.includes('SELECT o.id FROM durable_runtime.runtime_units')) {
+    if (sql.includes('SELECT o.id,u.dataset_name,o.controller_scope')) {
       inventoryClients.add(client)
       const result = await execute()
       if (fault === 'STALE') {
@@ -102,6 +102,10 @@ test('actual startup inventory commits observation history without adopting targ
       await tx.query(`INSERT INTO durable_runtime.operations(id,runtime_unit_id,kind,intent_revision,controller_scope,
         controller_term,step,expected_pod_uid,execution_epoch,external_resource_name)
         VALUES($1,$2,'WAKE',0,$3,0,'ENSURE_ATTEMPT',$4,0,$5)`, [operation, unit, CONTROLLER_SCOPE, uid, name])
+      await tx.query("INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at) VALUES('fixture-foreign-scope','unowned',0,'epoch')")
+      await tx.query(`INSERT INTO durable_runtime.operations(id,runtime_unit_id,kind,intent_revision,controller_scope,
+        controller_term,step,expected_pod_uid,execution_epoch,external_resource_name,result)
+        VALUES($1,$2,'WAKE',0,'fixture-foreign-scope',0,'ENSURE_ATTEMPT',$3,0,$4,'{}')`, [foreignOperation, unit, uid, name])
       await tx.query(`INSERT INTO durable_runtime.execution_grants(id,runtime_unit_id,attempt_id,execution_epoch,state)
         VALUES($1,$2,$3,0,'ACTIVE')`, [randomUUID(), unit, attempt])
     })
@@ -130,6 +134,7 @@ test('actual startup inventory commits observation history without adopting targ
         'orca.dev/execution-epoch': '0', 'orca.dev/spec-hash': 'b'.repeat(64) } })
       listObjects = [pod('opaque-initial-rv'), pod('wrong-name-rv', { name: 'another-name' }), pod('wrong-uid-rv', { uid: 'another-uid' }),
         pod('wrong-epoch-rv', { annotations: { 'orca.dev/operation-id': operation, 'orca.dev/execution-epoch': '1', 'orca.dev/spec-hash': 'a'.repeat(64) } }),
+        pod('foreign-scope-rv', { annotations: { 'orca.dev/operation-id': foreignOperation, 'orca.dev/execution-epoch': '0', 'orca.dev/spec-hash': 'a'.repeat(64) } }),
         pod('unknown-rv', { labels: { 'orca.dev/role': 'runtime-agent', 'orca.dev/dataset': CONTROLLER_DATASET, 'orca.dev/runtime-unit': randomUUID() } })]
       watchEvents = [{ type: 'ADDED', object: pod('opaque-initial-rv') }, { type: 'ADDED', object: changedSpec },
         { type: 'MODIFIED', object: pod('opaque-modified-rv') }, { type: 'DELETED', object: pod('opaque-deleted-rv') },
@@ -145,7 +150,7 @@ test('actual startup inventory commits observation history without adopting targ
       assert.deepEqual(await physicalRows(), before); await owner.stop()
     })
     await t.test('BOOKMARK alone writes no inventory audit/outbox', async () => {
-      listObjects = []; const owner = await start(); await completed(owner)
+      listObjects = []; watchEvents = [{ type: 'BOOKMARK', object: { apiVersion: 'v1', kind: 'Pod', metadata: { resourceVersion: 'bookmark-only-rv' } } }]; const owner = await start(); await completed(owner)
       assert.equal((await audits()).length, 3); assert.equal(await outboxCount(), '3')
       assert.equal(owner.controllerSnapshot().latestObservation?.persistence, 'CURSOR_ONLY'); await owner.stop()
     })

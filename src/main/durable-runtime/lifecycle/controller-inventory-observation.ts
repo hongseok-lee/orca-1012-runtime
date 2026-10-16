@@ -55,11 +55,14 @@ export async function persistControllerInventoryObservation(pool: Pool,
   const context = Object.freeze({ controller, runtimeUnitId: observed.unitId, operationId: observed.operationId })
   return runDurableTransaction(pool, async tx => {
     check()
-    const known = await tx.query(`SELECT o.id FROM durable_runtime.runtime_units u
-      JOIN durable_runtime.operations o ON o.runtime_unit_id=u.id WHERE u.id=$1 AND o.id=$2`,
+    const known = await tx.query<{ dataset_name: string; controller_scope: string; runtime_unit_id: string }>(
+      `SELECT o.id,u.dataset_name,o.controller_scope,o.runtime_unit_id FROM durable_runtime.runtime_units u
+      CROSS JOIN durable_runtime.operations o WHERE u.id=$1 AND o.id=$2`,
       [observed.unitId, observed.operationId])
     check()
     if (known.rowCount !== 1) { return disposition('TARGET_UNBOUND') }
+    if (known.rows[0].dataset_name !== datasetName || known.rows[0].controller_scope !== controller.scope ||
+        known.rows[0].runtime_unit_id !== observed.unitId) { return disposition('CONFLICT') }
     // Unit -> operation -> controller lease, then a fresh DB clock check after any lock wait.
     const authority = await LockedGatewayAuthority.acquire(tx, context)
     check()
