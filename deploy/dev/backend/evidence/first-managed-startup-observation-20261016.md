@@ -22,7 +22,7 @@ PR150은 2026-10-16 19:46:04 UTC에 병합됐다. 이 문서의 Git base는 `f31
 
 20:02:11.413 UTC readiness에서 watch PID는 13570/startTicks `29280792`, runtime PID는 13614/startTicks `29282910`/parent 13570, generation은 1이었다. Readiness 시점 watch의 helper parent는 후속 현재 부모 guard로 사용하지 않는다.
 
-기존 인증의 encrypted `status.get` 1회는 20:02:11.531–20:02:12.607 UTC에 실행됐다. API helper 13879/child 13886은 exit 0이며 `ok=true`였다. 응답의 runtime PID 13614, artifact hash, version이 위 readiness와 일치했다. Readiness만 회수한 시점의 API 미검증 상태와 그 뒤 정상 API 결과를 구분한다. 새 pairing·설치·이미지 build·Expo 재시작·Pod 교체는 없었다.
+기존 인증의 encrypted `status.get` 1회는 20:02:11.531–20:02:12.607 UTC에 실행됐다. API helper 13879/child 13886은 exit 0이며 `ok=true`였다. 응답의 runtime PID 13614, artifact hash, version이 위 readiness와 일치했다. Readiness만 회수한 시점의 API 미검증 상태와 그 뒤 정상 API 결과를 구분한다. 새 pairing·설치·이미지 build·Expo 재시작·Pod 교체는 없었다. 기존 Catalog·Ops bytes와 controller의 다른 의미값은 보존했다.
 
 ## 별도의 DB snapshot과 Agent Pod GET
 
@@ -75,3 +75,5 @@ Root가 수락한 후속 기한 snapshot은 PID 14217로 20:18:35.712–20:18:36
 이 증거는 한 번의 개발 runtime 반영·기존 encrypted API와 별도의 DB·Pod·실패 화면 관측에 한정된다. 실제 Agent 생성·admission·mount, physical pin issuer, provider/writer, oldwriter 차단, Active/Standby HA, native iPhone 및 detail 직접 조작 성공은 완료되지 않았다. Source/value 검증 통과와 이 실제 가동 결과를 구분한다.
 
 원 source·인증·원자료는 보존했으며 이 문서 준비에서 제품·배포 설정 변경, 원격 실행, 시험·빌드·재촬영은 0회다. 공개 문서에는 private 경로·endpoint·token·환경·CA·전체 로그를 포함하지 않았다.
+
+이번 증거 준비 turn에서 새 usage limit·credits·stream 중단 원오류는 관측되지 않았다. Viewer의 기능 실패와 이 상태를 구분한다.
