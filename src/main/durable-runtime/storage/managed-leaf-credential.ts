@@ -21,7 +21,9 @@ export type ManagedLeafCredentialConfig = Readonly<{
   apiOrigin: string; ca: Uint8Array; namespace: string; serviceAccountName: string; serviceAccountUid: string; timeoutMs: number
   readIssuerBearer(this: ManagedLeafCredentialConfig, signal: AbortSignal): string | Promise<string>
 }>
-type CapturedConfig = Readonly<ManagedLeafCredentialConfig>
+type CapturedConfig = Readonly<Omit<ManagedLeafCredentialConfig, 'readIssuerBearer'> & {
+  readIssuerBearer: (signal: AbortSignal) => string | Promise<string>
+}>
 
 function fail(code: ManagedLeafCredentialCode): never { throw new ManagedLeafCredentialError(code) }
 function expiration(value: unknown): number {
