@@ -3,6 +3,7 @@ import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { DurableDatabaseError, runDurableTransaction } from '../db/connection.ts'
 import type { DurableTransaction } from '../db/connection.ts'
+import type { JsonValue } from '../db/atomic.ts'
 import { appendAudit } from '../journal/store.ts'
 import { canonicalInput, inputDigest } from '../runtime/gateway/input.ts'
 import type { GatewayContext } from '../runtime/gateway/types.ts'
@@ -23,7 +24,7 @@ type Accepted = ReturnType<typeof captureFirstManagedBindingProfile>
 type Scope = PreparedDirectoryObservationInput['scope']
 type AuditRow = { id: string; kind: string; actor_id: string; producer_id: string; producer_seq: string;
   session_id: string | null; runtime_unit_id: string | null; operation_id: string | null; attempt_id: string | null;
-  next_state: unknown; evidence_refs: unknown }
+  next_state: JsonValue; evidence_refs: JsonValue }
 type Association = Readonly<{ sessionId: string; bindingId: string }>
 export type InitialDirectoryRevalidationInput = Readonly<{
   accepted: Accepted; hold: NamespaceHoldInput; sessionId: string; actorId: string;
@@ -41,10 +42,10 @@ export type InitialDirectoryRevalidationGuard = InitialDirectoryRevalidationReco
 const kind = 'INITIAL_AGENT_DIRECTORY_REVALIDATED'
 const deny = (code: string): never => { throw new DurableDatabaseError(`INITIAL_DIRECTORY_${code}`) }
 const hash = (bytes: string): string => createHash('sha256').update(bytes).digest('hex')
-function isRecord(value: unknown): value is Record<string, unknown> {
+function isRecord(value: JsonValue): value is { [key: string]: JsonValue } {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
-function object(value: unknown): Record<string, unknown> {
+function object(value: JsonValue): { [key: string]: JsonValue } {
   if (!isRecord(value)) { return deny('AUDIT_SHAPE') }
   return value
 }
@@ -54,7 +55,7 @@ function text(value: unknown): string {
   }
   return value
 }
-function captureScope(value: unknown): Scope {
+function captureScope(value: JsonValue): Scope {
   const s = object(value)
   // Preserve the original owner's exact property order for its JSON ref hash.
   return Object.freeze({ sessionId: logicalId('session', text(s.sessionId)), unitId: logicalId('runtime-unit', text(s.unitId)),
@@ -121,7 +122,7 @@ async function unused(tx: DurableTransaction, accepted: Accepted, sessionId: str
   const associations = (await tx.query<{ session_id: string; storage_binding_id: string }>(`SELECT session_id,storage_binding_id
     FROM durable_runtime.runtime_member_storage_bindings WHERE runtime_unit_id=$1 ORDER BY session_id,storage_binding_id`,
   [locked.context.runtimeUnitId])).rows.map(row => Object.freeze({ sessionId: row.session_id, bindingId: row.storage_binding_id }))
-  if (canonicalInput(associations) !== canonicalInput(locked.sessions.map(id => ({ sessionId: id, bindingId: expected.bindingId }))) ||
+  if (canonicalInput([...associations]) !== canonicalInput(locked.sessions.map(id => ({ sessionId: id, bindingId: expected.bindingId }))) ||
       !associations.some(a => a.sessionId === sessionId && a.bindingId === expected.bindingId)) { return deny('ASSOCIATION_SET') }
   return Object.freeze(associations)
 }
@@ -155,7 +156,7 @@ function auditState(accepted: Accepted, pinId: string, tokenHash: string, origin
     datasetName: p.profile.datasetName, backendId: p.profile.backendId, exportId: p.profile.exportId,
     generation: p.profile.generation, leafId: p.leafId, qualificationRef: p.qualificationRef,
     originalAuditId: origin.id, originalIdentityRef: origin.evidenceRef, originalCandidate: origin.candidate,
-    pinId, ownerTokenHash: tokenHash, observation, scope, associations })
+    pinId, ownerTokenHash: tokenHash, observation, scope, associations: [...associations] })
   return Object.freeze({ ...content, auditRef: `initial-agent-directory-revalidated:sha256:${inputDigest(content)}` })
 }
 
