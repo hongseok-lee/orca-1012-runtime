@@ -13,9 +13,11 @@ import { recordAgentPodPlan, readAgentPodPlan } from './agent-pod-plan-records.t
 const database = process.env.ORCA_AGENT_POD_PLANS_DATABASE
 const oid = process.env.ORCA_AGENT_POD_PLANS_DATABASE_OID
 const migrationsPath = process.env.ORCA_AGENT_POD_PLANS_MIGRATIONS
+const schemaState = process.env.ORCA_AGENT_POD_PLANS_SCHEMA_STATE
 if (process.env.ORCA_AGENT_POD_PLANS_APPROVED !== 'root-first-verification' ||
   !database || !/^orca_[a-z0-9_]+$/.test(database) || database === 'orca_dev' ||
-  database !== process.env.PGDATABASE || !oid || !/^[1-9][0-9]*$/.test(oid) || !migrationsPath) {
+  database !== process.env.PGDATABASE || !oid || !/^[1-9][0-9]*$/.test(oid) || !migrationsPath ||
+  (schemaState !== 'initial22' && schemaState !== 'verified23')) {
   throw new Error('Root-approved existing isolated database/OID and migration directory required')
 }
 const pool = createDurablePool({ database, max: 3, application_name: 'agent-pod-plan-records-first' })
@@ -62,15 +64,16 @@ async function identity() {
 const protectedTables = ['runtime_units','operations','attempts','execution_grants','runtime_members',
   'storage_bindings','storage_write_grants','storage_mounts','messages','input_components',
   'rpc_receipts','session_events','session_context_records','runtime_audit_events','outbox_events'] as const
+const protectedTableNames = schemaState === 'verified23' ? [...protectedTables, 'agent_pod_plans'] : protectedTables
 async function rowHashes() {
   const rows: Record<string, string[]> = {}
-  for (const table of protectedTables) {
+  for (const table of protectedTableNames) {
     rows[table] = (await pool.query<{ body: string }>(`SELECT to_jsonb(t)::text AS body FROM durable_runtime.${table} t`)).rows.map(row => hash(row.body)).sort()
   }
   return rows
 }
 function retained(before: Record<string, string[]>, after: Record<string, string[]>) {
-  for (const table of protectedTables) {
+  for (const table of protectedTableNames) {
     const counts = new Map<string, number>()
     for (const item of after[table]) { counts.set(item, (counts.get(item) ?? 0) + 1) }
     for (const item of before[table]) { assert.ok((counts.get(item) ?? 0) > 0, `Original ${table} row missing`); counts.set(item, (counts.get(item) ?? 0) - 1) }
@@ -80,7 +83,7 @@ async function history(operation: string) {
   return (await pool.query(`SELECT
     (SELECT count(*)::text FROM durable_runtime.agent_pod_plans WHERE operation_id=$1) AS plans,
     (SELECT count(*)::text FROM durable_runtime.runtime_audit_events WHERE operation_id=$1 AND kind='AGENT_POD_PLAN_RECORDED') AS audit,
-    (SELECT count(*)::text FROM durable_runtime.outbox_events WHERE event->>'operationId'=$1) AS outbox`, [operation])).rows[0]
+    (SELECT count(*)::text FROM durable_runtime.outbox_events WHERE event->>'operationId'=$1::text) AS outbox`, [operation])).rows[0]
 }
 
 await test('Agent Pod plan records: first023 immutable plan, exact replay and authority boundaries', async t => {
@@ -89,11 +92,14 @@ await test('Agent Pod plan records: first023 immutable plan, exact replay and au
   const migrations = await readMigrations(migrationsPath)
   assert.equal(migrations.length, 23); assert.equal(migrations[22].version, '023-agent-pod-plans.sql')
   const ledgerBefore = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
-  assert.equal(ledgerBefore.length, 22)
-  assert.deepEqual(ledgerBefore.map(row => [row.version, row.checksum]), migrations.slice(0, 22).map(row => [row.version, row.checksum]))
-  assert.equal((await pool.query("SELECT to_regclass('durable_runtime.agent_pod_plans') IS NULL AS absent")).rows[0].absent, true)
-  const originals = await rowHashes(), applied = await applyMigrations(pool, migrations)
-  assert.equal(applied.length, 23); assert.deepEqual(applied.slice(0, 22), ledgerBefore)
+  assert.equal(ledgerBefore.length, schemaState === 'initial22' ? 22 : 23)
+  assert.deepEqual(ledgerBefore.map(row => [row.version, row.checksum]), migrations.slice(0, ledgerBefore.length).map(row => [row.version, row.checksum]))
+  assert.equal((await pool.query("SELECT to_regclass('durable_runtime.agent_pod_plans') IS NULL AS absent")).rows[0].absent, schemaState === 'initial22')
+  const originals = await rowHashes()
+  // Root selects verified23 only after the original 023 COMMIT is preserved.
+  // This branch checks the full ledger above and executes no migration SQL.
+  const applied = schemaState === 'initial22' ? await applyMigrations(pool, migrations) : ledgerBefore
+  assert.equal(applied.length, 23); assert.deepEqual(applied.slice(0, ledgerBefore.length), ledgerBefore)
   const seedIdentity = await identity(), a = request(), b = request(), c = request()
   await withDurableTransaction(pool, async tx => {
     await tx.query(`INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at)
@@ -184,6 +190,6 @@ await test('Agent Pod plan records: first023 immutable plan, exact replay and au
   for (const key of ['plan','pod','command','env','mountExpectations']) { assert.equal(Object.hasOwn(audit,key), false) }
   retained(originals, await rowHashes())
   assert.deepEqual((await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows, applied)
-  t.diagnostic(JSON.stringify({ firstIdentity,seedIdentity,finalIdentity:await identity(),ledgerBefore:22,ledgerAfter:23,
+  t.diagnostic(JSON.stringify({ firstIdentity,seedIdentity,finalIdentity:await identity(),schemaState,ledgerBefore:ledgerBefore.length,ledgerAfter:23,
     productCallbacks:1,originalRowsPreserved:true,syntheticControllerIdentity:true,actualAttemptOrPodCreated:false,physicalPermissionIssued:false }))
 })
