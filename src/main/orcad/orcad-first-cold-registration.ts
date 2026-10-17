@@ -12,7 +12,10 @@ import type { CatalogRegistration } from '../durable-runtime/catalog/register.ts
  * from a request/PG principal, and installs no public registration RPC. */
 export async function registerOrcadFirstEmptyFolder(pool: Pool, originalAuthority: CatalogAuthority,
   original: Readonly<{ sourceRoot: string; registration: CatalogRegistration }>) {
-  const authority = captureCatalogAuthority(originalAuthority), input = captureCatalogParsed(original)
+  const authority = captureCatalogAuthority(originalAuthority)
+  // Original caller-typed DTO, detached/frozen by the incumbent JSON capture.
+  // This readonly-to-DTO connection is not an authority/evidence assertion.
+  const input = captureCatalogParsed(original) as typeof original
   const root = input.sourceRoot, repo = input.registration.repo
   const deny = (): never => { throw new Error('FIRST_COLD_FOLDER_REGISTRATION') }
   if (!authority.repositoryIds.includes(repo.id) || repo.kind !== 'folder' || repo.projectGroupId != null ||
