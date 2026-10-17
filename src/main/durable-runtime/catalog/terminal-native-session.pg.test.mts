@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { createDurablePool, withDurableTransaction, type DurableTransaction } from '../db/connection.ts'
+import { createDurablePool, withDurableTransaction, DurableDatabaseError, type DurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -102,7 +102,7 @@ test('same-RR original READY identity, atomic head/hint, rollback and authorizat
       VALUES('catalog',$1) ON CONFLICT(scope) DO NOTHING`, [owner])
     const before = await snapshot(), heads = before.heads.filter(row => row.scope === 'catalog' || row.scope === `workspace:${workspace}`)
     assert.equal(identity(await workspaceTabs()), undefined)
-    await assert.rejects(withDurableTransaction(pool, async tx => { await ready(tx, 0); throw new Error('SYNTHETIC_ROLLBACK') }), /SYNTHETIC_ROLLBACK/)
+    await assert.rejects(withDurableTransaction(pool, async tx => { await ready(tx, 0); throw new DurableDatabaseError('SYNTHETIC_ROLLBACK') }), /SYNTHETIC_ROLLBACK/)
     assert.deepEqual((await snapshot()).heads.filter(row => heads.some(head => row.scope === head.scope)), heads)
     assert.equal(identity(await workspaceTabs()), undefined)
     await withDurableTransaction(pool, tx => ready(tx, 1, '0', false))
