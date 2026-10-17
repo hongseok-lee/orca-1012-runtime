@@ -17,6 +17,10 @@ import type { TakeoverCommand, TakeoverOperation, TakeoverQueueHead, TakeoverUni
 import type { ControllerLeaseSession } from './session.ts'
 
 type StepPlan = Pick<ReconcileStepRequest, 'mutationKey' | 'step' | 'executorId' | 'input'>
+export type ControllerInputRecoveryResult =
+  | Readonly<{ status: 'HANDLED'; disposition: 'UNKNOWN_RECORDED' | 'ALREADY_UNKNOWN' }>
+  | Readonly<{ status: 'NOT_APPLICABLE' }>
+  | Readonly<{ status: 'UNCERTAIN'; settlement: string; commitOutcome: string; cleanupFailed: boolean }>
 export type AbortableInventoryTransport = {
   list(signal: AbortSignal): ReturnType<ListWatchTransport['list']>
   watch(resourceVersion: string, signal: AbortSignal): ReturnType<ListWatchTransport['watch']>
@@ -42,6 +46,9 @@ export type ControllerPassRequest = {
    * Existing two-argument callbacks remain assignable to this internal surface. */
   readonly executeCommitted?: (claim: CommandClaim, signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<void>
   readonly lookupOriginal?: (command: TakeoverCommand, signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<void>
+  /** Logical uncertainty only, before lifecycle selection; never a native claim. */
+  readonly recoverInput?: (command: TakeoverCommand, operation: TakeoverOperation,
+    signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<ControllerInputRecoveryResult>
   readonly inventory?: { readonly transport: AbortableInventoryTransport; readonly sink: ControllerInventorySink }
 }
 export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVENTORY';
@@ -69,7 +76,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   const request = Object.freeze({ controller: Object.freeze({ ...caller.controller }),
     maximumWork: caller.maximumWork, externalBudgetMs: caller.externalBudgetMs, signal: caller.signal,
     planStep: caller.planStep, eventWork: caller.eventWork, executeCommitted: caller.executeCommitted,
-    lookupOriginal: caller.lookupOriginal, inventory: snapshotInventory(caller.inventory) })
+    lookupOriginal: caller.lookupOriginal, recoverInput: caller.recoverInput, inventory: snapshotInventory(caller.inventory) })
   positiveInteger(request.maximumWork)
   positiveInteger(request.externalBudgetMs)
   counter('controller-term', request.controller.term)
@@ -134,6 +141,29 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
     const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
+    const recoveredUnits = new Set<RuntimeUnitId>()
+    if (request.recoverInput) {
+      for (const command of snapshot.commands) {
+        if (!room()) { break }
+        const operation = snapshot.operations.find(item => item.id === command.operation_id)
+        if (!operation || operation.kind !== 'INPUT_DELIVERY' || command.command_name !== 'dispatchInput' ||
+            !units.has(command.runtime_unit_id)) { continue }
+        await gate()
+        const context = Object.freeze({ controller: request.controller,
+          runtimeUnitId: command.runtime_unit_id, operationId: command.operation_id })
+        const result = await request.recoverInput(command, operation, local.signal, context)
+        if (result.status === 'UNCERTAIN') {
+          session.stop()
+          return { status: 'STOPPED', reason: 'UNCERTAIN_COMMIT', items }
+        }
+        await gate()
+        if (result.status === 'HANDLED') {
+          work++
+          recoveredUnits.add(command.runtime_unit_id)
+          items.push({ kind: 'RECONCILE', identity: command.id, disposition: result.disposition })
+        } else if (result.status !== 'NOT_APPLICABLE') { throw new DurableDatabaseError('CONTROLLER_INPUT_RECOVERY_RESULT') }
+      }
+    }
     const expiredInitialWakes = new Map<RuntimeUnitId, TakeoverOperation>()
     // Scheduling uses the actual PG snapshot flag, never a JS deadline clock.
     // The expiry transaction alone revalidates lease/CAS/clock/no-effect guards.
@@ -149,16 +179,17 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     }
     // Without a planner, keep the non-expired due/gate/work skip optimization.
     // Only actual expired initial WAKE candidates enter the expiry-only path.
-    if (request.planStep || expiredInitialWakes.size) {
+    if (request.planStep || request.recoverInput || expiredInitialWakes.size) {
       // listDueReconciliations retains its original PG deadline predicate/order.
       const due = request.planStep ? await listDueReconciliations(pool) : []
       // Unresolved original commands also need lookup, even if their normal
       // Unit projection does not currently appear in the due list.
-      const candidates: RuntimeUnitId[] = request.planStep
+      const candidates: RuntimeUnitId[] = request.planStep || request.recoverInput
         ? [...new Set([...due, ...snapshot.commands.map(c => c.runtime_unit_id), ...expiredInitialWakes.keys()])]
         : [...expiredInitialWakes.keys()]
       for (const unitId of candidates) {
         if (!room()) {break}
+        if (recoveredUnits.has(unitId)) { continue }
         const unit = units.get(unitId)
         if (!unit) {continue} // Never use a global due result to adopt another scope.
         await gate()
