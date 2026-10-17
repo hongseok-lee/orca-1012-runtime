@@ -100,7 +100,7 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
           plan.pod.metadata.labels['orca.dev/dataset'] !== accepted.record.profile.datasetName ||
           !input.originalDirectoryReference || input.originalDirectory.canonicalDirectory !==
             `/${accepted.record.profile.datasetName}/${protectedMounts[0].leafId}`) { return deny('SCOPE') }
-      hold = Object.freeze({ ...accepted.record.profile, digest: accepted.digest,
+      hold = Object.freeze({ ...accepted.record.profile, digest: accepted.namespaceDigest,
         pinId: logicalId('storage-namespace-pin', input.pinId), ownerToken: input.ownerToken, actorId: input.actorId })
       try {
         holdAttempted = true
