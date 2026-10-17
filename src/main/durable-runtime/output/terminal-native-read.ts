@@ -65,7 +65,7 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
     if (knownHead === headKey) { return {kind: 'UNCHANGED' as const, headKey} }
     const rows = await tx.query<{event_id: string; source_key: string; seq: string; body: unknown; committed_at: string}>(
       `SELECT event_id,source_key,seq::text,body,committed_at::text FROM durable_runtime.session_events
-       WHERE session_id=$1 AND journal_epoch=$2 AND seq<=$3 ORDER BY seq`, [sessionId, epoch, head])
+       WHERE session_id=$1 AND journal_epoch=$2 AND seq<=$3 ORDER BY durable_runtime.session_events.seq`, [sessionId, epoch, head])
     let last = 0
     const events: CommittedJournalEvent[] = rows.rows.map(event => {
       const seq = journalSafeCounter(event.seq, true)

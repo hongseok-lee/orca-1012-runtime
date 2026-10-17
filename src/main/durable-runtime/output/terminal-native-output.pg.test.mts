@@ -167,8 +167,10 @@ test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and close
 test('managed pagination separates the real eviction summary from its triggering item', {concurrency: false}, async () => {
   assert.equal(process.env.PGDATABASE, 'orca_ops_resources_20261017')
   const pool = createDurablePool({max: 2, application_name: 'terminal-output-pagination-first', statement_timeout: 15000})
-  const owner = `terminal-output-pagination:${randomUUID()}`, agent = logicalId('agent', randomUUID())
-  const session = logicalId('session', randomUUID()), workspace = logicalId('workspace', randomUUID()), tab = logicalId('tab', randomUUID())
+  const resume: {owner: string; agent_id: string; session_id: string; workspace: string; tab_id: string} | null =
+    process.env.ORCA_TERMINAL_PAGINATION_RESUME ? JSON.parse(readFileSync(process.env.ORCA_TERMINAL_PAGINATION_RESUME, 'utf8')) : null
+  const owner = resume?.owner ?? `terminal-output-pagination:${randomUUID()}`, agent = logicalId('agent', resume?.agent_id ?? randomUUID())
+  const session = logicalId('session', resume?.session_id ?? randomUUID()), workspace = logicalId('workspace', resume?.workspace ?? randomUUID()), tab = logicalId('tab', resume?.tab_id ?? randomUUID())
   const threadId = `synthetic-thread:${owner}`, turnId = 'synthetic-pagination-turn'
   const config = captureDurableCatalogReadConfig({pool, datasetName: 'orca-1012-dev-v1', hostId: LOCAL_EXECUTION_HOST_ID,
     readHostIdentity: () => LOCAL_EXECUTION_HOST_ID, repositoryIds: [], projectGroupIds: [owner], workspacePublicIds: []})
@@ -194,7 +196,7 @@ test('managed pagination separates the real eviction summary from its triggering
     const identity = (await pool.query(`SELECT (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
       (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
     assert.equal(identity.oid, '98744'); assert.equal(identity.system, '7696101282789175327')
-    await withDurableTransaction(pool, async tx => {
+    if (!resume) { await withDurableTransaction(pool, async tx => {
       await tx.query("INSERT INTO durable_runtime.agents(id,provider,dataset_name) VALUES($1,'codex','orca-1012-dev-v1')", [agent])
       await tx.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state,dataset_name) VALUES($1,$2,$2,'READY','orca-1012-dev-v1')", [workspace, owner])
       await tx.query("INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')", [session, agent, workspace])
@@ -215,20 +217,29 @@ test('managed pagination separates the real eviction summary from its triggering
     for (let i = 0; i <= MAX_CODEX_ACTIVE_ITEMS; i++) {
       await commit('item/started', {threadId, turnId, item: {id: `item-${i}`, type: 'agentMessage', text: `synthetic original α ${i}`}})
     }
+    } else {
+      const stored = await pool.query<{event_id: string; source_key: string; seq: string; body: unknown; committed_at: Date}>(
+        'SELECT e.event_id,e.source_key,e.seq::text,e.body,e.committed_at FROM durable_runtime.session_events e WHERE e.session_id=$1 ORDER BY e.seq', [session])
+      rows.push(...stored.rows.map(row => ({eventId: row.event_id, sourceKey: row.source_key,
+        sequence: Number(row.seq), body: freezeJournalJson(row.body), committedAt: row.committed_at.toISOString()})))
+      assert.equal(rows.length, MAX_CODEX_ACTIVE_ITEMS + 3)
+    }
     // The 257th actual item is appended, then trimActiveState evicts/suppresses
     // one old item. The adapter's same-notification flush emits its FIRST summary.
     const projected = projectTerminalNativeHistory(session, rows, []).messages
-    assert.equal(projected.length, MAX_CODEX_ACTIVE_ITEMS + 2)
+    if (!resume) { assert.equal(projected.length, MAX_CODEX_ACTIVE_ITEMS + 2) }
     // The original live translator already excludes userMessage notifications;
     // selecting its exact persisted delivery identity must preserve every cursor.
     const echoSelected = projectTerminalNativeHistory(session, rows, [], new Set([codexTurnUserItemId(threadId, turnId)]))
-    assert.deepEqual(echoSelected.messages.map(item => [item.message.id, item.offset]),
-      projected.map(item => [item.message.id, item.offset]))
+    if (!resume) { assert.deepEqual(echoSelected.messages.map(item => [item.message.id, item.offset]),
+      projected.map(item => [item.message.id, item.offset])) }
     const tail = projected.slice(-2), recordStart = rows.slice(0, -1).reduce((position, row) =>
       position + Buffer.byteLength(canonicalInputJson(row.body as JsonValue), 'utf8') + 1, 0)
-    assert.equal(tail[0].message.role, 'assistant'); assert.equal(tail[1].message.role, 'system')
-    assert.deepEqual(tail[0].message.blocks, [{type: 'text', text: 'synthetic original α 256'}])
-    assert.deepEqual(tail.map(item => item.offset), [recordStart, recordStart + 1])
+    if (!resume) {
+      assert.equal(tail[0].message.role, 'assistant'); assert.equal(tail[1].message.role, 'system')
+      assert.deepEqual(tail[0].message.blocks, [{type: 'text', text: 'synthetic original α 256'}])
+      assert.deepEqual(tail.map(item => item.offset), [recordStart, recordStart + 1])
+    }
     const newest = await page(), older = await page(newest.beforeOffset), previous = await page(older.beforeOffset)
     assert.equal(newest.messages.length, 1); assert.equal(older.messages.length, 1); assert.equal(previous.messages.length, 1)
     assert.equal(newest.hasMore, true); assert.equal(older.hasMore, true)
@@ -250,6 +261,7 @@ test('managed pagination separates the real eviction summary from its triggering
     console.log(JSON.stringify({phase: 'TERMINAL_PAGINATION_PG_COMPLETE', owner, sessionId: session,
       actualReader: true, activeItemBoundary: MAX_CODEX_ACTIVE_ITEMS + 1, sameNotificationFirstItems: 2,
       strictLimit: 1, originalPositionsStable: true, providerTranscriptSeekAddress: false,
+      seedRepeated: false, resumedOriginalRows: resume !== null,
       syntheticProvider: true, actualInference: false, schemaApplied: 0}))
   } finally { await pool.end() }
 })
