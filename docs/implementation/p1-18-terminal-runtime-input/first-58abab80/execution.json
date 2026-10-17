@@ -1,0 +1,20 @@
+{
+  "pid": 22789,
+  "uid": 1000,
+  "startedAt": "2026-10-17T04:27:09.565Z",
+  "phase": "PG_COMPLETE",
+  "sourcePin": "58abab80e2d15ab57bc55e0aa856d7ceea69234b",
+  "identity": {
+    "name": "orca_public_clipboard_20261014",
+    "oid": "80991",
+    "system": "7696101282789175327",
+    "pid": 573443
+  },
+  "childPid": 22805,
+  "callbackStartedAt": "2026-10-17T04:27:10.062Z",
+  "pgExit": 1,
+  "originalRowsPreserved": true,
+  "exit": 1,
+  "endedAt": "2026-10-17T04:27:13.348Z",
+  "callbackPid": 22811
+}
