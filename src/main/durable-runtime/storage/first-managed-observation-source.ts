@@ -1,5 +1,6 @@
 import { createManagedLeafCredentialReader, type ManagedLeafCredentialConfig } from './managed-leaf-credential.ts';
 import { createManagedLeafCollector } from './managed-leaf-collector.ts';
+import { createManagedLeafPinHolder } from './managed-leaf-pin.ts';
 import { captureManagedLeafConfig } from './managed-leaf-collector-config.ts';
 import type { ManagedLeafCollectorConfig, ManagedLeafCollectorDependencies } from './managed-leaf-collector-types.ts';
 import { type captureFirstManagedBindingProfile, requireProfileCollectorIdentity } from './first-managed-binding-owner-profile.ts';
@@ -25,7 +26,8 @@ export function createFirstManagedObservationSource(original: FirstManagedBindin
     readReviewerBearer: reader.readReviewerBearer });
   requireProfileCollectorIdentity(profile, collectorConfig, credential);
   const collector = createManagedLeafCollector(collectorConfig, dependencies);
-  return Object.freeze({ accepted, collect: collector.collect.bind(collector) });
+  const holder = createManagedLeafPinHolder(collectorConfig, dependencies);
+  return Object.freeze({ accepted, collect: collector.collect.bind(collector), acquireHeld: holder.acquire.bind(holder) });
 }
 
 export { requireFirstManagedObservation } from './first-managed-observation-identity.ts';

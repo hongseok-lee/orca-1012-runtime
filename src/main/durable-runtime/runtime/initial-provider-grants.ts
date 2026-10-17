@@ -13,6 +13,7 @@ import { assertOriginal, commandById } from './gateway/store.ts'
 import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
+import { recordExecutionTarget } from './execution-target-records.ts'
 
 const deny = (code: string): never => { throw new DurableDatabaseError(code) }
 
@@ -35,6 +36,11 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
   const mount = authority.mount.bind(authority), mountValid = authority.mountPinValid.bind(authority)
   const expectedRevision = counter('row:runtime-unit', input.expectedUnitRevision)
   function pins(): void {
+    const record = lease.executionRecord
+    if (!record || record.runtimeUnitId !== input.context.runtimeUnitId || record.attemptId !== target.attemptId ||
+        record.podUid !== target.podUid || record.incarnation !== target.incarnation || record.executionEpoch !== target.executionEpoch ||
+        record.nodeUid !== target.nodeUid || record.computeIdentityRef !== target.computeIdentityRef ||
+        record.numericInstanceId !== target.numericInstanceId) { deny('INITIAL_PROVIDER_EXECUTION_RECORD') }
     if (execution(target.attemptId, target.podUid, target.incarnation, target.executionEpoch) !== target || !executionValid(target) ||
         mount(mounted.evidence.evidenceRef) !== mounted.evidence || !mountValid(mounted.evidence) ||
         mounted.evidence.target !== target || mounted.evidence.mode !== 'RW' || mounted.evidence.actualReadOnly ||
@@ -107,6 +113,7 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
     await write(`UPDATE durable_runtime.execution_grants SET state='ACTIVE',revision=revision+1 WHERE attempt_id=$4
       AND runtime_unit_id=$5 AND execution_epoch=$6 AND state='RESERVED' AND ${currentAuthoritySql} RETURNING id`,
     [target.attemptId, input.context.runtimeUnitId, target.executionEpoch])
+    await recordExecutionTarget(tx, input.context, lease.executionRecord)
     const store = new StorageStore(authority)
     const result = await store.observeMount(tx, { sessionId: input.sessionId, unitId: input.context.runtimeUnitId,
       expectedUnitRevision: expectedRevision, actorId: input.context.controller.owner, bindingId: mounted.bindingId,

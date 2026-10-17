@@ -10,6 +10,8 @@ import type { CodexAppServerConnection } from '../../codex/codex-app-server-conn
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import { agentMountProbeSource } from '../storage/agent-mount-collector-probe.ts'
+import { createAgentCodexPreparation } from './agent-codex-preparation.ts'
+import type { CodexNativeArtifact } from './agent-codex-preparation.ts'
 
 type Launch = Parameters<CodexProtocolDependencies['open']>[0]
 /** Installed by trusted deployment/bootstrap composition, not decoded from a
@@ -17,6 +19,8 @@ type Launch = Parameters<CodexProtocolDependencies['open']>[0]
 export type AgentCodexControlPolicy = Readonly<{
   protectedRoot: string
   launch: Launch
+  nativeArtifact: CodexNativeArtifact
+  codexAuth: string
 }>
 
 /** Runs INSIDE the Agent Pod. It holds the actual protected root directory open
@@ -36,12 +40,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const root = policy.protectedRoot
   if (root !== '/agent' || policy.launch.cwd !== `${root}/checkout` ||
       policy.launch.env.HOME !== `${root}/home` || policy.launch.env.CODEX_HOME !== `${root}/home/.codex` ||
-      !policy.launch.command.startsWith('/') || policy.launch.args.at(-1) !== 'app-server') {
+      policy.launch.command !== '/agent/home/.orca-native/codex' || policy.launch.args.at(-1) !== 'app-server') {
     throw new Error('AGENT_CODEX_DEPLOYMENT_POLICY')
   }
   const fd = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW)
   const stat = fstatSync(fd)
   if (!stat.isDirectory()) { closeSync(fd); throw new Error('AGENT_CODEX_PROTECTED_ROOT') }
+  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth)
   const seen = new Set<string>()
   let resolveClosed!: () => void
   const closed = new Promise<void>(resolve => { resolveClosed = resolve })
@@ -57,7 +62,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   function response(id: string, value: unknown): void { send({ id, controlId, result: value }) }
   function failure(id: string, code: string): void { send({ id, controlId, error: { code } }) }
   function releaseRoot(): void {
-    closeSync(fd); clearInterval(retained); reader.close(); phase = 'STOPPED'; resolveClosed()
+    preparation.close(); closeSync(fd); clearInterval(retained); reader.close(); phase = 'STOPPED'; resolveClosed()
   }
   output.on('error', () => { uncertain = true; phase = 'UNCONFIRMED' })
   reader.on('close', () => {
@@ -98,6 +103,19 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         response(id, { stopped: true, controlId }); releaseRoot(); return
       }
       if (uncertain) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
+      if (request.method === 'PREPARE_COLD' || request.method === 'NATIVE_CHUNK' || request.method === 'NATIVE_FINISH') {
+        if (coldUsed || !['CLOSED_GATE', 'PREPARING_COLD'].includes(phase)) { failure(id, 'AGENT_COLD_PREPARATION_GATE'); return }
+        try {
+          if (request.method === 'PREPARE_COLD') { preparation.begin(); phase = 'PREPARING_COLD' }
+          else if (request.method === 'NATIVE_CHUNK') {
+            const params = request.params
+            if (!params || typeof params !== 'object') { throw new Error() }
+            preparation.append(Reflect.get(params, 'offset'), Reflect.get(params, 'bytes'))
+          } else { preparation.finish(); phase = 'CLOSED_GATE' }
+          response(id, { prepared: preparation.ready() })
+        } catch { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_COLD_PREPARATION_FAILED') }
+        return
+      }
       if (request.method === 'MOUNT_PROBE') {
         if (phase !== 'CLOSED_GATE' || coldUsed) { failure(id, 'AGENT_MOUNT_PROBE_GATE'); return }
         // Reuse the original fixed read-only probe within this authenticated
@@ -108,7 +126,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         response(id, { output: probe.stdout }); return
       }
       if (request.method === 'COLD') {
-        if (coldUsed || phase !== 'CLOSED_GATE' || !isDeepStrictEqual(request.launch, policy.launch)) {
+        if (coldUsed || phase !== 'CLOSED_GATE' || !preparation.ready() || !isDeepStrictEqual(request.launch, policy.launch)) {
           failure(id, 'AGENT_COLD_POLICY'); return
         }
         coldUsed = true; phase = 'OPENING'

@@ -1,5 +1,6 @@
 import { TextDecoder, isDeepStrictEqual } from 'node:util'
 import { createHash } from 'node:crypto'
+import { constants, openSync, fstatSync, readSync, closeSync } from 'node:fs'
 import WebSocket from 'ws'
 import type { ClientOptions } from 'ws'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../codex/codex-app-server-connection-types.ts'
@@ -33,6 +34,7 @@ export type AgentCodexTransportConfiguration = Readonly<{
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
   bootstrapSha256: string
   bootstrapBytes: Uint8Array
+  nativeArtifactFile: string
   expected: KubernetesPodAuthExpected
   policy: AgentCodexControlPolicy
   podAuthenticator: ReturnType<typeof createKubernetesPodAuthenticator>
@@ -65,7 +67,8 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   const artifact = Buffer.from(original.bootstrapBytes)
   const config = immutableSnapshot({ apiOrigin: original.apiOrigin,
     namespace: original.namespace, container: original.container, timeoutMs: original.timeoutMs,
-    bootstrapSha256: original.bootstrapSha256, expected: original.expected, policy: original.policy })
+    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile,
+    expected: original.expected, policy: original.policy })
   const reviewer = original.readReviewerBearer.bind(original)
   const authenticate = original.podAuthenticator.authenticatePod.bind(original.podAuthenticator)
   let origin: URL
@@ -173,6 +176,20 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
               transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
                 if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, config.policy.launch)) { throw fail() }
                 openedNative = true; handlers = { ...supplied }
+                // This opener is invoked by the original actual-COMMIT permit.
+                // Keep native code out of /tmp and stream into the granted HOME.
+                const fd = openSync(config.nativeArtifactFile, constants.O_RDONLY | constants.O_NOFOLLOW)
+                try {
+                  const stat = fstatSync(fd)
+                  if (!stat.isFile() || stat.size !== config.policy.nativeArtifact.byteLength) { throw fail() }
+                  await request('PREPARE_COLD')
+                  const bytes = Buffer.alloc(256 * 1024)
+                  let offset = 0, count: number
+                  while ((count = readSync(fd, bytes, 0, bytes.length, null)) > 0) {
+                    await request('NATIVE_CHUNK', { offset, bytes: bytes.subarray(0, count).toString('base64') }); offset += count
+                  }
+                  await request('NATIVE_FINISH')
+                } finally { closeSync(fd) }
                 const ack = await request('COLD')
                 const pid = ack && typeof ack === 'object' ? Reflect.get(ack, 'nativePid') : null
                 if (!Number.isSafeInteger(pid) || pid < 1) { lost = true; throw fail() }

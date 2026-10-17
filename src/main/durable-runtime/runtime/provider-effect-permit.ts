@@ -10,6 +10,7 @@ import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import { LockedGatewayAuthority } from './gateway/authority.ts'
 import { commandById, assertOriginal } from './gateway/store.ts'
 import type { GatewayContext } from './gateway/types.ts'
+import type { ExecutionTargetObservation } from './execution-target-records.ts'
 
 /** The physical issuer transfers an ALREADY held lifetime, not a snapshot or
  * an assertion that a mount is ready. No issuer or grant activation is supplied
@@ -17,6 +18,7 @@ import type { GatewayContext } from './gateway/types.ts'
 export type ProviderProtectionLease = Readonly<{
   authority: StorageEvidenceAuthority
   target: ExecutionTarget
+  executionRecord: ExecutionTargetObservation
   mounts: readonly Readonly<{ bindingId: StorageBindingId; clientRoot: string; evidence: VerifiedMountEvidence }>[]
   release(): void | Promise<void>
 }>
