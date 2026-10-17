@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomUUID } from 'node:crypto'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { createDurablePool, withDurableTransaction } from '../db/connection.ts'
@@ -26,11 +26,14 @@ import type { GatewayContext } from '../runtime/gateway/types.ts'
 test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and closed history', {concurrency: false}, async () => {
   assert.equal(process.env.PGDATABASE, 'orca_ops_resources_20261017')
   const pool = createDurablePool({max: 4, application_name: 'terminal-output-owned-first', statement_timeout: 15000})
-  const id = randomUUID(), owner = `terminal-output:${id}`, agent = logicalId('agent', randomUUID())
-  const session = logicalId('session', randomUUID()), unit = logicalId('runtime-unit', randomUUID())
-  const workspace = logicalId('workspace', randomUUID()), attempt = logicalId('attempt', randomUUID())
-  const tab = logicalId('tab', randomUUID()), storage = randomUUID(), operation = logicalId('operation', randomUUID())
-  const pod = `synthetic-pod:${id}`, incarnation = `synthetic-incarnation:${id}`, producerId = logicalId('producer', randomUUID())
+  const resume: null | {id: string; agent: string; session: string; unit: string; workspace: string;
+    attempt: string; tab: string; storage: string; producerId: string} = process.env.ORCA_TERMINAL_OUTPUT_RESUME
+    ? JSON.parse(readFileSync(process.env.ORCA_TERMINAL_OUTPUT_RESUME, 'utf8')) : null
+  const id = resume?.id ?? randomUUID(), owner = `terminal-output:${id}`, agent = logicalId('agent', resume?.agent ?? randomUUID())
+  const session = logicalId('session', resume?.session ?? randomUUID()), unit = logicalId('runtime-unit', resume?.unit ?? randomUUID())
+  const workspace = logicalId('workspace', resume?.workspace ?? randomUUID()), attempt = logicalId('attempt', resume?.attempt ?? randomUUID())
+  const tab = logicalId('tab', resume?.tab ?? randomUUID()), storage = resume?.storage ?? randomUUID(), operation = logicalId('operation', randomUUID())
+  const pod = `synthetic-pod:${id}`, incarnation = `synthetic-incarnation:${id}`, producerId = logicalId('producer', resume?.producerId ?? randomUUID())
   const authority = {scope: owner, owner, term: counter('controller-term', '1')}
   const binding = {sessionId: session, tabId: tab, terminalHandle: owner, providerBindingRevision: '1',
     runtimeUnitId: unit, attemptId: attempt, podUid: pod, executionEpoch: '1', connectionInstanceId: owner,
@@ -52,7 +55,7 @@ test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and close
     const identity = (await pool.query(`SELECT (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
       (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
     assert.equal(identity.oid, '98744'); assert.equal(identity.system, '7696101282789175327')
-    await withDurableTransaction(pool, async tx => {
+    if (!resume) { await withDurableTransaction(pool, async tx => {
       await tx.query(`INSERT INTO durable_runtime.agents(id,provider,dataset_name) VALUES($1,'codex','orca-1012-dev-v1')`, [agent])
       await tx.query(`INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state,dataset_name)
         VALUES($1,$2,$2,'READY','orca-1012-dev-v1')`, [workspace, owner])
@@ -84,7 +87,7 @@ test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and close
         nextState: {kind: 'INITIAL_PROVIDER_READY', attemptId: attempt, podUid: pod, executionEpoch: '1',
           providerBindingRevision: '1', connectionInstanceId: owner, providerRef: {provider: 'codex', nativeSessionRef: binding.providerRef.nativeSessionRef}},
         occurredAt: new Date(), receivedAt: new Date(), producerId, producerSeq: counter('sequence:producer', '1'), evidenceRefs: []})
-    })
+    }) }
     await registerEventProducer(pool, producer)
     const raw = notification('1', 'synthetic 原 payload α'), eventId = logicalId('event', randomUUID())
     const queued = {eventId, sequence: counter('sequence:producer', '1'), payload: terminalCodexPayload(binding, raw), targetSessionIds: [session]}

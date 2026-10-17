@@ -6,6 +6,7 @@ import type { JsonValue } from '../db/atomic.ts'
 import type { EventHandler } from '../events/types.ts'
 import type { CodexNativeNotification } from '../providers/codex/protocol.ts'
 import type { ReadyProviderBinding } from '../providers/shared/contracts.ts'
+import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 
 export type TerminalCodexEvent = Readonly<{
   kind: 'TERMINAL_CODEX_NOTIFICATION'
@@ -20,9 +21,9 @@ export function terminalCodexPayload(binding: ReadyProviderBinding, notification
   if (binding.providerRef.provider !== 'codex' || binding.connectionInstanceId !== notification.connectionId) {
     throw new DurableDatabaseError('TERMINAL_OUTPUT_CONNECTION')
   }
-  return captureCatalogJson({ kind: 'TERMINAL_CODEX_NOTIFICATION', sessionId: binding.sessionId,
+  return immutableSnapshot(captureCatalogJson({ kind: 'TERMINAL_CODEX_NOTIFICATION', sessionId: binding.sessionId,
     tabId: binding.tabId, terminalHandle: binding.terminalHandle, providerBindingRevision: binding.providerBindingRevision,
-    nativeSessionRef: binding.providerRef.nativeSessionRef, notification })
+    nativeSessionRef: binding.providerRef.nativeSessionRef, notification }))
 }
 export function parseTerminalCodexEvent(value: unknown): TerminalCodexEvent {
   const data = captureCatalogJson(value)
