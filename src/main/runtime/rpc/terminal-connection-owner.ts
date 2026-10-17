@@ -8,11 +8,17 @@ export type TerminalInputConnection = Readonly<{
   assertCurrent: () => void
   assertPreviousInvalidated: (connectionIncarnation: string, pairedDeviceId: string, fingerprint: string) => void
   reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null) => TerminalLogicalFloorGrant
+  runOrderedInput: <T>(handle: string, requestKey: string, operation: (resolveOnly: boolean) => Promise<T>) => Promise<T>
 }>
 export type TerminalLogicalTarget = Readonly<{handle: string; sessionId: string; mode: 'AGENT_CHAT_COMPAT'}>
 export type TerminalLogicalFloorGrant = Readonly<{assertCurrent: () => void; commit: () => void; rollbackConfirmed: () => void}>
 type Connection = { pairedDeviceId: string; fingerprint: string | null; invalidated: boolean }
 type LogicalOwner = {target: TerminalLogicalTarget; connection: string; device: string; fingerprint: string; committed: boolean}
+type InputLane = {tail: Promise<void>; uncertainKey: string | null}
+class TerminalInputOrderError extends Error {
+  readonly code: string
+  constructor(code: string) { super(code); this.code = code }
+}
 
 /** Absence is unknown. Tombstones are created only by an actual owner hook;
  * a fresh server incarnation can never claim that an old socket terminated. */
@@ -20,6 +26,7 @@ export class TerminalConnectionOwner {
   private readonly incarnation = randomUUID()
   private readonly connections = new Map<string, Connection>()
   private readonly logicalFloors = new Map<string, LogicalOwner>()
+  private readonly inputLanes = new Map<string, InputLane>()
   register(connectionId: string, pairedDeviceId: string): void {
     if (this.connections.has(connectionId)) { throw new Error('TERMINAL_CONNECTION_ID_REUSED') }
     this.connections.set(connectionId, { pairedDeviceId, fingerprint: null, invalidated: false })
@@ -49,6 +56,36 @@ export class TerminalConnectionOwner {
     }
     return Object.freeze({ connectionIncarnation, pairedDeviceId, authenticatedCallerFingerprint: fingerprint, assertCurrent,
       assertPreviousInvalidated,
+      runOrderedInput: <T>(handle: string, requestKey: string, operation: (resolveOnly: boolean) => Promise<T>): Promise<T> => {
+        assertCurrent()
+        if (!handle || !requestKey) { throw new TerminalInputOrderError('TERMINAL_ORDER_IDENTITY_REQUIRED') }
+        // Enqueue synchronously, before the adapter's first database await. A
+        // reconnect of this same owner shares the lane; unrelated handles do not.
+        const key = JSON.stringify([handle, pairedDeviceId, fingerprint])
+        let lane = this.inputLanes.get(key)
+        if (!lane) { lane = {tail: Promise.resolve(), uncertainKey: null}; this.inputLanes.set(key, lane) }
+        const originalLane = lane
+        const result = originalLane.tail.then(async () => {
+          assertCurrent()
+          if (originalLane.uncertainKey !== null && originalLane.uncertainKey !== requestKey) {
+            throw new TerminalInputOrderError('TERMINAL_PRIOR_COMMIT_UNCERTAIN')
+          }
+          const resolveOnly = originalLane.uncertainKey === requestKey
+          try {
+            const value = await operation(resolveOnly)
+            if (resolveOnly) { originalLane.uncertainKey = null }
+            return value
+          } catch (error) {
+            const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
+            if (code === 'TERMINAL_COMMIT_UNCERTAIN_RESOLVE_SAME_KEY' || code === 'TERMINAL_FLOOR_COMMIT_UNCERTAIN') {
+              originalLane.uncertainKey = requestKey
+            }
+            throw error
+          }
+        })
+        originalLane.tail = result.then(() => undefined, () => undefined)
+        return result
+      },
       reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null): TerminalLogicalFloorGrant => {
         assertCurrent()
         if (!target.handle || !target.sessionId || target.mode !== 'AGENT_CHAT_COMPAT') { throw new Error('TERMINAL_LOGICAL_TARGET_REQUIRED') }
