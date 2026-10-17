@@ -20,9 +20,11 @@ import { readTerminalDraftInTransaction } from '../terminal/draft-repository.ts'
 import type { TerminalDraftBinding } from '../terminal/types.ts'
 import { TerminalDraftStoreError, type ManagedTerminalIngressRequest, type TerminalFloorPin } from '../terminal/durable-contracts.ts'
 import { assertManagedCatalogTarget } from '../terminal/catalog-target.ts'
+import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts'
 
-/** Existing unary schema only. This never calls a provider or creates a PTY. */
-export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) {
+/** Existing unary schema only. The optional internal sink observes confirmed
+ * new intake; provider work never delays or changes this original ACK. */
+export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, onCommitted?: TerminalInputCommittedSink) {
   const owner = config.pool, connect = owner.connect.bind(owner), query = owner.query.bind(owner)
   const pool = new Proxy(owner, {get(target, key) {
     if (key === 'connect') { return connect }
@@ -163,7 +165,22 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
       const pinned = acquired.value
       assertCurrent()
       if (!pinned.floor) { throw new TerminalDraftStoreError('TERMINAL_FLOOR_UNAVAILABLE') }
-      return committedWire(await applyManagedTerminalIngress(pool, request(pinned.floor, pinned.draftRevision)))
+      const submitted = request(pinned.floor, pinned.draftRevision)
+      const outcome = await applyManagedTerminalIngress(pool, submitted)
+      const result = committedWire(outcome)
+      if (onCommitted && outcome.status === 'COMMITTED' && outcome.receipt.response &&
+          typeof outcome.receipt.response === 'object' && !Array.isArray(outcome.receipt.response) &&
+          outcome.receipt.response.kind === 'SUBMITTED') {
+        try {
+          onCommitted(Object.freeze({authority: submitted.authority, binding: submitted.snapshot.scope.binding,
+            targetPin: resolved.targetPin, receipt: outcome.receipt,
+            sessionFence: submitted.sessionFence}))
+        } catch {
+          // Intake has committed. Keep its receipt/input/outbox and original ACK;
+          // notification failure is never permission to re-intake or delete it.
+        }
+      }
+      return result
     }
     return runOrderedInput && incarnation && requestId
       ? runOrderedInput(params.terminal, JSON.stringify(['UNARY', incarnation, requestId]), execute)

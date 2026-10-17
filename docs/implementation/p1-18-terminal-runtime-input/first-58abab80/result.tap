@@ -1,0 +1,46 @@
+{"phase":"PG_PARENT_BEFORE","pid":22811,"at":"2026-10-17T04:27:12.370Z"}
+(node:22811) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+▶ managed Terminal public fixture callback 1
+  ✖ committed Terminal execution keeps original lineage across close, replay and uncertainty (805.481544ms)
+  ℹ {"phase":"same-pool-identity","name":"orca_public_clipboard_20261014","oid":"80991","system":"7696101282789175327","dataset":"orca-1012-dev-v1","pid":573446,"ledger":19}
+✖ managed Terminal public fixture callback 1 (816.348213ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3082.598072
+
+✖ failing tests:
+
+test at ../..<isolated-verification>:11831:9
+✖ committed Terminal execution keeps original lineage across close, replay and uncertainty (805.481544ms)
+  error: new row for relation "tabs" violates check constraint "tabs_check"
+      at <isolated-verification>
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (<isolated-verification>:12078:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async TestContext.<anonymous> (<isolated-verification>:11831:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    length: 401,
+    severity: 'ERROR',
+    code: '23514',
+    detail: 'Failing row contains (ad1e4965-1a1d-4c0b-85d1-3daef60dce4b, 11228370-2041-4eb3-b657-dc6d60bfa7d4, 871e1c71-e444-4fe9-ac55-48850132970d, terminal, input-verification-bb0f9ec8-996b-499d-9265-4ebaac2d1271, null, null, 0, CLOSED, null, 0).',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'durable_runtime',
+    table: 'tabs',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'tabs_check',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }

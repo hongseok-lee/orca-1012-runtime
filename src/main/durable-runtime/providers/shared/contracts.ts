@@ -8,6 +8,7 @@ import type { CommandClaim } from '../../runtime/gateway/types.ts'
 import type {
   PodUid, ProviderAdmissionProof, ProviderRef, ProviderStoppedProof
 } from '../../runtime/runtime-evidence.ts'
+import type { InputDeliveryObservation, ProviderCompletedProof } from '../../input/observation-types.ts'
 
 export type ProviderBinding = {
   readonly sessionId: SessionId
@@ -54,6 +55,9 @@ export type ProviderEffectIdentity = {
   readonly kind: 'COLD' | 'DISPATCH' | 'CANCEL'
   readonly binding: ProviderBinding
   readonly commandClaim: CommandClaim
+  /** Exact owned cold request consumed by the callback; private memory only.
+   * This may contain launch environment secrets and must never be audited/hashed. */
+  readonly coldRequest?: ProviderColdRequest<unknown>
   readonly messageId?: MessageId
   readonly deliveryAttemptId?: DeliveryAttemptId
   readonly sealedRevision?: string
@@ -68,7 +72,7 @@ export type ProviderEffectIdentity = {
  * before invoking effect once, outside the transaction. No shape/string/boolean here
  * authenticates a grant. The production input/executor implementation is unconnected.
  */
-export interface ProviderEffectPermit {
+export type ProviderEffectPermit = {
   invoke<T>(identity: ProviderEffectIdentity, effect: () => Promise<T>): Promise<T>
 }
 
@@ -94,9 +98,10 @@ export type ProviderObservation = {
 } & (
   | { readonly kind: 'ADMITTED'; readonly admission: ProviderAdmissionProof;
       readonly contextDelivery: VerifiedContextDeliveryProof }
-  | { readonly kind: 'COMPLETED' }
+  | { readonly kind: 'COMPLETED'; readonly completed?: ProviderCompletedProof }
   | { readonly kind: 'TARGET_STOPPED'; readonly stopped: ProviderStoppedProof }
-  | { readonly kind: 'UNKNOWN'; readonly reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST' }
+  | { readonly kind: 'UNKNOWN'; readonly reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST';
+      readonly uncertainty?: Extract<InputDeliveryObservation, {kind: 'UNKNOWN'}>['uncertainty'] }
 )
 /** Append/spool/PG acknowledgement belongs to P112; this callback does not commit PG. */
 export type ProviderObservationSink = (observation: ProviderObservation) => void

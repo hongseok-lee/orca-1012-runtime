@@ -4,6 +4,7 @@ import type {
   ProviderAdmissionProof, ProviderRef, ProviderStoppedProof, RuntimeReference
 } from '../../runtime/runtime-evidence.ts'
 import type { VerifiedContextDeliveryProof } from '../../context/types.ts'
+import type { InputDeliveryObservation, ProviderCompletedProof } from '../../input/observation-types.ts'
 import type {
   ProviderColdRequest, ProviderBinding, ReadyProviderBinding, ProviderEffectPermit,
   ProviderDispatchRequest, ProviderDispatchResult, ProviderSubmissionIdentity,
@@ -30,15 +31,32 @@ export class DurableCodexDriver {
   #submissions = new Map<string, ProviderSubmissionIdentity>()
   #receipts = new Map<string, CodexNativeReceipt>()
   #proofs = new Map<string, Extract<ProviderDispatchResult, { state: 'ADMITTED' }>>()
+  #completed = new Set<string>()
+  #nativeEntered = new Set<string>()
 
   constructor(dependencies: CodexProtocolDependencies, private readonly sink: ProviderObservationSink) {
-    this.#protocol = new CodexProtocolSession({ ...dependencies, onEvent: (event) => {
+    const open = dependencies.open.bind(dependencies)
+    this.#protocol = new CodexProtocolSession({ ...dependencies,
+      open: (launch, handlers) => open(launch, {...handlers, onExit: error => {
+        handlers.onExit?.(error)
+        for (const identity of this.#submissions.values()) {
+          if (this.#nativeEntered.has(identity.nativeRequestId) && !this.#completed.has(identity.nativeRequestId)) {
+            this.#uncertain(identity, 'CONNECTION_LOST')
+          }
+        }
+      }}), onEvent: (event) => {
       dependencies.onEvent?.(event)
       this.#observe(event)
     } })
   }
 
   get connectionInstanceId(): string { return this.#protocol.connectionId }
+
+  /** Original native thread response owned by this still-live connection. A
+   * copied binding or a caller-provided readiness boolean cannot satisfy it. */
+  ownsReadyBinding(binding: ReadyProviderBinding): boolean {
+    return this.#binding === binding && !this.#protocol.closed
+  }
 
   async cold(request: ProviderColdRequest<CodexColdLaunch>, commandClaim: ProviderDispatchRequest['commandClaim'], permit: ProviderEffectPermit): Promise<ReadyProviderBinding> {
     const original = immutableSnapshot({ request, commandClaim })
@@ -47,7 +65,8 @@ export class DurableCodexDriver {
     }
     const native = original.request.native
     if (native.kind === 'RESUME' && native.providerRef.provider !== 'codex') {throw new Error('CODEX_RESUME_PROVIDER_MISMATCH')}
-    return invokeProviderEffect(permit, { kind: 'COLD', binding: original.request.binding, commandClaim: original.commandClaim }, async () => {
+    return invokeProviderEffect(permit, { kind: 'COLD', binding: original.request.binding,
+      commandClaim: original.commandClaim, coldRequest: original.request }, async () => {
       const opened = await this.#protocol.open({
         command: original.request.launch.command, args: original.request.launch.args,
         cwd: original.request.checkout, codexHome: original.request.persistentHome,
@@ -112,17 +131,23 @@ export class DurableCodexDriver {
         messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId,
         sealedRevision: identity.sealedRevision, sealedPayloadHash: identity.sealedPayloadHash,
         contextRevision: identity.contextRevision, contextHash: identity.contextHash
-      }, () => this.#protocol.dispatch(actual))
+      }, () => {
+        this.#nativeEntered.add(nativeRequestId)
+        return this.#protocol.dispatch(actual)
+      })
     } catch (error) {
       // Busy is a known refusal before native I/O, not an UNKNOWN submission.
-      if (error instanceof CodexConnectionBusyError && this.#submissions.get(nativeRequestId) === identity) {
+      if ((!this.#nativeEntered.has(nativeRequestId) || error instanceof CodexConnectionBusyError) &&
+          this.#submissions.get(nativeRequestId) === identity) {
         this.#submissions.delete(nativeRequestId)
+        this.#nativeEntered.delete(nativeRequestId)
       }
       throw error
     }
     if (outcome.effect === 'ADMITTED') {return this.#verifyAdmission(outcome.receipt, identity)}
-    this.sink(immutableSnapshot({ kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity,
-      observedAt: new Date().toISOString(), reason: 'WRITE_OUTCOME_LOST' }))
+    // This driver observed the original owned protocol write outcome become
+    // uncertain. It proves uncertainty only, never admission or permission.
+    this.#uncertain(identity, 'WRITE_OUTCOME_LOST')
     return immutableSnapshot({ state: 'UNKNOWN', identity })
   }
 
@@ -190,8 +215,35 @@ export class DurableCodexDriver {
       this.#verifyAdmission(event.receipt, identity)
     }
     if (event.method === 'turn/completed' && event.terminalStatus === 'completed') {
-      this.sink(immutableSnapshot({ kind: 'COMPLETED', source: 'PROVIDER_PROTOCOL', identity, observedAt: event.observedAt }))
+      // Only the actual protocol-owned receipt for this submission can issue a
+      // completion proof. Preserve the existing admission/stop predicates.
+      if (!this.#protocol.ownsReceipt(event.receipt) ||
+          event.connectionId !== event.receipt.connectionId || event.threadId !== event.receipt.threadId ||
+          event.turnId !== event.receipt.turnId || !Number.isFinite(Date.parse(event.observedAt)) ||
+          event.receipt.connectionId !== identity.binding.connectionInstanceId ||
+          event.receipt.threadId !== identity.binding.providerRef.nativeSessionRef ||
+          event.receipt.clientMessageId !== identity.nativeRequestId ||
+          sha256(event.receipt.submission) !== identity.submissionHash) {return}
+      const completed = immutableSnapshot({kind: 'PROVIDER_TARGET_COMPLETED', source: 'PROVIDER_PROTOCOL',
+        evidenceRef: `codex:turn-completed:${event.receipt.connectionId}:${event.receipt.turnId}`,
+        observedAt: event.observedAt, attemptId: identity.binding.attemptId, podUid: identity.binding.podUid,
+        executionEpoch: identity.binding.executionEpoch, messageId: identity.messageId,
+        deliveryAttemptId: identity.deliveryAttemptId, providerRef: this.#nativeRef(event.receipt)}) as ProviderCompletedProof
+      this.#completed.add(identity.nativeRequestId)
+      this.sink(immutableSnapshot({ kind: 'COMPLETED', source: 'PROVIDER_PROTOCOL', identity, observedAt: event.observedAt, completed }))
     }
+  }
+
+  #uncertain(identity: ProviderSubmissionIdentity, reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST'): void {
+    const observedAt = new Date().toISOString()
+    // Issued only by the owned protocol outcome/transport exit callback. These
+    // original references describe uncertainty and confer no dispatch permission.
+    const uncertainty = immutableSnapshot({kind: 'INPUT_EFFECT_UNCERTAIN',
+      evidenceRef: `codex:uncertain:${identity.binding.connectionInstanceId}:${identity.nativeRequestId}:${reason}`,
+      observedAt, reasonCode: reason, evidenceRefs: [], binding: identity.binding,
+      messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId,
+      commandClaim: identity.commandClaim}) as Extract<InputDeliveryObservation, {kind: 'UNKNOWN'}>['uncertainty']
+    this.sink(immutableSnapshot({kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity, observedAt, reason, uncertainty}))
   }
 
   #nativeRef(receipt: CodexNativeReceipt): ProviderRef {

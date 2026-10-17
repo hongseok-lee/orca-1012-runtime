@@ -1,0 +1,21 @@
+{
+  "oldHead": "4a25a9417394646edee35f44a9198c8ad1664518",
+  "alignedHead": "a561a73d63619184f82678b27b2599ab1f51a930",
+  "base": "a3a698934b4b053d9957c1ead77735f535c3f19a",
+  "conflicts": 0,
+  "ownedProductFixtureFiles": [
+    "src/main/durable-runtime/input/runtime-input-store.ts",
+    "src/main/durable-runtime/input/runtime-input-types.ts",
+    "src/main/durable-runtime/input/runtime-input.pg.test.mts",
+    "src/main/durable-runtime/input/runtime-input.ts",
+    "src/main/durable-runtime/providers/codex/driver.ts",
+    "src/main/durable-runtime/providers/shared/contracts.ts",
+    "src/main/durable-runtime/rpc/terminal-send.ts"
+  ],
+  "ownedBytesModeDelta": [],
+  "actualSavedInputs": 216,
+  "actualInputAlignmentDelta": [],
+  "testedDependencyVsOldBranch": [],
+  "testsRepeated": 0,
+  "sourceOutsideOwnedDiffToMain": []
+}
