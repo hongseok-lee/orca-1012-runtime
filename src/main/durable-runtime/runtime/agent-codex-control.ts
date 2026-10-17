@@ -2,12 +2,14 @@ import { randomUUID } from 'node:crypto'
 import { constants, openSync, fstatSync, closeSync, readFileSync } from 'node:fs'
 import { isDeepStrictEqual } from 'node:util'
 import { createInterface } from 'node:readline'
+import { spawnSync } from 'node:child_process'
 import type { Readable, Writable } from 'node:stream'
 import { openCodexAppServerConnection } from '../../codex/codex-app-server-connection.ts'
 import { CodexAppServerHandshakeExitUnprovenError } from '../../codex/codex-app-server-handshake-exit-proof.ts'
 import type { CodexAppServerConnection } from '../../codex/codex-app-server-connection-types.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
+import { agentMountProbeSource } from '../storage/agent-mount-collector-probe.ts'
 
 type Launch = Parameters<CodexProtocolDependencies['open']>[0]
 /** Installed by trusted deployment/bootstrap composition, not decoded from a
@@ -96,6 +98,15 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         response(id, { stopped: true, controlId }); releaseRoot(); return
       }
       if (uncertain) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
+      if (request.method === 'MOUNT_PROBE') {
+        if (phase !== 'CLOSED_GATE' || coldUsed) { failure(id, 'AGENT_MOUNT_PROBE_GATE'); return }
+        // Reuse the original fixed read-only probe within this authenticated
+        // control. No broader exec-admission exception or caller root list.
+        const probe = spawnSync('/usr/local/bin/node', ['-e', agentMountProbeSource,
+          JSON.stringify({ roots: ['/agent', '/shared'] })], { encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 })
+        if (probe.status !== 0 || probe.stderr) { failure(id, 'AGENT_MOUNT_PROBE_FAILED'); return }
+        response(id, { output: probe.stdout }); return
+      }
       if (request.method === 'COLD') {
         if (coldUsed || phase !== 'CLOSED_GATE' || !isDeepStrictEqual(request.launch, policy.launch)) {
           failure(id, 'AGENT_COLD_POLICY'); return

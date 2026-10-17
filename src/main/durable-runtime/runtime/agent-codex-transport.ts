@@ -1,4 +1,5 @@
 import { TextDecoder, isDeepStrictEqual } from 'node:util'
+import { createHash } from 'node:crypto'
 import WebSocket from 'ws'
 import type { ClientOptions } from 'ws'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../codex/codex-app-server-connection-types.ts'
@@ -21,9 +22,17 @@ if(!stat.isFile()||stat.uid!==1000||stat.nlink!==1||bytes.length>4194304||crypto
 const execute=require('node:vm').runInThisContext('(function(require,module,exports,__filename,__dirname){\\n'+bytes.toString('utf8')+'\\n})',{filename:path});
 const owned={exports:{}};execute(require,owned,owned.exports,path,'/tmp');`
 
+export const agentControlTransfer = `const fs=require('node:fs'),crypto=require('node:crypto');
+const chunks=[];let length=0;
+process.stdin.on('data',b=>{length+=b.length;if(length>4194304)process.exit(1);chunks.push(b)});
+process.stdin.on('end',()=>{const bytes=Buffer.concat(chunks);if(crypto.createHash('sha256').update(bytes).digest('hex')!==process.argv[1])process.exit(1);
+const fd=fs.openSync('/tmp/orca-agent-control.cjs',fs.constants.O_WRONLY|fs.constants.O_CREAT|fs.constants.O_EXCL|fs.constants.O_NOFOLLOW,0o600);
+try{fs.writeFileSync(fd,bytes);fs.fsyncSync(fd)}finally{fs.closeSync(fd)}});`
+
 export type AgentCodexTransportConfiguration = Readonly<{
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
   bootstrapSha256: string
+  bootstrapBytes: Uint8Array
   expected: KubernetesPodAuthExpected
   policy: AgentCodexControlPolicy
   podAuthenticator: ReturnType<typeof createKubernetesPodAuthenticator>
@@ -35,6 +44,7 @@ export type AuthenticatedAgentControl = Readonly<{
   pod: AuthenticatedPodObservation
   valid(): boolean
   transport: Pick<CodexProtocolDependencies, 'open'>
+  readMountProbe(): Promise<string>
   close(): Promise<boolean>
   physicalPinIssued: false
 }>
@@ -51,6 +61,8 @@ const fail = (): Error => new Error('AGENT_CODEX_CONTROL_UNCONFIRMED')
 export function createAgentCodexTransport(original: AgentCodexTransportConfiguration) {
   if (!(original.ca instanceof Uint8Array) || !original.ca.byteLength) { throw fail() }
   const ca = Buffer.from(original.ca)
+  if (!(original.bootstrapBytes instanceof Uint8Array) || !original.bootstrapBytes.byteLength || original.bootstrapBytes.byteLength > 4 * 1024 * 1024) { throw fail() }
+  const artifact = Buffer.from(original.bootstrapBytes)
   const config = immutableSnapshot({ apiOrigin: original.apiOrigin,
     namespace: original.namespace, container: original.container, timeoutMs: original.timeoutMs,
     bootstrapSha256: original.bootstrapSha256, expected: original.expected, policy: original.policy })
@@ -61,6 +73,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash ||
       !/^[0-9a-f]{64}$/.test(config.bootstrapSha256) || !Number.isSafeInteger(config.timeoutMs) || config.timeoutMs <= 0 ||
       config.timeoutMs > 2_147_483_647 || !/^[a-z0-9-]+$/.test(config.namespace) || !/^[a-z0-9-]+$/.test(config.container)) { throw fail() }
+  if (createHash('sha256').update(artifact).digest('hex') !== config.bootstrapSha256) { throw fail() }
   let preparedOnce = false
   return Object.freeze({ async prepare(signal: AbortSignal): Promise<AuthenticatedAgentControl> {
     // A failed/unknown original control is reconciled through its own handle;
@@ -75,6 +88,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     try {
       bearer = await awaitPodAuthValue(Promise.resolve(reviewer(acquisition.signal)), acquisition.signal)
       if (!bearerValid(bearer) || acquisition.signal.aborted) { throw fail() }
+      await transferAgentControlBundle(config, ca, artifact, bearer, acquisition.signal)
       return await new Promise<AuthenticatedAgentControl>((resolve, reject) => {
         let socket: ManagedLeafSocket | undefined, send: unknown, handshake = false, transferred = false
         let lost = false, socketClosed = false, openedNative = false, controlId = '', buffer = '', status = ''
@@ -150,6 +164,12 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
             const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: Number(record.pid), startTicks: record.startTicks,
               root: Object.freeze({ path: config.policy.protectedRoot, device: String(Reflect.get(root, 'device')), inode: String(Reflect.get(root, 'inode')) }),
               pod, valid: () => !lost && !socketClosed && !closing, close, physicalPinIssued: false as const,
+              async readMountProbe() {
+                if (openedNative || lost || socketClosed || closing) { throw fail() }
+                const observed = await request('MOUNT_PROBE')
+                if (!observed || typeof observed !== 'object' || typeof Reflect.get(observed, 'output') !== 'string') { throw fail() }
+                return Reflect.get(observed, 'output')
+              },
               transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
                 if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, config.policy.launch)) { throw fail() }
                 openedNative = true; handlers = { ...supplied }
@@ -234,4 +254,70 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     } catch { throw fail() }
     finally { bearer = ''; clearTimeout(budget); signal.removeEventListener('abort', abortAcquisition); acquisition.abort() }
   } })
+}
+
+/** Create-only delivery of the reviewed product artifact to the SAME Agent.
+ * Lost acknowledgement is unconfirmed and is never automatically retransmitted.
+ * This does not write NFS/HOME, change a Pod, install a package, or open a gate. */
+function transferAgentControlBundle(config: Readonly<Omit<AgentCodexTransportConfiguration,
+  'ca' | 'bootstrapBytes' | 'podAuthenticator' | 'readReviewerBearer'>>, ca: Buffer,
+  artifact: Buffer, bearer: string, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let socket: WebSocket | undefined, settled = false, handshake = false
+    const streams = new Map([1, 2, 3].map(id => [id, { decoder: new TextDecoder('utf-8', { fatal: true }), text: '', closed: false }]))
+    const clean = () => { signal.removeEventListener('abort', aborted); socket?.off('open', opened).off('message', message).off('unexpected-response', unexpected) }
+    function failure(): void {
+      if (settled) { return }
+      settled = true; clean(); socket?.terminate(); reject(fail())
+    }
+    function aborted(): void { failure() }
+    function unexpected(request: { destroy(): void }, response: { destroy(): void }): void { failure(); response.destroy(); request.destroy() }
+    function opened(): void {
+      if (!socket || socket.protocol !== 'v5.channel.k8s.io' || signal.aborted) { failure(); return }
+      handshake = true
+      socket.send(Buffer.concat([Buffer.from([0]), artifact]), error => {
+        if (error || signal.aborted) { failure(); return }
+        socket?.send(Buffer.from([255, 0]), closeError => { if (closeError) { failure() } })
+      })
+    }
+    function closeStream(id: number): void {
+      const stream = streams.get(id)
+      if (!stream || stream.closed) { throw fail() }
+      stream.text += stream.decoder.decode(); stream.closed = true
+    }
+    function message(raw: WebSocket.RawData, binary: boolean): void {
+      if (settled) { return }
+      try {
+        if (!handshake || !binary || !(raw instanceof Uint8Array) || !raw.length) { throw fail() }
+        if (raw[0] === 255) { if (raw.length !== 2) { throw fail() }; closeStream(raw[1]); return }
+        const stream = streams.get(raw[0])
+        if (!stream || stream.closed) { throw fail() }
+        stream.text += stream.decoder.decode(raw.subarray(1), { stream: true })
+        if (stream.text.length > 65536 || raw[0] !== 3 && stream.text) { throw fail() }
+      } catch { failure() }
+    }
+    signal.addEventListener('abort', aborted, { once: true })
+    if (signal.aborted) { aborted(); return }
+    try {
+      const url = new URL(`/api/v1/namespaces/${encodeURIComponent(config.namespace)}/pods/${encodeURIComponent(config.expected.podName)}/exec`, config.apiOrigin)
+      url.protocol = 'wss:'
+      for (const [key, value] of Object.entries({ container: config.container, stdin: 'true', stdout: 'true', stderr: 'true', tty: 'false' })) { url.searchParams.set(key, value) }
+      for (const arg of ['/usr/local/bin/node', '-e', agentControlTransfer, config.bootstrapSha256]) { url.searchParams.append('command', arg) }
+      socket = new WebSocket(url, 'v5.channel.k8s.io', { ca: Buffer.from(ca), rejectUnauthorized: true,
+        agent: false as unknown as ClientOptions['agent'], followRedirects: false, perMessageDeflate: false,
+        handshakeTimeout: config.timeoutMs, headers: { Authorization: `Bearer ${bearer}` } })
+      socket.on('error', failure).once('open', opened).on('message', message).once('unexpected-response', unexpected).once('close', code => {
+        if (!settled) {
+          try {
+            for (const [id, stream] of streams) { if (!stream.closed) { closeStream(id) } }
+            if (!handshake || code !== 1000 || streams.get(1)!.text || streams.get(2)!.text ||
+                JSON.parse(streams.get(3)!.text).status !== 'Success') { throw fail() }
+            settled = true; clean(); resolve()
+          } catch { failure() }
+        }
+        socket?.off('error', failure)
+        for (const stream of streams.values()) { stream.text = '' }
+      })
+    } catch { failure() }
+  })
 }

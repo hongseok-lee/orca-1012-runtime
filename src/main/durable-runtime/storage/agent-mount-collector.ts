@@ -12,6 +12,8 @@ import { collectAgentMountExec } from './agent-mount-collector-exec.ts'
 import { agentMountProbeSha256, projectAgentMountOutput } from './agent-mount-collector-probe.ts'
 import { AgentMountCollectorError } from './agent-mount-collector-types.ts'
 import type { AgentMountCollect, AgentMountCollectorConfig, AgentMountCollectorDependencies, AgentMountStorage } from './agent-mount-collector-types.ts'
+import { authenticatedAgentControlValid } from '../runtime/agent-codex-transport.ts'
+import type { AuthenticatedAgentControl } from '../runtime/agent-codex-transport.ts'
 
 export { AgentMountCollectorError } from './agent-mount-collector-types.ts'
 export type { AgentMountCollectorConfig, AgentMountCollectorDependencies, AuthenticatedAgentMountObservation } from './agent-mount-collector-types.ts'
@@ -21,7 +23,11 @@ const defaults: AgentMountCollectorDependencies = {
 }
 
 /** Authenticated consumer snapshots only. No physical issuer, transaction hold, provider or controller activation. */
-export function createAgentMountCollector(caller: AgentMountCollectorConfig, dependencies: AgentMountCollectorDependencies = defaults): Readonly<{ collect: AgentMountCollect }> {
+export function createAgentMountCollector(caller: AgentMountCollectorConfig, dependencies: AgentMountCollectorDependencies = defaults): Readonly<{
+  collect: AgentMountCollect
+  collectControlled(record: Parameters<AgentMountCollect>[0], podUid: string, control: AuthenticatedAgentControl,
+    signal: AbortSignal): ReturnType<AgentMountCollect>
+}> {
   let config: AgentMountCollectorConfig, captured: AgentMountCollectorDependencies, ca: Buffer
   try {
     const input = { apiOrigin: caller.apiOrigin, ca: caller.ca, namespace: caller.namespace, dataset: caller.dataset,
@@ -39,7 +45,7 @@ export function createAgentMountCollector(caller: AgentMountCollectorConfig, dep
     captured = Object.freeze({ https: Object.freeze({ request: request.bind(https) }), openWebSocket: open.bind(dependencies) })
   } catch { throw new AgentMountCollectorError('CONFIG_INVALID') }
   const reader = config.readReviewerBearer
-  return Object.freeze({ collect: async (record, podUid, signal) => {
+  const collect = async (record: Parameters<AgentMountCollect>[0], podUid: string, signal: AbortSignal, control?: AuthenticatedAgentControl): ReturnType<AgentMountCollect> => {
     const deadline = performance.now() + config.timeoutMs
     // Detach all original plan, path and UID data before the first credential await.
     const input = captureAgentMountInput(record, podUid, config), controller = new AbortController()
@@ -82,7 +88,11 @@ export function createAgentMountCollector(caller: AgentMountCollectorConfig, dep
       check()
       if (typeof bearer !== 'string' || !/^[A-Za-z0-9\-._~+/]+=*$/u.test(bearer)) { throw new AgentMountCollectorError('CREDENTIAL_FAILED') }
       const pod = projectAgentMountPod(await get(podPath), input), first = await storage()
-      const text = await collectAgentMountExec(captured.openWebSocket, { ...config, ca: Buffer.from(ca) }, input, bearer, controller.signal, deadline)
+      if (control && (!authenticatedAgentControlValid(control) || control.pod.pod.uid !== input.podUid)) {
+        throw new AgentMountCollectorError('POD_IDENTITY')
+      }
+      const text = control ? await awaitPodAuthValue(control.readMountProbe(), controller.signal)
+        : await collectAgentMountExec(captured.openWebSocket, { ...config, ca: Buffer.from(ca) }, input, bearer, controller.signal, deadline)
       check()
       const mounts = projectAgentMountOutput(text, input.mounts)
       check()
@@ -90,6 +100,7 @@ export function createAgentMountCollector(caller: AgentMountCollectorConfig, dep
       if (first.some((value, index) => agentMountMapping(value) !== agentMountMapping(last[index]))) { throw new AgentMountCollectorError('STORAGE_CHANGED') }
       const finalPod = projectAgentMountPod(await get(podPath), input)
       if (agentMountIncarnation(pod) !== agentMountIncarnation(finalPod)) { throw new AgentMountCollectorError('POD_CHANGED') }
+      if (control && !authenticatedAgentControlValid(control)) { throw new AgentMountCollectorError('POD_CHANGED') }
       const evidence = { kind: 'AUTHENTICATED_AGENT_MOUNT_OBSERVATION' as const, namespace: config.namespace, dataset: config.dataset,
         planDigest: input.original.planDigest, pod, finalPod, storage: first, finalStorage: last, mounts,
         observedAt: new Date().toISOString(), probeDigest: agentMountProbeSha256,
@@ -111,5 +122,7 @@ export function createAgentMountCollector(caller: AgentMountCollectorConfig, dep
     } finally {
       bearer = ''; clearTimeout(timer); signal.removeEventListener('abort', abort); controller.abort()
     }
-  } })
+  }
+  return Object.freeze({ collect: (record, podUid, signal) => collect(record, podUid, signal),
+    collectControlled: (record, podUid, control, signal) => collect(record, podUid, signal, control) })
 }

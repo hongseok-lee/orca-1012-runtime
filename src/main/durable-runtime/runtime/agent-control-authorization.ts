@@ -1,14 +1,7 @@
-import { agentCodexBootstrap } from './agent-codex-transport.ts'
+import { agentCodexBootstrap, agentControlTransfer } from './agent-codex-transport.ts'
 import { inventoryNamespace } from '../lifecycle/kubernetes-identity.ts'
 
-/** Fixed ephemeral product-code transfer. Only this artifact digest is accepted;
- * bytes are never evaluated here and no shell/stdin command is interpreted. */
-export const agentControlTransfer = `const fs=require('node:fs'),crypto=require('node:crypto');
-const chunks=[];let length=0;
-process.stdin.on('data',b=>{length+=b.length;if(length>4194304)process.exit(1);chunks.push(b)});
-process.stdin.on('end',()=>{const bytes=Buffer.concat(chunks);if(crypto.createHash('sha256').update(bytes).digest('hex')!==process.argv[1])process.exit(1);
-const fd=fs.openSync('/tmp/orca-agent-control.cjs',fs.constants.O_WRONLY|fs.constants.O_CREAT|fs.constants.O_EXCL|fs.constants.O_NOFOLLOW,0o600);
-try{fs.writeFileSync(fd,bytes);fs.fsyncSync(fd)}finally{fs.closeSync(fd)}});`
+export { agentControlTransfer } from './agent-codex-transport.ts'
 
 /** Root-selected minimal authorization delta. Pure source generation only;
  * creation/apply and the actual compiled artifact digest require live review.
@@ -29,8 +22,7 @@ export function createAgentControlAuthorization(namespaceInput: string, bootstra
   const roleRef = (kind: 'Role' | 'ClusterRole') => ({ apiGroup: 'rbac.authorization.k8s.io', kind, name })
   const subject = { kind: 'ServiceAccount', name: backend, namespace }
   const policyName = `orca-agent-control-${namespace}`
-  return {
-    apiVersion: 'v1', kind: 'List', items: [
+  const items = [
       { apiVersion: 'v1', kind: 'ServiceAccount', metadata: { name: 'orca-runtime-agent', namespace }, automountServiceAccountToken: false },
       { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'Role', metadata: { name, namespace },
         rules: [{ apiGroups: [''], resources: ['pods/exec'], verbs: ['get', 'create'] }] },
@@ -52,6 +44,8 @@ export function createAgentControlAuthorization(namespaceInput: string, bootstra
         policyName, validationActions: ['Deny'], matchResources: { matchPolicy: 'Exact',
           namespaceSelector: { matchLabels: { 'kubernetes.io/metadata.name': namespace } } },
       } },
-    ],
-  }
+    ]
+  // Install/confirm the exact VAP + Binding first. Definitions grant nothing;
+  // the two backend RBAC bindings are deliberately last, after guard activation.
+  return { apiVersion: 'v1', kind: 'List', items: [items[5], items[6], items[0], items[1], items[3], items[2], items[4]] }
 }
