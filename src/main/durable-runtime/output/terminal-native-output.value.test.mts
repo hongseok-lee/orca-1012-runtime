@@ -76,12 +76,13 @@ test('COMMITTED original Codex items/deltas replay through the existing translat
     event(6, 'turn/completed', {threadId: 'fixture-native-thread', turn: {id: 'turn-original', status: 'completed'}})
   ])
   const history = projectTerminalNativeHistory(sessionId, rows, [])
-  const assistant = history.filter(row => row.message.role === 'assistant')
+  const assistant = history.messages.filter(row => row.message.role === 'assistant')
   assert.equal(assistant.length, 1)
   assert.deepEqual(assistant[0].message.blocks, [{type: 'text', text: '실제 원본 형식의 α 출력'}])
   assert.equal(assistant[0].message.id, agentJournalItemKey({provider: 'codex', threadId: 'fixture-native-thread', turnId: 'turn-original', ordinal: 0}))
   assert.deepEqual(projectTerminalNativeHistory(sessionId, rows, []), history)
-  assert.equal(projectTerminalNativeHistory(sessionId, [], []).length, 0)
+  assert.equal(history.lifecycle?.state, 'completed')
+  assert.equal(projectTerminalNativeHistory(sessionId, [], []).messages.length, 0)
 })
 
 test('malformed/cross-connection output and unsafe spool ownership fail explicitly', () => {

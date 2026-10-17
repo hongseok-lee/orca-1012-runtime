@@ -96,7 +96,7 @@ test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and close
       await terminalCodexOutputEventHandler(tx, record)
       const invisible = await readManagedTerminalNativeChat(config, params, context)
       assert.equal(invisible?.kind, 'PAGE'); if (invisible?.kind === 'PAGE') { assert.equal(invisible.messages.length, 0) }
-    }, {claimDurationMs: 30000})
+    })
     assert.equal(processed.status, 'DONE')
     const page = await readManagedTerminalNativeChat(config, params, context)
     assert.equal(page?.kind, 'PAGE'); if (page?.kind !== 'PAGE') { throw new Error('PAGE') }

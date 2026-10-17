@@ -3,6 +3,7 @@ import { agentJournalItemKey } from '../../../shared/agent-session-journal-item-
 import { projectStructuredItemsToNativeChat } from '../../../shared/structured-agent-session-projection.ts'
 import type { AgentJournalItemIdentity, AgentJournalItemBody, AgentJournalRenderItem } from '../../../shared/agent-session-journal-types.ts'
 import type { StructuredAgentSessionEventSink } from '../../native-chat/agent-session-wire/structured-agent-session-event-sink.ts'
+import type { NativeChatTurnLifecycle } from '../../../shared/native-chat-types.ts'
 import type { CommittedJournalEvent, OriginalInputComponent } from './model.ts'
 import { jsonObject, JournalReadError } from './model.ts'
 import { decodeCommittedInputBody } from './input-codec.ts'
@@ -14,10 +15,17 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
   inputs: readonly OriginalInputComponent[], nativeInputEchoIds: ReadonlySet<string> = new Set()) {
   const items = new Map<string, AgentJournalRenderItem>(), revisions = new Map<string, number>()
   let position = 0, observedAt = 0
+  let lifecycle: NativeChatTurnLifecycle | undefined
   const append = (identity: AgentJournalItemIdentity, body: AgentJournalItemBody, at = observedAt) => {
     const itemId = agentJournalItemKey(identity), previous = items.get(itemId)
     // Exact stored delivery thread/turn identity only, never text/hash dedup.
     if (nativeInputEchoIds.has(itemId) && body.kind === 'message' && body.role === 'user') { return }
+    if (body.kind === 'turn') {
+      if (body.state === 'running' || body.state === 'completed' || body.state === 'interrupted') {
+        lifecycle = {state: body.state === 'running' ? 'working' : body.state, turnId: body.turnId,
+          timestamp: body.state === 'running' ? body.startedAt ?? at : body.completedAt ?? at}
+      } else { lifecycle = undefined }
+    }
     const revision = (revisions.get(itemId) ?? 0) + 1
     revisions.set(itemId, revision)
     items.set(itemId, {itemId, body, revision, sequence: previous?.sequence ?? position, observedAt: previous?.observedAt ?? at})
@@ -76,9 +84,10 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
         translator.flush()
       }
     }
-    const ordered = [...items.values()].sort((a, b) => a.sequence - b.sequence || a.itemId.localeCompare(b.itemId))
+    const ordered = [...items.values()].sort((a, b) => a.sequence - b.sequence)
     const messages = projectStructuredItemsToNativeChat(ordered)
     const byId = new Map(ordered.map(item => [item.itemId, item.sequence]))
-    return messages.map(message => Object.freeze({message, offset: byId.get(message.id)!}))
+    return {messages: messages.map(message => Object.freeze({message, offset: byId.get(message.id)!})),
+      ...(lifecycle ? {lifecycle} : {})}
   } finally { for (const translator of translators.values()) { translator.dispose() } }
 }

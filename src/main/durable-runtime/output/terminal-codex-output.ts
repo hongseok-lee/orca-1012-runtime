@@ -90,8 +90,8 @@ export function createTerminalCodexOutput(input: Readonly<{
       'SELECT state FROM durable_runtime.runtime_event_queue WHERE event_id=$1', [prepared.eventId])
     if (state.rows[0]?.state !== 'DONE') {
       const claimed = await claimRuntimeEvent(pool, stream, ready.context.controller, {claimDurationMs: 30000})
-      if (claimed.status !== 'CLAIMED' || claimed.claim.eventId !== prepared.eventId) { deny('CONSUMER_NOT_CURRENT') }
-      const result = await processRuntimeEvent(pool, claimed.claim, terminalCodexOutputEventHandler, {claimDurationMs: 30000})
+      if (claimed.status !== 'CLAIMED' || claimed.claim.eventId !== prepared.eventId) { return deny('CONSUMER_NOT_CURRENT') }
+      const result = await processRuntimeEvent(pool, claimed.claim, terminalCodexOutputEventHandler)
       if (result.status !== 'DONE') { deny(`COMMIT_${result.status}`) }
     }
     // Never prune raw records on uncertain PG/NFS completion.
