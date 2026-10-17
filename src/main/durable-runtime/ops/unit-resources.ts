@@ -1,9 +1,7 @@
 import { createHash } from 'node:crypto'
-import { logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { RuntimeUnitId } from '../../../shared/durable-runtime/identity.ts'
 import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts'
 import type { JsonValue } from '../db/atomic.ts'
-import { readAgentPodPlan } from '../runtime/agent-pod-plan-records.ts'
 import { canonicalInput } from '../runtime/gateway/input.ts'
 import type { OpsResourceQuantity } from './contract.ts'
 
@@ -47,13 +45,16 @@ export async function readOpsUnitDesiredResources(tx: DurableTransaction, unitId
   // declaration audit identifies a profile. Retained/other-attempt profiles
   // cannot become the desired profile by ordering their revision numbers.
   const candidates = (await tx.query<{ operation_id: string; revision: string; policy: string; body: JsonValue;
-    event: JsonValue; unit_revision: string; active_attempt_id: string | null; active_profile: string | null }>(`SELECT
+    event: JsonValue; unit_revision: string; active_attempt_id: string | null; active_profile: string | null;
+    plan_digest: string | null; pod_spec_sha256: string | null; plan: JsonValue }>(`SELECT
       a.operation_id,p.revision::text AS revision,p.policy_revision::text AS policy,p.container_resources AS body,
-      a.next_state AS event,u.revision::text AS unit_revision,u.active_attempt_id,t.resource_profile_revision::text AS active_profile
+      a.next_state AS event,u.revision::text AS unit_revision,u.active_attempt_id,t.resource_profile_revision::text AS active_profile,
+      q.plan_digest,q.pod_spec_sha256,q.plan
     FROM durable_runtime.runtime_audit_events a
     JOIN durable_runtime.runtime_units u ON u.id=a.runtime_unit_id
     JOIN durable_runtime.operations o ON o.id=a.operation_id AND o.runtime_unit_id=u.id
     JOIN durable_runtime.resource_profiles p ON p.runtime_unit_id=u.id AND p.revision=a.resource_profile_revision
+    LEFT JOIN durable_runtime.agent_pod_plans q ON q.operation_id=a.operation_id AND q.runtime_unit_id=u.id
     LEFT JOIN durable_runtime.attempts t ON t.id=u.active_attempt_id AND t.runtime_unit_id=u.id
     WHERE a.runtime_unit_id=$1 AND a.kind='INITIAL_AGENT_RESOURCE_PROFILE_RECORDED'`, [unitId])).rows
   if (!candidates.length) { return null }
@@ -65,17 +66,23 @@ export async function readOpsUnitDesiredResources(tx: DurableTransaction, unitId
       event.shapeDigest !== digest || typeof event.planDigest !== 'string' ||
       BigInt(decimal(event.recordedUnitRevision)) > BigInt(row.unit_revision) ||
       (row.active_attempt_id !== null && row.active_profile !== row.revision)) { return invalid() }
-  const record = await readAgentPodPlan(tx, logicalId('operation', row.operation_id))
-  if (!record || record.planDigest !== event.planDigest || record.plan.identity.unitId !== unitId ||
-      record.plan.identity.operationId !== row.operation_id ||
-      record.plan.pod.metadata.annotations['orca.dev/resource-profile-revision'] !== row.revision ||
-      declared.shape.sourceRef !== `initial-agent-plan:v1:${record.planDigest}` ||
+  // Inspect the immutable declaration only. The planner/execution dependency
+  // graph is unnecessary for this stored pointer projection.
+  const plan = object(row.plan), identity = object(plan.identity), pod = object(plan.pod)
+  const metadata = object(pod.metadata), annotations = object(metadata.annotations), spec = object(pod.spec)
+  if (!row.plan_digest || row.plan_digest !== event.planDigest ||
+      createHash('sha256').update(canonicalInput(row.plan)).digest('hex') !== row.plan_digest ||
+      identity.unitId !== unitId || identity.operationId !== row.operation_id ||
+      plan.podSpecSHA256 !== row.pod_spec_sha256 ||
+      annotations['orca.dev/resource-profile-revision'] !== row.revision ||
+      !Array.isArray(spec.containers) || spec.containers.length !== 1 ||
+      declared.shape.sourceRef !== `initial-agent-plan:v1:${row.plan_digest}` ||
       declared.shape.profileId !== `initial-agent-profile:v1:${unitId}:${row.revision}` ||
-      declared.shape.containerIdentity !== record.plan.pod.spec.containers[0].name) { return invalid() }
-  // Unit conversion only. The strict original plan reader validates its
-  // declaration; do not rerun scheduling/policy or label requests as admitted.
-  const requests = record.plan.pod.spec.containers[0].resources.requests
-  if (declared.quantity.cpuMilli !== requests.cpu.slice(0, -1) ||
+      declared.shape.containerIdentity !== object(spec.containers[0]).name) { return invalid() }
+  const requests = object(object(object(spec.containers[0]).resources).requests)
+  if (typeof requests.cpu !== 'string' || !/^[1-9][0-9]*m$/.test(requests.cpu) ||
+      typeof requests.memory !== 'string' || !/^[1-9][0-9]*Mi$/.test(requests.memory) ||
+      declared.quantity.cpuMilli !== requests.cpu.slice(0, -1) ||
       declared.quantity.memoryBytes !== (BigInt(requests.memory.slice(0, -2)) * 1048576n).toString()) { return invalid() }
   return declared.quantity
 }

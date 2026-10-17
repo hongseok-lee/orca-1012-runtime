@@ -2,9 +2,7 @@ import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { test } from 'node:test'
 import { createDurablePool, DurableDatabaseError } from '../db/connection.ts'
-import { fixture, policy } from '../lifecycle/verification-fixtures.mts'
 import { createAgentPodPlanner } from '../runtime/agent-pod-plan.ts'
-import { prepareAgentPodPlan } from '../runtime/agent-pod-plan-records.ts'
 import { canonicalInput } from '../runtime/gateway/input.ts'
 import { createPgOpsServices } from './pg-services.ts'
 
@@ -15,8 +13,15 @@ const pool = createDurablePool({ database, max: 3, application_name: 'ops-desire
 const digest = (value: unknown) => createHash('sha256').update(canonicalInput(value)).digest('hex')
 
 async function seed(cpu = '777', wrongPlanDigest = false) {
-  const f = await fixture(pool, 1), operation = randomUUID(), scope = `ops-resources:${randomUUID()}`
-  const workspace = (await pool.query('SELECT workspace_id FROM durable_runtime.sessions WHERE id=$1', [f.sessions[0]])).rows[0].workspace_id
+  const unit = randomUUID(), workspace = randomUUID(), agent = randomUUID(), session = randomUUID(), binding = randomUUID()
+  const f = { unit, sessions: [session], binding }, operation = randomUUID(), scope = `ops-resources:${randomUUID()}`
+  await pool.query("INSERT INTO durable_runtime.agents(id,provider) VALUES($1,'fixture')", [agent])
+  await pool.query("INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,'fixture','READY')", [workspace, `fixture:${workspace}`])
+  await pool.query("INSERT INTO durable_runtime.runtime_units(id,desired_mode,phase) VALUES($1,'RUNNING','ABSENT')", [unit])
+  await pool.query('INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,\'fixture\')', [unit])
+  await pool.query("INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state) VALUES($1,$2,'fixture',$3,'UNKNOWN')", [binding, unit, `/fixture/${unit}`])
+  await pool.query("INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')", [session, agent, workspace])
+  await pool.query('INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)', [unit, session, binding])
   const group = `ops-resources:${randomUUID()}`, leaf = randomUUID()
   // Fixture data only: this expired FK row is never acquired or used as a controller authority.
   await pool.query("INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at) VALUES($1,'fixture-data-only',0,'1970-01-01')", [scope])
@@ -36,7 +41,7 @@ async function seed(cpu = '777', wrongPlanDigest = false) {
     protectedBindings: [{ key: 'home', bindingId: f.binding, leafId: leaf, claimName: `protected-${leaf}`,
       claimUid: `claim-${leaf}`, pvUid: `pv-${leaf}`, serverPath: `/exports/runtime-domains/orca-1012-dev-v1/${leaf}`, mode: 'RW' }],
     profile: { revision: '7', cpuMilli: Number(cpu), memoryMi: 1024, ephemeralMi: 2048, temporaryMi: 256 } })
-  const prepared = prepareAgentPodPlan(plan), id = plan.identity
+  const prepared = { planDigest: digest(plan) }, id = plan.identity
   await pool.query(`INSERT INTO durable_runtime.agent_pod_plans(operation_id,runtime_unit_id,dataset_name,attempt_id,
     execution_epoch,intent_revision,namespace,resource_name,spec_hash,pod_spec_sha256,plan_digest,plan)
     VALUES($1,$2,'orca-1012-dev-v1',$3,0,0,$4,$5,$6,$7,$8,$9)`, [operation, f.unit, id.attemptId,
@@ -57,7 +62,8 @@ async function seed(cpu = '777', wrongPlanDigest = false) {
   [eventId, f.unit, operation, event.kind, event])
   const serverScope = { datasetName: 'orca-1012-dev-v1', namespaceId: `fixture:${workspace}`, workspaceIds: [workspace] }
   const actor = { ...serverScope, principalId: 'ops-resource-fixture', authorizationRef: 'fixture-only' }
-  const services = createPgOpsServices({ pool, scope: serverScope, streamId: 'ops-fixture', lifecyclePolicy: policy, controllerConnected: false })
+  const services = createPgOpsServices({ pool, scope: serverScope, streamId: 'ops-fixture',
+    lifecyclePolicy: { operationDeadlineMs: 60000, idleDurationMs: 60000 }, controllerConnected: false })
   return { ...f, operation, shape, actor, services, eventId }
 }
 
