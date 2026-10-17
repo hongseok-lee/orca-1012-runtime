@@ -1,7 +1,7 @@
-import { agentCodexBootstrap, agentControlTransfer } from './agent-codex-transport.ts'
+import { agentCodexBootstrap, agentControlTransfer } from './agent-control-bootstrap.ts'
 import { inventoryNamespace } from '../lifecycle/kubernetes-identity.ts'
 
-export { agentControlTransfer } from './agent-codex-transport.ts'
+export { agentControlTransfer } from './agent-control-bootstrap.ts'
 
 /** Root-selected minimal authorization delta. Pure source generation only;
  * creation/apply and the actual compiled artifact digest require live review.

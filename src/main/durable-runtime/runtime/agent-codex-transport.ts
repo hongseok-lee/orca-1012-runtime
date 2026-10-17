@@ -13,8 +13,9 @@ import type { AuthenticatedPodObservation, KubernetesPodAuthExpected } from './k
 import type { ManagedLeafSocket } from '../storage/managed-leaf-collector-types.ts'
 import type { AgentCodexControlPolicy } from './agent-codex-control.ts'
 
-import { agentCodexBootstrap, transferAgentControlBundle } from './agent-control-artifact-transfer.ts'
-export { agentCodexBootstrap, agentControlTransfer } from './agent-control-artifact-transfer.ts'
+import { transferAgentControlBundle } from './agent-control-artifact-transfer.ts'
+import { agentCodexBootstrap } from './agent-control-bootstrap.ts'
+export { agentCodexBootstrap, agentControlTransfer } from './agent-control-bootstrap.ts'
 
 export type AgentCodexTransportConfiguration = Readonly<{
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
