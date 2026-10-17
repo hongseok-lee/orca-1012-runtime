@@ -13,6 +13,8 @@ import { submitCommand, originalIdentity } from './gateway/store.ts'
 import { claimCommand } from './gateway/claim.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
+import { captureReleaseGateInput } from './release-gate-input.ts'
+import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 
 /** Continuation of the EXISTING cold operation, not a new wake, replacement
  * attempt, deadline extension or execution permit. Only the current callback's
@@ -26,6 +28,8 @@ export async function prepareInitialProviderStep(pool: Pool, original: Readonly<
   predecessor: Extract<SettledCommandReceipt<JsonValue>, { state: 'RESOLVED' }>
 }>) {
   const request = immutableSnapshot(original)
+  const coldGate = request.step === 'RELEASE_GATE' ? captureReleaseGateInput(request.input) : null
+  if (coldGate && !coldGate.coldStart) { throw new DurableDatabaseError('INITIAL_PROVIDER_NEW_GATE_REQUIRED') }
   const predecessorName = request.step === 'BIND' ? 'ensureAttempt' : 'bind'
   if (!request.mutationKey || !['BIND', 'RELEASE_GATE'].includes(request.step) ||
       request.predecessor.identity.command !== predecessorName || request.predecessor.state !== 'RESOLVED') {
@@ -59,6 +63,14 @@ export async function prepareInitialProviderStep(pool: Pool, original: Readonly<
       [context.runtimeUnitId, request.expectedUnitRevision, request.sessionId, request.expectedIntentRevision, request.step])
     if (target.rowCount !== 1) { throw new DurableDatabaseError('INITIAL_PROVIDER_STEP_STALE') }
     const actual = target.rows[0], previous = request.predecessor.identity.originalEnvelope
+    if (coldGate) {
+      const plan = await readAgentPodPlan(tx, context.operationId)
+      if (!plan || coldGate.attemptId !== actual.attempt_id || plan.planDigest !== coldGate.coldStart?.planDigest ||
+          plan.plan.identity.attemptId !== actual.attempt_id || plan.plan.identity.unitId !== context.runtimeUnitId ||
+          plan.plan.identity.executionEpoch !== actual.execution_epoch) {
+        throw new DurableDatabaseError('INITIAL_PROVIDER_NEW_GATE_PLAN')
+      }
+    }
     if (previous.operationId !== context.operationId || previous.executionEpoch !== actual.execution_epoch ||
         previous.intentRevision !== request.expectedIntentRevision || previous.stepRevision !== request.expectedStepRevision ||
         request.step === 'RELEASE_GATE' && previous.expectedPodUid !== actual.pod_uid) {

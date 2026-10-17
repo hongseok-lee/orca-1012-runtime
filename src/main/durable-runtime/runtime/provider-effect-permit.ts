@@ -11,6 +11,8 @@ import { LockedGatewayAuthority } from './gateway/authority.ts'
 import { commandById, assertOriginal } from './gateway/store.ts'
 import type { GatewayContext } from './gateway/types.ts'
 import type { ExecutionTargetObservation } from './execution-target-records.ts'
+import { captureReleaseGateInput } from './release-gate-input.ts'
+import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 
 /** The physical issuer transfers an ALREADY held lifetime, not a snapshot or
  * an assertion that a mount is ready. No issuer or grant activation is supplied
@@ -161,6 +163,36 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
             row.owner_controller_term !== context.controller.term || claim.controllerTerm !== context.controller.term ||
             row.command_name !== (identity.kind === 'COLD' ? 'releaseGate' : 'dispatchInput')) { deny('PROVIDER_COMMAND_NOT_CURRENT') }
         await gateway.assertExecutionTarget(claim.identity.originalEnvelope, false)
+        if (identity.kind === 'COLD') {
+          const gate = captureReleaseGateInput(row.input)
+          if (gate.attemptId !== binding.attemptId) { deny('PROVIDER_GATE_ATTEMPT') }
+          if (gate.coldStart) {
+            const plan = await readAgentPodPlan(tx, context.operationId)
+            if (!coldPolicy || coldPolicy.request.native.kind !== 'NEW' || !plan ||
+                plan.planDigest !== gate.coldStart.planDigest || plan.plan.identity.attemptId !== binding.attemptId ||
+                plan.plan.identity.unitId !== binding.runtimeUnitId || plan.plan.identity.executionEpoch !== binding.executionEpoch) {
+              deny('PROVIDER_NEW_GATE_PLAN')
+            }
+            const history = await tx.query(`SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2
+              UNION ALL SELECT id FROM durable_runtime.provider_context_deliveries WHERE session_id=$3
+              UNION ALL SELECT id FROM durable_runtime.delivery_attempts WHERE session_id=$3
+                AND (provider_ref IS NOT NULL OR state IN ('EFFECT_POSSIBLE','ADMITTED','SETTLED','UNKNOWN','INTERRUPTED'))
+              UNION ALL SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
+                AND command_name='releaseGate' AND id<>$4`,
+            [binding.runtimeUnitId, binding.attemptId, binding.sessionId, claim.commandId])
+            if (history.rowCount) { deny('PROVIDER_NEW_GATE_HISTORY') }
+            const oldWriters = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
+              JOIN durable_runtime.storage_bindings old ON old.id=g.storage_binding_id
+              JOIN durable_runtime.runtime_member_storage_bindings member ON member.runtime_unit_id=$1 AND member.session_id=$2
+              JOIN durable_runtime.storage_bindings current ON current.id=member.storage_binding_id
+              WHERE g.attempt_id<>$3 AND old.backend_id=current.backend_id AND old.export_id=current.export_id
+              AND (old.canonical_directory=current.canonical_directory OR old.canonical_directory='/' OR current.canonical_directory='/'
+                OR left(old.canonical_directory,length(current.canonical_directory)+1)=current.canonical_directory||'/'
+                OR left(current.canonical_directory,length(old.canonical_directory)+1)=old.canonical_directory||'/')`,
+            [binding.runtimeUnitId, binding.sessionId, binding.attemptId])
+            if (oldWriters.rowCount) { deny('PROVIDER_NEW_GATE_WRITER_HISTORY') }
+          }
+        }
         const active = await tx.query(
           `SELECT a.id FROM durable_runtime.attempts a JOIN durable_runtime.runtime_units u ON u.active_attempt_id=a.id
            JOIN durable_runtime.execution_grants g ON g.attempt_id=a.id AND g.runtime_unit_id=u.id
