@@ -5,6 +5,16 @@ import type { TerminalColorOverrides } from './terminal-color-overrides'
 import type { TerminalLayoutSnapshot } from './terminal-tab-types'
 import type { TuiAgent } from './tui-agent'
 
+/** Original provider READY identity; no activity, PTY or execution authority. */
+export type RuntimeTerminalNativeChatSession = { agent: 'codex'; sessionId: string }
+
+export function isRuntimeTerminalNativeChatSession(value: unknown): value is RuntimeTerminalNativeChatSession {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) { return false }
+  const item = value as Record<string, unknown>
+  return item.agent === 'codex' && typeof item.sessionId === 'string' && item.sessionId.length > 0 &&
+    item.sessionId.trim() === item.sessionId && !/[\u0000-\u001f\u007f]/.test(item.sessionId)
+}
+
 export type RuntimeMobileSessionTerminalTab = {
   type: 'terminal'
   id: string
@@ -17,6 +27,7 @@ export type RuntimeMobileSessionTerminalTab = {
   incarnationId?: string | null
   terminalTheme?: RuntimeMobileTerminalTheme
   agentStatus?: AgentStatusEntry | null
+  nativeChatSession?: RuntimeTerminalNativeChatSession
   /** Event-only lead-turn end time for paired clients; never persisted in AgentStatusEntry. */
   turnCompletedAt?: number
   launchAgent?: TuiAgent
