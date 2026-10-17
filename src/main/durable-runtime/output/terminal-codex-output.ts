@@ -20,6 +20,7 @@ export type TerminalCodexReady = Readonly<{
   context: GatewayContext
 }>
 type Record = Readonly<{eventId: string; notification: CodexNativeNotification; sequence?: string; producerKey?: string}>
+type OriginalProducer = Readonly<{binding: ReadyProviderBinding; workload: VerifiedWorkloadIdentity; context: GatewayContext}>
 const deny = (code: string): never => { throw new DurableDatabaseError(`TERMINAL_OUTPUT_${code}`) }
 
 /** Private NFS write-ahead spool. Original records are retained after PG ACK;
@@ -40,6 +41,7 @@ export function createTerminalCodexOutput(input: Readonly<{
   const directoryFd = openSync(directory, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW)
   try { fsyncSync(directoryFd) } finally { closeSync(directoryFd) }
   const records = new Map<string, Record>(), acknowledged = new Set<string>()
+  const originals = new Map<string, OriginalProducer>()
   let failure: unknown, closed = false, pending: Promise<void> | null = null, commits = 0
   function key(event: CodexNativeNotification) { return JSON.stringify([event.connectionId, event.sequence]) }
   function append(value: JsonValue) {
@@ -59,8 +61,8 @@ export function createTerminalCodexOutput(input: Readonly<{
       else { deny('SPOOL_FORMAT') }
     }
   } catch { closeSync(fd); deny('SPOOL_FORMAT') }
-  async function consume(record: Record, ready: TerminalCodexReady) {
-    const binding = ready.binding, w = ready.protection.takePreparedProtection().workloadIdentity
+  async function consume(record: Record, ready: OriginalProducer) {
+    const binding = ready.binding, w = ready.workload
     if (w.attemptId !== binding.attemptId || w.podUid !== binding.podUid || w.executionEpoch !== binding.executionEpoch ||
         ready.context.runtimeUnitId !== binding.runtimeUnitId || ready.context.operationId === undefined) { deny('READY_BINDING') }
     const found = await pool.query<{agent_id: string}>(
@@ -100,11 +102,26 @@ export function createTerminalCodexOutput(input: Readonly<{
   async function run() {
     if (failure) { throw failure }
     const ready = current()
-    if (!ready) { return }
+    if (ready && !originals.has(ready.binding.connectionInstanceId)) {
+      // Capture the genuine authenticated producer once while the original
+      // READY protection owner is held. Historical output is data, not a new
+      // provider effect: do not reacquire a live writer/permit for every line.
+      originals.set(ready.binding.connectionInstanceId, Object.freeze({binding: ready.binding,
+        workload: ready.protection.takePreparedProtection().workloadIdentity,
+        context: Object.freeze({runtimeUnitId: ready.context.runtimeUnitId, operationId: ready.context.operationId,
+          controller: ready.context.controller})}))
+    }
+    if (!ready && originals.size === 0 && records.size === 0) { return }
     for (const [id, record] of records) {
       if (acknowledged.has(id)) { continue }
-      if (record.notification.connectionId !== ready.binding.connectionInstanceId) { deny('ORIGINAL_OWNER_UNAVAILABLE') }
-      await consume(record, ready)
+      const original = originals.get(record.notification.connectionId)
+      if (!original) {
+        // Before first READY the spool is retained; a later unrelated owner
+        // must never authenticate those bytes as its own producer.
+        if (!ready && originals.size === 0) { return }
+        return deny('ORIGINAL_OWNER_UNAVAILABLE')
+      }
+      await consume(record, original)
     }
   }
   function drain(): Promise<void> {

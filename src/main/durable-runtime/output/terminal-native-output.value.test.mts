@@ -13,6 +13,7 @@ import { terminalCodexPayload, parseTerminalCodexEvent } from './terminal-codex-
 import type { ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import type { CommittedJournalEvent } from './model.ts'
 import { agentJournalItemKey } from '../../../shared/agent-session-journal-item-key.ts'
+import type { TerminalCodexReady } from './terminal-codex-output.ts'
 
 // Synthetic native HTTP/PG-independent controls. No real inference or workload proof is asserted.
 const sessionId = randomUUID()
@@ -92,5 +93,34 @@ test('malformed/cross-connection output and unsafe spool ownership fail explicit
   try {
     chmodSync(root, 0o755)
     assert.throws(() => createTerminalCodexOutput({pool: {} as Pool, spoolDirectory: root, current: () => null}), /SPOOL_OWNER/)
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
+
+test('historical spool data retains the original authenticated producer after its live owner closes', async () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'orca-terminal-output-history-'))
+  chmodSync(root, 0o700)
+  const original = binding('fixture-original-connection')
+  let live = true, takeCount = 0, queryCount = 0
+  const ready = {binding: original, context: {runtimeUnitId: original.runtimeUnitId,
+    operationId: randomUUID(), controller: {scope: 'synthetic', owner: 'synthetic', term: '1'}},
+  protection: {takePreparedProtection() {
+    takeCount++; assert.equal(live, true, 'must not reacquire expired execution protection for historical output')
+    return {workloadIdentity: {attemptId: original.attemptId, podUid: original.podUid,
+      executionEpoch: original.executionEpoch, incarnation: 'synthetic', producerId: randomUUID(),
+      principalRef: 'synthetic', authenticationEvidenceRef: 'synthetic'}}
+  }}} as TerminalCodexReady
+  const pool = {async query() { queryCount++; throw new Error('HISTORICAL_PG_UNAVAILABLE') }} as unknown as Pool
+  const output = createTerminalCodexOutput({pool, spoolDirectory: root, current: () => live ? ready : null})
+  try {
+    await output.drain(); assert.equal(takeCount, 1)
+    live = false
+    output.onNativeNotification(event(1, 'item/completed', {threadId: 'fixture-native-thread',
+      turnId: 'late-turn', item: {id: 'late-item', type: 'agentMessage', text: 'historical fixture bytes'}}))
+    await assert.rejects(output.drain(), /HISTORICAL_PG_UNAVAILABLE/)
+    assert.equal(takeCount, 1); assert.equal(queryCount, 1)
+    assert.equal(output.snapshot().failed, true); assert.equal(output.snapshot().pending, 1)
+    const saved = JSON.parse(readFileSync(path.join(root, 'codex-notifications.jsonl'), 'utf8').trim())
+    assert.equal(saved.record.notification.params.item.text, 'historical fixture bytes')
+    await assert.rejects(output.close(), /HISTORICAL_PG_UNAVAILABLE/)
   } finally { rmSync(root, {recursive: true, force: true}) }
 })
