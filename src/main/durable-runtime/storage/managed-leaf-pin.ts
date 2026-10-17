@@ -136,7 +136,7 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
         if (raw[0] === 3 && !releaseRequested) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
         if (acquired) {
           if (raw[0] === 1 && (!releaseRequested && stream.text !== heldOutput ||
-              releaseRequested && !(heldOutput + 'ORCA_MANAGED_LEAF_PIN_RELEASED\n').startsWith(stream.text))) {
+              releaseRequested && !`${heldOutput}ORCA_MANAGED_LEAF_PIN_RELEASED\n`.startsWith(stream.text))) {
             throw new ManagedLeafCollectorError('EXEC_PROTOCOL')
           }
           return
