@@ -7,7 +7,8 @@ import { lockAggregates } from '../db/locks.ts'
 import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
 import type { CodexColdLaunch } from '../providers/codex/driver.ts'
-import type { ProviderBinding, ProviderColdRequest, ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
+import type { ProviderBinding, ProviderColdRequest, ProviderDispatchRequest, ProviderDispatchResult,
+  ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
 import type { CommandClaim, GatewayContext } from './gateway/types.ts'
 import { settleInitialEnsureAssigned } from './initial-provider-command-settlement.ts'
@@ -40,6 +41,7 @@ export type InitialCodexExecutorConfiguration = Readonly<{
     nativeOptions: Readonly<Record<string, string>>
   }>>
   sink: ProviderObservationSink
+  onReady?(): void
 }>
 const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIAL_CODEX_${suffix}`) }
 
@@ -50,18 +52,33 @@ const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIA
 export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExecutorConfiguration) {
   const selected = immutableSnapshot({ sessionId: original.sessionId, planDigest: original.planDigest, emptyFolder: original.emptyFolder })
   const deployment = original.deployment.bind(original), sink = original.sink.bind(original)
+  const onReady = original.onReady?.bind(original)
   const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
   let used = false, phase = 'UNUSED'
   let writerActivated = false
   let protection: ReturnType<typeof createInitialProviderProtection> | null = null
   let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
   let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
+  async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest): Promise<ProviderDispatchResult> {
+    const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
+    const native = ready, activeDriver = driver, owner = readyProtection, controller = readyContext?.controller
+    if (!native || !activeDriver || !owner || !controller || !activeDriver.ownsReadyBinding(native) ||
+        context.runtimeUnitId !== native.runtimeUnitId || context.controller.scope !== controller.scope ||
+        context.controller.owner !== controller.owner || context.controller.term !== controller.term) { return deny('DISPATCH_OWNER') }
+    // SQL staging/operation/claim and observation belong to the input owner.
+    // This seam owns only the same held physical lifetime and original driver.
+    const effect = createProviderEffectPermit(borrowed, context, { kind: 'DISPATCH', binding: native,
+      commandClaim: request.commandClaim, messageId: request.sealed.messageId, deliveryAttemptId: request.deliveryAttemptId,
+      sealedRevision: request.sealed.sealedRevision, sealedPayloadHash: request.sealed.payloadHash,
+      contextRevision: request.context.revision, contextHash: request.context.hash }, owner)
+    return activeDriver.dispatch(request, effect.permit)
+  }
   return Object.freeze({
     phase: () => phase,
     snapshot: () => Object.freeze({ phase, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext }) : null,
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, dispatch }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
       used = true
@@ -158,6 +175,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           planDigest: selected.planDigest }, native, driver, owner)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
         readyProtection = owner; readyContext = context; ready = native; phase = 'READY'
+        onReady?.()
       } catch (error) {
         phase = 'RETAINED_UNCONFIRMED'
         throw error
