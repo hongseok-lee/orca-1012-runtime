@@ -127,7 +127,7 @@
     "visibleText": "Update desktop Orca to stream browser tabs on mobile.",
     "desiredResourcesVisuallyConfirmed": false
   },
-  "usageCreditsStreamOriginalError": "미관측",
+  "usageCreditsStreamOriginalError": "usage limit/credits/모델 stream 중단은 미관측입니다.",
   "browserRecovery": {
     "correctionSourcePin": "59fb3277",
     "condition": "Node execve closed CDP FD3; shell-parent exec preserves it with existing Node scope/argv guards.",
@@ -167,5 +167,67 @@
       "desiredResourcesVisuallyConfirmed": false
     },
     "repeatUnchangedViewer": false
+  },
+  "finalExpo": {
+    "status": "observed",
+    "startedAt": "2026-10-17T03:33:59.279Z",
+    "finishedAt": "2026-10-17T03:36:33.468Z",
+    "pid": 12891,
+    "generation": 4,
+    "runtimePID": 21338,
+    "orcadSHA256": "095f7e4c7b61e0abf04ebeb46e832a03df6ae71d1b79449667b31d3335a17c0c",
+    "wholeCheckoutGitProven": false,
+    "desired": {
+      "cpuMilli": "500",
+      "memoryBytes": "536870912",
+      "display": "CPU 500 mCPU · RAM 512.0 MiB"
+    },
+    "observedFields": "admitted/usage/peak/Node/Spot은미관측으로표시됩니다.",
+    "actions": {
+      "opsReloadClicks": 1,
+      "summaryTaps": 1,
+      "detailTaps": 1,
+      "upDrags": 0
+    },
+    "PNGCount": 1,
+    "authUnchanged": true,
+    "contextClosed": true,
+    "browserClosed": true,
+    "cleanup": [
+      {
+        "pid": 12884,
+        "state": "Z",
+        "parentPID": 1,
+        "startTicks": "31162870"
+      },
+      {
+        "pid": 12891,
+        "status": "ENOENT"
+      }
+    ],
+    "screenshot": {
+      "file": "ops-desired-resources-actual-detail-20261017.png",
+      "sha256": "fbaf4f48a3e89174f4e5650ae2ec9a144c9c9bb0e7e6d775d1e0580e8857066d",
+      "bytes": 151577,
+      "width": 390,
+      "height": 844,
+      "actualExpoWeb": true,
+      "nativeIPhone": false,
+      "edited": false
+    },
+    "selectorDiagnostic": {
+      "readyAt": "2026-10-17T03:32:05.574Z",
+      "samePageConfirmed": true,
+      "firstResponseOnly": true,
+      "binaryFrameClaimedByDiagnostic": false,
+      "failureCallsitesObserved": 0,
+      "priorAuthFailureCauseConfirmed": false
+    },
+    "temporaryDiagnostic": {
+      "functionalFixClaimed": false,
+      "finalPRProductDiffContainsDiagnostic": false,
+      "sourceRestoredToOriginalBytes": true,
+      "runtimeRemoval": "다음필요한Terminal/cold게시와원bytes제거packet을합류합니다. 제거만독립재시작하지않습니다."
+    }
   }
 }
