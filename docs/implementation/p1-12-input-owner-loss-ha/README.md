@@ -1,5 +1,8 @@
 # Controller 소멸 후 입력 UNKNOWN의 HA 연결
 
+Backend의 Root 수락 후 원 대상 한정 활성화 1회 결과를 기존 private 파일에서 읽었습니다. 2026-10-17 07:24:16.291 UTC에 runtime 31555가 준비됐고, 07:24:18.270 UTC의 읽기 전용 관측 PID 31736에서 원 command·delivery·Message가 모두 UNKNOWN이며 INPUT_OWNER_LOST 사건은 1개였습니다. 원 operation step/result/deadline과 Unit/attempt/Pod, component/receipt 1개, grant/binding/mount, ledger 23의 보존 대조 불일치는 0개였습니다. firstManagedInitial/structuredOutput/cold/native/send는 비활성·0회입니다. 이는 원 입력의 논리적 불확실성을 보존한 결과이며 provider 미실행·완료·물리 차단 증거가 아닙니다. 정제 근거는 actual-owner-loss-transition.json에 있고 원행/본문/credential은 포함하지 않았습니다.
+
+
 제품 source는 `7c4782be78028e680d2813279bffceb30a43838b`이며 fixture를 포함한 고정 검증 pin은 `575c1b798ca597f7efe9165a43e939b0e2081d36`입니다. PR163의 `f871615f` 위에 쌓은 후속 PR입니다. DB owner-loss transaction은 PR164의 제품 `2d44c8d5e9efa1a19bb27947de59165bd46d08f4`를 별도 읽기 의존으로 사용하며 이 PR에 중복 소유하지 않습니다.
 
 HA pass는 lifecycle planStep 전에 원 INPUT_DELIVERY/dispatchInput의 전용 recovery callback을 호출합니다. HANDLED Unit은 같은 pass의 native 실행 분기로 진행하지 않으며 NOT_APPLICABLE은 LOOKUP_REQUIRED를 유지합니다. UNCERTAIN COMMIT은 기존 stop 정책으로 연결합니다. 새 execution claim/provider proof/WAKE/입력 재전송을 만들지 않습니다.
