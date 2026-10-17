@@ -8,4 +8,4 @@
 
 [원 PG TAP](focused-pg.tap)과 [정제 결과·실제 입력 hash](results.json)를 제공합니다. 원 전체 type log·metafile·DB identity·ledger·행 hash·최초 실패는 비공개 증거에 보존합니다. Credential/실제 execution token/비공개 원행을 게시하지 않습니다.
 
-현재 실제 원 입력이나 서비스 설정은 변경하지 않았습니다. Root가 source와 집중 결과를 검토한 뒤 Backend 단일 writer가 한정 활성화합니다. 이번 UI는 미확인이며 합성 controller fixture/실제 PG 성공은 provider 실행·물리 종료·완전한 HA 검증이 아닙니다.
+Root source/집중 결과 수락 뒤 Backend 단일 writer가 원 대상의 inputRecoveryTarget만 활성화했습니다. `2026-10-17T07:24:18.270Z`의 별도 read-only snapshot에서 원 command·delivery·Message가 모두 UNKNOWN이고 INPUT_OWNER_LOST 사건 1개임을 확인했습니다. 원 receipt 1개·ledger 23과 Unit/operation/attempt/Pod/grant/binding/mount/component 보존 불일치는 0입니다. FirstManagedInitial·structuredOutput·cold resume·input send는 비활성입니다. 이번 UI는 미확인이며 provider 완료·미실행·물리 종료·완전한 HA 검증은 아닙니다. 이 증거 회수에서 DB 조회나 검증을 재실행하지 않았습니다.

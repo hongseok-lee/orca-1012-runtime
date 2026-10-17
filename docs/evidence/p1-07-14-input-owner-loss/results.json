@@ -233,10 +233,54 @@
     "nativeCalls": 0,
     "newExecutionClaims": 0,
     "providerProofIssued": 0,
-    "actualOriginalInputMutation": 0,
-    "serviceConfigurationChanged": false,
+    "actualOriginalInputMutation": "Backend의 정상 원 대상 한정 제품 transaction으로 UNKNOWN 기록",
+    "serviceConfigurationChanged": "Backend의 원 대상 한정 inputRecoveryTarget만 활성화",
     "actualUIObserved": false,
     "fullHAQualified": false
   },
-  "usageCreditsStream": "이번 turn에서 직접 관측한 오류가 없습니다."
+  "usageCreditsStream": "이번 turn에서 직접 관측한 오류가 없습니다.",
+  "actualActivation": {
+    "observedAt": "2026-10-17T07:24:18.270Z",
+    "reportedBy": "Backend 단일 writer의 원 대상 한정 활성화와 별도 read-only snapshot입니다.",
+    "states": {
+      "command_state": "UNKNOWN",
+      "delivery_state": "UNKNOWN",
+      "message_state": "UNKNOWN",
+      "step": "INPUT",
+      "result": null,
+      "deadline_at": null
+    },
+    "ownerLossEventCount": 1,
+    "reasonCode": "INPUT_OWNER_LOST",
+    "originalReceiptCount": 1,
+    "ledger23Preserved": true,
+    "preservationMismatches": [],
+    "preservedScope": [
+      "Unit",
+      "operation step/result/deadline",
+      "attempt",
+      "Pod",
+      "execution/write grants",
+      "binding/mount",
+      "components",
+      "original receipt",
+      "ledger23"
+    ],
+    "readyAt": "2026-10-17T07:24:16.291Z",
+    "runtime": {
+      "watchPID": 31511,
+      "runtimePID": 31555,
+      "bundleHash": "40779a36e0c273aa1bee7dfa6157a6ba7afb5a7383e03e1821a8f7db8e54a91e",
+      "orcadSHA256": "0dcdf61f7182c0185aeef5ea8b3dda5452aea34f1fcf7f7c543b061450795212",
+      "wholeCheckoutGitProven": false
+    },
+    "flags": {
+      "firstManagedInitial": false,
+      "structuredOutput": false,
+      "coldResumed": false,
+      "inputSent": false
+    },
+    "scope": "원 대상의 정상 제품 transaction으로 UNKNOWN을 기록했습니다. 원 provider 요청/재전송/새 claim을 발급하지 않았으며 provider 완료·미실행·종료 증명은 아닙니다. Client UNKNOWN 화면은 아직 이 증거에 포함하지 않았습니다.",
+    "newDBOrCollectorRunsByDBWorker": 0
+  }
 }
