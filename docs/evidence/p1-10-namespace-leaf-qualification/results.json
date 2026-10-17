@@ -1,0 +1,347 @@
+{
+  "sourcePin": "ccd94589c4c67e8038aa0c7721c526ff403d657c",
+  "base": "c18e210f06548fed2a7dcf5c20c62707290c72be",
+  "productPin": "3048aea55757522c55e80c698e0fce3d2a4af14e",
+  "scope": "동일 namespace에서 qualification file digest와 namespaceDigest를 분리했습니다.",
+  "owned": [
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-binding-owner-profile.ts",
+      "mode": "100644",
+      "blob": "a449cdac4f87350bafa21ef84b2535ae80db3c51",
+      "sha256": "cb438dafaaa3ab08c508a83d936910cfe9501fe099a68bc602d5eb714884313f",
+      "bytes": 7411
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-binding-owner.ts",
+      "mode": "100644",
+      "blob": "cdc603ef4decf100e3f2ede29448c154e6f27992",
+      "sha256": "8043dd8db1c58cd90c481ef20bf2f97ae642203d693fe5aeaf3bd6526968dbf3",
+      "bytes": 17597
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-initial-owner.ts",
+      "mode": "100644",
+      "blob": "660499482937aaf3888e154df81e61c3323ee9bd",
+      "sha256": "b25a41d7f49872041f30ccacc9223727674eae79800f6906de55edc1d9d6fc3a",
+      "bytes": 15645
+    },
+    {
+      "path": "src/main/durable-runtime/storage/initial-directory-revalidation-guard.ts",
+      "mode": "100644",
+      "blob": "fc86591be3776dfa2777fc17caeea6a781612249",
+      "sha256": "2be7638cfc3531afdaa492472e5277699f3ac814e0b088bef2f41e5e2528241e",
+      "bytes": 18750
+    },
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.ts",
+      "mode": "100644",
+      "blob": "94ae5eee415afd64f9d67f7c8a6aca2031f4e3bc",
+      "sha256": "6e5ba2a1d473d296276d08ea0fc06e2464b225f4759260f860c61b5c4fe71226",
+      "bytes": 10244
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-leaf-qualification.pg.test.mts",
+      "mode": "100644",
+      "blob": "9b50b95f3be450010bfb9aee3ae0d4bb791ab95e",
+      "sha256": "57008c055cef9c6517a6a9d601929ebb58929170735127cde93d666bf398c69e",
+      "bytes": 20394
+    }
+  ],
+  "validation": {
+    "sourceLint": "최초 fixture prefer-template 2건 실패 후 출력 동등 교정 및 변경 fixture 통과",
+    "type": "최초 fixture Uint8Array/Buffer shape 6건 실패 후 CA bytes 동등 교정 및 전체 scoped exit 0",
+    "typeSourceCount": 59,
+    "typeExternalPathCount": 211,
+    "typeMismatches": [],
+    "bundleInputCount": 45,
+    "bundleMismatches": [],
+    "pg": {
+      "callbacks": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "startedAt": "2026-10-17T05:16:38.912Z",
+    "endedAt": "2026-10-17T05:16:43.202Z",
+    "originalRows": 252,
+    "preservedTables": 35,
+    "originalRowsPreserved": true,
+    "existingLeaseRowsPreserved": true,
+    "ledger23Unchanged": true,
+    "DDL": 0,
+    "install": 0,
+    "live": 0
+  },
+  "sourceInputs": [
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154"
+    },
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "bytes": 2071,
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4"
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "bytes": 6238,
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-holds.ts",
+      "bytes": 17948,
+      "sha256": "036362b4f89526ec48eb0d3fbbb83c6d4eea1a851242fa78132234da10bcffce"
+    },
+    {
+      "path": "src/main/durable-runtime/lifecycle/kubernetes-identity.ts",
+      "bytes": 3952,
+      "sha256": "325498660cd8701a61db1b51539c7e51fc5cb673f7d23ff1fc0eeca1be3b8cd0"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-types.ts",
+      "bytes": 2961,
+      "sha256": "e5c0409b245924cf10516bddd4d8d22b5daaea695cff32ed98ad6592b51f3797"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-config.ts",
+      "bytes": 2955,
+      "sha256": "bade097ecb6f34426095bc8d6df88aee5936ce7b51ff947879e5f175b1521f9c"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-binding-owner-profile.ts",
+      "bytes": 7411,
+      "sha256": "cb438dafaaa3ab08c508a83d936910cfe9501fe099a68bc602d5eb714884313f"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-types.ts",
+      "bytes": 2786,
+      "sha256": "08caac8bf57510770dca3e07dd495c489f6389ad89d80125e1b8cb4eedd5d5fb"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-transport.ts",
+      "bytes": 5290,
+      "sha256": "b8c01a7a4898ce111bb0906cd0a3b3a3f2a8f420324d16b8db0b764d3ca6f835"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-projection.ts",
+      "bytes": 7495,
+      "sha256": "07fffcc8d51d8fa62267cb63009d90520663ab64fe4907d2f7c0e1fea2269632"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-exec.ts",
+      "bytes": 6522,
+      "sha256": "ae55ac8a278b96a8d31c4e85c9bd146978d7e4a83b019e1857a051041259c1fe"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-pod.ts",
+      "bytes": 5907,
+      "sha256": "7a3bd7f12c6a62362e4d2afdee5bc2a21f420de4a4f1b612fb9534c0dfba4ca1"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-resources.ts",
+      "bytes": 3429,
+      "sha256": "1186f0a2c8cae608f91767fb3dd1c9b02af2f7cccaf3887f46a2bc8a711e1ac0"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/canonical.ts",
+      "bytes": 5525,
+      "sha256": "103c02dfd061296ef43ce4b87525043ff5ef6deeaaab2b4ca12e29d789028dc6"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-canonical.ts",
+      "bytes": 1944,
+      "sha256": "4b12167177322b89f43326cbf87bd06b5edc6c64ff85bd123cd72d37620e3e79"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-output.ts",
+      "bytes": 4552,
+      "sha256": "0dc0a6ea07275a82c08b526035791e0a069437036215f16d42ba983b2904640d"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector.ts",
+      "bytes": 6132,
+      "sha256": "0bd156be3afc3869a4610544cffe69450be7823011dc4eb0a720c18750185e5f"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/prepared-directory-observation.ts",
+      "bytes": 10244,
+      "sha256": "6e5ba2a1d473d296276d08ea0fc06e2464b225f4759260f860c61b5c4fe71226"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification.ts",
+      "bytes": 6428,
+      "sha256": "25d74495545f81be0e846994d439fa441098acd9db67e01c25f3bf7bbc6b4fe2"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/store.ts",
+      "bytes": 24123,
+      "sha256": "d8bc3dc1696ab6e78c08993193ef21362110e744fc5a565e50c0f7f51019401f"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/binding-verification-transaction.ts",
+      "bytes": 7412,
+      "sha256": "176e03537edcffc3e9e3077c89e05039fdb6c2e93f4d539a99d3cded51e75525"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-credential.ts",
+      "bytes": 8472,
+      "sha256": "ed2e58571986dbd3973d2b1da79e4a4b7eb4799ed385c1ceaa0adf1c1dd1e877"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-observation-identity.ts",
+      "bytes": 1835,
+      "sha256": "369f60a60b09be736ea6ef700b5edda1fc372ed328dbf729ff6329bfbca12670"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-observation-source.ts",
+      "bytes": 2226,
+      "sha256": "02a799cd2635a6de8774f7886112bd19dc0d23d856ed8f717149735bfae53c7c"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-binding-owner.ts",
+      "bytes": 17597,
+      "sha256": "8043dd8db1c58cd90c481ef20bf2f97ae642203d693fe5aeaf3bd6526968dbf3"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "bytes": 5150,
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+      "bytes": 2182,
+      "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-policy.ts",
+      "bytes": 7365,
+      "sha256": "575f1607631fe6c47f484b06e3145ccba2054468d77570fa7d85a5826ebfed8f"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/closed-agent-bootstrap.ts",
+      "bytes": 839,
+      "sha256": "80dd23ef568c8a433f0326f60fc6382d0509b9465162699c4ea4217546423ccf"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan.ts",
+      "bytes": 9736,
+      "sha256": "465d8ff7af8dee9615286aef2f3ac0136919cbb2dfe7bb4d7e5bb1d38286ba0e"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/agent-pod-plan-records.ts",
+      "bytes": 15693,
+      "sha256": "82ffcdb1ac932d18f628bbd2fb2bf12e673b39adcc7d8c486f4ef24b8b4b644a"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+      "bytes": 9729,
+      "sha256": "778330564d02ec4835fcd7734f0116ddce748afd10490b2c494857d82b19b623"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/initial-agent-directory-context.ts",
+      "bytes": 9807,
+      "sha256": "b97b3cb14e176a5979a1a99c893e7632ad8776f4feaa120cdc9f61e71b9cbd0c"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/initial-directory-revalidation-guard.ts",
+      "bytes": 18750,
+      "sha256": "2be7638cfc3531afdaa492472e5277699f3ac814e0b088bef2f41e5e2528241e"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-attempt.ts",
+      "bytes": 13255,
+      "sha256": "7d0444c4cda440f411b931f46b0cbdf4f1d46c6b8b53a14d7c4bffdadee69dda"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/initial-agent-attempt-transaction.ts",
+      "bytes": 11089,
+      "sha256": "f13e6182bfb7cc8fe4f5f86af7246489a4305a0ca6aa5bcbf9dd0e7fd900ec58"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-initial-owner.ts",
+      "bytes": 15645,
+      "sha256": "b25a41d7f49872041f30ccacc9223727674eae79800f6906de55edc1d9d6fc3a"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/kubernetes-pod-auth-fixtures.mts",
+      "bytes": 5129,
+      "sha256": "ba134dacea911c09020ee4c8f1a28fdf60ac40427fb4a34e9a3564b7b0a1ec82"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/managed-leaf-collector-fixtures.mts",
+      "bytes": 7156,
+      "sha256": "966ec7fbcb66c791300bb6e9784f6ac870c910178449f25644791450ce5156d1"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-binding-owner-fixtures.mts",
+      "bytes": 3561,
+      "sha256": "b87737fbf604deb4bdc40a6d5b9dcc51f9e81363d16c9666370429fcd0573bf5"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/claim.ts",
+      "bytes": 7342,
+      "sha256": "3c6c91d7ec48131c698c0f1df8fceb7b481219f75ea9b0123a038766c14ad7d4"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/first-managed-initial-fixtures.mts",
+      "bytes": 13860,
+      "sha256": "cd98ca14dbed148691efe5337276f46ae7ca1cc3833d5396e9fee4489b737bfb"
+    },
+    {
+      "path": "src/main/durable-runtime/storage/namespace-leaf-qualification.pg.test.mts",
+      "bytes": 20394,
+      "sha256": "57008c055cef9c6517a6a9d601929ebb58929170735127cde93d666bf398c69e"
+    }
+  ],
+  "wrapper": {
+    "sourceSha256": "57008c055cef9c6517a6a9d601929ebb58929170735127cde93d666bf398c69e",
+    "originalBodySha256": "90e9267c8ec3ac371b5f0dcfcd1dbe99519841e726e1d6323631d1a08d7b59b6",
+    "generatedParent": false,
+    "productCallbacks": 1,
+    "childCases": 0,
+    "assertionsChanged": false
+  },
+  "rawHashes": {
+    "pg.tap": "a44133ec1ad96e9a52e0a61ade8db9f276150f50683e5e6080e2be0eb4dced71",
+    "pg.metafile.json": "38d1b62686d8d2feacb1a0175a28f635d1ecde5f6372fae4a5b1ffdac6e4eb6d",
+    "pg.actual-inputs.json": "d879452f96abd1ef97752e9eea17f22b394ca0a6d1f24968d15b53bb6b92c650",
+    "actual-type-inputs.json": "7e362a143ee1f38f33f2eb51ee72f273602e944c89f268743568608b1131c787",
+    "before-pg.json": "c593ab353727d5805af0fae22f19a2f793847f45f176a90f25d00c9291cdd025",
+    "database-end.json": "9d28385dad73f6a9ac670dcb0720c59454f089166adce8641630f43bd86743ea",
+    "fixture-identity.json": "ef9f1090817f04c17306779634b42f95afcc27c8108bf9c342a7e6b9dd61e9b2",
+    "fixture-result.json": "8a685a88fbf492980963dd9f1faf0286c65ac7bbe8c2c96d7c3f634f7aee7e2e",
+    "run-state.json": "801fb9604ab762ef7d34dce1e2b73bc4b4a4f72b30463862d9a5a942ce900bfc"
+  },
+  "proofLimits": {
+    "syntheticHTTPSAndWebSocket": true,
+    "actualProviderAuthentication": false,
+    "physicalPinIssued": false,
+    "writerGrantActivated": false,
+    "providerReady": false,
+    "newUIObserved": false
+  },
+  "usageCreditsStream": "이번 turn에서 직접 관측한 오류가 없습니다.",
+  "actualBackendNamespace": {
+    "at": "2026-10-17T05:22:03.755Z",
+    "pid": 25534,
+    "phase": "ORIGINAL_NAMESPACE_ALREADY_REGISTERED",
+    "namespaceRegisterCalls": 1,
+    "disposition": "ALREADY_REGISTERED",
+    "commitAcknowledged": true,
+    "originalRowsPreserved": true,
+    "ledger23Preserved": true,
+    "namespaceStateChanged": false,
+    "newProfileRegistered": false,
+    "holdAcquired": false,
+    "native": 0,
+    "privateSourceSHA256": "f5a835747ccaf2addb3f62043a37089633b67ba6ac6b9d9585ab133bbc3b521c",
+    "scope": "Backend의 정상 namespace register 1회 결과입니다. DB 집중 PG와 별도 실제 호출이며 binding/cold/physical/provider 합격은 아닙니다."
+  }
+}

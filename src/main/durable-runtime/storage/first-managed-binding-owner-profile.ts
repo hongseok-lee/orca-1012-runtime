@@ -11,7 +11,8 @@ export type FirstManagedBindingReference = Readonly<{ reference: string; sha256:
 export type FirstManagedBindingProfileRecord = Readonly<{
   schemaVersion: 1;
   qualificationRef: string;
-  profile: Readonly<{ profileId: string; datasetName: string; backendId: string; exportId: string; generation: string }>;
+  profile: Readonly<{ profileId: string; datasetName: string; backendId: string; exportId: string; generation: string;
+    namespaceDigest?: string }>;
   leafId: string;
   apiOrigin: string;
   caSha256: string;
@@ -61,7 +62,7 @@ function refs(value: unknown): readonly FirstManagedBindingReference[] {
 }
 
 export function captureFirstManagedBindingProfile(bytes: Uint8Array, expectedDigest: string): Readonly<{
-  record: FirstManagedBindingProfileRecord; digest: string;
+  record: FirstManagedBindingProfileRecord; digest: string; namespaceDigest: string;
 }> {
   try {
     if (!(bytes instanceof Uint8Array) || !bytes.byteLength || bytes.byteLength > 131072) {
@@ -86,7 +87,8 @@ export function captureFirstManagedBindingProfile(bytes: Uint8Array, expectedDig
       apiOrigin: origin.origin, caSha256: digest(input.caSha256),
       profile: Object.freeze({ profileId: logicalId('storage-namespace-profile', text(profile.profileId)),
         datasetName: inventoryNamespace(text(profile.datasetName)), backendId: inventoryOpaque(text(profile.backendId)),
-        exportId: inventoryOpaque(text(profile.exportId)), generation: counter('namespace-generation', text(profile.generation)) }),
+        exportId: inventoryOpaque(text(profile.exportId)), generation: counter('namespace-generation', text(profile.generation)),
+        ...(profile.namespaceDigest === undefined ? {} : { namespaceDigest: digest(profile.namespaceDigest) }) }),
       credential: Object.freeze({ serviceAccountName: inventoryName(text(credential.serviceAccountName)),
         serviceAccountUid: managedLeafUuid(text(credential.serviceAccountUid)) }),
       storage: Object.freeze({ pvcName: inventoryName(text(storage.pvcName)), pvcUid: inventoryOpaque(text(storage.pvcUid)),
@@ -103,7 +105,7 @@ export function captureFirstManagedBindingProfile(bytes: Uint8Array, expectedDig
     if (!/^sha256:[a-f0-9]{64}$/u.test(value.collector.imageDigest)) {
       invalid();
     }
-    return Object.freeze({ record: value, digest: hash });
+    return Object.freeze({ record: value, digest: hash, namespaceDigest: value.profile.namespaceDigest ?? hash });
   } catch (error) {
     if (error instanceof FirstManagedBindingOwnerError) {
       throw error;
