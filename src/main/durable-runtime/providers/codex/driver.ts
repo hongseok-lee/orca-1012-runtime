@@ -4,6 +4,7 @@ import type {
   ProviderAdmissionProof, ProviderRef, ProviderStoppedProof, RuntimeReference
 } from '../../runtime/runtime-evidence.ts'
 import type { VerifiedContextDeliveryProof } from '../../context/types.ts'
+import type { InputDeliveryObservation, ProviderCompletedProof } from '../../input/observation-types.ts'
 import type {
   ProviderColdRequest, ProviderBinding, ReadyProviderBinding, ProviderEffectPermit,
   ProviderDispatchRequest, ProviderDispatchResult, ProviderSubmissionIdentity,
@@ -121,8 +122,14 @@ export class DurableCodexDriver {
       throw error
     }
     if (outcome.effect === 'ADMITTED') {return this.#verifyAdmission(outcome.receipt, identity)}
+    // This driver observed the original owned protocol write outcome become
+    // uncertain. It proves uncertainty only, never admission or permission.
+    const observedAt = new Date().toISOString()
+    const uncertainty = immutableSnapshot({kind: 'INPUT_EFFECT_UNCERTAIN',
+      evidenceRef: `codex:write-outcome-lost:${binding.connectionInstanceId}:${identity.nativeRequestId}`,
+      observedAt, reasonCode: 'WRITE_OUTCOME_LOST', evidenceRefs: []}) as Extract<InputDeliveryObservation, {kind: 'UNKNOWN'}>['uncertainty']
     this.sink(immutableSnapshot({ kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity,
-      observedAt: new Date().toISOString(), reason: 'WRITE_OUTCOME_LOST' }))
+      observedAt, reason: 'WRITE_OUTCOME_LOST', uncertainty }))
     return immutableSnapshot({ state: 'UNKNOWN', identity })
   }
 
@@ -190,7 +197,19 @@ export class DurableCodexDriver {
       this.#verifyAdmission(event.receipt, identity)
     }
     if (event.method === 'turn/completed' && event.terminalStatus === 'completed') {
-      this.sink(immutableSnapshot({ kind: 'COMPLETED', source: 'PROVIDER_PROTOCOL', identity, observedAt: event.observedAt }))
+      // Only the actual protocol-owned receipt for this submission can issue a
+      // completion proof. Preserve the existing admission/stop predicates.
+      if (!this.#protocol.ownsReceipt(event.receipt) ||
+          event.receipt.connectionId !== identity.binding.connectionInstanceId ||
+          event.receipt.threadId !== identity.binding.providerRef.nativeSessionRef ||
+          event.receipt.clientMessageId !== identity.nativeRequestId ||
+          sha256(event.receipt.submission) !== identity.submissionHash) {return}
+      const completed = immutableSnapshot({kind: 'PROVIDER_TARGET_COMPLETED', source: 'PROVIDER_PROTOCOL',
+        evidenceRef: `codex:turn-completed:${event.receipt.connectionId}:${event.receipt.turnId}`,
+        observedAt: event.observedAt, attemptId: identity.binding.attemptId, podUid: identity.binding.podUid,
+        executionEpoch: identity.binding.executionEpoch, messageId: identity.messageId,
+        deliveryAttemptId: identity.deliveryAttemptId, providerRef: this.#nativeRef(event.receipt)}) as ProviderCompletedProof
+      this.sink(immutableSnapshot({ kind: 'COMPLETED', source: 'PROVIDER_PROTOCOL', identity, observedAt: event.observedAt, completed }))
     }
   }
 
