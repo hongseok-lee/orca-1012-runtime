@@ -186,7 +186,7 @@ test('managed pagination separates the real eviction summary from its triggering
   }
   async function page(beforeOffset?: number) {
     const result = await readManagedTerminalNativeChat(config, {...params, ...(beforeOffset === undefined ? {} : {beforeOffset})}, context)
-    assert.equal(result?.kind, 'PAGE'); if (result?.kind !== 'PAGE') { throw Error('EXPECTED_PAGE') }
+    assert.equal(result?.kind, 'PAGE'); if (result?.kind !== 'PAGE') { throw new Error('EXPECTED_PAGE') }
     assert.ok(result.messages.length <= 1); return result
   }
   try {
