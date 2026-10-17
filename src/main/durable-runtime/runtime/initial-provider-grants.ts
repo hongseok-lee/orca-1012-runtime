@@ -135,6 +135,11 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
       mountId: randomUUID(), mountEvidenceRef: mounted.evidence.evidenceRef,
       writer: { grantId: writers.rows[0].id, expectedRevision: writers.rows[0].revision } })
     if (observed.status !== 'APPLIED') { deny('INITIAL_PROVIDER_MOUNT_NOT_ACTIVE') }
+    const providerBinding = await tx.query<{ provider_binding_revision: string }>(`UPDATE durable_runtime.sessions
+      SET provider_binding_revision=provider_binding_revision+1,revision=revision+1
+      WHERE id=$4 AND lifecycle='OPEN' AND provider_binding_revision=0 AND ${currentAuthoritySql}
+      RETURNING provider_binding_revision`, [...auth, input.sessionId])
+    if (providerBinding.rowCount !== 1) { deny('INITIAL_PROVIDER_BINDING_NOT_FRESH') }
     await write(`UPDATE durable_runtime.runtime_units SET phase='REHYDRATING',revision=revision+1
       WHERE id=$4 AND revision=$5 AND phase='PROVISIONING' AND ${currentAuthoritySql} RETURNING id`,
     [input.context.runtimeUnitId, expectedRevision])
@@ -156,7 +161,8 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
       evidenceRefs: [mounted.evidence.evidenceRef as EvidenceRef] })
     await gateway.assertCurrent(); pins()
     return Object.freeze({ gate: 'CLOSED' as const, providerReady: false as const, writerGrantActivated: true as const,
-      unitRevision: String(BigInt(expectedRevision) + 1n), receipt: Object.freeze({
+      unitRevision: String(BigInt(expectedRevision) + 1n), providerBindingRevision: providerBinding.rows[0].provider_binding_revision,
+      receipt: Object.freeze({
         identity: originalIdentity(settled), state: 'RESOLVED' as const, result }) })
   })
   // No release or provider callback here, even when COMMIT was acknowledged.
