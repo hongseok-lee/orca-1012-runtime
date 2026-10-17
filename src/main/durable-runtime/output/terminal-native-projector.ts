@@ -8,13 +8,17 @@ import type { CommittedJournalEvent, OriginalInputComponent } from './model.ts'
 import { jsonObject, JournalReadError } from './model.ts'
 import { decodeCommittedInputBody } from './input-codec.ts'
 import { parseTerminalCodexEvent } from './terminal-codex-event.ts'
+import { canonicalInputJson } from '../input/canonical.ts'
+import type { JsonValue } from '../db/atomic.ts'
 
 /** Pure replay of COMMITTED raw notifications through the original translator.
  * Item identity/ordinal/revisions are the existing native journal identities. */
 export function projectTerminalNativeHistory(sessionId: string, events: readonly CommittedJournalEvent[],
   inputs: readonly OriginalInputComponent[], nativeInputEchoIds: ReadonlySet<string> = new Set()) {
   const items = new Map<string, AgentJournalRenderItem>(), revisions = new Map<string, number>()
+  const offsets = new Map<string, number>()
   let position = 0, observedAt = 0
+  let bytePosition = 0, itemBytePosition = 0
   let lifecycle: NativeChatTurnLifecycle | undefined
   const append = (identity: AgentJournalItemIdentity, body: AgentJournalItemBody, at = observedAt) => {
     const itemId = agentJournalItemKey(identity), previous = items.get(itemId)
@@ -28,6 +32,10 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
     }
     const revision = (revisions.get(itemId) ?? 0) + 1
     revisions.set(itemId, revision)
+    if (!offsets.has(itemId)) {
+      offsets.set(itemId, itemBytePosition++)
+      bytePosition = Math.max(bytePosition, itemBytePosition)
+    }
     items.set(itemId, {itemId, body, revision, sequence: previous?.sequence ?? position, observedAt: previous?.observedAt ?? at})
   }
   const tombstone = (identity: AgentJournalItemIdentity) => {
@@ -51,6 +59,12 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
   try {
     for (const event of events) {
       position = event.sequence; observedAt = Date.parse(event.committedAt)
+      // Managed numeric cursors use canonical committed UTF8 lengths and
+      // per-record item order; they are not provider transcript seek addresses.
+      // Unrendered rows count too; revisions retain the first item position.
+      itemBytePosition = bytePosition
+      bytePosition += Buffer.byteLength(canonicalInputJson(event.body as JsonValue), 'utf8') + 1
+      if (!Number.isSafeInteger(bytePosition)) { throw new JournalReadError('TERMINAL_HISTORY_OFFSET_UNREADABLE') }
       if (event.body === null || typeof event.body !== 'object' || Array.isArray(event.body)) { continue }
       const body = jsonObject(event.body)
       if (body.kind === 'INPUT_SUBMISSION') {
@@ -59,6 +73,8 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
         if (!original || original.submission !== null) { throw new JournalReadError('TERMINAL_HISTORY_INPUT') }
         // The real accepted input identity is never collapsed by text/hash.
         const itemId = `input:${original.inputId}`
+        offsets.set(itemId, itemBytePosition++)
+        bytePosition = Math.max(bytePosition, itemBytePosition)
         items.set(itemId, {itemId, revision: 1, sequence: position, observedAt,
           body: decodeCommittedInputBody(original)})
       } else if (body.kind === 'TERMINAL_CODEX_NOTIFICATION') {
@@ -84,10 +100,9 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
         translator.flush()
       }
     }
-    const ordered = [...items.values()].sort((a, b) => a.sequence - b.sequence)
+    const ordered = [...items.values()].sort((a, b) => offsets.get(a.itemId)! - offsets.get(b.itemId)!)
     const messages = projectStructuredItemsToNativeChat(ordered)
-    const byId = new Map(ordered.map(item => [item.itemId, item.sequence]))
-    return {messages: messages.map(message => Object.freeze({message, offset: byId.get(message.id)!})),
+    return {messages: messages.map(message => Object.freeze({message, offset: offsets.get(message.id)!})),
       ...(lifecycle ? {lifecycle} : {})}
   } finally { for (const translator of translators.values()) { translator.dispose() } }
 }

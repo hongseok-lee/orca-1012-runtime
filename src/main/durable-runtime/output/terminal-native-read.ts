@@ -88,11 +88,7 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
       new Set(echoes.rows.map(row => codexTurnUserItemId(row.thread_id, row.turn_id))))
     const before = params.beforeOffset ?? Number.MAX_SAFE_INTEGER
     const eligible = projected.messages.filter(item => item.offset < before), limit = params.limit ?? 40
-    let start = Math.max(0, eligible.length - limit)
-    // Preserve every message from the boundary record: a numeric beforeOffset
-    // always advances past a whole original committed record, never half of it.
-    while (start > 0 && eligible[start - 1].offset === eligible[start].offset) { start-- }
-    const page = eligible.slice(start)
+    const page = eligible.slice(-limit)
     active()
     return {kind: 'PAGE' as const, headKey, epoch, messages: page.map(item => item.message),
       hasMore: eligible.length > page.length, beforeOffset: page[0]?.offset ?? 0,
