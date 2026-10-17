@@ -183,7 +183,8 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
       qualificationRef: profile.qualificationRef })).digest('hex')}`;
     operation.evidenceRef = evidenceRef;
     const auditInput: PreparedDirectoryObservationInput = Object.freeze({ hold: operation.holdInput, scope: operation.scope,
-      qualificationRef: profile.qualificationRef, observation, evidenceRef });
+      qualificationRef: profile.qualificationRef, observation, evidenceRef,
+      ...(profile.profile.namespaceDigest === undefined ? {} : { qualificationDigest: accepted.digest }) });
     try { operation.audit = await recordObservation(borrowed, auditInput); }
     catch {
       operation.reconciliation = true;
@@ -257,7 +258,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
         }
         return Promise.resolve(result(existing, 'HOLD', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_PIN_ALREADY_ATTEMPTED'));
       }
-      const operation: Operation = { holdInput: Object.freeze({ ...profile.profile, digest: accepted.digest,
+      const operation: Operation = { holdInput: Object.freeze({ ...profile.profile, digest: accepted.namespaceDigest,
         actorId: scope.actorId, pinId, ownerToken }), scope, tokenHash: hash,
         hold: null, audit: null, binding: null, release: null, observationRef: null, evidenceRef: null,
         pinState: 'NOT_ACQUIRED', handedOff: false, releaseEligible: false, releaseAttempted: false, reconciliation: false,
