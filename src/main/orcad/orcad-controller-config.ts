@@ -12,7 +12,7 @@ export type OrcadControllerConfig = Readonly<{
     requestTimeoutMs: number; watchTimeoutSeconds: number; listLimit: number }>
   policy: ControllerWorkerPolicy
   structuredOutput?: Readonly<{ claimDurationMs: number }>
-  firstManagedInitial?: Readonly<{ configFile: string }>
+  firstManagedInitial?: Readonly<{ configFile: string; coldConfigFile?: string }>
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -71,9 +71,12 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const structuredOutput = hasStructuredOutput
     ? Object.freeze({ claimDurationMs: positive(record(input.structuredOutput, ['claimDurationMs']).claimDurationMs, true) })
     : undefined
-  const firstManagedInitial = hasFirstManagedInitial
-    ? Object.freeze({ configFile: absolute(record(input.firstManagedInitial, ['configFile']).configFile) })
-    : undefined
+  let firstManagedInitial: OrcadControllerConfig['firstManagedInitial']
+  if (hasFirstManagedInitial) {
+    const withCold = input.firstManagedInitial !== null && typeof input.firstManagedInitial === 'object' && Object.hasOwn(input.firstManagedInitial, 'coldConfigFile')
+    const fields = record(input.firstManagedInitial, ['configFile', ...(withCold ? ['coldConfigFile'] : [])])
+    firstManagedInitial = Object.freeze({ configFile: absolute(fields.configFile), ...(withCold ? { coldConfigFile: absolute(fields.coldConfigFile) } : {}) })
+  }
   const inventory = record(input.inventory, ['apiOrigin', 'namespace', 'dataset', 'caFile', 'tokenFile',
     'requestTimeoutMs', 'watchTimeoutSeconds', 'listLimit'])
   const policy = record(input.policy, ['lease', 'renewIntervalMs', 'standbyPollIntervalMs', 'passPollIntervalMs', 'maximumWork', 'externalBudgetMs'])

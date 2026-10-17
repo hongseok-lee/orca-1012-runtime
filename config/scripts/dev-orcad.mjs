@@ -34,8 +34,15 @@ export async function startOrcadDev({
   root = defaultRoot,
   args = [],
   onEvent = emit,
-  spawnRuntime = spawn
+  spawnRuntime = spawn,
+  auditToken
 } = {}) {
+  // Explicit first-cold development supply only: anonymous parent pipe ->
+  // owned memory -> child FD 3. Raw credentials never enter env/argv/log/files.
+  if (auditToken !== undefined && (!Buffer.isBuffer(auditToken) || !auditToken.length || auditToken.length > 16384)) {
+    throw new Error('FIRST_COLD_AUDIT_PIPE_INPUT')
+  }
+  const privateAuditToken = auditToken === undefined ? null : Buffer.from(auditToken)
   const outputRoot = join(root, 'out/orcad-dev')
   const stagingOutput = join(outputRoot, '.esbuild')
   const logs = join(homedir(), '.local/state/orca-dev')
@@ -159,9 +166,15 @@ export async function startOrcadDev({
     // Each child uses its immutable generation path, including detached daemon siblings.
     const running = spawnRuntime(process.execPath, [join(dir, 'orcad.js'), ...args], {
       cwd: root,
-      env: { ...process.env, ORCA_VERSION: version, ORCA_APP_VERSION: version },
-      stdio: ['ignore', log, log]
+      env: { ...process.env, ORCA_VERSION: version, ORCA_APP_VERSION: version,
+        ...(privateAuditToken ? { ORCA_DURABLE_AUDIT_TOKEN_FD: '3' } : {}) },
+      stdio: privateAuditToken ? ['ignore', log, log, 'pipe'] : ['ignore', log, log]
     })
+    if (privateAuditToken) {
+      const pipe = running.stdio[3]
+      pipe.on('error', () => event({ event: 'audit_pipe_failed', reason: 'delivery' }))
+      pipe.end(privateAuditToken)
+    }
     child = running
     owner.runtimePid = running.pid ?? null
     updateLock()
@@ -190,6 +203,7 @@ export async function startOrcadDev({
       await serial
       closeSync(log)
       closeSync(lock)
+      privateAuditToken?.fill(0)
       rmSync(lockPath)
       event({ event: 'closed' })
     })()

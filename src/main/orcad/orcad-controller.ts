@@ -108,7 +108,10 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
           if (closing) { return }
           captured.assertCurrentHost()
           if (!ca) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
-          selectedInitial = prepareInitial(config, captured.pool, ca)
+          const auditToken = config.firstManagedInitial.coldConfigFile
+            ? await (await import('./orcad-first-cold-provider.ts')).readFirstColdAuditPipe(config.inventory.requestTimeoutMs) : undefined
+          if (closing) { return }
+          selectedInitial = prepareInitial(config, captured.pool, ca, auditToken)
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }

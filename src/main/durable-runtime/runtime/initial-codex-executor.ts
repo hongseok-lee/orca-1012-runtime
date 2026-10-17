@@ -50,10 +50,13 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   const deployment = original.deployment.bind(original), sink = original.sink.bind(original)
   const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
   let used = false, phase = 'UNUSED'
+  let writerActivated = false
   let protection: ReturnType<typeof createInitialProviderProtection> | null = null
   let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
   return Object.freeze({
     phase: () => phase,
+    snapshot: () => Object.freeze({ phase, writerGrantActivated: writerActivated,
+      providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) ? Object.freeze({ binding: ready, driver, protection }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
@@ -117,6 +120,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           planDigest: selected.planDigest }, owner)
         const grants = activated.database
         if (!grants.ok || grants.commitOutcome !== 'ACKNOWLEDGED' || grants.cleanupFailed) { return deny('GRANT_COMMIT_UNCONFIRMED') }
+        writerActivated = true
         active(); phase = 'RELEASE_GATE_CLAIM'
         const gate = await prepareInitialProviderStep(borrowed, { context, sessionId: selected.sessionId,
           mutationKey: `initial-provider-new-gate:${randomUUID()}`, expectedUnitRevision: counter('row:runtime-unit', grants.value.unitRevision),
