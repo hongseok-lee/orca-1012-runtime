@@ -19,8 +19,8 @@
   "previousTerminalProductFilesPreserved": 14,
   "fixtureFilesPublished": 0,
   "terminalIntakeAPIExecuted": false,
-  "actualSetTabPropsAPIExecuted": false,
-  "reason": "Backend published corrected mode metadata with temporary browser trace removal. Fresh managed Chat selector and actual authenticated intake remain pending.",
+  "actualSetTabPropsAPIExecuted": true,
+  "reason": "Normal authenticated Chat metadata update and exact stored state confirmed for a newly created Session. Provider READY/input/output remain unconfirmed.",
   "previousPublication": {
     "at": "2026-10-17T02:54:07.180Z",
     "phase": "TERMINAL14_BROWSER_WRAPPER_NEW_READY",
@@ -42,5 +42,6 @@
     "fixtureFilesPublished": 0,
     "terminalIntakeAPIExecuted": false,
     "reason": "Existing inspected logical handle belongs to shell and has no explicit Chat mode; a verified managed Chat target is pending."
-  }
+  },
+  "actualMetadataArtifact": "actual-chat-mode-metadata.json"
 }
