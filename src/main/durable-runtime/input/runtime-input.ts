@@ -32,8 +32,17 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
   }})
   const current = host.current.bind(host), notify = onNotice
   const waiting = new Map<string, CommittedTerminalInput>(), seen = new Set<string>()
+  const consumedMessages = new Set<string>(), blockedMessages = new Set<string>()
   const submissions = new Map<string, Submission>()
-  let tail = Promise.resolve(), closed = false
+  let tail = Promise.resolve(), closed = false, launching = false, active: Submission | null = null
+  const messageKey = (input: CommittedTerminalInput): string => JSON.stringify([input.authority.sessionId, committedInputTarget(input).messageId])
+  const consumeMessage = (input: CommittedTerminalInput): void => {
+    const key = messageKey(input)
+    consumedMessages.add(key)
+    for (const [receiptKey, pending] of waiting) {
+      if (messageKey(pending) === key) { waiting.delete(receiptKey) }
+    }
+  }
   const notice = (phase: RuntimeNotice['phase'], code?: string): void => {
     try { notify(Object.freeze({phase, ...(code ? {code} : {})})) } catch { /* Telemetry cannot change a durable outcome. */ }
   }
@@ -50,6 +59,7 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
     const stagedOutcome = await runDurableTransaction(pool, tx => stageTerminalRuntimeInput(tx, input, port))
     if (!stagedOutcome.ok) { throw stagedOutcome.error }
     const staged = stagedOutcome.value
+    consumeMessage(input)
     if (staged.disposition !== 'STAGED') { notice('RETAINED', 'TERMINAL_RUNTIME_LOOKUP_ONLY'); return }
     notice('STAGED')
     assertReady(port)
@@ -59,25 +69,38 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
     if (!request) { notice('RETAINED', 'TERMINAL_RUNTIME_NOT_CLAIMABLE'); return }
     notice('CLAIMED')
     // Register before native I/O because admission can arrive within dispatch.
-    submissions.set(request.deliveryAttemptId, {input, port, staged, request})
+    const submission = {input, port, staged, request}
+    submissions.set(request.deliveryAttemptId, submission)
+    active = submission
     assertReady(port)
     const result = await port.dispatch(staged.context, request, async tx => {
       assertReady(port)
       await assertTerminalExecutionOrigin(tx, input)
       assertReady(port)
     })
-    if (result.state === 'UNSUPPORTED') { notice('RETAINED', 'TERMINAL_RUNTIME_PROVIDER_UNSUPPORTED') }
+    if (result.state === 'UNSUPPORTED') {
+      active = null
+      notice('RETAINED', 'TERMINAL_RUNTIME_PROVIDER_UNSUPPORTED')
+    }
     // Only the original driver sink proves ADMITTED/COMPLETED/UNKNOWN. A return
     // value or dispatch exception never synthesizes an observation or retry.
   }
   const pump = (): void => {
-    if (closed) { return }
+    if (closed || launching || active) { return }
     const port = current()
     if (!port) { return }
     for (const [key, input] of waiting) {
       if (input.authority.sessionId !== port.binding.sessionId) { continue }
-      waiting.delete(key)
-      enqueue(() => execute(input, port))
+      const target = messageKey(input)
+      if (consumedMessages.has(target)) { waiting.delete(key); continue }
+      if (blockedMessages.has(target)) { continue }
+      launching = true
+      enqueue(async () => {
+        try { await execute(input, port) }
+        catch (error) { blockedMessages.add(target); throw error }
+        finally { launching = false; if (!active) { pump() } }
+      })
+      break
     }
   }
   const committed = (original: CommittedTerminalInput): void => {
@@ -95,6 +118,7 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
     }
     const key = JSON.stringify(input.receipt.key)
     if (seen.has(key)) { return }
+    if (consumedMessages.has(messageKey(input))) { seen.add(key); return }
     seen.add(key); waiting.set(key, input); notice('QUEUED'); pump()
   }
   const observe = (original: ProviderObservation): void => {
@@ -120,6 +144,12 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
       })
       if (!stored.ok) { throw stored.error }
       notice('OBSERVED')
+      if ((delivery.kind === 'SETTLED' || delivery.kind === 'INTERRUPTED') && !stored.value.conflict && active === pending) {
+        // Admission only acknowledges the request. The next native turn starts
+        // after this original terminal observation has actually committed.
+        active = null
+        pump()
+      }
       // Historical observation survives loss of the old controller's settlement
       // authority. Only the original live owner may settle its command, separately.
       const settled = await runDurableTransaction(pool, async tx => {

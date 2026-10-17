@@ -85,6 +85,15 @@ export async function stageTerminalRuntimeInput(tx: DurableTransaction, input: C
   const attachment = await tx.query(`SELECT a.input_id FROM durable_runtime.input_attachments a
     JOIN durable_runtime.input_components i ON i.id=a.input_id WHERE i.message_id=$1 LIMIT 1`, [target.messageId])
   if (attachment.rowCount) { throw new InputStoreError('TERMINAL_RUNTIME_ATTACHMENTS_NOT_CONNECTED') }
+  const pending = (await tx.query<{revision: string; intake_status: string; cancel_revision: string}>(
+    'SELECT revision,intake_status,cancel_revision FROM durable_runtime.messages WHERE id=$1 AND session_id=$2 FOR UPDATE',
+    [target.messageId, input.authority.sessionId])).rows[0]
+  if (!pending || pending.intake_status !== 'DURABLE' || pending.cancel_revision !== '0') {
+    throw new InputStoreError('TERMINAL_RUNTIME_MESSAGE_NOT_PENDING')
+  }
+  // The receipt identifies its original Component/Message, not a forever-current
+  // seal revision. Include every accepted Component of this locked Message.
+  const pendingRevision = counter('message-revision', pending.revision)
   const operationId = logicalId('operation', randomUUID()), deliveryAttemptId = logicalId('delivery-attempt', randomUUID())
   const controller = ready.context.controller
   const inserted = await tx.query(`INSERT INTO durable_runtime.operations
@@ -101,7 +110,7 @@ export async function stageTerminalRuntimeInput(tx: DurableTransaction, input: C
     stepRevision: counter('step-revision', '0'), executionEpoch: binding.executionEpoch,
     intentRevision: target.intentRevision, podTarget: 'EXISTING_POD', expectedPodUid: binding.podUid})
   const sealed = await sealInputMessageInTransaction(tx, {authority: input.authority,
-    messageId: target.messageId, expectedRevision: target.messageRevision})
+    messageId: target.messageId, expectedRevision: pendingRevision})
   const stage = command(envelope, 'stageInput', {messageId: target.messageId, sealedRevision: sealed.sealedRevision,
     payloadHash: sealed.payloadHash, deliveryAttemptId, contextRevision: runtime.context_revision,
     bodyRef: `input-component:${target.inputId}`})

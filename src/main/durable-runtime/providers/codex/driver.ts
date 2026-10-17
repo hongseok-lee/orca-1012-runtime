@@ -32,6 +32,7 @@ export class DurableCodexDriver {
   #receipts = new Map<string, CodexNativeReceipt>()
   #proofs = new Map<string, Extract<ProviderDispatchResult, { state: 'ADMITTED' }>>()
   #completed = new Set<string>()
+  #nativeEntered = new Set<string>()
 
   constructor(dependencies: CodexProtocolDependencies, private readonly sink: ProviderObservationSink) {
     const open = dependencies.open.bind(dependencies)
@@ -39,7 +40,9 @@ export class DurableCodexDriver {
       open: (launch, handlers) => open(launch, {...handlers, onExit: error => {
         handlers.onExit?.(error)
         for (const identity of this.#submissions.values()) {
-          if (!this.#completed.has(identity.nativeRequestId)) { this.#uncertain(identity, 'CONNECTION_LOST') }
+          if (this.#nativeEntered.has(identity.nativeRequestId) && !this.#completed.has(identity.nativeRequestId)) {
+            this.#uncertain(identity, 'CONNECTION_LOST')
+          }
         }
       }}), onEvent: (event) => {
       dependencies.onEvent?.(event)
@@ -128,11 +131,16 @@ export class DurableCodexDriver {
         messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId,
         sealedRevision: identity.sealedRevision, sealedPayloadHash: identity.sealedPayloadHash,
         contextRevision: identity.contextRevision, contextHash: identity.contextHash
-      }, () => this.#protocol.dispatch(actual))
+      }, () => {
+        this.#nativeEntered.add(nativeRequestId)
+        return this.#protocol.dispatch(actual)
+      })
     } catch (error) {
       // Busy is a known refusal before native I/O, not an UNKNOWN submission.
-      if (error instanceof CodexConnectionBusyError && this.#submissions.get(nativeRequestId) === identity) {
+      if ((!this.#nativeEntered.has(nativeRequestId) || error instanceof CodexConnectionBusyError) &&
+          this.#submissions.get(nativeRequestId) === identity) {
         this.#submissions.delete(nativeRequestId)
+        this.#nativeEntered.delete(nativeRequestId)
       }
       throw error
     }

@@ -38,7 +38,7 @@ await test('committed Terminal execution keeps original lineage across close, re
   assert.equal(ledger.length, 19)
   t.diagnostic(JSON.stringify({phase: 'same-pool-identity', ...identity, ledger: ledger.length}))
 
-  async function setup(unknown = false) {
+  async function setup(unknown = false, refuseBeforeEffect = false) {
     const f = await fixture(pool, 'RUNNING'), sessionId = f.request.authority.sessionId
     const runtimeUnitId = logicalId('runtime-unit', f.unitId), operationId = logicalId('operation', randomUUID())
     const attemptId = logicalId('attempt', randomUUID()), podUid = `synthetic-runtime-${attemptId}` as PodUid
@@ -79,7 +79,7 @@ await test('committed Terminal execution keeps original lineage across close, re
       return {pid: undefined, closed: false, notify() {}, respond() {}, respondWithError() {}, close: async () => true,
         request: async method => {
           if (method === 'thread/start') { return {thread: {id: `synthetic-thread:${sessionId}`}} }
-          if (method === 'turn/start') { nativeCalls++; return unknown ? {} : {turn: {id: `synthetic-turn:${sessionId}`}} }
+          if (method === 'turn/start') { nativeCalls++; return unknown ? {} : {turn: {id: `synthetic-turn:${sessionId}${nativeCalls === 1 ? '' : `:${nativeCalls}`}`}} }
           return {}
         }}
     }, receiptWaitMs: 1}, observation => {observations.push(observation); coordinator.observe(observation)})
@@ -106,7 +106,10 @@ await test('committed Terminal execution keeps original lineage across close, re
         })
         assert.equal(guarded.ok, true)
         assert.notEqual(deliveryContext.operationId, operationId)
-        return driver.dispatch(request, {invoke: async (_effect, work) => work()})
+        return driver.dispatch(request, {invoke: async (_effect, work) => {
+          if (refuseBeforeEffect) { throw new Error('synthetic permit rejected before native callback') }
+          return work()
+        }})
       }})
     const owner = new TerminalConnectionOwner(), device = randomUUID(), fingerprint = 'c'.repeat(64)
     owner.register('original', device)
@@ -117,17 +120,19 @@ await test('committed Terminal execution keeps original lineage across close, re
     const handler = createCatalogTerminalSendRpc(config, input => {commits.push(input); coordinator.committed(input)})
     const key = randomUUID(), params = {terminal: f.terminalHandle, text: 'synthetic original runtime input', enter: true}
     const send = () => handler(params, {...socket, requestId: key}, () => {throw new Error('unexpected legacy')})
+    const sendNew = (text: string) => handler({...params, text}, {...socket, requestId: randomUUID()}, () => {throw new Error('unexpected legacy')})
     await send()
     assert.equal(commits.length, 1)
     assert.equal(nativeCalls, 0, 'intake ACK cannot wait for READY or provider effect')
-    return {coordinator, send, commits, notices, observations, sessionId, runtimeUnitId, operationId, originalOperation, tab,
+    return {coordinator, send, sendNew, commits, notices, observations, sessionId, runtimeUnitId, operationId, originalOperation, tab,
       controller, get nativeCalls() {return nativeCalls}, start: () => {active = port; coordinator.ready()},
       close: () => owner.invalidate('original'), notify: (method: string, params: unknown) => handlers.onNotification?.(method, params),
       exit: () => handlers.onExit?.(new Error('synthetic connection loss'))}
   }
 
   const closeOnly = process.env.ORCA_TERMINAL_RUNTIME_PHASE === 'CLOSE_ONLY'
-  if (!closeOnly) {
+  const queuedOnly = process.env.ORCA_TERMINAL_RUNTIME_PHASE === 'QUEUED_MERGED_ONLY'
+  if (!closeOnly && !queuedOnly) {
   const first = await setup()
   await first.send()
   assert.equal(first.commits.length, 1, 'receipt replay does not notify or dispatch')
@@ -162,13 +167,48 @@ await test('committed Terminal execution keeps original lineage across close, re
   assert.equal(lost.nativeCalls, 1, 'UNKNOWN is retained, never automatically resent')
   }
 
+  if (!queuedOnly) {
   const closed = await setup()
   await pool.query("UPDATE durable_runtime.tabs SET lifecycle='CLOSED',closed_at=clock_timestamp() WHERE id=$1", [closed.tab.id])
   closed.start(); await closed.coordinator.drain()
   assert.equal(closed.nativeCalls, 0)
   assert.equal((await pool.query("SELECT count(*)::int AS n FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND kind='INPUT_DELIVERY'", [closed.runtimeUnitId])).rows[0].n, 0)
   assert.equal((await pool.query('SELECT intake_status FROM durable_runtime.messages WHERE session_id=$1', [closed.sessionId])).rows[0].intake_status, 'DURABLE')
+  }
+  if (!closeOnly) {
+    const queued = await setup()
+    await queued.sendNew('synthetic merged component before READY')
+    assert.equal(queued.commits.length, 2)
+    const before = (await pool.query('SELECT id,revision FROM durable_runtime.messages WHERE session_id=$1', [queued.sessionId])).rows
+    assert.equal(before.length, 1)
+    assert.equal(before[0].revision, '2')
+    queued.start(); await queued.coordinator.drain(); await queued.coordinator.drain()
+    assert.equal(queued.nativeCalls, 1, 'two receipts for one pending Message produce one native turn')
+    const sealed = (await pool.query('SELECT sealed_revision,body_or_blob_ref FROM durable_runtime.messages WHERE id=$1', [before[0].id])).rows[0]
+    assert.equal(sealed.sealed_revision, '2', 'seal uses current locked revision, not the first receipt revision')
+    assert.deepEqual(sealed.body_or_blob_ref.components.map((component: {original: {payload: {text: string}}}) => component.original.payload.text),
+      ['synthetic original runtime input', 'synthetic merged component before READY'])
+    await queued.sendNew('synthetic next independent Message')
+    await queued.coordinator.drain()
+    assert.equal(queued.nativeCalls, 1, 'admission does not release the active native turn')
+    assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.delivery_attempts WHERE session_id=$1', [queued.sessionId])).rows[0].n, 1)
+    assert.equal((await pool.query("SELECT count(*)::int AS n FROM durable_runtime.messages WHERE session_id=$1 AND intake_status='DURABLE'", [queued.sessionId])).rows[0].n, 1)
+    queued.notify('turn/completed', {threadId: `synthetic-thread:${queued.sessionId}`,
+      turn: {id: `synthetic-turn:${queued.sessionId}`, status: 'completed'}})
+    await queued.coordinator.drain(); await queued.coordinator.drain(); await queued.coordinator.drain()
+    assert.equal(queued.nativeCalls, 2, 'the next pending Message runs only after original completion COMMIT')
+    assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.delivery_attempts WHERE session_id=$1', [queued.sessionId])).rows[0].n, 2)
+    assert.equal((await pool.query("SELECT count(*)::int AS n FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND kind='INPUT_DELIVERY'", [queued.runtimeUnitId])).rows[0].n, 2)
+
+    const refused = await setup(false, true)
+    refused.start(); await refused.coordinator.drain()
+    assert.equal(refused.nativeCalls, 0)
+    refused.exit(); await refused.coordinator.drain()
+    assert.equal(refused.observations.length, 0, 'transport exit cannot prove uncertainty for a callback never entered')
+    assert.equal((await pool.query('SELECT state FROM durable_runtime.delivery_attempts WHERE session_id=$1', [refused.sessionId])).rows[0].state, 'EFFECT_POSSIBLE')
+    assert.equal((await pool.query("SELECT state FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1 AND command_name='dispatchInput'", [refused.runtimeUnitId])).rows[0].state, 'EXECUTING')
+  }
   assert.deepEqual((await pool.query('SELECT * FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger)
-  t.diagnostic(JSON.stringify({phase: closeOnly ? 'CLOSE_ONLY_COMPLETE' : 'ALL_BOUNDARIES_COMPLETE',
+  t.diagnostic(JSON.stringify({phase: closeOnly ? 'CLOSE_ONLY_COMPLETE' : queuedOnly ? 'QUEUED_MERGED_ONLY_COMPLETE' : 'ALL_BOUNDARIES_COMPLETE',
     oldSuccessfulBoundariesRepeated: false, providerCalls: 0}))
 })
