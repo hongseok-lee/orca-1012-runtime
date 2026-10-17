@@ -17,6 +17,7 @@ import { TerminalDraftStoreError } from './durable-contracts'
 import type { ManagedTerminalIngressRequest } from './durable-contracts'
 import { prepareManagedTerminalIngress, requireCurrentTerminalIngress, terminalIntakePayload } from './managed-preparation'
 import type { PreparedManagedTerminalIngress } from './managed-preparation'
+import { assertManagedCatalogTarget } from './catalog-target.ts'
 
 /** Internal outcome only. P103 owns original receipt replay, observed COMMIT and uncertainty. */
 export async function applyManagedTerminalIngress(
@@ -62,6 +63,10 @@ export async function applyManagedTerminalIngressInTransaction(
   requireCurrentTerminalIngress(prepared)
   await assertNewInputState(tx, prepared.authority, prepared.sessionFence, expectedUnitId)
   requireCurrentTerminalIngress(prepared)
+  if (prepared.catalogTargetPin) {
+    await assertManagedCatalogTarget(tx, prepared.catalogTargetPin, scope.binding)
+    requireCurrentTerminalIngress(prepared)
+  }
   const floor = await readTerminalFloorInTransaction(tx, scope.binding)
   requireCurrentTerminalIngress(prepared)
   assertTerminalFloorPin(floor, { binding: scope.binding, revision: prepared.expectedFloorRevision })
@@ -119,7 +124,7 @@ export async function resolveManagedTerminalIngressReceipt(
   return resolveReceipt(pool, prepared.identity)
 }
 
-/** Public wiring is absent; an uncertain COMMIT never produces accepted=true here. */
+/** Only observed COMMIT/replay can produce the original public send acknowledgement. */
 export function managedTerminalIngressWireResult(outcome: MutationOutcome):
   Readonly<{ send: Readonly<{ handle: string; accepted: true; bytesWritten: 0 }> }> | null {
   if (outcome.status === 'UNCERTAIN') {
