@@ -127,9 +127,9 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
         const authority = await LockedGatewayAuthority.acquire(tx, pending.staged.context)
         const command = await lookupCommand(authority, pending.request.commandClaim.identity)
         if (!command || command.state !== 'EXECUTING') { return }
-        if (delivery.kind === 'UNKNOWN') { await markCommandUnknown(authority, pending.request.commandClaim) }
-        else { await settleOwnedExecution(authority, pending.request.commandClaim, {state: 'RESOLVED',
-          result: {receipt: delivery.kind}, evidenceRefs: [delivery.proof.evidenceRef]}) }
+        await (delivery.kind === 'UNKNOWN' ? markCommandUnknown(authority, pending.request.commandClaim)
+          : settleOwnedExecution(authority, pending.request.commandClaim, {state: 'RESOLVED',
+            result: {receipt: delivery.kind}, evidenceRefs: [delivery.proof.evidenceRef]}))
       })
       if (!settled.ok) { throw settled.error }
     })

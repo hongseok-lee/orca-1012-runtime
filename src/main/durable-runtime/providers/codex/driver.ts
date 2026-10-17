@@ -49,6 +49,12 @@ export class DurableCodexDriver {
 
   get connectionInstanceId(): string { return this.#protocol.connectionId }
 
+  /** Original native thread response owned by this still-live connection. A
+   * copied binding or a caller-provided readiness boolean cannot satisfy it. */
+  ownsReadyBinding(binding: ReadyProviderBinding): boolean {
+    return this.#binding === binding && !this.#protocol.closed
+  }
+
   async cold(request: ProviderColdRequest<CodexColdLaunch>, commandClaim: ProviderDispatchRequest['commandClaim'], permit: ProviderEffectPermit): Promise<ReadyProviderBinding> {
     const original = immutableSnapshot({ request, commandClaim })
     if (original.request.mode !== 'COLD' || original.request.binding.connectionInstanceId !== this.connectionInstanceId || this.#binding) {
@@ -56,7 +62,8 @@ export class DurableCodexDriver {
     }
     const native = original.request.native
     if (native.kind === 'RESUME' && native.providerRef.provider !== 'codex') {throw new Error('CODEX_RESUME_PROVIDER_MISMATCH')}
-    return invokeProviderEffect(permit, { kind: 'COLD', binding: original.request.binding, commandClaim: original.commandClaim }, async () => {
+    return invokeProviderEffect(permit, { kind: 'COLD', binding: original.request.binding,
+      commandClaim: original.commandClaim, coldRequest: original.request }, async () => {
       const opened = await this.#protocol.open({
         command: original.request.launch.command, args: original.request.launch.args,
         cwd: original.request.checkout, codexHome: original.request.persistentHome,

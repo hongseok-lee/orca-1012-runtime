@@ -55,6 +55,9 @@ export type ProviderEffectIdentity = {
   readonly kind: 'COLD' | 'DISPATCH' | 'CANCEL'
   readonly binding: ProviderBinding
   readonly commandClaim: CommandClaim
+  /** Exact owned cold request consumed by the callback; private memory only.
+   * This may contain launch environment secrets and must never be audited/hashed. */
+  readonly coldRequest?: ProviderColdRequest<unknown>
   readonly messageId?: MessageId
   readonly deliveryAttemptId?: DeliveryAttemptId
   readonly sealedRevision?: string
@@ -69,7 +72,7 @@ export type ProviderEffectIdentity = {
  * before invoking effect once, outside the transaction. No shape/string/boolean here
  * authenticates a grant. The production input/executor implementation is unconnected.
  */
-export interface ProviderEffectPermit {
+export type ProviderEffectPermit = {
   invoke<T>(identity: ProviderEffectIdentity, effect: () => Promise<T>): Promise<T>
 }
 
