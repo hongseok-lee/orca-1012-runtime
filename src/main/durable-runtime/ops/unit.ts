@@ -6,6 +6,7 @@ import type { OpsIncident, OpsSession, OpsTab, OpsUnit, OpsUnitDetail } from './
 import { requireUnitAccess } from './access.ts'
 import { opsTime, OPS_OPERATION_SELECT, projectOpsOperation } from './operation.ts'
 import type { OpsOperationRow } from './operation.ts'
+import { readOpsUnitDesiredResources } from './unit-resources.ts'
 
 /** Both list and detail use this P113-backed projector. No physical-state or telemetry fabrication. */
 export async function projectOpsUnit(tx: DurableTransaction, actor: OpsActor, id: string, controllerConnected: boolean): Promise<OpsUnit> {
@@ -37,11 +38,12 @@ export async function projectOpsUnit(tx: DurableTransaction, actor: OpsActor, id
         WHERE storage_binding_id=b.id ORDER BY granted_at DESC,id DESC LIMIT 1) g ON true
       WHERE m.runtime_unit_id=$1 AND w.dataset_name=$2 AND w.id=ANY($3::uuid[]) ORDER BY b.id`, [id, actor.datasetName, actor.workspaceIds])
   const attempt = original.attempt
+  const desiredResources = await readOpsUnitDesiredResources(tx, logicalId('runtime-unit', id))
   return { id: original.unit.id, revision: original.unit.revision, intentRevision: original.unit.intent_revision,
     alias: null, desiredMode: original.unit.desired_mode, phase: original.unit.phase, observed: original.observed,
     observedAt: null,
     attempt: attempt ? { id: attempt.id, podUid: attempt.podUid, status: attempt.status, node: null, spot: null } : null,
-    resources: { desired: null, admitted: null, usage: null, peak: null, nextDownsizeAt: null },
+    resources: { desired: desiredResources, admitted: null, usage: null, peak: null, nextDownsizeAt: null },
     counts: { pendingMessages: counts.pending, inputComponents: counts.inputs, inFlight: counts.flight, historicalUnknown: counts.unknown },
     mounts: mounts.rows.map(row => ({ id: row.id, accessState: row.access_state, storageEpoch: row.epoch,
       backendId: row.backend_id, exportId: row.export_id, canonicalDirectory: row.canonical_directory,
