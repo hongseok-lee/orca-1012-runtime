@@ -70,7 +70,7 @@ async function readAudit(tx: DurableTransaction, id: string): Promise<AuditRow> 
   if (value.rowCount !== 1 || value.rows[0].id !== id) { return deny('AUDIT_MISSING') }
   return value.rows[0]
 }
-function originalAudit(row: AuditRow, accepted: Accepted, sessionId: string, locked: LockedInitialAgentAttemptContext) {
+function originalAudit(row: AuditRow, accepted: Accepted, sessionId: string, context: GatewayContext, bindingId: string) {
   const raw = object(row.next_state), scope = captureScope(raw.scope), p = accepted.record
   const observation = captureAuthenticatedManagedLeafObservation(raw.observation)
   requireFirstManagedObservation(p, observation, p.leafId)
@@ -83,13 +83,22 @@ function originalAudit(row: AuditRow, accepted: Accepted, sessionId: string, loc
       row.operation_id !== null || row.attempt_id !== null || evidenceRef !== expected ||
       raw.profileId !== p.profile.profileId || raw.datasetName !== p.profile.datasetName ||
       raw.backendId !== p.profile.backendId || raw.exportId !== p.profile.exportId ||
-      raw.generation !== p.profile.generation || raw.digest !== accepted.digest || raw.qualificationRef !== p.qualificationRef ||
-      scope.sessionId !== sessionId || scope.unitId !== locked.context.runtimeUnitId ||
-      scope.bindingId !== locked.expected[0].bindingId ||
+      raw.generation !== p.profile.generation || raw.digest !== accepted.namespaceDigest || raw.qualificationRef !== p.qualificationRef ||
+      (p.profile.namespaceDigest !== undefined && raw.qualificationDigest !== accepted.digest) ||
+      (raw.qualificationDigest !== undefined && raw.qualificationDigest !== accepted.digest) ||
+      scope.sessionId !== sessionId || scope.unitId !== context.runtimeUnitId ||
+      scope.bindingId !== bindingId ||
       canonicalInput(row.evidence_refs) !== canonicalInput([observation.reference, p.qualificationRef, evidenceRef])) {
     return deny('ORIGINAL_AUDIT_MISMATCH')
   }
   return Object.freeze({ id: row.id, scope, pinId, evidenceRef, observation, candidate: observation.candidate })
+}
+/** Same original audit decoder/full candidate after assignment. Data only;
+ * the new concrete held owner still checks the actual directory lifetime. */
+export async function readOriginalFirstManagedDirectory(tx: DurableTransaction, accepted: Accepted, input: Readonly<{
+  originalAuditId: string; sessionId: string; context: GatewayContext; bindingId: string
+}>) {
+  return originalAudit(await readAudit(tx, input.originalAuditId), accepted, input.sessionId, input.context, input.bindingId)
 }
 function exactSingle(locked: LockedInitialAgentAttemptContext, accepted: Accepted): void {
   const binding = locked.expected[0], mount = locked.protectedBindings[0], p = accepted.record
@@ -132,12 +141,12 @@ async function heldProfile(tx: DurableTransaction, accepted: Accepted, pinId: st
     `SELECT dataset_name,backend_id,export_id,generation,digest,state FROM durable_runtime.storage_namespace_profiles WHERE id=$1 FOR UPDATE`,
     [p.profileId])).rows[0]
   if (!profile || profile.dataset_name !== p.datasetName || profile.backend_id !== p.backendId || profile.export_id !== p.exportId ||
-      profile.generation !== p.generation || profile.digest !== accepted.digest || !['ACTIVE', 'DRAINING'].includes(profile.state)) {
+      profile.generation !== p.generation || profile.digest !== accepted.namespaceDigest || !['ACTIVE', 'DRAINING'].includes(profile.state)) {
     deny('PROFILE_CHANGED')
   }
   const hold = (await tx.query<{ profile_id: string; generation: string; digest: string; owner_token_hash: string; state: string }>(
     'SELECT profile_id,generation,digest,owner_token_hash,state FROM durable_runtime.storage_namespace_holds WHERE id=$1 FOR UPDATE', [pinId])).rows[0]
-  if (!hold || hold.profile_id !== p.profileId || hold.generation !== p.generation || hold.digest !== accepted.digest ||
+  if (!hold || hold.profile_id !== p.profileId || hold.generation !== p.generation || hold.digest !== accepted.namespaceDigest ||
       hold.owner_token_hash !== tokenHash || hold.state !== 'HELD') { deny('HOLD_NOT_OWNED') }
 }
 function scopeState(locked: LockedInitialAgentAttemptContext, sessionId: string, actorId: string) {
@@ -153,6 +162,7 @@ function auditState(accepted: Accepted, pinId: string, tokenHash: string, origin
   observation: AuthenticatedManagedLeafObservation, scope: ReturnType<typeof scopeState>, associations: readonly Association[]) {
   const p = accepted.record
   const content = Object.freeze({ kind, profileId: p.profile.profileId, profileDigest: accepted.digest,
+    ...(p.profile.namespaceDigest === undefined ? {} : { namespaceDigest: accepted.namespaceDigest }),
     datasetName: p.profile.datasetName, backendId: p.profile.backendId, exportId: p.profile.exportId,
     generation: p.profile.generation, leafId: p.leafId, qualificationRef: p.qualificationRef,
     originalAuditId: origin.id, originalIdentityRef: origin.evidenceRef, originalCandidate: origin.candidate,
@@ -171,7 +181,7 @@ export function recordInitialDirectoryRevalidation(pool: Pool, original: Initial
     observation: captureAuthenticatedManagedLeafObservation(original.observation), context: captured.context, attempt: captured.input })
   if (text(hold.ownerToken).length < 32 || hold.actorId !== input.actorId || hold.profileId !== accepted.record.profile.profileId ||
       hold.datasetName !== accepted.record.profile.datasetName || hold.backendId !== accepted.record.profile.backendId ||
-      hold.exportId !== accepted.record.profile.exportId || hold.generation !== accepted.record.profile.generation || hold.digest !== accepted.digest) {
+      hold.exportId !== accepted.record.profile.exportId || hold.generation !== accepted.record.profile.generation || hold.digest !== accepted.namespaceDigest) {
     deny('INPUT')
   }
   requireFirstManagedObservation(accepted.record, input.observation, accepted.record.leafId)
@@ -179,7 +189,7 @@ export function recordInitialDirectoryRevalidation(pool: Pool, original: Initial
   return runDurableTransaction(borrowed, async tx => {
     const locked = await lockInitialAgentAttemptContext(tx, input.context, input.attempt)
     exactSingle(locked, accepted)
-    const origin = originalAudit(await readAudit(tx, input.originalAuditId), accepted, input.sessionId, locked)
+    const origin = originalAudit(await readAudit(tx, input.originalAuditId), accepted, input.sessionId, locked.context, locked.expected[0].bindingId)
     if (origin.pinId === input.pinId) { deny('NEW_PIN_REQUIRED') }
     // Preserve both records; a changed tuple is never refreshed into the binding.
     if (!sameDirectory(origin.candidate, input.observation.candidate)) { deny('FULL_TUPLE_CHANGED') }
@@ -206,7 +216,7 @@ export async function assertInitialDirectoryRevalidation(tx: DurableTransaction,
   const row = await readAudit(tx, logicalId('event', guard.auditId)), raw = object(row.next_state)
   const rawScope = object(raw.scope), sessionId = text(rawScope.sessionId), actorId = text(rawScope.actorId)
   exactSingle(locked, guard.accepted)
-  const origin = originalAudit(await readAudit(tx, guard.originalAuditId), guard.accepted, sessionId, locked)
+  const origin = originalAudit(await readAudit(tx, guard.originalAuditId), guard.accepted, sessionId, locked.context, locked.expected[0].bindingId)
   const observation = captureAuthenticatedManagedLeafObservation(raw.observation)
   requireFirstManagedObservation(guard.accepted.record, observation, guard.accepted.record.leafId)
   if (!sameDirectory(origin.candidate, observation.candidate) || !sameDirectory(origin.candidate, guard.originalCandidate) ||

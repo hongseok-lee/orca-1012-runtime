@@ -9,9 +9,12 @@ import { recordInputCancel } from '../input/cancel.ts'
 import type { RpcContext } from '../../runtime/rpc/core.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
 import { captureReadInvocation, projectTabs, validateCatalogSnapshot } from './read.ts'
+import type { CatalogTabPropsVisibility } from '../catalog/tab-props.ts'
+import { assertProjectedSessionTabVisible } from '../../runtime/rpc/methods/session-tab-browser-placement-projection.ts'
+import { CatalogError } from '../catalog/errors.ts'
 
 export const CATALOG_PUBLIC_METADATA_METHODS = Object.freeze([
-  'worktree.set', 'worktree.activate', 'ui.set', 'session.tabs.activate', 'terminal.focus', 'terminal.rename'
+  'worktree.set', 'worktree.activate', 'ui.set', 'session.tabs.activate', 'session.tabs.setTabProps', 'terminal.focus', 'terminal.rename'
 ] as const)
 export type CatalogMetadataMethod = typeof CATALOG_PUBLIC_METADATA_METHODS[number]
 
@@ -31,14 +34,15 @@ function guardedEntry<Method extends CatalogMetadataMethod>(
 }
 
 /** Borrows the read adapter's Pool/config. Real owner entries are supplied for
- * the incumbent Facade; these six metadata methods never invoke lifecycle IO. */
-export function createCatalogMetadataFacade(config: CapturedCatalogReadConfig): CatalogCompatibilityFacade {
-  const entries = createCatalogEntries(config.pool, { recordUnitIntent, reserveSleep, recordInputCancel })
+ * the incumbent Facade; these metadata methods never invoke lifecycle IO. */
+export function createCatalogMetadataFacade(config: CapturedCatalogReadConfig, tabPropsVisibility?: CatalogTabPropsVisibility): CatalogCompatibilityFacade {
+  const entries = createCatalogEntries(config.pool, { recordUnitIntent, reserveSleep, recordInputCancel }, { tabPropsVisibility })
   return new CatalogCompatibilityFacade({
     'worktree.set': guardedEntry(config, entries['worktree.set']),
     'worktree.activate': guardedEntry(config, entries['worktree.activate']),
     'ui.set': guardedEntry(config, entries['ui.set']),
     'session.tabs.activate': guardedEntry(config, entries['session.tabs.activate']),
+    'session.tabs.setTabProps': guardedEntry(config, entries['session.tabs.setTabProps']),
     'terminal.focus': guardedEntry(config, entries['terminal.focus']),
     'terminal.rename': guardedEntry(config, entries['terminal.rename'])
   })
@@ -51,6 +55,16 @@ export async function mutateCatalogRpc(
   // Same transport fingerprint, detached params/capabilities/client kind and
   // structured policy as reads. Config captured the host method and receiver.
   const invocation = captureReadInvocation(config, params, context)
+  if (method === 'session.tabs.setTabProps') {
+    // Same incumbent client projection, checked again against the locked PG snapshot.
+    const current = createCatalogMetadataFacade(config, { assertVisible(snapshot, tabId) {
+      if (invocation.clientKind) {
+        try { assertProjectedSessionTabVisible(projectTabs(invocation, snapshot), tabId) }
+        catch { throw new CatalogError('tab_not_found') }
+      }
+    } })
+    return current.invoke(method, invocation.params, invocation.context)
+  }
   if (method === 'session.tabs.activate') {
     return projectTabs(invocation, await facade.invoke(method, invocation.params, invocation.context))
   }

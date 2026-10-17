@@ -51,6 +51,10 @@ export function prepareManagedTerminalIngress(request: ManagedTerminalIngressReq
   }
   const sessionFence = counter('session-fence', request.sessionFence)
   const expectedFloorRevision = terminalCounter(request.expectedFloorRevision)
+  const catalogTargetPin = request.catalogTargetPin === undefined ? undefined : Object.freeze({
+    tabId: request.catalogTargetPin.tabId, tabRevision: terminalCounter(request.catalogTargetPin.tabRevision),
+    bindingRevision: terminalCounter(request.catalogTargetPin.bindingRevision), provider: request.catalogTargetPin.provider,
+    payload: immutableTerminalJson(request.catalogTargetPin.payload) })
   const authorizeOrigin = request.authorization.assertAuthenticatedOrigin.bind(request.authorization)
   const authorize = (): void => {
     if (authorizeOrigin(scope, origin) !== undefined) {
@@ -74,7 +78,7 @@ export function prepareManagedTerminalIngress(request: ManagedTerminalIngressReq
       method: 'terminal.send', operationKey }), payloadHash: inputPayloadHash(wire)
   })
   return Object.freeze({ snapshot, origin, authority, sessionFence, expectedFloorRevision,
-    attachments, authorize, wire, identity })
+    attachments, authorize, wire, identity, catalogTargetPin })
 }
 
 function snapshotTerminalOrigin(value: TerminalIngressOrigin): TerminalIngressOrigin {

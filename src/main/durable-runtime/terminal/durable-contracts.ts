@@ -2,6 +2,7 @@ import type { InputAttachment, InputAuthority } from '../input/types.ts'
 import { DurableDatabaseError } from '../db/connection.ts'
 import type { SessionFence } from '../../../shared/durable-runtime/identity.ts'
 import type { TerminalDraftBinding, TerminalIngressScope, TerminalIngressSnapshot } from './types'
+import type { ManagedCatalogTargetPin } from './catalog-target.ts'
 
 export class TerminalDraftStoreError extends DurableDatabaseError {
   constructor(code: string) {
@@ -38,6 +39,8 @@ export type ManagedTerminalIngressRequest = Readonly<{
   expectedFloorRevision: string
   attachments: readonly TerminalDraftAttachment[]
   authorization: ManagedTerminalAuthorization
+  /** Optional public Catalog fence; existing internal callers keep their floor contract. */
+  catalogTargetPin?: ManagedCatalogTargetPin
 }>
 
 export function terminalCounter(value: unknown): string {

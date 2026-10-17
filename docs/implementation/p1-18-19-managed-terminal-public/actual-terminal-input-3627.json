@@ -1,0 +1,78 @@
+{
+  "sessionId": "3627cd40-d010-4c1e-9604-96c93c9f1354",
+  "productSourcePin": "f3c4b17275130c79e8ba224f44e6b50accbdc1f7",
+  "intake": {
+    "method": "terminal.send",
+    "count": 1,
+    "startedAt": "2026-10-17T06:44:01.912Z",
+    "acknowledgedAt": "2026-10-17T06:44:02.431Z",
+    "pid": 29439,
+    "requestId": "ffb38cd7-2ea0-4b88-bfdc-c8347eeb9706",
+    "phase": "INTAKE_ACKNOWLEDGED",
+    "originalBodySHA256": "89b6d3f1c2ea7ce4926f6bc8d8e7975bf84b6833968479c1c790cbb838cb8b6b"
+  },
+  "readOnlyObservation": {
+    "startedAt": "2026-10-17T06:45:27.995Z",
+    "endedAt": "2026-10-17T06:46:53.280Z",
+    "pid": 29535,
+    "phase": "ACTUAL_OBSERVATION_FAILED",
+    "errorCode": "ORIGINAL_DELIVERY_NOT_TERMINAL_WITHIN_OBSERVATION_BOUND",
+    "exit": 1,
+    "ledgerUnchanged": true,
+    "nativeCalls": 0,
+    "pgMutations": 0
+  },
+  "database": {
+    "name": "orca_dev",
+    "oid": "16384",
+    "system": "7696101282789175327",
+    "dataset": "orca-1012-dev-v1",
+    "pid": 589852
+  },
+  "original": {
+    "inputId": "1a51105f-b14e-4659-bbf3-e536ab123e6e",
+    "messageId": "52d4dbe8-0c8a-4cf7-a5dc-40c01411e798",
+    "sessionId": "3627cd40-d010-4c1e-9604-96c93c9f1354",
+    "bodySHA256": "89b6d3f1c2ea7ce4926f6bc8d8e7975bf84b6833968479c1c790cbb838cb8b6b",
+    "receiptPayloadHash": "3de318cad1651534b38843aadcd132d123e397bf83087b81024e6c18071dd2a2"
+  },
+  "delivery": {
+    "pollCount": 18,
+    "first": {
+      "id": "22565dd6-87ee-4e66-aa61-4e8eb61d49bd",
+      "runtime_unit_id": "d35ee37e-be4d-47fc-8abc-7ece737a0aec",
+      "attempt_id": "40436149-4b46-4c43-b4f7-393735dc7562",
+      "execution_epoch": "0",
+      "state": "EFFECT_POSSIBLE",
+      "provider_ref": null,
+      "intake_status": "EFFECT_POSSIBLE",
+      "sealed_revision": "1",
+      "sealed_payload_hash": "5b351507829b8623aa9ec9e366e825084e543fa9cae57e3b099d2e7e140331a0",
+      "at": "2026-10-17T06:45:28.216Z"
+    },
+    "last": {
+      "id": "22565dd6-87ee-4e66-aa61-4e8eb61d49bd",
+      "runtime_unit_id": "d35ee37e-be4d-47fc-8abc-7ece737a0aec",
+      "attempt_id": "40436149-4b46-4c43-b4f7-393735dc7562",
+      "execution_epoch": "0",
+      "state": "EFFECT_POSSIBLE",
+      "provider_ref": null,
+      "intake_status": "EFFECT_POSSIBLE",
+      "sealed_revision": "1",
+      "sealed_payload_hash": "5b351507829b8623aa9ec9e366e825084e543fa9cae57e3b099d2e7e140331a0",
+      "at": "2026-10-17T06:46:53.265Z"
+    }
+  },
+  "actualProviderAdmissionConfirmed": false,
+  "actualProviderCompletionConfirmed": false,
+  "actualOutputConfirmed": false,
+  "additionalSendCalls": 0,
+  "automaticRetry": false,
+  "limits": [
+    "접수 COMMIT은 provider 수락이나 완료 증거가 아닙니다.",
+    "관측 구간 내내 원 delivery가 EFFECT_POSSIBLE이었으며 이후 상태를 추정하지 않습니다.",
+    "원 private 로그와 입력 본문은 비공개로 보존했습니다.",
+    "새 suite, type, 설치, build, 재시작 또는 capture를 실행하지 않았습니다."
+  ],
+  "usageCreditsStreamError": "미관측"
+}
