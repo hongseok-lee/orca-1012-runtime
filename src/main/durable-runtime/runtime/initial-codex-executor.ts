@@ -12,6 +12,7 @@ import type { ProviderBinding, ProviderColdRequest, ProviderDispatchRequest, Pro
   ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
 import type { CommandClaim, ExecutorId, GatewayContext } from './gateway/types.ts'
+import type { ControlledCreationWindow } from './controlled-creation-window.ts'
 import { settleInitialEnsureAssigned } from './initial-provider-command-settlement.ts'
 import { readInitialProviderPaths } from './initial-provider-paths.ts'
 import type { InitialEmptyFolderDeclaration, InitialProviderPaths } from './initial-provider-paths.ts'
@@ -38,9 +39,8 @@ export type InitialCodexExecutorConfiguration = Readonly<{
     config: ConcreteDeployment
     originalAuditId: string
     pinId: string; ownerToken: string; actorId: string
-    creationStartTime: string; creationEndTime: string
     nativeOptions: Readonly<Record<string, string>>
-  }>>
+  }> & ControlledCreationWindow>
   sink: ProviderObservationSink
   onReady?(): void
 }>
@@ -126,7 +126,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         const owner = await protection.prepare({ plan, bindingId: plan.plan.mountExpectations.protected[0].bindingId,
           originalDirectoryReference: directoryRead.value.evidenceRef, originalDirectory: directoryRead.value.candidate,
           pinId: prepared.pinId, ownerToken: prepared.ownerToken, actorId: prepared.actorId,
-          creationStartTime: prepared.creationStartTime, creationEndTime: prepared.creationEndTime }, signal)
+          ...(prepared.creationWindow === 'AUTHENTICATED_NODE' ? { creationWindow: prepared.creationWindow }
+            : { creationStartTime: prepared.creationStartTime, creationEndTime: prepared.creationEndTime }) }, signal)
         const lease = owner.takePreparedProtection(), control = protection.control()
         if (!control || lease.target.podUid !== source.value.pod_uid) { return deny('CONTROL_REQUIRED') }
         active(); phase = 'BIND_CLAIM'

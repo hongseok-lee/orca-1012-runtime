@@ -22,6 +22,7 @@ import { createControlledExecutionTargetObserver } from './controlled-execution-
 import type { ExecutionTargetCompositionConfiguration } from './execution-target-composition-types.ts'
 import type { ProviderProtectionLease, ProviderProtectionOwner } from './provider-effect-permit.ts'
 import { controlledWorkloadIdentity } from './controlled-workload-identity.ts'
+import type { ControlledCreationWindow } from './controlled-creation-window.ts'
 
 const deny = (code: string): never => { throw new DurableDatabaseError(`INITIAL_PROVIDER_PROTECTION_${code}`) }
 
@@ -85,8 +86,7 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
       plan: AgentPodPlanRecord
       bindingId: string; originalDirectoryReference: string; originalDirectory: CanonicalCandidate
       pinId: string; ownerToken: string; actorId: string
-      creationStartTime: string; creationEndTime: string
-    }>, signal: AbortSignal): Promise<ProviderProtectionOwner> {
+    }> & ControlledCreationWindow, signal: AbortSignal): Promise<ProviderProtectionOwner> {
       if (phase !== 'UNUSED') { return deny('ALREADY_ATTEMPTED') }
       phase = 'ACQUIRING'
       const input = immutableSnapshot(original), plan = input.plan.plan
@@ -116,8 +116,7 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
             control.pod.pod.name !== plan.identity.resourceName || control.pod.pod.specHash !== plan.identity.specHash) {
           return deny('CONTROL_SCOPE')
         }
-        const executionRecord = await observer.observe(control, { attemptId: plan.identity.attemptId,
-          creationStartTime: input.creationStartTime, creationEndTime: input.creationEndTime }, signal)
+        const executionRecord = await observer.observe(control, { ...input, attemptId: plan.identity.attemptId }, signal)
         observedMount = await collector.collectControlled(input.plan, executionRecord.podUid, control, signal)
         const mounted = observedMount.mounts.find(item => item.kind === 'protected' && item.key === protectedMounts[0].key)
         const mapping = observedMount.storage.find(item => item.expected.kind === 'protected' && item.expected.key === protectedMounts[0].key)

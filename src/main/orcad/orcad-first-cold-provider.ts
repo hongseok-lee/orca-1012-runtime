@@ -13,6 +13,7 @@ import type { FirstManagedBindingOwnerConfig } from '../durable-runtime/storage/
 import type { InitialEmptyFolderDeclaration } from '../durable-runtime/runtime/initial-provider-paths.ts'
 import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
+import type { ControlledCreationWindow } from '../durable-runtime/runtime/controlled-creation-window.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_FIRST_COLD_CONFIG')
 
@@ -51,10 +52,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
   try {
     if (typeof originalReadSettings !== 'function') { return deny() }
     const readSettings = originalReadSettings
-    const raw = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8')),
+    const parsed = parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8'))
+    const nodeWindow = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'creationWindow')
+    const raw = agentPodFields(parsed,
       ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256','codexAuthFile',
         'runtimeServiceAccountName','runtimeServiceAccountUid','originalAuditId','pinId','ownerTokenFile','actorId',
-        'clusterIdentityRef','projectId','projectNumber','creationStartTime','creationEndTime','timeoutMs'])
+        'clusterIdentityRef','projectId','projectNumber', ...(nodeWindow ? ['creationWindow'] : ['creationStartTime','creationEndTime']), 'timeoutMs'])
     const text = (key: string) => agentPodText(raw.get(key))
     const timeoutMs = agentPodInteger(raw.get('timeoutMs'))
     if (timeoutMs > 2_147_483_647 || text('runtimeServiceAccountName') !== 'orca-runtime-agent' ||
@@ -77,7 +80,11 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const actorId = text('actorId'), clusterIdentityRef = text('clusterIdentityRef')
     const serviceAccountName = text('runtimeServiceAccountName'), serviceAccountUid = text('runtimeServiceAccountUid')
     const projectId = text('projectId'), projectNumber = text('projectNumber')
-    const creationStartTime = text('creationStartTime'), creationEndTime = text('creationEndTime')
+    let creation: ControlledCreationWindow
+    if (nodeWindow) {
+      if (text('creationWindow') !== 'AUTHENTICATED_NODE') { return deny() }
+      creation = Object.freeze({ creationWindow: 'AUTHENTICATED_NODE' })
+    } else { creation = Object.freeze({ creationStartTime: text('creationStartTime'), creationEndTime: text('creationEndTime') }) }
     if (!originalAuditToken || !/^[A-Za-z0-9._~+/=-]+$/.test(originalAuditToken)) { return deny() }
     let auditToken = originalAuditToken, supplied = false
     const creationObserver = createComputeCreationIdentityClient({ timeoutMs,
@@ -105,7 +112,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
             native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
         const launch = Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
-        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, creationStartTime, creationEndTime, nativeOptions: native.options,
+        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, ...creation, nativeOptions: native.options,
           config: Object.freeze({ directory: initial.directory, nfsServer: plan.plan.mountExpectations.protected[0].server,
             mounts: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, dataset, timeoutMs, readReviewerBearer }),
             execution: Object.freeze({ clusterIdentityRef, namespace, dataset, audience: 'orca-runtime-agent', projectId, projectNumber,

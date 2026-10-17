@@ -1,6 +1,6 @@
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
-import { inventoryOpaque } from '../lifecycle/kubernetes-identity.ts'
-import { auditTimestamp } from './compute-deletion-audit-input.ts'
+import { captureControlledCreationWindow } from './controlled-creation-window.ts'
+import type { ControlledCreationWindow } from './controlled-creation-window.ts'
 import { authenticatedAgentControlValid } from './agent-codex-transport.ts'
 import type { AuthenticatedAgentControl } from './agent-codex-transport.ts'
 import { captureCompositionConfiguration } from './execution-target-composition-input.ts'
@@ -17,13 +17,11 @@ import { ExecutionTargetCompositionError } from './execution-target-composition-
 export function createControlledExecutionTargetObserver(configuration: ExecutionTargetCompositionConfiguration) {
   const config = captureCompositionConfiguration(configuration)
   return Object.freeze({ async observe(control: AuthenticatedAgentControl, original: Readonly<{
-    attemptId: string; creationStartTime: string; creationEndTime: string
-  }>, signal: AbortSignal) {
+    attemptId: string
+  }> & ControlledCreationWindow, signal: AbortSignal) {
   if (!authenticatedAgentControlValid(control) || signal.aborted) { throw new ExecutionTargetCompositionError('PREPARED_INVALID') }
   const observed = control.pod
-  const startTime = inventoryOpaque(original.creationStartTime), endTime = inventoryOpaque(original.creationEndTime)
-  const start = auditTimestamp(startTime), end = auditTimestamp(endTime)
-  if (start === null || end === null || start > end) { throw new ExecutionTargetCompositionError('INPUT_INVALID') }
+  const { startTime, endTime } = captureControlledCreationWindow(original, observed.node)
   const input: CompositionScopeInput = Object.freeze({ attemptId: logicalId('attempt', original.attemptId),
     incarnation: `agent-control:${control.controlId}:${control.controlPid}:${control.startTicks}`,
     runtimeUnitId: logicalId('runtime-unit', observed.pod.runtimeUnitId), operationId: logicalId('operation', observed.pod.operationId),
