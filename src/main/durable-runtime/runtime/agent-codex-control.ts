@@ -45,7 +45,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const paths = policy.paths
   if (root !== '/agent' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(paths.agentId) ||
       paths.home !== `${root}/home/${paths.agentId}` ||
-      paths.checkout !== `${root}/checkout` || !['EMPTY_FOLDER', 'EXISTING_GIT'].includes(paths.checkoutPreparation) ||
+      paths.checkout !== `${root}/checkout` || paths.checkoutPreparation !== 'FRESH_EMPTY_FOLDER' ||
       policy.launch.cwd !== paths.checkout || policy.launch.env.HOME !== paths.home ||
       policy.launch.env.CODEX_HOME !== `${paths.home}/.codex` ||
       policy.launch.command !== `${paths.home}/.orca-native/codex` || policy.launch.args.at(-1) !== 'app-server') {

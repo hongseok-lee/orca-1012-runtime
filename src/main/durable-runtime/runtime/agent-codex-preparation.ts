@@ -44,9 +44,13 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       child(home, '.codex'); directory = child(home, '.orca-native')
       // A first empty Folder workspace is materialized only AFTER COMMIT.
       // Git requires its real checkout and is never replaced by an empty one.
-      if (paths.checkoutPreparation === 'EMPTY_FOLDER') { child('/agent', 'checkout') }
+      if (paths.checkoutPreparation !== 'FRESH_EMPTY_FOLDER') { throw new Error('AGENT_COLD_CHECKOUT_UNPREPARED') }
+      // Create-only: an existing directory is not evidence of an empty original
+      // workspace, and partial preparation is never silently restarted.
+      mkdirSync(paths.checkout, { mode: 0o700 })
       const checkout = lstatSync(paths.checkout)
-      if (!checkout.isDirectory() || checkout.isSymbolicLink() || realpathSync(paths.checkout) !== paths.checkout) {
+      if (!checkout.isDirectory() || checkout.isSymbolicLink() || checkout.uid !== process.getuid?.() ||
+          (checkout.mode & 0o777) !== 0o700 || realpathSync(paths.checkout) !== paths.checkout) {
         throw new Error('AGENT_COLD_CHECKOUT_REQUIRED')
       }
       partial = join(directory, 'codex.partial')
