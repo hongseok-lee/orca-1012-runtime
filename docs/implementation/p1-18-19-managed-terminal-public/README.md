@@ -1,5 +1,8 @@
 # Managed Terminal 공개 영속 입력 검증
 
+2026-10-17 실제 Session `3627cd40-d010-4c1e-9604-96c93c9f1354`의 genuine cold READY 뒤 정상 E2EE `terminal.send`를 1회 호출했습니다. PID 29439의 접수 ACK는 06:44:02.431 UTC에 성공했습니다. 원 receipt/Component/Message와 본문 hash를 읽기 전용으로 대조했습니다. 후속 관측 PID 29535는 06:45:28.216–06:46:53.265 UTC의 18회 조회에서 원 delivery `22565dd6-87ee-4e66-aa61-4e8eb61d49bd`가 계속 `EFFECT_POSSIBLE`이고 provider_ref가 null임을 확인했습니다. 관측은 06:46:53.280 UTC에 `ORIGINAL_DELIVERY_NOT_TERMINAL_WITHIN_OBSERVATION_BOUND`, exit 1로 종료됐습니다. 실제 provider 수락·완료·출력은 미확정이며 접수 성공으로 대신하지 않습니다. 추가 send/관측 재실행/재시작은 하지 않았고 원 실패와 dev DB OID 16384/system 7696101282789175327/ledger 23을 보존했습니다. 정제 근거는 `actual-terminal-input-3627.json`이며 private 원문·credential은 게시하지 않습니다. 이번 turn의 usage limit/credits/stream 원오류는 미관측입니다.
+
+
 기존 `terminal.send` 선언과 schema를 유지하고 PG 소유 managed Chat만 기존 영속 ingress에 연결했습니다. 실제 socket owner의 인증된 device/principal/incarnation과 명시적인 close/revocation 증거를 사용합니다. 최초 논리 floor 예약은 정확한 Catalog 대상과 연결하며 Session 잠금 아래 PG CAS로 기록합니다. 서버에 명시된 Chat mode와 대상 revision은 intake COMMIT까지 잠금으로 보존합니다.
 
 검증 source는 `350dfdbf9adca8ccc4cbc1fb9b987cc642a13c25`입니다. 소유 15개 lint, 교정 파일 1개 lint, 새 연결 owner 1개 파일의 native TS7 strict type, 공개 adapter의 실제 PG callback 1개가 통과했습니다. PG callback에는 iPhone 본문+Enter, Mac draft와 별도 CR, 확정 clear, receipt replay/conflict, 실제 owner 무효화 이후의 재연결, 새 서버의 불명 owner 거절, 동시 mode 변경 거절과 COMMIT 응답 유실 이후 같은 key 재조회가 포함됩니다. 원 ledger 19개와 모든 기존 행을 보존했습니다.
