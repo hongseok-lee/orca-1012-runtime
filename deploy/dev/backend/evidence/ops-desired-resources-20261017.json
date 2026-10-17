@@ -1,0 +1,131 @@
+{
+  "sourcePin": "39b21e8823d3b161accfcdbd7885aa5fa661e07a",
+  "base": "874f07cdf14c7ea998b3d77b0d826989ff8b9636",
+  "productHashes": {
+    "unit.ts": "8dde63fdc8aea2f76795782aa01c6ec030cf6a7e6e2ec4df296c6cabaa986dd0",
+    "unit-resources.ts": "b73a133ad47d46155865e7db9287f993d232eb916a9b0adff8873f57aab8d3b4"
+  },
+  "validation": {
+    "ownedLint": {
+      "files": 3,
+      "exit": 0
+    },
+    "firstFocusedPG": {
+      "exit": 1,
+      "passed": [
+        "initial exact declaration/list-detail/scope/null observations",
+        "wrong plan digest rejected"
+      ],
+      "fixtureFailure": "23514 resource_policy_versions_check; policy JSON revision missing",
+      "originalTAPSHA256": "4a0108b5f190cceb4e1173220e3b48a890b356177da9a6309bc69223efddff27"
+    },
+    "headOnlyContinuation": {
+      "exit": 0,
+      "changedFixtureLintExit": 0,
+      "passed": [
+        "exact desired revision",
+        "approved fallback when desired null"
+      ],
+      "originalTAPSHA256": "18d87319f06c723131ef4bc5b795627e4a2b60cfbf2f0f3b6c2031bbd2d54ad0",
+      "originalRowLosses": [],
+      "ledgerUnchanged": true,
+      "schemaApplied": 0,
+      "poolClosed": true
+    },
+    "schemaLedgerCount": 23,
+    "fullTypeRun": false,
+    "typeCandidateFanoutStopped": true,
+    "runtimeValueClosureFiles": 43
+  },
+  "development": {
+    "generation": 2,
+    "runtimePID": 18701,
+    "readyAt": "2026-10-17T02:33:57.462Z",
+    "orcadSHA256": "8e48510f1e2a171175053539e8a19c134d33dc41c1d04d30f074bac03bdf58c1",
+    "productFilesPublished": 2,
+    "wholeCheckoutGitProven": false,
+    "configChanged": false,
+    "pairingChanged": false
+  },
+  "actualOpsAPI": {
+    "startedAt": "2026-10-17T02:37:27.685Z",
+    "pid": 12576,
+    "sourcePin": "39b21e8823d3b161accfcdbd7885aa5fa661e07a",
+    "runtimePID": 18701,
+    "generation": 2,
+    "requests": [
+      {
+        "name": "list",
+        "at": "2026-10-17T02:37:27.686Z",
+        "status": 200,
+        "targetFound": true,
+        "resources": {
+          "desired": {
+            "cpuMilli": "500",
+            "memoryBytes": "536870912"
+          },
+          "admitted": null,
+          "usage": null,
+          "peak": null,
+          "nextDownsizeAt": null
+        },
+        "node": null,
+        "spot": null,
+        "responseSHA256": "e33655279b39b0ed3f8db1e64501520a26fca4faa4269bde96a925181a20c5e4"
+      },
+      {
+        "name": "detail",
+        "at": "2026-10-17T02:37:27.852Z",
+        "status": 200,
+        "targetFound": true,
+        "resources": {
+          "desired": {
+            "cpuMilli": "500",
+            "memoryBytes": "536870912"
+          },
+          "admitted": null,
+          "usage": null,
+          "peak": null,
+          "nextDownsizeAt": null
+        },
+        "node": null,
+        "spot": null,
+        "responseSHA256": "5c68b85fdc895a287b489e0c0c5e8879a14051c0089684cab26dd4cc7144aae9"
+      }
+    ],
+    "post": 0,
+    "authChanged": false,
+    "desiredConsistent": true,
+    "observedNotFabricated": true,
+    "exit": 0,
+    "finishedAt": "2026-10-17T02:37:27.974Z"
+  },
+  "expo": {
+    "startedAt": "2026-10-17T02:35:45.730Z",
+    "finishedAt": "2026-10-17T02:36:31.323Z",
+    "PID": 12445,
+    "status": "failed",
+    "failureCode": "OPS_BROWSER_DECODED_FRAME_WAIT_FAILED",
+    "opsReloadClicks": 0,
+    "summaryTaps": 0,
+    "detailTaps": 0,
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true
+  },
+  "screenshot": {
+    "file": "ops-desired-resources-first-expo-failure-20261017.png",
+    "sha256": "a728c3ccfcbf2ecb58f8eafd77e6a85eae1807b7ea985035605eff3168bb1dca",
+    "bytes": 21557,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "actualExpoWeb": true,
+    "nativeIPhone": false,
+    "failureEvidence": true,
+    "visibleText": "Update desktop Orca to stream browser tabs on mobile.",
+    "desiredResourcesVisuallyConfirmed": false
+  },
+  "usageCreditsStreamOriginalError": "미관측"
+}
