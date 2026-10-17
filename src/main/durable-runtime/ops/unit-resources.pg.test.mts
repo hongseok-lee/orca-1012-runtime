@@ -67,7 +67,7 @@ async function seed(cpu = '777', wrongPlanDigest = false) {
   return { ...f, operation, shape, actor, services, eventId }
 }
 
-await test('stored desired requests: exact reference, scoped snapshot and no invented observations', async t => {
+test('stored desired requests: exact reference, scoped snapshot and no invented observations', async t => {
   t.after(() => pool.end())
   const identity = (await pool.query(`SELECT current_database() AS database,(SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
     (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
