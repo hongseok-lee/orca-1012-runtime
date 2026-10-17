@@ -12,7 +12,10 @@ export function isRuntimeTerminalNativeChatSession(value: unknown): value is Run
   if (!value || typeof value !== 'object' || Array.isArray(value)) { return false }
   const item = value as Record<string, unknown>
   return item.agent === 'codex' && typeof item.sessionId === 'string' && item.sessionId.length > 0 &&
-    item.sessionId.trim() === item.sessionId && !/[\u0000-\u001f\u007f]/.test(item.sessionId)
+    item.sessionId.trim() === item.sessionId && Array.from(item.sessionId).every(character => {
+      const code = character.charCodeAt(0)
+      return code > 31 && code !== 127
+    })
 }
 
 export type RuntimeMobileSessionTerminalTab = {

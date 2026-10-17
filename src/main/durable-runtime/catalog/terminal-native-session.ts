@@ -14,7 +14,11 @@ function object(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>
 }
 function text(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.trim() !== value || /[\u0000-\u001f\u007f]/.test(value)) { return invalid() }
+  if (typeof value !== 'string' || !value || value.trim() !== value) { return invalid() }
+  for (const character of value) {
+    const code = character.charCodeAt(0)
+    if (code <= 31 || code === 127) { return invalid() }
+  }
   return value
 }
 function decimal(value: unknown): string {
