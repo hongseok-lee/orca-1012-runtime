@@ -91,7 +91,8 @@ await test('existing setTabProps preserves parent scope, visibility, omitted fie
     (SELECT count(*)::int FROM durable_runtime.outbox_events WHERE aggregate_id=$1 AND aggregate_kind<>'catalog') AS wake`, [f.unitId, session])).rows[0]
   const oldDraft = await readStored(pool, f), oldEffects = await effects()
   const before = await read(), untouched = before.find(row => row.public_tab_id === otherId)
-  const params = {worktree: `id:${target.workspace_id}`, tabId: firstId, color: null, isPinned: true}
+  const params: {worktree: string; tabId: string; color: string | null; isPinned: boolean} = {
+    worktree: `id:${target.workspace_id}`, tabId: firstId, color: null, isPinned: true}
   const pending = invoke(params); params.color = '#mutated-after-capture'
   assert.deepEqual(await pending, {updated: true})
   let rows = await read()
@@ -103,6 +104,13 @@ await test('existing setTabProps preserves parent scope, visibility, omitted fie
   assert.deepEqual(rows.find(row => row.public_tab_id === otherId), untouched)
   await assert.rejects(invoke({worktree: `id:${target.workspace_id}`, tabId: browserId, color: '#ffffff'}), /tab_not_found/)
   await assert.rejects(invoke({worktree: `id:${randomUUID()}`, tabId: firstId, viewMode: 'chat'}), /selector_not_found/)
+  const foreign = (await pool.query(`SELECT w.public_id,m.public_tab_id,to_jsonb(m) AS metadata
+    FROM durable_runtime.catalog_tab_metadata m JOIN durable_runtime.tabs t ON t.id=m.tab_id
+    JOIN durable_runtime.workspaces w ON w.id=t.workspace_id WHERE w.id<>$1 ORDER BY w.id,m.tab_id LIMIT 1`, [target.workspace_id])).rows[0]
+  assert.ok(foreign, 'Reuse one preserved foreign Workspace for the permission denial only')
+  await assert.rejects(invoke({worktree: `id:${foreign.public_id}`, tabId: foreign.public_tab_id, color: '#blocked'}), /selector_not_found/)
+  assert.deepEqual((await pool.query('SELECT to_jsonb(m) AS metadata FROM durable_runtime.catalog_tab_metadata m WHERE public_tab_id=$1',
+    [foreign.public_tab_id])).rows[0].metadata, foreign.metadata)
   const original = rows.find(row => row.public_tab_id === firstId)
   const pin = {tabId: target.id, tabRevision: target.revision, bindingRevision: original.binding_revision,
     provider: 'codex', payload: original.payload}
