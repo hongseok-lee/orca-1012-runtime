@@ -49,7 +49,8 @@ export class ClaudeDurableProvider {
     }
     this.#starting = true
     try {
-      return await invokeProviderEffect(permit, { kind: 'COLD', binding: request.binding, commandClaim }, async () => {
+      return await invokeProviderEffect(permit, { kind: 'COLD', binding: request.binding, commandClaim,
+        coldRequest: request }, async () => {
         let resolveInit!: (value: ReadyProviderBinding) => void
         let rejectInit!: (reason: Error) => void
         let initial: ReadyProviderBinding | undefined

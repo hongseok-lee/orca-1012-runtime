@@ -1,10 +1,11 @@
 import { isDeepStrictEqual } from 'node:util'
+import path from 'node:path'
 import type { Pool } from 'pg'
 import { DurableDatabaseError, runDurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import type { StorageBindingId } from '../../../shared/durable-runtime/identity.ts'
 import type { StorageEvidenceAuthority, ExecutionTarget, VerifiedMountEvidence } from '../storage/evidence.ts'
-import type { ProviderEffectIdentity, ProviderEffectPermit } from '../providers/shared/contracts.ts'
+import type { ProviderColdRequest, ProviderEffectIdentity, ProviderEffectPermit } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import { LockedGatewayAuthority } from './gateway/authority.ts'
 import { commandById, assertOriginal } from './gateway/store.ts'
@@ -16,11 +17,20 @@ import type { GatewayContext } from './gateway/types.ts'
 export type ProviderProtectionLease = Readonly<{
   authority: StorageEvidenceAuthority
   target: ExecutionTarget
-  mounts: readonly Readonly<{ bindingId: StorageBindingId; evidence: VerifiedMountEvidence }>[]
+  mounts: readonly Readonly<{ bindingId: StorageBindingId; clientRoot: string; evidence: VerifiedMountEvidence }>[]
   release(): void | Promise<void>
 }>
 export type ProviderProtectionOwner = Readonly<{
   takePreparedProtection(): ProviderProtectionLease
+}>
+/** Captured by trusted server configuration, never from a public request. Full
+ * launch/native/env comparison is in memory; no secret-bearing request digest. */
+export type ProviderColdExecutionPolicy = Readonly<{
+  provider: 'codex' | 'claude'
+  home: string
+  providerState: string
+  request: ProviderColdRequest<unknown>
+  protectedRoots: readonly Readonly<{ bindingId: StorageBindingId; clientRoot: string }>[]
 }>
 export type ProviderEffectLifetime = Readonly<{
   phase: 'UNUSED' | 'VALIDATING' | 'REJECTED' | 'EFFECT_POSSIBLE' | 'COMPLETED'
@@ -35,12 +45,14 @@ const deny = (code: string): never => { throw new DurableDatabaseError(code) }
  * Construction performs no I/O. Invoke borrows a new transaction, confirms its
  * actual COMMIT, and only then runs one effect outside that transaction. */
 export function createProviderEffectPermit(pool: Pool, originalContext: GatewayContext,
-  originalIdentity: ProviderEffectIdentity, protectionOwner: ProviderProtectionOwner): Readonly<{
+  originalIdentity: ProviderEffectIdentity, protectionOwner: ProviderProtectionOwner,
+  originalColdPolicy?: ProviderColdExecutionPolicy): Readonly<{
     permit: ProviderEffectPermit
     lifetime(): ProviderEffectLifetime
     retainedProtection(): ProviderProtectionLease | null
   }> {
   const context = immutableSnapshot(originalContext), identity = immutableSnapshot(originalIdentity)
+  const coldPolicy = originalColdPolicy ? immutableSnapshot(originalColdPolicy) : null
   if (identity.kind !== 'COLD' && identity.kind !== 'DISPATCH') { deny('PROVIDER_EFFECT_KIND') }
   if (!Object.isFrozen(protectionOwner)) { deny('PROVIDER_PROTECTION_OWNER_REQUIRED') }
   const take = protectionOwner.takePreparedProtection, connect = pool.connect
@@ -90,15 +102,54 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
               mount(evidence.evidenceRef) !== evidence || !mountValid(evidence)) { deny('PROVIDER_MOUNT_PIN_REQUIRED') }
           ids.add(entry.bindingId)
         }
+        if (identity.kind === 'COLD') {
+          if (!coldPolicy || !identity.coldRequest ||
+              !isDeepStrictEqual(coldPolicy.request, identity.coldRequest) ||
+              !isDeepStrictEqual(identity.coldRequest.binding, binding)) { deny('PROVIDER_COLD_POLICY_REQUIRED') }
+          const request = coldPolicy.request
+          function within(value: string, root: string): boolean {
+            return typeof value === 'string' && typeof root === 'string' && path.posix.isAbsolute(value) &&
+              path.posix.normalize(value) === value && path.posix.isAbsolute(root) &&
+              path.posix.normalize(root) === root && !/[\x00-\x1f]/.test(value + root) &&
+              (value === root || value.startsWith(root + '/'))
+          }
+          const roots = coldPolicy.protectedRoots
+          if (roots.length !== mounts.length || new Set(roots.map(root => root.bindingId)).size !== roots.length || roots.some(expected =>
+            !mounts.some(held => held.bindingId === expected.bindingId && held.clientRoot === expected.clientRoot))) {
+            deny('PROVIDER_COLD_MOUNT_SET')
+          }
+          for (const location of [coldPolicy.home, coldPolicy.providerState, request.checkout]) {
+            if (!roots.some(root => within(location, root.clientRoot))) { deny('PROVIDER_COLD_PATH_SCOPE') }
+          }
+          const launch = request.launch
+          if (!launch || typeof launch !== 'object' || !('env' in launch) ||
+              !launch.env || typeof launch.env !== 'object') { deny('PROVIDER_COLD_ENV_REQUIRED') }
+          const env = launch.env
+          if (!('HOME' in env) || env.HOME !== coldPolicy.home ||
+              ('CODEX_HOME' in env && env.CODEX_HOME !== coldPolicy.providerState) ||
+              ('CLAUDE_CONFIG_DIR' in env && env.CLAUDE_CONFIG_DIR !== coldPolicy.providerState) ||
+              request.persistentHome !== (coldPolicy.provider === 'codex' ? coldPolicy.providerState : coldPolicy.home) ||
+              (request.native.kind === 'RESUME' && request.native.providerRef.provider !== coldPolicy.provider)) {
+            deny('PROVIDER_COLD_NATIVE_SCOPE')
+          }
+          const resumePath = 'resumePath' in launch ? launch.resumePath : null
+          if (resumePath !== null && resumePath !== undefined &&
+              (typeof resumePath !== 'string' || !roots.some(root => within(resumePath, root.clientRoot)))) {
+            deny('PROVIDER_COLD_RESUME_PATH_SCOPE')
+          }
+        }
       }
       const database = await runDurableTransaction(borrowed, async tx => {
         pins()
+        // Membership is authoritative only under the original Session/Unit
+        // locks. Discover storage domains after those locks, never from a
+        // pre-lock projection that can omit a newly attached binding.
+        await lockAggregates(tx, { sessionIds: [binding.sessionId], runtimeUnitIds: [binding.runtimeUnitId] })
         const members = await tx.query<{ storage_binding_id: StorageBindingId; backend_id: string; export_id: string }>(
           `SELECT m.storage_binding_id,b.backend_id,b.export_id FROM durable_runtime.runtime_member_storage_bindings m
            JOIN durable_runtime.storage_bindings b ON b.id=m.storage_binding_id
            WHERE m.runtime_unit_id=$1 AND m.session_id=$2`, [binding.runtimeUnitId, binding.sessionId])
-        await lockAggregates(tx, { sessionIds: [binding.sessionId], runtimeUnitIds: [binding.runtimeUnitId],
-          storageDomains: members.rows.map(row => ({ backendId: row.backend_id, exportId: row.export_id })),
+        await lockAggregates(tx, { storageDomains: members.rows.map(row => ({ backendId: row.backend_id, exportId: row.export_id })),
           operationIds: [context.operationId] })
         const gateway = await LockedGatewayAuthority.acquire(tx, context)
         const row = await commandById(gateway, claim.commandId)
@@ -131,7 +182,9 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
            AND x.attempt_id=$3 AND x.pod_uid=$4 AND x.grant_epoch=b.epoch AND x.mode='RW'
            AND x.desired_state='ACTIVE' AND x.observed_state='ACTIVE'`,
           [binding.runtimeUnitId, binding.sessionId, binding.attemptId, binding.podUid])
-        if (protectedMounts.rowCount !== members.rowCount || members.rowCount !== mounts.length) {
+        if (protectedMounts.rowCount !== members.rowCount || members.rowCount !== mounts.length ||
+            members.rows.some(member => !protectedMounts.rows.some(row => row.id === member.storage_binding_id)) ||
+            members.rows.some(member => !mounts.some(held => held.bindingId === member.storage_binding_id))) {
           deny('PROVIDER_ALL_PROTECTED_WRITERS_REQUIRED')
         }
         for (const stored of protectedMounts.rows) {
