@@ -12,3 +12,10 @@
 Root의 추가 source 리뷰에서 겹친 clear/body/CR의 DB 조회가 도착 순서를 뒤집을 수 있음을 확인했습니다. 교정 source `604919ed2733a089e63b4a938b4c59642411ee0f`는 실제 연결 owner에 같은 handle/device/principal의 입력 lane을 동기 등록합니다. Payload와 context는 등록 전에 capture하며, 다른 handle은 기다리지 않습니다. 앞 COMMIT이 불확정이면 뒤 입력은 PG에 진입하지 않고 원 key의 receipt 조회만 허용합니다. NOT_FOUND는 자동 재접수 근거로 쓰지 않습니다.
 
 새 겹침 callback 1개는 첫 target 조회를 늦춘 상태로 clear/body/CR를 함께 보냈습니다. 원 body를 정확히 접수했고 CR COMMIT 응답 유실 뒤 다른 key를 차단했으며, 원 key의 확정 receipt를 조회한 뒤에만 새 입력을 접수했습니다. 변경 lint 3개와 변경 연결 owner 1개 파일의 strict type도 통과했습니다. 기존 순차 callback은 반복하지 않았습니다. 기존 실제 개발 handle은 shell provider이고 Chat mode가 명시되지 않아 성공 대상으로 사용하지 않았습니다. 교정 제품 14개 파일은 개발 서버 generation 3 / runtime PID 20159에 한 번 반영됐고 2026-10-17 02:54:07.180 UTC의 Ready가 관측됐습니다. 이는 부분 source delta의 반영이며 전체 checkout Git SHA를 증명한 결과가 아닙니다. 실제 Terminal 인증 API 접수는 명시적인 managed Chat 대상이 준비되지 않아 아직 실행하지 않았습니다.
+
+
+기존 `session.tabs.setTabProps`도 원 schema와 `{updated:true}` 응답 그대로 PG Catalog에 연결했습니다. Terminal leaf 선택은 같은 부모의 열린 leaf들에만 적용하고 생략한 필드는 유지하며 `color:null`은 색만 지웁니다. 기존 visibility·Workspace 권한, membership 잠금, Catalog 게시와 receipt transaction을 재사용합니다. 이 변경은 floor/draft/본문이나 provider/wake 상태를 변경하지 않습니다.
+
+`ee780b8d`의 새 metadata callback 1개와 lint 5개가 통과했습니다. Root 리뷰 후 `0eb5da30`에서는 실제 mode 변경 시 해당 Tab의 semantic revision을 올리며 physical binding revision을 보존했습니다. 변경 lint 2개와 왕복 경계 callback 1개가 통과했고, 동일 mode·생략은 revision 불변이며 Chat→Terminal→Chat 뒤 payload가 같아져도 이전 pin은 stale입니다. 기존 순차·겹침·metadata callback은 재실행하지 않았습니다. 새 metadata 변경의 전체 type 검증은 실행하지 않았습니다.
+
+공유 cache는 원본을 쓰지 않고 검증 stage에서 고정 입력만 사용했습니다. 빌드 시 실제 Git pin을 대조한 이후에는 불변 bundle/hash와 실제 runtime 외부 입력을 guard하며, 실행이 읽지 않는 공유 source의 이후 변경 때문에 재수집·재bundle하지 않습니다. 모드 왕복 시험에서는 명시된 원 fixture Tab revision +2, metadata timestamp, Catalog head +4만 변하고 binding·floor·draft·입력과 나머지 원행·ledger는 보존됐습니다. 교정 제품 4개 파일의 개발 게시와 정상 새 Codex 대상의 setTabProps→Terminal 실제 접수는 아직 인계 중입니다.

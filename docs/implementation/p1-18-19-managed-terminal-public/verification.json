@@ -111,5 +111,45 @@
     "fixtureFilesPublished": 0,
     "terminalIntakeAPIExecuted": false,
     "reason": "Existing inspected logical handle belongs to shell and has no explicit Chat mode; a verified managed Chat target is pending."
-  }
+  },
+  "tabProps": {
+    "sourcePin": "ee780b8dbb670ea43ac92075751af7a69a21925e",
+    "lintOwned": 5,
+    "productCallbacks": 1,
+    "actualCallbackPid": 21653,
+    "exit": 0,
+    "actualInputFiles": 251,
+    "pinMismatch": 0,
+    "originalRowsPreserved": true,
+    "oldCallbacksRepeated": false,
+    "legacyWireDedupAdded": false,
+    "newTypeExecuted": false
+  },
+  "tabPropsRoundtrip": {
+    "sourcePin": "0eb5da3077c6133fb6f9040aa2e679e6715977ef",
+    "changedLintFiles": 2,
+    "productCallbacks": 1,
+    "runnerPid": 22104,
+    "testLauncherPid": 22115,
+    "actualCallbackPid": 22121,
+    "callbackAt": "2026-10-17T03:48:01.055Z",
+    "exit": 0,
+    "actualInputFiles": 232,
+    "pinMismatch": 0,
+    "sameOrOmittedModeRevisionDelta": 0,
+    "modeRoundtripRevisionDelta": 2,
+    "bindingRevisionDelta": 0,
+    "originalPinStale": true,
+    "expectedPublicationRevisionDelta": 4,
+    "otherOriginalRowsUnchanged": true,
+    "oldCallbacksRepeated": false,
+    "wholeProductTypeExecuted": false,
+    "runtimeSourceCacheRehashed": false
+  },
+  "preparationCorrections": [
+    "An unchanged terminal fixture helper was missing from cache and was supplied as fixed Git bytes.",
+    "A newly consumed baseline cancel-record.ts differed by the accepted unit ?? undefined line; only the owned verification stage was corrected.",
+    "A launch path variable was accidentally reused for helper source text; tar failed before Node/PG entry and the path-only continuation was preserved.",
+    "The shared Browser source changed after a frozen bundle was built; the stage copy was isolated. Subsequent runs guard the immutable bundle and actual runtime externals instead of unconsumed shared source."
+  ]
 }
