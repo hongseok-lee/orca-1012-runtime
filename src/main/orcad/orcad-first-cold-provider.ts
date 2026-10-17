@@ -1,4 +1,4 @@
-import { closeSync, fstatSync, createReadStream } from 'node:fs'
+import { fstatSync, createReadStream } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import type { OrcadControllerConfig } from './orcad-controller-config.ts'
@@ -25,7 +25,7 @@ export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string>
   if (process.env.ORCA_DURABLE_AUDIT_TOKEN_FD !== '3') { return deny() }
   const fd = 3, chunks: Buffer[] = []
   let bytes = 0
-  const stream = createReadStream('', { fd, autoClose: false })
+  const stream = createReadStream('', { fd, autoClose: true })
   const timer = setTimeout(() => stream.destroy(new Error('CONTROLLER_FIRST_COLD_CONFIG')), timeoutMs)
   try {
     const stat = fstatSync(fd)
@@ -40,7 +40,7 @@ export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string>
     if (!token || !/^[A-Za-z0-9._~+/=-]+$/.test(token)) { return deny() }
     return token
   } catch { return deny() }
-  finally { clearTimeout(timer); stream.destroy(); for (const part of chunks) { part.fill(0) }; try { closeSync(fd) } catch { /* fixed boundary only */ } }
+  finally { clearTimeout(timer); stream.destroy(); for (const part of chunks) { part.fill(0) } }
 }
 
 /** Startup-only optional specialization. Old/absent configuration is inert.
