@@ -62,7 +62,8 @@ export const terminalCodexOutputEventHandler: EventHandler = async (tx, event) =
      JOIN durable_runtime.workspaces w ON w.id=t.workspace_id AND w.dataset_name=a.dataset_name
      WHERE t.id=$1 AND t.session_id=$2 AND s.agent_id=$3 AND t.kind='terminal'
        AND a.provider='codex' AND t.terminal_handle=$4 AND m.payload->>'id'=m.public_tab_id
-       AND m.payload->>'terminal'=t.terminal_handle
+       AND ((m.payload->>'status'='ready' AND m.payload->>'terminal'=t.terminal_handle)
+         OR (m.payload->>'status'='pending-handle' AND m.payload->'terminal'='null'::jsonb))
        AND m.payload->>'type'='terminal'
        AND EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events l WHERE l.session_id=s.id
          AND l.runtime_unit_id=$5 AND l.kind='INITIAL_PROVIDER_READY'

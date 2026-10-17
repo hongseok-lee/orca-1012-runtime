@@ -21,10 +21,10 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
     // Exact stored delivery thread/turn identity only, never text/hash dedup.
     if (nativeInputEchoIds.has(itemId) && body.kind === 'message' && body.role === 'user') { return }
     if (body.kind === 'turn') {
-      if (body.state === 'running' || body.state === 'completed' || body.state === 'interrupted') {
-        lifecycle = {state: body.state === 'running' ? 'working' : body.state, turnId: body.turnId,
+      lifecycle = body.state === 'running' || body.state === 'completed' || body.state === 'interrupted'
+        ? {state: body.state === 'running' ? 'working' : body.state, turnId: body.turnId,
           timestamp: body.state === 'running' ? body.startedAt ?? at : body.completedAt ?? at}
-      } else { lifecycle = undefined }
+        : undefined
     }
     const revision = (revisions.get(itemId) ?? 0) + 1
     revisions.set(itemId, revision)
