@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomUUID } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { createDurablePool, withDurableTransaction, type DurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
@@ -16,15 +17,20 @@ import { publishCatalogTerminalNativeSessionReady } from './terminal-native-sess
 test('same-RR original READY identity, atomic head/hint, rollback and authorization', { concurrency: false }, async () => {
   assert.equal(process.env.PGDATABASE, 'orca_ops_resources_20261017')
   const pool = createDurablePool({ max: 4, application_name: 'terminal-native-identity-owned', statement_timeout: 15000 })
-  const owner = `terminal-native-identity:${randomUUID()}`, workspace = logicalId('workspace', randomUUID())
-  const bindings = [0, 1].map(() => ({ sessionId: logicalId('session', randomUUID()), tabId: logicalId('tab', randomUUID()),
+  const resume = process.env.ORCA_TERMINAL_IDENTITY_FIXTURE
+    ? JSON.parse(readFileSync(process.env.ORCA_TERMINAL_IDENTITY_FIXTURE, 'utf8')) as {
+      owner: string; workspace: string; bindings: ReadyProviderBinding[]; operations: string[]
+    } : null
+  const owner = resume?.owner ?? `terminal-native-identity:${randomUUID()}`
+  const workspace = logicalId('workspace', resume?.workspace ?? randomUUID())
+  const bindings = resume?.bindings ?? [0, 1].map(() => ({ sessionId: logicalId('session', randomUUID()), tabId: logicalId('tab', randomUUID()),
     terminalHandle: `${owner}:${randomUUID()}`, providerBindingRevision: counter('row:provider-binding', '1'),
     runtimeUnitId: logicalId('runtime-unit', randomUUID()), attemptId: logicalId('attempt', randomUUID()),
     podUid: `synthetic-pod:${randomUUID()}`, executionEpoch: counter('execution-epoch', '1'),
     connectionInstanceId: `synthetic-connection:${randomUUID()}`,
     providerRef: { provider: 'codex', nativeSessionRef: `synthetic-thread:${randomUUID()}` }
   }) as ReadyProviderBinding)
-  const operations = bindings.map(() => logicalId('operation', randomUUID()))
+  const operations = resume?.operations.map(id => logicalId('operation', id)) ?? bindings.map(() => logicalId('operation', randomUUID()))
   const authority = { principalId: owner, repositoryIds: [], projectGroupIds: [owner], workspacePublicIds: [] } as unknown as CatalogAuthority
   const snapshot = () => readCatalogSnapshot(pool, authority)
   const workspaceTabs = async () => {
@@ -54,7 +60,7 @@ test('same-RR original READY identity, atomic head/hint, rollback and authorizat
       (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
     assert.deepEqual(db, { oid: '98744', system: '7696101282789175327' })
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.schema_migrations')).rows[0].n, 23)
-    await withDurableTransaction(pool, async tx => {
+    if (!resume) { await withDurableTransaction(pool, async tx => {
       await tx.query(`INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state) VALUES($1,$2,$2,'READY')`, [workspace, owner])
       await tx.query(`INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)`, [owner, {
         id: owner, name: owner, createdFrom: 'manual', parentPath: null, parentGroupId: null, color: null,
@@ -89,7 +95,11 @@ test('same-RR original READY identity, atomic head/hint, rollback and authorizat
           VALUES($1,$2,'COLD_START',0,$3,1,'RELEASE_GATE',1,$4)`, [operations[index], binding.runtimeUnitId, owner,
           { state: 'SUCCEEDED', ready: true, providerBindings: [{ ...binding.providerRef }] }])
       }
-    })
+    }) }
+    // The earlier output/Ops fixtures did not register a Catalog global head.
+    // Match registerCatalogProject's insert-only initialization; retain any incumbent.
+    await pool.query(`INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch)
+      VALUES('catalog',$1) ON CONFLICT(scope) DO NOTHING`, [owner])
     const before = await snapshot(), heads = before.heads.filter(row => row.scope === 'catalog' || row.scope === `workspace:${workspace}`)
     assert.equal(identity(await workspaceTabs()), undefined)
     await assert.rejects(withDurableTransaction(pool, async tx => { await ready(tx, 0); throw new Error('SYNTHETIC_ROLLBACK') }), /SYNTHETIC_ROLLBACK/)
