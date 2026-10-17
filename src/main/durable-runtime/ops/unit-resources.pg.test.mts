@@ -11,6 +11,7 @@ if (!database || database === 'orca_dev' || !/^orca_ops_resources_[a-z0-9_]+$/.t
     database !== process.env.PGDATABASE) { throw new Error('Dedicated Ops resources verification database required') }
 const pool = createDurablePool({ database, max: 3, application_name: 'ops-desired-resources-focused' })
 const digest = (value: unknown) => createHash('sha256').update(canonicalInput(value)).digest('hex')
+const onlyHead = process.env.ORCA_OPS_RESOURCES_ONLY_HEAD === '1'
 
 async function seed(cpu = '777', wrongPlanDigest = false) {
   const unit = randomUUID(), workspace = randomUUID(), agent = randomUUID(), session = randomUUID(), binding = randomUUID()
@@ -79,7 +80,7 @@ test('stored desired requests: exact reference, scoped snapshot and no invented 
   // A larger, unrelated stored profile must not win over the audited reference.
   await pool.query('INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,99,$2,4)',
     [a.unit, { ...a.shape, containers: [{ ...a.shape.containers[0], cpuMillicores: '9999' }] }])
-  await t.test('initial declaration and list/detail share the exact profile; another Unit remains forbidden', async () => {
+  if (!onlyHead) { await t.test('initial declaration and list/detail share the exact profile; another Unit remains forbidden', async () => {
     const before = (await pool.query('SELECT to_jsonb(u) AS body FROM durable_runtime.runtime_units u WHERE id=$1', [a.unit])).rows
     const list = await a.services.units(a.actor), detail = await a.services.unit(a.actor, a.unit)
     assert.deepEqual(list.units.map(u => u.id), [a.unit])
@@ -89,10 +90,12 @@ test('stored desired requests: exact reference, scoped snapshot and no invented 
     assert.equal(detail.unit.attempt, null)
     await assert.rejects(a.services.unit(a.actor, b.unit), e => e instanceof DurableDatabaseError && e.code === 'OPS_TARGET_FORBIDDEN')
     assert.deepEqual((await pool.query('SELECT to_jsonb(u) AS body FROM durable_runtime.runtime_units u WHERE id=$1', [a.unit])).rows, before)
-  })
+  }) }
   await t.test('resource head selects its desired revision, then approved when no replacement is pending', async () => {
     const budget = `fixture-budget:${randomUUID()}`
-    await pool.query("INSERT INTO durable_runtime.resource_policy_versions(policy_revision,policy,policy_digest) VALUES(4,'{}',$1) ON CONFLICT DO NOTHING", ['0'.repeat(64)])
+    const fixturePolicy = { revision: '4' }
+    await pool.query('INSERT INTO durable_runtime.resource_policy_versions(policy_revision,policy,policy_digest) VALUES(4,$1,$2) ON CONFLICT DO NOTHING',
+      [fixturePolicy, digest(fixturePolicy)])
     await pool.query(`INSERT INTO durable_runtime.resource_budget_scopes(scope,dataset_name,budget_domain_id,memory_limit_bytes,cpu_limit_millicores,configuration,evidence_ref)
       VALUES($1,'orca-1012-dev-v1',$1,10000000000,10000,'{}','fixture-data-only')`, [budget])
     await pool.query('INSERT INTO durable_runtime.resource_profiles(runtime_unit_id,revision,container_resources,policy_revision) VALUES($1,8,$2,4)',
@@ -104,8 +107,8 @@ test('stored desired requests: exact reference, scoped snapshot and no invented 
     await pool.query('UPDATE durable_runtime.resource_unit_state SET desired_profile_revision=NULL,revision=revision+1 WHERE runtime_unit_id=$1', [a.unit])
     assert.deepEqual((await a.services.unit(a.actor, a.unit)).unit.resources.desired, { cpuMilli: '777', memoryBytes: '1073741824' })
   })
-  await t.test('mismatched initial plan evidence fails rather than projecting another identity', async () => {
+  if (!onlyHead) { await t.test('mismatched initial plan evidence fails rather than projecting another identity', async () => {
     const corrupt = await seed('666', true)
     await assert.rejects(corrupt.services.unit(corrupt.actor, corrupt.unit), e => e instanceof DurableDatabaseError && e.code === 'OPS_RESOURCE_PROFILE_REFERENCE')
-  })
+  }) }
 })
