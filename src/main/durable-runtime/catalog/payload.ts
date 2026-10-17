@@ -3,6 +3,7 @@ import type { ProjectGroup } from '../../../shared/project-group-types.ts'
 import type { FolderWorkspace } from '../../../shared/folder-workspace-types.ts'
 import type { RuntimeWorktreeRecord } from '../../../shared/runtime-worktree-contracts.ts'
 import type { RuntimeMobileSessionClientTab } from '../../../shared/runtime-mobile-session-tab-contracts.ts'
+import { isRuntimeTerminalNativeChatSession } from '../../../shared/runtime-mobile-session-tab-contracts.ts'
 import type { CatalogRepositoryRow, CatalogProjectGroupRow, CatalogWorkspaceMetadataRow } from '../db/rows.ts'
 import type { CatalogTab } from './read.ts'
 import { captureCatalogJson } from './immutable.ts'
@@ -76,6 +77,7 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
   if (value.isPinned !== undefined) {boolean(value, 'isPinned')}
   if (value.color !== undefined) {text(value, 'color', true)}
   if (value.type === 'terminal') {
+    if (Object.hasOwn(value, 'nativeChatSession')) {throw new CatalogError('CATALOG_NATIVE_SESSION_STORED_PAYLOAD')}
     text(value, 'parentTabId'); text(value, 'leafId')
     if (value.status === 'pending-handle') {
       if (value.terminal !== null) {throw new CatalogError('CATALOG_PAYLOAD')}
@@ -83,6 +85,10 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
       if (value.terminal !== row.terminal_handle || !value.terminal) {throw new CatalogError('CATALOG_PAYLOAD')}
     } else {throw new CatalogError('CATALOG_PAYLOAD')}
     if (value.viewMode !== undefined && !['terminal', 'chat'].includes(String(value.viewMode))) {throw new CatalogError('CATALOG_PAYLOAD')}
+    if (row.terminal_native_chat_session !== undefined) {
+      if (!isRuntimeTerminalNativeChatSession(row.terminal_native_chat_session)) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
+      return { ...value, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
+    }
   } else if (value.type === 'agent-session') {
     text(value, 'sessionId')
     if (!value.sessionId || !['claude', 'codex'].includes(String(value.agent))) {throw new CatalogError('CATALOG_PAYLOAD')}
