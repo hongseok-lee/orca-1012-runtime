@@ -3,6 +3,7 @@ import { constants, mkdirSync, lstatSync, openSync, writeSync, fstatSync, fchmod
   fsyncSync, closeSync, linkSync, unlinkSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils.ts'
+import type { InitialProviderPaths } from './initial-provider-paths.ts'
 
 export type CodexNativeArtifact = Readonly<{ sha256: string; byteLength: number }>
 
@@ -10,7 +11,8 @@ export type CodexNativeArtifact = Readonly<{ sha256: string; byteLength: number 
  * finish are reachable only from the original backend permit callback AFTER
  * grant COMMIT; they write only this owned protected HOME, never /shared.
  * A 289 MB native executable is streamed, not retained in the 64 MiB /tmp. */
-export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativeArtifact, codexAuth: string) {
+export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativeArtifact, codexAuth: string,
+  paths: InitialProviderPaths) {
   if (!/^[0-9a-f]{64}$/.test(artifact.sha256) || !Number.isSafeInteger(artifact.byteLength) || artifact.byteLength < 1 ||
       typeof codexAuth !== 'string' || Buffer.byteLength(codexAuth) > 1024 * 1024) { throw new Error('AGENT_COLD_PREPARATION_POLICY') }
   let phase: 'UNUSED' | 'WRITING' | 'READY' | 'FAILED' = 'UNUSED'
@@ -37,12 +39,14 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
     begin(): void {
       if (phase !== 'UNUSED') { throw new Error('AGENT_COLD_PREPARATION_USED') }
       phase = 'FAILED'
-      const home = child('/agent', 'home')
+      const homeRoot = child('/agent', 'home'), home = child(homeRoot, paths.agentId)
+      if (home !== paths.home) { throw new Error('AGENT_COLD_HOME_MAPPING') }
       child(home, '.codex'); directory = child(home, '.orca-native')
-      // Existing trusted checkout preparation must have completed. This path
-      // check does not clone arbitrary RPC-selected repositories or commands.
-      const checkout = lstatSync('/agent/checkout')
-      if (!checkout.isDirectory() || checkout.isSymbolicLink() || realpathSync('/agent/checkout') !== '/agent/checkout') {
+      // A first empty Folder workspace is materialized only AFTER COMMIT.
+      // Git requires its real checkout and is never replaced by an empty one.
+      if (paths.checkoutPreparation === 'EMPTY_FOLDER') { child('/agent', 'checkout') }
+      const checkout = lstatSync(paths.checkout)
+      if (!checkout.isDirectory() || checkout.isSymbolicLink() || realpathSync(paths.checkout) !== paths.checkout) {
         throw new Error('AGENT_COLD_CHECKOUT_REQUIRED')
       }
       partial = join(directory, 'codex.partial')
@@ -82,7 +86,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       // Authentication text is private data. It is never hashed or printed.
       try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error('AGENT_COLD_AUTH_SHAPE') } }
       catch { throw new Error('AGENT_COLD_AUTH_INVALID') }
-      writeFileAtomically('/agent/home/.codex/auth.json', codexAuth, { mode: 0o600 })
+      writeFileAtomically(join(paths.home, '.codex', 'auth.json'), codexAuth, { mode: 0o600 })
       rootCurrent(); phase = 'READY'
     },
     ready(): boolean { return phase === 'READY' },

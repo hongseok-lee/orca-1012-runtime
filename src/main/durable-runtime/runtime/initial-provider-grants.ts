@@ -128,13 +128,13 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
     [target.attemptId, input.context.runtimeUnitId, target.executionEpoch])
     await recordExecutionTarget(tx, input.context, lease.executionRecord)
     const store = new StorageStore(authority)
-    const result = await store.observeMount(tx, { sessionId: input.sessionId, unitId: input.context.runtimeUnitId,
+    const observed = await store.observeMount(tx, { sessionId: input.sessionId, unitId: input.context.runtimeUnitId,
       expectedUnitRevision: expectedRevision, actorId: input.context.controller.owner, bindingId: mounted.bindingId,
       expectedBindingRevision: counter('row:storage-binding', binding.revision), storageEpoch: counter('storage-epoch', binding.epoch),
       attemptId: target.attemptId, podUid: target.podUid, executionEpoch: target.executionEpoch,
       mountId: randomUUID(), mountEvidenceRef: mounted.evidence.evidenceRef,
       writer: { grantId: writers.rows[0].id, expectedRevision: writers.rows[0].revision } })
-    if (result.status !== 'APPLIED') { deny('INITIAL_PROVIDER_MOUNT_NOT_ACTIVE') }
+    if (observed.status !== 'APPLIED') { deny('INITIAL_PROVIDER_MOUNT_NOT_ACTIVE') }
     await write(`UPDATE durable_runtime.runtime_units SET phase='REHYDRATING',revision=revision+1
       WHERE id=$4 AND revision=$5 AND phase='PROVISIONING' AND ${currentAuthoritySql} RETURNING id`,
     [input.context.runtimeUnitId, expectedRevision])
