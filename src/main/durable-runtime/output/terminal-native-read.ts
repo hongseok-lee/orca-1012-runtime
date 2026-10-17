@@ -8,7 +8,7 @@ import { parseCatalogRepo, parseCatalogWorkspace, parseCatalogTab } from '../cat
 import { projectCatalogWorktree } from '../catalog/projection.ts'
 import { captureCatalogReadContext } from '../rpc/context.ts'
 import type { CapturedCatalogReadConfig } from '../rpc/config.ts'
-import { CatalogReadError } from '../rpc/config.ts'
+import { CatalogError } from '../catalog/errors.ts'
 import { freezeJournalJson, journalSafeCounter, JournalReadError, type CommittedJournalEvent } from './model.ts'
 import { readOriginalInputs } from './input-read.ts'
 import { projectTerminalNativeHistory } from './terminal-native-projector.ts'
@@ -20,7 +20,7 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
   context: RpcContext, knownHead?: string) {
   const params = NativeChatSession.parse(original), signal = context.signal
   const call = captureCatalogReadContext(config, context)
-  function active() { config.assertCurrentHost(); if (signal?.aborted) { throw new CatalogReadError('TERMINAL_HISTORY_ABORTED') } }
+  function active() { config.assertCurrentHost(); if (signal?.aborted) { throw new CatalogError('TERMINAL_HISTORY_ABORTED') } }
   active()
   return withCatalogReadSnapshot(config.pool, async tx => {
     const selected = await tx.query<{id: string}>(
@@ -30,7 +30,7 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
          SELECT 1 FROM durable_runtime.runtime_audit_events l WHERE l.session_id=s.id
          AND l.kind='INITIAL_PROVIDER_READY' AND l.next_state->'providerRef'->>'nativeSessionRef'=$1)`, [params.sessionId])
     if (selected.rows.length === 0) { return null }
-    if (selected.rows.length !== 1) { throw new CatalogReadError('TERMINAL_HISTORY_AMBIGUOUS') }
+    if (selected.rows.length !== 1) { throw new CatalogError('TERMINAL_HISTORY_AMBIGUOUS') }
     const sessionId = logicalId('session', selected.rows[0].id)
     const result = await tx.query<CatalogTab & {public_id: string; agent_dataset: string; dataset_name: string;
       provider: string; journal_epoch: string; head: string; session_lifecycle: string}>(
@@ -42,23 +42,23 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
        JOIN durable_runtime.workspaces w ON w.id=t.workspace_id AND w.id=s.workspace_id WHERE s.id=$1 AND t.kind='terminal'`, [sessionId])
     const row = result.rows[0]
     if (result.rows.length !== 1 || row.provider !== 'codex' || params.agent !== 'codex' || !row.terminal_handle ||
-        row.lifecycle !== 'OPEN' || row.session_lifecycle !== 'OPEN') { throw new CatalogReadError('TERMINAL_HISTORY_TARGET_UNAVAILABLE') }
+        row.lifecycle !== 'OPEN' || row.session_lifecycle !== 'OPEN') { throw new CatalogError('TERMINAL_HISTORY_TARGET_UNAVAILABLE') }
     const dataset = await tx.query<{dataset_name: string}>('SELECT dataset_name FROM durable_runtime.dataset_metadata')
     if (dataset.rows.length !== 1 || dataset.rows[0].dataset_name !== config.datasetName ||
-        row.dataset_name !== config.datasetName || row.agent_dataset !== config.datasetName) { throw new CatalogReadError('CATALOG_DATASET_MISMATCH') }
+        row.dataset_name !== config.datasetName || row.agent_dataset !== config.datasetName) { throw new CatalogError('CATALOG_DATASET_MISMATCH') }
     const workspace = await resolveCatalogWorkspace(tx, `id:${row.public_id}`, call.authority)
-    if (workspace.workspace_id !== row.workspace_id || workspace.deleted_at !== null) { throw new CatalogReadError('TERMINAL_HISTORY_WORKSPACE') }
+    if (workspace.workspace_id !== row.workspace_id || workspace.deleted_at !== null) { throw new CatalogError('TERMINAL_HISTORY_WORKSPACE') }
     parseCatalogWorkspace(workspace)
     let repo: ReturnType<typeof parseCatalogRepo> | undefined
     if (workspace.repo_id !== null) {
       const found = (await tx.query<CatalogRepositoryRow>('SELECT * FROM durable_runtime.catalog_repositories WHERE id=$1', [workspace.repo_id])).rows[0]
-      if (!found) { throw new CatalogReadError('CATALOG_REPOSITORY_UNAVAILABLE') }
+      if (!found) { throw new CatalogError('CATALOG_REPOSITORY_UNAVAILABLE') }
       repo = parseCatalogRepo(found)
-      if (getRepoExecutionHostId(repo) !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
+      if (getRepoExecutionHostId(repo) !== config.hostId) { throw new CatalogError('CATALOG_REGISTRATION_HOST_MISMATCH') }
     }
-    if (getWorktreeExecutionHostId(projectCatalogWorktree(workspace), repo) !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
+    if (getWorktreeExecutionHostId(projectCatalogWorktree(workspace), repo) !== config.hostId) { throw new CatalogError('CATALOG_REGISTRATION_HOST_MISMATCH') }
     const tab = parseCatalogTab(row)
-    if (tab.type !== 'terminal') { throw new CatalogReadError('TERMINAL_HISTORY_TARGET_UNAVAILABLE') }
+    if (tab.type !== 'terminal') { throw new CatalogError('TERMINAL_HISTORY_TARGET_UNAVAILABLE') }
     const epoch = counter('journal-epoch', row.journal_epoch), head = journalSafeCounter(row.head)
     const headKey = JSON.stringify([sessionId, epoch, head])
     active()

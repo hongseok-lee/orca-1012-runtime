@@ -55,6 +55,19 @@ test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and close
     const identity = (await pool.query(`SELECT (SELECT oid::text FROM pg_database WHERE datname=current_database()) AS oid,
       (SELECT system_identifier::text FROM pg_control_system()) AS system`)).rows[0]
     assert.equal(identity.oid, '98744'); assert.equal(identity.system, '7696101282789175327')
+    if (process.env.ORCA_TERMINAL_OUTPUT_CLOSED_ONLY === '1') {
+      assert.ok(resume)
+      await assert.rejects(readManagedTerminalNativeChat(config, params, context), /TARGET_UNAVAILABLE/)
+      assert.equal((await pool.query('SELECT lifecycle FROM durable_runtime.tabs WHERE id=$1', [tab])).rows[0].lifecycle, 'CLOSED')
+      assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.structured_session_aliases WHERE session_id=$1', [session])).rows[0].n, 0)
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM durable_runtime.session_events
+        WHERE session_id=$1 AND body->>'kind'='TERMINAL_CODEX_NOTIFICATION'`, [session])).rows[0].n, 3)
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM durable_runtime.runtime_event_queue
+        WHERE producer_id=$1 AND incarnation=$2 AND state='DONE'`, [producerId, incarnation])).rows[0].n, 3)
+      console.log(JSON.stringify({phase: 'TERMINAL_OUTPUT_CLOSED_ONLY_COMPLETE', owner, sessionId: session,
+        priorSuccessCallbacksRepeated: 0, PGMutations: 0, syntheticProvider: true}))
+      return
+    }
     if (!resume) { await withDurableTransaction(pool, async tx => {
       await tx.query(`INSERT INTO durable_runtime.agents(id,provider,dataset_name) VALUES($1,'codex','orca-1012-dev-v1')`, [agent])
       await tx.query(`INSERT INTO durable_runtime.workspaces(id,public_id,name,provisioning_state,dataset_name)
