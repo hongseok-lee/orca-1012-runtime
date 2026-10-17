@@ -140,6 +140,10 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const originalExecutor = executor
     return Object.freeze({ ...originalExecutor,
       onTerminalInputCommitted: inputRuntime.committed,
+      assertOutputAvailable(): void {
+        const state = output.snapshot()
+        if (state.failed || state.closed) { throw new Error('TERMINAL_OUTPUT_UNAVAILABLE') }
+      },
       snapshot: () => Object.freeze({ ...originalExecutor.snapshot(), inputPhase, inputError, output: output.snapshot() }),
       async close(): Promise<void> {
         inputRuntime.dispose()

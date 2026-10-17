@@ -62,6 +62,7 @@ export type OrcaRuntimeRpcServerOptions = {
   // Explicit server composition; absent preserves the existing runtime path.
   durableCatalogRead?: DurableCatalogReadConfig
   durableTerminalInputCommitted?: import('../../durable-runtime/input/runtime-input-types.ts').TerminalInputCommittedSink
+  durableTerminalOutputAvailable?: () => void
   // Explicit opt-in; runtime verifies existing paired keys and supplies server scope.
   opsHttp?: RuntimeOpsHttpConfig
 }

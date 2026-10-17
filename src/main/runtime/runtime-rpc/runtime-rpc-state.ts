@@ -114,6 +114,7 @@ export class RuntimeRpcState {
     methods,
     durableCatalogRead,
     durableTerminalInputCommitted,
+    durableTerminalOutputAvailable,
     opsHttp
   }: OrcaRuntimeRpcServerOptions) {
     this.runtime = runtime
@@ -122,7 +123,7 @@ export class RuntimeRpcState {
     const declarations = methods ?? ALL_RPC_METHODS
     const catalogMethods = this.durableCatalogRead?.bind(declarations) ?? declarations
     this.dispatcher = new RpcDispatcher({ runtime, methods: durableCatalogRead
-      ? bindManagedTerminalNativeChatMethods(catalogMethods, durableCatalogRead) : catalogMethods })
+      ? bindManagedTerminalNativeChatMethods(catalogMethods, durableCatalogRead, durableTerminalOutputAvailable) : catalogMethods })
     this.userDataPath = userDataPath
     this.pid = pid
     this.platform = platform

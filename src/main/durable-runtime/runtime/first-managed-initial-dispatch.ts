@@ -32,6 +32,7 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
   podConfig: AgentPodCreateConfig; firstManagedDirectory: FirstManagedBindingOwnerConfig
   cold?: ReturnType<typeof createInitialCodexExecutor> & Readonly<{
     onTerminalInputCommitted?: TerminalInputCommittedSink
+    assertOutputAvailable?(): void
     close?(): Promise<void>
   }>
 }>
@@ -218,6 +219,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
   }
   return Object.freeze({ ...callbacks,
     onTerminalInputCommitted: cold?.onTerminalInputCommitted?.bind(cold),
+    assertOutputAvailable: cold?.assertOutputAvailable?.bind(cold),
     close: async () => { await cold?.close?.() },
     snapshot: () => {
     const provider = coldSnapshot?.()

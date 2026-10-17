@@ -33,6 +33,7 @@ export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
   onTerminalInputCommitted: TerminalInputCommittedSink
+  assertTerminalOutputAvailable(): void
 }>
 
 /** Real PR58 transport, with owned file readers. Raw CA/token bytes never enter snapshots/errors or an exported accessor. */
@@ -83,6 +84,10 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
       // Only the already authenticated ingress creates this value. No receipt
       // or PG principal is reconstructed into a new authenticated authority.
       if (!closing) { firstManagedInitial?.onTerminalInputCommitted?.(input) }
+    },
+    assertTerminalOutputAvailable(): void {
+      if (closing) { throw new Error('TERMINAL_OUTPUT_UNAVAILABLE') }
+      firstManagedInitial?.assertOutputAvailable?.()
     },
     startController(input: OrcadControllerConfig): Promise<void> {
       if (closing) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CLOSED') }
