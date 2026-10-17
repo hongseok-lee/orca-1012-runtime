@@ -1,0 +1,440 @@
+[
+  {
+    "table": "agents",
+    "before": 9,
+    "after": 11,
+    "missing": 0
+  },
+  {
+    "table": "attachment_aliases",
+    "before": 4,
+    "after": 4,
+    "missing": 0
+  },
+  {
+    "table": "attachment_blobs",
+    "before": 3,
+    "after": 3,
+    "missing": 0
+  },
+  {
+    "table": "attachment_upload_chunks",
+    "before": 5,
+    "after": 5,
+    "missing": 0
+  },
+  {
+    "table": "attachment_uploads",
+    "before": 6,
+    "after": 6,
+    "missing": 0
+  },
+  {
+    "table": "attempts",
+    "before": 4,
+    "after": 6,
+    "missing": 0
+  },
+  {
+    "table": "cancel_intents",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "catalog_heads",
+    "before": 2,
+    "after": 2,
+    "missing": 0
+  },
+  {
+    "table": "catalog_name_reservations",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "catalog_project_groups",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "catalog_repositories",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "catalog_tab_metadata",
+    "before": 11,
+    "after": 13,
+    "missing": 0
+  },
+  {
+    "table": "catalog_ui_state",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "catalog_workspace_metadata",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "controller_leases",
+    "before": 4,
+    "after": 6,
+    "missing": 0
+  },
+  {
+    "table": "dataset_metadata",
+    "before": 1,
+    "after": 1,
+    "missing": 0
+  },
+  {
+    "table": "delivery_attempts",
+    "before": 2,
+    "after": 5,
+    "missing": 0
+  },
+  {
+    "table": "execution_grants",
+    "before": 4,
+    "after": 6,
+    "missing": 0
+  },
+  {
+    "table": "failure_incident_aliases",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "failure_incident_observations",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "failure_incident_state",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "failure_incidents",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "failure_observations",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "input_attachments",
+    "before": 1,
+    "after": 1,
+    "missing": 0
+  },
+  {
+    "table": "input_components",
+    "before": 14,
+    "after": 18,
+    "missing": 0
+  },
+  {
+    "table": "legacy_drafts",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "memory_rightsizing_state",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "messages",
+    "before": 8,
+    "after": 11,
+    "missing": 0
+  },
+  {
+    "table": "notifications",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "observation_challenges",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "observation_episodes",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "operations",
+    "before": 6,
+    "after": 11,
+    "missing": 0
+  },
+  {
+    "table": "outbox_events",
+    "before": 22,
+    "after": 26,
+    "missing": 0
+  },
+  {
+    "table": "provider_context_deliveries",
+    "before": 1,
+    "after": 3,
+    "missing": 0
+  },
+  {
+    "table": "recovery_episodes",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "replay_events",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "replay_stream_heads",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_budget_scopes",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_growth_ledger",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_operation_plans",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_policy_versions",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_profiles",
+    "before": 4,
+    "after": 6,
+    "missing": 0
+  },
+  {
+    "table": "resource_reservation_accounting",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_reservations",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "resource_unit_state",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "rpc_receipts",
+    "before": 30,
+    "after": 34,
+    "missing": 0
+  },
+  {
+    "table": "runtime_audit_events",
+    "before": 12,
+    "after": 15,
+    "missing": 0
+  },
+  {
+    "table": "runtime_command_history",
+    "before": 12,
+    "after": 29,
+    "missing": 0
+  },
+  {
+    "table": "runtime_commands",
+    "before": 4,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "runtime_event_attempt_history",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "runtime_event_failure_contexts",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "runtime_event_producers",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "runtime_event_queue",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "runtime_event_targets",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "runtime_members",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "runtime_units",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "schema_migrations",
+    "before": 19,
+    "after": 19,
+    "missing": 0
+  },
+  {
+    "table": "session_context_records",
+    "before": 3,
+    "after": 6,
+    "missing": 0
+  },
+  {
+    "table": "session_events",
+    "before": 16,
+    "after": 23,
+    "missing": 0
+  },
+  {
+    "table": "sessions",
+    "before": 9,
+    "after": 11,
+    "missing": 0
+  },
+  {
+    "table": "snapshot_manifests",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "snapshot_session_watermarks",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "storage_bindings",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "storage_domains",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "storage_mounts",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "storage_seals",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "storage_write_grants",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "structured_session_aliases",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "structured_submissions",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "tabs",
+    "before": 13,
+    "after": 15,
+    "missing": 0
+  },
+  {
+    "table": "terminal_input_floors",
+    "before": 8,
+    "after": 10,
+    "missing": 0
+  },
+  {
+    "table": "workspace_aliases",
+    "before": 0,
+    "after": 0,
+    "missing": 0
+  },
+  {
+    "table": "workspaces",
+    "before": 9,
+    "after": 11,
+    "missing": 0
+  }
+]

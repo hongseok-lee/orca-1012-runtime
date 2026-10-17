@@ -1,0 +1,16 @@
+{
+  "pin": "f3c4b17275130c79e8ba224f44e6b50accbdc1f7",
+  "inputs": 216,
+  "mismatches": [],
+  "bundleHashMatches": true,
+  "metafileHashMatches": true,
+  "inputsSavedBeforeGuard": true,
+  "reusedAcceptedInputPins": 213,
+  "ownedDelta": [
+    "src/main/durable-runtime/input/runtime-input-store.ts",
+    "src/main/durable-runtime/input/runtime-input.pg.test.mts",
+    "src/main/durable-runtime/input/runtime-input.ts",
+    "src/main/durable-runtime/providers/codex/driver.ts"
+  ],
+  "wholeSourceReaudit": false
+}
