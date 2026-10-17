@@ -14,7 +14,6 @@ import { inputDigest } from '../runtime/gateway/input.ts'
 import type { SubmitCommand, GatewayContext } from '../runtime/gateway/types.ts'
 import type { CommandEnvelope } from '../runtime/command-types.ts'
 import type { PayloadHash } from '../runtime/runtime-evidence.ts'
-import { assertManagedCatalogTarget } from '../terminal/catalog-target.ts'
 import type { CommittedTerminalInput, ReadyTerminalInputPort } from './runtime-input-types.ts'
 
 function required(row: Record<string, JsonValue>, key: string): string {
@@ -38,18 +37,21 @@ export function committedInputTarget(input: CommittedTerminalInput) {
 
 /** SQL-only fence, also supplied to the real protected permit transaction. */
 export async function assertTerminalExecutionOrigin(tx: DurableTransaction, input: CommittedTerminalInput) {
-  input.assertCurrent()
-  await assertManagedCatalogTarget(tx, input.targetPin, input.binding)
   const key = input.receipt.key, target = committedInputTarget(input)
   const found = await tx.query(`SELECT i.id FROM durable_runtime.rpc_receipts r
     JOIN durable_runtime.input_components i ON i.id=$8 AND i.message_id=$9 AND i.session_id=$10
+    JOIN durable_runtime.sessions s ON s.id=i.session_id
+    JOIN durable_runtime.tabs t ON t.id=$11 AND t.session_id=s.id AND t.terminal_handle=$12
+    JOIN durable_runtime.catalog_tab_metadata m ON m.tab_id=t.id
     WHERE r.principal_id=$1 AND r.session_scope=$2 AND r.method=$3 AND r.operation_key=$4
       AND r.payload_hash=$5 AND r.response=$6::jsonb
-      AND i.authenticated_sender=$7 AND i.client_operation_id=$4`,
+      AND i.authenticated_sender=$7 AND i.client_operation_id=$4
+      AND s.lifecycle='OPEN' AND s.session_fence=$13 AND t.lifecycle='OPEN' AND m.binding_revision=$14
+    FOR SHARE OF t,m`,
   [key.principalId, key.sessionScope, key.method, key.operationKey, input.receipt.payloadHash,
-    input.receipt.response, input.authority.principal, target.inputId, target.messageId, input.authority.sessionId])
+    input.receipt.response, input.authority.principal, target.inputId, target.messageId, input.authority.sessionId,
+    input.targetPin.tabId, input.binding.logicalHandle, input.sessionFence, input.targetPin.bindingRevision])
   if (found.rowCount !== 1) { throw new InputStoreError('TERMINAL_RUNTIME_RECEIPT') }
-  input.assertCurrent()
 }
 
 function command(envelope: CommandEnvelope, name: 'stageInput' | 'dispatchInput', input: JsonValue): SubmitCommand {
@@ -104,7 +106,6 @@ export async function stageTerminalRuntimeInput(tx: DurableTransaction, input: C
     payloadHash: sealed.payloadHash, deliveryAttemptId, contextRevision: runtime.context_revision,
     bodyRef: `input-component:${target.inputId}`})
   await stageInputInTransaction(tx, input.authority, context, stage, ready.executorId)
-  input.assertCurrent()
   return {disposition: 'STAGED' as const, context, envelope, sealed, deliveryAttemptId}
 }
 
@@ -117,7 +118,6 @@ export async function claimTerminalRuntimeInput(tx: DurableTransaction, input: C
     messageId: staged.sealed.messageId, deliveryAttemptId: staged.deliveryAttemptId}))
   if (submitted.disposition !== 'ACCEPTED') { return null }
   const claim = await claimInputEffectInTransaction(tx, input.authority, staged.context, originalIdentity(submitted.command), ready.executorId)
-  input.assertCurrent()
   if (claim.disposition !== 'CLAIMED') { return null }
   return Object.freeze({sealed: staged.sealed, deliveryAttemptId: staged.deliveryAttemptId,
     context: claim.contextFrame, attachments: Object.freeze([]), commandClaim: claim.commandClaim})

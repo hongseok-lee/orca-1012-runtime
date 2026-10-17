@@ -46,13 +46,13 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
         actual.executorId !== port.executorId) { throw new InputStoreError('TERMINAL_RUNTIME_OWNER_CHANGED') }
   }
   const execute = async (input: CommittedTerminalInput, port: ReadyTerminalInputPort): Promise<void> => {
-    assertReady(port); input.assertCurrent()
+    assertReady(port)
     const stagedOutcome = await runDurableTransaction(pool, tx => stageTerminalRuntimeInput(tx, input, port))
     if (!stagedOutcome.ok) { throw stagedOutcome.error }
     const staged = stagedOutcome.value
     if (staged.disposition !== 'STAGED') { notice('RETAINED', 'TERMINAL_RUNTIME_LOOKUP_ONLY'); return }
     notice('STAGED')
-    assertReady(port); input.assertCurrent()
+    assertReady(port)
     const claimed = await runDurableTransaction(pool, tx => claimTerminalRuntimeInput(tx, input, port, staged))
     if (!claimed.ok) { throw claimed.error }
     const request = claimed.value
@@ -60,11 +60,11 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
     notice('CLAIMED')
     // Register before native I/O because admission can arrive within dispatch.
     submissions.set(request.deliveryAttemptId, {input, port, staged, request})
-    assertReady(port); input.assertCurrent()
+    assertReady(port)
     const result = await port.dispatch(staged.context, request, async tx => {
       assertReady(port)
       await assertTerminalExecutionOrigin(tx, input)
-      assertReady(port); input.assertCurrent()
+      assertReady(port)
     })
     if (result.state === 'UNSUPPORTED') { notice('RETAINED', 'TERMINAL_RUNTIME_PROVIDER_UNSUPPORTED') }
     // Only the original driver sink proves ADMITTED/COMPLETED/UNKNOWN. A return
@@ -82,13 +82,11 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
   }
   const committed = (original: CommittedTerminalInput): void => {
     if (closed) { throw new InputStoreError('TERMINAL_RUNTIME_CLOSED') }
-    const check = original.assertCurrent.bind(original)
-    check()
     const input: CommittedTerminalInput = Object.freeze({authority: Object.freeze({...original.authority,
       scope: Object.freeze({...original.authority.scope})}), binding: Object.freeze({...original.binding}),
       targetPin: Object.freeze({...original.targetPin, payload: ownedInputJson(original.targetPin.payload)}),
       receipt: Object.freeze({...original.receipt, key: Object.freeze({...original.receipt.key}),
-        response: ownedInputJson(original.receipt.response)}), assertCurrent: check})
+        response: ownedInputJson(original.receipt.response)}), sessionFence: original.sessionFence})
     committedInputTarget(input)
     if (input.authority.scope.kind !== 'TERMINAL' || input.authority.sessionId !== input.binding.sessionId ||
         input.authority.scope.terminalHandle !== input.binding.logicalHandle || input.receipt.key.method !== 'terminal.send' ||

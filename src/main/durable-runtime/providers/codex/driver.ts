@@ -31,9 +31,17 @@ export class DurableCodexDriver {
   #submissions = new Map<string, ProviderSubmissionIdentity>()
   #receipts = new Map<string, CodexNativeReceipt>()
   #proofs = new Map<string, Extract<ProviderDispatchResult, { state: 'ADMITTED' }>>()
+  #completed = new Set<string>()
 
   constructor(dependencies: CodexProtocolDependencies, private readonly sink: ProviderObservationSink) {
-    this.#protocol = new CodexProtocolSession({ ...dependencies, onEvent: (event) => {
+    const open = dependencies.open.bind(dependencies)
+    this.#protocol = new CodexProtocolSession({ ...dependencies,
+      open: (launch, handlers) => open(launch, {...handlers, onExit: error => {
+        handlers.onExit?.(error)
+        for (const identity of this.#submissions.values()) {
+          if (!this.#completed.has(identity.nativeRequestId)) { this.#uncertain(identity, 'CONNECTION_LOST') }
+        }
+      }}), onEvent: (event) => {
       dependencies.onEvent?.(event)
       this.#observe(event)
     } })
@@ -124,12 +132,7 @@ export class DurableCodexDriver {
     if (outcome.effect === 'ADMITTED') {return this.#verifyAdmission(outcome.receipt, identity)}
     // This driver observed the original owned protocol write outcome become
     // uncertain. It proves uncertainty only, never admission or permission.
-    const observedAt = new Date().toISOString()
-    const uncertainty = immutableSnapshot({kind: 'INPUT_EFFECT_UNCERTAIN',
-      evidenceRef: `codex:write-outcome-lost:${binding.connectionInstanceId}:${identity.nativeRequestId}`,
-      observedAt, reasonCode: 'WRITE_OUTCOME_LOST', evidenceRefs: []}) as Extract<InputDeliveryObservation, {kind: 'UNKNOWN'}>['uncertainty']
-    this.sink(immutableSnapshot({ kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity,
-      observedAt, reason: 'WRITE_OUTCOME_LOST', uncertainty }))
+    this.#uncertain(identity, 'WRITE_OUTCOME_LOST')
     return immutableSnapshot({ state: 'UNKNOWN', identity })
   }
 
@@ -200,6 +203,8 @@ export class DurableCodexDriver {
       // Only the actual protocol-owned receipt for this submission can issue a
       // completion proof. Preserve the existing admission/stop predicates.
       if (!this.#protocol.ownsReceipt(event.receipt) ||
+          event.connectionId !== event.receipt.connectionId || event.threadId !== event.receipt.threadId ||
+          event.turnId !== event.receipt.turnId || !Number.isFinite(Date.parse(event.observedAt)) ||
           event.receipt.connectionId !== identity.binding.connectionInstanceId ||
           event.receipt.threadId !== identity.binding.providerRef.nativeSessionRef ||
           event.receipt.clientMessageId !== identity.nativeRequestId ||
@@ -209,8 +214,21 @@ export class DurableCodexDriver {
         observedAt: event.observedAt, attemptId: identity.binding.attemptId, podUid: identity.binding.podUid,
         executionEpoch: identity.binding.executionEpoch, messageId: identity.messageId,
         deliveryAttemptId: identity.deliveryAttemptId, providerRef: this.#nativeRef(event.receipt)}) as ProviderCompletedProof
+      this.#completed.add(identity.nativeRequestId)
       this.sink(immutableSnapshot({ kind: 'COMPLETED', source: 'PROVIDER_PROTOCOL', identity, observedAt: event.observedAt, completed }))
     }
+  }
+
+  #uncertain(identity: ProviderSubmissionIdentity, reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST'): void {
+    const observedAt = new Date().toISOString()
+    // Issued only by the owned protocol outcome/transport exit callback. These
+    // original references describe uncertainty and confer no dispatch permission.
+    const uncertainty = immutableSnapshot({kind: 'INPUT_EFFECT_UNCERTAIN',
+      evidenceRef: `codex:uncertain:${identity.binding.connectionInstanceId}:${identity.nativeRequestId}:${reason}`,
+      observedAt, reasonCode: reason, evidenceRefs: [], binding: identity.binding,
+      messageId: identity.messageId, deliveryAttemptId: identity.deliveryAttemptId,
+      commandClaim: identity.commandClaim}) as Extract<InputDeliveryObservation, {kind: 'UNKNOWN'}>['uncertainty']
+    this.sink(immutableSnapshot({kind: 'UNKNOWN', source: 'PROVIDER_PROTOCOL', identity, observedAt, reason, uncertainty}))
   }
 
   #nativeRef(receipt: CodexNativeReceipt): ProviderRef {

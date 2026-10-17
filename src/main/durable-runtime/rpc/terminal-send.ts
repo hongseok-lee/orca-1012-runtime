@@ -174,7 +174,7 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
         try {
           onCommitted(Object.freeze({authority: submitted.authority, binding: submitted.snapshot.scope.binding,
             targetPin: resolved.targetPin, receipt: outcome.receipt,
-            assertCurrent: () => { assertCurrent(); logicalGrant.assertCurrent() }}))
+            sessionFence: submitted.sessionFence}))
         } catch {
           // Intake has committed. Keep its receipt/input/outbox and original ACK;
           // notification failure is never permission to re-intake or delete it.
