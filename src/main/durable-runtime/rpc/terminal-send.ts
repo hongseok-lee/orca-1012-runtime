@@ -1,9 +1,8 @@
-import type { Pool } from 'pg'
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
 import { TerminalSend } from '../../../shared/rpc-contract/terminal-unary-params.ts'
 import type { RpcContext } from '../../runtime/rpc/core.ts'
 import { fingerprintAttachmentPrincipal } from '../attachments/types.ts'
-import { withDurableTransaction } from '../db/connection.ts'
+import { withDurableTransaction, runDurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import { resolveCatalogWorkspace, type CatalogTab } from '../catalog/read.ts'
 import { parseCatalogTab, parseCatalogWorkspace, parseCatalogRepo } from '../catalog/payload.ts'
@@ -20,6 +19,7 @@ import { reattachTerminalFloorInTransaction } from '../terminal/floor-reattach.t
 import { readTerminalDraftInTransaction } from '../terminal/draft-repository.ts'
 import type { TerminalDraftBinding } from '../terminal/types.ts'
 import type { ManagedTerminalIngressRequest, TerminalFloorPin } from '../terminal/durable-contracts.ts'
+import { assertManagedCatalogTarget } from '../terminal/catalog-target.ts'
 
 /** Existing unary schema only. This never calls a provider or creates a PTY. */
 export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) {
@@ -28,7 +28,7 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
     if (key === 'connect') { return connect }
     if (key === 'query') { return query }
     return Reflect.get(target, key, target)
-  }}) as Pool
+  }})
   const currentHost = config.assertCurrentHost.bind(config)
   return async (original: unknown, context: RpcContext, legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> => {
     const params = TerminalSend.parse(capturedJson(original))
@@ -39,26 +39,29 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
     const checkConnection = connection?.assertCurrent.bind(connection)
     const checkPrevious = connection?.assertPreviousInvalidated.bind(connection)
     const incarnation = connection?.connectionIncarnation
+    const capturedDevice = connection?.pairedDeviceId, capturedFingerprint = connection?.authenticatedCallerFingerprint
+    const reserveLogicalFloor = connection?.reserveLogicalFloor.bind(connection)
     const assertCurrent = (): void => {
       currentHost()
-      if (!checkConnection || signal?.aborted || connection?.pairedDeviceId !== device ||
-          connection?.authenticatedCallerFingerprint !== fingerprint) { throw new CatalogReadError('TERMINAL_AUTHENTICATED_CONNECTION_REQUIRED') }
+      if (!checkConnection || signal?.aborted || capturedDevice !== device ||
+          capturedFingerprint !== fingerprint) { throw new CatalogReadError('TERMINAL_AUTHENTICATED_CONNECTION_REQUIRED') }
       checkConnection()
     }
     currentHost()
     const resolved = await withDurableTransaction(pool, async tx => {
-      const found = await tx.query<CatalogTab & {public_id: string; provider: string; session_fence: string; dataset_name: string}>(
+      const owned = await tx.query('SELECT id FROM durable_runtime.tabs WHERE terminal_handle=$1', [params.terminal])
+      if (owned.rows.length === 0) { return null }
+      const found = await tx.query<CatalogTab & {public_id: string; provider: string | null; session_fence: string; dataset_name: string; agent_dataset: string | null}>(
         `SELECT m.*,t.workspace_id,t.session_id,t.kind,t.terminal_handle,t.lifecycle,t.revision AS tab_revision,
-         w.public_id,w.dataset_name,s.session_fence,g.provider FROM durable_runtime.tabs t
+         w.public_id,w.dataset_name,s.session_fence,g.provider,g.dataset_name AS agent_dataset FROM durable_runtime.tabs t
          JOIN durable_runtime.catalog_tab_metadata m ON m.tab_id=t.id
-         JOIN durable_runtime.sessions s ON s.id=t.session_id JOIN durable_runtime.agents g ON g.id=s.agent_id
+         LEFT JOIN durable_runtime.sessions s ON s.id=t.session_id LEFT JOIN durable_runtime.agents g ON g.id=s.agent_id
          JOIN durable_runtime.workspaces w ON w.id=t.workspace_id WHERE t.terminal_handle=$1`, [params.terminal])
-      if (found.rows.length === 0) { return null }
-      if (found.rows.length !== 1) { throw new CatalogReadError('TERMINAL_TARGET_AMBIGUOUS') }
+      if (found.rows.length !== 1) { throw new CatalogReadError('TERMINAL_MANAGED_TARGET_INCOMPLETE') }
       assertCurrent()
       const row = found.rows[0], call = captureCatalogReadContext(config, transport)
       const dataset = await tx.query<{dataset_name: string}>('SELECT dataset_name FROM durable_runtime.dataset_metadata')
-      if (dataset.rows.length !== 1 || dataset.rows[0].dataset_name !== config.datasetName || row.dataset_name !== config.datasetName || !row.session_id) {
+      if (dataset.rows.length !== 1 || dataset.rows[0].dataset_name !== config.datasetName || row.dataset_name !== config.datasetName || row.agent_dataset !== config.datasetName || !row.session_id) {
         throw new CatalogReadError('CATALOG_DATASET_MISMATCH')
       }
       const workspace = await resolveCatalogWorkspace(tx, `id:${row.public_id}`, call.authority)
@@ -73,13 +76,15 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
       }
       if (getWorktreeExecutionHostId(projectCatalogWorktree(workspace), repository) !== config.hostId) { throw new CatalogReadError('CATALOG_REGISTRATION_HOST_MISMATCH') }
       const tab = parseCatalogTab(row)
-      const chat = tab.type === 'terminal' && ['claude', 'codex'].includes(row.provider) && tab.viewMode !== 'terminal'
-      return Object.freeze({sessionId: logicalId('session', row.session_id), sessionFence: counter('session-fence', row.session_fence), chat})
+      const chat = tab.type === 'terminal' && (row.provider === 'claude' || row.provider === 'codex') && tab.viewMode === 'chat'
+      return Object.freeze({sessionId: logicalId('session', row.session_id), sessionFence: counter('session-fence', row.session_fence), chat,
+        targetPin: Object.freeze({tabId: row.tab_id, tabRevision: row.tab_revision, bindingRevision: row.binding_revision,
+          provider: row.provider, payload: capturedJson(row.payload)})})
     })
     currentHost()
     if (!resolved) { return legacy(params as never, context) }
     assertCurrent()
-    if (!fingerprint || !device || !incarnation || !requestId || !checkPrevious) { throw new CatalogReadError('TERMINAL_AUTHENTICATED_CONNECTION_REQUIRED') }
+    if (!fingerprint || !device || !incarnation || !requestId || !checkPrevious || !reserveLogicalFloor) { throw new CatalogReadError('TERMINAL_AUTHENTICATED_CONNECTION_REQUIRED') }
     const principal = fingerprintAttachmentPrincipal(fingerprint)
     const binding = (generation: string): TerminalDraftBinding => Object.freeze({logicalHandle: params.terminal,
       sessionId: resolved.sessionId, pairedDeviceId: device, principalId: principal,
@@ -91,6 +96,7 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
         origin: Object.freeze({kind: 'UNARY', authenticatedConnectionIncarnation: incarnation, rpcRequestId: requestId}),
         authority: Object.freeze({principal, sessionId: resolved.sessionId, scope: Object.freeze({kind: 'TERMINAL', terminalHandle: params.terminal})}),
         sessionFence: resolved.sessionFence, expectedFloorRevision: pin?.revision ?? '0', attachments: Object.freeze([]),
+        ...(resolved.chat ? {catalogTargetPin: resolved.targetPin} : {}),
         authorization: Object.freeze({assertAuthenticatedOrigin: () => { assertCurrent() }})})
     }
     // Receipt lookup precedes mutable floor/reattach/claim/lifecycle decisions.
@@ -115,17 +121,19 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
       assertCurrent()
       return {floor, draftRevision: draft?.draft.revision ?? '0'}
     })
-    const pinned = await withDurableTransaction(pool, async tx => {
+    const logicalGrant = reserveLogicalFloor({handle: params.terminal, sessionId: resolved.sessionId, mode: 'AGENT_CHAT_COMPAT'}, baseline.floor?.binding.connectionId ?? null)
+    const acquired = await runDurableTransaction(pool, async tx => {
       await lockAggregates(tx, {sessionIds: [resolved.sessionId]})
-      assertCurrent()
+      assertCurrent(); logicalGrant.assertCurrent()
+      await assertManagedCatalogTarget(tx, resolved.targetPin, binding('0'))
       const actual = await readTerminalFloorInTransaction(tx, binding('0'))
       if (baseline.floor) { assertTerminalFloorPin(actual, baseline.floor) }
       else if (actual) { throw new CatalogReadError('TERMINAL_STALE_FLOOR') }
       if (!baseline.floor) {
-        // Actual authenticated socket + Session lock + absent PG floor only;
-        // neither payload client identity nor an existing active owner is used.
+        // The concrete logical input owner reserved this exact target first;
+        // Session-locked CAS now persists it. This is not a native PTY grant.
         const floor = await claimTerminalFloorInTransaction(tx, binding('0'), null, {
-          assertClaimAllowed: (_next, previous) => { assertCurrent(); if (previous) { throw new CatalogReadError('TERMINAL_FLOOR_TAKEOVER_NOT_ALLOWED') } },
+          assertClaimAllowed: (_next, previous) => { assertCurrent(); logicalGrant.assertCurrent(); if (previous) { throw new CatalogReadError('TERMINAL_FLOOR_TAKEOVER_NOT_ALLOWED') } },
           assertReattachAllowed: () => { throw new CatalogReadError('TERMINAL_REATTACH_REQUIRED') }
         })
         return {floor, draftRevision: '0'}
@@ -135,10 +143,16 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig) 
       const reattached = await reattachTerminalFloorInTransaction(tx, {previous: baseline.floor,
         nextConnectionId: incarnation, expectedDraftRevision: baseline.draftRevision}, {
         assertClaimAllowed: () => { throw new CatalogReadError('TERMINAL_FLOOR_TAKEOVER_NOT_ALLOWED') },
-        assertReattachAllowed: previous => { assertCurrent(); checkPrevious(previous.binding.connectionId, device, fingerprint) }
+        assertReattachAllowed: previous => { assertCurrent(); logicalGrant.assertCurrent(); checkPrevious(previous.binding.connectionId, device, fingerprint) }
       })
       return {floor: reattached.floor, draftRevision: reattached.draft?.draft.revision ?? '0'}
     })
+    if (!acquired.ok) {
+      if (acquired.commitOutcome !== 'UNKNOWN' && (acquired.settlement === 'ROLLED_BACK' || acquired.settlement === 'NOT_STARTED')) { logicalGrant.rollbackConfirmed() }
+      throw acquired.error
+    }
+    logicalGrant.commit()
+    const pinned = acquired.value
     assertCurrent()
     if (!pinned.floor) { throw new CatalogReadError('TERMINAL_FLOOR_UNAVAILABLE') }
     return committedWire(await applyManagedTerminalIngress(pool, request(pinned.floor, pinned.draftRevision)))
