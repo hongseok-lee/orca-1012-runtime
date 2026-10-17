@@ -1,0 +1,52 @@
+{
+  "artifact": "terminal-native-chat-unknown.png",
+  "artifactSHA256": "516c0c809c70fbc68419f200162556737776f3d57010b45726948fcfb7284837",
+  "captureAt": "2026-10-17T07:39:23.368Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "environment": "실제 원격 Expo Web의 기존 인증 viewer",
+  "projectorSourcePin": "007cec1fad224ad9b94307eafb790e7da79d557e",
+  "backendArtifactSHA256": "95bfa825b5e1181b355fedf42bab8a1291eabb3f1fedb51789ee05cba1f12693",
+  "wholeBackendCheckoutGitSHAProven": false,
+  "sameExistingViewer": true,
+  "newViewer": false,
+  "newCaptureByOutputOwner": false,
+  "observed": {
+    "statusText": "Delivery unconfirmed.",
+    "statusCount": 1,
+    "originalRequestVisible": true,
+    "inputState": "UNKNOWN",
+    "historyMessages": 3,
+    "sendDisabled": true,
+    "inputLock": "waiting",
+    "assistantCompletionMessages": 0
+  },
+  "additionalActions": {
+    "manualReadCalls": 0,
+    "sendActions": 0,
+    "serverMetadataWrites": 0,
+    "newProviderOrCold": 0,
+    "reloads": 0,
+    "MetroRestarts": 0
+  },
+  "verification": {
+    "sourcePin": "007cec1fad224ad9b94307eafb790e7da79d557e",
+    "changedLint": "PASS",
+    "newValueCallbacks": {
+      "pass": 1,
+      "fail": 0,
+      "cancel": 0,
+      "skip": 0
+    },
+    "actualValueInputs": 160,
+    "PG": 0,
+    "typeRuns": 0,
+    "oldSuitesRepeated": 0
+  },
+  "limitations": [
+    "원 입력 UNKNOWN의 표시만 확인했으며 입력 완료·미실행·실패나 provider 응답으로 바꾸지 않는다.",
+    "Assistant 응답·새 native 실행·실제 설치 iPhone·HA 완료를 주장하지 않는다."
+  ]
+}
