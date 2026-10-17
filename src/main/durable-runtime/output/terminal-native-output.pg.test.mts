@@ -63,7 +63,7 @@ test('Terminal raw output COMMIT/dedup/authenticated nativeChat frames and close
         VALUES($1,$2,1,'COLD',$3,$4,0,'{}','STOPPED')`, [attempt, unit, pod, incarnation])
       await tx.query(`INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2)`, [storage, owner])
       await tx.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state)
-        VALUES($1,$1,$2,$3,'RO')`, [storage, owner, `/synthetic/${id}`])
+        VALUES($1,$2,$3,$4,'RO')`, [storage, storage, owner, `/synthetic/${id}`])
       await tx.query(`INSERT INTO durable_runtime.sessions(id,agent_id,workspace_id,lifecycle) VALUES($1,$2,$3,'OPEN')`, [session, agent, workspace])
       await tx.query(`INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)`, [unit, session, storage])
       await tx.query(`INSERT INTO durable_runtime.controller_leases(scope,owner,term,expires_at)
