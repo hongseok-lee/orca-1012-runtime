@@ -47,6 +47,12 @@ export async function updateCatalogTabProps(
         // terminal host parents also persist mode. Omission never resets it.
         ...(tab.type !== 'terminal' || call.params.viewMode === undefined ? {} : {viewMode: call.params.viewMode}) }
       parseCatalogTab({...row, payload})
+      if (tab.type === 'terminal' && call.params.viewMode !== undefined &&
+          (tab.viewMode ?? 'terminal') !== call.params.viewMode) {
+        const changed = await tx.query('UPDATE durable_runtime.tabs SET revision=revision+1 WHERE id=$1 AND revision=$2 RETURNING revision',
+          [row.tab_id, row.tab_revision])
+        if (changed.rowCount !== 1) { throw new CatalogError('CATALOG_TAB_CHANGED') }
+      }
       await tx.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2,updated_at=clock_timestamp() WHERE tab_id=$1',
         [row.tab_id, JSON.stringify(payload)])
     }
