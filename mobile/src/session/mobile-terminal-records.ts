@@ -1,5 +1,6 @@
 import type { MobileTerminalTheme } from '../terminal/terminal-webview-contract'
 import type { AgentStatusEntry } from '../../../src/shared/agent-status-types'
+import type { RuntimeTerminalNativeChatSession } from '../../../src/shared/runtime-mobile-session-tab-contracts'
 
 export type TerminalRecord = {
   handle: string
@@ -21,6 +22,7 @@ export type MobileTerminalSessionTab = {
   status?: 'pending-handle' | 'ready'
   terminal: string | null
   agentStatus?: AgentStatusEntry | null
+  nativeChatSession?: RuntimeTerminalNativeChatSession
   /** Host-provided launch context still parked as an unsent TUI-input draft. */
   launchDraft?: string
   launchDraftCreatedAt?: number
@@ -132,6 +134,8 @@ function mobileSessionTabEqual(
         a.launchDraft === b.launchDraft &&
         a.launchDraftCreatedAt === b.launchDraftCreatedAt &&
         JSON.stringify(a.agentStatus ?? null) === JSON.stringify(b.agentStatus ?? null) &&
+        a.nativeChatSession?.agent === b.nativeChatSession?.agent &&
+        a.nativeChatSession?.sessionId === b.nativeChatSession?.sessionId &&
         mobileTerminalThemesEqual(a.terminalTheme, b.terminalTheme)
       )
     case 'markdown':

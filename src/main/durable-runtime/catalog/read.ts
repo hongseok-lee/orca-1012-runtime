@@ -15,6 +15,8 @@ import { captureCatalogJson } from './immutable.ts'
 import { catalogSnapshotVersion } from './revision.ts'
 import { CatalogError } from './errors.ts'
 import { parseCatalogRepo, parseCatalogGroup, parseCatalogWorkspace, parseCatalogTab } from './payload.ts'
+import type { RuntimeTerminalNativeChatSession } from '../../../shared/runtime-mobile-session-tab-contracts.ts'
+import { enrichCatalogTerminalNativeSessions } from './terminal-native-session.ts'
 
 export type CatalogWorkspace = CatalogWorkspaceMetadataRow & {
   public_id: string; name: string; workspace_revision: string
@@ -23,6 +25,8 @@ export type CatalogWorkspace = CatalogWorkspaceMetadataRow & {
 export type CatalogTab = CatalogTabMetadataRow & {
   workspace_id: WorkspaceId; session_id: string | null; kind: string
   terminal_handle: string | null; lifecycle: 'OPEN' | 'CLOSED'; tab_revision: string
+  /** Derived in this read transaction, never part of the persisted payload. */
+  terminal_native_chat_session?: RuntimeTerminalNativeChatSession
 }
 export type CatalogSnapshot = {
   readonly heads: readonly CatalogHeadRow[]
@@ -120,10 +124,10 @@ export async function readCatalogSnapshot(pool: Pool, inputAuthority: CatalogAut
     const workspaces = (await loadCatalogWorkspaces(tx)).filter(row =>
       row.deleted_at === null && catalogWorkspaceAllowed(authority, row))
     for (const workspace of workspaces) {parseCatalogWorkspace(workspace)}
-    const tabs = (await tx.query<CatalogTab>(`SELECT m.*,t.workspace_id,t.session_id,t.kind,
+    const tabs = await enrichCatalogTerminalNativeSessions(tx, (await tx.query<CatalogTab>(`SELECT m.*,t.workspace_id,t.session_id,t.kind,
       t.terminal_handle,t.lifecycle,t.revision AS tab_revision
       FROM durable_runtime.catalog_tab_metadata m JOIN durable_runtime.tabs t ON t.id=m.tab_id ORDER BY t.ui_order,t.id`
-    )).rows.filter(row => workspaces.some(workspace => workspace.workspace_id === row.workspace_id))
+    )).rows.filter(row => workspaces.some(workspace => workspace.workspace_id === row.workspace_id)))
     for (const tab of tabs) {parseCatalogTab(tab)}
     const ui = (await tx.query<CatalogUiStateRow>(
       "SELECT * FROM durable_runtime.catalog_ui_state WHERE scope='host'"

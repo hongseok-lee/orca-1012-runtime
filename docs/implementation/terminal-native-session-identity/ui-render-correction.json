@@ -1,0 +1,32 @@
+{
+  "sourcePin": "3faa3ee3a1dc27c11dfd580c090d7e30eb0a4990",
+  "changedFile": "mobile/src/session/MobileSessionActiveContent.tsx",
+  "problem": "The legacy pending-handle branch rendered before the valid explicit native Chat overlay.",
+  "actualBefore": {
+    "nativeChatSessionPresent": true,
+    "nativeAgent": "codex",
+    "nativeRefHashMatchesOriginalREADY": true,
+    "showNativeChat": true,
+    "pendingTerminal": true,
+    "activeTabStatus": "pending-handle",
+    "activeHandlePresent": false,
+    "inputLock": "waiting",
+    "composerCount": 0
+  },
+  "correction": "Only a valid explicit native identity with the existing Chat choice bypasses the pending-terminal display branch. Input waiting lock and legacy pending behavior are retained.",
+  "changedLint": {
+    "files": 1,
+    "PID": 30656,
+    "exit": 0,
+    "startedAt": "2026-10-17T07:09:41.032Z",
+    "endedAt": "2026-10-17T07:09:41.726Z",
+    "logSHA256": "1ba04c0d73d6df453149b1748bb915823b52e9dee16325cd297cc4bdfe3a118a"
+  },
+  "originalModuleAndPGSuccessesRepeated": false,
+  "runtimeState": "Catalog service recovered; original input delivery remains EFFECT_POSSIBLE. Provider/input completion is unconfirmed.",
+  "developmentApply": "pending; prior instruction excludes additional Metro restart",
+  "actualAfter": "not executed",
+  "additionalScreenshots": 0,
+  "newProviderOrInput": 0,
+  "usageCreditsModelStreamOriginalError": "미관측"
+}

@@ -1,5 +1,6 @@
 import { isAgentSessionHandleProvider } from '../../../src/shared/agent-session-provider-handle'
 import type { AgentStatusEntry } from '../../../src/shared/agent-status-types'
+import { isRuntimeTerminalNativeChatSession, type RuntimeTerminalNativeChatSession } from '../../../src/shared/runtime-mobile-session-tab-contracts'
 import { isRuntimeOwnedSshTargetId } from '../../../src/shared/execution-host'
 import {
   isNativeChatSupportedAgent,
@@ -30,6 +31,7 @@ export type MobileNativeChatTab = {
   type: string
   launchAgent?: string | null
   agentStatus?: AgentStatusEntry | null
+  nativeChatSession?: RuntimeTerminalNativeChatSession
   /** Host-provided launch context still parked as an unsent TUI-input draft. */
   launchDraft?: string
   launchDraftCreatedAt?: number
@@ -57,6 +59,11 @@ export function resolveMobileNativeChat(
   }
   if (tab.type !== 'terminal') {
     return null
+  }
+  if (tab.nativeChatSession !== undefined) {
+    return isRuntimeTerminalNativeChatSession(tab.nativeChatSession)
+      ? { agent: tab.nativeChatSession.agent, sessionId: tab.nativeChatSession.sessionId, transcriptPath: null }
+      : null
   }
   const liveAgent = tab.agentStatus?.agentType ?? null
   const agent = liveAgent
@@ -92,6 +99,9 @@ export function resolveMobileNativeChatFileSessionId(
     return tab.sessionId ?? null
   }
   if (tab?.type === 'terminal') {
+    if (tab.nativeChatSession !== undefined) {
+      return isRuntimeTerminalNativeChatSession(tab.nativeChatSession) ? tab.nativeChatSession.sessionId : null
+    }
     return tab.agentStatus?.providerSession?.id ?? null
   }
   return null

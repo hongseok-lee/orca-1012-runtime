@@ -1,0 +1,82 @@
+{
+  "sourcePin": "9155e456d2af7b88b962bfd9ff0e8239b3626f95",
+  "productFiles": 8,
+  "fixtureFiles": 2,
+  "actualInputs": {
+    "value": 11,
+    "PG": 145,
+    "union": 150,
+    "fixedGitMismatches": []
+  },
+  "value": {
+    "callbacks": 1,
+    "exit": 0,
+    "TAPSHA256": "1ec8747401316d6bc80a110fa8c72e521491570d51d76d61827d4cea05e19d7d"
+  },
+  "PG": {
+    "callbacks": 1,
+    "exit": 0,
+    "startedAt": "2026-10-17T05:31:33.112Z",
+    "endedAt": "2026-10-17T05:31:35.123Z",
+    "TAPSHA256": "7f2892166557fa9259962397c215bff51e9f63afbbe251f2c650e95d55547da3",
+    "databaseOID": "98744",
+    "systemIdentifier": "7696101282789175327",
+    "dataset": "orca-1012-dev-v1",
+    "ledgerRows": 23,
+    "ledgerUnchanged": true,
+    "tables": 80,
+    "originalSnapshotRows": 182,
+    "afterRows": 187,
+    "approvedHeadUpdates": [
+      "catalog +1",
+      "owned workspace +1"
+    ],
+    "otherOriginalRowLosses": [],
+    "syntheticREADY": true,
+    "actualProviderStarted": false
+  },
+  "preparationFailures": [
+    {
+      "phase": "initial lint",
+      "diagnosis": "no-control-regex in two new validators",
+      "correction": "same code-point range via charCodeAt; no suppression"
+    },
+    {
+      "phase": "PG module load; callback not entered",
+      "diagnosis": "MODULE_NOT_FOUND: zod",
+      "correction": "reuse existing runtime external module path; no install or bundle regeneration"
+    },
+    {
+      "phase": "owned fixture setup; rolled back",
+      "diagnosis": "42P08 for one reused UUID/text parameter",
+      "correction": "explicit uuid/text casts; assertions unchanged"
+    },
+    {
+      "phase": "first Catalog snapshot",
+      "diagnosis": "CATALOG_HEAD_MISSING in reused test database",
+      "correction": "reuse committed own fixture and insert absent Catalog head using incumbent register initialization convention"
+    },
+    {
+      "phase": "intentional rollback assertion",
+      "diagnosis": "generic fixture Error sanitized as DB_FAILURE",
+      "correction": "throw DurableDatabaseError with original SYNTHETIC_ROLLBACK code; assertion unchanged"
+    }
+  ],
+  "cleanup": {
+    "poolClosed": true,
+    "knownFinalChildrenAbsent": true,
+    "supervisorExitedZombie": true,
+    "heavy": 0
+  },
+  "notRun": [
+    "full type",
+    "schema apply",
+    "install",
+    "full build",
+    "provider process",
+    "native iPhone",
+    "old successful suites"
+  ],
+  "actualExpoChat": "pending same fresh Session and Backend publication",
+  "usageCreditsModelStreamOriginalError": "미관측"
+}
