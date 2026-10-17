@@ -15,7 +15,7 @@ export type { InputOwnerLossRecord, InputOwnerLossRequest, InputOwnerLossResult 
 const reasonCode = 'INPUT_OWNER_LOST'
 function deny(code: string): never { throw new DurableDatabaseError(`INPUT_OWNER_LOSS_${code}`) }
 function text(value: string): string {
-  if (typeof value !== 'string' || !value || value.length > 512 || /[\x00-\x1f\x7f]/.test(value)) { deny('SELECTOR') }
+  if (typeof value !== 'string' || !value || value.length > 512 || [...value].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) { deny('SELECTOR') }
   return value
 }
 function capture(original: InputOwnerLossRequest): InputOwnerLossRequest {
