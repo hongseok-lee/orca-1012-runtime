@@ -1,0 +1,233 @@
+{
+  "sourcePin": "39b21e8823d3b161accfcdbd7885aa5fa661e07a",
+  "base": "874f07cdf14c7ea998b3d77b0d826989ff8b9636",
+  "productHashes": {
+    "unit.ts": "8dde63fdc8aea2f76795782aa01c6ec030cf6a7e6e2ec4df296c6cabaa986dd0",
+    "unit-resources.ts": "b73a133ad47d46155865e7db9287f993d232eb916a9b0adff8873f57aab8d3b4"
+  },
+  "validation": {
+    "ownedLint": {
+      "files": 3,
+      "exit": 0
+    },
+    "firstFocusedPG": {
+      "exit": 1,
+      "passed": [
+        "initial exact declaration/list-detail/scope/null observations",
+        "wrong plan digest rejected"
+      ],
+      "fixtureFailure": "23514 resource_policy_versions_check; policy JSON revision missing",
+      "originalTAPSHA256": "4a0108b5f190cceb4e1173220e3b48a890b356177da9a6309bc69223efddff27"
+    },
+    "headOnlyContinuation": {
+      "exit": 0,
+      "changedFixtureLintExit": 0,
+      "passed": [
+        "exact desired revision",
+        "approved fallback when desired null"
+      ],
+      "originalTAPSHA256": "18d87319f06c723131ef4bc5b795627e4a2b60cfbf2f0f3b6c2031bbd2d54ad0",
+      "originalRowLosses": [],
+      "ledgerUnchanged": true,
+      "schemaApplied": 0,
+      "poolClosed": true
+    },
+    "schemaLedgerCount": 23,
+    "fullTypeRun": false,
+    "typeCandidateFanoutStopped": true,
+    "runtimeValueClosureFiles": 43
+  },
+  "development": {
+    "generation": 2,
+    "runtimePID": 18701,
+    "readyAt": "2026-10-17T02:33:57.462Z",
+    "orcadSHA256": "8e48510f1e2a171175053539e8a19c134d33dc41c1d04d30f074bac03bdf58c1",
+    "productFilesPublished": 2,
+    "wholeCheckoutGitProven": false,
+    "configChanged": false,
+    "pairingChanged": false
+  },
+  "actualOpsAPI": {
+    "startedAt": "2026-10-17T02:37:27.685Z",
+    "pid": 12576,
+    "sourcePin": "39b21e8823d3b161accfcdbd7885aa5fa661e07a",
+    "runtimePID": 18701,
+    "generation": 2,
+    "requests": [
+      {
+        "name": "list",
+        "at": "2026-10-17T02:37:27.686Z",
+        "status": 200,
+        "targetFound": true,
+        "resources": {
+          "desired": {
+            "cpuMilli": "500",
+            "memoryBytes": "536870912"
+          },
+          "admitted": null,
+          "usage": null,
+          "peak": null,
+          "nextDownsizeAt": null
+        },
+        "node": null,
+        "spot": null,
+        "responseSHA256": "e33655279b39b0ed3f8db1e64501520a26fca4faa4269bde96a925181a20c5e4"
+      },
+      {
+        "name": "detail",
+        "at": "2026-10-17T02:37:27.852Z",
+        "status": 200,
+        "targetFound": true,
+        "resources": {
+          "desired": {
+            "cpuMilli": "500",
+            "memoryBytes": "536870912"
+          },
+          "admitted": null,
+          "usage": null,
+          "peak": null,
+          "nextDownsizeAt": null
+        },
+        "node": null,
+        "spot": null,
+        "responseSHA256": "5c68b85fdc895a287b489e0c0c5e8879a14051c0089684cab26dd4cc7144aae9"
+      }
+    ],
+    "post": 0,
+    "authChanged": false,
+    "desiredConsistent": true,
+    "observedNotFabricated": true,
+    "exit": 0,
+    "finishedAt": "2026-10-17T02:37:27.974Z"
+  },
+  "expo": {
+    "startedAt": "2026-10-17T02:35:45.730Z",
+    "finishedAt": "2026-10-17T02:36:31.323Z",
+    "PID": 12445,
+    "status": "failed",
+    "failureCode": "OPS_BROWSER_DECODED_FRAME_WAIT_FAILED",
+    "opsReloadClicks": 0,
+    "summaryTaps": 0,
+    "detailTaps": 0,
+    "contextClosed": true,
+    "browserClosed": true,
+    "originalPrivateStateUnchanged": true
+  },
+  "screenshot": {
+    "file": "ops-desired-resources-first-expo-failure-20261017.png",
+    "sha256": "a728c3ccfcbf2ecb58f8eafd77e6a85eae1807b7ea985035605eff3168bb1dca",
+    "bytes": 21557,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "actualExpoWeb": true,
+    "nativeIPhone": false,
+    "failureEvidence": true,
+    "visibleText": "Update desktop Orca to stream browser tabs on mobile.",
+    "desiredResourcesVisuallyConfirmed": false
+  },
+  "usageCreditsStreamOriginalError": "usage limit/credits/모델 stream 중단은 미관측입니다.",
+  "browserRecovery": {
+    "correctionSourcePin": "59fb3277",
+    "condition": "Node execve closed CDP FD3; shell-parent exec preserves it with existing Node scope/argv guards.",
+    "generation": 3,
+    "runtimePID": 20159,
+    "runtimeStartTicks": "31754432",
+    "readyAt": "2026-10-17T02:54:07.180Z",
+    "orcadSHA256": "d52a3bba6a6520b23ed005af2b1e905685692726f0fea569ff8df1a8e3b7bee6",
+    "capabilityObservationAt": "2026-10-17T02:55:10.347Z",
+    "screencast": true,
+    "headless": true,
+    "degradations": [],
+    "opsProduct2HashesUnchanged": true,
+    "wholeCheckoutGitProven": false,
+    "viewer": {
+      "PID": 12641,
+      "startedAt": "2026-10-17T02:56:34.803Z",
+      "finishedAt": "2026-10-17T02:57:20.366Z",
+      "status": "failed",
+      "failureCode": "OPS_BROWSER_DECODED_FRAME_WAIT_FAILED",
+      "failurePhase": "before-phone-mode-address-and-decoded-surface",
+      "opsReloadClicks": 0,
+      "summaryTaps": 0,
+      "detailTaps": 0,
+      "contextClosed": true,
+      "browserClosed": true,
+      "originalPrivateStateUnchanged": true
+    },
+    "existingTargetTabSuffix": "ae49edf2",
+    "existingTargetType": "browser",
+    "screenshot": {
+      "file": "ops-desired-resources-gen3-stream-timeout-20261017.png",
+      "sha256": "1c8bfe5726c336159b7dcb4ed3b38db651fee1d56186017f41cffc617d273fb5",
+      "bytes": 20029,
+      "visibleText": "Browser stream timed out.",
+      "failureEvidence": true,
+      "desiredResourcesVisuallyConfirmed": false
+    },
+    "repeatUnchangedViewer": false
+  },
+  "finalExpo": {
+    "status": "observed",
+    "startedAt": "2026-10-17T03:33:59.279Z",
+    "finishedAt": "2026-10-17T03:36:33.468Z",
+    "pid": 12891,
+    "generation": 4,
+    "runtimePID": 21338,
+    "orcadSHA256": "095f7e4c7b61e0abf04ebeb46e832a03df6ae71d1b79449667b31d3335a17c0c",
+    "wholeCheckoutGitProven": false,
+    "desired": {
+      "cpuMilli": "500",
+      "memoryBytes": "536870912",
+      "display": "CPU 500 mCPU · RAM 512.0 MiB"
+    },
+    "observedFields": "admitted/usage/peak/Node/Spot은미관측으로표시됩니다.",
+    "actions": {
+      "opsReloadClicks": 1,
+      "summaryTaps": 1,
+      "detailTaps": 1,
+      "upDrags": 0
+    },
+    "PNGCount": 1,
+    "authUnchanged": true,
+    "contextClosed": true,
+    "browserClosed": true,
+    "cleanup": [
+      {
+        "pid": 12884,
+        "state": "Z",
+        "parentPID": 1,
+        "startTicks": "31162870"
+      },
+      {
+        "pid": 12891,
+        "status": "ENOENT"
+      }
+    ],
+    "screenshot": {
+      "file": "ops-desired-resources-actual-detail-20261017.png",
+      "sha256": "fbaf4f48a3e89174f4e5650ae2ec9a144c9c9bb0e7e6d775d1e0580e8857066d",
+      "bytes": 151577,
+      "width": 390,
+      "height": 844,
+      "actualExpoWeb": true,
+      "nativeIPhone": false,
+      "edited": false
+    },
+    "selectorDiagnostic": {
+      "readyAt": "2026-10-17T03:32:05.574Z",
+      "samePageConfirmed": true,
+      "firstResponseOnly": true,
+      "binaryFrameClaimedByDiagnostic": false,
+      "failureCallsitesObserved": 0,
+      "priorAuthFailureCauseConfirmed": false
+    },
+    "temporaryDiagnostic": {
+      "functionalFixClaimed": false,
+      "finalPRProductDiffContainsDiagnostic": false,
+      "sourceRestoredToOriginalBytes": true,
+      "runtimeRemoval": "다음필요한Terminal/cold게시와원bytes제거packet을합류합니다. 제거만독립재시작하지않습니다."
+    }
+  }
+}

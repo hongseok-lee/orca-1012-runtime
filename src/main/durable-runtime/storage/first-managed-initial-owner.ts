@@ -198,7 +198,7 @@ export function createFirstManagedInitialReservationOwner(pool: Pool, original: 
         if (old.tokenHash !== call.tokenHash) { return fail('OWNER_MISMATCH') }
         return Promise.resolve(result(old, 'HOLD', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_INITIAL_ALREADY_ATTEMPTED'))
       }
-      const op: Operation = { call, holdInput: Object.freeze({ ...profile.profile, digest: accepted.digest,
+      const op: Operation = { call, holdInput: Object.freeze({ ...profile.profile, digest: accepted.namespaceDigest,
         actorId: call.actorId, pinId: call.pinId, ownerToken: call.ownerToken }), tokenHash: call.tokenHash,
         hold: null, audit: null, reservation: null, release: null, observation: null, evidenceRef: null,
         state: 'NOT_ACQUIRED', handedOff: false, releaseEligible: false, releaseAttempted: false,

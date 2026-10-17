@@ -12,6 +12,7 @@ export type PreparedDirectoryObservationInput = Readonly<{
   hold: NamespaceHoldInput;
   scope: Omit<BindingVerificationInput, 'directoryEvidenceRef'>;
   qualificationRef: string;
+  qualificationDigest?: string;
   observation: AuthenticatedManagedLeafObservation;
   evidenceRef: string;
 }>;
@@ -100,6 +101,7 @@ function capture(original: PreparedDirectoryObservationInput) {
         expectedUnitRevision: counter('row:runtime-unit', scope.expectedUnitRevision),
         expectedBindingRevision: counter('row:storage-binding', scope.expectedBindingRevision), actorId: text(scope.actorId) }),
       qualificationRef: text(original.qualificationRef), evidenceRef: text(original.evidenceRef),
+      ...(original.qualificationDigest === undefined ? {} : { qualificationDigest: digest(original.qualificationDigest) }),
       observation: captureAuthenticatedManagedLeafObservation(original.observation),
     });
   } catch (error) {
@@ -121,7 +123,8 @@ export function recordPreparedDirectoryObservation(
   const nextState = Object.freeze({ kind: 'STORAGE_DIRECTORY_OBSERVATION_PREPARED',
     profileId: hold.profileId, datasetName: hold.datasetName, backendId: hold.backendId, exportId: hold.exportId,
     generation: hold.generation, digest: hold.digest, pinId: hold.pinId, scope: input.scope,
-    observation, qualificationRef: input.qualificationRef, evidenceRef: input.evidenceRef });
+    observation, qualificationRef: input.qualificationRef, evidenceRef: input.evidenceRef,
+    ...(input.qualificationDigest === undefined ? {} : { qualificationDigest: input.qualificationDigest }) });
   const borrowed: Pool = Object.create(pool, { connect: { value: connect } });
   return runDurableTransaction(borrowed, async tx => {
     const query = tx.query.bind(tx);
