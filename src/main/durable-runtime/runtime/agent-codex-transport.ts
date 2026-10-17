@@ -15,6 +15,7 @@ import type { AgentCodexControlPolicy } from './agent-codex-control.ts'
 
 import { transferAgentControlBundle } from './agent-control-artifact-transfer.ts'
 import { agentCodexBootstrap } from './agent-control-bootstrap.ts'
+import { awaitAgentControlPodRunning } from './agent-control-pod-running.ts'
 export { agentCodexBootstrap, agentControlTransfer } from './agent-control-bootstrap.ts'
 
 export type AgentCodexTransportConfiguration = Readonly<{
@@ -79,6 +80,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     try {
       bearer = await awaitPodAuthValue(Promise.resolve(reviewer(acquisition.signal)), acquisition.signal)
       if (!bearerValid(bearer) || acquisition.signal.aborted) { throw fail() }
+      await awaitAgentControlPodRunning(config, ca, bearer, acquisition.signal)
       await transferAgentControlBundle(config, ca, artifact, bearer, acquisition.signal)
       return await new Promise<AuthenticatedAgentControl>((resolve, reject) => {
         let socket: ManagedLeafSocket | undefined, send: unknown, handshake = false, transferred = false
