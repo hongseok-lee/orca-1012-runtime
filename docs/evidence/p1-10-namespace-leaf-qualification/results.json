@@ -327,5 +327,21 @@
     "providerReady": false,
     "newUIObserved": false
   },
-  "usageCreditsStream": "이번 turn에서 직접 관측한 오류가 없습니다."
+  "usageCreditsStream": "이번 turn에서 직접 관측한 오류가 없습니다.",
+  "actualBackendNamespace": {
+    "at": "2026-10-17T05:22:03.755Z",
+    "pid": 25534,
+    "phase": "ORIGINAL_NAMESPACE_ALREADY_REGISTERED",
+    "namespaceRegisterCalls": 1,
+    "disposition": "ALREADY_REGISTERED",
+    "commitAcknowledged": true,
+    "originalRowsPreserved": true,
+    "ledger23Preserved": true,
+    "namespaceStateChanged": false,
+    "newProfileRegistered": false,
+    "holdAcquired": false,
+    "native": 0,
+    "privateSourceSHA256": "f5a835747ccaf2addb3f62043a37089633b67ba6ac6b9d9585ab133bbc3b521c",
+    "scope": "Backend의 정상 namespace register 1회 결과입니다. DB 집중 PG와 별도 실제 호출이며 binding/cold/physical/provider 합격은 아닙니다."
+  }
 }

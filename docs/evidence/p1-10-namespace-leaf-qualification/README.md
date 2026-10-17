@@ -9,3 +9,5 @@ Qualification 파일 전체 digest는 leaf별 수락 bytes와 원 evidenceRef �
 [결과와 실제 source 입력](results.json), [원 PG TAP](focused-pg.tap)을 함께 제출합니다. 원 type log·metafile·DB identity/ledger·행 hash는 비공개 증거에 보존했으며 공개 결과에는 해당 자료의 hash와 보존 판정만 담았습니다. 계정 자격·비공개 원행·외부 credential 값을 게시하지 않습니다.
 
 이 검증은 합성 HTTPS/WebSocket collector transport와 실제 제품 owner/PG transaction을 사용합니다. 외부 qualification 수락·물리 pin·활성 writer·provider READY·native 실행·HA 전체 합격을 의미하지 않습니다. Backend의 실제 새 leaf 연결과 이번 UI는 별도 실제 근거가 도착하기 전 미확인입니다.
+
+Backend의 실제 namespace register 1회는 `2026-10-17T05:22:03.755Z`에 `ALREADY_REGISTERED`로 commit ACK를 받았습니다. 기존 namespace profile/version/holds·원행·ledger 23을 보존했고 새 profile 등록·namespace state 전환·hold 획득·native 실행은 없었습니다. 이 실제 호출은 합성 PG 검증과 구분하며, 새 leaf binding/cold 성공을 의미하지 않습니다. 원 결과는 비공개 보존하고 정제한 결과와 원 자료 hash만 `results.json`에 추가했습니다.
