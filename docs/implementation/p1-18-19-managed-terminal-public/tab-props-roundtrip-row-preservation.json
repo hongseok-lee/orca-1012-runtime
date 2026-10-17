@@ -1,0 +1,609 @@
+[
+  {
+    "table": "agents",
+    "before": 5,
+    "after": 5,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "attachment_aliases",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "attachment_blobs",
+    "before": 3,
+    "after": 3,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "attachment_upload_chunks",
+    "before": 5,
+    "after": 5,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "attachment_uploads",
+    "before": 6,
+    "after": 6,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "attempts",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "cancel_intents",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "catalog_heads",
+    "before": 2,
+    "after": 2,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": [
+      {
+        "id": "catalog",
+        "semanticRevisionDelta": 4,
+        "metadataTimestampOnly": false
+      },
+      {
+        "id": "workspace:8b317824-ebde-4b07-aa28-ebde16fb9199",
+        "semanticRevisionDelta": 4,
+        "metadataTimestampOnly": false
+      }
+    ]
+  },
+  {
+    "table": "catalog_name_reservations",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "catalog_project_groups",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "catalog_repositories",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "catalog_tab_metadata",
+    "before": 7,
+    "after": 7,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": [
+      {
+        "id": "45576200-b58e-4ea6-8993-c1e136a1afb4",
+        "semanticRevisionDelta": 0,
+        "metadataTimestampOnly": true
+      }
+    ]
+  },
+  {
+    "table": "catalog_ui_state",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "catalog_workspace_metadata",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "controller_leases",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "dataset_metadata",
+    "before": 1,
+    "after": 1,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "delivery_attempts",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "execution_grants",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "failure_incident_aliases",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "failure_incident_observations",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "failure_incident_state",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "failure_incidents",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "failure_observations",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "input_attachments",
+    "before": 1,
+    "after": 1,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "input_components",
+    "before": 10,
+    "after": 10,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "legacy_drafts",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "memory_rightsizing_state",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "messages",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "notifications",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "observation_challenges",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "observation_episodes",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "operations",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "outbox_events",
+    "before": 14,
+    "after": 18,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "provider_context_deliveries",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "recovery_episodes",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "replay_events",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "replay_stream_heads",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_budget_scopes",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_growth_ledger",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_operation_plans",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_policy_versions",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_profiles",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_reservation_accounting",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_reservations",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "resource_unit_state",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "rpc_receipts",
+    "before": 22,
+    "after": 26,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_audit_events",
+    "before": 5,
+    "after": 9,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_command_history",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_commands",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_event_attempt_history",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_event_failure_contexts",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_event_producers",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_event_queue",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_event_targets",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_members",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "runtime_units",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "schema_migrations",
+    "before": 19,
+    "after": 19,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "session_context_records",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "session_events",
+    "before": 9,
+    "after": 9,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "sessions",
+    "before": 5,
+    "after": 5,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "snapshot_manifests",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "snapshot_session_watermarks",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "storage_bindings",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "storage_domains",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "storage_mounts",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "storage_seals",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "storage_write_grants",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "structured_session_aliases",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "structured_submissions",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "tabs",
+    "before": 9,
+    "after": 9,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": [
+      {
+        "id": "45576200-b58e-4ea6-8993-c1e136a1afb4",
+        "semanticRevisionDelta": 2,
+        "metadataTimestampOnly": false
+      }
+    ]
+  },
+  {
+    "table": "terminal_input_floors",
+    "before": 4,
+    "after": 4,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "workspace_aliases",
+    "before": 0,
+    "after": 0,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  },
+  {
+    "table": "workspaces",
+    "before": 5,
+    "after": 5,
+    "unexpectedMissingOrChanged": 0,
+    "missing": 0,
+    "expectedMutableRows": []
+  }
+]
