@@ -45,7 +45,7 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
   const observer = createControlledExecutionTargetObserver(deployment.execution)
   const nfsServer = deployment.nfsServer
   if (typeof nfsServer !== 'string' || !nfsServer || nfsServer.trim() !== nfsServer) { return deny('DEPLOYMENT') }
-  const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
+  const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect, configurable: true } })
   let phase: 'UNUSED' | 'ACQUIRING' | 'ISSUED' | 'RELEASING' | 'RELEASED' | 'RETAINED' = 'UNUSED'
   let holder: HeldManagedLeafDirectory | null = null, control: AuthenticatedAgentControl | null = null
   let hold: NamespaceHoldInput | null = null, held = false, release: Promise<void> | undefined
