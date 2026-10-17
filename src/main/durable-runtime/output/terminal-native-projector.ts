@@ -71,13 +71,23 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
       if (body.kind === 'INPUT_SUBMISSION') {
         if (typeof body.inputId !== 'string') { throw new JournalReadError('TERMINAL_HISTORY_INPUT') }
         const original = originals.get(body.inputId)
-        if (!original || original.submission !== null) { throw new JournalReadError('TERMINAL_HISTORY_INPUT') }
+        if (!original || original.sessionId !== sessionId || original.submission !== null) { throw new JournalReadError('TERMINAL_HISTORY_INPUT') }
         // The real accepted input identity is never collapsed by text/hash.
         const itemId = `input:${original.inputId}`
         offsets.set(itemId, itemBytePosition++)
         bytePosition = Math.max(bytePosition, itemBytePosition)
         items.set(itemId, {itemId, revision: 1, sequence: position, observedAt,
           body: decodeCommittedInputBody(original)})
+      } else if (body.kind === 'INPUT_OBSERVATION' && body.state === 'UNKNOWN') {
+        const original = inputs.find(input => input.messageId === body.messageId && input.sessionId === sessionId &&
+          input.submission === null && items.has(`input:${input.inputId}`))
+        if (!original || typeof body.deliveryAttemptId !== 'string' || !body.deliveryAttemptId ||
+            typeof body.evidenceRef !== 'string' || !body.evidenceRef || !event.eventId ||
+            event.sourceKey !== JSON.stringify(['v1', sessionId, 'native', 'INPUT_UNKNOWN', 'platform',
+              body.deliveryAttemptId, body.evidenceRef])) { throw new JournalReadError('TERMINAL_HISTORY_INPUT_OBSERVATION') }
+        // This is original platform delivery history, not a provider reply or turn.
+        append({provider: 'orca', clientMessageId: `terminal-input-unknown:${sessionId}:${event.eventId}`},
+          {kind: 'status', text: 'Delivery unconfirmed.', tone: 'warning'})
       } else if (body.kind === 'TERMINAL_CODEX_NOTIFICATION') {
         const raw = parseTerminalCodexEvent(body)
         if (raw.sessionId !== sessionId) { throw new JournalReadError('TERMINAL_HISTORY_SCOPE') }
