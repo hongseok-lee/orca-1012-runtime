@@ -205,3 +205,6 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 Projected defaultMode 0444와 실제 token UID 1000/mode 0600을 구분합니다. Token은 runtime UID에서 읽을 수 있었고 CA·namespace는 0444였으며 credential 내용·hash는 읽지 않았습니다. 최초 admission 비교 실패와 fieldRef.apiVersion 기본값 교정을 보존했고 Pod DELETE/create를 재호출하지 않았습니다.
 
 화면은 연결됨·한글 Ops·Unit 1 RUNNING 목록 카드이며 상세 dialog는 닫혀 있었습니다. Lease 1개·term 1·revision 28 관측은 실제 LIST/WATCH 증거가 아닙니다. 실제 가동 owner의 LIST/WATCH, 전체 checkout/type closure, production launcher/mount·physical pin/old writer fencing·HA/native는 미완료/미측정입니다. 이 결과를 묶는 문서 작업에서 새 실행·재시험·재촬영은 없습니다.
+
+기존 Chromium 개발 wrapper의 CDP FD 전달 방식은 [browser-cdp-fd.md](browser-cdp-fd.md)에 있습니다.
+기록된 검증을 재사용하며 새 설치나 촬영은 하지 않습니다.
