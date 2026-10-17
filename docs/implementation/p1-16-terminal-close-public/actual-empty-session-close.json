@@ -1,0 +1,30 @@
+{
+  "actualAuthenticatedRPCReportedByPublicationOwner": true,
+  "responseReadDirectly": true,
+  "method": "session.tabs.close",
+  "ok": true,
+  "result": {
+    "closed": true
+  },
+  "acknowledgedAt": "2026-10-17T06:12:16.673Z",
+  "callerPid": 27779,
+  "publishedGeneration": 8,
+  "runtimePid": 27597,
+  "productSourcePin": "7701474fdadfa841854fd6ee9b486696a0ec7598",
+  "originalResponseSHA256": "5c5f09a6ecfc65493d29701fb989583931afe1c2002614a4fe05bd47f006e8be",
+  "stateObservedAt": "2026-10-17T06:12:26.928Z",
+  "scope": [
+    {
+      "lifecycle": "CLOSING",
+      "session_fence": "1",
+      "tab_lifecycle": "CLOSED",
+      "messages": "0",
+      "attempts": "0",
+      "execution_grants": "0"
+    }
+  ],
+  "physicalStopClaim": false,
+  "pendingCancellationClaim": false,
+  "oldMethodNotConnectedFailurePreserved": true,
+  "duplicateActualCloseCallsByThisWorker": 0
+}

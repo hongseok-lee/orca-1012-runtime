@@ -73,6 +73,14 @@ function normalizedMount(value: unknown) {
 }
 function normalizedVolume(value: unknown) {
   const volume = inventoryRecord(value)
+  if (volume.projected !== undefined) {
+    keys(volume, ['name', 'projected'])
+    const projection = inventoryRecord(volume.projected)
+    keys(projection, ['defaultMode', 'sources'])
+    if (volume.name !== 'runtime-identity' || projection.defaultMode !== 0o444 ||
+        !equal(projection.sources, [{ serviceAccountToken: { audience: 'orca-runtime-agent', expirationSeconds: 600, path: 'token' } }])) { conflict() }
+    return { name: volume.name, projected: { defaultMode: projection.defaultMode, sources: projection.sources } }
+  }
   if (volume.persistentVolumeClaim !== undefined) {
     keys(volume, ['name', 'persistentVolumeClaim'])
     const pvc = inventoryRecord(volume.persistentVolumeClaim)
@@ -147,8 +155,8 @@ export function projectAgentPodCreate(value: unknown, input: CapturedAgentPodCre
     if (actual.nodeName !== undefined) { inventoryName(actual.nodeName) }
     if (actual.dnsPolicy !== undefined && actual.dnsPolicy !== 'ClusterFirst' ||
         actual.schedulerName !== undefined && !['default-scheduler', 'gke.io/optimize-utilization-scheduler'].includes(String(actual.schedulerName)) ||
-        actual.serviceAccountName !== undefined && actual.serviceAccountName !== 'default' ||
-        actual.serviceAccount !== undefined && actual.serviceAccount !== 'default' ||
+        actual.serviceAccountName !== undefined && actual.serviceAccountName !== (desired.serviceAccountName ?? 'default') ||
+        actual.serviceAccount !== undefined && actual.serviceAccount !== (desired.serviceAccountName ?? 'default') ||
         actual.enableServiceLinks !== undefined && actual.enableServiceLinks !== true ||
         actual.priority !== undefined && actual.priority !== 0 ||
         actual.preemptionPolicy !== undefined && actual.preemptionPolicy !== 'PreemptLowerPriority') { conflict() }

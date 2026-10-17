@@ -6,13 +6,17 @@ import { OrcadDurableCatalogConfigurationError } from './orcad-durable-catalog.t
 
 const fileLimit = 1024 * 1024
 const dataset = 'orca-1012-dev-v1'
+export type OrcadInputRecoveryTarget = Readonly<{
+  sessionId: string; runtimeUnitId: string; operationId: string; commandId: string
+}>
 export type OrcadControllerConfig = Readonly<{
   datasetName: typeof dataset
   inventory: Readonly<{ apiOrigin: string; namespace: string; dataset: typeof dataset; caFile: string; tokenFile: string
     requestTimeoutMs: number; watchTimeoutSeconds: number; listLimit: number }>
   policy: ControllerWorkerPolicy
   structuredOutput?: Readonly<{ claimDurationMs: number }>
-  firstManagedInitial?: Readonly<{ configFile: string }>
+  firstManagedInitial?: Readonly<{ configFile: string; coldConfigFile?: string }>
+  inputRecoveryTarget?: OrcadInputRecoveryTarget
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -47,6 +51,18 @@ function absolute(value: unknown): string {
   if (!isAbsolute(path) || normalize(path) !== path) { invalidOrcadControllerConfig() }
   return path
 }
+export function captureOrcadInputRecoveryTarget(value: unknown): OrcadInputRecoveryTarget {
+  const input = record(value, ['sessionId', 'runtimeUnitId', 'operationId', 'commandId'])
+  const id = (value: unknown): string => {
+    const result = text(value)
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(result)) {
+      invalidOrcadControllerConfig('CONTROLLER_INPUT_RECOVERY_TARGET')
+    }
+    return result
+  }
+  return Object.freeze({ sessionId: id(input.sessionId), runtimeUnitId: id(input.runtimeUnitId),
+    operationId: id(input.operationId), commandId: id(input.commandId) })
+}
 function positive(value: unknown, timerBound = false): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0 ||
       (timerBound && value > 2_147_483_647)) { invalidOrcadControllerConfig() }
@@ -66,14 +82,20 @@ function apiOrigin(value: unknown): string {
 export function captureOrcadControllerConfig(value: unknown): OrcadControllerConfig {
   const hasStructuredOutput = value !== null && typeof value === 'object' && Object.hasOwn(value, 'structuredOutput')
   const hasFirstManagedInitial = value !== null && typeof value === 'object' && Object.hasOwn(value, 'firstManagedInitial')
+  const hasInputRecoveryTarget = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryTarget')
   const input = record(value, ['datasetName', 'inventory', 'policy',
-    ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : [])])
+    ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : []),
+    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : [])])
+  const inputRecoveryTarget = hasInputRecoveryTarget ? captureOrcadInputRecoveryTarget(input.inputRecoveryTarget) : undefined
   const structuredOutput = hasStructuredOutput
     ? Object.freeze({ claimDurationMs: positive(record(input.structuredOutput, ['claimDurationMs']).claimDurationMs, true) })
     : undefined
-  const firstManagedInitial = hasFirstManagedInitial
-    ? Object.freeze({ configFile: absolute(record(input.firstManagedInitial, ['configFile']).configFile) })
-    : undefined
+  let firstManagedInitial: OrcadControllerConfig['firstManagedInitial']
+  if (hasFirstManagedInitial) {
+    const withCold = input.firstManagedInitial !== null && typeof input.firstManagedInitial === 'object' && Object.hasOwn(input.firstManagedInitial, 'coldConfigFile')
+    const fields = record(input.firstManagedInitial, ['configFile', ...(withCold ? ['coldConfigFile'] : [])])
+    firstManagedInitial = Object.freeze({ configFile: absolute(fields.configFile), ...(withCold ? { coldConfigFile: absolute(fields.coldConfigFile) } : {}) })
+  }
   const inventory = record(input.inventory, ['apiOrigin', 'namespace', 'dataset', 'caFile', 'tokenFile',
     'requestTimeoutMs', 'watchTimeoutSeconds', 'listLimit'])
   const policy = record(input.policy, ['lease', 'renewIntervalMs', 'standbyPollIntervalMs', 'passPollIntervalMs', 'maximumWork', 'externalBudgetMs'])
@@ -87,6 +109,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   return Object.freeze({ datasetName: dataset,
     ...(structuredOutput ? { structuredOutput } : {}),
     ...(firstManagedInitial ? { firstManagedInitial } : {}),
+    ...(inputRecoveryTarget ? { inputRecoveryTarget } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),

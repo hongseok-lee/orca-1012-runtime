@@ -1,0 +1,286 @@
+{
+  "testedSource": "2d44c8d5e9efa1a19bb27947de59165bd46d08f4",
+  "base": "f871615f1ef6d182c8f07ecc3351d8d575f3273e",
+  "stackedOnPR": 163,
+  "files": [
+    {
+      "path": "src/main/durable-runtime/input/owner-loss.ts",
+      "mode": "100644",
+      "blob": "a4a798f0efa1fb62869cc28985fc47d6865218d8",
+      "bytes": 13537,
+      "sha256": "f8be2a1f81cd1835e1ec93986c3f751e18e55a3075f00f2284313610c555d292"
+    },
+    {
+      "path": "src/main/durable-runtime/input/owner-loss-types.ts",
+      "mode": "100644",
+      "blob": "c7b41e988fcc02f8837953bdd9073cafed641a8b",
+      "bytes": 1048,
+      "sha256": "18abe88b7306e48eaccec21679cac117288c3c976dae85f40de433d5c58b6f69"
+    },
+    {
+      "path": "src/main/durable-runtime/input/owner-loss.pg.test.mts",
+      "mode": "100644",
+      "blob": "155e354c94e2610c697b16c11d5e17b36a1c3fbd",
+      "bytes": 13130,
+      "sha256": "71e09cedd0d9182f9959ded7fa6665f7578a4f46a1d994257b4c1b64502fef44"
+    }
+  ],
+  "result": {
+    "lint": "원 no-control-regex 1건 실패 후 동일 문자 범위 교정·변경 source 통과",
+    "scopedTypeExit": 0,
+    "actualTypeSourceCount": 46,
+    "actualBundleSourceCount": 33,
+    "typeMismatches": [],
+    "bundleMismatches": [],
+    "PGCallbacks": 1,
+    "PGPass": 1,
+    "cases": [
+      "CURRENT_EXECUTION_TERM_REJECTED",
+      "WRONG_TOKEN_AND_DELIVERY_REJECTED",
+      "JOURNAL_AND_OUTBOX_FAILURE_ROLLBACK",
+      "OLDER_HISTORY_RECOVERED_AND_DUPLICATE_NO_WRITE",
+      "FINAL_AND_CLOSING_INPUTS_PRESERVED",
+      "AMBIGUOUS_FUTURE_HISTORY_REJECTED"
+    ],
+    "originalRows": 309,
+    "preservedTableCount": 36,
+    "originalRowsPreserved": true,
+    "existingLeasesPreserved": true,
+    "ledger23Unchanged": true,
+    "endedAt": "2026-10-17T07:14:35.307Z"
+  },
+  "actualBundleInputs": [
+    {
+      "path": "src/shared/durable-runtime/identity.ts",
+      "bytes": 3357,
+      "sha256": "6ccf31e364c6e20f657dda6252c3f7674c14b4a472fc8cdc1fac3b8e4fe98154"
+    },
+    {
+      "path": "src/main/durable-runtime/db/connection.ts",
+      "bytes": 6387,
+      "sha256": "4df73a43daba929f9e7624ee464f2c321a8d92fa53f00f053ee3d7601a3a8f2e"
+    },
+    {
+      "path": "src/main/durable-runtime/db/locks.ts",
+      "bytes": 2071,
+      "sha256": "9558eb3070f2173d1b40edac066d3a6586b462324bf54b2e0cedbfddab0edcd4"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/authority.ts",
+      "bytes": 5150,
+      "sha256": "7cb873f0a1f2744a8d968e5f70ac75344a9fb4a030290e37d1f7bcd4fdfb7f76"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/input.ts",
+      "bytes": 2182,
+      "sha256": "44355fd1b1221ec48222a295f8932f7f403773f075f5735c23218d2fe16d5ba1"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/store.ts",
+      "bytes": 9729,
+      "sha256": "778330564d02ec4835fcd7734f0116ddce748afd10490b2c494857d82b19b623"
+    },
+    {
+      "path": "src/main/durable-runtime/db/atomic.ts",
+      "bytes": 9074,
+      "sha256": "90a1c52a8b35594130953568359e65929a052192e39c9e00ced67a9960ff5f40"
+    },
+    {
+      "path": "src/main/durable-runtime/journal/store.ts",
+      "bytes": 6238,
+      "sha256": "104e03b8333b83348fc57f124f3d6bc9b430bea9b4f640a199020151f82512fb"
+    },
+    {
+      "path": "src/main/durable-runtime/attachments/types.ts",
+      "bytes": 2592,
+      "sha256": "a2c2a8d84ca2337dfaa8aabc5d9e58756a9361df65af50f3c15663d5e88ef282"
+    },
+    {
+      "path": "src/main/durable-runtime/input/types.ts",
+      "bytes": 1609,
+      "sha256": "e88cd450ae308c6c116540e11784dd42bac15ba44e8794ca1dbf2a42c851403f"
+    },
+    {
+      "path": "src/main/durable-runtime/input/canonical.ts",
+      "bytes": 3814,
+      "sha256": "1e96b9cae2404c2efb437b834c57924d2984d0aa54f96cd6d377a1b472e376b6"
+    },
+    {
+      "path": "src/main/durable-runtime/input/authority.ts",
+      "bytes": 3218,
+      "sha256": "9ef387758c5264ba089a459e93e04676429afcec113fd43423af23ecd0138cf6"
+    },
+    {
+      "path": "src/shared/clipboard-image.ts",
+      "bytes": 2159,
+      "sha256": "f09e3b72666058bfa4781f7b41446d0aa0168f895385607972bac829dc022e63"
+    },
+    {
+      "path": "src/shared/rpc-contract/clipboard-params.ts",
+      "bytes": 1944,
+      "sha256": "9171951b913d90a4fc420e85a69d0e6f5ae3518a65c7f916d717d3d89a16b50f"
+    },
+    {
+      "path": "src/main/durable-runtime/attachments/store-internals.ts",
+      "bytes": 2819,
+      "sha256": "f24b14fefb9c3e1a1665cd4f06933d10897d033217f619d673a81bb48b6c3fe2"
+    },
+    {
+      "path": "src/main/durable-runtime/attachments/upload-store.ts",
+      "bytes": 5994,
+      "sha256": "cf206574fd838fb7ded0c99b3e22c941a0879853f95f6dcfa13973adc50aae95"
+    },
+    {
+      "path": "src/main/durable-runtime/attachments/store.ts",
+      "bytes": 7092,
+      "sha256": "8983231a3e8d9abef3de86dd3cf88cb484d32b540e2830068ca6c10d15314e71"
+    },
+    {
+      "path": "src/main/durable-runtime/input/composition.ts",
+      "bytes": 3592,
+      "sha256": "128a473ad4b172dd8eda82ff7188c605d0e35af532e2df968d516fceb01b2591"
+    },
+    {
+      "path": "src/main/durable-runtime/input/append.ts",
+      "bytes": 4321,
+      "sha256": "1731f0f1800f60e336e402785be2def7238ccc8ca6d454c6e678e37ea6cdd434"
+    },
+    {
+      "path": "src/main/durable-runtime/input/intake.ts",
+      "bytes": 4885,
+      "sha256": "6ee23a500d570287d469c3e7d8882d3dc3f4c215f5f3c889c6c6e1a01ab75769"
+    },
+    {
+      "path": "src/main/durable-runtime/input/observed-turn-target.ts",
+      "bytes": 9414,
+      "sha256": "6746f1fcbe9a348fba83e86f4d2b302c8232efeebacf12408d6f2f79340df337"
+    },
+    {
+      "path": "src/main/durable-runtime/input/cancel-record.ts",
+      "bytes": 5725,
+      "sha256": "de440d4cbf4d2241f2f0135c4cbf678102add3fc805b302d32824d4f6d7e3827"
+    },
+    {
+      "path": "src/main/durable-runtime/input/cancel.ts",
+      "bytes": 10952,
+      "sha256": "68e986707e7269dbde1ead7181b6c95bbc55d37067fddd2bc9fe3acbabbf462f"
+    },
+    {
+      "path": "src/main/durable-runtime/input/seal.ts",
+      "bytes": 2799,
+      "sha256": "f367879807e63e4987902ae5ce6735a62a728a560d11bae07de98f8e98acdf01"
+    },
+    {
+      "path": "src/main/durable-runtime/runtime/gateway/claim.ts",
+      "bytes": 7342,
+      "sha256": "3c6c91d7ec48131c698c0f1df8fceb7b481219f75ea9b0123a038766c14ad7d4"
+    },
+    {
+      "path": "src/main/durable-runtime/input/stage-binding.ts",
+      "bytes": 4656,
+      "sha256": "b858038642da22c6dcc5eaa9429c4e3fc66abc81b74f6be5dd9904b32d3e6451"
+    },
+    {
+      "path": "src/main/durable-runtime/input/stage.ts",
+      "bytes": 6659,
+      "sha256": "f735783e44447c93262cf46c00aba6492893c263025b07fba1a470d6313c6a32"
+    },
+    {
+      "path": "src/main/durable-runtime/context/frame.ts",
+      "bytes": 6486,
+      "sha256": "18c23fec64fb009a2e8ac980e01b445bdd7b0462efd45aedf5fdde4eb660e5b2"
+    },
+    {
+      "path": "src/main/durable-runtime/input/effect-claim.ts",
+      "bytes": 6708,
+      "sha256": "f0fa74fe41e9ba0c37becfec356ecee88c716eb7cc9d6c0b55c0819cdfde3ba7"
+    },
+    {
+      "path": "src/main/durable-runtime/input/verification-fixtures.mts",
+      "bytes": 5355,
+      "sha256": "5b1f65334e6efba3af8a82e42544b868124ff4a158e4768a160382e00ec9bf4b"
+    },
+    {
+      "path": "src/main/durable-runtime/input/execution-fixtures.mts",
+      "bytes": 9902,
+      "sha256": "d7f428600c29b86930e1bacffc9cc21bbee869e996212dd548fa76c8400efad0"
+    },
+    {
+      "path": "src/main/durable-runtime/input/owner-loss.ts",
+      "bytes": 13537,
+      "sha256": "f8be2a1f81cd1835e1ec93986c3f751e18e55a3075f00f2284313610c555d292"
+    },
+    {
+      "path": "src/main/durable-runtime/input/owner-loss.pg.test.mts",
+      "bytes": 13130,
+      "sha256": "71e09cedd0d9182f9959ded7fa6665f7578a4f46a1d994257b4c1b64502fef44"
+    }
+  ],
+  "rawHashes": {
+    "pg.tap": "b258ce162520f54219a23a18f8a1bb71271757f7cc91d604f05e1d560ecfeea6",
+    "actual-type-inputs.json": "5ff284d0e727c803be6dfcb5ea08be61f1fcf84326ed72c87ff3feb53ec55b28",
+    "pg.metafile.json": "aa1e93e99afc003903f4f62c43d170dab94534bd3dc1643f71b507064744965c",
+    "pg.actual-inputs.json": "be1eb1913923da0acadacae41ed82a6bd41bd04905a3fb2dc6aaf66a61c6c64d",
+    "before-pg.json": "bfdfc146fbc9ce755d283affe1c81423faca26e5132b851eb8cc11ae0e4cad89",
+    "database-end.json": "b2e6d09ed67822e3bf05dd418fcadb586393ceae43a082c33215e8294b387c05",
+    "fixture-identity.json": "0022e954542312bcab021e9ad81d65554f47c5ddd09bfdda27ce18b81a1c05c3",
+    "fixture-result.json": "d6886f0e46c931101231c03a903ef9bd808adb31d4c6946e4527e2e1beb6b311"
+  },
+  "scope": {
+    "syntheticControllerAuthority": true,
+    "actualPG": true,
+    "DDL": 0,
+    "nativeCalls": 0,
+    "newExecutionClaims": 0,
+    "providerProofIssued": 0,
+    "actualOriginalInputMutation": "Backend의 정상 원 대상 한정 제품 transaction으로 UNKNOWN 기록",
+    "serviceConfigurationChanged": "Backend의 원 대상 한정 inputRecoveryTarget만 활성화",
+    "actualUIObserved": false,
+    "fullHAQualified": false
+  },
+  "usageCreditsStream": "이번 turn에서 직접 관측한 오류가 없습니다.",
+  "actualActivation": {
+    "observedAt": "2026-10-17T07:24:18.270Z",
+    "reportedBy": "Backend 단일 writer의 원 대상 한정 활성화와 별도 read-only snapshot입니다.",
+    "states": {
+      "command_state": "UNKNOWN",
+      "delivery_state": "UNKNOWN",
+      "message_state": "UNKNOWN",
+      "step": "INPUT",
+      "result": null,
+      "deadline_at": null
+    },
+    "ownerLossEventCount": 1,
+    "reasonCode": "INPUT_OWNER_LOST",
+    "originalReceiptCount": 1,
+    "ledger23Preserved": true,
+    "preservationMismatches": [],
+    "preservedScope": [
+      "Unit",
+      "operation step/result/deadline",
+      "attempt",
+      "Pod",
+      "execution/write grants",
+      "binding/mount",
+      "components",
+      "original receipt",
+      "ledger23"
+    ],
+    "readyAt": "2026-10-17T07:24:16.291Z",
+    "runtime": {
+      "watchPID": 31511,
+      "runtimePID": 31555,
+      "bundleHash": "40779a36e0c273aa1bee7dfa6157a6ba7afb5a7383e03e1821a8f7db8e54a91e",
+      "orcadSHA256": "0dcdf61f7182c0185aeef5ea8b3dda5452aea34f1fcf7f7c543b061450795212",
+      "wholeCheckoutGitProven": false
+    },
+    "flags": {
+      "firstManagedInitial": false,
+      "structuredOutput": false,
+      "coldResumed": false,
+      "inputSent": false
+    },
+    "scope": "원 대상의 정상 제품 transaction으로 UNKNOWN을 기록했습니다. 원 provider 요청/재전송/새 claim을 발급하지 않았으며 provider 완료·미실행·종료 증명은 아닙니다. Client UNKNOWN 화면은 아직 이 증거에 포함하지 않았습니다.",
+    "newDBOrCollectorRunsByDBWorker": 0
+  }
+}

@@ -8,6 +8,9 @@ import { persistControllerInventoryObservation } from '../durable-runtime/lifecy
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import type { OrcadDurableCatalog } from './orcad-durable-catalog.ts'
+import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
+import type { TerminalInputCommittedSink } from '../durable-runtime/input/runtime-input-types.ts'
+import type { prepareOrcadInputRecovery, OrcadInputRecoverySnapshot } from './orcad-input-recovery.ts'
 import { captureOrcadControllerConfig, invalidOrcadControllerConfig, OrcadControllerConfigurationError,
   type OrcadControllerConfig } from './orcad-controller-config.ts'
 
@@ -26,10 +29,13 @@ export type OrcadControllerSnapshot = Readonly<{
   latestObservation: OrcadControllerObservation | null
   lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY'; code: string }> | null
   firstManagedInitial?: FirstManagedInitialDispatchSnapshot
+  inputRecovery?: OrcadInputRecoverySnapshot
 }>
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
+  onTerminalInputCommitted: TerminalInputCommittedSink
+  assertTerminalOutputAvailable(): void
 }>
 
 /** Real PR58 transport, with owned file readers. Raw CA/token bytes never enter snapshots/errors or an exported accessor. */
@@ -66,16 +72,26 @@ async function prepareOrcadControllerInventoryWithCA(config: OrcadControllerConf
 }
 
 /** Wrap the original Pool owner before validation/I/O. Entry cleanup runs RPC first; publication wraps this owner outside. */
-export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControllerOwner {
+export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSettings?: () => InitialCodexNativeSettings): OrcadControllerOwner {
   const readConfig = catalog.readConfig, stopCatalog = catalog.stop.bind(catalog)
   let worker: ControllerWorker | null = null, closing = false
   let starting: Promise<void> | null = null, completion: Promise<void> | null = null
   let latestObservation: OrcadControllerObservation | null = null
   let lastFailure: OrcadControllerSnapshot['lastFailure'] = null
   let firstManagedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
+  let inputRecovery: ReturnType<typeof prepareOrcadInputRecovery> | null = null
   let total = 0, list = 0, watch = 0
   return Object.freeze({
     readConfig,
+    onTerminalInputCommitted(input: Parameters<TerminalInputCommittedSink>[0]) {
+      // Only the already authenticated ingress creates this value. No receipt
+      // or PG principal is reconstructed into a new authenticated authority.
+      if (!closing) { firstManagedInitial?.onTerminalInputCommitted?.(input) }
+    },
+    assertTerminalOutputAvailable(): void {
+      if (closing) { throw new Error('TERMINAL_OUTPUT_UNAVAILABLE') }
+      firstManagedInitial?.assertOutputAvailable?.()
+    },
     startController(input: OrcadControllerConfig): Promise<void> {
       if (closing) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CLOSED') }
       if (starting) { return starting }
@@ -108,9 +124,19 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
           if (closing) { return }
           captured.assertCurrentHost()
           if (!ca) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
-          selectedInitial = prepareInitial(config, captured.pool, ca)
+          const auditToken = config.firstManagedInitial.coldConfigFile
+            ? await (await import('./orcad-first-cold-provider.ts')).readFirstColdAuditPipe(config.inventory.requestTimeoutMs) : undefined
+          if (closing) { return }
+          selectedInitial = prepareInitial(config, captured.pool, ca, auditToken, readProviderSettings)
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
+        }
+        if (config.inputRecoveryTarget) {
+          const { prepareOrcadInputRecovery: prepareRecovery } = await import('./orcad-input-recovery.ts')
+          if (closing) { return }
+          captured.assertCurrentHost()
+          inputRecovery = prepareRecovery(captured.pool, config.inputRecoveryTarget,
+            { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
         // Dataset 전체 queue 소비를 서버가 명시적으로 선택합니다. 원 transaction에서 claim 뒤 payload를 검증합니다.
         // Payload 없는 head로 kind를 추정하거나 새 권한을 만들지 않습니다.
@@ -123,6 +149,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
         firstManagedInitial = selectedInitial
         worker = createControllerWorker(captured.pool, config.policy, {
           ...selectedCallbacks,
+          ...(inputRecovery ? { recoverInput: inputRecovery.recoverInput } : {}),
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source, pass) {
             if (closing || pass.signal.aborted) { invalidOrcadControllerConfig('CONTROLLER_INVENTORY_ABORTED') }
@@ -170,11 +197,14 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
             lastFailure = Object.freeze({ stage: 'STOP', code: 'CONTROLLER_STOP_UNAVAILABLE' })
             invalidOrcadControllerConfig('CONTROLLER_STOP_UNAVAILABLE')
           }
-        } finally { await stopCatalog() }
+        } finally {
+          try { await firstManagedInitial?.close() } finally { await stopCatalog() }
+        }
       })
       return completion
     },
     controllerSnapshot(): OrcadControllerSnapshot { return Object.freeze({ worker: worker?.snapshot() ?? null, latestObservation, lastFailure,
-      ...(firstManagedInitial ? { firstManagedInitial: firstManagedInitial.snapshot() } : {}) }) }
+      ...(firstManagedInitial ? { firstManagedInitial: firstManagedInitial.snapshot() } : {}),
+      ...(inputRecovery ? { inputRecovery: inputRecovery.snapshot() } : {}) }) }
   })
 }

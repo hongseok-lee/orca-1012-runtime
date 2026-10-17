@@ -1,5 +1,6 @@
 import type { RuntimeOpsHttpConfig } from '../../durable-runtime/ops/runtime-config.ts'
 import type { DurableCatalogReadConfig } from '../../durable-runtime/rpc/config.ts'
+import type { TerminalInputCommittedSink } from '../../durable-runtime/input/runtime-input-types.ts'
 import type { OrcaRuntimeService } from '../orca-runtime'
 import type { RpcAnyMethodDeclaration } from '../rpc/core'
 import type { DeviceRegistry } from '../device-registry'
@@ -61,6 +62,8 @@ export type OrcaRuntimeRpcServerOptions = {
   methods?: readonly RpcAnyMethodDeclaration[]
   // Explicit server composition; absent preserves the existing runtime path.
   durableCatalogRead?: DurableCatalogReadConfig
+  durableTerminalInputCommitted?: TerminalInputCommittedSink
+  durableTerminalOutputAvailable?: () => void
   // Explicit opt-in; runtime verifies existing paired keys and supplies server scope.
   opsHttp?: RuntimeOpsHttpConfig
 }

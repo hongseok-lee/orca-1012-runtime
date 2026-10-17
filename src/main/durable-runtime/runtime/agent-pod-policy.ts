@@ -84,7 +84,17 @@ export function agentPodUuid(value: unknown): string {
 /** Server composition input only. Capture validates shape, not the caller's authority. */
 export function captureAgentPodPolicy(value: unknown) {
   try {
-    const input = agentPodFields(value, ['namespace', 'dataset', 'image', 'entrypoint', 'paths', 'nfsServer', 'protectedExportRoot', 'protectedMounts', 'shared'])
+    const hasRuntimeAuthentication = value !== null && typeof value === 'object' && Object.hasOwn(value, 'runtimeAuthentication')
+    const input = agentPodFields(value, ['namespace', 'dataset', 'image', 'entrypoint', 'paths', 'nfsServer', 'protectedExportRoot', 'protectedMounts', 'shared',
+      ...(hasRuntimeAuthentication ? ['runtimeAuthentication'] : [])])
+    let runtimeAuthentication: Readonly<{ serviceAccountName: 'orca-runtime-agent'; audience: 'orca-runtime-agent' }> | undefined
+    if (hasRuntimeAuthentication) {
+      const auth = agentPodFields(input.get('runtimeAuthentication'), ['serviceAccountName', 'audience'])
+      if (auth.get('serviceAccountName') !== 'orca-runtime-agent' || auth.get('audience') !== 'orca-runtime-agent') {
+        throw new AgentPodPlanError('POLICY_INVALID')
+      }
+      runtimeAuthentication = Object.freeze({ serviceAccountName: 'orca-runtime-agent', audience: 'orca-runtime-agent' })
+    }
     const namespace = agentPodName(input.get('namespace'), true), dataset = agentPodName(input.get('dataset'), true)
     const image = agentPodText(input.get('image'))
     if (!/^[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}$/u.test(image) || image.includes('://')) {
@@ -135,7 +145,8 @@ export function captureAgentPodPolicy(value: unknown) {
       throw new AgentPodPlanError('POLICY_INVALID')
     }
     return Object.freeze({ namespace, dataset, image, entrypoint: Object.freeze({ command, args }), paths,
-      nfsServer, protectedExportRoot, protectedMounts: Object.freeze(protectedMounts), shared })
+      nfsServer, protectedExportRoot, protectedMounts: Object.freeze(protectedMounts), shared,
+      ...(runtimeAuthentication ? { runtimeAuthentication } : {}) })
   } catch { throw new AgentPodPlanError('POLICY_INVALID') }
 }
 
