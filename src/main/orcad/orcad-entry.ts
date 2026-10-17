@@ -172,11 +172,18 @@ async function startOrcadRuntime(
     uninstallHookStatusRepublish: () => uninstallHookStatusRepublish(),
     stopAgentHookServer: () => agentHookServer.stop(), stopDurableCatalog: () => durableCatalog?.stop()
   }) })
-  let providerSettings: (() => InitialCodexNativeSettings) | null = null
-  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) }, () => {
-    if (!providerSettings) { throw new Error('CONTROLLER_FIRST_COLD_SETTINGS_UNAVAILABLE') }
-    return providerSettings()
-  })
+  // The real Store must exist before startup can schedule a cold callback.
+  // No default settings or consumed-owner retry stands in for this ordering.
+  const runtimeUserDataPath = getAppEnvironment().getPath('userData')
+  initOrcaProfilePaths()
+  const profile = ensureActiveOrcaProfile(runtimeUserDataPath)
+  const store = new Store({ dataFile: profile.dataFile, storageAuthority: 'runtime' })
+  const providerSettings = (): InitialCodexNativeSettings => {
+    const settings = store.getSettings()
+    return { agentDefaultArgs: settings.agentDefaultArgs, agentDefaultEnv: settings.agentDefaultEnv,
+      nativeChatSessionOptions: settings.nativeChatSessionOptions }
+  }
+  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) }, providerSettings)
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
       headless: browserProvider !== null, screencast: browserProvider?.kind === 'chromium',
@@ -186,22 +193,8 @@ async function startOrcadRuntime(
   const { DesktopPushService } = await import('../runtime/push/desktop-push-service')
   const { resolvePushGatewayOrigin } = await import('../runtime/push/push-gateway-origin')
 
-  const runtimeUserDataPath = getAppEnvironment().getPath('userData')
-  initOrcaProfilePaths()
-  const profile = ensureActiveOrcaProfile(runtimeUserDataPath)
   const observedPaneIdentities = new AgentStatusObservedPaneIdentities()
   const observedStatusCapture = new AgentStatusObservedPaneIdentityCapture(observedPaneIdentities)
-  // Why a real Store: without one every persistence-backed RPC throws `runtime_unavailable`
-  // and the read paths that use `this.store?.x ?? []` quietly answer "empty" instead —
-  // a server that pairs and lists nothing looks healthy and is not.
-  // Why: orcad IS the runtime authority — loading as 'desktop' would classify its
-  // own runtime-scheduled automations as ambiguous mirrors and orphan them.
-  const store = new Store({ dataFile: profile.dataFile, storageAuthority: 'runtime' })
-  providerSettings = () => {
-    const settings = store.getSettings()
-    return { agentDefaultArgs: settings.agentDefaultArgs, agentDefaultEnv: settings.agentDefaultEnv,
-      nativeChatSessionOptions: settings.nativeChatSessionOptions }
-  }
   // Why: every SSH connect consults this sidecar. Left unbound it reports nothing trusted,
   // which is safe but silently discards accept records on every launch.
   initSshHostKeyStoreFile(profile.dataFile)
