@@ -29,7 +29,9 @@ await test('metadata registry closes an empty Session and refuses pending cancel
   assert.equal(ledger.length, 19)
   t.diagnostic(JSON.stringify({phase: 'same-pool-identity', ...identity, ledger: ledger.length}))
   const group = `terminal-close-adapter:${randomUUID()}`
-  await pool.query('INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)', [group, {id: group}])
+  await pool.query('INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)', [group,
+    {id: group, name: 'synthetic close adapter', createdFrom: 'manual', parentPath: null, parentGroupId: null,
+      color: null, tabOrder: 0, createdAt: 1, updatedAt: 1, isCollapsed: false}])
   async function target(pending: boolean) {
     const f = await fixture(pool, 'RUNNING')
     const tab = (await pool.query('SELECT * FROM durable_runtime.tabs WHERE terminal_handle=$1', [f.terminalHandle])).rows[0]
@@ -44,6 +46,8 @@ await test('metadata registry closes an empty Session and refuses pending cancel
       await tx.query("INSERT INTO durable_runtime.catalog_tab_metadata(tab_id,public_tab_id,payload,launch_request) VALUES($1,$2,$3,'{}')",
         [tab.id, publicTabId, {id: publicTabId, type: 'terminal', title: 'synthetic empty Session', isActive: true,
           parentTabId: 'synthetic-parent', leafId: 'synthetic-leaf', status: 'ready', terminal: f.terminalHandle}])
+      await tx.query('INSERT INTO durable_runtime.catalog_heads(scope,publication_epoch) VALUES($1,$2)',
+        [`workspace:${tab.workspace_id}`, randomUUID()])
     })
     if (pending) { assert.notEqual((await acceptInput(pool, f.request)).status, 'UNCERTAIN') }
     return {...f, tab, publicTabId}
