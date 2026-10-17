@@ -61,7 +61,12 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash ||
       !/^[0-9a-f]{64}$/.test(config.bootstrapSha256) || !Number.isSafeInteger(config.timeoutMs) || config.timeoutMs <= 0 ||
       config.timeoutMs > 2_147_483_647 || !/^[a-z0-9-]+$/.test(config.namespace) || !/^[a-z0-9-]+$/.test(config.container)) { throw fail() }
+  let preparedOnce = false
   return Object.freeze({ async prepare(signal: AbortSignal): Promise<AuthenticatedAgentControl> {
+    // A failed/unknown original control is reconciled through its own handle;
+    // this factory cannot open a second control process for the same attempt.
+    if (preparedOnce) { throw fail() }
+    preparedOnce = true
     const acquisition = new AbortController(), abortAcquisition = () => acquisition.abort()
     const budget = setTimeout(abortAcquisition, config.timeoutMs)
     signal.addEventListener('abort', abortAcquisition, { once: true })

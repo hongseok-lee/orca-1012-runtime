@@ -69,6 +69,7 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
       const closedBootstrap = isClosedAgentBootstrap(policy.entrypoint)
       const spec = Object.freeze({ restartPolicy: 'Never', terminationGracePeriodSeconds: 25,
         hostNetwork: false, automountServiceAccountToken: false,
+        ...(policy.runtimeAuthentication ? { serviceAccountName: policy.runtimeAuthentication.serviceAccountName } : {}),
         nodeSelector: Object.freeze({ 'cloud.google.com/gke-spot': 'true', 'kubernetes.io/arch': 'amd64' }),
         tolerations: Object.freeze([
           Object.freeze({ key: 'cloud.google.com/gke-spot', operator: 'Equal', value: 'true', effect: 'NoSchedule' }),
@@ -89,10 +90,15 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
             capabilities: Object.freeze({ drop: Object.freeze(['ALL']) }) }),
           volumeMounts: Object.freeze([...protectedBindings.map((binding, index) => Object.freeze({
             name: `protected-${index}`, mountPath: binding.clientPath, readOnly: binding.mode === 'RO' })),
-            Object.freeze({ name: 'shared', mountPath: '/shared', readOnly: false }), Object.freeze({ name: 'temporary', mountPath: '/tmp' })]) })]),
+            Object.freeze({ name: 'shared', mountPath: '/shared', readOnly: false }),
+            ...(policy.runtimeAuthentication ? [Object.freeze({ name: 'runtime-identity', mountPath: '/var/run/secrets/orca-runtime-agent', readOnly: true })] : []),
+            Object.freeze({ name: 'temporary', mountPath: '/tmp' })]) })]),
         volumes: Object.freeze([...protectedBindings.map((binding, index) => Object.freeze({ name: `protected-${index}`,
           persistentVolumeClaim: Object.freeze({ claimName: binding.claimName, readOnly: binding.mode === 'RO' }) })),
           Object.freeze({ name: 'shared', persistentVolumeClaim: Object.freeze({ claimName: policy.shared.claimName, readOnly: false }) }),
+          ...(policy.runtimeAuthentication ? [Object.freeze({ name: 'runtime-identity', projected: Object.freeze({ defaultMode: 0o444,
+            sources: Object.freeze([Object.freeze({ serviceAccountToken: Object.freeze({ audience: policy.runtimeAuthentication.audience,
+              expirationSeconds: 600, path: 'token' }) })]) }) })] : []),
           Object.freeze({ name: 'temporary', emptyDir: Object.freeze({ sizeLimit: `${profile.temporaryMi}Mi` }) })]) })
       const pod = Object.freeze({ apiVersion: 'v1', kind: 'Pod', metadata: Object.freeze({
         name: identity.resourceName, namespace: policy.namespace,

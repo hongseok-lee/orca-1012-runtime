@@ -66,7 +66,10 @@ function capturePlan(original: unknown) {
       Object.hasOwn(annotationInput, CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation)
     const annotations = agentPodFields(annotationInput, ['orca.dev/operation-id','orca.dev/attempt-id','orca.dev/execution-epoch','orca.dev/intent-revision','orca.dev/spec-hash','orca.dev/resource-profile-revision',
       ...(hasCheckout ? [CLOSED_AGENT_BOOTSTRAP.checkoutAnnotation] : [])])
-    const spec = agentPodFields(pod.get('spec'), ['restartPolicy','terminationGracePeriodSeconds','hostNetwork','automountServiceAccountToken','nodeSelector','tolerations','securityContext','affinity','containers','volumes'])
+    const specValue = pod.get('spec')
+    const hasRuntimeAuthentication = specValue !== null && typeof specValue === 'object' && Object.hasOwn(specValue, 'serviceAccountName')
+    const spec = agentPodFields(specValue, ['restartPolicy','terminationGracePeriodSeconds','hostNetwork','automountServiceAccountToken','nodeSelector','tolerations','securityContext','affinity','containers','volumes',
+      ...(hasRuntimeAuthentication ? ['serviceAccountName'] : [])])
     const containers = agentPodArray(spec.get('containers'))
     if (containers.length !== 1) { return invalid() }
     const container = agentPodFields(containers[0], ['name','image','imagePullPolicy','command','args','workingDir','env','resources','securityContext','volumeMounts'])
@@ -99,6 +102,7 @@ function capturePlan(original: unknown) {
     // digest. Reconstructed policy is NOT authenticated external authority.
     const planner = createAgentPodPlanner({ namespace: metadata.get('namespace'), dataset, image: container.get('image'),
       entrypoint,
+      ...(spec.has('serviceAccountName') ? { runtimeAuthentication: { serviceAccountName: spec.get('serviceAccountName'), audience: 'orca-runtime-agent' } } : {}),
       paths: { home: envValue('HOME'), claudeState: envValue('CLAUDE_CONFIG_DIR'), codexState: envValue('CODEX_HOME'), checkout },
       nfsServer: protectedBindings[0].server, protectedExportRoot: `/exports/runtime-domains/${dataset}`,
       protectedMounts: protectedBindings.map(b => ({ key: b.key, clientPath: b.clientPath })),

@@ -65,7 +65,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   // and is consumed by the existing TokenReview boundary. It is never an audit
   // field, a control reference, a launch environment value, or a hashed input.
   let podBearer: string
-  try { podBearer = readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token', 'utf8').trim() }
+  try { podBearer = readFileSync('/var/run/secrets/orca-runtime-agent/token', 'utf8').trim() }
   catch { releaseRoot(); throw new Error('AGENT_CODEX_POD_CREDENTIAL') }
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks,

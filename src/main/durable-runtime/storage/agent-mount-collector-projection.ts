@@ -35,7 +35,17 @@ export function captureAgentMountInput(record: AgentPodPlanRecord, podUid: strin
     if (containers.length !== 1) { throw new Error('INPUT_INVALID') }
     const volumes = agentPodArray(original.spec.volumes).map(inventoryRecord)
     const actualMounts = agentPodArray(container.volumeMounts).map(inventoryRecord)
-    if (volumes.length !== mounts.length + 1 || actualMounts.length !== mounts.length + 1) { throw new Error('INPUT_INVALID') }
+    const authenticated = original.spec.serviceAccountName === 'orca-runtime-agent'
+    const extraVolumes = authenticated ? 2 : 1
+    if (volumes.length !== mounts.length + extraVolumes || actualMounts.length !== mounts.length + extraVolumes) { throw new Error('INPUT_INVALID') }
+    if (authenticated) {
+      const token = volumes.filter(value => value.name === 'runtime-identity'), tokenMount = actualMounts.filter(value => value.name === 'runtime-identity')
+      if (token.length !== 1 || tokenMount.length !== 1 || tokenMount[0].mountPath !== '/var/run/secrets/orca-runtime-agent' ||
+          tokenMount[0].readOnly !== true || canonicalInput(token[0]) !== canonicalInput({ name: 'runtime-identity',
+            projected: { defaultMode: 0o444, sources: [{ serviceAccountToken: { audience: 'orca-runtime-agent', expirationSeconds: 600, path: 'token' } }] } })) {
+        throw new Error('INPUT_INVALID')
+      }
+    }
     for (let index = 0; index < mounts.length; index++) {
       const item = mounts[index], volumeName = item.kind === 'shared' ? 'shared' : `protected-${index}`
       const volume = volumes.filter(value => value.name === volumeName), mount = actualMounts.filter(value => value.name === volumeName)

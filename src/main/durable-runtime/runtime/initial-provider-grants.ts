@@ -92,7 +92,7 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
     // This specialization never revives or replaces another execution/writer.
     if ((await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2',
       [input.context.runtimeUnitId, target.attemptId])).rowCount || (await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
-      JOIN durable_runtime.storage_bindings b ON b.id=g.storage_binding_id WHERE g.state<>'REVOKED' AND g.attempt_id<>$4
+      JOIN durable_runtime.storage_bindings b ON b.id=g.storage_binding_id WHERE g.attempt_id<>$4
       AND b.backend_id=$1 AND b.export_id=$2 AND (b.canonical_directory=$3 OR b.canonical_directory='/' OR $3='/'
       OR left(b.canonical_directory,length($3)+1)=$3||'/' OR left($3,length(b.canonical_directory)+1)=b.canonical_directory||'/')`,
     [binding.backend_id, binding.export_id, binding.canonical_directory, target.attemptId])).rowCount) { deny('INITIAL_PROVIDER_OLD_WRITER') }
