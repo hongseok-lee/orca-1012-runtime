@@ -1,0 +1,93 @@
+{
+  "sourcePin": "350dfdbf9adca8ccc4cbc1fb9b987cc642a13c25",
+  "firstSourcePin": "e1b9efa7818eb01a7ab85d2bff0b16c91e33a606",
+  "lint": {
+    "ownedFiles": 15,
+    "firstExit": 0,
+    "changedFiles": 1,
+    "changedExit": 0
+  },
+  "type": {
+    "scope": [
+      "src/main/runtime/rpc/terminal-connection-owner.ts"
+    ],
+    "compiler": "TypeScript 7.0.2 native bin/tsc",
+    "strict": true,
+    "pid": 19708,
+    "exit": 0,
+    "wholeProductTypeExecuted": false
+  },
+  "PG": {
+    "productCallbacks": 1,
+    "tapTestsIncludingParent": 2,
+    "pass": 2,
+    "fail": 0,
+    "runnerPid": 18393,
+    "testLauncherPid": 18404,
+    "actualCallbackPid": 18410,
+    "callbackAt": "2026-10-17T02:32:40.298Z",
+    "endedAt": "2026-10-17T02:32:41.094Z",
+    "exit": 0,
+    "actualInputFiles": 199,
+    "actualInputMismatches": 0,
+    "originalRowsPreserved": true,
+    "ledgerEntries": 19,
+    "podCreated": 0,
+    "providerCalls": 0
+  },
+  "failures": [
+    {
+      "phase": "first preparation",
+      "cause": "cached fixture-support.mts absent",
+      "correction": "exact pin helper bytes added; lint not repeated"
+    },
+    {
+      "phase": "first PG",
+      "cause": "explicit CatalogReadError became DB_FAILURE in transaction sanitization",
+      "correction": "new adapter uses existing TerminalDraftStoreError; assertion unchanged",
+      "tapSHA256": "938308375f001966f618a55d8ef5c4482a4019496725ad244baaffc5063fe6cf"
+    },
+    {
+      "phase": "corrected preparation",
+      "cause": "metafile paths relative to real absWorkingDir resolved against symlink path",
+      "correction": "save actual inputs against real absWorkingDir; existing bundle reused"
+    }
+  ],
+  "realPublicAPI": "pending shared Backend publication and a server-declared managed Chat handle; existing inspected handle belongs to shell with omitted viewMode and is not used",
+  "realAppScreenshot": "not captured; no synthetic UI evidence",
+  "binaryRawStop": "not connected",
+  "usageCreditsStreamErrorObserved": false,
+  "orderingSourcePin": "604919ed2733a089e63b4a938b4c59642411ee0f",
+  "orderingPG": {
+    "productCallbacks": 1,
+    "tapTestsIncludingParent": 2,
+    "pass": 2,
+    "fail": 0,
+    "runnerPid": 19906,
+    "testLauncherPid": 19917,
+    "actualCallbackPid": 19923,
+    "callbackAt": "2026-10-17T02:40:31.250Z",
+    "endedAt": "2026-10-17T02:40:31.883Z",
+    "exit": 0,
+    "actualInputFiles": 199,
+    "actualInputMismatches": 0,
+    "originalRowsPreserved": true,
+    "delayedFirstRead": true,
+    "followingInputFenced": true,
+    "sameKeyResolution": true,
+    "unrelatedHandleIndependent": true,
+    "priorSequentialCallbackRepeated": false
+  },
+  "orderingLint": {
+    "changedFiles": 3,
+    "exit": 0
+  },
+  "orderingType": {
+    "pid": 19961,
+    "pin": "604919ed2733a089e63b4a938b4c59642411ee0f",
+    "startedAt": "2026-10-17T02:42:08.533Z",
+    "scope": "changed TerminalConnectionOwner only",
+    "exit": 0,
+    "endedAt": "2026-10-17T02:42:10.953Z"
+  }
+}
