@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { isDeepStrictEqual } from 'node:util'
 import type { Pool } from 'pg'
 import { DurableDatabaseError, runDurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
@@ -14,6 +15,9 @@ import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
 import { recordExecutionTarget } from './execution-target-records.ts'
+import { settleOwnedExecution } from './gateway/claim.ts'
+import { originalIdentity } from './gateway/store.ts'
+import type { EvidenceRef } from './runtime-evidence.ts'
 
 const deny = (code: string): never => { throw new DurableDatabaseError(code) }
 
@@ -41,6 +45,10 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
         record.podUid !== target.podUid || record.incarnation !== target.incarnation || record.executionEpoch !== target.executionEpoch ||
         record.nodeUid !== target.nodeUid || record.computeIdentityRef !== target.computeIdentityRef ||
         record.numericInstanceId !== target.numericInstanceId) { deny('INITIAL_PROVIDER_EXECUTION_RECORD') }
+    const workload = lease.workloadIdentity
+    if (!workload || workload.attemptId !== target.attemptId || workload.podUid !== target.podUid ||
+        workload.incarnation !== target.incarnation || workload.executionEpoch !== target.executionEpoch ||
+        !lease.bindChallengeResponse) { deny('INITIAL_PROVIDER_WORKLOAD_REQUIRED') }
     if (execution(target.attemptId, target.podUid, target.incarnation, target.executionEpoch) !== target || !executionValid(target) ||
         mount(mounted.evidence.evidenceRef) !== mounted.evidence || !mountValid(mounted.evidence) ||
         mounted.evidence.target !== target || mounted.evidence.mode !== 'RW' || mounted.evidence.actualReadOnly ||
@@ -71,6 +79,11 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
         claim.controllerTerm !== input.context.controller.term || claim.identity.originalEnvelope.podTarget !== 'EXISTING_POD' ||
         claim.identity.originalEnvelope.expectedPodUid !== target.podUid || claim.identity.originalEnvelope.executionEpoch !== target.executionEpoch) {
       deny('INITIAL_PROVIDER_COMMAND_STALE')
+    }
+    if (!isDeepStrictEqual(command.input, { attemptId: target.attemptId, podUid: target.podUid,
+      incarnation: target.incarnation, workloadIdentity: lease.workloadIdentity,
+      restoreEvidence: [], challengeResponse: lease.bindChallengeResponse })) {
+      deny('INITIAL_PROVIDER_BIND_INPUT')
     }
     await gateway.assertExecutionTarget(claim.identity.originalEnvelope, false)
     const plan = await readAgentPodPlan(tx, input.context.operationId)
@@ -134,8 +147,17 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
     await enqueueOutbox(tx, { eventId: logicalId('event', audit), aggregateId: input.context.runtimeUnitId, aggregateKind: 'runtime-unit',
       revision: counter('row:runtime-unit', String(BigInt(expectedRevision) + 1n)), event })
     await gateway.assertCurrent(); pins()
+    const result = { executionEpoch: target.executionEpoch, gate: 'CLOSED', allowedBindings: [{ storageBindingId: mounted.bindingId,
+      storageIdentity: { backendRef: binding.backend_id, exportRef: binding.export_id, canonicalDirectoryRef: binding.identity_proof_ref },
+      storageEpoch: binding.epoch, access: 'RW' }] }
+    const settled = await settleOwnedExecution(gateway, claim, { state: 'RESOLVED', result,
+      // This ref was minted by the concrete held-mount issuer above; the cast
+      // only records its nominal reference, never creates verification.
+      evidenceRefs: [mounted.evidence.evidenceRef as EvidenceRef] })
+    await gateway.assertCurrent(); pins()
     return Object.freeze({ gate: 'CLOSED' as const, providerReady: false as const, writerGrantActivated: true as const,
-      unitRevision: String(BigInt(expectedRevision) + 1n) })
+      unitRevision: String(BigInt(expectedRevision) + 1n), receipt: Object.freeze({
+        identity: originalIdentity(settled), state: 'RESOLVED' as const, result }) })
   })
   // No release or provider callback here, even when COMMIT was acknowledged.
   // The exact original runtime owner retains this lifetime through cold/inputs.

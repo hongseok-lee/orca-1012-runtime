@@ -21,6 +21,7 @@ import type { AgentCodexTransportConfiguration, AuthenticatedAgentControl } from
 import { createControlledExecutionTargetObserver } from './controlled-execution-target.ts'
 import type { ExecutionTargetCompositionConfiguration } from './execution-target-composition-types.ts'
 import type { ProviderProtectionLease, ProviderProtectionOwner } from './provider-effect-permit.ts'
+import { controlledWorkloadIdentity } from './controlled-workload-identity.ts'
 
 const deny = (code: string): never => { throw new DurableDatabaseError(`INITIAL_PROVIDER_PROTECTION_${code}`) }
 
@@ -131,6 +132,7 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
         const target: ExecutionTarget = Object.freeze({ attemptId: executionRecord.attemptId, podUid: executionRecord.podUid,
           incarnation: executionRecord.incarnation, executionEpoch: executionRecord.executionEpoch,
           nodeUid: executionRecord.nodeUid, computeIdentityRef: executionRecord.computeIdentityRef, numericInstanceId: executionRecord.numericInstanceId })
+        const workload = controlledWorkloadIdentity(control, executionRecord)
         // Brands are issued only here after concrete held server FD, actual Pod
         // authentication/control FD, same mount and original Compute verifier.
         const directory = Object.freeze({ evidenceRef: input.originalDirectoryReference, topologyPinId: hold.pinId,
@@ -147,7 +149,8 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
           executionTargetPinValid: value => live() && value === target,
           permanentComputeStop: () => null, computeStopPinValid: () => false,
         })
-        lease = Object.freeze({ authority, target, executionRecord,
+        lease = Object.freeze({ authority, target, executionRecord, workloadIdentity: workload.workloadIdentity,
+          bindChallengeResponse: workload.challengeResponse,
           mounts: Object.freeze([Object.freeze({ bindingId, clientRoot: '/agent', evidence: mount })]), release: releaseOriginal })
         phase = 'ISSUED'
         if (!live()) { return deny('LIFETIME_LOST') }

@@ -11,6 +11,7 @@ import { LockedGatewayAuthority } from './gateway/authority.ts'
 import { commandById, assertOriginal } from './gateway/store.ts'
 import type { GatewayContext } from './gateway/types.ts'
 import type { ExecutionTargetObservation } from './execution-target-records.ts'
+import type { VerifiedWorkloadIdentity, RuntimeReference } from './runtime-evidence.ts'
 import { captureReleaseGateInput } from './release-gate-input.ts'
 import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 
@@ -21,6 +22,8 @@ export type ProviderProtectionLease = Readonly<{
   authority: StorageEvidenceAuthority
   target: ExecutionTarget
   executionRecord: ExecutionTargetObservation
+  workloadIdentity: VerifiedWorkloadIdentity
+  bindChallengeResponse: RuntimeReference<'bind-challenge-response'>
   mounts: readonly Readonly<{ bindingId: StorageBindingId; clientRoot: string; evidence: VerifiedMountEvidence }>[]
   release(): void | Promise<void>
 }>
