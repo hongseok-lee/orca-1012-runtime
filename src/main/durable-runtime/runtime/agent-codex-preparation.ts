@@ -80,7 +80,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       }
       closeSync(fd); fd = null; unlinkSync(partial)
       // Authentication text is private data. It is never hashed or printed.
-      try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error() } }
+      try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error('AGENT_COLD_AUTH_SHAPE') } }
       catch { throw new Error('AGENT_COLD_AUTH_INVALID') }
       writeFileAtomically('/agent/home/.codex/auth.json', codexAuth, { mode: 0o600 })
       rootCurrent(); phase = 'READY'

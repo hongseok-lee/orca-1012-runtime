@@ -111,7 +111,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
           if (request.method === 'PREPARE_COLD') { preparation.begin(); phase = 'PREPARING_COLD' }
           else if (request.method === 'NATIVE_CHUNK') {
             const params = request.params
-            if (!params || typeof params !== 'object') { throw new Error() }
+            if (!params || typeof params !== 'object') { throw new Error('AGENT_COLD_CHUNK_PARAMS') }
             preparation.append(Reflect.get(params, 'offset'), Reflect.get(params, 'bytes'))
           } else { preparation.finish(); phase = 'CLOSED_GATE' }
           response(id, { prepared: preparation.ready() })

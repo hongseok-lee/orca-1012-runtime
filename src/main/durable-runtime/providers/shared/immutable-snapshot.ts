@@ -3,7 +3,7 @@ export function immutableSnapshot<T>(value: T): T {
   const copy = structuredClone(value)
   const freeze = (item: unknown): void => {
     if (item && typeof item === 'object') {
-      for (const child of Object.values(item)) freeze(child)
+      for (const child of Object.values(item)) { freeze(child) }
       Object.freeze(item)
     }
   }

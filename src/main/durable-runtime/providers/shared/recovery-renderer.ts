@@ -28,14 +28,14 @@ export class ProviderInputError extends Error {
     this.name = 'ProviderInputError'
   }
 }
-function record(value: JsonValue | undefined): { [key: string]: JsonValue } {
+function record(value: JsonValue | undefined): Record<string, JsonValue> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new ProviderInputError('INVALID_COMPOSITION')
   }
   return value
 }
 function string(value: JsonValue | undefined): string {
-  if (typeof value !== 'string') throw new ProviderInputError('INVALID_COMPOSITION')
+  if (typeof value !== 'string') { throw new ProviderInputError('INVALID_COMPOSITION') }
   return value
 }
 
@@ -52,9 +52,9 @@ export function renderRecoverySubmission(
     throw new ProviderInputError('HASH_MISMATCH')
   }
   const composition = record(sealed.payload)
-  if (composition.inputKind !== 'GENERAL') throw new ProviderInputError('UNSUPPORTED_KIND')
+  if (composition.inputKind !== 'GENERAL') { throw new ProviderInputError('UNSUPPORTED_KIND') }
   if (composition.version !== 1 || !Array.isArray(composition.components) ||
-      composition.components.length === 0) throw new ProviderInputError('NO_NORMAL_INPUT')
+      composition.components.length === 0) { throw new ProviderInputError('NO_NORMAL_INPUT') }
   const attachmentOrder: { inputId: string; position: string; aliasPath: string; contentHash: string }[] = []
   for (const item of composition.components) {
     const component = record(item)
