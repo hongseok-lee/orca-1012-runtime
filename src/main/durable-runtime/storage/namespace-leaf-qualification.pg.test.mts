@@ -39,7 +39,7 @@ const profile = { profileId: randomUUID(), datasetName: 'orca-1012-dev-v1', back
 const signal = () => new AbortController().signal
 type Synthetic = ReturnType<typeof firstManagedFixture>
 function wireFor(f: Synthetic) {
-  const c = { ...f.wire.configuration, ...f.settings.collector }, credential = f.settings.credential
+  const c = { ...f.wire.configuration, ...f.settings.collector, ca: Buffer.from(f.settings.collector.ca) }, credential = f.settings.credential
   const response = { apiVersion: 'authentication.k8s.io/v1', kind: 'TokenRequest',
     metadata: { name: credential.serviceAccountName, namespace: c.namespace, uid: credential.serviceAccountUid },
     status: { token: f.issued, expirationTimestamp: new Date(Date.now() + 600000).toISOString() } }
