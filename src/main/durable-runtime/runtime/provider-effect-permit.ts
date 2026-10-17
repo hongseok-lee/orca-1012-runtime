@@ -110,8 +110,8 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
           function within(value: string, root: string): boolean {
             return typeof value === 'string' && typeof root === 'string' && path.posix.isAbsolute(value) &&
               path.posix.normalize(value) === value && path.posix.isAbsolute(root) &&
-              path.posix.normalize(root) === root && !/[\x00-\x1f]/.test(value + root) &&
-              (value === root || value.startsWith(root + '/'))
+              path.posix.normalize(root) === root && ![...value, ...root].some(char => char.charCodeAt(0) < 32) &&
+              (value === root || value.startsWith(`${root}/`))
           }
           const roots = coldPolicy.protectedRoots
           if (roots.length !== mounts.length || new Set(roots.map(root => root.bindingId)).size !== roots.length || roots.some(expected =>
