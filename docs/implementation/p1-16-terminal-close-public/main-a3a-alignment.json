@@ -1,0 +1,22 @@
+{
+  "oldHead": "ba15f7e15503fd3cf569f3b75fa5548093b05770",
+  "alignedHead": "eef41d8f3f13b5a3c2f18324b958ada20215f7dc",
+  "base": "a3a698934b4b053d9957c1ead77735f535c3f19a",
+  "conflicts": 0,
+  "ownedProductFixtureFiles": [
+    "src/main/durable-runtime/rpc/metadata.ts",
+    "src/main/durable-runtime/rpc/terminal-close.pg.test.mts"
+  ],
+  "ownedBytesModeDelta": [],
+  "actualSavedInputs": 361,
+  "actualInputAlignmentDelta": [],
+  "testedDependencyVsOldBranch": [
+    {
+      "path": "src/main/durable-runtime/rpc/terminal-send.ts",
+      "testedSHA256": "6d3864159b8dbfc99c9659b22adf92eee8b2c3fdcd2bf551fbaf60c36f5145ed",
+      "oldBranchSHA256": "40476a5c77442d8249c3407dbf66283c2acef13d79251ec8de40e3b97dc65541"
+    }
+  ],
+  "testsRepeated": 0,
+  "sourceOutsideOwnedDiffToMain": []
+}
