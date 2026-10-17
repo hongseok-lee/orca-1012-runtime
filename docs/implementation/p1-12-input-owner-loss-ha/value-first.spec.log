@@ -1,0 +1,13 @@
+{"phase":"VALUE_CALLBACK_ENTERED","pid":31267,"at":"2026-10-17T07:17:25.186Z"}
+▶ owner-loss HA focused value callback 1
+  ✔ input recovery is selected before lifecycle planning, cannot dispatch, and stops on uncertain COMMIT (8.957861ms)
+  ✔ trusted recovery selector is optional, detached, strict own data and independent of cold activation (2.257478ms)
+✔ owner-loss HA focused value callback 1 (15.641331ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1953.510751

@@ -1,0 +1,72 @@
+{
+  "sourcePin": "575c1b798ca597f7efe9165a43e939b0e2081d36",
+  "base": "f871615f1ef6d182c8f07ecc3351d8d575f3273e",
+  "dbDependencyPin": "2d44c8d5e9efa1a19bb27947de59165bd46d08f4",
+  "dbDependencyPR": 164,
+  "validation": {
+    "lintOwned": 6,
+    "lintExit": 0,
+    "valueCallbackPid": 31267,
+    "valueExit": 0,
+    "valueBoundaries": 2,
+    "actualValueFiles": 194,
+    "actualValueMismatch": 0,
+    "HATypeOwnedFiles": 2,
+    "actualTypeFiles": 41,
+    "HATypeOwnedDiagnostics": 0,
+    "HATypeDependencyDiagnostics": 2,
+    "HATypeFullExit": 1,
+    "configurationCompositionFullType": "미실행",
+    "DBPG": 0,
+    "nativeCalls": 0,
+    "actualMutation": 0,
+    "serviceChange": 0
+  },
+  "actualValueInputGuard": {
+    "files": 194,
+    "mismatches": [],
+    "bundleSHA256": "0e2d747d07e151a78618802217c1860aee549be2c55edbde668b8bd253a270f9",
+    "metafileSHA256": "eb89e80d971b8967ab7afd36c0dd95235fbfb1fc13da4ac2b93a96dde170aef1",
+    "savedBeforeGuard": true
+  },
+  "value": {
+    "phase": "VALUE_ENDED",
+    "pid": 31248,
+    "at": "2026-10-17T07:17:23.218Z",
+    "childPid": 31261,
+    "code": 0,
+    "signal": null,
+    "endedAt": "2026-10-17T07:17:25.241Z"
+  },
+  "type": {
+    "expectedSourceFiles": 41,
+    "actualSourceFiles": 41,
+    "missing": [],
+    "unexpected": [],
+    "ownedDiagnostics": 0,
+    "dependencyDiagnostics": [
+      "source/src/main/durable-runtime/db/connection.ts(30,21): error TS7006: Parameter 'oid' implicitly has an 'any' type.",
+      "source/src/main/durable-runtime/db/connection.ts(30,26): error TS7006: Parameter 'format' implicitly has an 'any' type."
+    ],
+    "fullExit": 1,
+    "rootDirsFallback": false,
+    "singleSourceTree": true,
+    "typeRuns": 1
+  },
+  "preparationFailures": [
+    {
+      "phase": "BUNDLE",
+      "code": "MISSING_EXISTING_FIXTURE_HELPER",
+      "callbackEntered": false,
+      "correction": "고정 f871의 기존 verification-fixtures.mts 1개만 자기 검증 stage에 보충했습니다. 통과한 lint는 반복하지 않았습니다."
+    },
+    {
+      "phase": "ACTUAL_INPUT_GUARD",
+      "originalActualFiles": 196,
+      "originalMismatches": 6,
+      "correction": "현재 개발 cache의 nativeSession 변경 파일 5개만 고정 source 사본으로 교정했습니다. 이에 따른 추가 모듈 1개는 최종 소비에서 제외됐습니다. 원 bundle/metafile/actual 입력과 exact diff를 보존했습니다."
+    }
+  ],
+  "scope": "논리 UNKNOWN 보존의 HA 연결만 검증했습니다. 실제 입력/서비스 활성화와 provider 호출은 실행하지 않았습니다.",
+  "usageCreditsStream": "미관측"
+}
