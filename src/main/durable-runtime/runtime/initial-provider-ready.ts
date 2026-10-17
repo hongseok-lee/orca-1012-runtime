@@ -14,6 +14,7 @@ import { originalIdentity, commandById, assertOriginal } from './gateway/store.t
 import { captureReleaseGateInput } from './release-gate-input.ts'
 import { readAgentPodPlan } from './agent-pod-plan-records.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
+import { publishCatalogTerminalNativeSessionReady } from '../catalog/terminal-native-session.ts'
 
 const deny = (): never => { throw new DurableDatabaseError('INITIAL_PROVIDER_READY_UNCONFIRMED') }
 
@@ -97,6 +98,9 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
       occurredAt: new Date(), receivedAt: new Date(), producerId: randomUUID(), producerSeq: counter('sequence:producer', '1'), evidenceRefs: [] })
     await enqueueOutbox(tx, { eventId: logicalId('event', audit), aggregateId: native.runtimeUnitId, aggregateKind: 'runtime-unit',
       revision: counter('row:runtime-unit', unit.rows[0].revision), event })
+    // Final rank10: publish only the original driver's committed native read
+    // identity together with READY. No metadata state or principal is made.
+    await publishCatalogTerminalNativeSessionReady(tx, audit, native)
     await authority.assertCurrent(); pins()
     return Object.freeze({ receipt: Object.freeze({ identity: originalIdentity(settled), state: 'RESOLVED' as const, result }),
       unitRevision: unit.rows[0].revision })
