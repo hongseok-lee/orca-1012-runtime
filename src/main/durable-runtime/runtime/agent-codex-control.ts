@@ -4,6 +4,7 @@ import { isDeepStrictEqual } from 'node:util'
 import { createInterface } from 'node:readline'
 import type { Readable, Writable } from 'node:stream'
 import { openCodexAppServerConnection } from '../../codex/codex-app-server-connection.ts'
+import { CodexAppServerHandshakeExitUnprovenError } from '../../codex/codex-app-server-handshake-exit-proof.ts'
 import type { CodexAppServerConnection } from '../../codex/codex-app-server-connection-types.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
@@ -108,7 +109,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
             onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
           })
           phase = 'READY'; response(id, { nativePid: connection.pid })
-        } catch { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_COLD_FAILED') }
+        } catch (error) {
+          // Initialization may fail without a proven process-tree exit. Keep
+          // the original owned handle so CLOSE can reconcile THAT process;
+          // neither this error nor the preserved connection permits COLD again.
+          if (error instanceof CodexAppServerHandshakeExitUnprovenError) { connection = error.connection }
+          uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_COLD_FAILED')
+        }
         return
       }
       if (!connection || phase !== 'READY' || typeof request.method !== 'string' || !nativeMethods.has(request.method)) {

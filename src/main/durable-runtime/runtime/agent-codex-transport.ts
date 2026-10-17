@@ -18,7 +18,8 @@ export const agentCodexBootstrap = `const fs=require('node:fs'),crypto=require('
 const path='/tmp/orca-agent-control.cjs',fd=fs.openSync(path,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
 const stat=fs.fstatSync(fd),bytes=fs.readFileSync(fd);fs.closeSync(fd);
 if(!stat.isFile()||stat.uid!==1000||stat.nlink!==1||bytes.length>4194304||crypto.createHash('sha256').update(bytes).digest('hex')!==process.argv[1])throw Error('AGENT_CONTROL_BUNDLE');
-require(path);`
+const execute=require('node:vm').runInThisContext('(function(require,module,exports,__filename,__dirname){\\n'+bytes.toString('utf8')+'\\n})',{filename:path});
+const owned={exports:{}};execute(require,owned,owned.exports,path,'/tmp');`
 
 export type AgentCodexTransportConfiguration = Readonly<{
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
