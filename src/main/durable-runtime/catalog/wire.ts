@@ -82,6 +82,7 @@ export type CatalogWireResults = {
   'session.tabs.listAll': { snapshots: RuntimeMobileSessionTabsResult[]; authoritative?: true }
   'session.tabs.createTerminal': RuntimeMobileSessionCreateTerminalResult
   'session.tabs.activate': RuntimeMobileSessionTabsResult
+  'session.tabs.setTabProps': { updated: true }
   'session.tabs.close': RuntimeMobileSessionTabCloseResult
   'session.tabs.closeLifecycle': RuntimeMobileSessionTabCloseResult
   'terminal.focus': { focus: RuntimeTerminalFocus }
