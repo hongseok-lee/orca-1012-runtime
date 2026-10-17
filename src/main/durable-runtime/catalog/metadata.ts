@@ -11,11 +11,12 @@ import { lockCatalogMetadata } from './heads.ts'
 import { CatalogError } from './errors.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import { readWorkspaceTabsInTransaction } from './projection.ts'
+import { enrichCatalogTerminalNativeSessions } from './terminal-native-session.ts'
 
 export async function loadCatalogTabs(tx: DurableTransaction, workspaceId: string): Promise<CatalogTab[]> {
-  return (await tx.query<CatalogTab>(`SELECT m.*,t.workspace_id,t.session_id,t.kind,t.terminal_handle,
+  return enrichCatalogTerminalNativeSessions(tx, (await tx.query<CatalogTab>(`SELECT m.*,t.workspace_id,t.session_id,t.kind,t.terminal_handle,
     t.lifecycle,t.revision AS tab_revision FROM durable_runtime.catalog_tab_metadata m
-    JOIN durable_runtime.tabs t ON t.id=m.tab_id WHERE t.workspace_id=$1 ORDER BY t.ui_order,t.id`, [workspaceId])).rows
+    JOIN durable_runtime.tabs t ON t.id=m.tab_id WHERE t.workspace_id=$1 ORDER BY t.ui_order,t.id`, [workspaceId])).rows)
 }
 
 export function resolveCatalogTab(rows: readonly CatalogTab[], selector: { tabId?: string; leafId?: string; terminal?: string }): CatalogTab {

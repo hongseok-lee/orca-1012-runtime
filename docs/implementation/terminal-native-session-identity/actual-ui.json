@@ -1,0 +1,102 @@
+{
+  "phase": "EXPLICIT_NATIVE_CHAT_UI_RENDER_OBSERVED",
+  "sourcePin": "3faa3ee3",
+  "originalIdentityProduct8Pin": "7a37b6ddcc13c3add2954b4f3f7d93f6cd0f0536",
+  "UIAt": "2026-10-17T07:18:17.296Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "sameViewerRetained": true,
+  "viewerPID": 13240,
+  "Metro": {
+    "originalPID": 943,
+    "currentPID": 1046,
+    "supervisorPID": 1039,
+    "necessaryRestartsForNewRenderDelta": 1,
+    "changedFiles": 1,
+    "renderSourceSHA256": "18d56be15e2819704791760d1d947206cafe531ed0798ab7032b6a7db895e1bb"
+  },
+  "actualUI": {
+    "nativeIdentityMatchesOriginalREADY": true,
+    "agent": "codex",
+    "showNativeChat": true,
+    "pendingTerminal": true,
+    "status": "pending-handle",
+    "activeHandlePresent": false,
+    "inputLock": "waiting",
+    "composerVisible": true,
+    "composerDisabled": true,
+    "sendAriaDisabled": true,
+    "sendPointerEvents": "none",
+    "nativeChatReadStatus": "ready",
+    "historyItems": 2,
+    "historyKinds": [
+      "native-warning",
+      "user-request"
+    ],
+    "assistantCompletionObserved": false
+  },
+  "runtime": {
+    "service": "catalog-only",
+    "PID": 30492,
+    "artifactSHA256": "596235512148e2629058b0dded913bb2d6b947cf6f13528c69d84cee197546aa",
+    "controllerConfigured": false,
+    "coldResumed": false,
+    "inputReplayed": false,
+    "wholeCheckoutGitProven": false
+  },
+  "originalInput": {
+    "deliveryState": "EFFECT_POSSIBLE",
+    "providerRef": null,
+    "completionConfirmed": false,
+    "retry": 0
+  },
+  "capture": {
+    "file": "terminal-native-chat-ui-preparing.png",
+    "SHA256": "f034c429230cd57a49cba4fcf43aac84672bdc5459a5d477d5bcd999bcbc4f0e",
+    "UIRenderProofScreenshots": 1,
+    "separateEarlierFailureDiagnosticScreenshots": 1,
+    "nativeIPhone": false,
+    "providerCurrentConnectionClaimed": false,
+    "inputCompletionClaimed": false
+  },
+  "manualEffects": {
+    "readRPC": 0,
+    "send": 0,
+    "serverMetadataWrites": 0,
+    "newPairing": 0,
+    "newProviderOrCold": 0
+  },
+  "checks": {
+    "newUIFileLint": {
+      "PID": 30656,
+      "exit": 0,
+      "SHA256": "1ba04c0d73d6df453149b1748bb915823b52e9dee16325cd297cc4bdfe3a118a"
+    },
+    "originalSuccessfulValuePGSchemaTypeRepeated": false
+  },
+  "originalUIFailures": [
+    {
+      "phase": "Home Workspace label wait",
+      "cause": "missing normal Host-card navigation",
+      "correctedHelperOnly": true
+    },
+    {
+      "phase": "Terminal title selector",
+      "cause": "two rendered Terminal labels; scoped existing header",
+      "correctedHelperOnly": true
+    },
+    {
+      "phase": "Send disabled helper check",
+      "cause": "Playwright generic DIV matcher; actual RN disabled=true and DOM aria-disabled/pointer-events confirmed",
+      "productChangedForMatcher": false
+    }
+  ],
+  "limitations": [
+    "서비스 복구와 현재 provider 연결을 구분합니다.",
+    "사용자 요청 말풍선의 완료 문자열은 assistant 응답이 아닙니다.",
+    "원 입력 완료·현재 provider 연결·native iPhone·HA·physical writer 합격을 주장하지 않습니다."
+  ],
+  "usageCreditsModelStreamOriginalError": "미관측"
+}

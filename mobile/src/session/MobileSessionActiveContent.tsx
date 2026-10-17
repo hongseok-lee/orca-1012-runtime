@@ -3,6 +3,7 @@ import { saveTerminalTextScale } from '../storage/preferences'
 import { MobileBrowserPane } from '../browser/MobileBrowserPane'
 import { TerminalPaneView } from './TerminalPaneView'
 import { MobileNativeChatOverlay } from './MobileNativeChatOverlay'
+import { isRuntimeTerminalNativeChatSession } from '../../../src/shared/runtime-mobile-session-tab-contracts'
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
 import type { MobileSessionController } from './use-mobile-session-controller'
@@ -72,6 +73,7 @@ export function MobileSessionActiveContent({
     activeFileTab,
     activeBrowserTab,
     activePendingTerminalTab,
+    activeSessionTab,
     isPendingTerminalRecoveryParked,
     retryPendingTerminalRecovery,
     showLoadingState,
@@ -81,6 +83,11 @@ export function MobileSessionActiveContent({
     toastAnimatedStyle,
     createTabBusy
   } = controller
+  // A committed native transcript can be read before a legacy PTY handle exists.
+  // Keep the original pending-terminal path for all other tabs and view modes.
+  const showExplicitNativeChat = nativeChatController.showNativeChat &&
+    activeSessionTab?.type === 'terminal' &&
+    isRuntimeTerminalNativeChatSession(activeSessionTab.nativeChatSession)
   return showLoadingState ? (
     <View style={styles.emptyState}>
       <ActivityIndicator size="small" color={colors.textSecondary} />
@@ -170,7 +177,7 @@ export function MobileSessionActiveContent({
         </Animated.View>
       )}
     </View>
-  ) : activePendingTerminalTab ? (
+  ) : activePendingTerminalTab && !showExplicitNativeChat ? (
     <View style={styles.emptyState}>
       {!isPendingTerminalRecoveryParked && (
         <ActivityIndicator size="small" color={colors.textSecondary} />
