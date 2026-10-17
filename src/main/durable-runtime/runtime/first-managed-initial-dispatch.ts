@@ -76,6 +76,9 @@ function captureClaim(claim: CommandClaim): CommandClaim {
 export function createFirstManagedInitialDispatch(original: FirstManagedInitialDispatchConfig,
   https?: AgentPodCreateHttps, collectorDependencies?: ManagedLeafCollectorDependencies): Readonly<Callbacks & {
     snapshot(): FirstManagedInitialDispatchSnapshot
+    onTerminalInputCommitted?: TerminalInputCommittedSink
+    assertOutputAvailable?(): void
+    close(): Promise<void>
   }> {
   const prepared = prepareAgentPodPlan(createAgentPodPlanner(original.policy).plan(original.request))
   const { plan, planDigest } = prepared, id = plan.identity, container = plan.pod.spec.containers[0]
