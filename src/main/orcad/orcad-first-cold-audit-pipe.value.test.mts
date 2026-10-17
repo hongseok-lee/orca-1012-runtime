@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { fstatSync } from 'node:fs'
 import { spawn } from 'node:child_process'
+import type { Writable } from 'node:stream'
 import test from 'node:test'
 import { readFirstColdAuditPipe } from './orcad-first-cold-provider.ts'
 
@@ -17,14 +18,16 @@ if (childMode) {
 } else {
   test('actual Audit reader owns one close on dummy EOF and rejected input', async () => {
     for (const mode of ['EOF', 'FAILURE']) {
+      const env = { ...process.env, ORCA_AUDIT_PIPE_FIXTURE_CHILD: mode, ORCA_DURABLE_AUDIT_TOKEN_FD: '3' }
+      delete env.NODE_TEST_CONTEXT
       const child = spawn(process.execPath, [process.argv[1]], {
-        env: { ...process.env, ORCA_AUDIT_PIPE_FIXTURE_CHILD: mode, ORCA_DURABLE_AUDIT_TOKEN_FD: '3' },
+        env,
         stdio: ['ignore', 'pipe', 'pipe', 'pipe']
       })
       const stdout: Buffer[] = [], stderr: Buffer[] = []
       child.stdout!.on('data', chunk => stdout.push(Buffer.from(chunk)))
       child.stderr!.on('data', chunk => stderr.push(Buffer.from(chunk)))
-      const pipe = child.stdio[3] as import('node:stream').Writable
+      const pipe = child.stdio[3] as Writable
       pipe.end(mode === 'EOF' ? 'FIXTURE_ONLY_NOT_A_CREDENTIAL' : 'INVALID DUMMY INPUT')
       const exit = await new Promise<number | null>((resolve, reject) => {
         child.once('error', reject); child.once('exit', resolve)
