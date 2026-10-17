@@ -10,7 +10,7 @@ import type { CodexColdLaunch } from '../providers/codex/driver.ts'
 import type { ProviderBinding, ProviderColdRequest, ProviderDispatchRequest, ProviderDispatchResult,
   ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
-import type { CommandClaim, GatewayContext } from './gateway/types.ts'
+import type { CommandClaim, ExecutorId, GatewayContext } from './gateway/types.ts'
 import { settleInitialEnsureAssigned } from './initial-provider-command-settlement.ts'
 import { readInitialProviderPaths } from './initial-provider-paths.ts'
 import type { InitialEmptyFolderDeclaration, InitialProviderPaths } from './initial-provider-paths.ts'
@@ -58,6 +58,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let writerActivated = false
   let protection: ReturnType<typeof createInitialProviderProtection> | null = null
   let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
+  let readyExecutor: ExecutorId | null = null
   let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest): Promise<ProviderDispatchResult> {
     const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
@@ -77,8 +78,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
     phase: () => phase,
     snapshot: () => Object.freeze({ phase, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
-    current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, dispatch }) : null,
+    current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
       used = true
@@ -174,7 +175,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         const settled = await settleInitialProviderReady(borrowed, { context, claim: gate.execution.claim,
           planDigest: selected.planDigest }, native, driver, owner)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
-        readyProtection = owner; readyContext = context; ready = native; phase = 'READY'
+        readyProtection = owner; readyContext = context; readyExecutor = claim.executorId; ready = native; phase = 'READY'
         onReady?.()
       } catch (error) {
         phase = 'RETAINED_UNCONFIRMED'
