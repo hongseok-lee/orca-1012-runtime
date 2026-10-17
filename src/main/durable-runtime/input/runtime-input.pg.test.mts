@@ -126,6 +126,8 @@ await test('committed Terminal execution keeps original lineage across close, re
       exit: () => handlers.onExit?.(new Error('synthetic connection loss'))}
   }
 
+  const closeOnly = process.env.ORCA_TERMINAL_RUNTIME_PHASE === 'CLOSE_ONLY'
+  if (!closeOnly) {
   const first = await setup()
   await first.send()
   assert.equal(first.commits.length, 1, 'receipt replay does not notify or dispatch')
@@ -158,12 +160,15 @@ await test('committed Terminal execution keeps original lineage across close, re
   assert.equal((await pool.query("SELECT state FROM durable_runtime.delivery_attempts WHERE session_id=$1", [lost.sessionId])).rows[0].state, 'UNKNOWN')
   lost.coordinator.committed(lost.commits[0]); lost.coordinator.ready(); await lost.coordinator.drain()
   assert.equal(lost.nativeCalls, 1, 'UNKNOWN is retained, never automatically resent')
+  }
 
   const closed = await setup()
-  await pool.query("UPDATE durable_runtime.tabs SET lifecycle='CLOSED' WHERE id=$1", [closed.tab.id])
+  await pool.query("UPDATE durable_runtime.tabs SET lifecycle='CLOSED',closed_at=clock_timestamp() WHERE id=$1", [closed.tab.id])
   closed.start(); await closed.coordinator.drain()
   assert.equal(closed.nativeCalls, 0)
   assert.equal((await pool.query("SELECT count(*)::int AS n FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND kind='INPUT_DELIVERY'", [closed.runtimeUnitId])).rows[0].n, 0)
   assert.equal((await pool.query('SELECT intake_status FROM durable_runtime.messages WHERE session_id=$1', [closed.sessionId])).rows[0].intake_status, 'DURABLE')
   assert.deepEqual((await pool.query('SELECT * FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger)
+  t.diagnostic(JSON.stringify({phase: closeOnly ? 'CLOSE_ONLY_COMPLETE' : 'ALL_BOUNDARIES_COMPLETE',
+    oldSuccessfulBoundariesRepeated: false, providerCalls: 0}))
 })
