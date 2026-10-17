@@ -1,0 +1,41 @@
+{
+  "artifact": "terminal-native-chat-ui-preparing.png",
+  "artifactSHA256": "f034c429230cd57a49cba4fcf43aac84672bdc5459a5d477d5bcd999bcbc4f0e",
+  "captureAt": "2026-10-17T07:18:17.296Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "environment": "실제 원격 Expo Web Chat 화면",
+  "originalClientRenderSourcePin": "3faa3ee3a1dc27c11dfd580c090d7e30eb0a4990",
+  "originalPublicAssetCommit": "824cab9bc0401110057c5da3d9b5aa2b0f201dea",
+  "originalPublicAssetPath": "docs/implementation/terminal-native-session-identity/terminal-native-chat-ui-preparing.png",
+  "originalPublicProvenancePath": "docs/implementation/terminal-native-session-identity/actual-ui.json",
+  "originalPublicProvenanceSHA256": "a67f416c3666a3b9ccab83767d5fd822a99a5e2987a0a3db329ca9ee7b578557",
+  "outputProductSourcePin": "f93af06fd2109a8a7df0b4cc28ccc9dbf32926ae",
+  "rootAlignedPRSourceBeforeAsset": "ff383a6fc57deddced4cfacdb30378f1f9859898",
+  "backendArtifactSHA256": "596235512148e2629058b0dded913bb2d6b947cf6f13528c69d84cee197546aa",
+  "wholeBackendCheckoutGitSHAProven": false,
+  "captureReusedWithoutChanges": true,
+  "newCaptureForThisPR": false,
+  "manualReadByOutputOwner": 0,
+  "newSendActions": 0,
+  "newProviderOrCold": 0,
+  "observed": {
+    "historyMessages": 2,
+    "messageKinds": [
+      "native bubblewrap 경고",
+      "원 사용자 요청"
+    ],
+    "assistantCompletionMessages": 0,
+    "inputDeliveryState": "EFFECT_POSSIBLE",
+    "inputLock": "waiting",
+    "sendDisabled": true
+  },
+  "limitations": [
+    "실제 assistant 응답·provider 실행 완료·입력 완료를 주장하지 않는다.",
+    "실제 설치 iPhone 앱이나 HA·physical fencing 합격이 아니다.",
+    "Raw subscribe frame을 출력 담당이 추가 수집하거나 별도 대조하지 않았다."
+  ],
+  "rootLimitedAcceptance": "https://github.com/hongseok-lee/orca-1012-runtime/pull/161#issuecomment-6231134679"
+}
