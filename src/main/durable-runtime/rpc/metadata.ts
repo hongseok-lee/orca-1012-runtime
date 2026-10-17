@@ -14,7 +14,7 @@ import { assertProjectedSessionTabVisible } from '../../runtime/rpc/methods/sess
 import { CatalogError } from '../catalog/errors.ts'
 
 export const CATALOG_PUBLIC_METADATA_METHODS = Object.freeze([
-  'worktree.set', 'worktree.activate', 'ui.set', 'session.tabs.activate', 'session.tabs.setTabProps', 'terminal.focus', 'terminal.rename'
+  'worktree.set', 'worktree.activate', 'ui.set', 'session.tabs.activate', 'session.tabs.setTabProps', 'session.tabs.close', 'terminal.focus', 'terminal.rename'
 ] as const)
 export type CatalogMetadataMethod = typeof CATALOG_PUBLIC_METADATA_METHODS[number]
 
@@ -36,13 +36,14 @@ function guardedEntry<Method extends CatalogMetadataMethod>(
 /** Borrows the read adapter's Pool/config. Real owner entries are supplied for
  * the incumbent Facade; these metadata methods never invoke lifecycle IO. */
 export function createCatalogMetadataFacade(config: CapturedCatalogReadConfig, tabPropsVisibility?: CatalogTabPropsVisibility): CatalogCompatibilityFacade {
-  const entries = createCatalogEntries(config.pool, { recordUnitIntent, reserveSleep, recordInputCancel }, { tabPropsVisibility })
+  const entries = createCatalogEntries(config.pool, { recordUnitIntent, reserveSleep, recordInputCancel }, { tabPropsVisibility, close: { inputAuthorities: [] } })
   return new CatalogCompatibilityFacade({
     'worktree.set': guardedEntry(config, entries['worktree.set']),
     'worktree.activate': guardedEntry(config, entries['worktree.activate']),
     'ui.set': guardedEntry(config, entries['ui.set']),
     'session.tabs.activate': guardedEntry(config, entries['session.tabs.activate']),
     'session.tabs.setTabProps': guardedEntry(config, entries['session.tabs.setTabProps']),
+    'session.tabs.close': guardedEntry(config, entries['session.tabs.close']),
     'terminal.focus': guardedEntry(config, entries['terminal.focus']),
     'terminal.rename': guardedEntry(config, entries['terminal.rename'])
   })

@@ -1,0 +1,11 @@
+{
+  "pin": "7f2fce82347439a6a5e06f9cc8dbe1f0300b0cab",
+  "inputs": 361,
+  "mismatches": [],
+  "bundleHashMatches": true,
+  "metafileHashMatches": true,
+  "inputsSavedBeforeGuard": true,
+  "reusedAcceptedInputPins": 361,
+  "fixtureOnlyChanged": true,
+  "wholeSourceReaudit": false
+}

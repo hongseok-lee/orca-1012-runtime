@@ -1,0 +1,18 @@
+{
+  "pin": "3005db8edbeba0ee4961b347510242ee92096e6b",
+  "inputs": 361,
+  "mismatches": [],
+  "bundleHashMatches": true,
+  "metafileHashMatches": true,
+  "inputsSavedBeforeGuard": true,
+  "fixedPreparationDelta": [
+    "src/shared/runtime-mobile-session-tab-contracts.ts",
+    "src/main/durable-runtime/catalog/payload.ts",
+    "src/main/durable-runtime/output/input-read.ts",
+    "src/main/durable-runtime/rpc/structured-history.ts"
+  ],
+  "removedInputs": [
+    "src/shared/runtime-mobile-session-tab-contracts.ts"
+  ],
+  "wholeSourceReaudit": false
+}

@@ -1,0 +1,21 @@
+{
+  "pid": 27483,
+  "uid": 1000,
+  "startedAt": "2026-10-17T06:11:07.411Z",
+  "phase": "PG_COMPLETE",
+  "sourcePin": "7f2fce82347439a6a5e06f9cc8dbe1f0300b0cab",
+  "identity": {
+    "name": "orca_public_clipboard_20261014",
+    "oid": "80991",
+    "system": "7696101282789175327",
+    "pid": 585834
+  },
+  "childPid": 27501,
+  "callbackStartedAt": "2026-10-17T06:11:07.999Z",
+  "pgExit": 0,
+  "catalogGlobalRevisionDelta": "1",
+  "originalRowsPreserved": true,
+  "endedAt": "2026-10-17T06:11:10.047Z",
+  "callbackPid": 27507,
+  "allowedExistingRowChange": "catalog_heads(scope=catalog).revision +1 only on successful logical close"
+}
