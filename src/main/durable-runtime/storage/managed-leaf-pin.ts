@@ -39,10 +39,10 @@ export function createManagedLeafPinHolder(caller: ManagedLeafCollectorConfig,
   const collect = collector.collect.bind(collector), open = dependencies.openWebSocket.bind(dependencies)
   const reviewer = config.readReviewerBearer.bind(config)
   return Object.freeze({ async acquire(input: string, signal: AbortSignal) {
-    const leafId = managedLeafUuid(input)
+    const deadline = performance.now() + config.timeoutMs, leafId = managedLeafUuid(input)
     const observation = await collect(leafId, signal)
     const acquisition = new AbortController(), abort = () => acquisition.abort()
-    const timer = setTimeout(abort, config.timeoutMs)
+    const timer = setTimeout(abort, Math.max(0, deadline - performance.now()))
     signal.addEventListener('abort', abort, { once: true })
     if (signal.aborted) { acquisition.abort() }
     let bearer = ''
@@ -50,7 +50,9 @@ export function createManagedLeafPinHolder(caller: ManagedLeafCollectorConfig,
       try { bearer = await awaitPodAuthValue(Promise.resolve(reviewer(acquisition.signal)), acquisition.signal) }
       catch { throw new ManagedLeafCollectorError(signal.aborted ? 'ABORTED' : acquisition.signal.aborted ? 'TIMEOUT' : 'CREDENTIAL_FAILED') }
       if (!bearerValid(bearer) || bearer.trim() !== bearer) { throw new ManagedLeafCollectorError('CREDENTIAL_FAILED') }
-      return await hold(open, config, leafId, observation, bearer, signal, performance.now() + config.timeoutMs)
+      if (signal.aborted) { throw new ManagedLeafCollectorError('ABORTED') }
+      if (acquisition.signal.aborted || performance.now() >= deadline) { throw new ManagedLeafCollectorError('TIMEOUT') }
+      return await hold(open, config, leafId, observation, bearer, signal, deadline)
     } finally {
       bearer = ''; clearTimeout(timer); signal.removeEventListener('abort', abort); acquisition.abort()
     }
@@ -66,6 +68,7 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
     let terminalError: ManagedLeafCollectorError | undefined
     let releaseResolve: (() => void) | undefined, releaseReject: ((error: Error) => void) | undefined
     let releasing: Promise<void> | undefined
+    let heldOutput = ''
     let releaseTimer: ReturnType<typeof setTimeout> | undefined
     const streams = new Map([1, 2, 3].map(id => [id, {
       decoder: new TextDecoder('utf-8', { fatal: true }), text: '', closed: false,
@@ -101,11 +104,11 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
       if (!stream || stream.closed) { throw new ManagedLeafCollectorError('EXEC_PROTOCOL') }
       stream.text += stream.decoder.decode(); stream.closed = true
     }
-    function closed(): void {
+    function closed(code: number): void {
       active = false
       if (!terminal) {
         try {
-          if (!handshake || !acquired) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
+          if (!handshake || !acquired || code !== 1000) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
           for (const [id, stream] of streams) { if (!stream.closed) { closeStream(id) } }
           const stdout = streams.get(1)!.text, stderr = streams.get(2)!.text
           const status = JSON.parse(streams.get(3)!.text)
@@ -123,13 +126,22 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
         if (!handshake || !binary || !(raw instanceof Uint8Array) || raw.length < 1) { throw new ManagedLeafCollectorError('EXEC_PROTOCOL') }
         if (raw[0] === 255) {
           if (raw.length !== 2) { throw new ManagedLeafCollectorError('EXEC_PROTOCOL') }
+          if (!releaseRequested) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
           closeStream(raw[1]); return
         }
         const stream = streams.get(raw[0])
         if (!stream || stream.closed) { throw new ManagedLeafCollectorError('EXEC_PROTOCOL') }
         stream.text += stream.decoder.decode(raw.subarray(1), { stream: true })
         if (stream.text.length > 2 * 1024 * 1024 || raw[0] === 2 && stream.text) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
-        if (acquired || raw[0] !== 1) { return }
+        if (raw[0] === 3 && !releaseRequested) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
+        if (acquired) {
+          if (raw[0] === 1 && (!releaseRequested && stream.text !== heldOutput ||
+              releaseRequested && !(heldOutput + 'ORCA_MANAGED_LEAF_PIN_RELEASED\n').startsWith(stream.text))) {
+            throw new ManagedLeafCollectorError('EXEC_PROTOCOL')
+          }
+          return
+        }
+        if (raw[0] !== 1) { return }
         const marker = /\nORCA_MANAGED_LEAF_PIN_HELD ([1-9]\d*) (\d+) ([1-9]\d*)\n$/.exec(stream.text)
         if (!marker) { return }
         const projected = projectManagedLeafOutput(stream.text.slice(0, marker.index + 1), config, leafId, observation.pod)
@@ -137,7 +149,7 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
             marker[3] !== observation.candidate.inode || !Number.isSafeInteger(Number(marker[1]))) {
           fail('MOUNT_CHANGED'); return
         }
-        acquired = true; active = true; clearTimeout(timer)
+        acquired = true; active = true; heldOutput = stream.text; clearTimeout(timer)
         // Acquisition cancellation no longer owns this resource. In particular
         // request abort/cleanup cannot close the FD during PG settlement.
         signal.removeEventListener('abort', aborted)
