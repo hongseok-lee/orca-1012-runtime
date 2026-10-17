@@ -5,6 +5,7 @@ import type { E2EEKeypair } from '../e2ee-keypair'
 import { E2EEChannel, type E2EEAuthenticatedDevice } from './e2ee-channel'
 import { createMobileE2EEOutboundMemoryBudget } from './mobile-e2ee-outbound-memory-budget'
 import type { RuntimeCapability } from '../../../shared/protocol-version'
+import { TerminalConnectionOwner, type TerminalInputConnection } from './terminal-connection-owner'
 
 type MobileSocketPayload = string | Uint8Array<ArrayBufferLike>
 
@@ -78,6 +79,8 @@ export class MobileSocketWiring {
   private readonly authenticatedSockets = new Map<WebSocket, AuthenticatedMobileSocket>()
   private readonly transports = new Set<MobileSocketTransport>()
   private readonly outboundMemoryBudget = createMobileE2EEOutboundMemoryBudget()
+  private readonly terminalConnectionOwner = new TerminalConnectionOwner()
+  private readonly socketTransports = new Map<WebSocket, MobileSocketTransport>()
 
   constructor(options: MobileSocketWiringOptions) {
     this.deviceRegistry = options.deviceRegistry
@@ -107,11 +110,29 @@ export class MobileSocketWiring {
       }
       attached = false
       this.transports.delete(transport)
+      for (const [ws, owner] of this.socketTransports) {
+        if (owner === transport) { this.invalidateTerminalInput(ws) }
+      }
     }
   }
 
   getConnectionId(ws: WebSocket): string | undefined {
     return this.connectionIds.get(ws)
+  }
+
+  captureTerminalInput(ws: WebSocket, deviceId: string, fingerprint: string): TerminalInputConnection {
+    const socket = this.authenticatedSockets.get(ws)
+    if (!socket || socket.device.deviceId !== deviceId) { throw new Error('TERMINAL_AUTHENTICATED_CONNECTION_REQUIRED') }
+    return this.terminalConnectionOwner.capture(socket.connectionId, deviceId, fingerprint, () => {
+      const device = this.deviceRegistry.validateToken(socket.device.deviceToken)
+      return ws.readyState === ws.OPEN && this.authenticatedSockets.get(ws) === socket &&
+        this.channels.has(ws) && device?.deviceId === deviceId
+    })
+  }
+
+  invalidateTerminalInput(ws: WebSocket): void {
+    const id = this.connectionIds.get(ws)
+    if (id) { this.terminalConnectionOwner.invalidate(id) }
   }
 
   get channelCount(): number {
@@ -123,6 +144,9 @@ export class MobileSocketWiring {
   }
 
   terminateDeviceConnections(deviceToken: string): number {
+    for (const socket of this.authenticatedSockets.values()) {
+      if (socket.device.deviceToken === deviceToken) { this.invalidateTerminalInput(socket.ws) }
+    }
     let terminated = 0
     for (const transport of this.transports) {
       terminated += transport.terminateClientConnections(deviceToken)
@@ -178,12 +202,15 @@ export class MobileSocketWiring {
             transport: metadata
           }
           this.authenticatedSockets.set(ws, socket)
+          this.socketTransports.set(ws, transport)
+          this.terminalConnectionOwner.register(connectionId, device.deviceId)
           transport.setClientId(ws, device.deviceToken)
           // Why: deferred — the client's e2ee_authenticated must not wait on a secure-file rewrite.
           this.deviceRegistry.updateLastSeenDeferred(device.deviceId)
           this.onReady?.(socket)
         },
         onError: (code, reason) => {
+          this.invalidateTerminalInput(ws)
           const reportUnpairedDevice = code === 4001 && reason === 'Unauthorized'
           this.channels.get(ws)?.destroy()
           this.channels.delete(ws)
@@ -216,6 +243,8 @@ export class MobileSocketWiring {
   }
 
   private handleClose(ws: WebSocket): void {
+    this.invalidateTerminalInput(ws)
+    this.socketTransports.delete(ws)
     const socket = this.authenticatedSockets.get(ws) ?? null
     this.authenticatedSockets.delete(ws)
     this.channels.get(ws)?.destroy()

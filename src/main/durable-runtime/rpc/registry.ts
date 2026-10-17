@@ -32,6 +32,11 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
   const metadata = new Set<string>(CATALOG_PUBLIC_METADATA_METHODS)
   const creation = new Set<string>(CATALOG_PUBLIC_CREATION_METHODS), structured = new Set<string>(CATALOG_STRUCTURED_CREATE_METHODS)
   return Object.freeze(methods.map(method => {
+    if (method.name === 'terminal.send') {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      const original = method.handler.bind(method)
+      return {...method, handler: (params: never, context: RpcContext) => adapter.sendTerminal(params, context, original)}
+    }
     if (clipboard.has(method.name)) {
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.clipboard(method.name, params, context) }

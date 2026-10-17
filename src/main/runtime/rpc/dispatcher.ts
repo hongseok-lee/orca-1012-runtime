@@ -96,6 +96,7 @@ export class RpcDispatcher {
           runtime: this.runtime,
           signal: options?.signal,
           connectionId: options?.connectionId,
+          terminalInputConnection: options?.terminalInputConnection,
           requestId: request.id,
           clientId: options?.clientId,
           pairedDeviceId: options?.pairedDeviceId,
