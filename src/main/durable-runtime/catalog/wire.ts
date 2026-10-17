@@ -5,7 +5,7 @@ import {
 } from '../../../shared/rpc-contract/worktree-params.ts'
 import { WorktreeCreate } from '../../../shared/rpc-contract/worktree-create-params.ts'
 import {
-  ActivateTab, CloseLifecycleTab, CloseTab, CreateTerminalTab, WorktreeTabSelector
+  ActivateTab, CloseLifecycleTab, CloseTab, CreateTerminalTab, SetTabProps, WorktreeTabSelector
 } from '../../../shared/rpc-contract/session-tabs-schemas-params.ts'
 import { TerminalFocus, TerminalHandle, TerminalRename } from '../../../shared/rpc-contract/terminal-unary-params.ts'
 import { UiUpdate } from '../../../shared/rpc-contract/client-ui-params.ts'
@@ -47,6 +47,7 @@ export const catalogWireSchemas = {
   'session.tabs.listAll': null,
   'session.tabs.createTerminal': CreateTerminalTab,
   'session.tabs.activate': ActivateTab,
+  'session.tabs.setTabProps': SetTabProps,
   'session.tabs.close': CloseTab,
   'session.tabs.closeLifecycle': CloseLifecycleTab,
   'terminal.focus': TerminalFocus,
@@ -81,6 +82,7 @@ export type CatalogWireResults = {
   'session.tabs.listAll': { snapshots: RuntimeMobileSessionTabsResult[]; authoritative?: true }
   'session.tabs.createTerminal': RuntimeMobileSessionCreateTerminalResult
   'session.tabs.activate': RuntimeMobileSessionTabsResult
+  'session.tabs.setTabProps': { updated: true }
   'session.tabs.close': RuntimeMobileSessionTabCloseResult
   'session.tabs.closeLifecycle': RuntimeMobileSessionTabCloseResult
   'terminal.focus': { focus: RuntimeTerminalFocus }

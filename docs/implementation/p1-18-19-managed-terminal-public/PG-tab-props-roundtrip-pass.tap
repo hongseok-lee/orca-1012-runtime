@@ -1,0 +1,15 @@
+{"phase":"PG_PARENT_BEFORE","pid":22121,"at":"2026-10-17T03:48:01.055Z"}
+(node:22121) DeprecationWarning: pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+▶ managed Terminal public fixture callback 1
+  ✔ mode roundtrip advances semantic Tab revision and cannot revive the original Chat pin (271.780933ms)
+  ℹ {"phase":"roundtrip-complete","name":"orca_public_clipboard_20261014","oid":"80991","system":"7696101282789175327","dataset":"orca-1012-dev-v1","pid":568815,"targetTab":"45576200-b58e-4ea6-8993-c1e136a1afb4","targetWorkspace":"8b317824-ebde-4b07-aa28-ebde16fb9199","semanticRevisionBefore":"0","semanticRevisionAfter":"2","bindingRevisionUnchanged":true,"originalPinStale":true,"oldCallbacksRepeated":0}
+✔ managed Terminal public fixture callback 1 (276.486447ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1772.476254

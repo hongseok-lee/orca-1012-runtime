@@ -1,6 +1,7 @@
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
 import { createCatalogBrowserStreamRecovery } from './browser-stream-recovery.ts'
 import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
+import { createCatalogTerminalSendRpc } from './terminal-send.ts'
 import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
 import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
@@ -32,9 +33,11 @@ export class DurableCatalogReadAdapter {
   private readonly structuredCancel: ReturnType<typeof createCatalogStructuredCancelRpc>
   private readonly structuredHolds: ReturnType<typeof createCatalogStructuredHolds>
   private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
+  private readonly terminalSendRpc: ReturnType<typeof createCatalogTerminalSendRpc>
   private disposed = false
   constructor(config: DurableCatalogReadConfig) {
     this.config = captureDurableCatalogReadConfig(config)
+    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config)
     this.clipboardRpc = this.config.attachments === undefined ? null : createCatalogClipboardRpc(this.config, this.config.attachments)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
     this.metadata = createCatalogMetadataFacade(this.config)
@@ -55,6 +58,11 @@ export class DurableCatalogReadAdapter {
       const invocation = captureReadInvocation(this.config, params, context)
       return await readCatalogRpc(this.config, method as CatalogMethod, invocation)
     } catch (error) { throw catalogReadFailure(error) }
+  }
+  async sendTerminal(params: unknown, context: RpcContext,
+    legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
+    try { this.requireOpen(); return await this.terminalSendRpc(params, context, legacy) }
+    catch (error) { throw catalogReadFailure(error) }
   }
   async subscribe(method: string, params: unknown, context: RpcContext, emit: (frame: unknown) => void): Promise<void> {
     try { this.requireOpen(); await this.subscriptions.subscribe(method, params, context, emit) }

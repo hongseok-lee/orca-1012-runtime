@@ -1,0 +1,40 @@
+{
+  "method": "session.tabs.setTabProps",
+  "authenticatedEncryptedRPC": true,
+  "ok": true,
+  "result": {
+    "updated": true
+  },
+  "startedAt": "2026-10-17T06:19:22.059Z",
+  "endedAt": "2026-10-17T06:19:22.364Z",
+  "pid": 28156,
+  "runtimePid": 27883,
+  "runtimeStartTicks": "32947371",
+  "setTabPropsRequestId": "0db26323-9c4e-43ae-b141-3bf145a0ff4a",
+  "originalResponseSHA256": "941cd12a8187181724489ab998f121b6c2b442a424f9c69ba6a9c21934b7dbc7",
+  "targetSessionId": "6e9d1c8b-a8ae-44b0-a4fa-6398236fc248",
+  "stored": {
+    "lifecycle": "OPEN",
+    "revision": "1",
+    "binding_revision": "0",
+    "view_mode": "chat",
+    "session_lifecycle": "OPEN",
+    "session_fence": "0",
+    "messages": "0"
+  },
+  "readOnlyObservation": {
+    "at": "2026-10-17T06:21:17.986Z",
+    "pid": 28211,
+    "database": "orca_dev",
+    "oid": "16384",
+    "system": "7696101282789175327",
+    "ledger": 23,
+    "pgMutations": 0
+  },
+  "terminalSendCalls": 0,
+  "providerReadyConfirmed": false,
+  "providerAdmissionConfirmed": false,
+  "actualOutputConfirmed": false,
+  "newPairing": 0,
+  "statusProbeAdded": 0
+}

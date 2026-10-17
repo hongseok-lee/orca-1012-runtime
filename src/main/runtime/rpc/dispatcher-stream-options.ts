@@ -1,3 +1,4 @@
+import type { TerminalInputConnection } from './terminal-connection-owner'
 import type { RuntimeCapability } from '../../../shared/protocol-version'
 import type { TerminalStreamFrame } from '../../../shared/terminal-stream-protocol'
 import type { PairingRpcContext } from './core'
@@ -5,6 +6,7 @@ import type { PairingRpcContext } from './core'
 export type RpcDispatchStreamingOptions = {
   authenticatedCallerFingerprint?: string
   connectionId?: string
+  terminalInputConnection?: TerminalInputConnection
   signal?: AbortSignal
   clientId?: string
   pairedDeviceId?: string

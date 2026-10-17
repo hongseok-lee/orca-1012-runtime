@@ -1,0 +1,94 @@
+{
+  "approvedSourcePin": "59fb3277120845aab1a20e67d04be1de4ebbd25d",
+  "base": "874f07cdf14c7ea998b3d77b0d826989ff8b9636",
+  "sourceFiles": [
+    {
+      "path": "deploy/dev/backend/chrome-c4",
+      "mode": "0o755",
+      "gitBlob": "6b38334544a3b28515e29775c2a3f6dcfda11974",
+      "sha256": "ef403b58d1cce8a9097f5a843f8888e1b5b989c6efaaa7acb5069080a8c7281c",
+      "bytes": 755,
+      "equalApprovedPin": true
+    },
+    {
+      "path": "deploy/dev/backend/chrome-c4-guard.cjs",
+      "mode": "0o644",
+      "gitBlob": "928f0f55a27a97703232d0e4c191706872edc3b4",
+      "sha256": "1b1a8c14ddefd789608c5fbcd5a7e20e2d5ce5296f5dd70b928eef540c1be130",
+      "bytes": 1914,
+      "equalApprovedPin": true
+    }
+  ],
+  "existingFDObservation": {
+    "at": "2026-10-17T02:48:18.675Z",
+    "pid": 20111,
+    "phase": "BOUNDED_FD_EXEC_OBSERVATION",
+    "before": {
+      "name": "NODE_EXECVE",
+      "pid": 20123,
+      "exit": 0,
+      "fd3Survived": false,
+      "fd3Closed": true,
+      "stderrCategory": "BAD_FD"
+    },
+    "parent": {
+      "name": "SHELL_PARENT_WITH_NODE_GUARD",
+      "pid": 20130,
+      "exit": 0,
+      "fd3Survived": true,
+      "fd3Closed": false,
+      "stderrCategory": null
+    },
+    "chromeLaunches": 0,
+    "pairingChanges": 0
+  },
+  "existingSyntaxChecks": {
+    "shell": {
+      "exit": 0,
+      "reused": true
+    },
+    "nodeGuard": {
+      "exit": 0,
+      "reused": true
+    },
+    "provenance": "Root가수락한기존두파일syntax결과를재사용했습니다. 이PR에서재실행하지않았습니다."
+  },
+  "existingDevelopmentRecovery": {
+    "readyAt": "2026-10-17T02:54:07.180Z",
+    "generation": 3,
+    "runtimePID": 20159,
+    "orcadSHA256": "d52a3bba6a6520b23ed005af2b1e905685692726f0fea569ff8df1a8e3b7bee6",
+    "capabilityObservedAt": "2026-10-17T02:55:10.347Z",
+    "browserScreencast": true,
+    "browserHeadless": true,
+    "degradations": [],
+    "wholeCheckoutGitProven": false
+  },
+  "actualExpoEvidence": {
+    "pr": "https://github.com/hongseok-lee/orca-1012-runtime/pull/155",
+    "sourceCommit": "0865ec1ca15989b0edbd041bc9322f877c86e9de",
+    "path": "deploy/dev/backend/evidence/ops-desired-resources-actual-detail-20261017.png",
+    "sha256": "fbaf4f48a3e89174f4e5650ae2ec9a144c9c9bb0e7e6d775d1e0580e8857066d",
+    "capturedAt": "2026-10-17T03:36:33Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "nativeIPhone": false,
+    "edited": false
+  },
+  "limits": {
+    "priorOpsAuthFailureCauseConfirmed": false,
+    "FDFixClaimedToResolveOpsAuth": false,
+    "newFDTests": 0,
+    "newChromeLaunches": 0,
+    "newPGOrAPI": 0,
+    "newInstall": 0,
+    "newScreenshots": 0,
+    "fullBuild": 0,
+    "coldWIPIncluded": false,
+    "privateConfigIncluded": false,
+    "diagnosticSourceIncluded": false
+  },
+  "usageCreditsModelStreamOriginalError": "미관측"
+}
