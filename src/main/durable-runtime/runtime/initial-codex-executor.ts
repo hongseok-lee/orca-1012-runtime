@@ -17,6 +17,7 @@ import { createInitialProviderProtection } from './initial-provider-protection.t
 import { prepareInitialProviderStep } from './initial-provider-step.ts'
 import { activateInitialProviderGrants } from './initial-provider-grants.ts'
 import { createProviderEffectPermit } from './provider-effect-permit.ts'
+import type { ProviderProtectionOwner } from './provider-effect-permit.ts'
 import { settleInitialProviderReady } from './initial-provider-ready.ts'
 import { captureFirstManagedBindingProfile } from '../storage/first-managed-binding-owner-profile.ts'
 import { readOriginalFirstManagedDirectory } from '../storage/initial-directory-revalidation-guard.ts'
@@ -36,6 +37,7 @@ export type InitialCodexExecutorConfiguration = Readonly<{
     originalAuditId: string
     pinId: string; ownerToken: string; actorId: string
     creationStartTime: string; creationEndTime: string
+    nativeOptions: Readonly<Record<string, string>>
   }>>
   sink: ProviderObservationSink
 }>
@@ -52,12 +54,14 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let used = false, phase = 'UNUSED'
   let writerActivated = false
   let protection: ReturnType<typeof createInitialProviderProtection> | null = null
+  let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
   let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
   return Object.freeze({
     phase: () => phase,
     snapshot: () => Object.freeze({ phase, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
-    current: () => ready && driver?.ownsReadyBinding(ready) ? Object.freeze({ binding: ready, driver, protection }) : null,
+    current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
       used = true
@@ -142,7 +146,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
             launch.env.CODEX_HOME !== `${source.value.paths.home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
         const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: { kind: 'NEW' },
           persistentHome: `${source.value.paths.home}/.codex`, checkout: source.value.paths.checkout,
-          launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: {} } })
+          launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
         const permit = createProviderEffectPermit(borrowed, context,
           { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
           { provider: 'codex', home: source.value.paths.home, providerState: cold.persistentHome, request: cold,
@@ -153,7 +157,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         const settled = await settleInitialProviderReady(borrowed, { context, claim: gate.execution.claim,
           planDigest: selected.planDigest }, native, driver, owner)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
-        ready = native; phase = 'READY'
+        readyProtection = owner; readyContext = context; ready = native; phase = 'READY'
       } catch (error) {
         phase = 'RETAINED_UNCONFIRMED'
         throw error

@@ -12,6 +12,7 @@
  * Chromium proves available at startup.
  */
 import process from 'node:process'
+import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import { setAppEnvironment, type AppEnvironment } from '../../shared/app-environment'
 import { setSecretStore, type SecretStore } from '../../shared/secret-store'
 import type { ServePairingReadiness, ServeReadiness } from '../server/serve-readiness'
@@ -171,7 +172,11 @@ async function startOrcadRuntime(
     uninstallHookStatusRepublish: () => uninstallHookStatusRepublish(),
     stopAgentHookServer: () => agentHookServer.stop(), stopDurableCatalog: () => durableCatalog?.stop()
   }) })
-  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) })
+  let providerSettings: (() => InitialCodexNativeSettings) | null = null
+  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) }, () => {
+    if (!providerSettings) { throw new Error('CONTROLLER_FIRST_COLD_SETTINGS_UNAVAILABLE') }
+    return providerSettings()
+  })
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
       headless: browserProvider !== null, screencast: browserProvider?.kind === 'chromium',
@@ -192,6 +197,11 @@ async function startOrcadRuntime(
   // Why: orcad IS the runtime authority — loading as 'desktop' would classify its
   // own runtime-scheduled automations as ambiguous mirrors and orphan them.
   const store = new Store({ dataFile: profile.dataFile, storageAuthority: 'runtime' })
+  providerSettings = () => {
+    const settings = store.getSettings()
+    return { agentDefaultArgs: settings.agentDefaultArgs, agentDefaultEnv: settings.agentDefaultEnv,
+      nativeChatSessionOptions: settings.nativeChatSessionOptions }
+  }
   // Why: every SSH connect consults this sidecar. Left unbound it reports nothing trusted,
   // which is safe but silently discards accept records on every launch.
   initSshHostKeyStoreFile(profile.dataFile)

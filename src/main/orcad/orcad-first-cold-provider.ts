@@ -11,6 +11,8 @@ import { createComputeCreationIdentityClient } from '../durable-runtime/runtime/
 import { logicalId } from '../../shared/durable-runtime/identity.ts'
 import type { FirstManagedBindingOwnerConfig } from '../durable-runtime/storage/first-managed-binding-owner.ts'
 import type { InitialEmptyFolderDeclaration } from '../durable-runtime/runtime/initial-provider-paths.ts'
+import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
+import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_FIRST_COLD_CONFIG')
 
@@ -43,10 +45,12 @@ export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string>
  * row-to-authority cast, public RPC or flat observation supplier is introduced. */
 export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, pool: Pool, ca: Uint8Array, initial: Readonly<{
   sessionId: string; planDigest: string; directory: FirstManagedBindingOwnerConfig
-}>, originalAuditToken?: string) {
+}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings) {
   const file = config.firstManagedInitial?.coldConfigFile
   if (!file) { return undefined }
   try {
+    if (typeof originalReadSettings !== 'function') { return deny() }
+    const readSettings = originalReadSettings
     const raw = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8')),
       ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256','codexAuthFile',
         'runtimeServiceAccountName','runtimeServiceAccountUid','originalAuditId','pinId','ownerTokenFile','actorId',
@@ -56,11 +60,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     if (timeoutMs > 2_147_483_647 || text('runtimeServiceAccountName') !== 'orca-runtime-agent' ||
         text('projectId') !== 'bold-hope-441519-s3' || text('projectNumber') !== '608028832645') { return deny() }
     const declaration = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(text('emptyFolderFile')).toString('utf8')),
-      ['kind','workspaceId','canonicalDirectory','checkout'])
+      ['kind','workspaceId','canonicalDirectory','checkout','sourceCheckout'])
     if (declaration.get('kind') !== 'FRESH_EMPTY_FOLDER' || declaration.get('checkout') !== '/agent/checkout') { return deny() }
     const emptyFolder: InitialEmptyFolderDeclaration = Object.freeze({ kind: 'FRESH_EMPTY_FOLDER',
       workspaceId: logicalId('workspace', agentPodText(declaration.get('workspaceId'))),
-      canonicalDirectory: agentPodText(declaration.get('canonicalDirectory')), checkout: '/agent/checkout' })
+      canonicalDirectory: agentPodText(declaration.get('canonicalDirectory')), checkout: '/agent/checkout',
+      sourceCheckout: agentPodText(declaration.get('sourceCheckout')) })
     const nativeArtifact = Object.freeze({ sha256: text('nativeSha256'), byteLength: agentPodInteger(raw.get('nativeByteLength')) })
     const bootstrapBytes = readPrivateOrcadControllerConfigBytes(text('controlArtifactFile'))
     const bootstrapSha256 = text('controlSha256'), nativeArtifactFile = text('nativeArtifactFile')
@@ -95,9 +100,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       async deployment({ plan, podUid, paths }, signal) {
         if (signal.aborted) { return deny() }
         const id = plan.plan.identity, bindChallenge = randomUUID()
-        const launch = Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: ['app-server'], cwd: paths.checkout,
-          env: { HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: '/usr/local/bin:/usr/bin:/bin' } })
-        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, creationStartTime, creationEndTime,
+        const native = captureInitialCodexNativePolicy(readSettings())
+        if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
+            native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
+        const launch = Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
+          env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
+        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, creationStartTime, creationEndTime, nativeOptions: native.options,
           config: Object.freeze({ directory: initial.directory, nfsServer: plan.plan.mountExpectations.protected[0].server,
             mounts: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, dataset, timeoutMs, readReviewerBearer }),
             execution: Object.freeze({ clusterIdentityRef, namespace, dataset, audience: 'orca-runtime-agent', projectId, projectNumber,

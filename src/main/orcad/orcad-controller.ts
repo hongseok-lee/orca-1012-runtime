@@ -8,6 +8,7 @@ import { persistControllerInventoryObservation } from '../durable-runtime/lifecy
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import type { OrcadDurableCatalog } from './orcad-durable-catalog.ts'
+import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import { captureOrcadControllerConfig, invalidOrcadControllerConfig, OrcadControllerConfigurationError,
   type OrcadControllerConfig } from './orcad-controller-config.ts'
 
@@ -66,7 +67,7 @@ async function prepareOrcadControllerInventoryWithCA(config: OrcadControllerConf
 }
 
 /** Wrap the original Pool owner before validation/I/O. Entry cleanup runs RPC first; publication wraps this owner outside. */
-export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControllerOwner {
+export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSettings?: () => InitialCodexNativeSettings): OrcadControllerOwner {
   const readConfig = catalog.readConfig, stopCatalog = catalog.stop.bind(catalog)
   let worker: ControllerWorker | null = null, closing = false
   let starting: Promise<void> | null = null, completion: Promise<void> | null = null
@@ -111,7 +112,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog): OrcadControlle
           const auditToken = config.firstManagedInitial.coldConfigFile
             ? await (await import('./orcad-first-cold-provider.ts')).readFirstColdAuditPipe(config.inventory.requestTimeoutMs) : undefined
           if (closing) { return }
-          selectedInitial = prepareInitial(config, captured.pool, ca, auditToken)
+          selectedInitial = prepareInitial(config, captured.pool, ca, auditToken, readProviderSettings)
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }

@@ -10,6 +10,7 @@ import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
 import { prepareOrcadFirstColdProvider } from './orcad-first-cold-provider.ts'
 import { createAgentPodPlanner } from '../durable-runtime/runtime/agent-pod-plan.ts'
 import { prepareAgentPodPlan } from '../durable-runtime/runtime/agent-pod-plan-records.ts'
+import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 
 const deny = (code = 'CONTROLLER_FIRST_MANAGED_CONFIG'): never => invalidOrcadControllerConfig(code)
 function absolute(value: unknown): string {
@@ -59,7 +60,8 @@ export function captureOrcadFirstManagedCallbacks(initial: ReturnType<typeof cre
 /** One private target configuration. No raw token, Pool, callback, identity or
  * transport is decoded from JSON. Only the existing strict planner composes
  * policy/request; this loader supplies the original captured inventory CA. */
-export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig, pool: Pool, capturedCA: Uint8Array, auditToken?: string) {
+export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig, pool: Pool, capturedCA: Uint8Array, auditToken?: string,
+  readProviderSettings?: () => InitialCodexNativeSettings) {
   const config = captureOrcadControllerConfig(original)
   if (!config.firstManagedInitial) { return null }
   try {
@@ -102,7 +104,7 @@ export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig,
         helperConfigMapUid: agentPodText(collector.get('helperConfigMapUid')), helperSha256: agentPodText(collector.get('helperSha256')),
         exportsSha256: agentPodText(collector.get('exportsSha256')), timeoutMs: timeout(collector.get('timeoutMs')) }) })
     const cold = prepareOrcadFirstColdProvider(config, pool, ca, { sessionId: agentPodText(raw.get('sessionId')),
-      planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken)
+      planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken, readProviderSettings)
     return createFirstManagedInitialDispatch({ pool, policy, request, ...(cold ? { cold } : {}),
       policyRevision: agentPodText(raw.get('policyRevision')), sessionId: agentPodText(raw.get('sessionId')),
       actorId: agentPodText(raw.get('actorId')), originalAuditId: agentPodText(raw.get('originalAuditId')), pinId,

@@ -10,11 +10,13 @@ export type InitialProviderPaths = Readonly<{
   checkout: '/agent/checkout'
   checkoutPreparation: 'FRESH_EMPTY_FOLDER'
   canonicalDirectory: string
+  sourceHome: string
+  sourceCheckout: string
 }>
 /** Private, create-only provisioning record written for the deliberately new
  * blank workspace returned by normal Catalog creation. Never a public param. */
 export type InitialEmptyFolderDeclaration = Readonly<{
-  kind: 'FRESH_EMPTY_FOLDER'; workspaceId: string; canonicalDirectory: string; checkout: '/agent/checkout'
+  kind: 'FRESH_EMPTY_FOLDER'; workspaceId: string; canonicalDirectory: string; checkout: '/agent/checkout'; sourceCheckout: string
 }>
 
 const deny = (): never => { throw new DurableDatabaseError('INITIAL_PROVIDER_CATALOG_PATHS') }
@@ -32,9 +34,18 @@ export function captureInitialProviderPaths(original: Readonly<{
   const input = immutableSnapshot(original), server = object(object(input.launchRequest).server)
   const declaration = originalDeclaration ? immutableSnapshot(originalDeclaration) : null
   const mapping = object(server.storagePathMapping), home = server.agentHomePath
+  function mapped(value: unknown): string {
+    const root = mapping.localDirectory
+    if (typeof root !== 'string' || typeof value !== 'string' || !root.startsWith('/') || !value.startsWith('/') ||
+        root.includes('\\') || value.includes('\\') || posix.normalize(root) !== root || posix.normalize(value) !== value ||
+        root.endsWith('/') || value.endsWith('/') || !value.startsWith(`${root}/`) ||
+        Array.from(root + value).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) { return deny() }
+    return posix.join('/agent', posix.relative(root, value))
+  }
+  const agentHome = mapped(home), checkout = mapped(input.reservedPath)
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(input.agentId) ||
-      home !== `/agent/home/${input.agentId}` || input.reservedPath !== '/agent/checkout' ||
-      mapping.localDirectory !== '/agent' || typeof mapping.canonicalDirectory !== 'string' ||
+      agentHome !== `/agent/home/${input.agentId}` || checkout !== '/agent/checkout' ||
+      typeof home !== 'string' || typeof mapping.canonicalDirectory !== 'string' ||
       mapping.canonicalDirectory !== input.canonicalDirectory ||
       !mapping.canonicalDirectory.startsWith('/') || posix.normalize(mapping.canonicalDirectory) !== mapping.canonicalDirectory ||
       mapping.canonicalDirectory === '/' || mapping.canonicalDirectory.endsWith('/') ||
@@ -42,8 +53,10 @@ export function captureInitialProviderPaths(original: Readonly<{
   if (input.kind !== 'REPO_FOLDER' || input.repositoryKind !== 'folder' ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(input.workspaceId) ||
       !declaration || declaration.kind !== 'FRESH_EMPTY_FOLDER' || declaration.workspaceId !== input.workspaceId ||
-      declaration.canonicalDirectory !== mapping.canonicalDirectory || declaration.checkout !== input.reservedPath) { return deny() }
-  return Object.freeze({ workspaceId: input.workspaceId, agentId: input.agentId, home, checkout: input.reservedPath,
+      declaration.canonicalDirectory !== mapping.canonicalDirectory || declaration.checkout !== checkout ||
+      declaration.sourceCheckout !== input.reservedPath) { return deny() }
+  return Object.freeze({ workspaceId: input.workspaceId, agentId: input.agentId, home: agentHome, checkout,
+    sourceHome: home, sourceCheckout: input.reservedPath,
     canonicalDirectory: mapping.canonicalDirectory,
     checkoutPreparation: 'FRESH_EMPTY_FOLDER' })
 }

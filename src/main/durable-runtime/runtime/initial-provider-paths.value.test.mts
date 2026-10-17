@@ -10,7 +10,8 @@ test('first cold uses the stored Agent HOME and preserves exclusive NEW/manifest
   const original = { workspaceId, agentId, kind: 'REPO_FOLDER', repositoryKind: 'folder', reservedPath: '/agent/checkout',
     canonicalDirectory, launchRequest: { server: { agentHomePath: `/agent/home/${agentId}`,
       storagePathMapping: { localDirectory: '/agent', canonicalDirectory } } } }
-  const declaration = { kind: 'FRESH_EMPTY_FOLDER' as const, workspaceId, canonicalDirectory, checkout: '/agent/checkout' as const }
+  const declaration = { kind: 'FRESH_EMPTY_FOLDER' as const, workspaceId, canonicalDirectory, checkout: '/agent/checkout' as const,
+    sourceCheckout: '/agent/checkout' }
   const paths = captureInitialProviderPaths(original, declaration)
   assert.equal(paths.home, `/agent/home/${agentId}`)
   assert.equal(paths.checkoutPreparation, 'FRESH_EMPTY_FOLDER')
