@@ -139,7 +139,7 @@ test('namespace leaf qualification separates file evidence from one unchanged na
     assert.deepEqual((await tx.query('SELECT dataset_name FROM durable_runtime.dataset_metadata')).rows, [{ dataset_name: profile.datasetName }])
     return actual
   })
-  await writeFile(`${evidenceRoot}/fixture-identity.json`, JSON.stringify(identity) + '\n', { mode: 0o600, flag: 'wx' })
+  await writeFile(`${evidenceRoot}/fixture-identity.json`, `${JSON.stringify(identity)}\n`, { mode: 0o600, flag: 'wx' })
   const ledger = (await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows
   assert.equal(ledger.length, 23)
   const legacy = qualification(), acceptedA = captureFirstManagedBindingProfile(legacy.bytes, legacy.settings.expectedProfileDigest)
@@ -219,9 +219,9 @@ test('namespace leaf qualification separates file evidence from one unchanged na
   assert.deepEqual(await namespaceRows(), namespaceBefore)
   assert.deepEqual((await pool.query('SELECT version,checksum,applied_at FROM durable_runtime.schema_migrations ORDER BY version')).rows, ledger)
   await fresh.wire.assertCleanup(); t.diagnostic('INITIAL_NAMESPACE_REVALIDATION_SETTLED')
-  await writeFile(`${evidenceRoot}/fixture-result.json`, JSON.stringify({ tag, profileId: profile.profileId,
+  await writeFile(`${evidenceRoot}/fixture-result.json`, `${JSON.stringify({ tag, profileId: profile.profileId,
     generation: profile.generation, legacyFileDigest: acceptedA.digest, secondFileDigest: acceptedB.digest,
     namespaceDigest: acceptedA.namespaceDigest, bindingIds: [a.bindingId, b.bindingId], leafIds: [legacy.record.leafId, second.record.leafId],
     holdIds: [a.pinId, b.pinId, initial.pinId], profileUnchanged: true, ledger23Unchanged: true, heldThroughCommit,
-    actualProviderOrPhysicalProof: false }) + '\n', { mode: 0o600, flag: 'wx' })
+    actualProviderOrPhysicalProof: false })}\n`, { mode: 0o600, flag: 'wx' })
 })
