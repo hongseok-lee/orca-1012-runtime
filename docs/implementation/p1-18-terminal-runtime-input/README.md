@@ -1,5 +1,8 @@
 # Terminal 입력 실행 연결 근거
 
+2026-10-17 실제 Session `3627cd40-d010-4c1e-9604-96c93c9f1354`의 genuine cold READY 뒤 정상 E2EE `terminal.send`를 1회 호출했습니다. PID 29439의 접수 ACK는 06:44:02.431 UTC에 성공했습니다. 원 receipt/Component/Message와 본문 hash를 읽기 전용으로 대조했습니다. 후속 관측 PID 29535는 06:45:28.216–06:46:53.265 UTC의 18회 조회에서 원 delivery `22565dd6-87ee-4e66-aa61-4e8eb61d49bd`가 계속 `EFFECT_POSSIBLE`이고 provider_ref가 null임을 확인했습니다. 관측은 06:46:53.280 UTC에 `ORIGINAL_DELIVERY_NOT_TERMINAL_WITHIN_OBSERVATION_BOUND`, exit 1로 종료됐습니다. 실제 provider 수락·완료·출력은 미확정이며 접수 성공으로 대신하지 않습니다. 추가 send/관측 재실행/재시작은 하지 않았고 원 실패와 dev DB OID 16384/system 7696101282789175327/ledger 23을 보존했습니다. 정제 근거는 `actual-terminal-input-3627.json`이며 private 원문·credential은 게시하지 않습니다. 이번 turn의 usage limit/credits/stream 원오류는 미관측입니다.
+
+
 현재 제품 source는 `f3c4b17275130c79e8ba224f44e6b50accbdc1f7`다. `70ce961f`의 원 근거는 이력으로 보존한다. 기존 PR156의 공개 접수/모드 변경 source를 보존하고 후속 실행 coordinator를 별도로 추가했다. `INPUT_DELIVERY` operation과 원 component/receipt를 연결하며 stage COMMIT, claim COMMIT, 실제 owned protection permit, 같은 ready driver 순서를 사용한다.
 
 최초 PG callback은 `58abab80`에서 정상 접수 후 socket close/UI 변경, 원 delivery admission/completion, receipt 중복 방지, UNKNOWN 재전송 방지 assertion을 지난 뒤 마지막 fixture의 CLOSED/closed_at 제약 누락으로 exit 1이었다. 원 TAP를 보존했다. `70ce961f`는 fixture의 close timestamp를 교정하고 마지막 명시 close 경계만 실행해 exit 0이었다. 앞선 성공 구간을 재실행하지 않았으며 두 결과를 전체 callback 한 번의 성공으로 합치지 않는다. 제품 6개 파일의 bytes/mode는 두 pin 사이 불변이다.
