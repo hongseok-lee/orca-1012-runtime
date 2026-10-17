@@ -21,3 +21,11 @@
 ![실제 Expo 첫 stream 실패](ops-desired-resources-first-expo-failure-20261017.png)
 
 PNG는 편집하지 않았습니다. 클릭 0·Browser/context 종료·원 인증 상태 불변이며 알려진 child는 종료됐습니다. 희망 CPU/RAM의 실제 Expo 표시가 미완료이므로 PR은 Draft입니다. 관측 telemetry·admission·Node/Spot·정책 자동 실행·provider·HA·native iPhone 전체 수용을 주장하지 않습니다. 이번 작업에서 새 usage/credits/stream 원오류는 미관측입니다.
+
+## 원인 교정 뒤 generation 3의 별도 첫 stream 실패
+
+Backend는 추가 CDP FD 3이 Node execve에서 닫히고 shell-parent exec에서는 보존됨을 관측했습니다. 기존 scope/argv guard를 유지한 wrapper 교정 뒤 generation 3/runtime PID 20159가 02:54:07.180 UTC Ready였습니다. 02:55:10.347 UTC 기존 인증 status 1회는 `browser.screencast.v1`/headless capability와 빈 degradation을 확인했습니다. 조회 제품 2개 파일 해시는 그대로이고 이전 API·PG를 반복하지 않았습니다. 이 운영 wrapper 교정은 본 PR의 제품 source 변경이 아닙니다.
+
+교정된 조건에서 별도로 실행한 viewer는 02:56:34.803–02:57:20.366 UTC에 exit 1이었습니다. 실제 PNG는 이제 “Browser stream timed out.”이며 최초 capability 부재와 다른 경계입니다. 기존 Ops Browser Tab 선택 진단은 관측됐지만 decoded frame은 없었고 클릭은 0입니다. Browser/context 종료·원 인증 상태 불변을 확인했습니다. 이 두 번째 원결과도 보존하고 같은 조건을 자동 재촬영하지 않았습니다. Backend와 실제 stream/target 연결을 대조하는 중이며 희망 자원의 실제 Expo 표시는 계속 미완료입니다.
+
+![교정된 generation 3의 첫 stream timeout](ops-desired-resources-gen3-stream-timeout-20261017.png)

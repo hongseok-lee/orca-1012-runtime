@@ -127,5 +127,45 @@
     "visibleText": "Update desktop Orca to stream browser tabs on mobile.",
     "desiredResourcesVisuallyConfirmed": false
   },
-  "usageCreditsStreamOriginalError": "미관측"
+  "usageCreditsStreamOriginalError": "미관측",
+  "browserRecovery": {
+    "correctionSourcePin": "59fb3277",
+    "condition": "Node execve closed CDP FD3; shell-parent exec preserves it with existing Node scope/argv guards.",
+    "generation": 3,
+    "runtimePID": 20159,
+    "runtimeStartTicks": "31754432",
+    "readyAt": "2026-10-17T02:54:07.180Z",
+    "orcadSHA256": "d52a3bba6a6520b23ed005af2b1e905685692726f0fea569ff8df1a8e3b7bee6",
+    "capabilityObservationAt": "2026-10-17T02:55:10.347Z",
+    "screencast": true,
+    "headless": true,
+    "degradations": [],
+    "opsProduct2HashesUnchanged": true,
+    "wholeCheckoutGitProven": false,
+    "viewer": {
+      "PID": 12641,
+      "startedAt": "2026-10-17T02:56:34.803Z",
+      "finishedAt": "2026-10-17T02:57:20.366Z",
+      "status": "failed",
+      "failureCode": "OPS_BROWSER_DECODED_FRAME_WAIT_FAILED",
+      "failurePhase": "before-phone-mode-address-and-decoded-surface",
+      "opsReloadClicks": 0,
+      "summaryTaps": 0,
+      "detailTaps": 0,
+      "contextClosed": true,
+      "browserClosed": true,
+      "originalPrivateStateUnchanged": true
+    },
+    "existingTargetTabSuffix": "ae49edf2",
+    "existingTargetType": "browser",
+    "screenshot": {
+      "file": "ops-desired-resources-gen3-stream-timeout-20261017.png",
+      "sha256": "1c8bfe5726c336159b7dcb4ed3b38db651fee1d56186017f41cffc617d273fb5",
+      "bytes": 20029,
+      "visibleText": "Browser stream timed out.",
+      "failureEvidence": true,
+      "desiredResourcesVisuallyConfirmed": false
+    },
+    "repeatUnchangedViewer": false
+  }
 }
