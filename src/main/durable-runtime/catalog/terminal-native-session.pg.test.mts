@@ -76,7 +76,7 @@ test('same-RR original READY identity, atomic head/hint, rollback and authorizat
           VALUES($1,$2,1,'COLD',$3,0,'{}','STOPPED',clock_timestamp())`, [binding.attemptId, binding.runtimeUnitId, binding.podUid])
         await tx.query(`INSERT INTO durable_runtime.storage_domains(backend_id,export_id) VALUES($1,$2)`, [storage, owner])
         await tx.query(`INSERT INTO durable_runtime.storage_bindings(id,backend_id,export_id,canonical_directory,access_state)
-          VALUES($1,$1,$2,$3,'RO')`, [storage, owner, `/synthetic/${storage}`])
+          VALUES($1::uuid,$1::text,$2,$3,'RO')`, [storage, owner, `/synthetic/${storage}`])
         await tx.query(`INSERT INTO durable_runtime.runtime_members(runtime_unit_id,session_id,storage_binding_id) VALUES($1,$2,$3)`,
           [binding.runtimeUnitId, binding.sessionId, storage])
         await tx.query(`INSERT INTO durable_runtime.tabs(id,workspace_id,session_id,kind,terminal_handle,ui_order,lifecycle)
