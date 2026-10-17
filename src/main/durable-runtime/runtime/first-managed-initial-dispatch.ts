@@ -20,6 +20,8 @@ import type { CommandClaim, ExecutorId, GatewayContext } from './gateway/types.t
 import { createFirstManagedInitialAgentPodExecution, createInitialAgentPodLookup } from './initial-agent-pod-execution.ts'
 import type { InitialAgentPodExecutionResult } from './initial-agent-pod-execution.ts'
 import { recordInitialAgentResourceProfile } from './initial-agent-resource-profile.ts'
+import type { createInitialCodexExecutor } from './initial-codex-executor.ts'
+import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts'
 
 export type FirstManagedInitialDispatchConfig = Readonly<{
   pool: Pool; policy: unknown; request: unknown; policyRevision: string
@@ -28,6 +30,11 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
   executorId: ExecutorId; externalBudgetMs: number
   readOwnerToken(pinId: string, signal: AbortSignal): Promise<string>
   podConfig: AgentPodCreateConfig; firstManagedDirectory: FirstManagedBindingOwnerConfig
+  cold?: ReturnType<typeof createInitialCodexExecutor> & Readonly<{
+    onTerminalInputCommitted?: TerminalInputCommittedSink
+    assertOutputAvailable?(): void
+    close?(): Promise<void>
+  }>
 }>
 type TransactionSnapshot = Readonly<{
   settlement: string; commitOutcome: string; cleanupFailed: boolean; disposition: string | null; errorCode: string | null
@@ -44,7 +51,8 @@ export type FirstManagedInitialDispatchSnapshot = Readonly<{
   executionErrorCode: string | null
   target: TransactionSnapshot | null; assignment: TransactionSnapshot | null
   observationDisposition: string | null; createRequested: boolean
-  gate: 'CLOSED'; providerReady: false; writerGrantActivated: false
+  gate: 'CLOSED' | 'OPEN'; providerReady: boolean; writerGrantActivated: boolean
+  coldPhase?: string
 }>
 type Callbacks = Required<Pick<ControllerPassRequest, 'planStep' | 'executeCommitted' | 'lookupOriginal'>>
 
@@ -68,6 +76,9 @@ function captureClaim(claim: CommandClaim): CommandClaim {
 export function createFirstManagedInitialDispatch(original: FirstManagedInitialDispatchConfig,
   https?: AgentPodCreateHttps, collectorDependencies?: ManagedLeafCollectorDependencies): Readonly<Callbacks & {
     snapshot(): FirstManagedInitialDispatchSnapshot
+    onTerminalInputCommitted?: TerminalInputCommittedSink
+    assertOutputAvailable?(): void
+    close(): Promise<void>
   }> {
   const prepared = prepareAgentPodPlan(createAgentPodPlanner(original.policy).plan(original.request))
   const { plan, planDigest } = prepared, id = plan.identity, container = plan.pod.spec.containers[0]
@@ -87,6 +98,8 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
   if (budget > 2_147_483_647) { return deny('BUDGET') }
   const readOwnerToken = original.readOwnerToken.bind(original)
   const pool = original.pool, connect = pool.connect.bind(pool)
+  const cold = original.cold
+  const continueCold = cold?.continueAssigned.bind(cold), coldSnapshot = cold?.snapshot.bind(cold)
   const borrowed: Pool = Object.create(pool, { connect: { value: connect } })
   const execution = createFirstManagedInitialAgentPodExecution({ pool: borrowed, podConfig: original.podConfig,
     firstManagedDirectory: original.firstManagedDirectory }, https, collectorDependencies)
@@ -180,6 +193,9 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
         if (!preparation || preparation.outcome !== 'RESERVED' || !result.execution) { return deny('PREPARATION_NOT_RESERVED') }
         observeExecution(result.execution)
         remaining(deadline, signal)
+        // Only the ORIGINAL successful execute path may continue. lookupOriginal
+        // below never opens a cold executor from a receipt or observed Pod.
+        if (continueCold) { await continueCold(claim, signal, context) }
         state = Object.freeze({ ...state, status: 'FINISHED' })
       } catch (error) { failed(error) }
       finally { inFlight = false }
@@ -204,5 +220,14 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
       finally { inFlight = false }
     },
   }
-  return Object.freeze({ ...callbacks, snapshot: () => state })
+  return Object.freeze({ ...callbacks,
+    onTerminalInputCommitted: cold?.onTerminalInputCommitted?.bind(cold),
+    assertOutputAvailable: cold?.assertOutputAvailable?.bind(cold),
+    close: async () => { await cold?.close?.() },
+    snapshot: () => {
+    const provider = coldSnapshot?.()
+    return provider ? Object.freeze({ ...state, coldPhase: provider.phase,
+      gate: provider.providerReady ? 'OPEN' as const : 'CLOSED' as const,
+      providerReady: provider.providerReady, writerGrantActivated: provider.writerGrantActivated }) : state
+  } })
 }

@@ -109,10 +109,16 @@ export interface CheckpointAndStopResult {
   readonly stoppedProof: ComputeStoppedProof
 }
 
-export type ReleaseGateRequest = CommandRequest<{
+export type ReleaseGateInput = {
   readonly attemptId: AttemptId
+} & ({
   readonly manifestDecisionRevision: RowRevision<'manifest-decision'>
-}>
+  readonly coldStart?: never
+} | {
+  readonly coldStart: Readonly<{ kind: 'INITIAL_NEW'; planDigest: string }>
+  readonly manifestDecisionRevision?: never
+})
+export type ReleaseGateRequest = CommandRequest<ReleaseGateInput>
 export interface ReleaseGateResult {
   readonly ready: boolean
   readonly providerBindings: readonly ProviderRef[]

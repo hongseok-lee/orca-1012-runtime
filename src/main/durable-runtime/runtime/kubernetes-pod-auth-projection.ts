@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { inventoryName, inventoryOpaque, inventoryPod, inventoryRecord } from '../lifecycle/kubernetes-identity.ts'
 import { KubernetesPodAuthError } from './kubernetes-pod-auth-types.ts'
+import { auditTimestamp } from './compute-deletion-audit-input.ts'
 import type { AuthenticatedPodObservation, KubernetesPodAuthConfig, KubernetesPodAuthExpected,
   KubernetesPodAuthInput } from './kubernetes-pod-auth-types.ts'
 
@@ -94,10 +95,15 @@ export function projectAuthenticatedNode(raw: unknown, claims: Claims): Authenti
     const providerId = node.spec === undefined ? undefined : inventoryRecord(node.spec).providerID
     const instanceId = metadata.annotations === undefined ? undefined :
       inventoryRecord(metadata.annotations)['container.googleapis.com/instance_id']
+    const creationTimestamp = metadata.creationTimestamp === undefined ? undefined : inventoryOpaque(metadata.creationTimestamp)
+    if (creationTimestamp !== undefined && auditTimestamp(creationTimestamp) === null) {
+      throw new KubernetesPodAuthError('NODE_IDENTITY_MISMATCH')
+    }
     return Object.freeze({ name: claims.nodeName, uid: claims.nodeUid, resourceVersion,
       observationSource: 'KUBERNETES_API',
       ...(providerId === undefined ? {} : { providerId: inventoryOpaque(providerId) }),
-      ...(instanceId === undefined ? {} : { instanceId: inventoryOpaque(instanceId) }) })
+      ...(instanceId === undefined ? {} : { instanceId: inventoryOpaque(instanceId) }),
+      ...(creationTimestamp === undefined ? {} : { creationTimestamp }) })
   } catch (error) {
     throw error instanceof KubernetesPodAuthError ? error : new KubernetesPodAuthError('NODE_IDENTITY_MISMATCH')
   }

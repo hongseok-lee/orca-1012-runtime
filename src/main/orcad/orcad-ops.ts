@@ -11,6 +11,7 @@ import { captureOrcadControllerConfig, readOrcadControllerConfig, invalidOrcadCo
   type OrcadControllerConfig } from './orcad-controller-config.ts'
 import { ownOrcadController, type OrcadControllerSnapshot } from './orcad-controller.ts'
 import { createOrcadOpsBrowserSessionOwner } from './orcad-ops-browser-session-owner.ts'
+import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 
 // The entry consumes one composition surface; Catalog retains its existing Pool ownership and exit class.
 export { OrcadDurableCatalogConfigurationError } from './orcad-durable-catalog.ts'
@@ -29,14 +30,15 @@ export function readOrcadStartupConfig(): OrcadStartupConfig {
 
 /** Publish ownership before Ops validation so the entry's existing failure cleanup can always close Catalog. */
 export async function prepareOrcadStartup(
-  input: OrcadStartupConfig, ownCatalog: (catalog: OrcadStartupOwner | null) => void
-): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp'>> {
+  input: OrcadStartupConfig, ownCatalog: (catalog: OrcadStartupOwner | null) => void,
+  readProviderSettings?: () => InitialCodexNativeSettings
+): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp' | 'durableTerminalInputCommitted' | 'durableTerminalOutputAvailable'>> {
   const ops = input.ops === null ? null : captureOrcadOpsConfig(input.ops)
   const controller = input.controller == null ? null : captureOrcadControllerConfig(input.controller)
   if (ops && !input.catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
   if (controller && !input.catalog) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CATALOG_REQUIRED') }
   const catalog = await prepareOrcadDurableCatalog(input.catalog)
-  const controllerOwner = catalog && controller ? ownOrcadController(catalog) : null
+  const controllerOwner = catalog && controller ? ownOrcadController(catalog, readProviderSettings) : null
   // Stop order after entry RPC/subscription cleanup: publication → controller → original Catalog Pool.
   const publication = catalog && ops ? ownOrcadOpsPublication(controllerOwner ?? catalog) : null
   const owner = publication ?? controllerOwner ?? catalog
@@ -57,7 +59,10 @@ export async function prepareOrcadStartup(
     if (opsHttp && publication) { await publication.startPublication(opsHttp) }
     if (controller && controllerOwner) { await controllerOwner.startController(controller) }
     browserSessions.assertOpen()
-    return readConfig ? Object.freeze({ durableCatalogRead: readConfig, ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
+    return readConfig ? Object.freeze({ durableCatalogRead: readConfig,
+      ...(controllerOwner ? { durableTerminalInputCommitted: controllerOwner.onTerminalInputCommitted,
+        durableTerminalOutputAvailable: controllerOwner.assertTerminalOutputAvailable } : {}),
+      ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
   } catch (error) {
     await browserSessions.stop().catch(() => {})
     throw error

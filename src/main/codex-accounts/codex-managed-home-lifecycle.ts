@@ -1,6 +1,5 @@
-import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve, sep } from 'node:path'
-import { isDefinitiveAbsence } from '../../shared/definitive-filesystem-absence'
 import {
   WINDOWS_RM_MAX_RETRIES,
   WINDOWS_RM_RETRY_DELAY_MS
@@ -10,8 +9,8 @@ import { parseWslUncPath } from '../../shared/wsl-paths'
 import { toWindowsWslPath } from '../wsl'
 import { runWslProcess } from '../wsl/wsl-runner'
 import type { CodexAccountAddTarget, ManagedCodexHomeLocation } from './codex-account-service-types'
-import { writeFileAtomically } from './fs-utils'
 import { ManagedCodexHomeTemporarilyUnavailableError } from './host-codex-managed-home-ownership'
+import { importCodexManagedHomeAuth } from './codex-managed-home-auth-import.ts'
 import type { CodexManagedHomePath } from './codex-managed-home-path'
 
 const WSL_MANAGED_HOME_TIMEOUT_MS = 5_000
@@ -56,27 +55,7 @@ export class CodexManagedHomeLifecycle {
   // dir the CLI ran `codex login` into) into the managed home. Mirrors the login
   // step of doAddAccount without spawning an interactive browser flow.
   importAuthFromHome(sourceHome: string, managedHomePath: string, accountId: string): void {
-    const trimmed = sourceHome.trim()
-    if (!trimmed) {
-      throw new Error('A Codex home directory path is required.')
-    }
-    const resolvedSourceHome = resolve(trimmed)
-    let sourceAuthContents: string
-    try {
-      sourceAuthContents = readFileSync(join(resolvedSourceHome, 'auth.json'), 'utf-8')
-    } catch (error) {
-      // Why: "no credentials here, run codex login" is only true for a definitive
-      // absence. A locked source file used to produce that advice, which sends the
-      // user to re-run a login they had already completed.
-      if (!isDefinitiveAbsence(error)) {
-        throw new ManagedCodexHomeTemporarilyUnavailableError(undefined, { cause: error })
-      }
-      throw new Error(
-        `No Codex credentials found in ${resolvedSourceHome}. Run \`codex login\` into this directory first.`
-      )
-    }
-    const trustedHome = this.paths.assert(managedHomePath, accountId)
-    writeFileAtomically(join(trustedHome, 'auth.json'), sourceAuthContents, { mode: 0o600 })
+    importCodexManagedHomeAuth(sourceHome, () => this.paths.assert(managedHomePath, accountId))
   }
 
   /**

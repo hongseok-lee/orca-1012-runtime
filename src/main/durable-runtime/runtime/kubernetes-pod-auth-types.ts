@@ -53,7 +53,7 @@ export type AuthenticatedPodObservation = {
   readonly pod: Readonly<{ name: string; uid: string; resourceVersion: string; runtimeUnitId: string;
     operationId: string; executionEpoch: string; specHash: string }>
   readonly node: Readonly<{ name: string; uid: string; resourceVersion: string;
-    observationSource: 'KUBERNETES_API'; providerId?: string; instanceId?: string }>
+    observationSource: 'KUBERNETES_API'; providerId?: string; instanceId?: string; creationTimestamp?: string }>
   readonly evidenceDigest: string
 }
 

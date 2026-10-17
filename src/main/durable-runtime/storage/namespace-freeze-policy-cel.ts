@@ -1,4 +1,5 @@
 import { managedLeafInspectCommand } from "./managed-leaf-collector-exec.ts";
+import { managedLeafPinCommand } from "./managed-leaf-pin-command.ts";
 import type { NamespaceFreezePolicyInput } from "./namespace-freeze-policy-input.ts";
 
 /** CEL string/list literals, never caller-provided expression or shell source. */
@@ -54,10 +55,15 @@ export function collectorExec(input: NamespaceFreezePolicyInput): string {
   const helper = `size(object.command) == 6 && object.command[0] == "/bin/sh" && ` +
     `object.command[1] == "/opt/orca-nfs-tools/managed_storage.sh" && object.command[2] in ["ensure-leaf", "inspect-leaf"] && ` +
     `object.command[3].matches(${celLiteral(uuid)}) && object.command[4] == ${celLiteral(input.dataset)} && object.command[5].matches(${celLiteral(uuid)})`;
+  const holder = `size(object.command) == 9 && object.command[0] == "/bin/sh" && object.command[1] == "-ec" && ` +
+    `object.command[2] == ${celLiteral(managedLeafPinCommand)} && object.command[3] == "orca-managed-leaf-pin" && ` +
+    `object.command[4] == ${celLiteral(input.helperConfigMap.sha256)} && object.command[5] == ${celLiteral(input.exportsConfigMap.sha256)} && ` +
+    `object.command[6].matches(${celLiteral(uuid)}) && object.command[7] == ${celLiteral(input.dataset)} && object.command[8].matches(${celLiteral(uuid)})`;
   return `(request.userInfo.username in ${celLiteral(input.collectorUsernames)} && request.subResource == "exec" && ` +
     `object != null && has(object.container) && object.container == "unfs3" && ` +
-    `(!has(object.stdin) || !object.stdin) && (!has(object.tty) || !object.tty) && ` +
-    `has(object.stdout) && object.stdout && has(object.stderr) && object.stderr && has(object.command) && ((${inspect}) || (${helper})))`;
+    `(!has(object.tty) || !object.tty) && has(object.stdout) && object.stdout && has(object.stderr) && object.stderr && ` +
+    `has(object.command) && (((!has(object.stdin) || !object.stdin) && ((${inspect}) || (${helper}))) || ` +
+    `(has(object.stdin) && object.stdin && (${holder}))))`;
 }
 export function serviceEndpoint(object: string, input: NamespaceFreezePolicyInput): string {
   return `(${object} != null && has(${object}.metadata.labels) && "kubernetes.io/service-name" in ${object}.metadata.labels && ` +

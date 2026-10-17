@@ -7,6 +7,12 @@ import type { EvidenceRef, Incarnation, NodeUid, PayloadHash, PodUid, RuntimeRef
 import type { CapturedCompositionConfiguration, CapturedCompositionInput } from './execution-target-composition-input.ts'
 import { ExecutionTargetCompositionError } from './execution-target-composition-types.ts'
 
+/** Common actual scope needed by the projection; a previously authenticated
+ * owned control supplies its safe expected tuple without exposing a Pod token. */
+export type CompositionScopeInput = Omit<CapturedCompositionInput, 'pod'> & Readonly<{
+  pod: Readonly<{ expected: CapturedCompositionInput['pod']['expected'] }>
+}>
+
 function digest(value: unknown): string {
   if (typeof value !== 'string' || /^[0-9a-f]{64}$/.exec(value)?.[0] !== value) {
     throw new Error('Invalid observation digest')
@@ -15,7 +21,7 @@ function digest(value: unknown): string {
 }
 
 export function captureCompositionPod(config: CapturedCompositionConfiguration,
-  input: CapturedCompositionInput, value: unknown) {
+  input: CompositionScopeInput, value: unknown) {
   try {
     const raw = inventoryRecord(value), expected = input.pod.expected
     const kind = raw.kind, clusterIdentityRef = raw.clusterIdentityRef
@@ -93,7 +99,7 @@ export function captureCompositionCreation(scope: ComputeCreationScope, value: u
 }
 
 export function compositionObservation(config: CapturedCompositionConfiguration,
-  input: CapturedCompositionInput, pod: CapturedCompositionPod,
+  input: CompositionScopeInput, pod: CapturedCompositionPod,
   scope: ComputeCreationScope, creationDigest: string): ExecutionTargetObservation {
   const computeIdentityRef = `gce-identity:sha256:${createHash('sha256').update(JSON.stringify([
     scope.projectNumber, scope.zone, scope.instanceName, scope.numericInstanceId
