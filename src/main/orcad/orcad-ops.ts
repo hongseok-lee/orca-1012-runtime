@@ -32,7 +32,7 @@ export function readOrcadStartupConfig(): OrcadStartupConfig {
 export async function prepareOrcadStartup(
   input: OrcadStartupConfig, ownCatalog: (catalog: OrcadStartupOwner | null) => void,
   readProviderSettings?: () => InitialCodexNativeSettings
-): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp'>> {
+): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp' | 'durableTerminalInputCommitted'>> {
   const ops = input.ops === null ? null : captureOrcadOpsConfig(input.ops)
   const controller = input.controller == null ? null : captureOrcadControllerConfig(input.controller)
   if (ops && !input.catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
@@ -59,7 +59,9 @@ export async function prepareOrcadStartup(
     if (opsHttp && publication) { await publication.startPublication(opsHttp) }
     if (controller && controllerOwner) { await controllerOwner.startController(controller) }
     browserSessions.assertOpen()
-    return readConfig ? Object.freeze({ durableCatalogRead: readConfig, ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
+    return readConfig ? Object.freeze({ durableCatalogRead: readConfig,
+      ...(controllerOwner ? { durableTerminalInputCommitted: controllerOwner.onTerminalInputCommitted } : {}),
+      ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
   } catch (error) {
     await browserSessions.stop().catch(() => {})
     throw error

@@ -14,6 +14,8 @@ import type { InitialEmptyFolderDeclaration } from '../durable-runtime/runtime/i
 import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { ControlledCreationWindow } from '../durable-runtime/runtime/controlled-creation-window.ts'
+import { createTerminalInputRuntime } from '../durable-runtime/input/runtime-input.ts'
+import { createTerminalCodexOutput } from '../durable-runtime/output/terminal-codex-output.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_FIRST_COLD_CONFIG')
 
@@ -57,7 +59,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const raw = agentPodFields(parsed,
       ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256','codexAuthFile',
         'runtimeServiceAccountName','runtimeServiceAccountUid','originalAuditId','pinId','ownerTokenFile','actorId',
-        'clusterIdentityRef','projectId','projectNumber', ...(nodeWindow ? ['creationWindow'] : ['creationStartTime','creationEndTime']), 'timeoutMs'])
+        'clusterIdentityRef','projectId','projectNumber','outputSpoolDirectory', ...(nodeWindow ? ['creationWindow'] : ['creationStartTime','creationEndTime']), 'timeoutMs'])
     const text = (key: string) => agentPodText(raw.get(key))
     const timeoutMs = agentPodInteger(raw.get('timeoutMs'))
     if (timeoutMs > 2_147_483_647 || text('runtimeServiceAccountName') !== 'orca-runtime-agent' ||
@@ -99,11 +101,23 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     }
     const podAuthenticator = createKubernetesPodAuthenticator({ apiOrigin, ca: Buffer.from(ca), clusterIdentityRef,
       audience: 'orca-runtime-agent', namespace, dataset, timeoutMs, readReviewerBearer })
-    return createInitialCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), planDigest: initial.planDigest,
+    let executor: ReturnType<typeof createInitialCodexExecutor> | undefined
+    const current = () => executor?.current() ?? null
+    let inputPhase = 'UNUSED', inputError: string | null = null
+    const inputRuntime = createTerminalInputRuntime(pool, { current }, notice => {
+      inputPhase = notice.phase; inputError = notice.code ?? null
+    })
+    const output = createTerminalCodexOutput({ pool, spoolDirectory: text('outputSpoolDirectory'), current })
+    executor = createInitialCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), planDigest: initial.planDigest,
       emptyFolder,
-      // Until durable observation journaling is connected, fail explicitly if
-      // native activity arrives. Cold thread creation itself emits no input.
-      sink() { throw new Error('INITIAL_PROVIDER_OUTPUT_UNCONNECTED') },
+      sink: inputRuntime.observe,
+      onNativeNotification: output.onNativeNotification,
+      onReady() {
+        // Both consumers borrow this SAME original READY owner. Raw cold
+        // notifications retained before READY now become drainable.
+        void output.drain().catch(() => { /* The output owner retains the failure/spool. */ })
+        inputRuntime.ready()
+      },
       async deployment({ plan, podUid, paths }, signal) {
         if (signal.aborted) { return deny() }
         const id = plan.plan.identity, bindChallenge = randomUUID()
@@ -122,6 +136,14 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
               expected: Object.freeze({ serviceAccountName, serviceAccountUid, podName: id.resourceName, podUid,
                 runtimeUnitId: id.unitId, operationId: id.operationId, executionEpoch: id.executionEpoch, specHash: id.specHash }),
               policy: Object.freeze({ protectedRoot: '/agent', launch, nativeArtifact, codexAuth, bindChallenge, paths }) }) }) })
+      } })
+    const originalExecutor = executor
+    return Object.freeze({ ...originalExecutor,
+      onTerminalInputCommitted: inputRuntime.committed,
+      snapshot: () => Object.freeze({ ...originalExecutor.snapshot(), inputPhase, inputError, output: output.snapshot() }),
+      async close(): Promise<void> {
+        inputRuntime.dispose()
+        try { await inputRuntime.drain() } finally { await output.close() }
       } })
   } catch { return deny() }
 }

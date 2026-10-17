@@ -9,6 +9,7 @@ import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import type { OrcadDurableCatalog } from './orcad-durable-catalog.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
+import type { TerminalInputCommittedSink } from '../durable-runtime/input/runtime-input-types.ts'
 import { captureOrcadControllerConfig, invalidOrcadControllerConfig, OrcadControllerConfigurationError,
   type OrcadControllerConfig } from './orcad-controller-config.ts'
 
@@ -31,6 +32,7 @@ export type OrcadControllerSnapshot = Readonly<{
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
+  onTerminalInputCommitted: TerminalInputCommittedSink
 }>
 
 /** Real PR58 transport, with owned file readers. Raw CA/token bytes never enter snapshots/errors or an exported accessor. */
@@ -77,6 +79,11 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
   let total = 0, list = 0, watch = 0
   return Object.freeze({
     readConfig,
+    onTerminalInputCommitted(input: Parameters<TerminalInputCommittedSink>[0]) {
+      // Only the already authenticated ingress creates this value. No receipt
+      // or PG principal is reconstructed into a new authenticated authority.
+      if (!closing) { firstManagedInitial?.onTerminalInputCommitted?.(input) }
+    },
     startController(input: OrcadControllerConfig): Promise<void> {
       if (closing) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CLOSED') }
       if (starting) { return starting }
@@ -174,7 +181,9 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
             lastFailure = Object.freeze({ stage: 'STOP', code: 'CONTROLLER_STOP_UNAVAILABLE' })
             invalidOrcadControllerConfig('CONTROLLER_STOP_UNAVAILABLE')
           }
-        } finally { await stopCatalog() }
+        } finally {
+          try { await firstManagedInitial?.close() } finally { await stopCatalog() }
+        }
       })
       return completion
     },

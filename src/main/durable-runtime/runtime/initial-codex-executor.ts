@@ -8,6 +8,7 @@ import { lockAggregates } from '../db/locks.ts'
 import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
 import type { CodexColdLaunch } from '../providers/codex/driver.ts'
+import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import type { ProviderBinding, ProviderColdRequest, ProviderDispatchRequest, ProviderDispatchResult,
   ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
@@ -42,6 +43,7 @@ export type InitialCodexExecutorConfiguration = Readonly<{
     nativeOptions: Readonly<Record<string, string>>
   }> & ControlledCreationWindow>
   sink: ProviderObservationSink
+  onNativeNotification?: CodexProtocolDependencies['onNativeNotification']
   onReady?(): void
 }>
 const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIAL_CODEX_${suffix}`) }
@@ -54,6 +56,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   const selected = immutableSnapshot({ sessionId: original.sessionId, planDigest: original.planDigest, emptyFolder: original.emptyFolder })
   const deployment = original.deployment.bind(original), sink = original.sink.bind(original)
   const onReady = original.onReady?.bind(original)
+  const onNativeNotification = original.onNativeNotification?.bind(original)
   const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
   let used = false, phase = 'UNUSED'
   let writerActivated = false
@@ -156,7 +159,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           predecessor: grants.value.receipt })
         if (gate.execution.disposition !== 'COMMITTED_EXECUTE') { return deny('GATE_CLAIM_UNCONFIRMED') }
         const transport = control.transport
-        driver = new DurableCodexDriver({ open: transport.open.bind(transport) }, sink)
+        driver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification }, sink)
         const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
           tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
           providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),

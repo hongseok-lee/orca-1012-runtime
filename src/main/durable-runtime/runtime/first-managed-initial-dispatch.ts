@@ -21,6 +21,7 @@ import { createFirstManagedInitialAgentPodExecution, createInitialAgentPodLookup
 import type { InitialAgentPodExecutionResult } from './initial-agent-pod-execution.ts'
 import { recordInitialAgentResourceProfile } from './initial-agent-resource-profile.ts'
 import type { createInitialCodexExecutor } from './initial-codex-executor.ts'
+import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts'
 
 export type FirstManagedInitialDispatchConfig = Readonly<{
   pool: Pool; policy: unknown; request: unknown; policyRevision: string
@@ -29,7 +30,10 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
   executorId: ExecutorId; externalBudgetMs: number
   readOwnerToken(pinId: string, signal: AbortSignal): Promise<string>
   podConfig: AgentPodCreateConfig; firstManagedDirectory: FirstManagedBindingOwnerConfig
-  cold?: ReturnType<typeof createInitialCodexExecutor>
+  cold?: ReturnType<typeof createInitialCodexExecutor> & Readonly<{
+    onTerminalInputCommitted?: TerminalInputCommittedSink
+    close?(): Promise<void>
+  }>
 }>
 type TransactionSnapshot = Readonly<{
   settlement: string; commitOutcome: string; cleanupFailed: boolean; disposition: string | null; errorCode: string | null
@@ -212,7 +216,10 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
       finally { inFlight = false }
     },
   }
-  return Object.freeze({ ...callbacks, snapshot: () => {
+  return Object.freeze({ ...callbacks,
+    onTerminalInputCommitted: cold?.onTerminalInputCommitted?.bind(cold),
+    close: async () => { await cold?.close?.() },
+    snapshot: () => {
     const provider = coldSnapshot?.()
     return provider ? Object.freeze({ ...state, coldPhase: provider.phase,
       gate: provider.providerReady ? 'OPEN' as const : 'CLOSED' as const,

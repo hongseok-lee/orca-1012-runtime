@@ -1,5 +1,6 @@
 import { snapshotRuntimeOpsHttpConfig, type RuntimeOpsHttpConfig } from '../../durable-runtime/ops/runtime-config.ts'
 import { DurableCatalogReadAdapter } from '../../durable-runtime/rpc/public.ts'
+import { bindManagedTerminalNativeChatMethods } from '../../durable-runtime/rpc/terminal-native-chat.ts'
 import { randomBytes } from 'node:crypto'
 import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap'
 import type { OrcaRuntimeService } from '../orca-runtime'
@@ -112,12 +113,16 @@ export class RuntimeRpcState {
     metadataOwnershipPollMs = RUNTIME_METADATA_OWNERSHIP_POLL_MS,
     methods,
     durableCatalogRead,
+    durableTerminalInputCommitted,
     opsHttp
   }: OrcaRuntimeRpcServerOptions) {
     this.runtime = runtime
-    this.durableCatalogRead = durableCatalogRead ? new DurableCatalogReadAdapter(durableCatalogRead) : null
+    this.durableCatalogRead = durableCatalogRead ? new DurableCatalogReadAdapter(durableCatalogRead,
+      { onTerminalInputCommitted: durableTerminalInputCommitted }) : null
     const declarations = methods ?? ALL_RPC_METHODS
-    this.dispatcher = new RpcDispatcher({ runtime, methods: this.durableCatalogRead?.bind(declarations) ?? declarations })
+    const catalogMethods = this.durableCatalogRead?.bind(declarations) ?? declarations
+    this.dispatcher = new RpcDispatcher({ runtime, methods: durableCatalogRead
+      ? bindManagedTerminalNativeChatMethods(catalogMethods, durableCatalogRead) : catalogMethods })
     this.userDataPath = userDataPath
     this.pid = pid
     this.platform = platform
