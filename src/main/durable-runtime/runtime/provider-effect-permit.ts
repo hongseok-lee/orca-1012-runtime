@@ -166,6 +166,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
         if (identity.kind === 'COLD') {
           const gate = captureReleaseGateInput(row.input)
           if (gate.attemptId !== binding.attemptId) { deny('PROVIDER_GATE_ATTEMPT') }
+          if (!gate.coldStart) { deny('PROVIDER_MANIFEST_GATE_UNCONNECTED') }
           if (gate.coldStart) {
             const plan = await readAgentPodPlan(tx, context.operationId)
             if (!coldPolicy || coldPolicy.request.native.kind !== 'NEW' || !plan ||
