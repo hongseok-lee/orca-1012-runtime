@@ -21,6 +21,7 @@ export type AgentCodexControlPolicy = Readonly<{
   launch: Launch
   nativeArtifact: CodexNativeArtifact
   codexAuth: string
+  bindChallenge: string
 }>
 
 /** Runs INSIDE the Agent Pod. It holds the actual protected root directory open
@@ -34,6 +35,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
     closed: Promise<void>
   }> {
   const policy = immutableSnapshot(original), controlId = randomUUID()
+  if (!/^[0-9a-f-]{36}$/.test(policy.bindChallenge)) { throw new Error('AGENT_CODEX_BIND_CHALLENGE') }
   const nativeMethods = new Set(['thread/start', 'thread/resume', 'turn/start', 'turn/interrupt'])
   let phase = 'CLOSED_GATE', connection: CodexAppServerConnection | null = null
   let coldUsed = false, stopping = false, uncertain = false
@@ -75,7 +77,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   try { podBearer = readFileSync('/var/run/secrets/orca-runtime-agent/token', 'utf8').trim() }
   catch { releaseRoot(); throw new Error('AGENT_CODEX_POD_CREDENTIAL') }
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
-  send({ event: 'HELLO', controlId, pid: process.pid, startTicks,
+  send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer })
   podBearer = ''
   let serial = Promise.resolve()

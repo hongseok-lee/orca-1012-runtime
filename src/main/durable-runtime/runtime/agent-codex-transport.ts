@@ -42,6 +42,7 @@ export type AgentCodexTransportConfiguration = Readonly<{
 }>
 export type AuthenticatedAgentControl = Readonly<{
   controlId: string; controlPid: number; startTicks: string
+  bindChallenge: string
   root: Readonly<{ path: string; device: string; inode: string }>
   pod: AuthenticatedPodObservation
   valid(): boolean
@@ -154,7 +155,8 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
           if (record.event === 'HELLO') {
             if (controlId || typeof record.controlId !== 'string' || !/^[0-9a-f-]{36}$/.test(record.controlId) ||
                 !Number.isSafeInteger(record.pid) || Number(record.pid) < 1 || typeof record.startTicks !== 'string' ||
-                !/^[1-9]\d*$/.test(record.startTicks) || !bearerValid(record.podBearer)) { throw fail() }
+                !/^[1-9]\d*$/.test(record.startTicks) || !bearerValid(record.podBearer) ||
+                record.bindChallenge !== config.policy.bindChallenge) { throw fail() }
             const root = record.root
             if (!root || typeof root !== 'object' || Reflect.get(root, 'path') !== config.policy.protectedRoot ||
                 !/^\d+$/.test(Reflect.get(root, 'device')) || !/^[1-9]\d*$/.test(Reflect.get(root, 'inode'))) { throw fail() }
@@ -165,6 +167,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
             // Request cancellation no longer owns the live control resource.
             transferred = true; acquisition.signal.removeEventListener('abort', cancelled)
             const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: Number(record.pid), startTicks: record.startTicks,
+              bindChallenge: config.policy.bindChallenge,
               root: Object.freeze({ path: config.policy.protectedRoot, device: String(Reflect.get(root, 'device')), inode: String(Reflect.get(root, 'inode')) }),
               pod, valid: () => !lost && !socketClosed && !closing, close, physicalPinIssued: false as const,
               async readMountProbe() {
