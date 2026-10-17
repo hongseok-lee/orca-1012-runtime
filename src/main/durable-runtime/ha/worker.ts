@@ -19,7 +19,7 @@ export type ControllerWorkerPolicy = Readonly<{
   externalBudgetMs: number
 }>
 export type ControllerWorkerCallbacks = Pick<ControllerPassRequest,
-  'planStep' | 'eventWork' | 'executeCommitted' | 'lookupOriginal' | 'inventory'>
+  'planStep' | 'eventWork' | 'executeCommitted' | 'lookupOriginal' | 'recoverInput' | 'inventory'>
 type Stage = 'ACQUIRE' | 'RENEW' | 'PASS' | 'RELEASE' | 'START'
 export type ControllerWorkerFailure = Readonly<{ stage: Stage; code: string }>
 export type ControllerWorkerSnapshot = Readonly<{
@@ -42,7 +42,7 @@ export type ControllerWorker = Readonly<{
 // Only excludes another process worker using this exact Pool object in this process.
 // It supplies no PG authority, leader election, writer fencing or Pool ownership.
 const owners = new WeakSet<Pool>()
-const callbackNames = ['planStep', 'eventWork', 'executeCommitted', 'lookupOriginal', 'inventory']
+const callbackNames = ['planStep', 'eventWork', 'executeCommitted', 'lookupOriginal', 'recoverInput', 'inventory']
 function safeCode(code: string): string { return /^[A-Z0-9_]{1,64}$/.test(code) ? code : 'DB_FAILURE' }
 function failureCode(error: unknown): string { return safeCode(safeDatabaseError(error).code) }
 
@@ -57,7 +57,7 @@ function capturePolicy(input: ControllerWorkerPolicy): ControllerWorkerPolicy {
 }
 function captureCallbacks(input: ControllerWorkerCallbacks): ControllerWorkerCallbacks {
   if (Object.keys(input).some(key => !callbackNames.includes(key)) ||
-      callbackNames.slice(0, 4).some(key => {
+      callbackNames.slice(0, 5).some(key => {
         const value = Reflect.get(input, key)
         return value !== undefined && typeof value !== 'function'
       })) { throw new DurableDatabaseError('CONTROLLER_WORKER_CALLBACKS') }
@@ -69,6 +69,7 @@ function captureCallbacks(input: ControllerWorkerCallbacks): ControllerWorkerCal
   const transport = inventory?.transport
   return Object.freeze({ planStep: input.planStep?.bind(input), eventWork: input.eventWork?.bind(input),
     executeCommitted: input.executeCommitted?.bind(input), lookupOriginal: input.lookupOriginal?.bind(input),
+    recoverInput: input.recoverInput?.bind(input),
     inventory: inventory && transport ? Object.freeze({ sink: inventory.sink.bind(inventory),
       transport: Object.freeze({ list: transport.list.bind(transport), watch: transport.watch.bind(transport),
         get: transport.get.bind(transport) }) }) : undefined })
@@ -119,6 +120,8 @@ export function createControllerWorker(pool: Pool, input: ControllerWorkerPolicy
       invoke(() => callbacks.executeCommitted!(...args)) : undefined,
     lookupOriginal: callbacks.lookupOriginal ? (...args: Parameters<NonNullable<ControllerPassRequest['lookupOriginal']>>) =>
       invoke(() => callbacks.lookupOriginal!(...args)) : undefined,
+    recoverInput: callbacks.recoverInput ? (...args: Parameters<NonNullable<ControllerPassRequest['recoverInput']>>) =>
+      invoke(() => callbacks.recoverInput!(...args)) : undefined,
     inventory: callbacks.inventory ? Object.freeze({
       transport: Object.freeze({ list: (signal: AbortSignal) => invoke(() => callbacks.inventory!.transport.list(signal)),
         watch: (version: string, signal: AbortSignal) => invoke(() => callbacks.inventory!.transport.watch(version, signal)),

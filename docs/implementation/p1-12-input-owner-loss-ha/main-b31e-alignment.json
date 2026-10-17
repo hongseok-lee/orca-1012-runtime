@@ -1,0 +1,48 @@
+{
+  "originalHead": "9846d8a780504ac98d1b383cacca83063684d52a",
+  "alignedHead": "22bbbd30b1f90c28fd8bcaea47e2f0b6ebf23ec4",
+  "alignedTree": "1e81e7df7a5de5f7af97a24619480db9c2180485",
+  "base": "b31eec3d53088d3744ec447a2d08b6a0941d2943",
+  "testedSourcePin": "575c1b798ca597f7efe9165a43e939b0e2081d36",
+  "rebaseRuns": 1,
+  "conflicts": 0,
+  "ownedFiles": [
+    {
+      "path": "src/main/durable-runtime/ha/input-owner-loss.value.test.mts",
+      "mode": "100644",
+      "blob": "d3ff07990bd8369dc69d3ccca4749e67d552f108"
+    },
+    {
+      "path": "src/main/durable-runtime/ha/pass.ts",
+      "mode": "100644",
+      "blob": "95cc93a7a4016b68ff19440cbb06cf273542fbcf"
+    },
+    {
+      "path": "src/main/durable-runtime/ha/worker.ts",
+      "mode": "100644",
+      "blob": "e03d445b6690774326398fc79ed306d55453a861"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller-config.ts",
+      "mode": "100644",
+      "blob": "126cedd27c75178bf1ed5f643526e36f7d15933c"
+    },
+    {
+      "path": "src/main/orcad/orcad-controller.ts",
+      "mode": "100644",
+      "blob": "f9cd6e32f09c05863005de3c80e3c028b990bd48"
+    },
+    {
+      "path": "src/main/orcad/orcad-input-recovery.ts",
+      "mode": "100644",
+      "blob": "4983c7ca074adc7effa9428c1a55e589a3038a87"
+    }
+  ],
+  "ownedBytesModeDelta": [],
+  "sourceOutsideOwnedDiffToMain": [],
+  "duplicatedPR163Or164Files": [],
+  "testsRepeated": 0,
+  "runtimeMutation": 0,
+  "unknownDisplayChangeIncluded": false,
+  "usageCreditsStream": "미관측"
+}

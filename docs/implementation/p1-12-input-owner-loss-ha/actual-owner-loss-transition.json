@@ -1,0 +1,70 @@
+{
+  "sourcePin": "575c1b798ca597f7efe9165a43e939b0e2081d36",
+  "dbDependencyPin": "2d44c8d5e9efa1a19bb27947de59165bd46d08f4",
+  "observer": {
+    "at": "2026-10-17T07:24:18.270Z",
+    "pid": 31736,
+    "readOnly": true,
+    "SQLMutation": 0,
+    "providerCalls": 0
+  },
+  "target": {
+    "sessionId": "3627cd40-d010-4c1e-9604-96c93c9f1354",
+    "runtimeUnitId": "d35ee37e-be4d-47fc-8abc-7ece737a0aec",
+    "operationId": "2b03bcae-d892-432f-a173-c6aa52bfbb58",
+    "commandId": "859734ba-cb9f-4592-9608-c7cff7971231"
+  },
+  "current": {
+    "command_state": "UNKNOWN",
+    "delivery_state": "UNKNOWN",
+    "message_state": "UNKNOWN",
+    "step": "INPUT",
+    "result": null,
+    "deadline_at": null
+  },
+  "ownerLossEvents": 1,
+  "events": [
+    {
+      "state": "UNKNOWN",
+      "eventId": "5e397a48-d833-49f0-8dbe-72de4934dbc8",
+      "messageId": "52d4dbe8-0c8a-4cf7-a5dc-40c01411e798",
+      "reasonCode": "INPUT_OWNER_LOST",
+      "authorityKind": "CONTROLLER_OWNER_LOSS",
+      "deliveryAttemptId": "22565dd6-87ee-4e66-aa61-4e8eb61d49bd"
+    }
+  ],
+  "originalReceiptCount": 1,
+  "preservedCategories": [
+    "unit",
+    "ledger",
+    "mounts",
+    "attempts",
+    "bindings",
+    "receipts",
+    "operation",
+    "components",
+    "writeGrants",
+    "executionGrants"
+  ],
+  "preservationMismatches": [],
+  "ledger23": true,
+  "runtimePublication": {
+    "readyAt": "2026-10-17T07:24:16.291Z",
+    "watchPid": 31511,
+    "runtimePid": 31555,
+    "generation": 1,
+    "readyBuildHash": "40779a36e0c273aa1bee7dfa6157a6ba7afb5a7383e03e1821a8f7db8e54a91e",
+    "runtimeArtifactSHA256": "0dcdf61f7182c0185aeef5ea8b3dda5452aea34f1fcf7f7c543b061450795212",
+    "firstManagedInitial": false,
+    "structuredOutput": false,
+    "coldResumed": false,
+    "inputSent": false,
+    "wholeCheckoutGitProven": false
+  },
+  "limits": [
+    "UNKNOWN은 논리 불확실성의 보존이며 provider 미실행·수락·완료·종료 증거가 아닙니다.",
+    "원 입력을 재전송하거나 새로운 claim/provider proof/WAKE를 만들지 않았습니다.",
+    "실제 앱 화면 UNKNOWN 투영은 Client 담당의 별도 근거이며 이 문서는 화면 합격을 주장하지 않습니다."
+  ],
+  "usageCreditsStream": "미관측"
+}
