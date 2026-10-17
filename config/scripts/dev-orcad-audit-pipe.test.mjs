@@ -18,6 +18,7 @@ test('explicit dev Audit supply reaches only child FD 3 and preserves private ch
     process.env.HOME = join(root, 'home')
     const fixture = Buffer.from('FIXTURE_ONLY_NOT_A_CREDENTIAL')
     await writeFile(join(root, 'src/main/orcad/main.ts'), `import {createReadStream,writeFileSync} from 'node:fs'
+void (async()=>{
 const chunks=[]
 for await (const part of createReadStream('',{fd:3})) chunks.push(part)
 const bytes=Buffer.concat(chunks)
@@ -25,6 +26,7 @@ writeFileSync(${JSON.stringify(marker)},JSON.stringify({matches:bytes.toString()
 bytes.fill(0)
 setInterval(()=>{},1000)
 process.once('SIGTERM',()=>process.exit(0))
+})().catch(()=>process.exit(1))
 `)
     await writeFile(join(root, 'src/main/daemon/daemon-entry.ts'), 'export const daemon = true')
     await writeFile(join(root, 'src/main/ipc/parcel-watcher-process-entry.ts'), 'export const watcher = true')
