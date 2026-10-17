@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from 'node:util'
 import path from 'node:path'
 import type { Pool } from 'pg'
 import { DurableDatabaseError, runDurableTransaction } from '../db/connection.ts'
+import type { DurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import type { StorageBindingId } from '../../../shared/durable-runtime/identity.ts'
 import type { StorageEvidenceAuthority, ExecutionTarget, VerifiedMountEvidence } from '../storage/evidence.ts'
@@ -53,13 +54,17 @@ const deny = (code: string): never => { throw new DurableDatabaseError(code) }
  * actual COMMIT, and only then runs one effect outside that transaction. */
 export function createProviderEffectPermit(pool: Pool, originalContext: GatewayContext,
   originalIdentity: ProviderEffectIdentity, protectionOwner: ProviderProtectionOwner,
-  originalColdPolicy?: ProviderColdExecutionPolicy): Readonly<{
+  originalColdPolicy?: ProviderColdExecutionPolicy,
+  originalCommitGuard?: (tx: DurableTransaction) => Promise<void>): Readonly<{
     permit: ProviderEffectPermit
     lifetime(): ProviderEffectLifetime
     retainedProtection(): ProviderProtectionLease | null
   }> {
   const context = immutableSnapshot(originalContext), identity = immutableSnapshot(originalIdentity)
   const coldPolicy = originalColdPolicy ? immutableSnapshot(originalColdPolicy) : null
+  // Private SQL-only target guard owned by the authenticated intake adapter.
+  // Capture before await; it neither replaces grants nor supplies an effect.
+  const commitGuard = originalCommitGuard
   if (identity.kind !== 'COLD' && identity.kind !== 'DISPATCH') { deny('PROVIDER_EFFECT_KIND') }
   if (!Object.isFrozen(protectionOwner)) { deny('PROVIDER_PROTECTION_OWNER_REQUIRED') }
   const take = protectionOwner.takePreparedProtection, connect = pool.connect
@@ -243,6 +248,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
               identity.contextRevision])
           if (delivery.rowCount !== 1) { deny('PROVIDER_DELIVERY_NOT_CURRENT') }
         }
+        if (commitGuard) { await commitGuard(tx) }
         await gateway.assertCurrent()
         pins()
       })

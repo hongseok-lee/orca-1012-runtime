@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { SessionId } from '../../../shared/durable-runtime/identity.ts'
 import { DurableDatabaseError, runDurableTransaction } from '../db/connection.ts'
+import type { DurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
@@ -60,7 +61,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
   let readyExecutor: ExecutorId | null = null
   let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
-  async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest): Promise<ProviderDispatchResult> {
+  async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
+    commitGuard?: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult> {
     const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
     const native = ready, activeDriver = driver, owner = readyProtection, controller = readyContext?.controller
     if (!native || !activeDriver || !owner || !controller || !activeDriver.ownsReadyBinding(native) ||
@@ -71,7 +73,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
     const effect = createProviderEffectPermit(borrowed, context, { kind: 'DISPATCH', binding: native,
       commandClaim: request.commandClaim, messageId: request.sealed.messageId, deliveryAttemptId: request.deliveryAttemptId,
       sealedRevision: request.sealed.sealedRevision, sealedPayloadHash: request.sealed.payloadHash,
-      contextRevision: request.context.revision, contextHash: request.context.hash }, owner)
+      contextRevision: request.context.revision, contextHash: request.context.hash }, owner, undefined, commitGuard)
     return activeDriver.dispatch(request, effect.permit)
   }
   return Object.freeze({
