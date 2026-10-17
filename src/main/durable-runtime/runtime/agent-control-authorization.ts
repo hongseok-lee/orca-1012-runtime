@@ -1,5 +1,5 @@
 import { agentCodexBootstrap, agentControlTransfer } from './agent-control-bootstrap.ts'
-import { inventoryNamespace } from '../lifecycle/kubernetes-identity.ts'
+import { inventoryName, inventoryNamespace } from '../lifecycle/kubernetes-identity.ts'
 
 export { agentControlTransfer } from './agent-control-bootstrap.ts'
 
@@ -48,4 +48,26 @@ export function createAgentControlAuthorization(namespaceInput: string, bootstra
   // Install/confirm the exact VAP + Binding first. Definitions grant nothing;
   // the two backend RBAC bindings are deliberately last, after guard activation.
   return { apiVersion: 'v1', kind: 'List', items: [items[5], items[6], items[0], items[1], items[3], items[2], items[4]] }
+}
+
+/** Exact original Bound names from the trusted deployment plan/readback only.
+ * The runtime Agent receives neither these permissions nor a RoleBinding. */
+export function createAgentMountReadAuthorization(namespaceInput: string, claims: readonly string[], volumes: readonly string[]) {
+  const namespace = inventoryNamespace(namespaceInput)
+  const names = (values: readonly string[]) => {
+    if (values.length !== 2 || new Set(values).size !== 2) { throw new Error('AGENT_MOUNT_READ_SCOPE') }
+    return Object.freeze(values.map(value => inventoryName(value)))
+  }
+  const claimNames = names(claims), volumeNames = names(volumes), name = 'orca-agent-mount-reader'
+  const subject = { kind: 'ServiceAccount', name: 'orca-backend-inventory', namespace }
+  return { apiVersion: 'v1', kind: 'List', items: [
+    { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'Role', metadata: { name, namespace },
+      rules: [{ apiGroups: [''], resources: ['persistentvolumeclaims'], verbs: ['get'], resourceNames: claimNames }] },
+    { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'ClusterRole', metadata: { name },
+      rules: [{ apiGroups: [''], resources: ['persistentvolumes'], verbs: ['get'], resourceNames: volumeNames }] },
+    { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'RoleBinding', metadata: { name, namespace },
+      roleRef: { apiGroup: 'rbac.authorization.k8s.io', kind: 'Role', name }, subjects: [subject] },
+    { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'ClusterRoleBinding', metadata: { name },
+      roleRef: { apiGroup: 'rbac.authorization.k8s.io', kind: 'ClusterRole', name }, subjects: [subject] }
+  ] }
 }
