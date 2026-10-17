@@ -22,6 +22,11 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
   let lifecycle: NativeChatTurnLifecycle | undefined
   const append = (identity: AgentJournalItemIdentity, body: AgentJournalItemBody, at = observedAt) => {
     const itemId = agentJournalItemKey(identity), previous = items.get(itemId)
+    // Reserve the original item position before any render-only echo filtering.
+    if (!offsets.has(itemId)) {
+      offsets.set(itemId, itemBytePosition++)
+      bytePosition = Math.max(bytePosition, itemBytePosition)
+    }
     // Exact stored delivery thread/turn identity only, never text/hash dedup.
     if (nativeInputEchoIds.has(itemId) && body.kind === 'message' && body.role === 'user') { return }
     if (body.kind === 'turn') {
@@ -32,10 +37,6 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
     }
     const revision = (revisions.get(itemId) ?? 0) + 1
     revisions.set(itemId, revision)
-    if (!offsets.has(itemId)) {
-      offsets.set(itemId, itemBytePosition++)
-      bytePosition = Math.max(bytePosition, itemBytePosition)
-    }
     items.set(itemId, {itemId, body, revision, sequence: previous?.sequence ?? position, observedAt: previous?.observedAt ?? at})
   }
   const tombstone = (identity: AgentJournalItemIdentity) => {

@@ -25,6 +25,7 @@ import { projectTerminalNativeHistory } from './terminal-native-projector.ts'
 import { freezeJournalJson, type CommittedJournalEvent } from './model.ts'
 import { canonicalInputJson } from '../input/canonical.ts'
 import { MAX_CODEX_ACTIVE_ITEMS } from '../../codex/codex-structured-journal-limits.ts'
+import { codexTurnUserItemId } from '../../codex/codex-structured-journal-translation-turns.ts'
 
 // Real PG transactions with synthetic provider/workload/lease controls only.
 // This test issues no production authority and launches no provider/Pod.
@@ -209,6 +210,7 @@ test('managed pagination separates the real eviction summary from its triggering
         {id: owner, type: 'terminal', title: owner, isActive: true, parentTabId: owner, leafId: owner, status: 'ready', terminal: owner, viewMode: 'chat'}])
     })
     await commit('turn/started', {threadId, turn: {id: turnId}})
+    await commit('item/completed', {threadId, turnId, item: {id: 'original-user-echo', type: 'userMessage', text: 'synthetic user α'}})
     assert.equal(MAX_CODEX_ACTIVE_ITEMS, 256)
     for (let i = 0; i <= MAX_CODEX_ACTIVE_ITEMS; i++) {
       await commit('item/started', {threadId, turnId, item: {id: `item-${i}`, type: 'agentMessage', text: `synthetic original α ${i}`}})
@@ -217,6 +219,11 @@ test('managed pagination separates the real eviction summary from its triggering
     // one old item. The adapter's same-notification flush emits its FIRST summary.
     const projected = projectTerminalNativeHistory(session, rows, []).messages
     assert.equal(projected.length, MAX_CODEX_ACTIVE_ITEMS + 2)
+    // The original live translator already excludes userMessage notifications;
+    // selecting its exact persisted delivery identity must preserve every cursor.
+    const echoSelected = projectTerminalNativeHistory(session, rows, [], new Set([codexTurnUserItemId(threadId, turnId)]))
+    assert.deepEqual(echoSelected.messages.map(item => [item.message.id, item.offset]),
+      projected.map(item => [item.message.id, item.offset]))
     const tail = projected.slice(-2), recordStart = rows.slice(0, -1).reduce((position, row) =>
       position + Buffer.byteLength(canonicalInputJson(row.body as JsonValue), 'utf8') + 1, 0)
     assert.equal(tail[0].message.role, 'assistant'); assert.equal(tail[1].message.role, 'system')
@@ -239,7 +246,7 @@ test('managed pagination separates the real eviction summary from its triggering
     assert.equal(revisedOlder.messages[0].id, older.messages[0].id)
     assert.equal(revisedOlder.beforeOffset, older.beforeOffset)
     assert.deepEqual(revisedOlder.messages[0].blocks, [{type: 'text', text: 'synthetic original α 256 revised β'}])
-    assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.session_events WHERE session_id=$1', [session])).rows[0].n, MAX_CODEX_ACTIVE_ITEMS + 3)
+    assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.session_events WHERE session_id=$1', [session])).rows[0].n, MAX_CODEX_ACTIVE_ITEMS + 4)
     console.log(JSON.stringify({phase: 'TERMINAL_PAGINATION_PG_COMPLETE', owner, sessionId: session,
       actualReader: true, activeItemBoundary: MAX_CODEX_ACTIVE_ITEMS + 1, sameNotificationFirstItems: 2,
       strictLimit: 1, originalPositionsStable: true, providerTranscriptSeekAddress: false,
