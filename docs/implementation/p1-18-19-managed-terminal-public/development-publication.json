@@ -1,22 +1,46 @@
 {
-  "at": "2026-10-17T02:54:07.180Z",
-  "phase": "TERMINAL14_BROWSER_WRAPPER_NEW_READY",
-  "generation": 3,
-  "bundleHash": "6435c6f5fe57c0d48b7d8d52b5ed567a2339065c6e0a097a94e44ec13631c95a",
-  "orcadSha256": "d52a3bba6a6520b23ed005af2b1e905685692726f0fea569ff8df1a8e3b7bee6",
-  "version": "0.1.0+6435c6f5fe57",
-  "sourcePin": "604919ed2733a089e63b4a938b4c59642411ee0f",
+  "at": "2026-10-17T03:55:00.641Z",
+  "phase": "TAB_PROPS4_TRACE_REMOVAL2_NEW_READY",
+  "generation": 5,
+  "bundleHash": "969a61cd01e717519fb97d621b0b9bc0ce634df57c2c2099b590f61668690b67",
+  "orcadSha256": "582290e6c948b07713274d697b99419210feb2d59f41defac20b2de44c5c77ae",
+  "version": "0.1.0+969a61cd01e7",
+  "sourcePin": "0eb5da3077c6133fb6f9040aa2e679e6715977ef",
   "wholeCheckoutGitProven": false,
   "coldSourcePublished": false,
   "pairingChanged": false,
   "configChanged": false,
   "providerInputConfirmed": false,
   "runtime": {
-    "pid": 20159,
-    "startTicks": "31754432"
+    "pid": 22211,
+    "startTicks": "32119982"
   },
-  "terminalProductFiles": 14,
+  "metadataProductFiles": 4,
+  "previousTerminalProductFilesPreserved": 14,
   "fixtureFilesPublished": 0,
   "terminalIntakeAPIExecuted": false,
-  "reason": "Existing inspected logical handle belongs to shell and has no explicit Chat mode; a verified managed Chat target is pending."
+  "actualSetTabPropsAPIExecuted": false,
+  "reason": "Backend published corrected mode metadata with temporary browser trace removal. Fresh managed Chat selector and actual authenticated intake remain pending.",
+  "previousPublication": {
+    "at": "2026-10-17T02:54:07.180Z",
+    "phase": "TERMINAL14_BROWSER_WRAPPER_NEW_READY",
+    "generation": 3,
+    "bundleHash": "6435c6f5fe57c0d48b7d8d52b5ed567a2339065c6e0a097a94e44ec13631c95a",
+    "orcadSha256": "d52a3bba6a6520b23ed005af2b1e905685692726f0fea569ff8df1a8e3b7bee6",
+    "version": "0.1.0+6435c6f5fe57",
+    "sourcePin": "604919ed2733a089e63b4a938b4c59642411ee0f",
+    "wholeCheckoutGitProven": false,
+    "coldSourcePublished": false,
+    "pairingChanged": false,
+    "configChanged": false,
+    "providerInputConfirmed": false,
+    "runtime": {
+      "pid": 20159,
+      "startTicks": "31754432"
+    },
+    "terminalProductFiles": 14,
+    "fixtureFilesPublished": 0,
+    "terminalIntakeAPIExecuted": false,
+    "reason": "Existing inspected logical handle belongs to shell and has no explicit Chat mode; a verified managed Chat target is pending."
+  }
 }
