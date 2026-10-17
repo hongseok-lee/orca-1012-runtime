@@ -1,4 +1,4 @@
-import type { PoolClient } from 'pg'
+import type { DurableTransaction } from '../db/connection.ts'
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
 import { inputPayloadHash } from '../input/canonical.ts'
 import type { JsonValue } from '../db/atomic.ts'
@@ -19,7 +19,7 @@ type InputRow = {
   wire_fence: string | null; journal_epoch: string | null; journal_sequence: string | null; submitted_at: string | null
 }
 export async function readOriginalInputs(
-  client: PoolClient, scope: VerifiedJournalReadScope, epoch: string, events: readonly CommittedJournalEvent[]
+  client: Pick<DurableTransaction, 'query'>, scope: Pick<VerifiedJournalReadScope, 'sessionId' | 'publicSessionId'>, epoch: string, events: readonly CommittedJournalEvent[]
 ): Promise<readonly OriginalInputComponent[]> {
   const inputEvents = events.filter((event) => event.body !== null && typeof event.body === 'object' &&
     !Array.isArray(event.body) && jsonObject(event.body).kind === 'INPUT_SUBMISSION')

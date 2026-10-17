@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto'
+import { captureCatalogJson } from '../../catalog/immutable.ts'
+import type { JsonValue } from '../../db/atomic.ts'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../../codex/codex-app-server-connection-types'
 
 type RecordValue = Record<string, unknown>
@@ -38,6 +40,14 @@ export type CodexProtocolEvent = Readonly<{
   observedAt: string
   receipt?: CodexNativeReceipt
   terminalStatus?: 'completed' | 'interrupted' | 'failed'
+}>
+/** Actual app-server notification, separate from admission/stop observations. */
+export type CodexNativeNotification = Readonly<{
+  connectionId: string
+  sequence: string
+  method: string
+  params: JsonValue
+  observedAt: string
 }>
 type RequestState = {
   submission: string
@@ -86,6 +96,7 @@ export type CodexProtocolDependencies = {
   receiptWaitMs?: number
   requestTimeoutMs?: number
   onEvent?: (event: CodexProtocolEvent) => void
+  onNativeNotification?: (event: CodexNativeNotification) => void
 }
 
 export class CodexProtocolSession {
@@ -103,8 +114,12 @@ export class CodexProtocolSession {
   #latestRequest: RequestState | null = null
   #activeRequest: RequestState | null = null
   #interrupting = false
+  #notificationSequence = 0n
+  readonly #nativeNotification: CodexProtocolDependencies['onNativeNotification']
 
-  constructor(private readonly dependencies: CodexProtocolDependencies) {}
+  constructor(private readonly dependencies: CodexProtocolDependencies) {
+    this.#nativeNotification = dependencies.onNativeNotification?.bind(dependencies)
+  }
 
   get threadId(): string | null { return this.#threadId }
   get historyPath(): string | null { return this.#historyPath }
@@ -124,7 +139,18 @@ export class CodexProtocolSession {
         command: input.command, args: [...input.args, 'app-server'], cwd: input.cwd,
         env: { ...input.env, CODEX_HOME: input.codexHome }
       }, {
-        onNotification: (method, params) => this.#observe(method, params),
+        onNotification: (method, params) => {
+          const originalParams = this.#nativeNotification ? captureCatalogJson(params ?? null) : null
+          this.#observe(method, params)
+          // Protocol admission/terminal state is settled by the original path.
+          // The owned sink persists errors separately; this is never an ACK.
+          if (this.#nativeNotification) {
+            this.#notificationSequence++
+            this.#nativeNotification(Object.freeze({ connectionId: this.connectionId,
+              sequence: String(this.#notificationSequence), method,
+              params: originalParams, observedAt: this.#now() }))
+          }
+        },
         onExit: () => { this.#closed = true },
         // These unconnected channels must not block a native process silently.
         onServerRequest: (request) => this.#connection?.respondWithError(request.id, -32000, 'Durable Codex driver does not support this reply channel')
