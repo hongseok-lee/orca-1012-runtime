@@ -53,10 +53,13 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
   let lease: ProviderProtectionLease | null = null
   let observedMount: AuthenticatedAgentMountObservation | null = null
 
-  function live(): boolean {
-    return phase === 'ISSUED' && held && holder !== null && heldManagedLeafDirectoryValid(holder) &&
-      control !== null && authenticatedAgentControlValid(control)
+  function lostPart(): string | null {
+    if (phase !== 'ISSUED') { return 'PHASE' }
+    if (!held || holder === null || !heldManagedLeafDirectoryValid(holder)) { return 'HELD_LEAF' }
+    if (control === null || !authenticatedAgentControlValid(control)) { return `CONTROL_${control?.lossReason() ?? 'NONE'}` }
+    return null
   }
+  function live(): boolean { return lostPart() === null }
   function releaseOriginal(): Promise<void> {
     if (release) { return release }
     release = (async () => {
@@ -152,9 +155,9 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
           bindChallengeResponse: workload.challengeResponse,
           mounts: Object.freeze([Object.freeze({ bindingId, clientRoot: '/agent', evidence: mount })]), release: releaseOriginal })
         phase = 'ISSUED'
-        if (!live()) { return deny('LIFETIME_LOST') }
+        if (!live()) { return deny(`LIFETIME_LOST_${lostPart()}`) }
         return Object.freeze({ takePreparedProtection() {
-          if (!live() || !lease) { return deny('LIFETIME_LOST') }
+          if (!live() || !lease) { return deny(`LIFETIME_LOST_${lostPart() ?? 'LEASE'}`) }
           return lease
         } })
       } catch (error) { phase = 'RETAINED'; throw error }

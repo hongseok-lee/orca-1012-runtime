@@ -50,6 +50,10 @@ export type ControllerPassRequest = {
   readonly recoverInput?: (command: TakeoverCommand, operation: TakeoverOperation,
     signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<ControllerInputRecoveryResult>
   readonly inventory?: { readonly transport: AbortableInventoryTransport; readonly sink: ControllerInventorySink }
+  /** Revokes attempts whose Agent Pod is observed gone; returns how many. Runs before the snapshot. */
+  readonly reconcileOrphans?: (signal: AbortSignal, controller: VerifiedControllerIdentity) => Promise<number>
+  /** Re-attaches READY providers recorded under a lost owner; returns how many. Runs before the snapshot. */
+  readonly adoptRuntimes?: (signal: AbortSignal, controller: VerifiedControllerIdentity) => Promise<number>
 }
 export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVENTORY';
   readonly identity: string; readonly disposition: string }
@@ -76,7 +80,8 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   const request = Object.freeze({ controller: Object.freeze({ ...caller.controller }),
     maximumWork: caller.maximumWork, externalBudgetMs: caller.externalBudgetMs, signal: caller.signal,
     planStep: caller.planStep, eventWork: caller.eventWork, executeCommitted: caller.executeCommitted,
-    lookupOriginal: caller.lookupOriginal, recoverInput: caller.recoverInput, inventory: snapshotInventory(caller.inventory) })
+    lookupOriginal: caller.lookupOriginal, recoverInput: caller.recoverInput, inventory: snapshotInventory(caller.inventory),
+    reconcileOrphans: caller.reconcileOrphans, adoptRuntimes: caller.adoptRuntimes })
   positiveInteger(request.maximumWork)
   positiveInteger(request.externalBudgetMs)
   counter('controller-term', request.controller.term)
@@ -138,6 +143,13 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   function room(): boolean { return work < request.maximumWork && performance.now() < end }
   try {
     await gate()
+    // Physical facts first: a gone Pod frees its unit, a live recorded host is
+    // taken over, and only then does lifecycle/input recovery read its snapshot.
+    for (const [identity, hook] of [['ORPHANS', request.reconcileOrphans], ['ADOPTION', request.adoptRuntimes]] as const) {
+      if (!hook || !room()) { continue }
+      const handled = await external(signal => hook(signal, request.controller))
+      if (handled > 0) { work += handled; items.push({ kind: 'RECONCILE', identity, disposition: `HANDLED_${handled}` }) }
+    }
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
     const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))

@@ -34,9 +34,14 @@ function count(value: number): number {
   return value
 }
 
+function optional(value: string | null): string | null {
+  if (value !== null && (typeof value !== 'string' || !/^[A-Z0-9_:]{1,160}$/.test(value))) { throw new Error('CONTROLLER_DIAGNOSTIC_SNAPSHOT_FAILED') }
+  return value
+}
+
 // Explicit projection only: never serialize the owner, a resource, or raw extra fields.
 function project(snapshot: OrcadControllerSnapshot) {
-  const worker = snapshot.worker, latest = snapshot.latestObservation
+  const worker = snapshot.worker, latest = snapshot.latestObservation, initial = snapshot.firstManagedInitial
   const lease = worker?.confirmedLease, pass = worker?.lastPass
   const failure = worker?.lastFailure, stopped = worker?.stoppedBy, flight = worker?.inFlight
   return {
@@ -56,6 +61,10 @@ function project(snapshot: OrcadControllerSnapshot) {
       persistence: state(latest.persistence, ['CURSOR_ONLY', 'RECORDED', 'REPLAYED']), observedAt: latest.observedAt,
       counts: { total: count(latest.counts.total), list: count(latest.counts.list), watch: count(latest.counts.watch) }
     },
+    firstManagedInitial: initial == null ? null : { phase: initial.phase, status: initial.status,
+      errorCode: optional(initial.errorCode), executionPhase: initial.executionPhase, executionErrorCode: optional(initial.executionErrorCode),
+      coldPhase: optional(initial.coldPhase ?? null), coldFailure: optional(initial.coldFailure ?? null),
+      coldInput: optional(initial.coldInput ?? null), adoption: optional(initial.adoption ?? null) },
     lastFailure: snapshot.lastFailure === null ? null : {
       stage: state(snapshot.lastFailure.stage, ['START', 'STOP', 'INVENTORY']), code: code(snapshot.lastFailure.code)
     }

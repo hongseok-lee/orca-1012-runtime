@@ -17,6 +17,8 @@ export type OrcadControllerConfig = Readonly<{
   structuredOutput?: Readonly<{ claimDurationMs: number }>
   firstManagedInitial?: Readonly<{ configFile: string; coldConfigFile?: string }>
   inputRecoveryTarget?: OrcadInputRecoveryTarget
+  /** Opt-in: the Active controller revokes attempts whose Agent Pod is observed gone. */
+  orphanReconcile?: true
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -83,9 +85,11 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const hasStructuredOutput = value !== null && typeof value === 'object' && Object.hasOwn(value, 'structuredOutput')
   const hasFirstManagedInitial = value !== null && typeof value === 'object' && Object.hasOwn(value, 'firstManagedInitial')
   const hasInputRecoveryTarget = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryTarget')
+  const hasOrphanReconcile = value !== null && typeof value === 'object' && Object.hasOwn(value, 'orphanReconcile')
   const input = record(value, ['datasetName', 'inventory', 'policy',
     ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : []),
-    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : [])])
+    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : []), ...(hasOrphanReconcile ? ['orphanReconcile'] : [])])
+  if (hasOrphanReconcile && input.orphanReconcile !== true) { invalidOrcadControllerConfig() }
   const inputRecoveryTarget = hasInputRecoveryTarget ? captureOrcadInputRecoveryTarget(input.inputRecoveryTarget) : undefined
   const structuredOutput = hasStructuredOutput
     ? Object.freeze({ claimDurationMs: positive(record(input.structuredOutput, ['claimDurationMs']).claimDurationMs, true) })
@@ -110,6 +114,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
     ...(structuredOutput ? { structuredOutput } : {}),
     ...(firstManagedInitial ? { firstManagedInitial } : {}),
     ...(inputRecoveryTarget ? { inputRecoveryTarget } : {}),
+    ...(hasOrphanReconcile ? { orphanReconcile: true as const } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),

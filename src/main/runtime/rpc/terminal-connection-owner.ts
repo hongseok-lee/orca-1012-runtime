@@ -20,8 +20,10 @@ class TerminalInputOrderError extends Error {
   constructor(code: string) { super(code); this.code = code }
 }
 
-/** Absence is unknown. Tombstones are created only by an actual owner hook;
- * a fresh server incarnation can never claim that an old socket terminated. */
+/** Absence is unknown. Tombstones are created only by an actual owner hook.
+ * A fresh server incarnation never claims an old socket terminated; it only
+ * lets the same device and caller take over that socket's floor, and the PG
+ * floor CAS then rejects any late write through the old binding. */
 export class TerminalConnectionOwner {
   private readonly incarnation = randomUUID()
   private readonly connections = new Map<string, Connection>()
@@ -50,7 +52,16 @@ export class TerminalConnectionOwner {
     const assertPreviousInvalidated = (previous: string, device: string, principal: string): void => {
         assertCurrent()
         const prefix = `${this.incarnation}:`
-        const old = previous.startsWith(prefix) ? this.connections.get(previous.slice(prefix.length)) : null
+        // A connection of an earlier server process cannot write through this
+        // process at all; after a backend restart or Serve failover the same
+        // device and caller may take its floor over (the draft revision CAS
+        // still orders it). Within this process the old connection must be
+        // invalidated explicitly.
+        if (!previous.startsWith(prefix)) {
+          if (device !== pairedDeviceId || principal !== fingerprint) { throw new Error('TERMINAL_PREVIOUS_CONNECTION_INVALIDATION_UNPROVEN') }
+          return
+        }
+        const old = this.connections.get(previous.slice(prefix.length))
         if (!old || !old.invalidated || old.pairedDeviceId !== device || old.fingerprint !== principal ||
             device !== pairedDeviceId || principal !== fingerprint) { throw new Error('TERMINAL_PREVIOUS_CONNECTION_INVALIDATION_UNPROVEN') }
     }
@@ -94,7 +105,12 @@ export class TerminalConnectionOwner {
             prior.device !== pairedDeviceId || prior.fingerprint !== fingerprint)) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
         if (previousConnection === null && prior) { throw new Error('TERMINAL_LOGICAL_FLOOR_ALREADY_RESERVED') }
         if (previousConnection !== null) {
-          if (!prior || prior.connection !== previousConnection) { throw new Error('TERMINAL_LOGICAL_FLOOR_GRANT_UNPROVEN') }
+          // An earlier process's floor has no in-memory owner here; the PG
+          // floor reattach checks it was the same device and principal.
+          const earlier = !previousConnection.startsWith(`${this.incarnation}:`)
+          if (earlier ? prior && prior.connection !== previousConnection : !prior || prior.connection !== previousConnection) {
+            throw new Error('TERMINAL_LOGICAL_FLOOR_GRANT_UNPROVEN')
+          }
           if (previousConnection !== connectionIncarnation) { assertPreviousInvalidated(previousConnection, pairedDeviceId, fingerprint) }
         }
         const next: LogicalOwner = prior?.connection === connectionIncarnation ? prior : {

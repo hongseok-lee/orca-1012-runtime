@@ -1,5 +1,5 @@
 import { agentCodexBootstrap, agentControlTransfer } from './agent-control-bootstrap.ts'
-import { inventoryName, inventoryNamespace } from '../lifecycle/kubernetes-identity.ts'
+import { inventoryNamespace } from '../lifecycle/kubernetes-identity.ts'
 
 export { agentControlTransfer } from './agent-control-bootstrap.ts'
 
@@ -50,21 +50,18 @@ export function createAgentControlAuthorization(namespaceInput: string, bootstra
   return { apiVersion: 'v1', kind: 'List', items: [items[5], items[6], items[0], items[1], items[3], items[2], items[4]] }
 }
 
-/** Exact original Bound names from the trusted deployment plan/readback only.
- * The runtime Agent receives neither these permissions nor a RoleBinding. */
-export function createAgentMountReadAuthorization(namespaceInput: string, claims: readonly string[], volumes: readonly string[]) {
-  const namespace = inventoryNamespace(namespaceInput)
-  const names = (values: readonly string[]) => {
-    if (values.length !== 2 || new Set(values).size !== 2) { throw new Error('AGENT_MOUNT_READ_SCOPE') }
-    return Object.freeze(values.map(value => inventoryName(value)))
-  }
-  const claimNames = names(claims), volumeNames = names(volumes), name = 'orca-agent-mount-reader'
+/** Read-only get of the PVC/PV objects the mount collector compares with the
+ * mount it observes. Every session has its own leaf PV, so the grant is not
+ * limited to fixed names. The runtime Agent receives neither these
+ * permissions nor a RoleBinding. */
+export function createAgentMountReadAuthorization(namespaceInput: string) {
+  const namespace = inventoryNamespace(namespaceInput), name = 'orca-agent-mount-reader'
   const subject = { kind: 'ServiceAccount', name: 'orca-backend-inventory', namespace }
   return { apiVersion: 'v1', kind: 'List', items: [
     { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'Role', metadata: { name, namespace },
-      rules: [{ apiGroups: [''], resources: ['persistentvolumeclaims'], verbs: ['get'], resourceNames: claimNames }] },
+      rules: [{ apiGroups: [''], resources: ['persistentvolumeclaims'], verbs: ['get'] }] },
     { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'ClusterRole', metadata: { name },
-      rules: [{ apiGroups: [''], resources: ['persistentvolumes'], verbs: ['get'], resourceNames: volumeNames }] },
+      rules: [{ apiGroups: [''], resources: ['persistentvolumes'], verbs: ['get'] }] },
     { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'RoleBinding', metadata: { name, namespace },
       roleRef: { apiGroup: 'rbac.authorization.k8s.io', kind: 'Role', name }, subjects: [subject] },
     { apiVersion: 'rbac.authorization.k8s.io/v1', kind: 'ClusterRoleBinding', metadata: { name },

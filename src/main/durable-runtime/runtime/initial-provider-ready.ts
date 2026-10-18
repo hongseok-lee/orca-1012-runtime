@@ -17,12 +17,14 @@ import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
 import { publishCatalogTerminalNativeSessionReady } from '../catalog/terminal-native-session.ts'
 
 const deny = (): never => { throw new DurableDatabaseError('INITIAL_PROVIDER_READY_UNCONFIRMED') }
+/** Identity of the Pod-local control host the READY provider runs under. */
+export type ReadyControlHost = Readonly<{ provider: 'codex' | 'claude'; controlId: string; pid: number; startTicks: string; device: string; inode: string }>
 
 /** Only the original driver's actual thread/start response may settle READY.
  * This does not start a provider, replay an effect or release its held pins. */
 export async function settleInitialProviderReady(pool: Pool, original: Readonly<{
   context: GatewayContext; claim: CommandClaim; planDigest: string
-}>, binding: ReadyProviderBinding, driver: DurableCodexDriver, owner: ProviderProtectionOwner) {
+}>, binding: ReadyProviderBinding, driver: DurableCodexDriver, owner: ProviderProtectionOwner, host?: ReadyControlHost) {
   if (!(driver instanceof DurableCodexDriver) || !driver.ownsReadyBinding(binding)) { return deny() }
   const input = immutableSnapshot(original), take = owner.takePreparedProtection.bind(owner)
   const native = immutableSnapshot(binding), lease = take()
@@ -98,6 +100,13 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
       occurredAt: new Date(), receivedAt: new Date(), producerId: randomUUID(), producerSeq: counter('sequence:producer', '1'), evidenceRefs: [] })
     await enqueueOutbox(tx, { eventId: logicalId('event', audit), aggregateId: native.runtimeUnitId, aggregateKind: 'runtime-unit',
       revision: counter('row:runtime-unit', unit.rows[0].revision), event })
+    if (host) {
+      // Recorded with READY so a later backend can re-attach to this exact control.
+      await tx.query(`INSERT INTO durable_runtime.agent_control_hosts(attempt_id,runtime_unit_id,session_id,provider,pod_uid,
+        control_id,control_pid,control_start_ticks,root_device,root_inode,connection_instance_id)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [native.attemptId, native.runtimeUnitId, native.sessionId, host.provider,
+        native.podUid, host.controlId, host.pid, host.startTicks, host.device, host.inode, native.connectionInstanceId])
+    }
     // Final rank10: publish only the original driver's committed native read
     // identity together with READY. No metadata state or principal is made.
     await publishCatalogTerminalNativeSessionReady(tx, audit, native)

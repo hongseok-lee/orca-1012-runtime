@@ -147,8 +147,15 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
         if (closing) { return }
         captured.assertCurrentHost()
         firstManagedInitial = selectedInitial
+        const orphans = config.orphanReconcile
+          ? (await import('./orcad-orphan-reconcile.ts')).prepareOrcadOrphanReconcile(captured.pool, config,
+            ca ?? Buffer.from(credential(config.inventory.caFile, 'CA')))
+          : null
+        if (closing) { return }
         worker = createControllerWorker(captured.pool, config.policy, {
           ...selectedCallbacks,
+          ...(selectedInitial?.adoptRuntimes ? { adoptRuntimes: selectedInitial.adoptRuntimes } : {}),
+          ...(orphans ? { reconcileOrphans: orphans.reconcileOrphans } : {}),
           ...(inputRecovery ? { recoverInput: inputRecovery.recoverInput } : {}),
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source, pass) {

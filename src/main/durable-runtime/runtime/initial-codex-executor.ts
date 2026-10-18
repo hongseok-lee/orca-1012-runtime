@@ -58,7 +58,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   const onReady = original.onReady?.bind(original)
   const onNativeNotification = original.onNativeNotification?.bind(original)
   const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
-  let used = false, phase = 'UNUSED'
+  let used = false, phase = 'UNUSED', failure: string | null = null
   let writerActivated = false
   let protection: ReturnType<typeof createInitialProviderProtection> | null = null
   let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
@@ -81,7 +81,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   }
   return Object.freeze({
     phase: () => phase,
-    snapshot: () => Object.freeze({ phase, writerGrantActivated: writerActivated,
+    snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
       ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch }) : null,
@@ -159,7 +159,11 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           predecessor: grants.value.receipt })
         if (gate.execution.disposition !== 'COMMITTED_EXECUTE') { return deny('GATE_CLAIM_UNCONFIRMED') }
         const transport = control.transport
-        driver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification }, sink)
+        // A host-capable control already tagged its HELLO; its id and frame
+        // sequence then name notifications identically for any later owner.
+        const hosted = control.frameSequence() > 0
+        driver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification,
+          ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, sink)
         const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
           tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
           providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),
@@ -179,11 +183,15 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         const native = await driver.cold(cold, gate.execution.claim, permit.permit)
         phase = 'READY_SETTLEMENT'
         const settled = await settleInitialProviderReady(borrowed, { context, claim: gate.execution.claim,
-          planDigest: selected.planDigest }, native, driver, owner)
+          planDigest: selected.planDigest }, native, driver, owner, hosted ? Object.freeze({ provider: 'codex' as const,
+          controlId: control.controlId, pid: control.controlPid, startTicks: control.startTicks,
+          device: control.root.device, inode: control.root.inode }) : undefined)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
         readyProtection = owner; readyContext = context; readyExecutor = claim.executorId; ready = native; phase = 'READY'
         onReady?.()
       } catch (error) {
+        // Only a fixed code is kept for diagnostics, never a message body.
+        failure = `${phase}:${error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'UNCLASSIFIED'}`
         phase = 'RETAINED_UNCONFIRMED'
         throw error
       }

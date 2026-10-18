@@ -34,6 +34,7 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
     onTerminalInputCommitted?: TerminalInputCommittedSink
     assertOutputAvailable?(): void
     close?(): Promise<void>
+    adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
   }>
 }>
 type TransactionSnapshot = Readonly<{
@@ -53,6 +54,9 @@ export type FirstManagedInitialDispatchSnapshot = Readonly<{
   observationDisposition: string | null; createRequested: boolean
   gate: 'CLOSED' | 'OPEN'; providerReady: boolean; writerGrantActivated: boolean
   coldPhase?: string
+  coldFailure?: string | null
+  coldInput?: string | null
+  adoption?: string | null
 }>
 type Callbacks = Required<Pick<ControllerPassRequest, 'planStep' | 'executeCommitted' | 'lookupOriginal'>>
 
@@ -78,6 +82,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
     snapshot(): FirstManagedInitialDispatchSnapshot
     onTerminalInputCommitted?: TerminalInputCommittedSink
     assertOutputAvailable?(): void
+    adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
     close(): Promise<void>
   }> {
   const prepared = prepareAgentPodPlan(createAgentPodPlanner(original.policy).plan(original.request))
@@ -223,10 +228,14 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
   return Object.freeze({ ...callbacks,
     onTerminalInputCommitted: cold?.onTerminalInputCommitted?.bind(cold),
     assertOutputAvailable: cold?.assertOutputAvailable?.bind(cold),
+    adoptRuntimes: cold?.adoptRuntimes?.bind(cold),
     close: async () => { await cold?.close?.() },
     snapshot: () => {
     const provider = coldSnapshot?.()
-    return provider ? Object.freeze({ ...state, coldPhase: provider.phase,
+    const extra = provider as { inputPhase?: string; inputError?: string | null; adoption?: { phase: string | null; error: string | null } } | undefined
+    return provider ? Object.freeze({ ...state, coldPhase: provider.phase, coldFailure: provider.failure ?? null,
+      coldInput: extra?.inputPhase ? `${extra.inputPhase}:${extra.inputError ?? 'NONE'}` : null,
+      adoption: extra?.adoption ? `${extra.adoption.phase ?? 'NONE'}:${extra.adoption.error ?? 'NONE'}` : null,
       gate: provider.providerReady ? 'OPEN' as const : 'CLOSED' as const,
       providerReady: provider.providerReady, writerGrantActivated: provider.writerGrantActivated }) : state
   } })

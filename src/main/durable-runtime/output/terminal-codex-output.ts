@@ -144,6 +144,17 @@ export function createTerminalCodexOutput(input: Readonly<{
       // A drain failure remains observable through drain/close/snapshot.
       void drain().catch(() => {})
     }, drain,
+    /** Highest spooled notification sequence of a connection. With a host
+     * frame sequence this is where a re-attach must resume, since every frame
+     * up to it already reached this write-ahead spool. */
+    journaledSequence(connectionId: string): number {
+      let highest = 0
+      for (const record of records.values()) {
+        const value = Number(record.notification.sequence)
+        if (record.notification.connectionId === connectionId && Number.isSafeInteger(value) && value > highest) { highest = value }
+      }
+      return highest
+    },
     async close(): Promise<void> {
       if (closed) { if (failure) { throw failure }; return }
       try { await drain() } finally { closed = true; closeSync(fd) }
