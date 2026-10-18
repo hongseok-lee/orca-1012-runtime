@@ -19,6 +19,8 @@ export type OrcadControllerConfig = Readonly<{
   inputRecoveryTarget?: OrcadInputRecoveryTarget
   /** Opt-in: the Active controller revokes attempts whose Agent Pod is observed gone. */
   orphanReconcile?: true
+  /** Re-attach every READY session whose control host an earlier process recorded. */
+  adoption?: Readonly<{ configFile: string }>
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -86,9 +88,11 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const hasFirstManagedInitial = value !== null && typeof value === 'object' && Object.hasOwn(value, 'firstManagedInitial')
   const hasInputRecoveryTarget = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryTarget')
   const hasOrphanReconcile = value !== null && typeof value === 'object' && Object.hasOwn(value, 'orphanReconcile')
+  const hasAdoption = value !== null && typeof value === 'object' && Object.hasOwn(value, 'adoption')
   const input = record(value, ['datasetName', 'inventory', 'policy',
     ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : []),
-    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : []), ...(hasOrphanReconcile ? ['orphanReconcile'] : [])])
+    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : []), ...(hasOrphanReconcile ? ['orphanReconcile'] : []),
+    ...(hasAdoption ? ['adoption'] : [])])
   if (hasOrphanReconcile && input.orphanReconcile !== true) { invalidOrcadControllerConfig() }
   const inputRecoveryTarget = hasInputRecoveryTarget ? captureOrcadInputRecoveryTarget(input.inputRecoveryTarget) : undefined
   const structuredOutput = hasStructuredOutput
@@ -115,6 +119,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
     ...(firstManagedInitial ? { firstManagedInitial } : {}),
     ...(inputRecoveryTarget ? { inputRecoveryTarget } : {}),
     ...(hasOrphanReconcile ? { orphanReconcile: true as const } : {}),
+    ...(hasAdoption ? { adoption: Object.freeze({ configFile: absolute(record(input.adoption, ['configFile']).configFile) }) } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),

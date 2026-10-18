@@ -123,14 +123,16 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
         await lockAggregates(tx, {sessionIds: [resolved.sessionId]})
         assertCurrent()
         const floor = await readTerminalFloorInTransaction(tx, binding('0'))
-        if (floor && (floor.binding.principalId !== principal || floor.binding.pairedDeviceId !== device || floor.binding.mode !== 'AGENT_CHAT_COMPAT')) {
-          throw new TerminalDraftStoreError('TERMINAL_FLOOR_OWNED_BY_ANOTHER_CALLER')
-        }
-        const draft = floor ? await readTerminalDraftInTransaction(tx, floor.binding) : null
+        if (floor && floor.binding.mode !== 'AGENT_CHAT_COMPAT') { throw new TerminalDraftStoreError('TERMINAL_FLOOR_OWNED_BY_ANOTHER_CALLER') }
+        // Another device/caller holds the floor: this sender takes it over at
+        // the next generation (last sender wins). Its unsent draft stays its own.
+        const foreign = !!floor && (floor.binding.principalId !== principal || floor.binding.pairedDeviceId !== device)
+        const draft = floor && !foreign ? await readTerminalDraftInTransaction(tx, floor.binding) : null
         assertCurrent()
-        return {floor, draftRevision: draft?.draft.revision ?? '0'}
+        return {floor, foreign, draftRevision: draft?.draft.revision ?? '0'}
       })
-      const logicalGrant = reserveLogicalFloor({handle: params.terminal, sessionId: resolved.sessionId, mode: 'AGENT_CHAT_COMPAT'}, baseline.floor?.binding.connectionId ?? null)
+      const logicalGrant = reserveLogicalFloor({handle: params.terminal, sessionId: resolved.sessionId, mode: 'AGENT_CHAT_COMPAT'},
+        baseline.floor?.binding.connectionId ?? null, baseline.foreign)
       const acquired = await runDurableTransaction(pool, async tx => {
         await lockAggregates(tx, {sessionIds: [resolved.sessionId]})
         assertCurrent(); logicalGrant.assertCurrent()
@@ -143,6 +145,14 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
           // Session-locked CAS now persists it. This is not a native PTY grant.
           const floor = await claimTerminalFloorInTransaction(tx, binding('0'), null, {
             assertClaimAllowed: (_next, previous) => { assertCurrent(); logicalGrant.assertCurrent(); if (previous) { throw new TerminalDraftStoreError('TERMINAL_FLOOR_TAKEOVER_NOT_ALLOWED') } },
+            assertReattachAllowed: () => { throw new TerminalDraftStoreError('TERMINAL_REATTACH_REQUIRED') }
+          })
+          return {floor, draftRevision: '0'}
+        }
+        if (baseline.foreign) {
+          const next = binding((BigInt(baseline.floor.binding.floorGeneration) + 1n).toString())
+          const floor = await claimTerminalFloorInTransaction(tx, next, baseline.floor, {
+            assertClaimAllowed: (_next, previous) => { assertCurrent(); logicalGrant.assertCurrent(); if (!previous) { throw new TerminalDraftStoreError('TERMINAL_STALE_FLOOR') } },
             assertReattachAllowed: () => { throw new TerminalDraftStoreError('TERMINAL_REATTACH_REQUIRED') }
           })
           return {floor, draftRevision: '0'}

@@ -7,7 +7,8 @@ export type TerminalInputConnection = Readonly<{
   authenticatedCallerFingerprint: string
   assertCurrent: () => void
   assertPreviousInvalidated: (connectionIncarnation: string, pairedDeviceId: string, fingerprint: string) => void
-  reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null) => TerminalLogicalFloorGrant
+  /** foreignOwner: the PG floor belongs to another device/caller and this send takes it over. */
+  reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null, foreignOwner?: boolean) => TerminalLogicalFloorGrant
   runOrderedInput: <T>(handle: string, requestKey: string, operation: (resolveOnly: boolean) => Promise<T>) => Promise<T>
 }>
 export type TerminalLogicalTarget = Readonly<{handle: string; sessionId: string; mode: 'AGENT_CHAT_COMPAT'}>
@@ -97,12 +98,15 @@ export class TerminalConnectionOwner {
         originalLane.tail = result.then(() => undefined, () => undefined)
         return result
       },
-      reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null): TerminalLogicalFloorGrant => {
+      reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null, foreignOwner = false): TerminalLogicalFloorGrant => {
         assertCurrent()
         if (!target.handle || !target.sessionId || target.mode !== 'AGENT_CHAT_COMPAT') { throw new Error('TERMINAL_LOGICAL_TARGET_REQUIRED') }
         const fixed = Object.freeze({...target}), prior = this.logicalFloors.get(target.handle)
-        if (prior && (prior.target.sessionId !== fixed.sessionId || prior.target.mode !== fixed.mode ||
-            prior.device !== pairedDeviceId || prior.fingerprint !== fingerprint)) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
+        if (prior && (prior.target.sessionId !== fixed.sessionId || prior.target.mode !== fixed.mode)) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
+        // Another device or caller sending to the same session takes the floor
+        // over (last sender wins); it must name the floor it read from PG.
+        const takeover = foreignOwner || !!prior && (prior.device !== pairedDeviceId || prior.fingerprint !== fingerprint)
+        if (takeover && (previousConnection === null || prior && prior.connection !== previousConnection)) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
         if (previousConnection === null && prior) { throw new Error('TERMINAL_LOGICAL_FLOOR_ALREADY_RESERVED') }
         if (previousConnection !== null) {
           // An earlier process's floor has no in-memory owner here; the PG
@@ -111,9 +115,9 @@ export class TerminalConnectionOwner {
           if (earlier ? prior && prior.connection !== previousConnection : !prior || prior.connection !== previousConnection) {
             throw new Error('TERMINAL_LOGICAL_FLOOR_GRANT_UNPROVEN')
           }
-          if (previousConnection !== connectionIncarnation) { assertPreviousInvalidated(previousConnection, pairedDeviceId, fingerprint) }
+          if (previousConnection !== connectionIncarnation && !takeover && !foreignOwner) { assertPreviousInvalidated(previousConnection, pairedDeviceId, fingerprint) }
         }
-        const next: LogicalOwner = prior?.connection === connectionIncarnation ? prior : {
+        const next: LogicalOwner = prior?.connection === connectionIncarnation && !takeover ? prior : {
           target: fixed, connection: connectionIncarnation, device: pairedDeviceId, fingerprint, committed: false}
         this.logicalFloors.set(target.handle, next)
         const check = (): void => {

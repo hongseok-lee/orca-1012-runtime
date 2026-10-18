@@ -35,6 +35,7 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
     assertOutputAvailable?(): void
     close?(): Promise<void>
     adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
+    ownsSession?(sessionId: string): boolean
   }>
 }>
 type TransactionSnapshot = Readonly<{
@@ -83,6 +84,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
     onTerminalInputCommitted?: TerminalInputCommittedSink
     assertOutputAvailable?(): void
     adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
+    ownsSession?(sessionId: string): boolean
     close(): Promise<void>
   }> {
   const prepared = prepareAgentPodPlan(createAgentPodPlanner(original.policy).plan(original.request))
@@ -229,6 +231,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
     onTerminalInputCommitted: cold?.onTerminalInputCommitted?.bind(cold),
     assertOutputAvailable: cold?.assertOutputAvailable?.bind(cold),
     adoptRuntimes: cold?.adoptRuntimes?.bind(cold),
+    ownsSession: (sessionId: string) => cold?.ownsSession?.(sessionId) ?? false,
     close: async () => { await cold?.close?.() },
     snapshot: () => {
     const provider = coldSnapshot?.()

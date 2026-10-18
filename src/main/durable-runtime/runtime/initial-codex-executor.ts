@@ -185,7 +185,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         const settled = await settleInitialProviderReady(borrowed, { context, claim: gate.execution.claim,
           planDigest: selected.planDigest }, native, driver, owner, hosted ? Object.freeze({ provider: 'codex' as const,
           controlId: control.controlId, pid: control.controlPid, startTicks: control.startTicks,
-          device: control.root.device, inode: control.root.inode }) : undefined)
+          device: control.root.device, inode: control.root.inode, controlSha256: prepared.config.agent.bootstrapSha256 }) : undefined)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
         readyProtection = owner; readyContext = context; readyExecutor = claim.executorId; ready = native; phase = 'READY'
         onReady?.()

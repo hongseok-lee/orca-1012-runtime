@@ -140,6 +140,18 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     }
   }
 
+  /** One operation's executor failure is that operation's result: it keeps
+   * its retained resources and is looked up again, while the pass goes on.
+   * Loss of the lease or cancellation still stops the whole pass. */
+  async function contained(run: () => Promise<void>): Promise<string | null> {
+    try { await run(); return null } catch (error) {
+      if (local.signal.aborted || session.signal.aborted) { throw error }
+      const code = safeDatabaseError(error).code
+      if (code === 'CONTROLLER_PASS_CANCELLED' || code === 'CONTROLLER_EXTERNAL_BUDGET') { throw error }
+      await gate()
+      return /^[A-Z0-9_]{1,40}$/.test(code) ? code : 'UNCLASSIFIED'
+    }
+  }
   function room(): boolean { return work < request.maximumWork && performance.now() < end }
   try {
     await gate()
@@ -147,8 +159,10 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     // taken over, and only then does lifecycle/input recovery read its snapshot.
     for (const [identity, hook] of [['ORPHANS', request.reconcileOrphans], ['ADOPTION', request.adoptRuntimes]] as const) {
       if (!hook || !room()) { continue }
-      const handled = await external(signal => hook(signal, request.controller))
-      if (handled > 0) { work += handled; items.push({ kind: 'RECONCILE', identity, disposition: `HANDLED_${handled}` }) }
+      let handled = 0
+      const failure = await contained(async () => { handled = await external(signal => hook(signal, request.controller)) })
+      if (failure) { items.push({ kind: 'RECONCILE', identity, disposition: `FAILED_${failure}` }) }
+      else if (handled > 0) { work += handled; items.push({ kind: 'RECONCILE', identity, disposition: `HANDLED_${handled}` }) }
     }
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
@@ -258,14 +272,14 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
           if (!request.executeCommitted) {
             items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE_NOT_WIRED' })
           } else {
-            await external(signal => request.executeCommitted!(claim, signal, context))
-            items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE' })
+            const failure = await contained(() => external(signal => request.executeCommitted!(claim, signal, context)))
+            items.push({ kind: 'RECONCILE', identity: operation.id, disposition: failure ? `EXECUTE_FAILED_${failure}` : 'COMMITTED_EXECUTE' })
           }
         } else if (prepared.execution.reason === 'LOOKUP_ORIGINAL' && command && request.lookupOriginal) {
           // P113 performed original gateway adoption. No receipt becomes a claim,
           // no ACCEPTED/EXECUTING/UNKNOWN command is executed a second time here.
-          await external(signal => request.lookupOriginal!(command, signal, context))
-          items.push({ kind: 'RECONCILE', identity: command.id, disposition: 'LOOKUP_ORIGINAL' })
+          const failure = await contained(() => external(signal => request.lookupOriginal!(command, signal, context)))
+          items.push({ kind: 'RECONCILE', identity: command.id, disposition: failure ? `LOOKUP_FAILED_${failure}` : 'LOOKUP_ORIGINAL' })
         } else {items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })}
       }
     }

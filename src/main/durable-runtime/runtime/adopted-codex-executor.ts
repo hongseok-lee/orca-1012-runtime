@@ -21,6 +21,8 @@ type Transport = ReturnType<typeof createAgentCodexTransport>
 export type AdoptedCodexTarget = Readonly<{
   attemptId: string; runtimeUnitId: string; operationId: string; podName: string; podUid: string
   executionEpoch: string; specHash: string; agentId: string
+  /** Bundle the recorded host runs; null for hosts recorded before migration 025. */
+  controlSha256: string | null
 }>
 export type AdoptedCodexExecutorConfiguration = Readonly<{
   sessionId: SessionId
@@ -35,7 +37,7 @@ export type AdoptedCodexExecutorConfiguration = Readonly<{
 }>
 type Row = { attempt_id: string; runtime_unit_id: string; pod_uid: string; execution_epoch: string; incarnation: string
   control_id: string; control_pid: number; control_start_ticks: string; root_device: string; root_inode: string
-  connection_instance_id: string; operation_id: string; resource_name: string; spec_hash: string; tab_id: string
+  connection_instance_id: string; control_sha256: string | null; operation_id: string; resource_name: string; spec_hash: string; tab_id: string
   terminal_handle: string; provider_binding_revision: string; agent_id: string; native_session_ref: string | null
   producer_id: string | null; producer_incarnation: string | null }
 
@@ -76,7 +78,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
       try {
         phase = 'READ_RECORD'
         const found = await pool.query<Row>(`SELECT a.id AS attempt_id,a.runtime_unit_id,a.pod_uid,a.execution_epoch::text,a.incarnation,
-          h.control_id,h.control_pid,h.control_start_ticks,h.root_device,h.root_inode,h.connection_instance_id,
+          h.control_id,h.control_pid,h.control_start_ticks,h.root_device,h.root_inode,h.connection_instance_id,h.control_sha256,
           p.operation_id,p.resource_name,p.spec_hash,t.id AS tab_id,t.terminal_handle,s.provider_binding_revision::text,s.agent_id,
           (SELECT e.next_state->'providerRef'->>'nativeSessionRef' FROM durable_runtime.runtime_audit_events e
             WHERE e.kind='INITIAL_PROVIDER_READY' AND e.next_state->>'attemptId'=a.id::text ORDER BY e.occurred_at DESC LIMIT 1) AS native_session_ref,
@@ -93,7 +95,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         phase = 'DEPLOYMENT'
         const prepared = await deployment(Object.freeze({ attemptId: row.attempt_id, runtimeUnitId: row.runtime_unit_id,
           operationId: row.operation_id, podName: row.resource_name, podUid: row.pod_uid, executionEpoch: row.execution_epoch,
-          specHash: row.spec_hash, agentId: row.agent_id }))
+          specHash: row.spec_hash, agentId: row.agent_id, controlSha256: row.control_sha256 }))
         const identity = Object.freeze({ controlId: row.control_id, pid: row.control_pid, startTicks: row.control_start_ticks,
           device: row.root_device, inode: row.root_inode })
         const adoption: { current: ReturnType<Transport['adopt']> | null } = { current: null }

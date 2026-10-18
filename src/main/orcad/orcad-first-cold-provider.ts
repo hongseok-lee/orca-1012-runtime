@@ -172,6 +172,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       catch (error) { adoptError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'ADOPTION_FAILED'; return 0 }
     }
     return Object.freeze({ ...originalExecutor, adoptRuntimes,
+      ownsSession: (sessionId: string) => sessionId === initial.sessionId,
       onTerminalInputCommitted: inputRuntime.committed,
       assertOutputAvailable(): void {
         const state = output.snapshot()
