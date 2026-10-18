@@ -106,6 +106,9 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
       hold = Object.freeze({ ...accepted.record.profile, digest: accepted.namespaceDigest,
         pinId: logicalId('storage-namespace-pin', input.pinId), ownerToken: input.ownerToken, actorId: input.actorId })
       try {
+        // A Pod can wait minutes for a node; the leaf pin's exec stream would
+        // sit idle that long and be dropped. Take the pin once the Pod runs.
+        await agent.awaitPodRunning(signal)
         holdAttempted = true
         const acquired = await acquireNamespaceHold(borrowed, hold)
         if (!acquired.database.ok || acquired.database.commitOutcome !== 'ACKNOWLEDGED' || acquired.database.cleanupFailed ||

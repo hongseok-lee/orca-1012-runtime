@@ -63,6 +63,14 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     authenticate: original.podAuthenticator.authenticatePod.bind(original.podAuthenticator) })
   let preparedOnce = false, adoptedOnce = false
   return Object.freeze({
+    /** Waits for the exact Pod to run without creating anything, so a caller
+     * can take long-held resources (the protected leaf pin) only afterwards. */
+    async awaitPodRunning(signal: AbortSignal): Promise<void> {
+      const bounded = AbortSignal.any([signal, AbortSignal.timeout(config.timeoutMs)])
+      const bearer = await awaitPodAuthValue(Promise.resolve(reviewer(bounded)), bounded)
+      if (!bearerValid(bearer) || bounded.aborted) { throw fail() }
+      await awaitAgentControlPodRunning(config, ca, bearer, bounded)
+    },
     async prepare(signal: AbortSignal): Promise<AuthenticatedAgentControl> {
       // A failed/unknown original control is reconciled through its own handle;
       // this factory cannot open a second control process for the same attempt.
