@@ -31,7 +31,7 @@ export type OrcadControllerSnapshot = Readonly<{
   lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY'; code: string }> | null
   firstManagedInitial?: FirstManagedInitialDispatchSnapshot
   inputRecovery?: OrcadInputRecoverySnapshot
-  adoptedRuntimes?: Readonly<{ adopted: number; failed: number; firstError: string | null }>
+  adoptedRuntimes?: Readonly<{ adopted: number; failed: number; firstError: string | null; lastInput: string | null }>
 }>
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>

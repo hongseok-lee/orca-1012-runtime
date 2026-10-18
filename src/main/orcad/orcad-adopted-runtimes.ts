@@ -52,6 +52,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
   const podAuthenticator = createKubernetesPodAuthenticator({ apiOrigin, ca: Buffer.from(ca), clusterIdentityRef: text('clusterIdentityRef'),
     audience: 'orca-runtime-agent', namespace, dataset, timeoutMs, readReviewerBearer })
   const entries = new Map<string, Entry>(), errors = new Map<string, string>()
+  let lastInput: string | null = null
 
   function transportFor(target: AdoptedCodexTarget) {
     if (!target.controlSha256) { return deny() }
@@ -76,7 +77,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     mkdirSync(spool, { recursive: true, mode: 0o700 })
     let executor: ReturnType<typeof createAdoptedCodexExecutor> | null = null
     const current = () => executor?.current() ?? null
-    const input = createTerminalInputRuntime(pool, { current })
+    const input = createTerminalInputRuntime(pool, { current }, notice => { lastInput = `${notice.phase}:${notice.code ?? 'NONE'}` })
     const output = createTerminalCodexOutput({ pool, spoolDirectory: spool, current })
     executor = createAdoptedCodexExecutor(pool, { sessionId: logicalId('session', sessionId), executorId: ADOPTED_EXECUTOR,
       ...(provider === 'claude' ? { provider: 'claude' as const } : {}),
@@ -118,7 +119,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     adoptRuntimes,
     onTerminalInputCommitted: ((input) => { entries.get(input.authority.sessionId)?.input.committed(input) }) satisfies TerminalInputCommittedSink,
     snapshot: () => Object.freeze({ adopted: entries.size, failed: errors.size,
-      firstError: errors.size ? [...errors.values()][0] : null }),
+      firstError: errors.size ? [...errors.values()][0] : null, lastInput }),
     async close(): Promise<void> {
       for (const entry of entries.values()) {
         entry.input.dispose()

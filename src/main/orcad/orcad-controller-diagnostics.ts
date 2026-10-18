@@ -66,7 +66,7 @@ function project(snapshot: OrcadControllerSnapshot) {
       coldPhase: optional(initial.coldPhase ?? null), coldFailure: optional(initial.coldFailure ?? null),
       coldInput: optional(initial.coldInput ?? null), adoption: optional(initial.adoption ?? null) },
     adoptedRuntimes: snapshot.adoptedRuntimes ? { adopted: count(snapshot.adoptedRuntimes.adopted), failed: count(snapshot.adoptedRuntimes.failed),
-      firstError: optional(snapshot.adoptedRuntimes.firstError) } : null,
+      firstError: optional(snapshot.adoptedRuntimes.firstError), lastInput: optional(snapshot.adoptedRuntimes.lastInput) } : null,
     lastFailure: snapshot.lastFailure === null ? null : {
       stage: state(snapshot.lastFailure.stage, ['START', 'STOP', 'INVENTORY']), code: code(snapshot.lastFailure.code)
     }
