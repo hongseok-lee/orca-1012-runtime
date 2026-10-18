@@ -28,7 +28,7 @@ type Entry = Readonly<{
   output: ReturnType<typeof createTerminalCodexOutput>
 }>
 
-/** Takes over every READY Codex session whose Pod-local control host an earlier
+/** Takes over every READY Codex or Claude session whose Pod-local control host an earlier
  * backend process recorded, one owner per session. It never starts a Pod,
  * control, native process or cold attempt; a session whose host is gone stays
  * for orphan reconciliation. `owned` excludes a session another owner of this
@@ -70,7 +70,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     return Object.freeze({ transport, checkout: '/agent/checkout', nativeOptions: native.options })
   }
 
-  async function adoptSession(sessionId: string, controller: Parameters<NonNullable<ControllerPassRequest['adoptRuntimes']>>[1]): Promise<boolean> {
+  async function adoptSession(sessionId: string, provider: 'codex' | 'claude', controller: Parameters<NonNullable<ControllerPassRequest['adoptRuntimes']>>[1]): Promise<boolean> {
     const spool = join(spoolRoot, sessionId)
     mkdirSync(spool, { recursive: true, mode: 0o700 })
     let executor: ReturnType<typeof createAdoptedCodexExecutor> | null = null
@@ -78,6 +78,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     const input = createTerminalInputRuntime(pool, { current })
     const output = createTerminalCodexOutput({ pool, spoolDirectory: spool, current })
     executor = createAdoptedCodexExecutor(pool, { sessionId: logicalId('session', sessionId), executorId: ADOPTED_EXECUTOR,
+      ...(provider === 'claude' ? { provider: 'claude' as const } : {}),
       journaledSequence: connectionId => output.journaledSequence(connectionId),
       sink: input.observe, onNativeNotification: output.onNativeNotification,
       onReady() { void output.drain().catch(() => { /* retained by the output owner */ }); input.ready() },
@@ -96,18 +97,18 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
   }
 
   const adoptRuntimes: NonNullable<ControllerPassRequest['adoptRuntimes']> = async (signal, controller) => {
-    const found = await pool.query<{ session_id: string }>(`SELECT h.session_id FROM durable_runtime.agent_control_hosts h
+    const found = await pool.query<{ session_id: string; provider: 'codex' | 'claude' }>(`SELECT h.session_id,h.provider FROM durable_runtime.agent_control_hosts h
       JOIN durable_runtime.attempts a ON a.id=h.attempt_id JOIN durable_runtime.runtime_units u ON u.active_attempt_id=a.id
       JOIN durable_runtime.sessions s ON s.id=h.session_id
-      WHERE h.provider='codex' AND h.control_sha256 IS NOT NULL AND a.status='READY' AND a.stopped_at IS NULL
+      WHERE h.provider IN ('codex','claude') AND h.control_sha256 IS NOT NULL AND a.status='READY' AND a.stopped_at IS NULL
       AND u.phase='READY' AND s.lifecycle='OPEN' ORDER BY h.recorded_at`)
     let adopted = 0
-    for (const { session_id: sessionId } of found.rows) {
+    for (const { session_id: sessionId, provider } of found.rows) {
       if (signal.aborted) { break }
       const entry = entries.get(sessionId)
       if (owned(sessionId) || entry?.executor.current()) { continue }
       if (entry) { entries.delete(sessionId); entry.input.dispose(); await entry.output.close().catch(() => undefined) }
-      if (await adoptSession(sessionId, controller)) { adopted++ }
+      if (await adoptSession(sessionId, provider, controller)) { adopted++ }
     }
     return adopted
   }

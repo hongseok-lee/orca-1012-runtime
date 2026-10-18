@@ -8,6 +8,8 @@ import { appendAudit } from '../journal/store.ts'
 import { currentAuthoritySql } from './gateway/authority.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
+import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
+import { agentClaudeTransport } from './agent-claude-transport.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import type { ProviderDispatchRequest, ProviderDispatchResult, ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
@@ -34,6 +36,8 @@ export type AdoptedCodexExecutorConfiguration = Readonly<{
   sink: ProviderObservationSink
   onNativeNotification?: CodexProtocolDependencies['onNativeNotification']
   onReady?(): void
+  /** Absent means Codex. */
+  provider?: 'claude'
 }>
 type Row = { attempt_id: string; runtime_unit_id: string; pod_uid: string; execution_epoch: string; incarnation: string
   control_id: string; control_pid: number; control_start_ticks: string; root_device: string; root_inode: string
@@ -51,7 +55,8 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
   const sink = original.sink.bind(original), onReady = original.onReady?.bind(original)
   const onNativeNotification = original.onNativeNotification?.bind(original)
   let used = false, phase = 'UNUSED'
-  let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
+  let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
+  const provider = original.provider ?? 'codex'
   let control: AdoptedAgentControl | null = null, context: GatewayContext | null = null
   let workload: VerifiedWorkloadIdentity | null = null
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
@@ -85,11 +90,11 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
           r.producer_id,r.incarnation AS producer_incarnation
           FROM durable_runtime.sessions s JOIN durable_runtime.runtime_members m ON m.session_id=s.id
           JOIN durable_runtime.runtime_units u ON u.id=m.runtime_unit_id JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id
-          JOIN durable_runtime.agent_control_hosts h ON h.attempt_id=a.id AND h.provider='codex'
+          JOIN durable_runtime.agent_control_hosts h ON h.attempt_id=a.id AND h.provider=$2
           JOIN durable_runtime.agent_pod_plans p ON p.attempt_id=a.id
           JOIN durable_runtime.tabs t ON t.session_id=s.id AND t.kind='terminal' AND t.lifecycle='OPEN'
           LEFT JOIN durable_runtime.runtime_event_producers r ON r.attempt_id=a.id
-          WHERE s.id=$1 AND s.lifecycle='OPEN' AND u.phase='READY' AND a.status='READY' AND a.stopped_at IS NULL`, [selected.sessionId])
+          WHERE s.id=$1 AND s.lifecycle='OPEN' AND u.phase='READY' AND a.status='READY' AND a.stopped_at IS NULL`, [selected.sessionId, provider])
         if (found.rowCount !== 1 || !found.rows[0].native_session_ref) { return deny('NO_ADOPTABLE_RECORD') }
         const row = found.rows[0], nativeSessionRef = found.rows[0].native_session_ref
         phase = 'DEPLOYMENT'
@@ -100,23 +105,33 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
           device: row.root_device, inode: row.root_inode })
         const adoption: { current: ReturnType<Transport['adopt']> | null } = { current: null }
         const lastSeq = journaled(row.connection_instance_id)
-        driver = new DurableCodexDriver({
-          open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification,
-          connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0,
-          attach: async handlers => {
-            adoption.current = prepared.transport.adopt(identity, lastSeq, handlers)
-            control = await adoption.current.ready
-            return control.connection
-          } }, sink)
-        // This private cast follows the recorded native thread of the READY audit.
-        const providerRef: ProviderRef = Object.freeze({ provider: 'codex', nativeSessionRef: nativeSessionRef as RuntimeReference<'provider-session'> })
+        // This private cast follows the recorded native session of the READY audit.
+        const providerRef: ProviderRef = Object.freeze({ provider, nativeSessionRef: nativeSessionRef as RuntimeReference<'provider-session'> })
         const binding: ReadyProviderBinding = immutableSnapshot({ sessionId: selected.sessionId, tabId: logicalId('tab', row.tab_id),
           terminalHandle: row.terminal_handle, providerBindingRevision: counter('row:provider-binding', row.provider_binding_revision),
           runtimeUnitId: logicalId('runtime-unit', row.runtime_unit_id), attemptId: logicalId('attempt', row.attempt_id),
           podUid: row.pod_uid as PodUid, executionEpoch: counter('execution-epoch', row.execution_epoch),
           connectionInstanceId: row.connection_instance_id, providerRef })
+        const attach = async (handlers: Parameters<Transport['adopt']>[2]) => {
+          adoption.current = prepared.transport.adopt(identity, lastSeq, handlers)
+          control = await adoption.current.ready
+          return control.connection
+        }
+        let adopted: ReadyProviderBinding
         phase = 'ATTACH'
-        const adopted = await driver.adopt(binding, prepared.checkout, prepared.nativeOptions)
+        if (provider === 'claude') {
+          // The Claude process is alive in the Pod: re-attach and replay, nothing to resume.
+          const claudeDriver = new ClaudeDurableProvider(() => Promise.reject(new Error('ADOPTED_CLAUDE_NO_COLD')), sink, row.connection_instance_id)
+          driver = claudeDriver
+          adopted = await claudeDriver.adopt(binding, agentClaudeTransport({ controlId: row.control_id,
+            frameSequence: () => adoption.current?.frameSequence() ?? 0 }, attach, onNativeNotification))
+        } else {
+          const codexDriver = new DurableCodexDriver({
+            open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification,
+            connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0, attach }, sink)
+          driver = codexDriver
+          adopted = await codexDriver.adopt(binding, prepared.checkout, prepared.nativeOptions)
+        }
         if (!control || control.pod.pod.uid !== row.pod_uid) { return deny('ATTACHED_POD') }
         // Same shape as controlledWorkloadIdentity of the cold owner; the
         // producer stays the control's, so its event stream continues.

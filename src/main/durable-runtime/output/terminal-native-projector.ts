@@ -1,4 +1,5 @@
 import { createCodexJournalTranslator } from '../../codex/codex-structured-journal-translation.ts'
+import { createClaudeJournalTranslator } from '../../claude/claude-structured-journal-translation.ts'
 import { agentJournalItemKey } from '../../../shared/agent-session-journal-item-key.ts'
 import { projectStructuredItemsToNativeChat } from '../../../shared/structured-agent-session-projection.ts'
 import type { AgentJournalItemIdentity, AgentJournalItemBody, AgentJournalRenderItem } from '../../../shared/agent-session-journal-types.ts'
@@ -10,6 +11,14 @@ import { decodeCommittedInputBody } from './input-codec.ts'
 import { parseTerminalCodexEvent } from './terminal-codex-event.ts'
 import { canonicalInputJson } from '../input/canonical.ts'
 import type { JsonValue } from '../db/atomic.ts'
+
+/** The replay of a submitted user message (not a tool result) opens a Claude turn. */
+function claudeStartsTurn(message: Record<string, unknown>): boolean {
+  const body = message.message
+  if (message.type !== 'user' || message.parent_tool_use_id !== null || !body || typeof body !== 'object') { return false }
+  const content = Reflect.get(body, 'content')
+  return typeof content === 'string' || Array.isArray(content) && content.some(part => part && typeof part === 'object' && Reflect.get(part, 'type') !== 'tool_result')
+}
 
 /** Pure replay of COMMITTED raw notifications through the original translator.
  * Item identity/ordinal/revisions are the existing native journal identities. */
@@ -56,6 +65,7 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
     }
   }
   const translators = new Map<string, ReturnType<typeof createCodexJournalTranslator>>()
+  const claudeTranslators = new Map<string, ReturnType<typeof createClaudeJournalTranslator>>()
   const originals = new Map(inputs.map(input => [input.inputId, input]))
   try {
     for (const event of events) {
@@ -92,6 +102,20 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
         const raw = parseTerminalCodexEvent(body)
         if (raw.sessionId !== sessionId) { throw new JournalReadError('TERMINAL_HISTORY_SCOPE') }
         const key = JSON.stringify([raw.notification.connectionId, raw.nativeSessionRef])
+        if (raw.notification.method === 'claude/message') {
+          // A hosted Claude frame is one SDK message, replayed through the desktop Claude translator.
+          let claude = claudeTranslators.get(key)
+          if (!claude) {
+            claude = createClaudeJournalTranslator({sink, coalesceMs: 0, fallbackIdPrefix: `terminal:${raw.notification.connectionId}`})
+            claudeTranslators.set(key, claude)
+          }
+          observedAt = Date.parse(raw.notification.observedAt)
+          const message = jsonObject(raw.notification.params) as Record<string, unknown>
+          claude.handle({type: 'message', sessionId: raw.nativeSessionRef, message, observedAt,
+            ...(claudeStartsTurn(message) ? {startsTurn: true as const} : {})})
+          claude.flush()
+          continue
+        }
         let translator = translators.get(key)
         if (!translator) {
           translator = createCodexJournalTranslator({sink, sessionId, coalesceMs: 0,
@@ -115,5 +139,8 @@ export function projectTerminalNativeHistory(sessionId: string, events: readonly
     const messages = projectStructuredItemsToNativeChat(ordered)
     return {messages: messages.map(message => Object.freeze({message, offset: offsets.get(message.id)!})),
       ...(lifecycle ? {lifecycle} : {})}
-  } finally { for (const translator of translators.values()) { translator.dispose() } }
+  } finally {
+    for (const translator of translators.values()) { translator.dispose() }
+    for (const translator of claudeTranslators.values()) { translator.dispose() }
+  }
 }

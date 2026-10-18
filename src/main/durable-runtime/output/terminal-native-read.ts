@@ -41,7 +41,7 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
        JOIN durable_runtime.sessions s ON s.id=t.session_id JOIN durable_runtime.agents a ON a.id=s.agent_id
        JOIN durable_runtime.workspaces w ON w.id=t.workspace_id AND w.id=s.workspace_id WHERE s.id=$1 AND t.kind='terminal'`, [sessionId])
     const row = result.rows[0]
-    if (result.rows.length !== 1 || row.provider !== 'codex' || params.agent !== 'codex' || !row.terminal_handle ||
+    if (result.rows.length !== 1 || (row.provider !== 'codex' && row.provider !== 'claude') || params.agent !== row.provider || !row.terminal_handle ||
         row.lifecycle !== 'OPEN' || row.session_lifecycle !== 'OPEN') { throw new CatalogError('TERMINAL_HISTORY_TARGET_UNAVAILABLE') }
     const dataset = await tx.query<{dataset_name: string}>('SELECT dataset_name FROM durable_runtime.dataset_metadata')
     if (dataset.rows.length !== 1 || dataset.rows[0].dataset_name !== config.datasetName ||

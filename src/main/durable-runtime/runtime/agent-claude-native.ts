@@ -1,5 +1,5 @@
 import { openClaudeStreamJsonConnection } from '../../claude/claude-stream-json-connection.ts'
-import { claudeSdkOptionsForLaunchArgs } from '../../claude/claude-structured-launch-resolution.ts'
+import { CLAUDE_STRUCTURED_BASE_OPTIONS, claudeSdkOptionsForLaunchArgs } from '../../claude/claude-structured-launch-resolution.ts'
 import type { ClaudeStructuredSdkOptions } from '../../claude/claude-structured-launch-resolution.ts'
 
 export type AgentClaudeLaunch = Readonly<{ command: string; args: readonly string[]; cwd: string; env: Readonly<Record<string, string>> }>
@@ -17,14 +17,21 @@ export async function openAgentClaudeNative(launch: AgentClaudeLaunch, handlers:
   onNotification(method: string, params: unknown): void
   onExit(): void
 }>): Promise<AgentNativeConnection> {
+  // Same SDK options as the desktop structured Claude lane (user-message
+  // replay is Orca's send receipt); launch args add e.g. --session-id.
+  const translated = claudeSdkOptionsForLaunchArgs([...launch.args])
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the existing launch-args translator produces SDK options.
-  const options = claudeSdkOptionsForLaunchArgs([...launch.args]) as ClaudeStructuredSdkOptions
+  const options = { ...CLAUDE_STRUCTURED_BASE_OPTIONS, ...translated,
+    extraArgs: { ...CLAUDE_STRUCTURED_BASE_OPTIONS.extraArgs, ...translated.extraArgs } } as ClaudeStructuredSdkOptions
   const connection = await openClaudeStreamJsonConnection({ pathToClaudeCodeExecutable: launch.command, options,
     cwd: launch.cwd, env: { ...launch.env } }, {
     onMessage: message => handlers.onNotification('claude/message', message),
     onFault: () => handlers.onExit(),
     onExit: () => handlers.onExit(),
   })
+  // The CLI emits system/init only with a first turn; its answer to the SDK
+  // initialize request is the proof that the started process is serving.
+  try { await connection.initializationResult() } catch (error) { await connection.close().catch(() => false); throw error }
   return Object.freeze({
     get pid() { return connection.pid },
     async request(method: string, params: Record<string, unknown>): Promise<unknown> {

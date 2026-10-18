@@ -62,13 +62,14 @@ async function readyRows(tx: DurableTransaction, ids: readonly string[]): Promis
     WHERE t.id=ANY($1::uuid[]) AND t.kind='terminal' ORDER BY t.id,a.id`, [ids])).rows
 }
 function originalReady(row: ReadyRow): RuntimeTerminalNativeChatSession | undefined {
-  if (row.provider !== 'codex' || row.tab_lifecycle !== 'OPEN' || row.session_lifecycle !== 'OPEN' || row.deleted_at !== null) { return undefined }
+  const provider = row.provider
+  if ((provider !== 'codex' && provider !== 'claude') || row.tab_lifecycle !== 'OPEN' || row.session_lifecycle !== 'OPEN' || row.deleted_at !== null) { return undefined }
   const event = object(row.next_state)
   if (decimal(event.providerBindingRevision) !== row.binding_revision) { return undefined }
   const ref = object(event.providerRef), operation = object(row.operation_result)
   const connection = text(event.connectionInstanceId), attempt = text(event.attemptId), epoch = decimal(event.executionEpoch)
   const pod = text(event.podUid), native = text(ref.nativeSessionRef)
-  if (event.kind !== 'INITIAL_PROVIDER_READY' || ref.provider !== 'codex' || !connection ||
+  if (event.kind !== 'INITIAL_PROVIDER_READY' || ref.provider !== provider || !connection ||
       row.workspace_dataset !== row.agent_dataset || row.workspace_dataset !== row.unit_dataset ||
       row.audit_unit !== row.unit_id || row.attempt_unit !== row.unit_id || row.operation_unit !== row.unit_id ||
       row.attempt_id !== attempt || row.attempt_pod !== pod || row.attempt_epoch !== epoch || row.operation_epoch !== epoch ||
@@ -78,10 +79,10 @@ function originalReady(row: ReadyRow): RuntimeTerminalNativeChatSession | undefi
       operation.state !== 'SUCCEEDED' || operation.ready !== true || !Array.isArray(operation.providerBindings) ||
       operation.providerBindings.length !== 1) { return invalid() }
   const settled = object(operation.providerBindings[0])
-  if (settled.provider !== 'codex' || settled.nativeSessionRef !== native) { return invalid() }
+  if (settled.provider !== provider || settled.nativeSessionRef !== native) { return invalid() }
   // The original audit/outbox pair carries the connection lineage. No current
   // activity, live attempt/grant or provider process is inferred from this ID.
-  return Object.freeze({ agent: 'codex', sessionId: native })
+  return Object.freeze({ agent: provider, sessionId: native })
 }
 function uniqueReady(rows: readonly ReadyRow[]): Map<string, { row: ReadyRow; identity: RuntimeTerminalNativeChatSession }> {
   const selected = new Map<string, { row: ReadyRow; identity: RuntimeTerminalNativeChatSession }>()
@@ -118,7 +119,7 @@ export async function publishCatalogTerminalNativeSessionReady(
   const found = uniqueReady(await readyRows(tx, [binding.tabId])).get(binding.tabId)
   if (!found || found.row.audit_id !== readyAuditId || found.row.session_id !== binding.sessionId ||
       found.row.unit_id !== binding.runtimeUnitId || found.row.terminal_handle !== binding.terminalHandle ||
-      found.identity.sessionId !== binding.providerRef.nativeSessionRef || binding.providerRef.provider !== 'codex') { return invalid() }
+      found.identity.sessionId !== binding.providerRef.nativeSessionRef || binding.providerRef.provider !== found.identity.agent) { return invalid() }
   const original = object(found.row.next_state)
   if (original.attemptId !== binding.attemptId || original.podUid !== binding.podUid ||
       original.executionEpoch !== binding.executionEpoch || original.providerBindingRevision !== binding.providerBindingRevision ||
