@@ -60,7 +60,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     const bootstrapBytes = readFileSync(join(artifacts, `agent-control-${target.controlSha256}.cjs`))
     const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: '/agent/checkout',
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
-    const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs,
+    const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, reconnectBudgetMs: 30_000,
       bootstrapBytes, bootstrapSha256: target.controlSha256, nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
       expected: Object.freeze({ serviceAccountName: text('runtimeServiceAccountName'), serviceAccountUid: text('runtimeServiceAccountUid'),
         podName: target.podName, podUid: target.podUid, runtimeUnitId: target.runtimeUnitId, operationId: target.operationId,

@@ -183,7 +183,9 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
           const paths: InitialProviderPaths = Object.freeze({ workspaceId: '', agentId: target.agentId, home: `/agent/home/${target.agentId}`,
             checkout: '/agent/checkout', checkoutPreparation: 'FRESH_EMPTY_FOLDER', canonicalDirectory: '', sourceHome: '', sourceCheckout: '' })
           const prepared = agentDeployment(target, paths)
-          return Object.freeze({ transport: createAgentCodexTransport(prepared.agent), checkout: paths.checkout, nativeOptions: prepared.native.options })
+          // A vanished Pod must not hold the pass: re-attach briefly, then leave it to orphan reconciliation.
+          return Object.freeze({ transport: createAgentCodexTransport({ ...prepared.agent, reconnectBudgetMs: 30_000 }), checkout: paths.checkout,
+            nativeOptions: prepared.native.options })
         } })
       // A failed adoption leaves the attempt to orphan reconciliation; the next pass may try again.
       try { await candidate.adopt(controller); adopted = candidate; adoptError = null; return 1 }
