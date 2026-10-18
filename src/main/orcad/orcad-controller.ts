@@ -134,11 +134,11 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
-        if (config.inputRecoveryTarget) {
+        if (config.inputRecoveryTarget || config.inputRecoveryAll) {
           const { prepareOrcadInputRecovery: prepareRecovery } = await import('./orcad-input-recovery.ts')
           if (closing) { return }
           captured.assertCurrentHost()
-          inputRecovery = prepareRecovery(captured.pool, config.inputRecoveryTarget,
+          inputRecovery = prepareRecovery(captured.pool, config.inputRecoveryTarget ?? null,
             { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
         // Dataset 전체 queue 소비를 서버가 명시적으로 선택합니다. 원 transaction에서 claim 뒤 payload를 검증합니다.

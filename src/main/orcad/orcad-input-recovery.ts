@@ -12,9 +12,10 @@ export type OrcadInputRecoverySnapshot = Readonly<{
 
 /** Trusted selector only. The existing live controller supplies authority and
  * the DB owner revalidates every original mapping under aggregate/lease locks. */
-export function prepareOrcadInputRecovery(poolOwner: Pool, originalTarget: OrcadInputRecoveryTarget,
+export function prepareOrcadInputRecovery(poolOwner: Pool, originalTarget: OrcadInputRecoveryTarget | null,
   owner: Readonly<{ isClosing(): boolean; assertCurrentHost(): void }>) {
-  const target = captureOrcadInputRecoveryTarget(originalTarget)
+  // null: every dispatch whose executing term was lost (the owner-loss check itself refuses a live term).
+  const target = originalTarget ? captureOrcadInputRecoveryTarget(originalTarget) : null
   const connect = poolOwner.connect.bind(poolOwner), query = poolOwner.query.bind(poolOwner)
   const pool = new Proxy(poolOwner, { get(original, key) {
     if (key === 'connect') { return connect }
@@ -36,11 +37,12 @@ export function prepareOrcadInputRecovery(poolOwner: Pool, originalTarget: Orcad
       assertCurrentHost()
     }
     guard()
-    if (selected.id !== target.commandId || selected.operationId !== target.operationId ||
-        selected.runtimeUnitId !== target.runtimeUnitId || selected.command !== 'dispatchInput' ||
-        selected.kind !== 'INPUT_DELIVERY' || selected.snapshotOperationId !== target.operationId ||
-        selected.snapshotUnitId !== target.runtimeUnitId) { return { status: 'NOT_APPLICABLE' } }
-    if (!selected.token || context.operationId !== target.operationId || context.runtimeUnitId !== target.runtimeUnitId) {
+    const scope = target ?? { commandId: selected.id, operationId: selected.operationId, runtimeUnitId: selected.runtimeUnitId, sessionId: null }
+    if (selected.id !== scope.commandId || selected.operationId !== scope.operationId ||
+        selected.runtimeUnitId !== scope.runtimeUnitId || selected.command !== 'dispatchInput' ||
+        selected.kind !== 'INPUT_DELIVERY' || selected.snapshotOperationId !== scope.operationId ||
+        selected.snapshotUnitId !== scope.runtimeUnitId) { return { status: 'NOT_APPLICABLE' } }
+    if (!selected.token || context.operationId !== scope.operationId || context.runtimeUnitId !== scope.runtimeUnitId) {
       throw new DurableDatabaseError('CONTROLLER_INPUT_RECOVERY_TARGET')
     }
     // Session is a strict activation selector, not authority. Message/delivery
@@ -50,8 +52,8 @@ export function prepareOrcadInputRecovery(poolOwner: Pool, originalTarget: Orcad
       JOIN durable_runtime.delivery_attempts d ON d.id::text=c.input->>'deliveryAttemptId'
         AND d.message_id=m.id AND d.session_id=m.session_id
       WHERE c.id=$1 AND c.operation_id=$2 AND c.runtime_unit_id=$3 AND c.command_name='dispatchInput'
-        AND m.session_id=$4 AND d.runtime_unit_id=$3`,
-    [target.commandId, target.operationId, target.runtimeUnitId, target.sessionId])
+        AND ($4::uuid IS NULL OR m.session_id=$4) AND d.runtime_unit_id=$3`,
+    [scope.commandId, scope.operationId, scope.runtimeUnitId, scope.sessionId])
     guard()
     if (found.rowCount !== 1) { throw new DurableDatabaseError('CONTROLLER_INPUT_RECOVERY_TARGET') }
     const input = found.rows[0].input
@@ -70,6 +72,9 @@ export function prepareOrcadInputRecovery(poolOwner: Pool, originalTarget: Orcad
     last = Object.freeze({ settlement: result.settlement, commitOutcome: result.commitOutcome,
       cleanupFailed: result.cleanupFailed, disposition: result.ok ? result.value.disposition : null })
     if (!result.ok) {
+      // In LOST_OWNERS mode a refused candidate (e.g. a command this live term
+      // executes) is not this recovery's; only an uncertain COMMIT stops the pass.
+      if (!target && result.commitOutcome !== 'UNKNOWN' && result.settlement !== 'UNCONFIRMED') { return { status: 'NOT_APPLICABLE' } }
       if (result.commitOutcome === 'UNKNOWN' || result.settlement === 'UNCONFIRMED') {
         return { status: 'UNCERTAIN', settlement: result.settlement,
           commitOutcome: result.commitOutcome, cleanupFailed: result.cleanupFailed }

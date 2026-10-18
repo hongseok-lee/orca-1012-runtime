@@ -17,6 +17,8 @@ export type OrcadControllerConfig = Readonly<{
   structuredOutput?: Readonly<{ claimDurationMs: number }>
   firstManagedInitial?: Readonly<{ configFile: string; coldConfigFile?: string }>
   inputRecoveryTarget?: OrcadInputRecoveryTarget
+  /** Recover every dispatch whose executing controller term was lost, not one named target. */
+  inputRecoveryAll?: true
   /** Opt-in: the Active controller revokes attempts whose Agent Pod is observed gone. */
   orphanReconcile?: true
   /** Re-attach every READY session whose control host an earlier process recorded. */
@@ -87,12 +89,14 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const hasStructuredOutput = value !== null && typeof value === 'object' && Object.hasOwn(value, 'structuredOutput')
   const hasFirstManagedInitial = value !== null && typeof value === 'object' && Object.hasOwn(value, 'firstManagedInitial')
   const hasInputRecoveryTarget = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryTarget')
+  const hasInputRecoveryAll = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryAll')
   const hasOrphanReconcile = value !== null && typeof value === 'object' && Object.hasOwn(value, 'orphanReconcile')
   const hasAdoption = value !== null && typeof value === 'object' && Object.hasOwn(value, 'adoption')
   const input = record(value, ['datasetName', 'inventory', 'policy',
     ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : []),
     ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : []), ...(hasOrphanReconcile ? ['orphanReconcile'] : []),
-    ...(hasAdoption ? ['adoption'] : [])])
+    ...(hasAdoption ? ['adoption'] : []), ...(hasInputRecoveryAll ? ['inputRecoveryAll'] : [])])
+  if (hasInputRecoveryAll && (input.inputRecoveryAll !== true || hasInputRecoveryTarget)) { invalidOrcadControllerConfig() }
   if (hasOrphanReconcile && input.orphanReconcile !== true) { invalidOrcadControllerConfig() }
   const inputRecoveryTarget = hasInputRecoveryTarget ? captureOrcadInputRecoveryTarget(input.inputRecoveryTarget) : undefined
   const structuredOutput = hasStructuredOutput
@@ -118,6 +122,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
     ...(structuredOutput ? { structuredOutput } : {}),
     ...(firstManagedInitial ? { firstManagedInitial } : {}),
     ...(inputRecoveryTarget ? { inputRecoveryTarget } : {}),
+    ...(hasInputRecoveryAll ? { inputRecoveryAll: true as const } : {}),
     ...(hasOrphanReconcile ? { orphanReconcile: true as const } : {}),
     ...(hasAdoption ? { adoption: Object.freeze({ configFile: absolute(record(input.adoption, ['configFile']).configFile) }) } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
