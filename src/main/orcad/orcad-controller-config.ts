@@ -169,7 +169,7 @@ export function parseUniqueOrcadControllerJson(source: string): unknown {
 }
 
 /** Private config has a strict no-symlink identity boundary and a bounded read even if the file grows. */
-export function readPrivateOrcadControllerConfigBytes(path: string): Buffer {
+export function readPrivateOrcadControllerConfigBytes(path: string, limit = fileLimit): Buffer {
   const code = 'CONTROLLER_STARTUP_PRIVATE_FILE'
   let fd: number | undefined
   try {
@@ -179,13 +179,13 @@ export function readPrivateOrcadControllerConfigBytes(path: string): Buffer {
     }
     fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK | constants.O_NOFOLLOW)
     const opened = fstatSync(fd)
-    if (!opened.isFile() || opened.size < 1 || opened.size > fileLimit || opened.dev !== before.dev || opened.ino !== before.ino ||
+    if (!opened.isFile() || opened.size < 1 || opened.size > limit || opened.dev !== before.dev || opened.ino !== before.ino ||
         opened.uid !== process.getuid?.() || (opened.mode & 0o777) !== 0o600) { invalidOrcadControllerConfig(code) }
-    const buffer = Buffer.alloc(fileLimit + 1)
+    const buffer = Buffer.alloc(limit + 1)
     let used = 0, count: number
     do { count = readSync(fd, buffer, used, buffer.length - used, null); used += count } while (count && used < buffer.length)
     const after = fstatSync(fd)
-    if (!used || used > fileLimit || after.dev !== opened.dev || after.ino !== opened.ino ||
+    if (!used || used > limit || after.dev !== opened.dev || after.ino !== opened.ino ||
         after.uid !== process.getuid?.() || (after.mode & 0o777) !== 0o600) { invalidOrcadControllerConfig(code) }
     return Buffer.from(buffer.subarray(0, used))
   } catch (error) {

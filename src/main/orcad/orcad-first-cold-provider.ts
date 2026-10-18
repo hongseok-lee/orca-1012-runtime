@@ -24,6 +24,10 @@ import type { InitialProviderPaths } from '../durable-runtime/runtime/initial-pr
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_FIRST_COLD_CONFIG')
+/** Managed Agents run without approval prompts: Codex always gets --yolo (or its long form from settings). */
+export function codexYolo(args: readonly string[]): string[] {
+  return args.includes('--yolo') || args.includes('--dangerously-bypass-approvals-and-sandbox') ? [...args] : ['--yolo', ...args]
+}
 
 /** Private anonymous pipe only. A regular file/argv/env token cannot enter
  * this one-shot development Audit supplier. No token hash or error body. */
@@ -81,7 +85,8 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       canonicalDirectory: agentPodText(declaration.get('canonicalDirectory')), checkout: '/agent/checkout',
       sourceCheckout: agentPodText(declaration.get('sourceCheckout')) })
     const nativeArtifact = Object.freeze({ sha256: text('nativeSha256'), byteLength: agentPodInteger(raw.get('nativeByteLength')) })
-    const bootstrapBytes = readPrivateOrcadControllerConfigBytes(text('controlArtifactFile'))
+    // The control bundle (with the Claude SDK) is larger than a config file; the transport caps it at 4 MiB.
+    const bootstrapBytes = readPrivateOrcadControllerConfigBytes(text('controlArtifactFile'), 4 * 1024 * 1024)
     const bootstrapSha256 = text('controlSha256'), nativeArtifactFile = text('nativeArtifactFile')
     // Read only the already imported product-managed credential. Never hash,
     // serialize to evidence, publish, or inspect the root original again.
@@ -126,7 +131,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       const launch = claude
         ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
-        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
+        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
         bootstrapSha256, nativeArtifactFile, podAuthenticator, readReviewerBearer,
@@ -197,5 +202,10 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         inputRuntime.dispose()
         try { await inputRuntime.drain() } finally { await output.close() }
       } })
-  } catch { return deny() }
+  } catch (error) {
+    // The original cause stays a fixed code in the private runtime log; the caller sees only the config refusal.
+    const code = error && typeof error === 'object' ? Reflect.get(error, 'code') ?? Reflect.get(error, 'message') : null
+    process.stderr.write(`[orcad] first cold config refused: ${typeof code === 'string' && /^[A-Za-z0-9_:-]{1,80}$/.test(code) ? code : 'UNCLASSIFIED'}\n`)
+    return deny()
+  }
 }

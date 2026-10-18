@@ -5,7 +5,7 @@
 // Prints {"file", "sha256", "bytes"}; the file is named agent-control-<sha256>.cjs.
 import { build } from 'esbuild'
 import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync, renameSync } from 'node:fs'
+import { chmodSync, mkdirSync, readFileSync, renameSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..', '..')
@@ -22,5 +22,7 @@ await build({
 })
 const bytes = readFileSync(staged), sha256 = createHash('sha256').update(bytes).digest('hex')
 const file = join(out, `agent-control-${sha256}.cjs`)
+// The backend reads it as a private controller file (owner-only 0600).
+chmodSync(staged, 0o600)
 renameSync(staged, file)
 console.log(JSON.stringify({ file, sha256, bytes: bytes.length }))

@@ -14,6 +14,7 @@ import { createTerminalCodexOutput } from '../durable-runtime/output/terminal-co
 import { createAdoptedCodexExecutor } from '../durable-runtime/runtime/adopted-codex-executor.ts'
 import type { AdoptedCodexTarget } from '../durable-runtime/runtime/adopted-codex-executor.ts'
 import { createAgentCodexTransport } from '../durable-runtime/runtime/agent-codex-transport.ts'
+import { codexYolo } from './orcad-first-cold-provider.ts'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 import { logicalId } from '../../shared/durable-runtime/identity.ts'
@@ -57,7 +58,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     const home = `/agent/home/${target.agentId}`, native = captureInitialCodexNativePolicy(readSettings())
     // Re-attach only: the bundle must be the one the recorded host verified; no policy is ever sent.
     const bootstrapBytes = readFileSync(join(artifacts, `agent-control-${target.controlSha256}.cjs`))
-    const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: '/agent/checkout',
+    const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: '/agent/checkout',
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
     const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs,
       bootstrapBytes, bootstrapSha256: target.controlSha256, nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
