@@ -124,7 +124,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
           native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
       // Claude's native session id is fixed by the Orca session, as on the desktop lane.
       const launch = claude
-        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: ['--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
+        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
         : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
