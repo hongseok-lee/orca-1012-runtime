@@ -4,6 +4,7 @@ import { readClaudeInit, readClaudeFrameString } from '../../../claude/claude-in
 import { CLAUDE_STREAM_JSON_FRAME_KINDS } from '../../../native-chat/agent-session-wire/claude-stream-json-frame-schema.ts'
 import type { CommandClaim } from '../../runtime/gateway/types.ts'
 import type { ProviderRef, ProviderAdmissionProof, ProviderStoppedProof } from '../../runtime/runtime-evidence.ts'
+import { claudeCompletedProof } from './completion-proof.ts'
 import type { VerifiedContextDeliveryProof } from '../../context/types.ts'
 import type {
   ProviderCancelResult, ProviderCancelTarget, ProviderDispatchRequest, ProviderDispatchResult,
@@ -118,8 +119,7 @@ export class ClaudeDurableProvider {
           })).then((connection) => {
             // Retain late ownership; opening/timeout is not provider stop evidence.
             this.#connection = connection
-            // NEW with its own --session-id: serving once open answered initialize
-            // (the CLI emits init only with a first turn; a different id fails above).
+            // NEW with its own --session-id serves once open answered initialize (init comes only with a turn).
             if (presetSession && !initial && !abandoned) {
               // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: native session id fixed by this cold's own launch options.
               const providerRef = { provider: 'claude', nativeSessionRef: presetSession } as ProviderRef
@@ -284,8 +284,9 @@ export class ClaudeDurableProvider {
         identity: pending.identity, observedAt, providerRef: pending.nativeRef,
         nativeEventId: uuid, stopped: pending.stopped }))
     } else {
+      const completed = claudeCompletedProof(binding, pending.identity, pending.nativeRef, uuid, observedAt)
       this.sink(immutableSnapshot({ source: 'PROVIDER_PROTOCOL', kind: 'COMPLETED',
-        identity: pending.identity, observedAt, providerRef: pending.nativeRef, nativeEventId: uuid }))
+        identity: pending.identity, observedAt, providerRef: pending.nativeRef, nativeEventId: uuid, completed }))
     }
   }
   #emitUnknown(pending: Pending, reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST'): void {

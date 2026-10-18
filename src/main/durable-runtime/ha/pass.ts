@@ -140,16 +140,12 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     }
   }
 
-  /** One operation's executor failure is that operation's result: it keeps
-   * its retained resources and is looked up again, while the pass goes on.
-   * Loss of the lease or cancellation still stops the whole pass. */
+  /** One operation's failure is its own result (resources retained, looked up again); lease loss still stops the pass. */
   async function contained(run: () => Promise<void>): Promise<string | null> {
     try { await run(); return null } catch (error) {
-      if (local.signal.aborted || session.signal.aborted) { throw error }
       const code = safeDatabaseError(error).code
-      if (code === 'CONTROLLER_PASS_CANCELLED' || code === 'CONTROLLER_EXTERNAL_BUDGET') { throw error }
-      await gate()
-      return /^[A-Z0-9_]{1,40}$/.test(code) ? code : 'UNCLASSIFIED'
+      if (local.signal.aborted || session.signal.aborted || ['CONTROLLER_PASS_CANCELLED', 'CONTROLLER_EXTERNAL_BUDGET'].includes(code)) { throw error }
+      await gate(); return /^[A-Z0-9_]{1,40}$/.test(code) ? code : 'UNCLASSIFIED'
     }
   }
   function room(): boolean { return work < request.maximumWork && performance.now() < end }
@@ -335,7 +331,10 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
       performance.now() >= end ? 'EXTERNAL_BUDGET' : 'PASS_COMPLETE', items: Object.freeze(items) }
   } catch (error) {
     session.stop()
-    return { status: 'STOPPED', reason: safeDatabaseError(error).code, items: Object.freeze(items) }
+    const reason = safeDatabaseError(error).code
+    // An unclassified cause is kept only in the private runtime log.
+    if (reason === 'DB_FAILURE') { process.stderr.write(`[controller] pass stopped: ${error instanceof Error ? String(error.stack).split('\n').slice(0, 3).join(' | ').slice(0, 600) : typeof error}\n`) }
+    return { status: 'STOPPED', reason, items: Object.freeze(items) }
   } finally {
     local.abort()
     sessionSignal.removeEventListener('abort', abort)

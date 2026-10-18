@@ -177,6 +177,11 @@ test('hosted adopt: a re-attached session observes the native receipt of its own
   assert.ok(handlers)
   handlers.onMessage({ ...sent[0] })
   assert.deepEqual(observations.map(item => item.kind), ['ADMITTED'])
+  handlers.onMessage({ type: 'result', subtype: 'success', session_id: 'adopted-native', uuid: randomUUID(), user_message_uuid: sent[0].uuid })
+  assert.deepEqual(observations.map(item => item.kind), ['ADMITTED', 'COMPLETED'])
+  const completed = observations[1] as { completed?: { kind: string; deliveryAttemptId: string } }
+  assert.equal(completed.completed?.kind, 'PROVIDER_TARGET_COMPLETED')
+  assert.equal(completed.completed?.deliveryAttemptId, f.dispatch.deliveryAttemptId)
   handlers.onMessage({ type: 'system', subtype: 'init', session_id: 'other-native' })
   assert.equal(driver.ownsReadyBinding(binding), false)
 })
