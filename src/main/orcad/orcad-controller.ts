@@ -31,6 +31,7 @@ export type OrcadControllerSnapshot = Readonly<{
   lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY'; code: string }> | null
   firstManagedInitial?: FirstManagedInitialDispatchSnapshot
   inputRecovery?: OrcadInputRecoverySnapshot
+  adoptedRuntimes?: Readonly<{ adopted: number; failed: number; firstError: string | null }>
 }>
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
@@ -224,6 +225,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
     },
     controllerSnapshot(): OrcadControllerSnapshot { return Object.freeze({ worker: worker?.snapshot() ?? null, latestObservation, lastFailure,
       ...(firstManagedInitial ? { firstManagedInitial: firstManagedInitial.snapshot() } : {}),
-      ...(inputRecovery ? { inputRecovery: inputRecovery.snapshot() } : {}) }) }
+      ...(inputRecovery ? { inputRecovery: inputRecovery.snapshot() } : {}),
+      ...(adoptedRuntimes ? { adoptedRuntimes: adoptedRuntimes.snapshot() } : {}) }) }
   })
 }

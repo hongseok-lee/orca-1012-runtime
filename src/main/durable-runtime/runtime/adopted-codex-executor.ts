@@ -104,7 +104,13 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         const identity = Object.freeze({ controlId: row.control_id, pid: row.control_pid, startTicks: row.control_start_ticks,
           device: row.root_device, inode: row.root_inode })
         const adoption: { current: ReturnType<Transport['adopt']> | null } = { current: null }
-        const lastSeq = journaled(row.connection_instance_id)
+        // Replay starts after what is already journaled in PG as well as in the
+        // local spool: a new owner's spool may be empty, and a frame journaled
+        // twice under one source key conflicts and stops the session's queue.
+        const stored = await pool.query<{ last: string | null }>(`SELECT max((body->'notification'->>'sequence')::bigint)::text AS last
+          FROM durable_runtime.session_events WHERE session_id=$1 AND body->>'kind'='TERMINAL_CODEX_NOTIFICATION'
+          AND body->'notification'->>'connectionId'=$2`, [selected.sessionId, row.connection_instance_id])
+        const lastSeq = Math.max(journaled(row.connection_instance_id), Number(stored.rows[0]?.last ?? 0))
         // This private cast follows the recorded native session of the READY audit.
         const providerRef: ProviderRef = Object.freeze({ provider, nativeSessionRef: nativeSessionRef as RuntimeReference<'provider-session'> })
         const binding: ReadyProviderBinding = immutableSnapshot({ sessionId: selected.sessionId, tabId: logicalId('tab', row.tab_id),

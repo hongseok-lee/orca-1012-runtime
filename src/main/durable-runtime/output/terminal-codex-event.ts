@@ -80,6 +80,12 @@ export const terminalCodexOutputEventHandler: EventHandler = async (tx, event) =
       event.podUid, event.executionEpoch, payload.providerBindingRevision, payload.notification.connectionId, payload.nativeSessionRef])
   // Historical output may be stored after close; neither this check nor append reopens a Tab/Session.
   if (found.rowCount !== 1) { throw new DurableDatabaseError('TERMINAL_OUTPUT_CATALOG_BINDING') }
+  // A frame is (connection, host sequence). A replay after re-attach can carry
+  // one already journaled (only observedAt differs): it is the same frame.
+  const journaled = await tx.query(`SELECT 1 FROM durable_runtime.session_events WHERE session_id=$1
+    AND body->>'kind'='TERMINAL_CODEX_NOTIFICATION' AND body->'notification'->>'connectionId'=$2
+    AND body->'notification'->>'sequence'=$3 LIMIT 1`, [sessionId, payload.notification.connectionId, payload.notification.sequence])
+  if (journaled.rowCount) { return }
   const body = captureCatalogJson(payload)
   const journal = await appendSessionEvent(tx, {sessionId,
     source: {kind: 'NATIVE', sourceKind: 'TERMINAL_CODEX_NOTIFICATION',

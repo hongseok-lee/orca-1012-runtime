@@ -107,7 +107,8 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     for (const { session_id: sessionId, provider } of found.rows) {
       if (signal.aborted) { break }
       const entry = entries.get(sessionId)
-      if (owned(sessionId) || entry?.executor.current()) { continue }
+      // An adopted owner stays this session's owner: its in-flight deliveries and observations live in it.
+      if (owned(sessionId) || entry?.executor.current() || entry?.executor.phase() === 'READY') { continue }
       if (entry) { entries.delete(sessionId); entry.input.dispose(); await entry.output.close().catch(() => undefined) }
       if (await adoptSession(sessionId, provider, controller)) { adopted++ }
     }
