@@ -192,6 +192,35 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 }
 ```
 
+### Agent 재부착·정리 설정 (PR #167–#169)
+
+위 예제에 아래 키를 더하면 backend가 재기동하거나 교체돼도 Agent 세션이 이어집니다. 실행 중이던 provider를 다시 붙이고, 사라진 Pod의 grant를 회수하며, owner를 잃은 입력을 UNKNOWN으로 정리합니다(재전송 없음).
+
+```json
+{
+  "orphanReconcile": true,
+  "inputRecoveryAll": true,
+  "adoption": { "configFile": "/home/orca-dev/.local/state/orca-dev/adoption.json" }
+}
+```
+
+- `orphanReconcile`: Agent Pod가 GONE(404 또는 다른 UID)이면 그 attempt의 write/exec grant·mount를 회수하고 binding을 epoch+1로 올린다. attempt는 `STOPPED ORPHAN_POD_ABSENT`가 된다.
+- `inputRecoveryAll`: 이전 controller term에서 실행되다 owner를 잃은 모든 `dispatchInput`을 기존 owner-loss 규칙으로 UNKNOWN 정리한다. `inputRecoveryTarget`과 함께 쓸 수 없다.
+- `adoption.configFile`: host가 기록된(`agent_control_hosts.control_sha256`) 모든 READY Codex/Claude 세션을 다시 붙이는 registry 설정이다. 파일은 UID 1000·mode 0600이며 형식은 다음과 같다.
+
+```json
+{
+  "controlArtifactDirectory": "/home/orca-dev/.local/share/orca-backend-dev/control-artifacts",
+  "runtimeServiceAccountName": "orca-runtime-agent",
+  "runtimeServiceAccountUid": "<orca-runtime-agent SA uid>",
+  "clusterIdentityRef": "<cluster identity ref>",
+  "outputSpoolRoot": "/home/orca-dev/.local/state/orca-dev/adopted-spool",
+  "timeoutMs": 120000
+}
+```
+
+`controlArtifactDirectory`에는 `node config/scripts/build-agent-control.mjs <dir>`로 만든 `agent-control-<sha256>.cjs`(mode 0600)가 있어야 한다. 기록된 host와 같은 sha의 bundle로만 다시 붙는다. `outputSpoolRoot` 아래에는 세션별 spool 디렉터리가 생긴다. dev runner(`dev-orcad.mjs`)는 요청하지 않은 runtime 종료가 나면 같은 generation을 다시 띄운다.
+
 현재 Backend는 Deployment owner가 없는 독립 Pod입니다. SA/volume 같은 불변 spec 필드를 실제 반영하려면 Root가 정확 UID 조건의 정상 종료와 Pod 재생성, 같은 NFS source/dependency/private 설정·watch 복구를 함께 배분해야 합니다. 기존 lock의 owner와 Pod UID를 대조하는 위 복구 절차를 유지하며 원 runner/runtime이 종료됐다는 근거 없이 lock을 삭제하지 않습니다. 새 설치·cache 복사·container/release image build를 이 준비의 부수 작업으로 추가하지 않습니다.
 
 읽기 전용 준비 관측의 시각은 2026-10-16 Backend GET 00:15:33 UTC, 도구 metadata 종료 00:16:49 UTC, entry/config/live PG 관측 종료 01:03:31.611 UTC입니다. 당시 controller selector는 unset이었고, live PG ledger는 001–019였습니다. 이는 source 반영·migration·controller 활성화 성공이 아닙니다. 현재 PID·source/cache/config 경로·원 argv·정확 file hash와 복구 원자료는 private 운영 인계에 보존했으며 공개 문서에 인증/운영 식별 원문을 추가하지 않습니다. 기존 2026-10-15 19:53:29.593 UTC의 수락된 PNG는 당시 개발 화면이며 이번 source 후보의 새 화면 시험이 아닙니다.
