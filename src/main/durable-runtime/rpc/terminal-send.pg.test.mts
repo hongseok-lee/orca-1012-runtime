@@ -121,8 +121,19 @@ await test('public managed Terminal preserves owner, draft, receipt and uncertai
     { ...context, requestId: randomUUID() }, legacy), /SEMANTIC_NOT_CONNECTED/)
   await pool.query("UPDATE durable_runtime.catalog_tab_metadata SET payload=payload-'viewMode' WHERE tab_id=$1", [tab.id])
   await assert.rejects(send('omitted is not Chat', true), /RAW_NOT_CONNECTED/)
-  await pool.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2 WHERE tab_id=$1', [tab.id, tabPayload])
   assert.deepEqual(await state(), beforeUnsupported)
+  // A mode switch blocks new Chat intake, but cannot rewrite an earlier receipt.
+  const replayKey = randomUUID()
+  await pool.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2 WHERE tab_id=$1', [tab.id, tabPayload])
+  assert.deepEqual(await send('preserved draft', false, replayKey), accepted)
+  const beforeModeSwitch = await state()
+  await pool.query("UPDATE durable_runtime.catalog_tab_metadata SET payload=jsonb_set(payload,'{viewMode}','\"terminal\"') WHERE tab_id=$1", [tab.id])
+  assert.deepEqual(await send('preserved draft', false, replayKey), accepted)
+  await assert.rejects(send('raw bytes must not become a prompt', true), /RAW_NOT_CONNECTED/)
+  assert.deepEqual(await state(), beforeModeSwitch)
+  await pool.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2 WHERE tab_id=$1', [tab.id, tabPayload])
+  assert.deepEqual(await send(buildAgentTuiClearInputForText('preserved draft')), accepted)
+  const afterModeReplay = await state()
   // Owned but incomplete metadata never reaches the original PTY path.
   const incomplete = `terminal-incomplete:${randomUUID()}`
   await pool.query("INSERT INTO durable_runtime.tabs(id,workspace_id,kind,terminal_handle,ui_order,lifecycle) VALUES($1,$2,'terminal',$3,2,'OPEN')",
@@ -142,7 +153,7 @@ await test('public managed Terminal preserves owner, draft, receipt and uncertai
     { terminal: f.terminalHandle, text: 'stale mode', enter: true }, { ...context, requestId: randomUUID() }, legacy))
   assert.equal(changed, true)
   await pool.query('UPDATE durable_runtime.catalog_tab_metadata SET payload=$2 WHERE tab_id=$1', [tab.id, tabPayload])
-  assert.deepEqual(await state(), beforeUnsupported)
+  assert.deepEqual(await state(), afterModeReplay)
   // Simulate loss of this client's COMMIT acknowledgement after PG really committed.
   let lost = false
   const uncertainPool = new Proxy(pool, { get(target, property) {

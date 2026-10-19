@@ -81,8 +81,10 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
         }
         if (getWorktreeExecutionHostId(projectCatalogWorktree(workspace), repository) !== config.hostId) { throw new TerminalDraftStoreError('CATALOG_REGISTRATION_HOST_MISMATCH') }
         const tab = parseCatalogTab(row)
-        // A durable Agent terminal is chat-only (no raw PTY in this process), whatever view the client shows it in.
-        const chat = tab.type === 'terminal' && (row.provider === 'claude' || row.provider === 'codex')
+        // Provider identity does not select input semantics. Missing viewMode
+        // has the client's normal Terminal meaning, never an implicit Chat send.
+        const chat = tab.type === 'terminal' && tab.viewMode === 'chat' &&
+          (row.provider === 'claude' || row.provider === 'codex')
         return Object.freeze({sessionId: logicalId('session', row.session_id), sessionFence: counter('session-fence', row.session_fence), chat,
           targetPin: Object.freeze({tabId: row.tab_id, tabRevision: row.tab_revision, bindingRevision: row.binding_revision,
             provider: row.provider, payload: capturedJson(row.payload)})})
