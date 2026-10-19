@@ -5,6 +5,7 @@ import type { ExecutionTargetRecordRow } from '../db/execution-target-record-row
 import { LockedGatewayAuthority } from './gateway/authority.ts'
 import type { GatewayContext } from './gateway/types.ts'
 import type { EvidenceRef, Incarnation, NodeUid, PayloadHash, PodUid, RuntimeReference } from './runtime-evidence.ts'
+import { executionTargetIdentityProvenance, type ExecutionTargetIdentityProvenance } from './execution-target-identity-provenance.ts'
 
 export type ExecutionTargetKey = {
   readonly attemptId: AttemptId
@@ -34,7 +35,10 @@ export type ExecutionTargetObservation = ExecutionTargetKey & {
 }
 // Flat immutable plain data. StorageEvidenceAuthority integration and verification
 // of external evidence remain with the future trusted observer boundary.
-export type ExecutionTargetRecord = ExecutionTargetObservation & { readonly recordedAt: string }
+export type ExecutionTargetRecord = ExecutionTargetObservation & {
+  readonly recordedAt: string
+  readonly computeIdentityProvenance: ExecutionTargetIdentityProvenance
+}
 
 function invalid(): never {
   throw new DurableDatabaseError('EXECUTION_TARGET_INPUT_INVALID')
@@ -111,7 +115,8 @@ function projection(row: ExecutionTargetRecordRow): ExecutionTargetRecord {
     kubernetesEvidenceRef: row.kubernetes_evidence_ref,
     computeIdentityEvidenceRef: row.compute_identity_evidence_ref, observationDigest: row.observation_digest
   })
-  return Object.freeze({ ...observation, recordedAt: row.recorded_at.toISOString() })
+  return Object.freeze({ ...observation, recordedAt: row.recorded_at.toISOString(),
+    computeIdentityProvenance: executionTargetIdentityProvenance(observation) })
 }
 
 export async function readExecutionTarget(

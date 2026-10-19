@@ -160,14 +160,14 @@ test('an intermediate row cannot borrow last-only response omission from a valid
   })
 })
 
-test('one deletion compatibility vector keeps its existing observation/digest when shape metadata is added', () => {
+test('creation-only shape metadata leaves deletion receipt unchanged while retaining its required error marker', () => {
   const projected = projectComputeAuditPage({ entries: deletionEntries() })
   assert.ok(projected.ok)
   const legacyPage = structuredClone(projected.page)
   for (const entry of legacyPage.entries) {
-    Reflect.deleteProperty(entry, 'responseShape')
+    for (const key of ['present', 'object', 'fields']) { Reflect.deleteProperty(entry.responseShape, key) }
   }
-  // The unchanged deletion evaluator consumed this exact pre-metadata field shape.
+  // Deletion now requires errorPresent; only creation-specific metadata is irrelevant.
   const before = evaluateComputeAuditPage(deletionInput, legacyPage)
   const after = evaluateComputeAuditPage(deletionInput, projected.page)
   assert.equal(before.status, 'DELETE_OPERATION_COMPLETED')

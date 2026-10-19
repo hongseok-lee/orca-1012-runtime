@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
 import { inventoryName, inventoryOpaque, inventoryRecord } from '../lifecycle/kubernetes-identity.ts'
 import { canonicalCreationUint64 } from './compute-creation-identity-input.ts'
+import { auditTimestamp } from './compute-deletion-audit-input.ts'
+import { identityEvidenceRef, type ExecutionTargetIdentityObservation } from './execution-target-identity-provenance.ts'
 import type { ComputeCreationScope } from './compute-creation-identity-types.ts'
 import type { ExecutionTargetObservation } from './execution-target-records.ts'
 import type { EvidenceRef, Incarnation, NodeUid, PayloadHash, PodUid, RuntimeReference } from './runtime-evidence.ts'
@@ -75,7 +77,7 @@ export function compositionComputeScope(config: CapturedCompositionConfiguration
   }
 }
 
-export function captureCompositionCreation(scope: ComputeCreationScope, value: unknown): string {
+export function captureCompositionCreation(scope: ComputeCreationScope, value: unknown): ExecutionTargetIdentityObservation {
   try {
     const result = inventoryRecord(value)
     if (result.ok !== true) {
@@ -87,26 +89,44 @@ export function captureCompositionCreation(scope: ComputeCreationScope, value: u
     const projectId = identity.projectId, projectNumber = identity.projectNumber
     const zone = identity.zone, instanceName = identity.instanceName, numericInstanceId = identity.numericInstanceId
     const evidenceDigest = digest(observation.evidenceDigest)
+    const operationId = inventoryOpaque(observation.operationId)
+    const first = inventoryRecord(observation.first), last = inventoryRecord(observation.last)
+    const firstId = inventoryOpaque(first.insertId), lastId = inventoryOpaque(last.insertId)
+    const firstTime = inventoryOpaque(first.timestamp), lastTime = inventoryOpaque(last.timestamp)
+    const start = auditTimestamp(firstTime), end = auditTimestamp(lastTime)
     if (status !== 'CREATE_OPERATION_COMPLETED' || source !== 'CLOUD_AUDIT_LOGS' ||
         projectId !== scope.projectId || projectNumber !== scope.projectNumber || zone !== scope.zone ||
-        instanceName !== scope.instanceName || numericInstanceId !== scope.numericInstanceId) {
+        instanceName !== scope.instanceName || numericInstanceId !== scope.numericInstanceId ||
+        observation.producer !== 'compute.googleapis.com' || operationId.startsWith('node-identity:') ||
+        firstId === 'node-identity' || lastId === 'node-identity' || start === null || end === null || start > end) {
       throw new Error('Creation identity not confirmed')
     }
-    return evidenceDigest
+    const evidence = { source, identity: { ...scope }, operationId, producer: observation.producer,
+      first: { insertId: firstId, timestamp: firstTime }, last: { insertId: lastId, timestamp: lastTime } }
+    if (createHash('sha256').update(JSON.stringify(evidence)).digest('hex') !== evidenceDigest) {
+      throw new Error('Creation receipt digest mismatch')
+    }
+    return Object.freeze({ kind: 'CLOUD_AUDIT_CREATION_COMPLETED', evidenceDigest })
   } catch {
     throw new ExecutionTargetCompositionError('CREATION_NOT_CONFIRMED')
   }
 }
 
+/** Called only after captureCompositionPod and compositionComputeScope validated
+ * the authenticated Pod/Node tuple. No Google operation, producer or time is inferred. */
+export function captureCompositionNodeIdentity(pod: CapturedCompositionPod): ExecutionTargetIdentityObservation {
+  return Object.freeze({ kind: 'AUTHENTICATED_KUBERNETES_NODE', evidenceDigest: pod.evidenceDigest })
+}
+
 export function compositionObservation(config: CapturedCompositionConfiguration,
   input: CompositionScopeInput, pod: CapturedCompositionPod,
-  scope: ComputeCreationScope, creationDigest: string): ExecutionTargetObservation {
+  scope: ComputeCreationScope, identity: ExecutionTargetIdentityObservation): ExecutionTargetObservation {
   const computeIdentityRef = `gce-identity:sha256:${createHash('sha256').update(JSON.stringify([
     scope.projectNumber, scope.zone, scope.instanceName, scope.numericInstanceId
   ])).digest('hex')}` as RuntimeReference<'compute-identity'>
   const observedAt = new Date().toISOString()
   const kubernetesEvidenceRef = `kubernetes-pod-auth:sha256:${pod.evidenceDigest}` as EvidenceRef
-  const computeIdentityEvidenceRef = `compute-creation-audit:sha256:${creationDigest}` as EvidenceRef
+  const computeIdentityEvidenceRef = identityEvidenceRef(identity) as EvidenceRef
   const fields = {
     attemptId: input.attemptId, runtimeUnitId: input.runtimeUnitId, executionEpoch: input.executionEpoch,
     podUid: input.pod.expected.podUid as PodUid, incarnation: input.incarnation as Incarnation,

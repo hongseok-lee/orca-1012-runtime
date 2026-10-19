@@ -60,8 +60,8 @@ export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string>
 export type OrcadColdRewake = Readonly<{
   /** The native session the Session's earlier READY recorded; resumed, never replaced. */
   nativeSessionRef: string
-  /** Creation evidence for a later wake, in place of the one-shot audit-token supplier. */
-  creationObserver: ReturnType<typeof createComputeCreationIdentityClient>
+  /** Explicit identity source for later wakes; no inferred Compute creation completion. */
+  creationObserver: 'AUTHENTICATED_KUBERNETES_NODE'
 }>
 
 export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, pool: Pool, ca: Uint8Array, initial: Readonly<{

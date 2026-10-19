@@ -208,7 +208,7 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 - 종료 증거가 없는 사라진/종료 중 Pod는 writer와 epoch를 보존하고 `REVOKING/BLOCKED`로 유지한다. 실제 상태 변경은 기존 audit/outbox와 notification에 한 번 기록하며, 증거 확인 시 notification을 해소한다. DURABLE/UNKNOWN 입력은 재전송하거나 삭제하지 않는다.
 - 새 Agent Pod는 `orca.dev/writer-stop` finalizer로 종료 상태를 DB 회수 commit까지 보존한다. 이전 plan의 live Pod도 삭제 전에 UID/resourceVersion 조건부 PATCH로 보존하며, 삭제는 원 UID의 `DeleteOptions.preconditions.uid`와 기본 grace를 사용한다. 삭제 응답은 종료 증명이 아니다. commit 후 finalizer 정리는 controller takeover 후에도 재시도한다. Agent create/delete Role에는 이 finalizer용 `pods/patch`가 필요하다.
 - 실패한 ownerless WAKE는 현재 controller 권한으로 기존 operation/command를 takeover한 후 정확한 미준비 Pod만 종료 요청한다. READY runtime은 재부착 경로에 남긴다. Node나 공용 기반 시설을 삭제하지 않는다.
-- Compute fallback은 기존 실행 target과 완전한 Compute 삭제 audit를 읽는다. Cloud Logging 조회 권한이 없거나 증거가 불완전하면 writer를 해제하지 않는다. [실측 기록](evidence/writer-lifecycle-20261019.json)의 개발 identity는 Logging 403이므로 lost-node fallback은 검증되지 않았다.
+- Compute fallback은 기존 실행 target과 완전한 Compute 삭제 audit를 읽는다. Cloud Logging 조회 권한이 없거나 증거가 불완전하면 writer를 해제하지 않는다. [실측 기록](evidence/writer-lifecycle-20261019.json)의 unit01 시점에는 Logging 403이었다. 이후 unit02에서 root의 권한 부여와 HTTP 200·matching entries 0 확인이 보고됐으며, 실제 lost-node 복구는 여전히 검증되지 않았다.
 - `inputRecoveryAll`: 이전 controller term에서 실행되다 owner를 잃은 모든 `dispatchInput`을 기존 owner-loss 규칙으로 UNKNOWN 정리한다. `inputRecoveryTarget`과 함께 쓸 수 없다.
 - `adoption.configFile`: host가 기록된(`agent_control_hosts.control_sha256`) 모든 READY Codex/Claude 세션을 다시 붙이는 registry 설정이다. 파일은 UID 1000·mode 0600이며 형식은 다음과 같다.
 
@@ -259,3 +259,22 @@ Projected defaultMode 0444와 실제 token UID 1000/mode 0600을 구분합니다
 
 기존 Chromium 개발 wrapper의 CDP FD 전달 방식은 [browser-cdp-fd.md](browser-cdp-fd.md)에 있습니다.
 기록된 검증을 재사용하며 새 설치나 촬영은 하지 않습니다.
+
+
+### Node identity와 Compute 생성 증거 provenance (TODO-03)
+
+후속 rewake는 기존 인증된 Pod/Node identity를 사용하는 승인된 간소화 경로를 유지한다. 내부의 명시적 `AUTHENTICATED_KUBERNETES_NODE` 모드는 TokenReview와 정확한 Pod/Node UID·resourceVersion·providerId·numeric instance ID 검사를 거친 뒤 Node identity만 기록한다. Google의 생성 operation·producer·insert ID·감사 timestamp를 만들지 않으며, Cloud Logging token이나 조회가 필요하지 않다. 초기 생성의 실제 Cloud Audit 경로는 기존 client/parser를 사용한다.
+
+저장된 `compute_identity_evidence_ref`와 `readExecutionTarget(...).computeIdentityProvenance`의 의미는 다음과 같다. 새 grant 활성화 audit/outbox에도 같은 provenance와 원 evidence ref가 포함된다. 별도의 생성 증거 UI/RPC는 없으며 기존 UI는 변경하지 않았다.
+
+| provenance | 저장 ref / 근거 | 의미 |
+| --- | --- | --- |
+| `AUTHENTICATED_KUBERNETES_NODE` | `kubernetes-node-identity:sha256:…`, 같은 인증 Pod 관측 digest | Kubernetes Node identity 관측. Compute 생성 완료를 주장하지 않는다. |
+| `CLOUD_AUDIT_CREATION_COMPLETED` | `compute-creation-cloud-audit-v1:sha256:…` | 실제 생성 client/parser 결과의 정확한 scope·first/last receipt·producer·digest를 검증한 새 생성 관측. 현재 VM 상태나 종료 증명이 아니다. |
+| `LEGACY_SYNTHETIC_NODE_IDENTITY` | 옛 `compute-creation-audit:sha256:…`와 알려진 fallback fingerprint가 정확히 일치 | 과거 synthetic 형식. Cloud Audit 증거로 취급하지 않는다. |
+| `LEGACY_AMBIGUOUS` | 그 외 옛 `compute-creation-audit:sha256:…` | 저장된 digest만으로 원 수집 receipt를 복원할 수 없다. 실제 감사 경로였을 수도 있으나 genuine audit로 소급 확정하지 않는다. |
+| `UNCLASSIFIED` | 인식되지 않거나 Node/Pod digest가 불일치하는 ref | 출처 미확인. |
+
+과거 fallback fingerprint는 SHA256(JSON.stringify(`['node-identity', projectNumber, zone, instanceName, numericInstanceId]`))이다. 분류는 원 ref·observation digest를 보존하는 읽기 projection이며, immutable history를 갱신하거나 backfill하지 않는다. 운영자가 과거 ref의 `audit` 문자열만 보고 genuine audit로 단정하면 안 된다. 실제 PG의 17건을 읽은 결과와 Node 인증 관측은 [실측 기록](evidence/node-identity-provenance-20261019.json)에 구분해 기록했다.
+
+이 provenance는 모두 **실행 target identity의 출처**다. `permanentComputeStop`/writer revoke 권한으로 승격하지 않는다. unit01의 실제 sandbox 종료 또는 기존 정확한 Compute 삭제 증거 요구는 유지된다. Logging 조회 권한의 HTTP 200·결과 0건은 삭제 operation이나 lost-node 복구 증거가 아니다.

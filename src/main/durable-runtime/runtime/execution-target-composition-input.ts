@@ -11,7 +11,7 @@ export type CapturedCompositionConfiguration = Readonly<{
   clusterIdentityRef: string; namespace: string; dataset: string; audience: string
   projectId: string; projectNumber: string; timeoutMs: number
   authenticatePod: ExecutionTargetCompositionConfiguration['podAuthenticator']['authenticatePod']
-  observeCreation: ExecutionTargetCompositionConfiguration['creationObserver']['observe']
+  observeCreation: Exclude<ExecutionTargetCompositionConfiguration['creationObserver'], string>['observe'] | null
 }>
 
 export function captureCompositionConfiguration(
@@ -26,16 +26,17 @@ export function captureCompositionConfiguration(
     const projectNumber = inventoryOpaque(original.projectNumber)
     const timeoutMs = original.timeoutMs
     const pod = original.podAuthenticator, creation = original.creationObserver
-    const authenticatePod = pod.authenticatePod, observeCreation = creation.observe
+    const authenticatePod = pod.authenticatePod
+    const observeCreation = creation === 'AUTHENTICATED_KUBERNETES_NODE' ? null : creation.observe.bind(creation)
     if (/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.exec(projectId)?.[0] !== projectId ||
         /^[1-9][0-9]*$/.exec(projectNumber)?.[0] !== projectNumber ||
         !Number.isFinite(timeoutMs) || timeoutMs <= 0 ||
-        typeof authenticatePod !== 'function' || typeof observeCreation !== 'function') {
+        typeof authenticatePod !== 'function' || (observeCreation !== null && typeof observeCreation !== 'function')) {
       throw new ExecutionTargetCompositionError('CONFIG_INVALID')
     }
     return Object.freeze({ clusterIdentityRef, namespace, dataset, audience, projectId,
       projectNumber, timeoutMs, authenticatePod: authenticatePod.bind(pod),
-      observeCreation: observeCreation.bind(creation) })
+      observeCreation })
   } catch {
     throw new ExecutionTargetCompositionError('CONFIG_INVALID')
   }

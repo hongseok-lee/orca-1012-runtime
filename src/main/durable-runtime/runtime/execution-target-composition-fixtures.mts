@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { DurableTransaction } from '../db/connection.ts'
 import type { PoolClient } from 'pg'
 import type { GatewayContext } from './gateway/types.ts'
@@ -30,13 +31,15 @@ export function compositionPod(input: KubernetesPodAuthInput): AuthenticatedPodO
       instanceId: compositionNode.numericInstanceId }, evidenceDigest: 'a'.repeat(64) }
 }
 export function compositionCreation(input: ComputeCreationIdentityInput): ComputeCreationIdentityResult {
-  return { ok: true, observation: { status: 'CREATE_OPERATION_COMPLETED', source: 'CLOUD_AUDIT_LOGS',
+  const evidence = { source: 'CLOUD_AUDIT_LOGS' as const,
     identity: { ...input.scope }, operationId: 'synthetic-creation-operation', producer: 'compute.googleapis.com',
     first: { insertId: 'synthetic-creation-first', timestamp: input.startTime },
-    last: { insertId: 'synthetic-creation-last', timestamp: input.endTime }, evidenceDigest: 'b'.repeat(64) } }
+    last: { insertId: 'synthetic-creation-last', timestamp: input.endTime } } as const
+  return { ok: true, observation: { status: 'CREATE_OPERATION_COMPLETED', ...evidence,
+    evidenceDigest: createHash('sha256').update(JSON.stringify(evidence)).digest('hex') } }
 }
 type PodCall = ExecutionTargetCompositionConfiguration['podAuthenticator']['authenticatePod']
-type CreationCall = ExecutionTargetCompositionConfiguration['creationObserver']['observe']
+type CreationCall = Exclude<ExecutionTargetCompositionConfiguration['creationObserver'], string>['observe']
 export function compositionDoubles(control: { pod?: PodCall; creation?: CreationCall } = {}) {
   const calls: { kind: 'pod' | 'creation'; input: KubernetesPodAuthInput | ComputeCreationIdentityInput;
     signal: AbortSignal | undefined }[] = []

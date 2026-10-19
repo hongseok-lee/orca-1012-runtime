@@ -14,7 +14,8 @@ export type ExecutionTargetCompositionConfiguration = Readonly<{
   projectNumber: string
   timeoutMs: number
   podAuthenticator: ReturnType<typeof createKubernetesPodAuthenticator>
-  creationObserver: ReturnType<typeof createComputeCreationIdentityClient>
+  /** Explicit approved node-identity mode never manufactures a creation receipt. */
+  creationObserver: ReturnType<typeof createComputeCreationIdentityClient> | 'AUTHENTICATED_KUBERNETES_NODE'
 }>
 
 export type ExecutionTargetPrepareInput = Readonly<{
