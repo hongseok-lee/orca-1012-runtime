@@ -67,7 +67,7 @@ export async function stageTerminalRuntimeInput(tx: DurableTransaction, input: C
   if (binding.sessionId !== input.authority.sessionId || binding.terminalHandle !== input.binding.logicalHandle ||
       binding.tabId !== input.targetPin.tabId ||
       binding.runtimeUnitId !== target.runtimeUnitId || ready.context.runtimeUnitId !== target.runtimeUnitId ||
-      binding.providerRef.provider !== 'codex') { throw new InputStoreError('TERMINAL_RUNTIME_READY_TARGET') }
+      (binding.providerRef.provider !== 'codex' && binding.providerRef.provider !== 'claude')) { throw new InputStoreError('TERMINAL_RUNTIME_READY_TARGET') }
   const prior = await tx.query(`SELECT c.id FROM durable_runtime.runtime_commands c
     JOIN durable_runtime.delivery_attempts d ON d.id::text=c.input->>'deliveryAttemptId'
     WHERE c.command_name='stageInput' AND c.input->>'messageId'=$1 AND d.session_id=$2`,

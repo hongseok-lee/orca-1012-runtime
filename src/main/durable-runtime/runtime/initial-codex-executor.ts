@@ -9,6 +9,9 @@ import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
 import type { CodexColdLaunch } from '../providers/codex/driver.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
+import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
+import type { ClaudeColdRequest } from '../providers/claude/transport.ts'
+import { agentClaudeTransport } from './agent-claude-transport.ts'
 import type { ProviderBinding, ProviderColdRequest, ProviderDispatchRequest, ProviderDispatchResult,
   ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
@@ -45,6 +48,8 @@ export type InitialCodexExecutorConfiguration = Readonly<{
   sink: ProviderObservationSink
   onNativeNotification?: CodexProtocolDependencies['onNativeNotification']
   onReady?(): void
+  /** Absent means Codex. Claude runs under the same Pod-local control host. */
+  provider?: 'claude'
 }>
 const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIAL_CODEX_${suffix}`) }
 
@@ -58,12 +63,13 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   const onReady = original.onReady?.bind(original)
   const onNativeNotification = original.onNativeNotification?.bind(original)
   const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
-  let used = false, phase = 'UNUSED'
+  let used = false, phase = 'UNUSED', failure: string | null = null
   let writerActivated = false
   let protection: ReturnType<typeof createInitialProviderProtection> | null = null
   let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
   let readyExecutor: ExecutorId | null = null
-  let driver: DurableCodexDriver | null = null, ready: ReadyProviderBinding | null = null
+  let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
+  const claude = original.provider === 'claude'
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
     commitGuard?: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult> {
     const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
@@ -81,7 +87,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   }
   return Object.freeze({
     phase: () => phase,
-    snapshot: () => Object.freeze({ phase, writerGrantActivated: writerActivated,
+    snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
       ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch }) : null,
@@ -159,31 +165,66 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           predecessor: grants.value.receipt })
         if (gate.execution.disposition !== 'COMMITTED_EXECUTE') { return deny('GATE_CLAIM_UNCONFIRMED') }
         const transport = control.transport
-        driver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification }, sink)
-        const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
-          tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
-          providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),
-          runtimeUnitId: context.runtimeUnitId, attemptId: lease.target.attemptId, podUid: lease.target.podUid,
-          executionEpoch: lease.target.executionEpoch, connectionInstanceId: driver.connectionInstanceId })
-        const launch = prepared.config.agent.policy.launch
-        if (launch.cwd !== source.value.paths.checkout || launch.env.HOME !== source.value.paths.home ||
-            launch.env.CODEX_HOME !== `${source.value.paths.home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
-        const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: { kind: 'NEW' },
-          persistentHome: `${source.value.paths.home}/.codex`, checkout: source.value.paths.checkout,
-          launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
-        const permit = createProviderEffectPermit(borrowed, context,
-          { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
-          { provider: 'codex', home: source.value.paths.home, providerState: cold.persistentHome, request: cold,
-            protectedRoots: lease.mounts.map(mount => ({ bindingId: mount.bindingId, clientRoot: mount.clientRoot })) })
-        active(); phase = 'NATIVE_COLD'
-        const native = await driver.cold(cold, gate.execution.claim, permit.permit)
+        // A host-capable control already tagged its HELLO; its id and frame
+        // sequence then name notifications identically for any later owner.
+        const hosted = control.frameSequence() > 0
+        const launch = prepared.config.agent.policy.launch, home = source.value.paths.home
+        let native: ReadyProviderBinding
+        if (claude) {
+          if (!hosted) { return deny('CLAUDE_HOST_REQUIRED') }
+          const sessionAt = launch.args.indexOf('--session-id'), nativeSessionId = sessionAt === -1 ? null : launch.args[sessionAt + 1]
+          if (!nativeSessionId || launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
+              launch.command !== `${home}/.orca-native/claude`) { return deny('LAUNCH_MAPPING') }
+          const attach = agentClaudeTransport(control, handlers => transport.open(launch, handlers), onNativeNotification)
+          const claudeDriver = new ClaudeDurableProvider((_request, handlers) => attach(handlers), sink, control.controlId)
+          driver = claudeDriver
+          const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
+            tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
+            providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),
+            runtimeUnitId: context.runtimeUnitId, attemptId: lease.target.attemptId, podUid: lease.target.podUid,
+            executionEpoch: lease.target.executionEpoch, connectionInstanceId: claudeDriver.connectionInstanceId })
+          const cold: ClaudeColdRequest = immutableSnapshot({ mode: 'COLD', binding, native: { kind: 'NEW' }, persistentHome: home,
+            checkout: source.value.paths.checkout,
+            launch: { executable: launch.command, args: launch.args, options: { sessionId: nativeSessionId }, env: launch.env } })
+          const permit = createProviderEffectPermit(borrowed, context,
+            { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
+            { provider: 'claude', home, providerState: `${home}/.claude`, request: cold,
+              protectedRoots: lease.mounts.map(mount => ({ bindingId: mount.bindingId, clientRoot: mount.clientRoot })) })
+          active(); phase = 'NATIVE_COLD'
+          // The native artifact transfer runs inside this cold; bound it like the control timeout.
+          native = await claudeDriver.cold(cold, gate.execution.claim, permit.permit, prepared.config.agent.timeoutMs)
+        } else {
+          const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification,
+            ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, sink)
+          driver = codexDriver
+          const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
+            tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
+            providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),
+            runtimeUnitId: context.runtimeUnitId, attemptId: lease.target.attemptId, podUid: lease.target.podUid,
+            executionEpoch: lease.target.executionEpoch, connectionInstanceId: codexDriver.connectionInstanceId })
+          if (launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
+              launch.env.CODEX_HOME !== `${home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
+          const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: { kind: 'NEW' },
+            persistentHome: `${home}/.codex`, checkout: source.value.paths.checkout,
+            launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
+          const permit = createProviderEffectPermit(borrowed, context,
+            { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
+            { provider: 'codex', home, providerState: cold.persistentHome, request: cold,
+              protectedRoots: lease.mounts.map(mount => ({ bindingId: mount.bindingId, clientRoot: mount.clientRoot })) })
+          active(); phase = 'NATIVE_COLD'
+          native = await codexDriver.cold(cold, gate.execution.claim, permit.permit)
+        }
         phase = 'READY_SETTLEMENT'
         const settled = await settleInitialProviderReady(borrowed, { context, claim: gate.execution.claim,
-          planDigest: selected.planDigest }, native, driver, owner)
+          planDigest: selected.planDigest }, native, driver, owner, hosted ? Object.freeze({ provider: claude ? 'claude' as const : 'codex' as const,
+          controlId: control.controlId, pid: control.controlPid, startTicks: control.startTicks,
+          device: control.root.device, inode: control.root.inode, controlSha256: prepared.config.agent.bootstrapSha256 }) : undefined)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
         readyProtection = owner; readyContext = context; readyExecutor = claim.executorId; ready = native; phase = 'READY'
         onReady?.()
       } catch (error) {
+        // Only a fixed code is kept for diagnostics, never a message body.
+        failure = `${phase}:${error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'UNCLASSIFIED'}`
         phase = 'RETAINED_UNCONFIRMED'
         throw error
       }

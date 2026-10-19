@@ -12,9 +12,12 @@ export type CodexNativeArtifact = Readonly<{ sha256: string; byteLength: number 
  * grant COMMIT; they write only this owned protected HOME, never /shared.
  * A 289 MB native executable is streamed, not retained in the 64 MiB /tmp. */
 export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativeArtifact, codexAuth: string,
-  paths: InitialProviderPaths) {
+  paths: InitialProviderPaths, provider: 'codex' | 'claude' = 'codex') {
   if (!/^[0-9a-f]{64}$/.test(artifact.sha256) || !Number.isSafeInteger(artifact.byteLength) || artifact.byteLength < 1 ||
-      typeof codexAuth !== 'string' || Buffer.byteLength(codexAuth) > 1024 * 1024) { throw new Error('AGENT_COLD_PREPARATION_POLICY') }
+      typeof codexAuth !== 'string' || Buffer.byteLength(codexAuth) > 1024 * 1024 ||
+      provider === 'claude' && codexAuth !== '') { throw new Error('AGENT_COLD_PREPARATION_POLICY') }
+  // Claude's OAuth token reaches the native process only through its launch env.
+  const native = provider, stateDirectory = provider === 'codex' ? '.codex' : '.claude'
   let phase: 'UNUSED' | 'WRITING' | 'READY' | 'FAILED' = 'UNUSED'
   let fd: number | null = null, bytes = 0, directory = '', partial = ''
   const initial = fstatSync(rootFd), digest = createHash('sha256')
@@ -41,7 +44,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       phase = 'FAILED'
       const homeRoot = child('/agent', 'home'), home = child(homeRoot, paths.agentId)
       if (home !== paths.home) { throw new Error('AGENT_COLD_HOME_MAPPING') }
-      child(home, '.codex'); directory = child(home, '.orca-native')
+      child(home, stateDirectory); directory = child(home, '.orca-native')
       // A first empty Folder workspace is materialized only AFTER COMMIT.
       // Git requires its real checkout and is never replaced by an empty one.
       if (paths.checkoutPreparation !== 'FRESH_EMPTY_FOLDER') { throw new Error('AGENT_COLD_CHECKOUT_UNPREPARED') }
@@ -53,7 +56,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
           (checkout.mode & 0o777) !== 0o700 || realpathSync(paths.checkout) !== paths.checkout) {
         throw new Error('AGENT_COLD_CHECKOUT_REQUIRED')
       }
-      partial = join(directory, 'codex.partial')
+      partial = join(directory, `${native}.partial`)
       fd = openSync(partial, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600)
       phase = 'WRITING'
     },
@@ -80,13 +83,14 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       if (digest.digest('hex') !== artifact.sha256) { throw new Error('AGENT_COLD_ARTIFACT_IDENTITY') }
       const original = fstatSync(fd)
       fchmodSync(fd, 0o700); fsyncSync(fd)
-      const final = join(directory, 'codex')
+      const final = join(directory, native)
       linkSync(partial, final)
       const published = lstatSync(final), staged = lstatSync(partial)
       if (published.dev !== original.dev || published.ino !== original.ino || staged.dev !== original.dev || staged.ino !== original.ino) {
         throw new Error('AGENT_COLD_ARTIFACT_PUBLICATION')
       }
       closeSync(fd); fd = null; unlinkSync(partial)
+      if (provider === 'claude') { rootCurrent(); phase = 'READY'; return }
       // Authentication text is private data. It is never hashed or printed.
       try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error('AGENT_COLD_AUTH_SHAPE') } }
       catch { throw new Error('AGENT_COLD_AUTH_INVALID') }

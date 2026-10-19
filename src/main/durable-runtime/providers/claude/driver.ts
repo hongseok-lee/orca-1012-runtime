@@ -4,6 +4,7 @@ import { readClaudeInit, readClaudeFrameString } from '../../../claude/claude-in
 import { CLAUDE_STREAM_JSON_FRAME_KINDS } from '../../../native-chat/agent-session-wire/claude-stream-json-frame-schema.ts'
 import type { CommandClaim } from '../../runtime/gateway/types.ts'
 import type { ProviderRef, ProviderAdmissionProof, ProviderStoppedProof } from '../../runtime/runtime-evidence.ts'
+import { claudeCompletedProof } from './completion-proof.ts'
 import type { VerifiedContextDeliveryProof } from '../../context/types.ts'
 import type {
   ProviderCancelResult, ProviderCancelTarget, ProviderDispatchRequest, ProviderDispatchResult,
@@ -36,7 +37,27 @@ export class ClaudeDurableProvider {
   #starting = false
   #interrupting = false
 
-  constructor(readonly openTransport: OpenClaudeTransport, readonly sink: ProviderObservationSink) {}
+  constructor(readonly openTransport: OpenClaudeTransport, readonly sink: ProviderObservationSink,
+    readonly connectionInstanceId: string = randomUUID() /* the control id for a hosted provider */) {}
+
+  ownsReadyBinding(binding: ReadyProviderBinding): boolean {
+    return !!this.#ready && !this.#faulted && !!this.#connection && !this.#connection.closed &&
+      digest(this.#ready) === digest(binding) && binding.connectionInstanceId === this.connectionInstanceId
+  }
+
+  /** Takes over a live session an earlier owner started; its deliveries stay with owner-loss recovery. */
+  async adopt(binding: ReadyProviderBinding, attach: (handlers: Parameters<OpenClaudeTransport>[1]) => Promise<ClaudeProtocolConnection>): Promise<ReadyProviderBinding> {
+    if (this.#starting || this.#connection || this.#faulted || binding.providerRef.provider !== 'claude' ||
+        binding.connectionInstanceId !== this.connectionInstanceId) { throw new Error('CLAUDE_ADOPT_INVALID') }
+    const ready = immutableSnapshot(binding)
+    const lost = () => { this.#faulted = true; this.#connectionLost() }
+    this.#connection = await attach({ onFault: lost, onExit: lost, onMessage: (message) => {
+      const init = readClaudeInit(message)
+      if (!init) { this.#observe(message, ready) } else if (init.providerSessionId !== ready.providerRef.nativeSessionRef) { lost() }
+    } })
+    this.#ready = ready
+    return ready
+  }
 
   async cold(request: ClaudeColdRequest, commandClaim: CommandClaim,
     permit: ProviderEffectPermit, readinessTimeoutMs = 10_000): Promise<ReadyProviderBinding> {
@@ -73,6 +94,8 @@ export class ClaudeDurableProvider {
           this.#connectionLost()
         }
         const timer = setTimeout(() => fail('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED'), readinessTimeoutMs)
+        const presetSession = request.native.kind === 'NEW' && typeof request.launch.options.sessionId === 'string'
+          ? request.launch.options.sessionId : null
         try {
           const opening = Promise.resolve().then(() => this.openTransport(request, {
             onMessage: (message) => {
@@ -96,6 +119,13 @@ export class ClaudeDurableProvider {
           })).then((connection) => {
             // Retain late ownership; opening/timeout is not provider stop evidence.
             this.#connection = connection
+            // NEW with its own --session-id serves once open answered initialize (init comes only with a turn).
+            if (presetSession && !initial && !abandoned) {
+              // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: native session id fixed by this cold's own launch options.
+              const providerRef = { provider: 'claude', nativeSessionRef: presetSession } as ProviderRef
+              initial = immutableSnapshot({ ...request.binding, providerRef })
+              resolveInit(initial)
+            }
             return connection
           })
           const [connection, ready] = await Promise.race([Promise.all([opening, initialized]), failed])
@@ -254,8 +284,9 @@ export class ClaudeDurableProvider {
         identity: pending.identity, observedAt, providerRef: pending.nativeRef,
         nativeEventId: uuid, stopped: pending.stopped }))
     } else {
+      const completed = claudeCompletedProof(binding, pending.identity, pending.nativeRef, uuid, observedAt)
       this.sink(immutableSnapshot({ source: 'PROVIDER_PROTOCOL', kind: 'COMPLETED',
-        identity: pending.identity, observedAt, providerRef: pending.nativeRef, nativeEventId: uuid }))
+        identity: pending.identity, observedAt, providerRef: pending.nativeRef, nativeEventId: uuid, completed }))
     }
   }
   #emitUnknown(pending: Pending, reason: 'CONNECTION_LOST' | 'WRITE_OUTCOME_LOST'): void {

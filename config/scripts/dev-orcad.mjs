@@ -163,6 +163,18 @@ export async function startOrcadDev({
     const pointer = join(outputRoot, `.current-${randomUUID()}`)
     symlinkSync(relative(outputRoot, dir), pointer, 'dir')
     renameSync(pointer, join(outputRoot, 'current'))
+    crashes = 0
+    await launch({ dir, number, version, hash })
+  }
+
+  // An exit nobody asked for (crash, kill) restarts the SAME generation with
+  // backoff, so a lost backend comes back without a source change.
+  let crashes = 0
+  async function launch(built) {
+    const { dir, number, version, hash } = built
+    if (closing || child) {
+      return
+    }
     // Each child uses its immutable generation path, including detached daemon siblings.
     const running = spawnRuntime(process.execPath, [join(dir, 'orcad.js'), ...args], {
       cwd: root,
@@ -187,7 +199,23 @@ export async function startOrcadDev({
         owner.runtimePid = null
         updateLock()
       }
+      const unexpected = child === running && !closing && !stopping
+      if (child === running) {
+        child = null
+      }
       event({ event: 'exited', generation: number, pid: running.pid, code, signal })
+      if (unexpected) {
+        const delay = Math.min(30_000, 1_000 * 2 ** Math.min(crashes++, 5))
+        event({ event: 'restart_scheduled', generation: number, delayMs: delay })
+        setTimeout(() => {
+          serial = serial
+            .then(() => launch(built))
+            .catch((error) => {
+              recordPrivate(error.stack)
+              event({ event: 'runner_failed', reason: 'restart' })
+            })
+        }, delay).unref()
+      }
     })
     event({ event: 'started', generation: number, pid: running.pid, bundleHash: hash })
   }

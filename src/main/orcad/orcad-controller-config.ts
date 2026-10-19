@@ -17,6 +17,12 @@ export type OrcadControllerConfig = Readonly<{
   structuredOutput?: Readonly<{ claimDurationMs: number }>
   firstManagedInitial?: Readonly<{ configFile: string; coldConfigFile?: string }>
   inputRecoveryTarget?: OrcadInputRecoveryTarget
+  /** Recover every dispatch whose executing controller term was lost, not one named target. */
+  inputRecoveryAll?: true
+  /** Opt-in: the Active controller revokes attempts whose Agent Pod is observed gone. */
+  orphanReconcile?: true
+  /** Re-attach every READY session whose control host an earlier process recorded. */
+  adoption?: Readonly<{ configFile: string }>
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -83,9 +89,15 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const hasStructuredOutput = value !== null && typeof value === 'object' && Object.hasOwn(value, 'structuredOutput')
   const hasFirstManagedInitial = value !== null && typeof value === 'object' && Object.hasOwn(value, 'firstManagedInitial')
   const hasInputRecoveryTarget = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryTarget')
+  const hasInputRecoveryAll = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryAll')
+  const hasOrphanReconcile = value !== null && typeof value === 'object' && Object.hasOwn(value, 'orphanReconcile')
+  const hasAdoption = value !== null && typeof value === 'object' && Object.hasOwn(value, 'adoption')
   const input = record(value, ['datasetName', 'inventory', 'policy',
     ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : []),
-    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : [])])
+    ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : []), ...(hasOrphanReconcile ? ['orphanReconcile'] : []),
+    ...(hasAdoption ? ['adoption'] : []), ...(hasInputRecoveryAll ? ['inputRecoveryAll'] : [])])
+  if (hasInputRecoveryAll && (input.inputRecoveryAll !== true || hasInputRecoveryTarget)) { invalidOrcadControllerConfig() }
+  if (hasOrphanReconcile && input.orphanReconcile !== true) { invalidOrcadControllerConfig() }
   const inputRecoveryTarget = hasInputRecoveryTarget ? captureOrcadInputRecoveryTarget(input.inputRecoveryTarget) : undefined
   const structuredOutput = hasStructuredOutput
     ? Object.freeze({ claimDurationMs: positive(record(input.structuredOutput, ['claimDurationMs']).claimDurationMs, true) })
@@ -110,6 +122,9 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
     ...(structuredOutput ? { structuredOutput } : {}),
     ...(firstManagedInitial ? { firstManagedInitial } : {}),
     ...(inputRecoveryTarget ? { inputRecoveryTarget } : {}),
+    ...(hasInputRecoveryAll ? { inputRecoveryAll: true as const } : {}),
+    ...(hasOrphanReconcile ? { orphanReconcile: true as const } : {}),
+    ...(hasAdoption ? { adoption: Object.freeze({ configFile: absolute(record(input.adoption, ['configFile']).configFile) }) } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),
@@ -159,7 +174,7 @@ export function parseUniqueOrcadControllerJson(source: string): unknown {
 }
 
 /** Private config has a strict no-symlink identity boundary and a bounded read even if the file grows. */
-export function readPrivateOrcadControllerConfigBytes(path: string): Buffer {
+export function readPrivateOrcadControllerConfigBytes(path: string, limit = fileLimit): Buffer {
   const code = 'CONTROLLER_STARTUP_PRIVATE_FILE'
   let fd: number | undefined
   try {
@@ -169,13 +184,13 @@ export function readPrivateOrcadControllerConfigBytes(path: string): Buffer {
     }
     fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK | constants.O_NOFOLLOW)
     const opened = fstatSync(fd)
-    if (!opened.isFile() || opened.size < 1 || opened.size > fileLimit || opened.dev !== before.dev || opened.ino !== before.ino ||
+    if (!opened.isFile() || opened.size < 1 || opened.size > limit || opened.dev !== before.dev || opened.ino !== before.ino ||
         opened.uid !== process.getuid?.() || (opened.mode & 0o777) !== 0o600) { invalidOrcadControllerConfig(code) }
-    const buffer = Buffer.alloc(fileLimit + 1)
+    const buffer = Buffer.alloc(limit + 1)
     let used = 0, count: number
     do { count = readSync(fd, buffer, used, buffer.length - used, null); used += count } while (count && used < buffer.length)
     const after = fstatSync(fd)
-    if (!used || used > fileLimit || after.dev !== opened.dev || after.ino !== opened.ino ||
+    if (!used || used > limit || after.dev !== opened.dev || after.ino !== opened.ino ||
         after.uid !== process.getuid?.() || (after.mode & 0o777) !== 0o600) { invalidOrcadControllerConfig(code) }
     return Buffer.from(buffer.subarray(0, used))
   } catch (error) {

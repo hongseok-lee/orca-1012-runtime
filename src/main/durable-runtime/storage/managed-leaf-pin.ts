@@ -70,12 +70,14 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
     let releasing: Promise<void> | undefined
     let heldOutput = ''
     let releaseTimer: ReturnType<typeof setTimeout> | undefined
+    // WebSocket pings keep a held, otherwise silent exec stream from being dropped as idle.
+    let keepalive: ReturnType<typeof setInterval> | undefined
     const streams = new Map([1, 2, 3].map(id => [id, {
       decoder: new TextDecoder('utf-8', { fatal: true }), text: '', closed: false,
     }]))
     const timer = setTimeout(() => fail('TIMEOUT'), Math.max(0, deadline - performance.now()))
     function removeActive(): void {
-      clearTimeout(timer); clearTimeout(releaseTimer)
+      clearTimeout(timer); clearTimeout(releaseTimer); clearInterval(keepalive)
       signal.removeEventListener('abort', aborted)
       socket?.off('open', opened).off('message', message).off('unexpected-response', unexpected)
     }
@@ -105,7 +107,7 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
       stream.text += stream.decoder.decode(); stream.closed = true
     }
     function closed(code: number): void {
-      active = false
+      active = false; clearInterval(keepalive)
       if (!terminal) {
         try {
           if (!handshake || !acquired || code !== 1000) { throw new ManagedLeafCollectorError('EXEC_FAILED') }
@@ -150,6 +152,8 @@ function hold(open: ManagedLeafCollectorDependencies['openWebSocket'], config: M
           fail('MOUNT_CHANGED'); return
         }
         acquired = true; active = true; heldOutput = stream.text; clearTimeout(timer)
+        const ping = Reflect.get(socket ?? {}, 'ping')
+        if (typeof ping === 'function') { keepalive = setInterval(() => { try { Reflect.apply(ping, socket, []) } catch { /* close reports loss */ } }, 20_000) }
         // Acquisition cancellation no longer owns this resource. In particular
         // request abort/cleanup cannot close the FD during PG settlement.
         signal.removeEventListener('abort', aborted)

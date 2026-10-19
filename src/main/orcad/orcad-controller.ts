@@ -4,6 +4,7 @@ import type { AbortableInventoryTransport } from '../durable-runtime/ha/pass.ts'
 import type { ControllerWorker, ControllerWorkerSnapshot } from '../durable-runtime/ha/worker.ts'
 import type { FirstManagedInitialDispatchSnapshot } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
 import type { prepareOrcadFirstManagedInitial, captureOrcadFirstManagedCallbacks } from './orcad-first-managed-initial.ts'
+import type { prepareOrcadAdoptedRuntimes } from './orcad-adopted-runtimes.ts'
 import { persistControllerInventoryObservation } from '../durable-runtime/lifecycle/controller-inventory-observation.ts'
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
@@ -30,6 +31,7 @@ export type OrcadControllerSnapshot = Readonly<{
   lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY'; code: string }> | null
   firstManagedInitial?: FirstManagedInitialDispatchSnapshot
   inputRecovery?: OrcadInputRecoverySnapshot
+  adoptedRuntimes?: Readonly<{ adopted: number; failed: number; firstError: string | null; lastInput: string | null }>
 }>
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
@@ -80,13 +82,14 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
   let lastFailure: OrcadControllerSnapshot['lastFailure'] = null
   let firstManagedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
   let inputRecovery: ReturnType<typeof prepareOrcadInputRecovery> | null = null
+  let adoptedRuntimes: ReturnType<typeof prepareOrcadAdoptedRuntimes> = null
   let total = 0, list = 0, watch = 0
   return Object.freeze({
     readConfig,
     onTerminalInputCommitted(input: Parameters<TerminalInputCommittedSink>[0]) {
       // Only the already authenticated ingress creates this value. No receipt
       // or PG principal is reconstructed into a new authenticated authority.
-      if (!closing) { firstManagedInitial?.onTerminalInputCommitted?.(input) }
+      if (!closing) { firstManagedInitial?.onTerminalInputCommitted?.(input); adoptedRuntimes?.onTerminalInputCommitted(input) }
     },
     assertTerminalOutputAvailable(): void {
       if (closing) { throw new Error('TERMINAL_OUTPUT_UNAVAILABLE') }
@@ -113,7 +116,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
         captured.assertCurrentHost()
         // Explicit target startup captures CA once; both consumers own copies
         // of these exact bytes. Unset configuration retains the original path.
-        const ca = config.firstManagedInitial ? Buffer.from(credential(config.inventory.caFile, 'CA')) : null
+        const ca = config.firstManagedInitial || config.adoption ? Buffer.from(credential(config.inventory.caFile, 'CA')) : null
         const transport = ca ? await prepareOrcadControllerInventoryWithCA(config, ca)
           : await prepareOrcadControllerInventory(config)
         let selectedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
@@ -131,11 +134,11 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
-        if (config.inputRecoveryTarget) {
+        if (config.inputRecoveryTarget || config.inputRecoveryAll) {
           const { prepareOrcadInputRecovery: prepareRecovery } = await import('./orcad-input-recovery.ts')
           if (closing) { return }
           captured.assertCurrentHost()
-          inputRecovery = prepareRecovery(captured.pool, config.inputRecoveryTarget,
+          inputRecovery = prepareRecovery(captured.pool, config.inputRecoveryTarget ?? null,
             { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
         // Dataset 전체 queue 소비를 서버가 명시적으로 선택합니다. 원 transaction에서 claim 뒤 payload를 검증합니다.
@@ -147,8 +150,25 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
         if (closing) { return }
         captured.assertCurrentHost()
         firstManagedInitial = selectedInitial
+        const orphans = config.orphanReconcile
+          ? (await import('./orcad-orphan-reconcile.ts')).prepareOrcadOrphanReconcile(captured.pool, config,
+            ca ?? Buffer.from(credential(config.inventory.caFile, 'CA')))
+          : null
+        if (config.adoption) {
+          if (!ca || !readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_ADOPTION_CONFIG') }
+          adoptedRuntimes = (await import('./orcad-adopted-runtimes.ts')).prepareOrcadAdoptedRuntimes(captured.pool, config, ca,
+            readProviderSettings, sessionId => selectedInitial?.ownsSession?.(sessionId) ?? false)
+        }
+        if (closing) { return }
+        const adoptionHooks = [selectedInitial?.adoptRuntimes, adoptedRuntimes?.adoptRuntimes].filter(hook => !!hook)
         worker = createControllerWorker(captured.pool, config.policy, {
           ...selectedCallbacks,
+          ...(adoptionHooks.length ? { adoptRuntimes: async (signal: AbortSignal, controller: Parameters<NonNullable<typeof adoptionHooks[0]>>[1]) => {
+            let handled = 0
+            for (const hook of adoptionHooks) { handled += await hook(signal, controller) }
+            return handled
+          } } : {}),
+          ...(orphans ? { reconcileOrphans: orphans.reconcileOrphans } : {}),
           ...(inputRecovery ? { recoverInput: inputRecovery.recoverInput } : {}),
           ...(selectedEventWork ? { eventWork: () => selectedEventWork } : {}), inventory: { transport,
           async sink(event, source, pass) {
@@ -198,13 +218,14 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
             invalidOrcadControllerConfig('CONTROLLER_STOP_UNAVAILABLE')
           }
         } finally {
-          try { await firstManagedInitial?.close() } finally { await stopCatalog() }
+          try { await firstManagedInitial?.close(); await adoptedRuntimes?.close() } finally { await stopCatalog() }
         }
       })
       return completion
     },
     controllerSnapshot(): OrcadControllerSnapshot { return Object.freeze({ worker: worker?.snapshot() ?? null, latestObservation, lastFailure,
       ...(firstManagedInitial ? { firstManagedInitial: firstManagedInitial.snapshot() } : {}),
-      ...(inputRecovery ? { inputRecovery: inputRecovery.snapshot() } : {}) }) }
+      ...(inputRecovery ? { inputRecovery: inputRecovery.snapshot() } : {}),
+      ...(adoptedRuntimes ? { adoptedRuntimes: adoptedRuntimes.snapshot() } : {}) }) }
   })
 }

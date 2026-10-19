@@ -18,7 +18,10 @@ export type TerminalCodexEvent = Readonly<{
   notification: CodexNativeNotification
 }>
 export function terminalCodexPayload(binding: ReadyProviderBinding, notification: CodexNativeNotification): JsonValue {
-  if (binding.providerRef.provider !== 'codex' || binding.connectionInstanceId !== notification.connectionId) {
+  // A Claude provider's every frame is one claude/message notification.
+  const provider = binding.providerRef.provider
+  if ((provider !== 'codex' && provider !== 'claude') || (provider === 'claude') !== (notification.method === 'claude/message') ||
+      binding.connectionInstanceId !== notification.connectionId) {
     throw new DurableDatabaseError('TERMINAL_OUTPUT_CONNECTION')
   }
   return immutableSnapshot(captureCatalogJson({ kind: 'TERMINAL_CODEX_NOTIFICATION', sessionId: binding.sessionId,
@@ -62,7 +65,7 @@ export const terminalCodexOutputEventHandler: EventHandler = async (tx, event) =
      JOIN durable_runtime.agents a ON a.id=s.agent_id
      JOIN durable_runtime.workspaces w ON w.id=t.workspace_id AND w.dataset_name=a.dataset_name
      WHERE t.id=$1 AND t.session_id=$2 AND s.agent_id=$3 AND t.kind='terminal'
-       AND a.provider='codex' AND t.terminal_handle=$4 AND m.payload->>'id'=m.public_tab_id
+       AND a.provider IN ('codex','claude') AND t.terminal_handle=$4 AND m.payload->>'id'=m.public_tab_id
        AND ((m.payload->>'status'='ready' AND m.payload->>'terminal'=t.terminal_handle)
          OR (m.payload->>'status'='pending-handle' AND m.payload->'terminal'='null'::jsonb))
        AND m.payload->>'type'='terminal'
@@ -71,15 +74,22 @@ export const terminalCodexOutputEventHandler: EventHandler = async (tx, event) =
          AND l.next_state->>'attemptId'=$6 AND l.next_state->>'podUid'=$7
          AND l.next_state->>'executionEpoch'=$8 AND l.next_state->>'providerBindingRevision'=$9
          AND l.next_state->>'connectionInstanceId'=$10
-         AND l.next_state->'providerRef'->>'provider'='codex'
+         AND l.next_state->'providerRef'->>'provider'=a.provider
          AND l.next_state->'providerRef'->>'nativeSessionRef'=$11)`,
     [payload.tabId, sessionId, event.agentId, payload.terminalHandle, event.runtimeUnitId, event.attemptId,
       event.podUid, event.executionEpoch, payload.providerBindingRevision, payload.notification.connectionId, payload.nativeSessionRef])
   // Historical output may be stored after close; neither this check nor append reopens a Tab/Session.
   if (found.rowCount !== 1) { throw new DurableDatabaseError('TERMINAL_OUTPUT_CATALOG_BINDING') }
+  // A frame is (connection, host sequence). A replay after re-attach can carry
+  // one already journaled (only observedAt differs): it is the same frame.
+  const journaled = await tx.query(`SELECT 1 FROM durable_runtime.session_events WHERE session_id=$1
+    AND body->>'kind'='TERMINAL_CODEX_NOTIFICATION' AND body->'notification'->>'connectionId'=$2
+    AND body->'notification'->>'sequence'=$3 LIMIT 1`, [sessionId, payload.notification.connectionId, payload.notification.sequence])
+  if (journaled.rowCount) { return }
   const body = captureCatalogJson(payload)
   const journal = await appendSessionEvent(tx, {sessionId,
-    source: {kind: 'NATIVE', sourceKind: 'TERMINAL_CODEX_NOTIFICATION', provider: 'codex',
+    source: {kind: 'NATIVE', sourceKind: 'TERMINAL_CODEX_NOTIFICATION',
+      provider: payload.notification.method === 'claude/message' ? 'claude' : 'codex',
       lineage: payload.notification.connectionId, nativeId: payload.notification.sequence}, body})
   await enqueueOutbox(tx, {eventId: journal.eventId, aggregateId: sessionId, aggregateKind: 'session',
     revision: counter('row:session', journal.sequence), event: body})

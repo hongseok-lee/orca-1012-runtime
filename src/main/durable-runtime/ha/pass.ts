@@ -50,6 +50,10 @@ export type ControllerPassRequest = {
   readonly recoverInput?: (command: TakeoverCommand, operation: TakeoverOperation,
     signal: AbortSignal, context: Readonly<GatewayContext>) => Promise<ControllerInputRecoveryResult>
   readonly inventory?: { readonly transport: AbortableInventoryTransport; readonly sink: ControllerInventorySink }
+  /** Revokes attempts whose Agent Pod is observed gone; returns how many. Runs before the snapshot. */
+  readonly reconcileOrphans?: (signal: AbortSignal, controller: VerifiedControllerIdentity) => Promise<number>
+  /** Re-attaches READY providers recorded under a lost owner; returns how many. Runs before the snapshot. */
+  readonly adoptRuntimes?: (signal: AbortSignal, controller: VerifiedControllerIdentity) => Promise<number>
 }
 export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVENTORY';
   readonly identity: string; readonly disposition: string }
@@ -76,7 +80,8 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
   const request = Object.freeze({ controller: Object.freeze({ ...caller.controller }),
     maximumWork: caller.maximumWork, externalBudgetMs: caller.externalBudgetMs, signal: caller.signal,
     planStep: caller.planStep, eventWork: caller.eventWork, executeCommitted: caller.executeCommitted,
-    lookupOriginal: caller.lookupOriginal, recoverInput: caller.recoverInput, inventory: snapshotInventory(caller.inventory) })
+    lookupOriginal: caller.lookupOriginal, recoverInput: caller.recoverInput, inventory: snapshotInventory(caller.inventory),
+    reconcileOrphans: caller.reconcileOrphans, adoptRuntimes: caller.adoptRuntimes })
   positiveInteger(request.maximumWork)
   positiveInteger(request.externalBudgetMs)
   counter('controller-term', request.controller.term)
@@ -135,9 +140,26 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     }
   }
 
+  /** One operation's failure is its own result (resources retained, looked up again); lease loss still stops the pass. */
+  async function contained(run: () => Promise<void>): Promise<string | null> {
+    try { await run(); return null } catch (error) {
+      const code = safeDatabaseError(error).code
+      if (local.signal.aborted || session.signal.aborted || ['CONTROLLER_PASS_CANCELLED', 'CONTROLLER_EXTERNAL_BUDGET'].includes(code)) { throw error }
+      await gate(); return /^[A-Z0-9_]{1,40}$/.test(code) ? code : 'UNCLASSIFIED'
+    }
+  }
   function room(): boolean { return work < request.maximumWork && performance.now() < end }
   try {
     await gate()
+    // Physical facts first: a gone Pod frees its unit, a live recorded host is
+    // taken over, and only then does lifecycle/input recovery read its snapshot.
+    for (const [identity, hook] of [['ORPHANS', request.reconcileOrphans], ['ADOPTION', request.adoptRuntimes]] as const) {
+      if (!hook || !room()) { continue }
+      let handled = 0
+      const failure = await contained(async () => { handled = await external(signal => hook(signal, request.controller)) })
+      if (failure) { items.push({ kind: 'RECONCILE', identity, disposition: `FAILED_${failure}` }) }
+      else if (handled > 0) { work += handled; items.push({ kind: 'RECONCILE', identity, disposition: `HANDLED_${handled}` }) }
+    }
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
     const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
@@ -246,14 +268,14 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
           if (!request.executeCommitted) {
             items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE_NOT_WIRED' })
           } else {
-            await external(signal => request.executeCommitted!(claim, signal, context))
-            items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'COMMITTED_EXECUTE' })
+            const failure = await contained(() => external(signal => request.executeCommitted!(claim, signal, context)))
+            items.push({ kind: 'RECONCILE', identity: operation.id, disposition: failure ? `EXECUTE_FAILED_${failure}` : 'COMMITTED_EXECUTE' })
           }
         } else if (prepared.execution.reason === 'LOOKUP_ORIGINAL' && command && request.lookupOriginal) {
           // P113 performed original gateway adoption. No receipt becomes a claim,
           // no ACCEPTED/EXECUTING/UNKNOWN command is executed a second time here.
-          await external(signal => request.lookupOriginal!(command, signal, context))
-          items.push({ kind: 'RECONCILE', identity: command.id, disposition: 'LOOKUP_ORIGINAL' })
+          const failure = await contained(() => external(signal => request.lookupOriginal!(command, signal, context)))
+          items.push({ kind: 'RECONCILE', identity: command.id, disposition: failure ? `LOOKUP_FAILED_${failure}` : 'LOOKUP_ORIGINAL' })
         } else {items.push({ kind: 'RECONCILE', identity: operation.id, disposition: prepared.execution.reason })}
       }
     }
@@ -309,7 +331,10 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
       performance.now() >= end ? 'EXTERNAL_BUDGET' : 'PASS_COMPLETE', items: Object.freeze(items) }
   } catch (error) {
     session.stop()
-    return { status: 'STOPPED', reason: safeDatabaseError(error).code, items: Object.freeze(items) }
+    const reason = safeDatabaseError(error).code
+    // An unclassified cause is kept only in the private runtime log.
+    if (reason === 'DB_FAILURE') { process.stderr.write(`[controller] pass stopped: ${error instanceof Error ? String(error.stack).split('\n').slice(0, 3).join(' | ').slice(0, 600) : typeof error}\n`) }
+    return { status: 'STOPPED', reason, items: Object.freeze(items) }
   } finally {
     local.abort()
     sessionSignal.removeEventListener('abort', abort)

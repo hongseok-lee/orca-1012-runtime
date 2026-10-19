@@ -144,3 +144,44 @@ test('cold focus: denied-before-effect clears starting and allows only a fresh p
   assert.equal(f.opens(), 1); assert.equal(opened.writes(), 0)
   assert.deepEqual(f.observations, [])
 })
+
+test('hosted cold: a NEW session with its own --session-id is ready on open, and a different init id faults it', async () => {
+  let handlers: ClaudeProtocolHandlers | undefined
+  const opened = connection()
+  const f = syntheticCold(async (_request, callbacks) => { handlers = callbacks; return opened.transport })
+  const cold: ClaudeColdRequest = { ...f.cold, launch: { ...f.cold.launch, options: { sessionId: 'preset-native' } } }
+  const ready = await bounded(f.driver.cold(cold, f.claim, f.permit(), 200))
+  assert.equal(ready.providerRef.nativeSessionRef, 'preset-native')
+  assert.equal(f.driver.ownsReadyBinding(ready), false, 'connection id of this fixture driver is its own random id')
+  assert.ok(handlers)
+  handlers.onMessage({ type: 'system', subtype: 'init', session_id: 'other-native' })
+  await assert.rejects(f.driver.dispatch(f.dispatch, f.permit()), /NOT_READY/)
+})
+
+test('hosted adopt: a re-attached session observes the native receipt of its own dispatch', async () => {
+  let handlers: ClaudeProtocolHandlers | undefined
+  const sent: Record<string, unknown>[] = []
+  const transport: ClaudeProtocolConnection = { closed: false,
+    async send(message) { sent.push(message) }, async interrupt() { throw new Error('UNEXPECTED_INTERRUPT') } }
+  const f = syntheticCold(async () => { throw new Error('UNEXPECTED_COLD') })
+  const observations: ProviderObservation[] = []
+  const driver = new ClaudeDurableProvider(async () => { throw new Error('UNEXPECTED_COLD') }, event => observations.push(event),
+    f.cold.binding.connectionInstanceId)
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: synthetic native reference for the fixture binding.
+  const binding = { ...f.cold.binding, providerRef: { provider: 'claude', nativeSessionRef: 'adopted-native' } } as Parameters<typeof driver.adopt>[0]
+  await driver.adopt(binding, async callbacks => { handlers = callbacks; return transport })
+  assert.equal(driver.ownsReadyBinding(binding), true)
+  const result = await driver.dispatch(f.dispatch, f.permit())
+  assert.equal(result.state, 'PENDING')
+  assert.equal(sent.length, 1)
+  assert.ok(handlers)
+  handlers.onMessage({ ...sent[0] })
+  assert.deepEqual(observations.map(item => item.kind), ['ADMITTED'])
+  handlers.onMessage({ type: 'result', subtype: 'success', session_id: 'adopted-native', uuid: randomUUID(), user_message_uuid: sent[0].uuid })
+  assert.deepEqual(observations.map(item => item.kind), ['ADMITTED', 'COMPLETED'])
+  const completed = observations[1] as { completed?: { kind: string; deliveryAttemptId: string } }
+  assert.equal(completed.completed?.kind, 'PROVIDER_TARGET_COMPLETED')
+  assert.equal(completed.completed?.deliveryAttemptId, f.dispatch.deliveryAttemptId)
+  handlers.onMessage({ type: 'system', subtype: 'init', session_id: 'other-native' })
+  assert.equal(driver.ownsReadyBinding(binding), false)
+})

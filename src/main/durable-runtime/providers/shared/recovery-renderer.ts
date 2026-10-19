@@ -40,6 +40,22 @@ function string(value: JsonValue | undefined): string {
 }
 
 /** Pure, lossless rendering. No provider wake, extra turn, quota, summarization or splitting. */
+function plainUserText(context: RecoveryContextFrame, components: readonly unknown[]): string | null {
+  const payload = context.payload
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) { return null }
+  const records = Reflect.get(payload, 'records'), facts = Reflect.get(payload, 'facts')
+  if (!Array.isArray(records) || records.length || !Array.isArray(facts) || facts.length) { return null }
+  const texts: string[] = []
+  for (const item of components) {
+    const original = item && typeof item === 'object' ? Reflect.get(item, 'original') : null
+    const body = original && typeof original === 'object' ? Reflect.get(original, 'payload') : null
+    const text = body && typeof body === 'object' ? Reflect.get(body, 'text') : null
+    if (typeof text !== 'string' || !text) { return null }
+    texts.push(text)
+  }
+  return texts.join('\n\n')
+}
+
 export function renderRecoverySubmission(
   context: RecoveryContextFrame,
   sealed: SealedInputMessage
@@ -71,7 +87,10 @@ export function renderRecoverySubmission(
         contentHash: string(attachment.contentHash) })
     }
   }
-  const text = `${RECOVERY_INSTRUCTIONS}\nRecovery context (JSON):\n${canonicalInputJson(context)}\n` +
+  // Nothing to recover: the provider gets exactly what the user wrote. A
+  // JSON frame around a plain message reads as an injected instruction.
+  const plain = plainUserText(context, composition.components)
+  const text = plain ?? `${RECOVERY_INSTRUCTIONS}\nRecovery context (JSON):\n${canonicalInputJson(context)}\n` +
     `Independent new GENERAL input (JSON):\n${canonicalInputJson(sealed.payload)}`
   return immutableSnapshot({ context, sealed, text, attachmentOrder })
 }

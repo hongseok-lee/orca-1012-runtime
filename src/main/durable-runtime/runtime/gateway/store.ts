@@ -168,9 +168,12 @@ export async function submitCommand(
   if (request.predecessor.kind === 'RECONCILED') {
     await assertPredecessor(authority, request.predecessor.receipt)
   }
+  // An UNKNOWN input dispatch stays history: follow-up input is not blocked by
+  // it and carries it as recovery context instead (spec: UNKNOWN never
+  // blocks later input; the original is never resent).
   const unresolved = await authority.tx.query<CommandRow>(
     `SELECT * FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
-     AND state IN ('ACCEPTED','EXECUTING','UNKNOWN')`,
+     AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))`,
     [authority.context.runtimeUnitId]
   )
   if (unresolved.rows[0]) {

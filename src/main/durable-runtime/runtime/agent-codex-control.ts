@@ -13,11 +13,15 @@ import { agentMountProbeSource } from '../storage/agent-mount-collector-probe.ts
 import { createAgentCodexPreparation } from './agent-codex-preparation.ts'
 import type { CodexNativeArtifact } from './agent-codex-preparation.ts'
 import type { InitialProviderPaths } from './initial-provider-paths.ts'
+import { AGENT_CLAUDE_METHODS, openAgentClaudeNative } from './agent-claude-native.ts'
+import type { AgentNativeConnection } from './agent-claude-native.ts'
 
 type Launch = Parameters<CodexProtocolDependencies['open']>[0]
 /** Installed by trusted deployment/bootstrap composition, not decoded from a
  * public RPC. Launch env may contain secrets: never hash or persist this DTO. */
 export type AgentCodexControlPolicy = Readonly<{
+  /** Absent means Codex; Claude carries its OAuth token in launch.env and an empty codexAuth. */
+  provider?: 'codex' | 'claude'
   protectedRoot: string
   launch: Launch
   nativeArtifact: CodexNativeArtifact
@@ -38,8 +42,9 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   }> {
   const policy = immutableSnapshot(original), controlId = randomUUID()
   if (!/^[0-9a-f-]{36}$/.test(policy.bindChallenge)) { throw new Error('AGENT_CODEX_BIND_CHALLENGE') }
-  const nativeMethods = new Set(['thread/start', 'thread/resume', 'turn/start', 'turn/interrupt'])
-  let phase = 'CLOSED_GATE', connection: CodexAppServerConnection | null = null
+  const provider = policy.provider ?? 'codex'
+  const nativeMethods = provider === 'claude' ? AGENT_CLAUDE_METHODS : new Set(['thread/start', 'thread/resume', 'turn/start', 'turn/interrupt'])
+  let phase = 'CLOSED_GATE', connection: CodexAppServerConnection | AgentNativeConnection | null = null
   let coldUsed = false, stopping = false, uncertain = false
   const root = policy.protectedRoot
   const paths = policy.paths
@@ -47,14 +52,15 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
       paths.home !== `${root}/home/${paths.agentId}` ||
       paths.checkout !== `${root}/checkout` || paths.checkoutPreparation !== 'FRESH_EMPTY_FOLDER' ||
       policy.launch.cwd !== paths.checkout || policy.launch.env.HOME !== paths.home ||
-      policy.launch.env.CODEX_HOME !== `${paths.home}/.codex` ||
-      policy.launch.command !== `${paths.home}/.orca-native/codex` || policy.launch.args.at(-1) !== 'app-server') {
+      policy.launch.command !== `${paths.home}/.orca-native/${provider}` ||
+      provider === 'codex' && (policy.launch.env.CODEX_HOME !== `${paths.home}/.codex` || policy.launch.args.at(-1) !== 'app-server') ||
+      provider === 'claude' && (!policy.launch.env.CLAUDE_CODE_OAUTH_TOKEN || policy.codexAuth !== '')) {
     throw new Error('AGENT_CODEX_DEPLOYMENT_POLICY')
   }
   const fd = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW)
   const stat = fstatSync(fd)
   if (!stat.isDirectory()) { closeSync(fd); throw new Error('AGENT_CODEX_PROTECTED_ROOT') }
-  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths)
+  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider)
   const seen = new Set<string>()
   let resolveClosed!: () => void
   const closed = new Promise<void>(resolve => { resolveClosed = resolve })
@@ -138,10 +144,25 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
           failure(id, 'AGENT_COLD_POLICY'); return
         }
         coldUsed = true; phase = 'OPENING'
+        if (provider === 'claude') {
+          try {
+            connection = await openAgentClaudeNative(policy.launch, {
+              onNotification: (method, params) => send({ event: 'NOTIFICATION', controlId, method, params }),
+              onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
+            })
+            phase = 'READY'; response(id, { nativePid: connection.pid })
+          } catch (error) {
+            // Pod-local diagnostic only (host log); the backend still sees the fixed code.
+            process.stderr.write(`AGENT_CLAUDE_COLD_FAILED ${error instanceof Error ? error.message.slice(0, 400) : 'unknown'}\n`)
+            uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_COLD_FAILED')
+          }
+          return
+        }
+        let codex: CodexAppServerConnection | null = null
         try {
-          connection = await openCodexAppServerConnection(policy.launch, {
+          connection = codex = await openCodexAppServerConnection(policy.launch, {
             onNotification: (method, params) => send({ event: 'NOTIFICATION', controlId, method, params }),
-            onServerRequest: pending => connection?.respondWithError(pending.id, -32000,
+            onServerRequest: pending => codex?.respondWithError(pending.id, -32000,
               'Durable Codex driver does not support this reply channel'),
             onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
           })

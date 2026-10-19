@@ -1,91 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import { captureCatalogJson } from '../../catalog/immutable.ts'
-import type { JsonValue } from '../../db/atomic.ts'
+import { CodexConnectionBusyError, codexTurnStartParams, record, text, threadIdOf, turnIdOf } from './protocol-types.ts'
+import type { CodexInterruptResult, CodexNativeNotification, CodexNativeReceipt, CodexProtocolEvent, CodexProtocolResult, RequestState } from './protocol-types.ts'
+export { CodexConnectionBusyError, codexTurnStartParams } from './protocol-types.ts'
+export type { CodexInterruptResult, CodexNativeNotification, CodexNativeReceipt, CodexProtocolEvent, CodexProtocolResult, CodexWireInput } from './protocol-types.ts'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../../codex/codex-app-server-connection-types'
-
-type RecordValue = Record<string, unknown>
-const record = (value: unknown): RecordValue | null =>
-  typeof value === 'object' && value !== null && !Array.isArray(value) ? value as RecordValue : null
-const text = (value: unknown): string | null => typeof value === 'string' && value.length > 0 ? value : null
-const turnIdOf = (value: unknown): string | null => {
-  const root = record(value)
-  return text(record(root?.turn)?.id) ?? text(root?.turnId)
-}
-const threadIdOf = (value: unknown): string | null => {
-  const root = record(value)
-  return text(record(root?.thread)?.id) ?? text(root?.threadId)
-}
-const TURN_OPTIONS = new Set(['model', 'effort', 'approvalPolicy', 'approvalsReviewer', 'personality', 'serviceTier'])
-
-export type CodexWireInput =
-  | Readonly<{ type: 'text'; text: string }>
-  | Readonly<{ type: 'localImage'; path: string }>
-  | Readonly<{ type: 'image'; url: string }>
-
-/** This is an owned protocol receipt, not a generic VerifiedEvidence factory. */
-export type CodexNativeReceipt = Readonly<{
-  connectionId: string
-  threadId: string
-  turnId: string
-  clientMessageId: string
-  submission: string
-  observedAt: string
-  source: 'TURN_START_RESPONSE' | 'CORRELATED_TURN_STARTED'
-}>
-export type CodexProtocolEvent = Readonly<{
-  connectionId: string
-  threadId: string | null
-  turnId: string | null
-  method: string
-  observedAt: string
-  receipt?: CodexNativeReceipt
-  terminalStatus?: 'completed' | 'interrupted' | 'failed'
-}>
-/** Actual app-server notification, separate from admission/stop observations. */
-export type CodexNativeNotification = Readonly<{
-  connectionId: string
-  sequence: string
-  method: string
-  params: JsonValue
-  observedAt: string
-}>
-type RequestState = {
-  submission: string
-  input: Readonly<{ clientMessageId: string; input: readonly CodexWireInput[]; options: Readonly<Record<string, string>> }>
-  receipt?: CodexNativeReceipt
-  notify: (receipt: CodexNativeReceipt) => void
-  notified: Promise<CodexNativeReceipt>
-  baseline?: unknown
-  stoppedFact?: Readonly<{
-    receipt: CodexNativeReceipt
-    baseline: unknown
-    connection: CodexAppServerConnection
-  }>
-  interruptAcknowledged?: boolean
-}
-export type CodexInterruptResult = Readonly<{
-  requested: boolean; terminal: CodexProtocolEvent | null; descendantsStopped: boolean; acknowledged: boolean
-}>
-/** This describes only this connection's effect scope, never durable intake policy. */
-export class CodexConnectionBusyError extends Error {
-  readonly code = 'CODEX_CONNECTION_BUSY'
-  constructor(
-    readonly reason: 'REQUEST_IN_FLIGHT' | 'TURN_ACTIVE' | 'TURN_UNVERIFIABLE',
-    readonly scope: Readonly<{ connectionId: string; threadId: string | null; clientMessageId: string | null; turnId: string | null }>
-  ) {
-    super(`Codex connection cannot dispatch (${reason})`)
-    this.name = 'CodexConnectionBusyError'
-    Object.freeze(scope)
-  }
-}
-/** Exact params serialized by the existing app-server request transport. */
-export function codexTurnStartParams(threadId: string, input: RequestState['input']): Record<string, unknown> {
-  if (Object.keys(input.options).some((key) => !TURN_OPTIONS.has(key))) {throw new Error('CODEX_UNSUPPORTED_OPTION')}
-  return { threadId, clientUserMessageId: input.clientMessageId, input: input.input, ...input.options }
-}
-export type CodexProtocolResult =
-  | Readonly<{ effect: 'ADMITTED'; receipt: CodexNativeReceipt }>
-  | Readonly<{ effect: 'UNKNOWN'; reason: 'RESPONSE_LOST' | 'TURN_UNNAMED' | 'CONNECTION_CLOSED' }>
 
 export type CodexProtocolDependencies = {
   open: (launch: { command: string; args: string[]; cwd: string; env: Record<string, string> }, handlers: CodexAppServerConnectionHandlers) => Promise<CodexAppServerConnection>
@@ -97,10 +16,16 @@ export type CodexProtocolDependencies = {
   requestTimeoutMs?: number
   onEvent?: (event: CodexProtocolEvent) => void
   onNativeNotification?: (event: CodexNativeNotification) => void
+  /** Stable native connection identity, e.g. the Pod-local control id; a fresh UUID when absent. */
+  connectionId?: string
+  /** Sequence of the transport frame being delivered; stable across re-attach and owners. */
+  frameSequence?: () => number
+  /** Re-attaches to a native connection an earlier owner opened. Used only by adopt(). */
+  attach?: (handlers: CodexAppServerConnectionHandlers) => Promise<CodexAppServerConnection>
 }
 
 export class CodexProtocolSession {
-  readonly connectionId = randomUUID()
+  readonly connectionId: string
   #connection: CodexAppServerConnection | null = null
   #threadId: string | null = null
   #historyPath: string | null = null
@@ -119,12 +44,60 @@ export class CodexProtocolSession {
 
   constructor(private readonly dependencies: CodexProtocolDependencies) {
     this.#nativeNotification = dependencies.onNativeNotification?.bind(dependencies)
+    this.connectionId = dependencies.connectionId ?? randomUUID()
   }
 
   get threadId(): string | null { return this.#threadId }
   get historyPath(): string | null { return this.#historyPath }
   get closed(): boolean { return this.#closed || this.#connection?.closed === true }
   ownsReceipt(receipt: CodexNativeReceipt): boolean { return this.#receipts.has(receipt) }
+
+  #handlers(): CodexAppServerConnectionHandlers {
+    return {
+      onNotification: (method, params) => {
+        const originalParams = this.#nativeNotification ? captureCatalogJson(params ?? null) : null
+        this.#observe(method, params)
+        // Protocol admission/terminal state is settled by the original path.
+        // The owned sink persists errors separately; this is never an ACK.
+        if (this.#nativeNotification) {
+          // A host frame sequence names the same notification for every owner,
+          // so a replay after re-attach is the same spool record, not a new one.
+          const frame = this.dependencies.frameSequence?.() ?? 0
+          this.#notificationSequence++
+          this.#nativeNotification(Object.freeze({ connectionId: this.connectionId,
+            sequence: String(frame > 0 ? frame : this.#notificationSequence), method,
+            params: originalParams, observedAt: this.#now() }))
+        }
+      },
+      onExit: () => { this.#closed = true },
+      // These unconnected channels must not block a native process silently.
+      onServerRequest: (request) => this.#connection?.respondWithError(request.id, -32000, 'Durable Codex driver does not support this reply channel')
+    }
+  }
+
+  /** Binds to a native thread already open on a connection an earlier owner
+   * created. No process or thread is created; on failure the live connection
+   * is left untouched, since closing it would stop the provider. */
+  async adopt(input: { threadId: string; cwd: string }): Promise<Readonly<{ threadId: string; connectionId: string }>> {
+    if (this.#connection || this.#opening || this.#closed || !this.dependencies.attach) {throw new Error('CODEX_CONNECTION_ALREADY_USED')}
+    this.#opening = true
+    try {
+      const connection = await this.dependencies.attach(this.#handlers())
+      this.#connection = connection
+      const opened = await connection.request('thread/resume', { threadId: input.threadId, cwd: input.cwd, excludeTurns: true },
+        { timeoutMs: this.dependencies.requestTimeoutMs })
+      if (threadIdOf(opened) !== input.threadId) {throw new Error('CODEX_NATIVE_THREAD_MISMATCH')}
+      if (connection.closed || this.#closed) {throw new Error('CODEX_CONNECTION_CLOSED')}
+      this.#threadId = input.threadId
+      this.#historyPath = text(record(record(opened)?.thread)?.path)
+      return Object.freeze({ threadId: input.threadId, connectionId: this.connectionId })
+    } catch (error) {
+      this.#closed = true
+      throw error
+    } finally {
+      this.#opening = false
+    }
+  }
 
   async open(input: {
     command: string; args: readonly string[]; cwd: string; codexHome: string
@@ -138,23 +111,7 @@ export class CodexProtocolSession {
       const connection = await this.dependencies.open({
         command: input.command, args: [...input.args, 'app-server'], cwd: input.cwd,
         env: { ...input.env, CODEX_HOME: input.codexHome }
-      }, {
-        onNotification: (method, params) => {
-          const originalParams = this.#nativeNotification ? captureCatalogJson(params ?? null) : null
-          this.#observe(method, params)
-          // Protocol admission/terminal state is settled by the original path.
-          // The owned sink persists errors separately; this is never an ACK.
-          if (this.#nativeNotification) {
-            this.#notificationSequence++
-            this.#nativeNotification(Object.freeze({ connectionId: this.connectionId,
-              sequence: String(this.#notificationSequence), method,
-              params: originalParams, observedAt: this.#now() }))
-          }
-        },
-        onExit: () => { this.#closed = true },
-        // These unconnected channels must not block a native process silently.
-        onServerRequest: (request) => this.#connection?.respondWithError(request.id, -32000, 'Durable Codex driver does not support this reply channel')
-      })
+      }, this.#handlers())
       this.#connection = connection
       const params = { threadId: input.resumeThreadId, cwd: input.cwd, ...(input.resumePath ? { path: input.resumePath } : {}) }
       const opened = input.resumeThreadId

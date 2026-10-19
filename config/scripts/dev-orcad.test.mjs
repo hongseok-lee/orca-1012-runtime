@@ -300,3 +300,30 @@ test(
     }
   }
 )
+
+test('a runtime that dies unasked is restarted from the same generation', { timeout: 60_000 }, async () => {
+  const root = await fixture()
+  const events = []
+  const lifecycle = join(root, 'lifecycle.jsonl')
+  process.env.TEST_LIFECYCLE = lifecycle
+  const dev = await startOrcadDev({ root, onEvent: (e) => events.push(e) })
+  try {
+    await until(() => events.some((e) => e.event === 'started'))
+    const first = events.find((e) => e.event === 'started')
+    process.kill(first.pid, 'SIGKILL')
+    await until(() => events.filter((e) => e.event === 'started').length === 2)
+    const second = events.filter((e) => e.event === 'started')[1]
+    assert.equal(second.generation, first.generation)
+    assert.equal(second.bundleHash, first.bundleHash)
+    assert.notEqual(second.pid, first.pid)
+    assert(events.some((e) => e.event === 'restart_scheduled' && e.generation === first.generation))
+    await dev.close()
+    // A requested stop is not a crash: nothing is restarted after close.
+    await delay(1_500)
+    assert.equal(events.filter((e) => e.event === 'started').length, 2)
+  } finally {
+    await dev.close()
+    delete process.env.TEST_LIFECYCLE
+    await rm(root, { recursive: true, force: true })
+  }
+})

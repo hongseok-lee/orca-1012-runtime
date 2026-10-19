@@ -12,6 +12,7 @@ import type {
 } from '../shared/contracts.ts'
 import { invokeProviderEffect } from '../shared/effect-boundary.ts'
 import { immutableSnapshot, renderRecoverySubmission, ProviderInputError } from '../shared/recovery-renderer.ts'
+import type { CodexAppServerConnectionHandlers } from '../../../codex/codex-app-server-connection-types.ts'
 import { CodexProtocolSession, CodexConnectionBusyError, codexTurnStartParams, type CodexNativeReceipt, type CodexProtocolDependencies, type CodexProtocolEvent, type CodexWireInput } from './protocol.ts'
 
 export type CodexColdLaunch = {
@@ -35,19 +36,24 @@ export class DurableCodexDriver {
   #nativeEntered = new Set<string>()
 
   constructor(dependencies: CodexProtocolDependencies, private readonly sink: ProviderObservationSink) {
-    const open = dependencies.open.bind(dependencies)
-    this.#protocol = new CodexProtocolSession({ ...dependencies,
-      open: (launch, handlers) => open(launch, {...handlers, onExit: error => {
-        handlers.onExit?.(error)
-        for (const identity of this.#submissions.values()) {
-          if (this.#nativeEntered.has(identity.nativeRequestId) && !this.#completed.has(identity.nativeRequestId)) {
-            this.#uncertain(identity, 'CONNECTION_LOST')
-          }
+    const open = dependencies.open.bind(dependencies), attach = dependencies.attach?.bind(dependencies)
+    // Whichever way the connection was obtained, its loss leaves every entered
+    // and uncompleted submission UNKNOWN; nothing is resent.
+    const losing = (handlers: CodexAppServerConnectionHandlers): CodexAppServerConnectionHandlers => ({ ...handlers, onExit: error => {
+      handlers.onExit?.(error)
+      for (const identity of this.#submissions.values()) {
+        if (this.#nativeEntered.has(identity.nativeRequestId) && !this.#completed.has(identity.nativeRequestId)) {
+          this.#uncertain(identity, 'CONNECTION_LOST')
         }
-      }}), onEvent: (event) => {
-      dependencies.onEvent?.(event)
-      this.#observe(event)
+      }
     } })
+    this.#protocol = new CodexProtocolSession({ ...dependencies,
+      open: (launch, handlers) => open(launch, losing(handlers)),
+      ...(attach ? { attach: (handlers: CodexAppServerConnectionHandlers) => attach(losing(handlers)) } : {}),
+      onEvent: (event) => {
+        dependencies.onEvent?.(event)
+        this.#observe(event)
+      } })
   }
 
   get connectionInstanceId(): string { return this.#protocol.connectionId }
@@ -80,6 +86,19 @@ export class DurableCodexDriver {
       this.#binding = immutableSnapshot({ ...original.request.binding, providerRef })
       return this.#binding
     })
+  }
+
+  /** Re-binds to the native thread an earlier owner recorded READY for this
+   * binding, over a re-attached connection. No provider effect or permit: the
+   * process, thread and writer grant already exist and are not recreated. */
+  async adopt(binding: ReadyProviderBinding, checkout: string, options: Readonly<Record<string, string>>): Promise<ReadyProviderBinding> {
+    const original = immutableSnapshot({ binding, options })
+    if (this.#binding || original.binding.connectionInstanceId !== this.connectionInstanceId ||
+        original.binding.providerRef.provider !== 'codex') {throw new Error('CODEX_ADOPT_BINDING_MISMATCH')}
+    await this.#protocol.adopt({ threadId: original.binding.providerRef.nativeSessionRef, cwd: checkout })
+    this.#options = immutableSnapshot(original.options)
+    this.#binding = immutableSnapshot(original.binding)
+    return this.#binding
   }
 
   async dispatch(request: ProviderDispatchRequest, permit: ProviderEffectPermit): Promise<ProviderDispatchResult> {

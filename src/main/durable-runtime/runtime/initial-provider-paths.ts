@@ -76,7 +76,7 @@ export async function readInitialProviderPaths(tx: DurableTransaction, unitId: s
      JOIN durable_runtime.catalog_repositories r ON r.id=w.repo_id
      JOIN durable_runtime.tabs tab ON tab.session_id=s.id AND tab.kind='terminal' AND tab.lifecycle='OPEN'
      JOIN durable_runtime.catalog_tab_metadata t ON t.tab_id=tab.id
-     WHERE m.runtime_unit_id=$1 AND s.id=$2 AND s.lifecycle='OPEN' AND a.provider='codex'
+     WHERE m.runtime_unit_id=$1 AND s.id=$2 AND s.lifecycle='OPEN' AND a.provider IN ('codex','claude')
      AND ws.deleted_at IS NULL AND r.deleted_at IS NULL AND w.runtime_unit_id=m.runtime_unit_id`, [unitId, sessionId])
   const members = await tx.query('SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1', [unitId])
   if (members.rowCount !== 1 || rows.rowCount !== 1) { return deny() }

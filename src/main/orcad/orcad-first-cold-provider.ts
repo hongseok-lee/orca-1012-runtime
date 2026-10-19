@@ -6,6 +6,7 @@ import { invalidOrcadControllerConfig, parseUniqueOrcadControllerJson, readPriva
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
 import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtime/runtime/agent-pod-policy.ts'
 import { createInitialCodexExecutor } from '../durable-runtime/runtime/initial-codex-executor.ts'
+import { claudeSessionIdForOrcaSession } from '../claude/claude-structured-launch-resolution.ts'
 import { createKubernetesPodAuthenticator } from '../durable-runtime/runtime/kubernetes-pod-auth.ts'
 import { createComputeCreationIdentityClient } from '../durable-runtime/runtime/compute-creation-identity.ts'
 import { logicalId } from '../../shared/durable-runtime/identity.ts'
@@ -16,8 +17,17 @@ import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/init
 import type { ControlledCreationWindow } from '../durable-runtime/runtime/controlled-creation-window.ts'
 import { createTerminalInputRuntime } from '../durable-runtime/input/runtime-input.ts'
 import { createTerminalCodexOutput } from '../durable-runtime/output/terminal-codex-output.ts'
+import { createAdoptedCodexExecutor } from '../durable-runtime/runtime/adopted-codex-executor.ts'
+import { createAgentCodexTransport } from '../durable-runtime/runtime/agent-codex-transport.ts'
+import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
+import type { InitialProviderPaths } from '../durable-runtime/runtime/initial-provider-paths.ts'
+import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_FIRST_COLD_CONFIG')
+/** Managed Agents run without approval prompts: Codex always gets --yolo (or its long form from settings). */
+export function codexYolo(args: readonly string[]): string[] {
+  return args.includes('--yolo') || args.includes('--dangerously-bypass-approvals-and-sandbox') ? [...args] : ['--yolo', ...args]
+}
 
 /** Private anonymous pipe only. A regular file/argv/env token cannot enter
  * this one-shot development Audit supplier. No token hash or error body. */
@@ -56,8 +66,11 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const readSettings = originalReadSettings
     const parsed = parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8'))
     const nodeWindow = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'creationWindow')
+    // provider: "claude" selects Claude with its OAuth token file in place of the Codex auth file.
+    const claude = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'provider')
     const raw = agentPodFields(parsed,
-      ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256','codexAuthFile',
+      ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256',
+        ...(claude ? ['provider', 'claudeTokenFile'] : ['codexAuthFile']),
         'runtimeServiceAccountName','runtimeServiceAccountUid','originalAuditId','pinId','ownerTokenFile','actorId',
         'clusterIdentityRef','projectId','projectNumber','outputSpoolDirectory', ...(nodeWindow ? ['creationWindow'] : ['creationStartTime','creationEndTime']), 'timeoutMs'])
     const text = (key: string) => agentPodText(raw.get(key))
@@ -72,11 +85,14 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       canonicalDirectory: agentPodText(declaration.get('canonicalDirectory')), checkout: '/agent/checkout',
       sourceCheckout: agentPodText(declaration.get('sourceCheckout')) })
     const nativeArtifact = Object.freeze({ sha256: text('nativeSha256'), byteLength: agentPodInteger(raw.get('nativeByteLength')) })
-    const bootstrapBytes = readPrivateOrcadControllerConfigBytes(text('controlArtifactFile'))
+    // The control bundle (with the Claude SDK) is larger than a config file; the transport caps it at 4 MiB.
+    const bootstrapBytes = readPrivateOrcadControllerConfigBytes(text('controlArtifactFile'), 4 * 1024 * 1024)
     const bootstrapSha256 = text('controlSha256'), nativeArtifactFile = text('nativeArtifactFile')
     // Read only the already imported product-managed credential. Never hash,
     // serialize to evidence, publish, or inspect the root original again.
-    const codexAuth = readPrivateOrcadControllerConfigBytes(text('codexAuthFile')).toString('utf8')
+    if (claude && text('provider') !== 'claude') { return deny() }
+    const codexAuth = claude ? '' : readPrivateOrcadControllerConfigBytes(text('codexAuthFile')).toString('utf8')
+    const claudeToken = claude ? agentPodText(readPrivateOrcadControllerConfigBytes(text('claudeTokenFile')).toString('utf8').trim()) : ''
     const ownerToken = agentPodText(readPrivateOrcadControllerConfigBytes(text('ownerTokenFile')).toString('utf8'))
     const originalAuditId = logicalId('event', text('originalAuditId')), pinId = logicalId('storage-namespace-pin', text('pinId'))
     const actorId = text('actorId'), clusterIdentityRef = text('clusterIdentityRef')
@@ -102,13 +118,34 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const podAuthenticator = createKubernetesPodAuthenticator({ apiOrigin, ca: Buffer.from(ca), clusterIdentityRef,
       audience: 'orca-runtime-agent', namespace, dataset, timeoutMs, readReviewerBearer })
     let executor: ReturnType<typeof createInitialCodexExecutor> | undefined
-    const current = () => executor?.current() ?? null
+    let adopted: ReturnType<typeof createAdoptedCodexExecutor> | null = null, adoptError: string | null = null
+    // The cold owner of this process first; otherwise a provider adopted from an earlier process.
+    const current = () => executor?.current() ?? adopted?.current() ?? null
+    // Same launch/env/policy for the cold path and for adoption of this exact Pod.
+    function agentDeployment(pod: Readonly<{ podName: string; podUid: string; runtimeUnitId: string; operationId: string
+      executionEpoch: string; specHash: string }>, paths: InitialProviderPaths) {
+      const native = captureInitialCodexNativePolicy(readSettings())
+      if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
+          native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
+      // Claude's native session id is fixed by the Orca session, as on the desktop lane.
+      const launch = claude
+        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
+          cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
+        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: paths.checkout,
+          env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
+      return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
+        bootstrapSha256, nativeArtifactFile, podAuthenticator, readReviewerBearer,
+        expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
+        policy: Object.freeze({ ...(claude ? { provider: 'claude' as const } : {}), protectedRoot: '/agent', launch, nativeArtifact, codexAuth,
+          bindChallenge: randomUUID(), paths }) }) })
+    }
     let inputPhase = 'UNUSED', inputError: string | null = null
     const inputRuntime = createTerminalInputRuntime(pool, { current }, notice => {
       inputPhase = notice.phase; inputError = notice.code ?? null
     })
     const output = createTerminalCodexOutput({ pool, spoolDirectory: text('outputSpoolDirectory'), current })
     executor = createInitialCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), planDigest: initial.planDigest,
+      ...(claude ? { provider: 'claude' as const } : {}),
       emptyFolder,
       sink: inputRuntime.observe,
       onNativeNotification: output.onNativeNotification,
@@ -120,34 +157,57 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       },
       async deployment({ plan, podUid, paths }, signal) {
         if (signal.aborted) { return deny() }
-        const id = plan.plan.identity, bindChallenge = randomUUID()
-        const native = captureInitialCodexNativePolicy(readSettings())
-        if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
-            native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
-        const launch = Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
-          env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
-        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, ...creation, nativeOptions: native.options,
+        const id = plan.plan.identity
+        const prepared = agentDeployment({ podName: id.resourceName, podUid, runtimeUnitId: id.unitId, operationId: id.operationId,
+          executionEpoch: id.executionEpoch, specHash: id.specHash }, paths)
+        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, ...creation, nativeOptions: prepared.native.options,
           config: Object.freeze({ directory: initial.directory, nfsServer: plan.plan.mountExpectations.protected[0].server,
             mounts: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, dataset, timeoutMs, readReviewerBearer }),
             execution: Object.freeze({ clusterIdentityRef, namespace, dataset, audience: 'orca-runtime-agent', projectId, projectNumber,
               timeoutMs, podAuthenticator, creationObserver }),
-            agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
-              bootstrapSha256, nativeArtifactFile, podAuthenticator, readReviewerBearer,
-              expected: Object.freeze({ serviceAccountName, serviceAccountUid, podName: id.resourceName, podUid,
-                runtimeUnitId: id.unitId, operationId: id.operationId, executionEpoch: id.executionEpoch, specHash: id.specHash }),
-              policy: Object.freeze({ protectedRoot: '/agent', launch, nativeArtifact, codexAuth, bindChallenge, paths }) }) }) })
+            agent: prepared.agent }) })
       } })
     const originalExecutor = executor
-    return Object.freeze({ ...originalExecutor,
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixed internal executor name for adopted dispatch commands.
+    const adoptedExecutorId = 'orca-adopted-codex-runtime' as ExecutorId
+    const adoptRuntimes: NonNullable<ControllerPassRequest['adoptRuntimes']> = async (_signal, controller) => {
+      // Never compete with this process's own cold owner, and never adopt twice.
+      if (originalExecutor.current() || adopted?.current() || !['UNUSED', 'READY'].includes(originalExecutor.phase())) { return 0 }
+      const candidate = createAdoptedCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), executorId: adoptedExecutorId,
+        ...(claude ? { provider: 'claude' as const } : {}),
+        journaledSequence: connectionId => output.journaledSequence(connectionId),
+        sink: inputRuntime.observe, onNativeNotification: output.onNativeNotification,
+        onReady() { void output.drain().catch(() => { /* retained by the output owner */ }); inputRuntime.ready() },
+        async deployment(target) {
+          // Only the protected root and checkout are used by an adopted control; nothing is prepared or copied.
+          const paths: InitialProviderPaths = Object.freeze({ workspaceId: '', agentId: target.agentId, home: `/agent/home/${target.agentId}`,
+            checkout: '/agent/checkout', checkoutPreparation: 'FRESH_EMPTY_FOLDER', canonicalDirectory: '', sourceHome: '', sourceCheckout: '' })
+          const prepared = agentDeployment(target, paths)
+          // A vanished Pod must not hold the pass: re-attach briefly, then leave it to orphan reconciliation.
+          return Object.freeze({ transport: createAgentCodexTransport({ ...prepared.agent, reconnectBudgetMs: 30_000 }), checkout: paths.checkout,
+            nativeOptions: prepared.native.options })
+        } })
+      // A failed adoption leaves the attempt to orphan reconciliation; the next pass may try again.
+      try { await candidate.adopt(controller); adopted = candidate; adoptError = null; return 1 }
+      catch (error) { adoptError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'ADOPTION_FAILED'; return 0 }
+    }
+    return Object.freeze({ ...originalExecutor, adoptRuntimes,
+      ownsSession: (sessionId: string) => sessionId === initial.sessionId,
       onTerminalInputCommitted: inputRuntime.committed,
       assertOutputAvailable(): void {
         const state = output.snapshot()
         if (state.failed || state.closed) { throw new Error('TERMINAL_OUTPUT_UNAVAILABLE') }
       },
-      snapshot: () => Object.freeze({ ...originalExecutor.snapshot(), inputPhase, inputError, output: output.snapshot() }),
+      snapshot: () => Object.freeze({ ...originalExecutor.snapshot(), inputPhase, inputError, output: output.snapshot(),
+        adoption: Object.freeze({ phase: adopted?.phase() ?? null, error: adoptError }) }),
       async close(): Promise<void> {
         inputRuntime.dispose()
         try { await inputRuntime.drain() } finally { await output.close() }
       } })
-  } catch { return deny() }
+  } catch (error) {
+    // The original cause stays a fixed code in the private runtime log; the caller sees only the config refusal.
+    const code = error && typeof error === 'object' ? Reflect.get(error, 'code') ?? Reflect.get(error, 'message') : null
+    process.stderr.write(`[orcad] first cold config refused: ${typeof code === 'string' && /^[A-Za-z0-9_:-]{1,80}$/.test(code) ? code : 'UNCLASSIFIED'}\n`)
+    return deny()
+  }
 }

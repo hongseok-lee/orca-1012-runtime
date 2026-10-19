@@ -98,12 +98,23 @@ await test('public managed Terminal preserves owner, draft, receipt and uncertai
   context = other
   assert.deepEqual(await send('\r'), accepted)
   assert.deepEqual(await texts(), ['iPhone original\n😀 /logical/image.png', 'Mac draft'])
-  const restart = connect('unknown-old-owner', new TerminalConnectionOwner())
-  await assert.rejects(send('not proof', false, randomUUID(), restart), /GRANT_UNPROVEN/)
+  // A new server process: the same device and caller take the earlier process's floor over.
+  const restartOwner = new TerminalConnectionOwner()
+  context = connect('after-restart', restartOwner)
   assert.deepEqual(await send('discard me'), accepted)
   assert.deepEqual(await send(buildAgentTuiClearInputForText('discard me')), accepted)
   assert.deepEqual(await send('after clear', true), accepted)
   assert.equal((await texts()).at(-1), 'after clear')
+  // Another device (iPhone) sending to the same session takes the floor at the next generation, and back.
+  const generation = async () => BigInt((await state()).floor.floor_generation)
+  const before = await generation()
+  const phone = connect('phone', restartOwner, 'b'.repeat(64), randomUUID())
+  assert.deepEqual(await send('from phone', true, randomUUID(), phone), accepted)
+  assert.equal((await texts()).at(-1), 'from phone')
+  assert.equal(await generation(), before + 1n)
+  assert.deepEqual(await send('mac again', true), accepted)
+  assert.equal((await texts()).at(-1), 'mac again')
+  assert.equal(await generation(), before + 2n)
   const beforeUnsupported = await state()
   await assert.rejects(handler({ terminal: f.terminalHandle, interrupt: true }, { ...context, requestId: randomUUID() }, legacy), /SEMANTIC_NOT_CONNECTED/)
   await assert.rejects(handler({ terminal: f.terminalHandle, text: '\x1b[1;1R', inputKind: 'query-reply' },

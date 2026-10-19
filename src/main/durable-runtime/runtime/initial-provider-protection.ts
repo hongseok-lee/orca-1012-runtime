@@ -53,10 +53,13 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
   let lease: ProviderProtectionLease | null = null
   let observedMount: AuthenticatedAgentMountObservation | null = null
 
-  function live(): boolean {
-    return phase === 'ISSUED' && held && holder !== null && heldManagedLeafDirectoryValid(holder) &&
-      control !== null && authenticatedAgentControlValid(control)
+  function lostPart(): string | null {
+    if (phase !== 'ISSUED') { return 'PHASE' }
+    if (!held || holder === null || !heldManagedLeafDirectoryValid(holder)) { return 'HELD_LEAF' }
+    if (control === null || !authenticatedAgentControlValid(control)) { return `CONTROL_${control?.lossReason() ?? 'NONE'}` }
+    return null
   }
+  function live(): boolean { return lostPart() === null }
   function releaseOriginal(): Promise<void> {
     if (release) { return release }
     release = (async () => {
@@ -103,6 +106,9 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
       hold = Object.freeze({ ...accepted.record.profile, digest: accepted.namespaceDigest,
         pinId: logicalId('storage-namespace-pin', input.pinId), ownerToken: input.ownerToken, actorId: input.actorId })
       try {
+        // A Pod can wait minutes for a node; the leaf pin's exec stream would
+        // sit idle that long and be dropped. Take the pin once the Pod runs.
+        await agent.awaitPodRunning(signal)
         holdAttempted = true
         const acquired = await acquireNamespaceHold(borrowed, hold)
         if (!acquired.database.ok || acquired.database.commitOutcome !== 'ACKNOWLEDGED' || acquired.database.cleanupFailed ||
@@ -152,9 +158,9 @@ export function createInitialProviderProtection(pool: Pool, deployment: Readonly
           bindChallengeResponse: workload.challengeResponse,
           mounts: Object.freeze([Object.freeze({ bindingId, clientRoot: '/agent', evidence: mount })]), release: releaseOriginal })
         phase = 'ISSUED'
-        if (!live()) { return deny('LIFETIME_LOST') }
+        if (!live()) { return deny(`LIFETIME_LOST_${lostPart()}`) }
         return Object.freeze({ takePreparedProtection() {
-          if (!live() || !lease) { return deny('LIFETIME_LOST') }
+          if (!live() || !lease) { return deny(`LIFETIME_LOST_${lostPart() ?? 'LEASE'}`) }
           return lease
         } })
       } catch (error) { phase = 'RETAINED'; throw error }
