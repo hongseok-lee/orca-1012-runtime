@@ -130,6 +130,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
   }
   return Object.freeze({
     adoptRuntimes,
+    currentTerminalRuntime: (sessionId: string) => entries.get(sessionId)?.executor.current() ?? null,
     onTerminalInputCommitted: ((input) => { entries.get(input.authority.sessionId)?.input.committed(input) }) satisfies TerminalInputCommittedSink,
     snapshot: () => Object.freeze({ adopted: entries.size, failed: errors.size,
       firstError: errors.size ? [...errors.values()][0] : null, lastInput }),

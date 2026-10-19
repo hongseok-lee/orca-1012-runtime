@@ -21,7 +21,7 @@ import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtim
 import { logicalId, counter } from '../../shared/durable-runtime/identity.ts'
 import { canonicalInput } from '../durable-runtime/runtime/gateway/input.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
-import type { TerminalInputCommittedSink } from '../durable-runtime/input/runtime-input-types.ts'
+import type { TerminalInputCommittedSink, ReadyTerminalInputPort } from '../durable-runtime/input/runtime-input-types.ts'
 import type { OrcadControllerConfig } from './orcad-controller-config.ts'
 import { invalidOrcadControllerConfig, parseUniqueOrcadControllerJson, readPrivateOrcadControllerConfigBytes } from './orcad-controller-config.ts'
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
@@ -297,6 +297,18 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       await dispatch.lookupOriginal(command, signal, context)
     }) satisfies NonNullable<ControllerPassRequest['lookupOriginal']>,
     ownsOperation: (operationId: string) => entries.has(operationId),
+    currentTerminalRuntime(sessionId: string): ReadyTerminalInputPort | null {
+      let selected: ReadyTerminalInputPort | null = null
+      for (const entry of entries.values()) {
+        if (entry.sessionId !== sessionId) { continue }
+        const current = entry.dispatch.currentTerminalRuntime?.(sessionId)
+        if (!current) { continue }
+        // Never choose a historical wake by map iteration order.
+        if (selected) { return null }
+        selected = current
+      }
+      return selected
+    },
     onTerminalInputCommitted: ((input) => {
       for (const entry of entries.values()) { if (entry.sessionId === input.authority.sessionId) { entry.dispatch.onTerminalInputCommitted?.(input) } }
     }) satisfies TerminalInputCommittedSink,

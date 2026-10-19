@@ -239,6 +239,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       // Owned while a cold start runs or a provider owner is held; a lost owner no longer claims the Session.
       ownsSession: (sessionId: string) => sessionId === initial.sessionId &&
         (current() !== null || !['UNUSED', 'READY', 'RETAINED_UNCONFIRMED'].includes(originalExecutor.phase())),
+      currentTerminalRuntime: (sessionId: string) => sessionId === initial.sessionId ? current() : null,
       onTerminalInputCommitted: inputRuntime.committed,
       assertOutputAvailable(): void {
         const state = output.snapshot()
