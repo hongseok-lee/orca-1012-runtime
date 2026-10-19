@@ -9,6 +9,7 @@ import { createKubernetesPodAuthenticator } from '../durable-runtime/runtime/kub
 import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import { createTerminalInputRuntime } from '../durable-runtime/input/runtime-input.ts'
+import { readPendingTerminalInputs } from '../durable-runtime/input/pending-terminal-input.ts'
 import type { TerminalInputCommittedSink } from '../durable-runtime/input/runtime-input-types.ts'
 import { createTerminalCodexOutput } from '../durable-runtime/output/terminal-codex-output.ts'
 import { createAdoptedCodexExecutor } from '../durable-runtime/runtime/adopted-codex-executor.ts'
@@ -83,7 +84,12 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
       ...(provider === 'claude' ? { provider: 'claude' as const } : {}),
       journaledSequence: connectionId => output.journaledSequence(connectionId),
       sink: input.observe, onNativeNotification: output.onNativeNotification,
-      onReady() { void output.drain().catch(() => { /* retained by the output owner */ }); input.ready() },
+      onReady() {
+        void output.drain().catch(() => { /* retained by the output owner */ }); input.ready()
+        // Input the lost owner accepted but never dispatched goes out now.
+        void readPendingTerminalInputs(pool, sessionId).then(list => { for (const item of list) { input.committed(item) } })
+          .catch(() => { lastInput = 'RETAINED:PENDING_INPUT_READ' })
+      },
       deployment: async target => transportFor(target) })
     try {
       await executor.adopt(controller)
