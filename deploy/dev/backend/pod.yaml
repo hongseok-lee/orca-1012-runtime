@@ -6,6 +6,9 @@
     "namespace": "orca-dev",
     "labels": {
       "app": "orca-backend-dev"
+    },
+    "annotations": {
+      "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
     }
   },
   "spec": {
@@ -13,7 +16,6 @@
     "automountServiceAccountToken": false,
     "terminationGracePeriodSeconds": 25,
     "nodeSelector": {
-      "cloud.google.com/gke-spot": "true",
       "kubernetes.io/arch": "amd64"
     },
     "securityContext": {
@@ -134,14 +136,6 @@
             }
           ]
         }
-      }
-    ],
-    "tolerations": [
-      {
-        "effect": "NoSchedule",
-        "key": "cloud.google.com/gke-spot",
-        "operator": "Equal",
-        "value": "true"
       }
     ],
     "serviceAccountName": "orca-backend-inventory"

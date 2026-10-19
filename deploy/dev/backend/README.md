@@ -1,6 +1,6 @@
 # Node-only backend development
 
-Foundation scope: pinned upstream plus common patches, a separate Spot dev Pod,
+Foundation scope: pinned upstream plus common patches, a separate dev Pod (development: on-demand with `safe-to-evict: "false"`, see `../storage/README.md`),
 and source watch/reload. This does not implement HA, PostgreSQL persistence or
 new product RPCs. The Pod manifest deliberately starts a holding process so
 admission and initial dependencies can be checked before runtime startup.

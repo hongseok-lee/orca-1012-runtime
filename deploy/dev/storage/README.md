@@ -14,7 +14,7 @@ Neither server specifies a CPU limit. PostgreSQL's StatefulSet keeps PVCs on del
 GKE Autopilot here runs about one Pod per node, so a cluster-autoscaler `ScaleDown` never packs anything: it only evicts a live Pod to another node. Before the opt-out the single NFS server was moved 20 times in 14 hours this way (none were Spot preemptions); each move broke in-flight leaf pins and binding checks. The rule, enforced by `tools/render_storage.py` on every rendered Pod template:
 
 - **Regular (on-demand) Pod with 500m CPU or more → `cluster-autoscaler.kubernetes.io/safe-to-evict: "false"`.** It is the dominant choice: there is nothing to consolidate, only a restart to avoid.
-- **Spot Pod → never.** Autopilot rejects the annotation together with the `gke-spot` toleration (`autopilot-scaledown-limitation`); Spot Pods (PostgreSQL, backend, Expo, Agent Pods) move on preemption anyway.
+- **Spot Pod → never.** Autopilot rejects the annotation together with the `gke-spot` toleration (`autopilot-scaledown-limitation`); Spot Pods (PostgreSQL, Agent Pods) move on preemption anyway. During development the backend and Expo Pods (`deploy/dev/backend`, `deploy/dev/expo`) also run on regular nodes with the opt-out.
 - **Below 500m → not allowed.** Autopilot rejects the annotation unless the containers' CPU request sum (or the largest init container) is at least 500m (`autopilot-pod-limit-constraints`), which is why NFS requests 500m.
 
 The fixed namespace profile guards (`…-v1-fixed`, `…-v1-pods`) pin the NFS ReplicaSet name and UID. Any NFS Pod template change creates a new ReplicaSet, so replace both policies with the new name/UID right after `kubectl apply`, or the new Pod is rejected and NFS stays down.
