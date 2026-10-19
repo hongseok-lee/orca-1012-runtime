@@ -27,7 +27,7 @@ const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_REWAKE_CONFIG
 const sha = (bytes: string | Buffer): string => createHash('sha256').update(bytes).digest('hex')
 type Dispatch = NonNullable<ReturnType<typeof prepareOrcadFirstManagedInitial>>
 type Entry = { sessionId: string; unitId: string; operationId: string; dispatch: Dispatch; error: string | null }
-type Native = Readonly<{ nativeArtifactFile: string; nativeSha256: string; nativeByteLength: number }>
+type Native = Readonly<{ nativeArtifactFile: string; nativeSha256: string; nativeByteLength: number; nativeDistributionFile?:string }>
 
 /** Starts a new Agent Pod for a READY-before Session whose Pod is gone (orphan
  * reconciled) once its input waits: a new WAKE operation, the same Pod shape and
@@ -45,9 +45,11 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       'clusterIdentityRef', 'projectId', 'projectNumber', 'stateDirectory', 'timeoutMs', 'nfsPodLabel', 'lifecyclePolicy'])
   const text = (key: string) => agentPodText(raw.get(key))
   const native = (key: 'codex' | 'claude'): Native & Record<string, unknown> => {
-    const n = agentPodFields(raw.get(key), ['nativeArtifactFile', 'nativeSha256', 'nativeByteLength', key === 'codex' ? 'codexAuthFile' : 'claudeTokenFile'])
+    const value=raw.get(key),distribution=value!==null&&typeof value==='object'&&Object.hasOwn(value,'nativeDistributionFile')
+    const n = agentPodFields(value, ['nativeArtifactFile', 'nativeSha256', 'nativeByteLength', ...(distribution?['nativeDistributionFile']:[]), key === 'codex' ? 'codexAuthFile' : 'claudeTokenFile'])
     return Object.freeze({ nativeArtifactFile: agentPodText(n.get('nativeArtifactFile')), nativeSha256: agentPodText(n.get('nativeSha256')),
       nativeByteLength: agentPodInteger(n.get('nativeByteLength')),
+      ...(distribution?{nativeDistributionFile:agentPodText(n.get('nativeDistributionFile'))}:{}),
       ...(key === 'codex' ? { codexAuthFile: agentPodText(n.get('codexAuthFile')) } : { provider: 'claude', claudeTokenFile: agentPodText(n.get('claudeTokenFile')) }) })
   }
   const codex = native('codex'), claude = native('claude')
