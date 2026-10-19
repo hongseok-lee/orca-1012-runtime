@@ -1,0 +1,110 @@
+{
+  "scope": "Root-dispatched PR181 normal managed auth-refresh follow-up, same worker/Agent/native; no lifecycle transition executed",
+  "officialContract": {
+    "installedVersion": "0.160.1",
+    "method": "account/read",
+    "params": {
+      "refreshToken": true
+    },
+    "timeoutMs": 15000,
+    "source": "https://learn.chatgpt.com/docs/app-server",
+    "meaning": "Managed refresh-token flow; completion is not selected-account replacement or inference/tool access proof."
+  },
+  "implementation": {
+    "capability": "managed-codex-auth-refresh-v1",
+    "privateControlMethod": "REFRESH_CODEX_MANAGED_AUTH",
+    "normalPath": "Authenticated control HELLO/ATTACH capability -> original managed adoption history/identity checks -> managed refresh observation; current cold/adopted owner exposes same refresh method.",
+    "protection": "Failed refresh gates subsequent provider dispatch before its permit, retaining healthy host and admitted input. No replay/restart/login-mode switch.",
+    "retryBoundary": "Resident outcome retained for identical normal supplied credential bytes held privately in memory only; changed supply may reopen official refresh. No token digest/log/persistent secret or parallel retry engine.",
+    "projection": "Only COMPLETED/chatgpt, fixed FAILED code, or UNAVAILABLE/HOST_CAPABILITY_MISSING leaves the Agent endpoint. Official account email/token fields are not forwarded."
+  },
+  "checks": {
+    "newFocusedAuthChecks": {
+      "passed": 5,
+      "failedFinal": 0,
+      "kind": "Production normal-adoption state/Agent endpoint/official-RPC boundaries with synthetic native responses; not live refresh success"
+    },
+    "cases": [
+      "Exact official refresh params and sanitized projection",
+      "Old capability/invalid attachment sends no unsupported request",
+      "Native token_revoked blocks new dispatch without inference-success claim or input replay",
+      "Provider/phase/token-parameter substitution refused before native call",
+      "Unchanged supplied credential cannot reconsume OAuth; changed supply permits refresh and clears later-dispatch failure gate"
+    ],
+    "narrowAuthModuleAndReaderTypecheck": "PASS",
+    "changed8FileLint": "PASS0warnings0errors",
+    "priorPolicyCursorLifecycleTests": "Reused, not rerun"
+  },
+  "development": {
+    "productSourceFiles": 7,
+    "sourceIntegratedAt": "2026-10-19T17:42:50.416Z",
+    "futureControlArtifact": {
+      "builtAt": "2026-10-19T17:43:43.419Z",
+      "deployedAt": "2026-10-19T17:44:20.493Z",
+      "sha256": "8d374d45b6f154ed1880370235a6a659743ea6dfc818983f836834f714cd83c4",
+      "byteLength": 2223937,
+      "normalFutureDeploymentUpdated": true,
+      "oldArtifactRetained": true,
+      "existingLiveHostUpdated": false,
+      "credentialConfigurationChanged": false
+    },
+    "backendPid": 40515,
+    "authenticatedApi": {
+      "at": "2026-10-19T17:45:16.016Z",
+      "method": "worktree.list",
+      "ok": true,
+      "runtimeId": "c29f0a1a-df6a-4ead-b039-f16d0092af35"
+    }
+  },
+  "currentActual": {
+    "observedAt": "2026-10-19T17:45:14.413Z",
+    "sameTaskOwnedHostAdopted": true,
+    "adoptionFailures": 0,
+    "authRefresh": {
+      "state": "UNAVAILABLE",
+      "reason": "HOST_CAPABILITY_MISSING"
+    },
+    "officialRefreshSentToOldHost": false,
+    "seq6": {
+      "messageId": "162262d6-b7ef-4362-9d60-d9699e499ae2",
+      "state": "ADMITTED",
+      "messageCount": 6,
+      "observedAt": "2026-10-19T17:45:14.485825Z",
+      "automaticallyRetransmitted": false
+    },
+    "actualShellExit": null,
+    "actualShellStdout": null
+  },
+  "historicalFactsPreserved": {
+    "rootLoginLastProbe": {
+      "at": "2026-10-19T15:55:32.670Z",
+      "http": 200,
+      "notRepeated": true
+    },
+    "normalTaskCredentialFileSupply": {
+      "at": "2026-10-19T16:01:36.631Z",
+      "state": "COMPLETED"
+    },
+    "actualTurnPolicy": {
+      "at": "2026-10-19T16:27:58.192Z",
+      "approvalPolicy": "never",
+      "sandboxPolicy": "danger-full-access",
+      "readback": "CONFIRMED"
+    },
+    "residentNativeError": {
+      "at": "2026-10-19T16:27:58Z",
+      "status": 401,
+      "code": "token_revoked",
+      "message": "HTTP error: 401 Unauthorized, url: wss://chatgpt.com/backend-api/codex/responses",
+      "rootLoginRevocationProven": false,
+      "notUsageCreditsError": true
+    }
+  },
+  "remainingLimits": [
+    "Existing live host cannot hot-update its in-memory method allowlist/capability. No live official-refresh or shell success obtained.",
+    "Minimum target-only lifecycle proposal sent to root, not executed: graceful exact UID retirement, actual stop/storage proof, same Agent protected home/native checkpoint in a new attempt/host. No Node/shared infrastructure action.",
+    "Any approved new COLD must bind the explicitly selected fresh task credential source; existing preparation otherwise writes the configured bootstrap source. No account-selection policy was invented or global credential pointer changed.",
+    "Original seq6 ADMITTED is never automatically retransmitted; root must decide lifecycle/input handling. No direct pipe injection, hidden login, privileged Pod/sysctl/RBAC or writer-fencing change.",
+    "Unchanged actual Expo Loading-tabs/initial warnings evidence reused. No new screenshot, installed-device/fullHA/lost-node or provider lifecycle test."
+  ]
+}

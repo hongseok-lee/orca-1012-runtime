@@ -194,5 +194,14 @@
       "Partial/truncated/mismatched histories and UNKNOWN/active deliveries remain blocked.",
       "Historical terminal snapshot resync is Codex-only; unsupported providers keep healthy gap-free traffic without ACKing an unproved prefix, and actual unproved gaps remain blocked."
     ]
+  },
+  "authRefreshFollowup": "auth-refresh-evidence.json",
+  "currentStatus": {
+    "policy": "ACTUAL_CONFIRMED",
+    "credentialFileSupply": "COMPLETED16:01:36.631Z",
+    "residentNativeInference": "LAST_OBSERVED401token_revoked16:27:58Z",
+    "normalAuthRefresh": "IMPLEMENTED_CURRENT_OLD_HOST_UNAVAILABLE17:45:14Z",
+    "seq6": "ADMITTED_NO_RESEND",
+    "actualShellExitAndStdout": "ABSENT"
   }
 }

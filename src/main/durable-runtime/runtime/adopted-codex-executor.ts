@@ -1,3 +1,4 @@
+import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -60,6 +61,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
   let used = false, phase = 'UNUSED'
   let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
   const provider = original.provider ?? 'codex'
+  const authRefresh=new ManagedCodexAuthRefreshState(result=>process.stderr.write(`${JSON.stringify({type:'codex_managed_auth_refresh',sessionId:selected.sessionId,...result})}\n`))
   let control: AdoptedAgentControl | null = null, context: GatewayContext | null = null
   let workload: VerifiedWorkloadIdentity | null = null
   const own = new Set<string>()
@@ -70,6 +72,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
     if (!native || !activeDriver || !adopted || !owner || !activeDriver.ownsReadyBinding(native) || !adopted.valid() ||
         supplied.runtimeUnitId !== native.runtimeUnitId || supplied.controller.scope !== owner.scope ||
         supplied.controller.owner !== owner.owner || supplied.controller.term !== owner.term) { return deny('DISPATCH_OWNER') }
+    authRefresh.assertDispatchAllowed()
     const effect = createAdoptedDispatchPermit(pool, supplied, { kind: 'DISPATCH', binding: native,
       commandClaim: request.commandClaim, messageId: request.sealed.messageId, deliveryAttemptId: request.deliveryAttemptId,
       sealedRevision: request.sealed.sealedRevision, sealedPayloadHash: request.sealed.payloadHash,
@@ -78,9 +81,10 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
     return activeDriver.dispatch(request, effect.permit)
   }
   return Object.freeze({
-    phase: () => phase,
+    phase: () => phase, authRefreshSnapshot:()=>authRefresh.snapshot(),
     current: () => ready && driver?.ownsReadyBinding(ready) && control?.valid() && context && workload
       ? Object.freeze({ binding: ready, driver, context, executorId: selected.executorId, dispatch,
+        refreshManagedAuth:()=>authRefresh.refresh(control!),
         protection: Object.freeze({ takePreparedProtection: () => Object.freeze({ workloadIdentity: workload! }) }) }) : null,
     async adopt(controller: GatewayContext['controller']): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
@@ -154,6 +158,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
           adopted = await codexDriver.adopt(binding, prepared.checkout, prepared.nativeOptions, prepared.codexPolicy)
         }
         if (!control || control.pod.pod.uid !== row.pod_uid) { return deny('ATTACHED_POD') }
+        if(provider==='codex') {await authRefresh.refresh(control)}
         // Same shape as controlledWorkloadIdentity of the cold owner; the
         // producer stays the control's, so its event stream continues.
         // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: re-authenticated Pod (TokenReview on ATTACH) of this exact attempt.

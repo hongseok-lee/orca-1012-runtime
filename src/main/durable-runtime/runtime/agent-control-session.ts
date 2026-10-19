@@ -1,52 +1,19 @@
+import { managedCodexAuthControl, managedCodexAuthRefreshSupported } from './managed-codex-auth-refresh.ts'
+import type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
+export type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
 import { agentControlReaders } from './agent-control-readers.ts'
 import { AgentControlFrameCursor } from './agent-control-frame-cursor.ts'
 import { claudeResumeLaunch, type NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import { isDeepStrictEqual } from 'node:util'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../codex/codex-app-server-connection-types.ts'
-import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import { awaitPodAuthValue } from './kubernetes-pod-auth-transport.ts'
-import type { AuthenticatedPodObservation, KubernetesPodAuthExpected } from './kubernetes-pod-auth-types.ts'
+import type { AuthenticatedPodObservation } from './kubernetes-pod-auth-types.ts'
 import type { ManagedLeafSocket } from '../storage/managed-leaf-collector-types.ts'
-import type { AgentCodexControlPolicy } from './agent-codex-control.ts'
 import { attemptAttach, checkAttached, checkHello, createExecChannelDecoder, openAgentControlExec, reattachWithin } from './agent-control-reattach.ts'
 import type { AttachOutcome } from './agent-control-reattach.ts'
-import type { ControlJournal } from './agent-control-journal.ts'
 import { supplyNativeAndCold } from './agent-control-native-supply.ts'
 
 const fail = (): Error => new Error('AGENT_CODEX_CONTROL_UNCONFIRMED')
-export type AgentControlIdentity = Readonly<{ controlId: string; pid: number; startTicks: string; device: string; inode: string }>
-export type AgentControlSessionEnvironment = Readonly<{
-  config: Readonly<{ timeoutMs: number; namespace: string; container: string; bootstrapSha256: string
-    nativeArtifactFile: string; nativeCompanionFile?:string; nativeBwrapFile?:string; expected: KubernetesPodAuthExpected; policy: AgentCodexControlPolicy }>
-  origin: URL; ca: Buffer; reconnectBudgetMs: number; termOnInitialize: boolean
-  reviewer(signal: AbortSignal): string | Promise<string>
-  authenticate(input: Readonly<{ podBearer: string; expected: KubernetesPodAuthExpected }>, signal: AbortSignal): Promise<AuthenticatedPodObservation>
-  onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
-  journal?: ControlJournal
-  controllerTerm(): number
-}>
-export type AuthenticatedAgentControl = Readonly<{
-  controlId: string; controlPid: number; startTicks: string
-  bindChallenge: string
-  root: Readonly<{ path: string; device: string; inode: string }>
-  pod: AuthenticatedPodObservation
-  valid(): boolean
-  transport: Pick<CodexProtocolDependencies, 'open'>
-  /** hostSeq of the control frame being delivered; stable across re-attach and backend processes. */
-  frameSequence(): number
-  readNativeSession(): Promise<NativeSessionCheckpoint>
-  readMountProbe(): Promise<string>
-  close(): Promise<boolean>
-  /** Fixed diagnostic code of why the control stopped being valid, if it did. */
-  lossReason(): string | null
-  physicalPinIssued: false
-}>
-/** A control handed over by an earlier owner and re-attached by this one. It
- * never initializes, transfers native code or sends COLD. */
-export type AdoptedAgentControl = Readonly<{
-  identity: AgentControlIdentity; pod: AuthenticatedPodObservation; connection: CodexAppServerConnection
-  valid(): boolean; frameSequence(): number; close(): Promise<boolean>
-}>
 type Pending = { method: string; resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }
 
 /** One owner's connection state to one Pod-local control host. INITIALIZE
@@ -63,7 +30,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
   const closed = new Promise<boolean>(done => { resolveClosed = done })
   let channel = createExecChannelDecoder(() => { throw fail() })
   const pending = new Map<string, Pending>()
-  let nextId = 1, stopAcknowledged = false
+  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false
   // A host-capable control tags every frame with hostSeq; an older control
   // without the Pod-local host keeps the original loss rule.
   let hostCapable = false, sinceAck = 0, reconnecting = false
@@ -133,6 +100,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     return closing
   }
   const valid = (): boolean => !lost && !closing && (!socketClosed || reconnecting)
+  const authControl=managedCodexAuthControl(()=>managedAuthCapable,valid,method=>request(method))
   const frameSequence = (): number => cursor.sequence
   const connection: CodexAppServerConnection = Object.freeze({
     get pid() { return nativePid }, get closed() { return lost || socketClosed && !reconnecting },
@@ -147,10 +115,10 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     controlId = checked.controlId; delete record.podBearer
     pod = await env.authenticate({ podBearer: checked.podBearer, expected: config.expected }, helloSignal)
     if (lost || socketClosed || helloSignal.aborted || pod.pod.uid !== config.expected.podUid) { throw fail() }
-    transferred = true
+    transferred = true;managedAuthCapable=managedCodexAuthRefreshSupported(record.capabilities)
     identity = Object.freeze({ controlId, pid: checked.pid, startTicks: checked.startTicks, device: checked.device, inode: checked.inode })
     const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: checked.pid, startTicks: checked.startTicks,
-      bindChallenge: config.policy.bindChallenge,
+      ...authControl,bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
       ...agentControlReaders(request,()=>!openedNative && !lost && !socketClosed && !closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value}),
@@ -257,7 +225,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       if (check.outcome !== 'VERIFY') { return check.outcome }
       const observed = await env.authenticate({ podBearer: check.podBearer, expected: config.expected }, signal)
       if (observed.pod.uid !== config.expected.podUid) { return 'FINAL' }
-      pod = observed
+      pod = observed;managedAuthCapable=managedCodexAuthRefreshSupported(Reflect.get(record.hello as object,'capabilities'))
       if(check.gap) {
         cursor.quarantine(check.gap)
       }
@@ -279,7 +247,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       for (const bytes of queued.splice(0)) { rawWrite(socket, bytes) }
       sinceAck = 0
       if(env.journal && cursor.gapThrough===null) {try { write({ hostAck: cursor.durable }) } catch { /* the next frame acknowledges */ }}
-      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close })); start = null
+      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, ...authControl })); start = null
       return
     }
     queued.length = 0

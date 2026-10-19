@@ -1,3 +1,4 @@
+import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import { claudeResumeLaunch } from './native-session-checkpoint.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
@@ -81,6 +82,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let readyExecutor: ExecutorId | null = null
   let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
   const claude = original.provider === 'claude'
+  const authRefresh=new ManagedCodexAuthRefreshState(result=>process.stderr.write(`${JSON.stringify({type:'codex_managed_auth_refresh',sessionId:selected.sessionId,...result})}\n`))
   function nativeStart(provider: 'codex' | 'claude') {
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the native session this Session's earlier READY recorded.
     return selected.resume ? { kind: 'RESUME' as const, providerRef: { provider, nativeSessionRef: selected.resume.nativeSessionRef } as ProviderRef }
@@ -95,6 +97,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         context.controller.owner !== controller.owner || context.controller.term !== controller.term) { return deny('DISPATCH_OWNER') }
     // SQL staging/operation/claim and observation belong to the input owner.
     // This seam owns only the same held physical lifetime and original driver.
+    authRefresh.assertDispatchAllowed()
     const effect = createProviderEffectPermit(borrowed, context, { kind: 'DISPATCH', binding: native,
       commandClaim: request.commandClaim, messageId: request.sealed.messageId, deliveryAttemptId: request.deliveryAttemptId,
       sealedRevision: request.sealed.sealedRevision, sealedPayloadHash: request.sealed.payloadHash,
@@ -106,7 +109,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
     snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch }) : null,
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch,
+        refreshManagedAuth:()=>{const control=protection?.control();return control?authRefresh.refresh(control):Promise.resolve({state:'FAILED' as const,code:'REFRESH_UNCONFIRMED' as const})} }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
       used = true
