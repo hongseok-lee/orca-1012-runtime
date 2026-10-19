@@ -8,6 +8,7 @@ import type { DurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
+import type { CodexExecutionPolicy } from '../providers/codex/execution-policy.ts'
 import type { CodexColdLaunch } from '../providers/codex/driver.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
@@ -47,6 +48,7 @@ export type InitialCodexExecutorConfiguration = Readonly<{
     originalAuditId: string
     pinId: string; ownerToken: string; actorId: string
     nativeOptions: Readonly<Record<string, string>>
+    codexPolicy?: CodexExecutionPolicy
   }> & ControlledCreationWindow>
   sink: ProviderObservationSink
   onNativeNotification?: CodexProtocolDependencies['onNativeNotification']
@@ -134,6 +136,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         if (!source.ok || source.commitOutcome !== 'ACKNOWLEDGED' || source.cleanupFailed) { return deny('SOURCE_UNCONFIRMED') }
         active(); phase = 'HELD_PROTECTION'
         const prepared = await deployment({ plan, podUid: source.value.pod_uid, paths: source.value.paths }, signal)
+        if (!claude && !prepared.codexPolicy) { return deny('POLICY_REQUIRED') }
         protection = createInitialProviderProtection(borrowed, prepared.config)
         // The original directory identity must come from the collector/Storage
         // owner already bound to this reservation, not from a path-only tuple.
@@ -220,6 +223,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           native = await claudeDriver.cold(cold, gate.execution.claim, permit.permit, prepared.config.agent.timeoutMs)
         } else {
           const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification,
+            onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
+              sessionId: selected.sessionId, ...observation })}\n`),
             ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, sink)
           driver = codexDriver
           const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
@@ -231,7 +236,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
               launch.env.CODEX_HOME !== `${home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
           const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: nativeRequest('codex'),
             persistentHome: `${home}/.codex`, checkout: source.value.paths.checkout,
-            launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
+            launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions, executionPolicy: prepared.codexPolicy } })
           const permit = createProviderEffectPermit(borrowed, context,
             { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
             { provider: 'codex', home, providerState: cold.persistentHome, request: cold,

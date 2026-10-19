@@ -1,0 +1,101 @@
+{
+  "task": "TODO19",
+  "base": "8096e5fd88c72bd29aae89edd05cd21e54a83c73",
+  "scope": "Managed Codex execution policy only; existing native session/Agent retained",
+  "focusedChecks": {
+    "passed": 4,
+    "failedFinal": 0,
+    "kind": "in-memory actual driver/protocol call-boundary checks, not live native effects",
+    "cases": [
+      "cold/new and new-process native resume exact policy, model/effort/env retained, digest equals transmitted turn JSON, duplicate request not resent",
+      "same-native-thread adoption and next-turn policy",
+      "cold mismatch/native rejection no input or host close, generic approval conflict explicit",
+      "loaded-thread resume mismatch stays AWAITING_TURN_OVERRIDE; ordinary turn policy read-back CONFIRMED or blocks only later input without replay; read-back waits for matching turn/started after queued-operation response"
+    ]
+  },
+  "static": {
+    "newPolicyAndManagedResolverTypecheck": "PASS",
+    "changedFilesLint": "PASS: 10 files, 0 warnings, 0 errors",
+    "fullDriverTypeClosure": "Not passed: existing missing resources/evidence/types.ts and VerifiedEvidence assertion at unchanged driver uncertainty boundary"
+  },
+  "development": {
+    "initialIntegrationAt": "2026-10-19T15:08:41.746Z",
+    "initialOwnedFiles": 9,
+    "loadedThreadCorrectionAt": "2026-10-19T15:18:32.908Z",
+    "backendGeneration": 23,
+    "backendPid": 37482,
+    "compiledReadbackPolicyPresent": true,
+    "authenticatedApi": {
+      "at": "2026-10-19T15:25:09.025Z",
+      "method": "worktree.list",
+      "ok": true,
+      "runtimeId": "3b2e17bb-1afc-4446-a330-1c11e31840ba"
+    },
+    "finalSourceIntegrationAt": "2026-10-19T15:24:30.198Z",
+    "backendBundleSha256": "780f7049868a5aa615f60497d9d35d06cf27ac0e24bb2ac50a04755d960967e8"
+  },
+  "existingAgent": {
+    "sessionId": "acb34107-68a9-41ec-b678-537973bdcf55",
+    "attemptId": "737d3edc-5712-4c9a-843c-1af58aca8621",
+    "podUid": "ccfa5615-fb90-48ac-bbff-438176193231",
+    "mainPid": 58,
+    "nativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295",
+    "restarted": false,
+    "newSessionCreated": false,
+    "newInputSubmitted": false,
+    "priorInputsSettled": 5
+  },
+  "actualNativeObservations": {
+    "threadResumeAt": "2026-10-19T15:09:31Z",
+    "source": "Existing task-owned native diagnostic log; selected policy message only",
+    "message": "resume_running_thread: thread/resume overrides ignored for loaded thread 01a15453-5375-7771-86da-c7a9f78f6295: approval_policy requested=Never active=OnRequest; sandbox requested=DangerFullAccess active=ReadOnly { network_access: false }",
+    "persistedApprovalMode": "on-request",
+    "persistedSandboxPolicy": {
+      "type": "managed",
+      "file_system": {
+        "type": "restricted",
+        "entries": [
+          {
+            "path": {
+              "type": "special",
+              "value": {
+                "kind": "root"
+              }
+            },
+            "access": "read"
+          }
+        ]
+      },
+      "network": "restricted"
+    },
+    "policyVerifiedAfterNewTurn": false,
+    "freshAuthenticationError": {
+      "at": "2026-10-19T15:11:23Z",
+      "operation": "models refresh",
+      "status": 401,
+      "message": "Encountered invalidated oauth token for user, failing request",
+      "code": "token_revoked",
+      "classification": "authentication, not usage/credits"
+    },
+    "adoptionLimit": "Generic AGENT_CODEX_CONTROL_UNCONFIRMED observed after failed adoption; no claim that authentication uniquely explains this transport/control error."
+  },
+  "actualShell": {
+    "state": "NOT_RUN_AUTH_AND_ADOPTION_BLOCKED",
+    "inputSubmitted": false,
+    "exitCode": null,
+    "stdout": null,
+    "assistantProseUsedAsEvidence": false
+  },
+  "reusedEvidence": {
+    "codeMode42": "../20261019-native-artifact/actual-evidence.json",
+    "actualShellNamespaceFailure": "../20261019-native-artifact/actual-evidence.json",
+    "browserLoadingTabs": "../20261019-native-artifact/ui-observed.png",
+    "initialReplyAndWarnings": "../20261019-public-initial-recovery/initial-reply.png"
+  },
+  "limits": [
+    "No actual new shell success or verified post-turn native policy yet; normal login/supply restoration requested from root without tokens.",
+    "Loaded-thread compatibility path is focused-fixture verified; latest task-owned adoption remains unconfirmed.",
+    "No new UI capture; prior Expo Web Loading tabs remains unresolved and is not attributed to this backend change.",
+    "No installed-device/fullHA/lost-node/provider lifecycle rerun, full image build, privilege/sysctl/RBAC or protected-home/writer-fencing change."
+  ]
+}

@@ -7,6 +7,7 @@ import { lockAggregates } from '../db/locks.ts'
 import { appendAudit } from '../journal/store.ts'
 import { currentAuthoritySql } from './gateway/authority.ts'
 import type { DurableTransaction } from '../db/connection.ts'
+import type { CodexExecutionPolicy } from '../providers/codex/execution-policy.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
 import { recordInitialNativeObservation } from './provider-start-observation.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
@@ -32,7 +33,7 @@ export type AdoptedCodexExecutorConfiguration = Readonly<{
   sessionId: SessionId
   executorId: ExecutorId
   /** Trusted composition: the same concrete transport config the cold path used for this Pod. */
-  deployment(target: AdoptedCodexTarget): Promise<Readonly<{ transport: Transport; checkout: string; nativeOptions: Readonly<Record<string, string>> }>>
+  deployment(target: AdoptedCodexTarget): Promise<Readonly<{ transport: Transport; checkout: string; nativeOptions: Readonly<Record<string, string>>; codexPolicy?: CodexExecutionPolicy }>>
   /** Highest notification sequence already in the output spool for this connection. */
   journaledSequence(connectionId: string): number
   sink: ProviderObservationSink
@@ -105,6 +106,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         const prepared = await deployment(Object.freeze({ attemptId: row.attempt_id, runtimeUnitId: row.runtime_unit_id,
           operationId: row.operation_id, podName: row.resource_name, podUid: row.pod_uid, executionEpoch: row.execution_epoch,
           specHash: row.spec_hash, agentId: row.agent_id, controlSha256: row.control_sha256 }))
+        if (provider === 'codex' && !prepared.codexPolicy) { return deny('POLICY_REQUIRED') }
         const identity = Object.freeze({ controlId: row.control_id, pid: row.control_pid, startTicks: row.control_start_ticks,
           device: row.root_device, inode: row.root_inode })
         const adoption: { current: ReturnType<Transport['adopt']> | null } = { current: null }
@@ -145,9 +147,11 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         } else {
           const codexDriver = new DurableCodexDriver({
             open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification: notify,
+            onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
+              sessionId: selected.sessionId, ...observation })}\n`),
             connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0, attach }, sink)
           driver = codexDriver
-          adopted = await codexDriver.adopt(binding, prepared.checkout, prepared.nativeOptions)
+          adopted = await codexDriver.adopt(binding, prepared.checkout, prepared.nativeOptions, prepared.codexPolicy)
         }
         if (!control || control.pod.pod.uid !== row.pod_uid) { return deny('ATTACHED_POD') }
         // Same shape as controlledWorkloadIdentity of the cold owner; the

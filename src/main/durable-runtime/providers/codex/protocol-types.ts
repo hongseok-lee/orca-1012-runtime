@@ -1,3 +1,4 @@
+import type { CodexExecutionPolicy } from './execution-policy.ts'
 import type { JsonValue } from '../../db/atomic.ts'
 import type { CodexAppServerConnection } from '../../../codex/codex-app-server-connection-types'
 
@@ -49,7 +50,7 @@ export type CodexNativeNotification = Readonly<{
 }>
 export type RequestState = {
   submission: string
-  input: Readonly<{ clientMessageId: string; input: readonly CodexWireInput[]; options: Readonly<Record<string, string>> }>
+  input: Readonly<{ clientMessageId: string; input: readonly CodexWireInput[]; options: Readonly<Record<string, string>>; executionPolicy?: CodexExecutionPolicy }>
   receipt?: CodexNativeReceipt
   notify: (receipt: CodexNativeReceipt) => void
   notified: Promise<CodexNativeReceipt>
@@ -79,7 +80,12 @@ export class CodexConnectionBusyError extends Error {
 /** Exact params serialized by the existing app-server request transport. */
 export function codexTurnStartParams(threadId: string, input: RequestState['input']): Record<string, unknown> {
   if (Object.keys(input.options).some((key) => !TURN_OPTIONS.has(key))) {throw new Error('CODEX_UNSUPPORTED_OPTION')}
-  return { threadId, clientUserMessageId: input.clientMessageId, input: input.input, ...input.options }
+  const policy = input.executionPolicy
+  if (policy && input.options.approvalPolicy !== undefined && input.options.approvalPolicy !== policy.approvalPolicy) {
+    throw new Error('CODEX_EXECUTION_POLICY_OPTION_CONFLICT')
+  }
+  return { threadId, clientUserMessageId: input.clientMessageId, input: input.input, ...input.options,
+    ...(policy ? { approvalPolicy: policy.approvalPolicy, sandboxPolicy: policy.sandboxPolicy } : {}) }
 }
 export type CodexProtocolResult =
   | Readonly<{ effect: 'ADMITTED'; receipt: CodexNativeReceipt }>
