@@ -56,3 +56,20 @@ export async function settleOrphanedTurn(pool: Pool, binding: ReadyProviderBindi
   })
   return settled.ok && settled.commitOutcome === 'ACKNOWLEDGED'
 }
+
+/** Completion frames a lost owner already journaled before it could record
+ * the turn (so a re-attach does not replay them): settle the ADMITTED
+ * deliveries of this attempt they close, once, at adoption. */
+export async function settleJournaledOrphanedTurns(pool: Pool, binding: ReadyProviderBinding, ownDeliveries: ReadonlySet<string>): Promise<number> {
+  const frames = await pool.query<{ notification: CodexNativeNotification }>(`SELECT e.body->'notification' AS notification
+    FROM durable_runtime.session_events e JOIN durable_runtime.delivery_attempts d ON d.session_id=e.session_id
+    WHERE e.session_id=$1 AND d.attempt_id=$2 AND d.state='ADMITTED' AND e.body->>'kind'='TERMINAL_CODEX_NOTIFICATION'
+      AND e.body->'notification'->>'connectionId'=$3
+      AND ((e.body->'notification'->>'method'='turn/completed' AND e.body->'notification'->'params'->'turn'->>'id'=d.provider_ref)
+        OR (e.body->'notification'->>'method'='claude/message' AND e.body->'notification'->'params'->>'type'='result'
+          AND e.body->'notification'->'params'->>'user_message_uuid'=d.provider_ref))
+    ORDER BY e.seq`, [binding.sessionId, binding.attemptId, binding.connectionInstanceId])
+  let settled = 0
+  for (const row of frames.rows) { if (await settleOrphanedTurn(pool, binding, row.notification, ownDeliveries)) { settled++ } }
+  return settled
+}
