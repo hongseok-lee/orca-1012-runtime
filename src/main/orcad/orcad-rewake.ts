@@ -45,8 +45,9 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   if (!file) { return null }
   const parsed = parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8'))
   const hasStorageTargets=parsed!==null&&typeof parsed==='object'&&Object.hasOwn(parsed,'storageTargets')
+  const hasTerminal = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'terminalDistributionFile')
   const raw = agentPodFields(parsed,
-    ['baseTargetFile', 'baseProfileFile', ...(hasStorageTargets?['storageTargets']:[]), 'controlArtifactFile', 'controlSha256', 'codex', 'claude', 'runtimeServiceAccountUid',
+    ['baseTargetFile', 'baseProfileFile', ...(hasStorageTargets?['storageTargets']:[]), ...(hasTerminal ? ['terminalDistributionFile'] : []), 'controlArtifactFile', 'controlSha256', 'codex', 'claude', 'runtimeServiceAccountUid',
       'clusterIdentityRef', 'projectId', 'projectNumber', 'stateDirectory', 'timeoutMs', 'nfsPodLabel', 'lifecyclePolicy'])
   const text = (key: string) => agentPodText(raw.get(key))
   const native = (key: 'codex' | 'claude'): Native & Record<string, unknown> => {
@@ -206,6 +207,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     const coldFile = write('cold.json', { emptyFolderFile: write('empty-folder.json', { kind: 'FRESH_EMPTY_FOLDER', workspaceId: row.workspace_id,
       canonicalDirectory: row.canonical_directory, checkout: '/agent/checkout', sourceCheckout: row.reserved_path }),
     ...nativeFiles, controlArtifactFile: text('controlArtifactFile'), controlSha256: text('controlSha256'),
+    ...(hasTerminal ? { terminalDistributionFile: text('terminalDistributionFile') } : {}),
     runtimeServiceAccountName: 'orca-runtime-agent', runtimeServiceAccountUid: text('runtimeServiceAccountUid'), originalAuditId: original?.id ?? randomUUID(),
     pinId: randomUUID(), ownerTokenFile: write('cold-owner-token', randomBytes(32).toString('hex')), actorId,
     clusterIdentityRef: text('clusterIdentityRef'), projectId: text('projectId'), projectNumber: text('projectNumber'),

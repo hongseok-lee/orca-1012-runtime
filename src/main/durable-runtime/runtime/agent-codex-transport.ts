@@ -22,6 +22,7 @@ export type AgentCodexTransportConfiguration = Readonly<{
   bootstrapSha256: string
   bootstrapBytes: Uint8Array
   nativeBwrapFile?: string
+  terminalSupply?: AgentTerminalSupply
   nativeCompanionFile?: string
   nativeArtifactFile: string
   expected: KubernetesPodAuthExpected
@@ -53,9 +54,13 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   const artifact = Buffer.from(original.bootstrapBytes)
   const config = immutableSnapshot({ apiOrigin: original.apiOrigin,
     namespace: original.namespace, container: original.container, timeoutMs: original.timeoutMs,
-    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile, nativeCompanionFile:original.nativeCompanionFile, nativeBwrapFile:original.nativeBwrapFile,
+    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile, nativeCompanionFile:original.nativeCompanionFile, nativeBwrapFile:original.nativeBwrapFile, terminalSupply: original.terminalSupply,
     expected: original.expected, policy: original.policy })
   const reviewer = original.readReviewerBearer.bind(original)
+  const terminal = config.policy.nativeArtifact.terminal
+  if (!!terminal !== !!config.terminalSupply || terminal && config.terminalSupply &&
+      (terminal.runtime.byteLength !== config.terminalSupply.runtime.byteLength ||
+       terminal.addon.byteLength !== config.terminalSupply.addon.byteLength)) { throw fail() }
   const reconnectBudgetMs = original.reconnectBudgetMs ?? original.timeoutMs
   if (!Number.isSafeInteger(reconnectBudgetMs) || reconnectBudgetMs < 0 || reconnectBudgetMs > 2_147_483_647) { throw fail() }
   let origin: URL
@@ -111,3 +116,4 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     },
   })
 }
+import type { AgentTerminalSupply } from './agent-control-native-supply.ts'

@@ -128,7 +128,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
         openedNative = true; handlers = { ...supplied }
         // This opener is invoked by the original actual-COMMIT permit.
         const pid = await supplyNativeAndCold(request, config.nativeArtifactFile, config.policy.nativeArtifact.byteLength, config.nativeCompanionFile && config.policy.nativeArtifact.codeModeHost ? {file:config.nativeCompanionFile,byteLength:config.policy.nativeArtifact.codeModeHost.byteLength,
-          ...(config.nativeBwrapFile&&config.policy.nativeArtifact.sandboxBwrap?{sandboxBwrap:{file:config.nativeBwrapFile,byteLength:config.policy.nativeArtifact.sandboxBwrap.byteLength}}:{})} : undefined)
+          ...(config.nativeBwrapFile&&config.policy.nativeArtifact.sandboxBwrap?{sandboxBwrap:{file:config.nativeBwrapFile,byteLength:config.policy.nativeArtifact.sandboxBwrap.byteLength}}:{})} : undefined, config.terminalSupply)
         if (pid === null) { lost = true; throw fail() }
         nativePid = pid; return connection
       } }),

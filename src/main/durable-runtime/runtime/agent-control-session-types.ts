@@ -6,11 +6,12 @@ import type { NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import type { KubernetesPodAuthExpected, AuthenticatedPodObservation } from './kubernetes-pod-auth-types.ts'
 import type { AgentCodexControlPolicy } from './agent-codex-control.ts'
 import type { ControlJournal } from './agent-control-journal.ts'
+import type { AgentTerminalSupply } from './agent-control-native-supply.ts'
 export type AgentControlIdentity = Readonly<{ controlId: string; pid: number; startTicks: string; device: string; inode: string }>
 export type AgentControlSessionEnvironment = Readonly<{
   readManagedCredential?():ManagedCodexCredential
   config: Readonly<{ timeoutMs: number; namespace: string; container: string; bootstrapSha256: string
-    nativeArtifactFile: string; nativeCompanionFile?:string; nativeBwrapFile?:string; expected: KubernetesPodAuthExpected; policy: AgentCodexControlPolicy }>
+    nativeArtifactFile: string; nativeCompanionFile?:string; nativeBwrapFile?:string; terminalSupply?: AgentTerminalSupply; expected: KubernetesPodAuthExpected; policy: AgentCodexControlPolicy }>
   origin: URL; ca: Buffer; reconnectBudgetMs: number; termOnInitialize: boolean
   reviewer(signal: AbortSignal): string | Promise<string>
   authenticate(input: Readonly<{ podBearer: string; expected: KubernetesPodAuthExpected }>, signal: AbortSignal): Promise<AuthenticatedPodObservation>
