@@ -10,7 +10,7 @@ import type { DurableTransaction } from '../db/connection.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
 import { agentClaudeTransport } from './agent-claude-transport.ts'
-import { settleOrphanedTurn } from './orphaned-turn-settlement.ts'
+import { settleJournaledOrphanedTurns, settleOrphanedTurn } from './orphaned-turn-settlement.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import type { ProviderDispatchRequest, ProviderDispatchResult, ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
@@ -178,6 +178,8 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         if (!owned.ok || owned.commitOutcome !== 'ACKNOWLEDGED' || owned.cleanupFailed) { return deny('OPERATION_ADOPTION_UNCONFIRMED') }
         context = Object.freeze({ runtimeUnitId: binding.runtimeUnitId, operationId: logicalId('operation', row.operation_id), controller })
         ready = adopted; phase = 'READY'
+        // Turns the lost owner saw finish but never recorded.
+        void settleJournaledOrphanedTurns(pool, adopted, own).catch(() => { /* recovered at the next adoption */ })
         onReady?.()
       } catch (error) {
         phase = 'ADOPT_FAILED'
