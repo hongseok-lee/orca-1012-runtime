@@ -1,3 +1,4 @@
+import type { Store } from '../../../persistence'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, writeFileSync, lstatSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -29,7 +30,9 @@ export function importNodeCodexManagedAuth(userDataPath: string, sourceHome: str
   if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.uid !== process.getuid?.() || (metadata.mode & 0o777) !== 0o600) {
     throw new Error('CODEX_MANAGED_IMPORT_AUTH_METADATA')
   }
-  return Object.freeze({ accountId, managedHomePath: home })
+  const now=Date.now()
+  return Object.freeze({ accountId, managedHomePath: home, account:{id:accountId,managedHomePath:home,managedHomeRuntime:'host' as const,
+    email:identity.email,createdAt:now,updatedAt:now,lastAuthenticatedAt:now} })
 }
 
 /** Private in-memory supply only. The actual executor must install these bytes
@@ -44,4 +47,13 @@ export function readNodeCodexManagedAuth(userDataPath: string, configured: Reado
     throw new Error('CODEX_MANAGED_AUTH_METADATA')
   }
   return readFileSync(file, 'utf8')
+}
+
+/** Existing managed-account inventory registration, without changing any global
+ * active selection. The authenticated operator can pin only its target Agent. */
+export function registerNodeCodexManagedAuth(store: Pick<Store,'getSettings'|'updateSettings'>,
+  imported: ReturnType<typeof importNodeCodexManagedAuth>): void {
+  const accounts=store.getSettings().codexManagedAccounts
+  if(accounts.some(a=>a.id===imported.accountId)) {return}
+  store.updateSettings({codexManagedAccounts:[...accounts,imported.account]})
 }

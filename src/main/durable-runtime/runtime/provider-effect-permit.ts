@@ -1,3 +1,4 @@
+import { assertInitialWakeDeadline } from './initial-wake-deadline.ts'
 import { isDeepStrictEqual } from 'node:util'
 import path from 'node:path'
 import type { Pool } from 'pg'
@@ -258,6 +259,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
           if (delivery.rowCount !== 1) { deny('PROVIDER_DELIVERY_NOT_CURRENT') }
         }
         if (commitGuard) { await commitGuard(tx) }
+        if (identity.kind === 'COLD') { await assertInitialWakeDeadline(tx, context.operationId) }
         await gateway.assertCurrent()
         pins()
       })

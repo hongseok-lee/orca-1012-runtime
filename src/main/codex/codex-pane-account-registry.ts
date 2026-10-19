@@ -1,3 +1,4 @@
+import { getAppEnvironment, hasAppEnvironment } from '../../shared/app-environment'
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { isDefinitiveAbsence } from '../../shared/definitive-filesystem-absence'
 import { dirname, join } from 'node:path'
@@ -32,7 +33,7 @@ let cachedRegistry: CodexPaneAccountRegistryFile | null = null
 let cachedRegistryIsAuthoritative = true
 
 function getRegistryPath(): string {
-  return join(getOrcaUserDataPath(), 'codex-pane-accounts.json')
+  return join(process.env.ORCA_USER_DATA_PATH || (hasAppEnvironment() ? getAppEnvironment().getPath('userData') : getOrcaUserDataPath()), 'codex-pane-accounts.json')
 }
 
 /**
@@ -129,8 +130,8 @@ function parseRegistry(parsed: unknown): CodexPaneAccountRegistryFile {
   }
   for (const [ptyId, record] of Object.entries(panes)) {
     if (isPaneAccountRecord(record)) {
-      empty.panes[ptyId] = {
-        selectionKey: record.selectionKey,
+      empty.panes[ptyId] = { selectionKey: record.selectionKey,
+        ...(record.lifetime === 'durable-agent' ? { lifetime: record.lifetime } : {}),
         accountId: record.accountId,
         ...(isPaneHomeRoute(record.homeRoute) ? { homeRoute: record.homeRoute } : {}),
         ...(isShellStartupHomeOverride(record.shellStartupHomeOverride)
@@ -231,16 +232,12 @@ export function recordCodexPaneAccount(ptyId: string, record: CodexPaneAccountRe
 /**
  * Drops a PTY's record once it exits.
  */
-export function forgetCodexPaneAccount(ptyId: string): void {
-  recordCodexPaneAccount(ptyId, null)
-}
+export function forgetCodexPaneAccount(ptyId: string): void { recordCodexPaneAccount(ptyId, null) }
 
 /**
  * Returns the account a PTY launched under, or null when it was never recorded.
  */
-export function getCodexPaneAccount(ptyId: string): CodexPaneAccountRecord | null {
-  return readRegistry().panes[ptyId] ?? null
-}
+export function getCodexPaneAccount(ptyId: string): CodexPaneAccountRecord | null { return readRegistry().panes[ptyId] ?? null }
 
 /** `custom-home` stays conservative because it can mask a non-comparable shared-home route. */
 export function isCodexPaneHomeRouteProvenAwayFromSharedHome(
@@ -362,7 +359,7 @@ export function reconcileCodexPaneAccountsWithLivePtys(livePtyIds: readonly stri
     changed = true
   }
   for (const ptyId of Object.keys(registry.panes)) {
-    if (!livePtyIdSet.has(ptyId)) {
+    if (!livePtyIdSet.has(ptyId) && registry.panes[ptyId].lifetime !== 'durable-agent') {
       delete registry.panes[ptyId]
       changed = true
     }
@@ -376,4 +373,12 @@ export const _internals = {
     cachedRegistryIsAuthoritative = true
     mutations.reset()
   }
+}
+
+/** Actual persisted owner, not a pending in-memory attribution. Managed Agent
+ * launch refuses an unreadable registry instead of choosing another account. */
+export function getPersistedCodexPaneAccount(identity: string): CodexPaneAccountRecord | null { let raw: string
+  try { raw = readFileSync(getRegistryPath(), 'utf8') } catch (error) { if (isDefinitiveAbsence(error)) { return null }; throw new Error('CODEX_ACCOUNT_OWNER_UNAVAILABLE') }
+  const parsed = parseRegistryJson(raw); if (!isAuthoritativeRegistry(parsed)) { throw new Error('CODEX_ACCOUNT_OWNER_UNAVAILABLE') }
+  return parseRegistry(parsed).panes[identity] ?? null
 }

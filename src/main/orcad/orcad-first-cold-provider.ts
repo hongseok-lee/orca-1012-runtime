@@ -1,3 +1,4 @@
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { readCodexNativeDistribution } from './orcad-native-distribution.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
@@ -67,7 +68,7 @@ export type OrcadColdRewake = Readonly<{
 
 export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, pool: Pool, ca: Uint8Array, initial: Readonly<{
   sessionId: string; planDigest: string; directory: FirstManagedBindingOwnerConfig
-}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake) {
+}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake,readCodexCredential?:ManagedCodexCredentialReader) {
   const file = config.firstManagedInitial?.coldConfigFile
   if (!file) { return undefined }
   try {
@@ -103,7 +104,9 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     // Read only the already imported product-managed credential. Never hash,
     // serialize to evidence, publish, or inspect the root original again.
     if (claude && text('provider') !== 'claude') { return deny() }
-    const codexAuth = claude ? '' : readPrivateOrcadControllerConfigBytes(text('codexAuthFile')).toString('utf8')
+    if(!claude&&!readCodexCredential) {return deny()}
+    // Legacy field is accepted for config compatibility, never an alternate source.
+    const codexAuth = ''
     const claudeToken = claude ? agentPodText(readPrivateOrcadControllerConfigBytes(text('claudeTokenFile')).toString('utf8').trim()) : ''
     const ownerToken = agentPodText(readPrivateOrcadControllerConfigBytes(text('ownerTokenFile')).toString('utf8'))
     const originalAuditId = logicalId('event', text('originalAuditId')), pinId = logicalId('storage-namespace-pin', text('pinId'))
@@ -148,7 +151,8 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
-        bootstrapSha256, nativeArtifactFile, journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
+        bootstrapSha256, nativeArtifactFile,
+        ...(!claude&&readCodexCredential?{readManagedCredential:()=>readCodexCredential(paths.agentId,rewake===undefined)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
         onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
         policy: Object.freeze({ ...(claude ? { provider: 'claude' as const } : {}), protectedRoot: '/agent', launch, nativeArtifact, codexAuth,

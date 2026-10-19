@@ -138,12 +138,14 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           return Object.freeze({ paths, ...rows.rows[0] })
         })
         if (!source.ok || source.commitOutcome !== 'ACKNOWLEDGED' || source.cleanupFailed) { return deny('SOURCE_UNCONFIRMED') }
-        active(); phase = 'HELD_PROTECTION'
+        active(); phase = 'DEPLOYMENT'
         const prepared = await deployment({ plan, podUid: source.value.pod_uid, paths: source.value.paths }, signal)
         if (!claude && !prepared.codexPolicy) { return deny('POLICY_REQUIRED') }
+        phase = 'PROTECTION_CONFIGURATION'
         protection = createInitialProviderProtection(borrowed, prepared.config)
         // The original directory identity must come from the collector/Storage
         // owner already bound to this reservation, not from a path-only tuple.
+        phase = 'DIRECTORY_SOURCE'
         const directoryRead = await runDurableTransaction(borrowed, async tx => {
           await lockAggregates(tx, { sessionIds: [selected.sessionId], runtimeUnitIds: [context.runtimeUnitId] })
           const accepted = captureFirstManagedBindingProfile(prepared.config.directory.acceptedProfileBytes,
@@ -153,6 +155,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         })
         if (!directoryRead.ok || directoryRead.commitOutcome !== 'ACKNOWLEDGED' || directoryRead.cleanupFailed ||
             directoryRead.value.evidenceRef !== source.value.identity_proof_ref) { return deny('DIRECTORY_SOURCE_REQUIRED') }
+        phase = 'HELD_PROTECTION'
         const owner = await protection.prepare({ plan, bindingId: plan.plan.mountExpectations.protected[0].bindingId,
           originalDirectoryReference: directoryRead.value.evidenceRef, originalDirectory: directoryRead.value.candidate,
           pinId: prepared.pinId, ownerToken: prepared.ownerToken, actorId: prepared.actorId,
@@ -264,7 +267,10 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         onReady?.()
       } catch (error) {
         // Only a fixed code is kept for diagnostics, never a message body.
-        failure = `${phase}:${error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'UNCLASSIFIED'}`
+        const systemCode = error instanceof Error && 'code' in error && typeof error.code === 'string' && /^[A-Z0-9_]{1,80}$/.test(error.code)
+          ? error.code : null
+        const errorType = error instanceof Error && /^[A-Za-z]{1,40}$/.test(error.name) ? error.name.toUpperCase() : 'UNCLASSIFIED'
+        failure = `${phase}:${error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : systemCode ?? errorType}`
         phase = 'RETAINED_UNCONFIRMED'
         throw error
       }

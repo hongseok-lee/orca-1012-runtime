@@ -13,10 +13,10 @@ export function assertResyncCoverage(snapshot:unknown,native:string,deliveries:r
   const nativeIds=new Set<string>()
   for(const value of turns as unknown[]) {
     const turn=object(value),items=turn?.items
-    if(typeof turn?.id!=='string'||turn.status!=='completed'||!Array.isArray(items)||!settled.has(turn.id)||nativeIds.has(turn.id)||!items.length||!items.some(i=>object(i)?.type==='userMessage')) {deny('TURN_UNCONFIRMED')}
+    if(typeof turn?.id!=='string'||!['completed','failed'].includes(String(turn.status))||!Array.isArray(items)||!settled.has(turn.id)||nativeIds.has(turn.id)||!items.length||!items.some(i=>object(i)?.type==='userMessage')) {deny('TURN_UNCONFIRMED')}
     nativeIds.add(turn!.id as string)
     const done=notifications.filter(n=>object(n)?.method==='item/completed').map(n=>object(object(n)?.params)).filter(p=>p?.turnId===turn!.id)
-    if(!notifications.some(n=>{const v=object(n),p=object(v?.params);return v?.method==='turn/completed'&&object(p?.turn)?.id===turn!.id&&object(p?.turn)?.status==='completed'})) {deny('COMPLETION_MISSING')}
+    if(!notifications.some(n=>{const v=object(n),p=object(v?.params);return v?.method==='turn/completed'&&object(p?.turn)?.id===turn!.id&&object(p?.turn)?.status===turn!.status})) {deny('COMPLETION_MISSING')}
     for(const item of items as unknown[]) {
       const id=object(item)?.id
       if(typeof id!=='string'||!done.some(p=>isDeepStrictEqual(p?.item,item))) {deny('ITEM_NOT_RETAINED')}

@@ -1,3 +1,4 @@
+import { RECOVERY_CHAIN_HEAD_SQL } from './recovery-chain.ts'
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -51,8 +52,8 @@ async function event(tx:DurableTransaction,controller:VerifiedControllerIdentity
   }
 }
 async function exhaust(tx:DurableTransaction,controller:VerifiedControllerIdentity,unitId:string,root:RecoveryOperation,reason:string) {
-  const changed=await tx.query(`UPDATE durable_runtime.operations SET retry_exhausted_reason=$2,retry_at=NULL,revision=revision+1
-    WHERE id=$1 AND retry_exhausted_reason IS NULL RETURNING id`,[root.id,reason])
+  const changed=await tx.query(`UPDATE durable_runtime.operations r SET retry_exhausted_reason=$2,retry_at=NULL,revision=revision+1
+    WHERE id=$1 AND ${RECOVERY_CHAIN_HEAD_SQL} AND retry_exhausted_reason IS NULL RETURNING id`,[root.id,reason])
   if(changed.rowCount) {
     await tx.query("UPDATE durable_runtime.runtime_units SET phase='BLOCKED',reconcile_due_at=NULL,revision=revision+1 WHERE id=$1 AND active_attempt_id IS NULL AND phase<>'BLOCKED'",[unitId])
     await event(tx,controller,unitId,root.id,'REWAKE_RETRY_EXHAUSTED',reason)
@@ -73,7 +74,7 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
     const anchor=(await tx.query<{id:string;execution_epoch:string}>(`SELECT id,execution_epoch::text FROM durable_runtime.attempts
       WHERE runtime_unit_id=$1 AND ready_at IS NOT NULL ORDER BY execution_epoch DESC,ready_at DESC,id LIMIT 1`,[unitId])).rows[0]
     let initialized=false
-    let root=(await tx.query<RecoveryOperation>('SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND recovery_root_id=id AND recovery_anchor_attempt_id IS NOT DISTINCT FROM $2::uuid',[unitId,anchor?.id??null])).rows[0]
+    let root=(await tx.query<RecoveryOperation>(`SELECT r.* FROM durable_runtime.operations r WHERE r.runtime_unit_id=$1 AND ${RECOVERY_CHAIN_HEAD_SQL} AND r.recovery_anchor_attempt_id IS NOT DISTINCT FROM $2::uuid`,[unitId,anchor?.id??null])).rows[0]
     if(!root) {
       initialized=true
       // Import distinguishable legacy operations after this READY generation.
@@ -156,10 +157,11 @@ export async function settleRewakeOperation(pool:Pool,controller:VerifiedControl
     if(!original?.recovery_root_id) {return false}
     const unit=await unitLock(tx,original.runtime_unit_id)
     const clock=(await tx.query<{now:Date}>('SELECT clock_timestamp() AS now')).rows[0].now
+    const root=(await tx.query<RecoveryOperation>(`SELECT r.* FROM durable_runtime.operations r WHERE r.id=$1 AND ${RECOVERY_CHAIN_HEAD_SQL}`,[original.recovery_root_id])).rows[0]
+    if(!root) {return false}
     const authority=await authorize(tx,controller,unit,[original.recovery_root_id,operationId],clock)
     const op=(await tx.query<RecoveryOperation>('SELECT * FROM durable_runtime.operations WHERE id=$1',[operationId])).rows[0]
     if(op.retry_accounted_at) {return true}
-    const root=(await tx.query<RecoveryOperation>('SELECT * FROM durable_runtime.operations WHERE id=$1',[op.recovery_root_id])).rows[0]
     const ready=(await tx.query(`SELECT 1 FROM durable_runtime.attempts a JOIN durable_runtime.agent_pod_plans p ON p.attempt_id=a.id
       WHERE p.operation_id=$1 AND a.ready_at IS NOT NULL`,[op.id])).rowCount
     if(ready) {

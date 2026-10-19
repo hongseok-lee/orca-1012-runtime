@@ -1,3 +1,4 @@
+import { assertInitialWakeDeadline } from './initial-wake-deadline.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -54,6 +55,7 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
     await lockAggregates(tx, { storageDomains: domains.rows.map(row => ({ backendId: row.backend_id, exportId: row.export_id })),
       operationIds: [input.context.operationId] })
     const authority = await LockedGatewayAuthority.acquire(tx, input.context)
+    await assertInitialWakeDeadline(tx, input.context.operationId)
     const command = await commandById(authority, input.claim.commandId)
     assertOriginal(command, input.claim.identity)
     if (input.context.runtimeUnitId !== native.runtimeUnitId || command.command_name !== 'releaseGate' ||
@@ -127,6 +129,7 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
       AND next_state->'providerRef'=$3::jsonb`, [native.attemptId,native.podUid,JSON.stringify(native.providerRef)])).rowCount === 1
     if (observed) { await publishCatalogTerminalNativeSessionReady(tx, audit, native) }
     await authority.assertCurrent(); pins()
+    await assertInitialWakeDeadline(tx, input.context.operationId)
     return Object.freeze({ receipt: Object.freeze({ identity: originalIdentity(settled), state: 'RESOLVED' as const, result }),
       unitRevision: unit.rows[0].revision })
   })

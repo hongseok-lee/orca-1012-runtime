@@ -1,3 +1,6 @@
+import type { LifecyclePolicy } from '../durable-runtime/lifecycle/types.ts'
+import { readOrcadManagedWakePolicy } from './orcad-wake-policy.ts'
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import type { CatalogAuthority } from '../durable-runtime/catalog/authority.ts'
 import type { RuntimeOpsHttpConfig } from '../durable-runtime/ops/runtime-config.ts'
 import type { OrcaRuntimeRpcServerOptions } from '../runtime/runtime-rpc/runtime-rpc-pairing-types.ts'
@@ -31,14 +34,15 @@ export function readOrcadStartupConfig(): OrcadStartupConfig {
 /** Publish ownership before Ops validation so the entry's existing failure cleanup can always close Catalog. */
 export async function prepareOrcadStartup(
   input: OrcadStartupConfig, ownCatalog: (catalog: OrcadStartupOwner | null) => void,
-  readProviderSettings?: () => InitialCodexNativeSettings
+  readProviderSettings?: () => InitialCodexNativeSettings, readCodexCredential?:ManagedCodexCredentialReader
 ): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp' | 'durableTerminalInputCommitted' | 'durableTerminalOutputAvailable'>> {
   const ops = input.ops === null ? null : captureOrcadOpsConfig(input.ops)
   const controller = input.controller == null ? null : captureOrcadControllerConfig(input.controller)
   if (ops && !input.catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
   if (controller && !input.catalog) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CATALOG_REQUIRED') }
+  const wakePolicy = readOrcadManagedWakePolicy(controller)
   const catalog = await prepareOrcadDurableCatalog(input.catalog)
-  const controllerOwner = catalog && controller ? ownOrcadController(catalog, readProviderSettings) : null
+  const controllerOwner = catalog && controller ? ownOrcadController(catalog, readProviderSettings,readCodexCredential,wakePolicy) : null
   // Stop order after entry RPC/subscription cleanup: publication → controller → original Catalog Pool.
   const publication = catalog && ops ? ownOrcadOpsPublication(controllerOwner ?? catalog) : null
   const owner = publication ?? controllerOwner ?? catalog
@@ -48,7 +52,7 @@ export async function prepareOrcadStartup(
     ...(controllerOwner ? { controllerSnapshot: controllerOwner.controllerSnapshot.bind(controllerOwner) } : {}) }) : null)
   try {
     browserSessions.assertOpen()
-    let opsHttp = await prepareOrcadOps(ops, catalog?.readConfig)
+    let opsHttp = await prepareOrcadOps(ops, catalog?.readConfig,wakePolicy)
     browserSessions.assertOpen()
     let readConfig = catalog?.readConfig
     if (opsHttp && readConfig) {
@@ -72,7 +76,7 @@ export async function prepareOrcadStartup(
 /** Borrow the validated Catalog owner; neither allocate nor close a Pool/listener here. */
 export async function prepareOrcadOps(
   input: OrcadOpsConfig | null,
-  readConfig: DurableCatalogReadConfig | undefined
+  readConfig: DurableCatalogReadConfig | undefined, wakePolicy?: LifecyclePolicy
 ): Promise<RuntimeOpsHttpConfig | undefined> {
   if (input === null) { return undefined }
   if (!readConfig) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
@@ -114,7 +118,7 @@ export async function prepareOrcadOps(
     // Domain configuration failures stay outside the DB wrapper's error conversion.
     if (failure) { invalidOrcadOpsConfig(failure) }
     const servicesConfig = Object.freeze({ pool: catalog.pool, scope, streamId: OPS_REPLAY_STREAM,
-      lifecyclePolicy: config.lifecyclePolicy, controllerConnected: false })
+      lifecyclePolicy: wakePolicy ?? config.lifecyclePolicy, controllerConnected: false })
     return Object.freeze({ origin: config.origin, scope, streamId: OPS_REPLAY_STREAM,
       pollIntervalMs: config.pollIntervalMs, ui: getOpsUiAsset,
       services: catalogScope ? catalogScope.createOrcadOpsCatalogScopeServices(catalog, servicesConfig)

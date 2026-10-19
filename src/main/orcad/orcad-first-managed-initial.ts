@@ -1,3 +1,4 @@
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { isAbsolute, normalize } from 'node:path'
 import type { Pool } from 'pg'
 import { createFirstManagedInitialDispatch } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
@@ -62,7 +63,7 @@ export function captureOrcadFirstManagedCallbacks(initial: ReturnType<typeof cre
  * transport is decoded from JSON. Only the existing strict planner composes
  * policy/request; this loader supplies the original captured inventory CA. */
 export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig, pool: Pool, capturedCA: Uint8Array, auditToken?: string,
-  readProviderSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake) {
+  readProviderSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake,readCodexCredential?:ManagedCodexCredentialReader) {
   const config = captureOrcadControllerConfig(original)
   if (!config.firstManagedInitial) { return null }
   try {
@@ -105,7 +106,7 @@ export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig,
         helperConfigMapUid: agentPodText(collector.get('helperConfigMapUid')), helperSha256: agentPodText(collector.get('helperSha256')),
         exportsSha256: agentPodText(collector.get('exportsSha256')), timeoutMs: timeout(collector.get('timeoutMs')) }) })
     const cold = prepareOrcadFirstColdProvider(config, pool, ca, { sessionId: agentPodText(raw.get('sessionId')),
-      planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken, readProviderSettings, rewake)
+      planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken, readProviderSettings, rewake,readCodexCredential)
     const dispatch = createFirstManagedInitialDispatch({ pool, policy, request, ...(cold ? { cold } : {}), ...(rewake?.reuseProfile ? { rewake: true } : {}),
       policyRevision: agentPodText(raw.get('policyRevision')), sessionId: agentPodText(raw.get('sessionId')),
       actorId: agentPodText(raw.get('actorId')), originalAuditId: agentPodText(raw.get('originalAuditId')), pinId,

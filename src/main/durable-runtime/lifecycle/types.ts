@@ -26,6 +26,7 @@ export type LifecycleOperation = Readonly<OperationRow> & {
   readonly retry_at: Date | null
   readonly result: JsonValue | null
   readonly recovery_root_id: string | null
+  readonly recovery_predecessor_id: string | null
   readonly recovery_anchor_attempt_id: string | null
   readonly retry_count: string
   readonly retry_limit: string | null

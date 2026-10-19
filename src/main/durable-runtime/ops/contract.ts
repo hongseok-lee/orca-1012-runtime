@@ -48,7 +48,7 @@ export type OpsOperation = {
   result: { state: string | null } | null
   deadlineAt: OpsTime
   retryAt: OpsTime
-  recovery?: { rootOperationId: OpsId; retryCount: OpsCounter; retryLimit: OpsCounter;
+  recovery?: { rootOperationId: OpsId; predecessorOperationId?: OpsId | null; retryCount: OpsCounter; retryLimit: OpsCounter;
     retryAt: OpsTime; deadlineAt: OpsTime; exhaustionReason: string | null; resolvedAt: OpsTime }
 }
 export type OpsUnitDetail = { unit: OpsUnit; sessions: OpsSession[]; tabs: OpsTab[]; recentIncidents: OpsIncident[]; operations: OpsOperation[] }

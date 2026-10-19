@@ -1,3 +1,7 @@
+# Current acceptance evidence
+
+Root directly confirmed normal managed authentication, same-session recovery and actual shell exit0/stdout on2026-10-19T22:32:06Z. See [final actual result](root-actual-shell-success.json). Earlier blocked observations below are chronological history, not current shell status. No fresh UI/native-device success is claimed.
+
 # Managed Codex policy and reconnect evidence
 
 TODO19 restores the authorized managed-Agent permission-skip contract and the directly required transport reconnect boundary. [Structured evidence](actual-evidence.json) separates native policy confirmation, durable gap recovery, and absent shell stdout/exit.
@@ -19,3 +23,12 @@ The subsequent explicitly authorized minimum lifecycle transition is recorded in
 
 
 At18:17:09Z the unchanged recovery deadline18:16:40.303661Z had elapsed while the same seq7 remained DURABLE and retry Pod ContainerCreating. No new native resume/auth refresh/model/shell success was obtained. PG exhaustion reason was still NULL at that observation. No additional input, budget/deadline reset or backend reload was used. PR remains draft with actual tool acceptance incomplete.
+
+
+## Current common-owner and recovery follow-up
+
+[Current structured evidence](auth-refresh-evidence.json) separates current facts from the earlier v1/old-host and lifecycle observations. The normal Store account inventory and persisted Agent attribution now own COLD, resume and live refresh. Same-source supply preserves native refreshed credentials; the rejected Agent-to-file deployment map was removed. No global active account changed.
+
+One authenticated existing Ops wake was accepted18:50:14Z, but the production candidate still considered its exhausted predecessor while claim selected the new chain head. Its original2min deadline expired without a Pod/attempt. The shared owning definition now covers intent/candidate/claim/exhaustion, and existing managed startup policy is shared with Ops rather than independently reading2min versus10min. The isolated PG check exercises actual DeviceRegistry-authenticated Ops HTTP -> production candidate -> normal claim and passes. **No second live wake, input resend, deadline extension or actual shell result is claimed.** Original seq7 remains DURABLE with0 deliveries.
+
+The attempted final source publication initially failed startup because a removed local profile variable remained referenced; it was restored before the one manual wake. Earlier exit137 was backend-takeover-triggered normal retirement, not OOM. Actual late retry did not certify READY or dispatch seq7 after expiry. Existing screenshots and successful policy/cursor/CodeMode checks are reused; no new image or installed-device evidence.

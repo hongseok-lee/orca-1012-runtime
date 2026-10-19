@@ -5,7 +5,7 @@ import { readReplayPage } from '../replay/read.ts'
 import { listNotifications } from '../notifications/read.ts'
 import { markNotificationRead } from '../notifications/mutations.ts'
 import type { NotificationPrincipal, NotificationTarget, NotificationRow } from '../notifications/types.ts'
-import { requestUnitIntent } from '../lifecycle/intent.ts'
+import { requestManualUnitWake } from '../lifecycle/intent.ts'
 import type { UnitIntentAuthority } from '../lifecycle/types.ts'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { OpsHttpServices, OpsActor } from './types.ts'
@@ -126,7 +126,7 @@ export function createPgOpsServices(input: OpsPgConfig): OpsHttpServices {
       const unitId = logicalId('runtime-unit', id)
       const authority = Object.freeze({ principalId: actor.principalId, runtimeUnitId: unitId,
         scope: `ops:${actor.namespaceId}:runtime-unit:${id}` }) as UnitIntentAuthority
-      const outcome = await requestUnitIntent(pool, { authority, operationKey: body.operationId,
+      const outcome = await requestManualUnitWake(pool, { authority, operationKey: body.operationId,
         desired: 'RUNNING', expectedRevision: counter('row:runtime-unit', body.expectedRevision),
         expectedIntentRevision: counter('intent-revision', body.params.expectedIntentRevision as string),
         // Fixed server policy, never re-read current revision/policy to alter a retry's semantic hash.

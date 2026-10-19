@@ -100,7 +100,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     return closing
   }
   const valid = (): boolean => !lost && !closing && (!socketClosed || reconnecting)
-  const authControl=managedCodexAuthControl(()=>managedAuthCapable,valid,method=>request(method))
+  const authControl=managedCodexAuthControl(()=>managedAuthCapable,valid,(method,params)=>request(method,params),env.readManagedCredential)
   const frameSequence = (): number => cursor.sequence
   const connection: CodexAppServerConnection = Object.freeze({
     get pid() { return nativePid }, get closed() { return lost || socketClosed && !reconnecting },
@@ -265,7 +265,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
         if (signal.aborted) { cancelled(); return }
         try {
           openSocket(bearer, () => {
-            try { write({ method: 'INITIALIZE', policy: config.policy, ...(env.termOnInitialize ? { term: env.controllerTerm() } : {}) }) }
+            try { const source=config.policy.provider!=='claude'?env.readManagedCredential?.():undefined
+              write({ method: 'INITIALIZE', policy: source?{...config.policy,codexAuth:source.authJson,managedCredential:source}:config.policy, ...(env.termOnInitialize ? { term: env.controllerTerm() } : {}) }) }
             catch { failure() }
           }, () => failure())
         } catch { failure() }

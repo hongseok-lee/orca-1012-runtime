@@ -1,3 +1,4 @@
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { mkdirSync, readFileSync } from 'node:fs'
@@ -38,7 +39,7 @@ type Entry = Readonly<{
  * for orphan reconciliation. It adopts only after claiming the unit's attempt
  * in this process's unit ownership (one owner per unit). */
 export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerConfig, ca: Uint8Array,
-  readSettings: () => InitialCodexNativeSettings, ownership: UnitOwnership) {
+  readSettings: () => InitialCodexNativeSettings, ownership: UnitOwnership,readCodexCredential?:ManagedCodexCredentialReader) {
   const file = config.adoption?.configFile
   if (!file) { return null }
   const raw = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8')),
@@ -65,7 +66,8 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: '/agent/checkout',
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
     const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, reconnectBudgetMs: 30_000,
-      bootstrapBytes, bootstrapSha256: target.controlSha256, journal:createAgentControlJournal(pool,target.podUid), nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
+      bootstrapBytes, bootstrapSha256: target.controlSha256,
+      ...(readCodexCredential?{readManagedCredential:()=>readCodexCredential(target.agentId,false)}:{}), journal:createAgentControlJournal(pool,target.podUid), nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
       onProviderChildExit:(exit)=>recordProviderChildExit(pool,target,exit),
       expected: Object.freeze({ serviceAccountName: text('runtimeServiceAccountName'), serviceAccountUid: text('runtimeServiceAccountUid'),
         podName: target.podName, podUid: target.podUid, runtimeUnitId: target.runtimeUnitId, operationId: target.operationId,

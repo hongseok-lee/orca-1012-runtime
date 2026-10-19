@@ -16,3 +16,11 @@ test('explicit snapshot resync requires actual terminal output and settled nativ
   assert.throws(()=>assertResyncCoverage({thread:{id:'native',turns:[]}},'native',deliveries,notifications))
   assert.throws(()=>assertResyncCoverage(snapshot,'native',[...deliveries,{state:'SETTLED',provider_ref:'missing-turn'}],notifications))
 })
+
+test('failed terminal history requires the matching retained failed completion and every item',()=>{
+  const failed={thread:{id:'native',turns:[{id:'turn',status:'failed',items:[user,item]}]}}
+  const retained=[...notifications.slice(0,2),{method:'turn/completed',params:{turn:{id:'turn',status:'failed'}}}]
+  assert.doesNotThrow(()=>assertResyncCoverage(failed,'native',deliveries,retained))
+  assert.throws(()=>assertResyncCoverage(failed,'native',deliveries,notifications),/COMPLETION_MISSING/)
+  assert.throws(()=>assertResyncCoverage(failed,'native',deliveries,retained.slice(1)),/ITEM_NOT_RETAINED/)
+})
