@@ -1,7 +1,6 @@
 import type { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
-import { createCatalogTerminalActions } from './terminal-runtime-actions.ts'
+import { createCatalogTerminalStreamLifecycle } from './terminal-stream-lifecycle.ts'
 import type { TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
-import { createCatalogTerminalRuntimeReader } from './terminal-runtime-read.ts'
 import { streamCatalogTerminal } from './terminal-runtime-stream.ts'
 import { TerminalSubscribe } from '../../../shared/rpc-contract/terminal-stream-params.ts'
 import type { RpcContext, RpcStreamingMethodDeclaration } from '../../runtime/rpc/core.ts'
@@ -30,10 +29,8 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
     if (found.lifecycle !== 'OPEN') { throw new TerminalDraftStoreError('TERMINAL_CATALOG_TARGET_CLOSED') }
     if (found.chat || params.client?.type === 'mobile' && params.capabilities?.mobileInputLeaseOnly === 1) { return holdCatalogTerminalInputLease(params, capturedContext, emit) }
     if (!lookup) { throw new TerminalDraftStoreError('TERMINAL_RUNTIME_UNAVAILABLE') }
-    const reader = createCatalogTerminalRuntimeReader(config, capturedContext, params.terminal, found, lookup)
-    const actions = createCatalogTerminalActions(config, capturedContext, params.terminal, found, lookup)
-    return streamCatalogTerminal(params, capturedContext, emit, reader, actions,
-      raw && capturedContext.terminalInputConnection ? incarnationId => raw.attach(params.terminal, capturedContext, incarnationId, actions) : undefined)
+    return streamCatalogTerminal(params, capturedContext, emit, undefined, undefined, undefined,
+      createCatalogTerminalStreamLifecycle(config,capturedContext,params.terminal,found,lookup,raw))
   }
 }
 

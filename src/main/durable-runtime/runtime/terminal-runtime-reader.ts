@@ -4,7 +4,7 @@ const unavailable = (): never => { throw new Error('TERMINAL_RUNTIME_UNAVAILABLE
 
 /** Pin one existing control. The caller supplies the
  * authenticated Catalog/PG guard; routing is not authority. A replacement
- * execution requires a fresh subscription, never a silent retarget. */
+ * execution requires a fresh physical pin, never retargeting existing actions. */
 export function pinTerminalRuntime(sessionId: string, lookup: TerminalRuntimeLookup) {
   const initial = lookup(sessionId), terminal = initial?.terminal
   if (!initial || initial.binding.sessionId !== sessionId || !terminal?.supported()) { return unavailable() }

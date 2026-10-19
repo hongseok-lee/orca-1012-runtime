@@ -25,19 +25,38 @@ function readOutput(value: unknown, incarnationId: string, fromByte: number) {
   return { bytes, endByte: Number(r.endByte), live: r.live, truncated: r.truncated }
 }
 
-/** Existing binary wire with scoped input/viewport controls. Retained output
- * bytes are observations, never input to a new process. */
+export type TerminalStreamSource = Readonly<{
+  key: string
+  reader: Reader
+  actions?: ReturnType<typeof createCatalogTerminalActions>
+  attach?: (incarnationId: string) => () => void
+  release?: () => void
+}>
+export type TerminalStreamLifecycle = Readonly<{ refresh(): Promise<TerminalStreamSource | null> }>
+const ownerUnavailable = (error: unknown) => error instanceof Error &&
+  ['TERMINAL_RUNTIME_UNAVAILABLE', 'AGENT_CODEX_CONTROL_UNCONFIRMED'].some(code =>
+    error.message === code || ('code' in error && error.code === code))
+
+/** One logical stream owns its wire ID. Replacing a live source discards its
+ * input actions; bytes accepted for that source are never queued for another. */
 export async function streamCatalogTerminal(params: ReturnType<typeof TerminalSubscribe.parse>, context: RpcContext,
-  emit: (frame: unknown) => void, reader: Reader, actions?: ReturnType<typeof createCatalogTerminalActions>, onReady?: (incarnationId: string) => () => void): Promise<void> {
+  emit: (frame: unknown) => void, reader?: Reader, actions?: ReturnType<typeof createCatalogTerminalActions>,
+  onReady?: (incarnationId: string) => () => void, lifecycle?: TerminalStreamLifecycle): Promise<void> {
   if (!context.sendBinary || !context.registerBinaryStreamHandler || params.capabilities?.terminalBinaryStream !== 1) {
     throw new Error('binary_terminal_stream_required')
   }
   const streamId = allocateTerminalSubscriptionStreamId()
-  let closed = false, seq = 0, ingress = 0, cursor = 0, timer: ReturnType<typeof setTimeout> | undefined
-  let wake: (() => void) | undefined, unregister = () => {}, detach = () => {}
+  let closed = false, announced = false, seq = 0, ingress = 0, cursor = 0, live = false, finishReported = false
+  let timer: ReturnType<typeof setTimeout> | undefined, wake: (() => void) | undefined
+  let unregister = () => {}, detach = () => {}, incarnationId = '', decoder = new StringDecoder('utf8')
+  let slot: TerminalStreamSource | null = null
+  const releaseSource = () => {
+    const old=slot;slot=null;live=false;incarnationId=''
+    detach();detach=()=>{};old?.actions?.close();old?.release?.()
+  }
   const end = () => {
     if (closed) { return }
-    closed = true; actions?.close(); detach(); clearTimeout(timer); wake?.(); unregister()
+    closed = true; releaseSource(); clearTimeout(timer); wake?.(); unregister()
     context.signal?.removeEventListener('abort', abort)
     try { emit({ type: 'end' }) } catch { /* disconnected */ }
   }
@@ -50,67 +69,112 @@ export async function streamCatalogTerminal(params: ReturnType<typeof TerminalSu
       throw new Error('TERMINAL_OUTPUT_BACKPRESSURE')
     }
   }
-  const decoder = new StringDecoder('utf8')
   const chunks = (opcode: Opcode, text: string) => {
     for (const payload of iterateTerminalStreamTextPayloads(text)) { send(opcode, payload) }
   }
+  const unavailable = () => {
+    send(Opcode.Metadata,encodeTerminalStreamJson({writeAvailable:false}))
+  }
+  const announce = (cols?:number,rows?:number,truncated=false) => {
+    if(announced || closed) {return}
+    announced=true;emit({type:'subscribed',streamId,lines:[],truncated,...(cols===undefined?{}:{cols,rows})})
+  }
+  let snapshotRequested = false
   try {
     if (context.signal?.aborted) { return }
     context.signal?.addEventListener('abort', abort, { once: true })
-    const status = record(await reader.status())
-    if (closed) { return }
-    if (typeof status.incarnationId !== 'string' || !Number.isSafeInteger(status.cols) || !Number.isSafeInteger(status.rows)) { invalid() }
-    const incarnationId = status.incarnationId as string
-    const initial = readOutput(await reader.read(incarnationId, 0), incarnationId, 0)
-    if (closed) { return }
     unregister = context.registerBinaryStreamHandler(streamId, frame => {
       if (closed || frame.streamId !== streamId) { return }
       if (frame.opcode === Opcode.Unsubscribe) { abort(); return }
+      if (frame.opcode === Opcode.SnapshotRequest) { snapshotRequested=true;wake?.();return }
+      const selected=slot, id=incarnationId
       const reject = () => {
         if (closed) { return }
-        try { send(Opcode.Error, encodeTerminalStreamJson({ code: 'TERMINAL_WRITE_UNAVAILABLE' })) } catch { abort() }
+        try {
+          if(selected!==slot) {
+            send(Opcode.Error,encodeTerminalStreamJson({code:'TERMINAL_PREVIOUS_WRITE_UNCONFIRMED',incarnationId:id}));return
+          }
+          send(params.capabilities?.writeUnavailable===1 ? Opcode.WriteUnavailable : Opcode.Error,
+            params.capabilities?.writeUnavailable===1 ? undefined : encodeTerminalStreamJson({code:'TERMINAL_WRITE_UNAVAILABLE'}))
+        } catch { abort() }
       }
-      // Existing desktop sends seq=0 for every control frame. The socket already
-      // orders delivery; sequence is not a client idempotency key.
+      // Existing desktop sends seq=0 on each control frame; socket ingress is ordered.
       const key = JSON.stringify(['BINARY', streamId, ++ingress])
       if (frame.opcode === Opcode.Input) {
-        if (!actions || frame.payload.length > TERMINAL_INPUT_MAX_BYTES) { reject(); return }
+        if (!selected?.actions || !live || frame.payload.length > TERMINAL_INPUT_MAX_BYTES) { reject(); return }
         try {
-          void actions.write(incarnationId, frame.payload, key).then(result => {
+          void selected.actions.write(id, frame.payload, key).then(result => {
             if (result.status !== 'WRITTEN') { reject() }
           }, reject)
         } catch { reject() }
       } else if (frame.opcode === Opcode.Resize || frame.opcode === Opcode.ClaimViewport) {
-        const viewport = decodeTerminalStreamJson<{ cols?: unknown; rows?: unknown }>(frame.payload)
-        if (!actions || typeof viewport?.cols !== 'number' || typeof viewport.rows !== 'number') { reject(); return }
-        const { cols, rows } = viewport
+        const viewport = decodeTerminalStreamJson<{cols?:unknown;rows?:unknown}>(frame.payload)
+        if (!selected?.actions || !live || typeof viewport?.cols !== 'number' || typeof viewport.rows !== 'number') { reject(); return }
+        const {cols,rows}=viewport
         try {
-          void actions.resize(incarnationId, cols, rows, key).then(() => {
-            if (!closed) { send(Opcode.Resized, encodeTerminalStreamJson({ cols, rows })) }
+          void selected.actions.resize(id,cols,rows,key).then(()=>{
+            if(!closed && selected===slot) {send(Opcode.Resized,encodeTerminalStreamJson({cols,rows}))}
           }).catch(reject)
-        } catch { reject() }
+        } catch {reject()}
       }
     })
-    detach = onReady?.(incarnationId) ?? (() => {})
-    emit({ type: 'subscribed', streamId, lines: [], truncated: initial.truncated, cols: status.cols, rows: status.rows })
-    send(Opcode.SnapshotStart, encodeTerminalStreamJson({ kind: 'scrollback', cols: status.cols, rows: status.rows,
-      truncated: initial.truncated }))
-    chunks(Opcode.SnapshotChunk, decoder.write(initial.bytes))
-    send(Opcode.SnapshotEnd)
-    cursor = initial.endByte
-    let live = initial.live
-    while (!closed && live) {
-      await new Promise<void>(resolve => { wake = resolve; timer = setTimeout(resolve, 250) })
-      wake = undefined
-      if (closed) { break }
-      const output = readOutput(await reader.read(incarnationId, cursor), incarnationId, cursor)
-      if (closed) { break }
-      // A missing range is not a screen snapshot. End explicitly so a new
-      // subscription can present a fresh, honestly truncated history.
-      if (output.truncated) { throw new Error('TERMINAL_OUTPUT_GAP') }
-      chunks(Opcode.Output, decoder.write(output.bytes))
-      cursor = output.endByte; live = output.live
+    const fixed=reader ? {key:'fixed',reader,actions,attach:onReady} : null
+    let first=true
+    while(!closed) {
+      if(!first) {
+        await new Promise<void>(resolve=>{wake=resolve;timer=setTimeout(resolve,250)})
+        clearTimeout(timer);wake=undefined
+        if(closed) {break}
+      }
+      first=false
+      let next:TerminalStreamSource|null
+      try {next=lifecycle ? await lifecycle.refresh() : fixed}
+      catch(error) {if(!lifecycle || !ownerUnavailable(error)) {throw error};next=null}
+      if(closed) {next?.actions?.close();next?.release?.();break}
+      if(!next) {
+        const changed=!!slot || !announced
+        releaseSource();announce()
+        if(changed) {unavailable()}
+        if(!lifecycle) {break}
+        continue
+      }
+      if(slot?.key!==next.key) {releaseSource();slot=next;incarnationId='';finishReported=false}
+      const selected=slot!
+      try {
+        if(!incarnationId || snapshotRequested) {
+          const inspected=await selected.reader.status()
+          if(inspected===null) {throw new Error('TERMINAL_RUNTIME_UNAVAILABLE')}
+          const status=record(inspected)
+          if(closed) {break}
+          if(typeof status.incarnationId!=='string' || !Number.isSafeInteger(status.cols) || !Number.isSafeInteger(status.rows)) {invalid()}
+          const id=status.incarnationId as string
+          if(incarnationId && incarnationId!==id) {throw new Error('TERMINAL_RUNTIME_UNAVAILABLE')}
+          const initial=readOutput(await selected.reader.read(id,0),id,0)
+          if(closed) {break}
+          incarnationId=id;decoder=new StringDecoder('utf8');cursor=initial.endByte;live=initial.live
+          detach();detach=live ? selected.attach?.(id)??(()=>{}) : ()=>{}
+          announce(Number(status.cols),Number(status.rows),initial.truncated)
+          send(Opcode.SnapshotStart,encodeTerminalStreamJson({kind:'scrollback',cols:status.cols,rows:status.rows,
+            truncated:initial.truncated,incarnationId:id}))
+          chunks(Opcode.SnapshotChunk,decoder.write(initial.bytes));send(Opcode.SnapshotEnd)
+          send(Opcode.Metadata,encodeTerminalStreamJson({writeAvailable:live,incarnationId:id}))
+          snapshotRequested=false
+        } else if(live) {
+          const output=readOutput(await selected.reader.read(incarnationId,cursor),incarnationId,cursor)
+          if(closed) {break}
+          if(output.truncated) {throw new Error('TERMINAL_OUTPUT_GAP')}
+          chunks(Opcode.Output,decoder.write(output.bytes));cursor=output.endByte;live=output.live
+        }
+        if(!live && !finishReported) {
+          finishReported=true
+          chunks(Opcode.Output,decoder.end());detach();detach=()=>{};selected.actions?.close()
+          if(!lifecycle) {break}
+          unavailable()
+        }
+      } catch(error) {
+        if(!lifecycle || !ownerUnavailable(error)) {throw error}
+        releaseSource();announce();unavailable()
+      }
     }
-    if (!closed) { chunks(Opcode.Output, decoder.end()) }
-  } finally { registration.releaseIfCurrent() }
+  } finally {registration.releaseIfCurrent()}
 }

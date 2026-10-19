@@ -1,3 +1,5 @@
+import {createCatalogTerminalStreamLifecycle} from './terminal-stream-lifecycle.ts'
+import {resolveCatalogTerminalTarget} from './terminal-target.ts'
 import {RuntimeSubscriptionRegistry} from '../../runtime/runtime-subscription-registry.ts'
 import assert from 'node:assert/strict'
 import {randomUUID} from 'node:crypto'
@@ -66,6 +68,13 @@ test('retained display survives absent runtime, preserves UTF-8/cursor, and clea
     await output(unicode.subarray(2))
     await pool.query("UPDATE durable_runtime.runtime_units SET phase='ABSENT' WHERE id=$1",[runtimeUnitId])
     const absent=await read(1);assert.deepEqual(absent.tail,['한글']);assert.equal(absent.nextCursor,'2')
+    const logicalTarget=await withDurableTransaction(pool,tx=>resolveCatalogTerminalTarget(tx,config,rpc,f.terminalHandle,()=>{}))
+    assert.ok(logicalTarget)
+    const logical=createCatalogTerminalStreamLifecycle(config,rpc,f.terminalHandle,logicalTarget,()=>null)
+    assert.equal(await logical.refresh(),null)
+    const forbidden=createCatalogTerminalStreamLifecycle({...config,projectGroupIds:[]},rpc,f.terminalHandle,logicalTarget,()=>null)
+    await assert.rejects(forbidden.refresh(),/selector_not_found/)
+
     const foreign=createCatalogTerminalDisplay({...config,projectGroupIds:[]})
     await assert.rejects(foreign('terminal.read',{terminal:f.terminalHandle},rpc,legacy),/selector_not_found/)
     const before=(await pool.query('SELECT count(*)::int AS n FROM durable_runtime.agent_control_frames WHERE control_id=$1',[controlId])).rows[0].n

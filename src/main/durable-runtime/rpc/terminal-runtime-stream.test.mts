@@ -106,3 +106,52 @@ test('real native PTY output reaches the existing mobile binary decoder with act
     clearTimeout(timeout); terminal.requestClose(); await exit; await rm(cwd, { recursive: true })
   }
 })
+
+
+test('logical raw stream survives Pod0 and rebinds without replaying old input', async () => {
+  const h=harness(),writes:string[]=[],closed:string[]=[]
+  let current: 'a'|'b'|null=null,releaseOld:()=>void=()=>{}
+  const make=(key:'a'|'b')=>({key,
+    reader:{status:async()=>({incarnationId:key,cols:80,rows:24}),read:async(id:string,cursor:number)=>({
+      incarnationId:id,startByte:cursor,endByte:cursor || 1,bytes:cursor?'':Buffer.from(key).toString('base64'),live:true,truncated:false})},
+    actions:{close:()=>{closed.push(key)},resize:async()=>({resized:true}),write:async()=>{
+      writes.push(key)
+      if(key==='a') {await new Promise<void>(resolve=>{releaseOld=resolve})}
+      return {status:key==='a'?'UNKNOWN' as const:'WRITTEN' as const,bytesWritten:key==='a'?0:1}
+    }}
+  })
+  const sources={a:make('a'),b:make('b')}
+  const waitFor=async(predicate:()=>boolean)=>{
+    const deadline=Date.now()+3000
+    while(!predicate()) {if(Date.now()>deadline) {throw new Error('stream condition timeout')};await new Promise(resolve=>setTimeout(resolve,5))}
+  }
+  const timeout=setTimeout(()=>h.abort.abort(),6000)
+  const run=streamCatalogTerminal(params,h.context as never,h.emit,undefined,undefined,undefined,
+    {refresh:async()=>current?sources[current]:null})
+  try {
+    await waitFor(()=>h.json.length===1)
+    const id=(h.json[0] as {streamId:number}).streamId
+    const input=()=>h.receive({streamId:id,seq:0,opcode:Opcode.Input,payload:Buffer.from('x')})
+    input();assert.deepEqual(writes,[])
+    current='a'
+    await waitFor(()=>h.frames.some(f=>f.opcode===Opcode.SnapshotEnd))
+    input();await waitFor(()=>writes.length===1)
+    current=null
+    await waitFor(()=>closed.includes('a'))
+    assert.equal(h.json.some(f=>(f as {type:string}).type==='end'),false)
+    input();assert.deepEqual(writes,['a'])
+    current='b'
+    await waitFor(()=>h.frames.filter(f=>f.opcode===Opcode.SnapshotEnd).length===2)
+    releaseOld();input();await waitFor(()=>writes.length===2)
+    assert.deepEqual(writes,['a','b'])
+    await waitFor(()=>h.frames.some(f=>f.opcode===Opcode.Error && Buffer.from(f.payload).toString().includes('TERMINAL_PREVIOUS_WRITE_UNCONFIRMED')))
+    h.receive({streamId:id,seq:0,opcode:Opcode.SnapshotRequest,payload:new Uint8Array()})
+    await waitFor(()=>h.frames.filter(f=>f.opcode===Opcode.SnapshotEnd).length===3)
+    assert.equal(h.json.filter(f=>(f as {type:string}).type==='subscribed').length,1)
+    assert.equal(new Set(h.frames.map(f=>f.streamId)).size,1)
+    const snapshots=h.mobile.filter(f=>(f as {type:string}).type==='scrollback') as {serialized:string}[]
+    assert.deepEqual(snapshots.map(f=>f.serialized),['a','b','b'])
+  } finally {clearTimeout(timeout);releaseOld();h.abort.abort();await run}
+  assert.equal(h.json.filter(f=>(f as {type:string}).type==='end').length,1)
+  assert.ok(closed.includes('b'))
+})
