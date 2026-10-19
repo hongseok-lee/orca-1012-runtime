@@ -191,7 +191,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           return selectedInitial.ownsSession?.(target) ? 0 : initialAdopt(signal, controller)
         } : undefined
         const adoptionHooks = [firstManagedAdopt, adoptedRuntimes?.adoptRuntimes,
-          selectedRewake ? (signal: AbortSignal) => selectedRewake.wakePending(signal) : undefined].filter(hook => !!hook)
+          selectedRewake ? (signal: AbortSignal, controller: Parameters<NonNullable<ControllerPassRequest['adoptRuntimes']>>[1]) => selectedRewake.wakePending(signal, controller) : undefined].filter(hook => !!hook)
         // A wake started by this process owns its operation; the configured first target keeps its own.
         const lifecycleCallbacks = selectedRewake ? Object.freeze({
           planStep: (...args: Parameters<NonNullable<ControllerPassRequest['planStep']>>) =>

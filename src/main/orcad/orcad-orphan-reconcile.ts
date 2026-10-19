@@ -1,29 +1,59 @@
 import type { Pool } from 'pg'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
-import { listOrphanCandidates, observeAgentPod, reconcileOrphanedAttempt } from '../durable-runtime/runtime/orphan-reconcile.ts'
+import { listOrphanCandidates, observeAgentPod, reconcileOrphanedAttempt, type OrphanCandidate } from '../durable-runtime/runtime/orphan-reconcile.ts'
+import { releaseAgentPodStopFinalizer } from '../durable-runtime/runtime/agent-pod-retirement.ts'
+import { currentAuthoritySql } from '../durable-runtime/runtime/gateway/authority.ts'
 import type { OrcadControllerConfig } from './orcad-controller-config.ts'
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
+import { prepareOrphanComputeStop } from './orcad-orphan-compute-stop.ts'
 
 export type OrcadOrphanReconcileSnapshot = Readonly<{ passes: number; reconciled: number; skipped: number; lastError: string | null }>
 
-/** Controller-pass hook. Every active attempt whose Agent Pod name is absent,
- * or now names another UID, is revoked under the pass's own controller term.
- * An unknown observation reconciles nothing and is retried on a later pass. */
+/** Current controller owns reconciliation; a missing Pod alone never releases its writer. */
 export function prepareOrcadOrphanReconcile(pool: Pool, config: OrcadControllerConfig, ca: Uint8Array) {
   const caBytes = Buffer.from(ca)
   let passes = 0, reconciled = 0, skipped = 0, lastError: string | null = null
   const reconcileOrphans: NonNullable<ControllerPassRequest['reconcileOrphans']> = async (signal, controller) => {
     passes++
     let handled = 0
+    const api = () => ({ apiOrigin: config.inventory.apiOrigin, ca: caBytes, namespace: config.inventory.namespace,
+      reviewer: readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim() })
     for (const candidate of await listOrphanCandidates(pool)) {
       if (signal.aborted) { break }
-      const reviewer = readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim()
-      const observed = await observeAgentPod({ apiOrigin: config.inventory.apiOrigin, ca: caBytes,
-        namespace: config.inventory.namespace, reviewer }, candidate, signal)
-      if (observed.state !== 'GONE') { skipped++; continue }
-      const result = await reconcileOrphanedAttempt(pool, { scope: controller.scope, owner: controller.owner, term: controller.term },
-        candidate, observed, controller.owner)
-      if (result.ok && !result.cleanupFailed) { handled++; reconciled++ } else { lastError = result.ok ? 'CLEANUP' : String(result.error) }
+      const bounded = AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)])
+      const observed = await observeAgentPod(api(), candidate, bounded)
+      if (observed.state === 'PRESENT' && !observed.stopping) { skipped++; continue }
+      if (observed.state === 'UNKNOWN') { skipped++; continue }
+      let computeStop
+      try {
+        if (!observed.stopEvidence) { computeStop = await prepareOrphanComputeStop(pool, config, candidate, bounded) ?? undefined }
+      } catch { lastError = 'COMPUTE_STOP_UNCONFIRMED' }
+      try {
+        const result = await reconcileOrphanedAttempt(pool, { scope: controller.scope, owner: controller.owner, term: controller.term },
+          candidate, observed, controller.owner, computeStop)
+        if (result.ok && result.commitOutcome === 'ACKNOWLEDGED' && !result.cleanupFailed) {
+          if (result.value.status === 'RECONCILED') { handled++; reconciled++ }
+          else { skipped++; lastError = result.value.reason }
+        } else { lastError = result.ok ? 'CLEANUP' : 'ORPHAN_TRANSACTION_FAILED' }
+      } finally { computeStop?.release() }
+    }
+    // Retry cleanup after a crash/uncertain COMMIT; stop facts and revocation are already durable.
+    const stopped = await pool.query<OrphanCandidate>(`SELECT a.id AS "attemptId",a.runtime_unit_id AS "runtimeUnitId",
+      a.pod_uid AS "podUid",p.resource_name AS "podName",a.execution_epoch::text AS "executionEpoch",a.incarnation,a.status
+      FROM durable_runtime.attempts a JOIN durable_runtime.agent_pod_plans p ON p.attempt_id=a.id
+      WHERE a.stopped_at IS NOT NULL AND a.reason='WRITER_STOP_CONFIRMED'
+        AND EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e WHERE e.attempt_id=a.id AND e.kind='AGENT_ORPHAN_RECONCILED')
+        AND NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e WHERE e.attempt_id=a.id AND e.kind='AGENT_STOP_FINALIZER_RELEASED')
+      ORDER BY a.stopped_at LIMIT 32`)
+    for (const candidate of stopped.rows) {
+      if (signal.aborted || !(await pool.query(`SELECT 1 WHERE ${currentAuthoritySql}`, [controller.scope,controller.owner,controller.term])).rowCount) { break }
+      const bounded = AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)])
+      if (await releaseAgentPodStopFinalizer(api(), candidate, bounded)) {
+        await pool.query(`INSERT INTO durable_runtime.runtime_audit_events(id,actor_id,runtime_unit_id,attempt_id,pod_uid,kind,
+          next_state,occurred_at,received_at,producer_id,producer_seq,evidence_refs,payload)
+          VALUES(gen_random_uuid(),$1,$2,$3,$4,'AGENT_STOP_FINALIZER_RELEASED','{}',clock_timestamp(),clock_timestamp(),gen_random_uuid(),1,'[]','{}')`,
+        [controller.owner,candidate.runtimeUnitId,candidate.attemptId,candidate.podUid])
+      } else { lastError = 'STOP_FINALIZER_CLEANUP_PENDING' }
     }
     return handled
   }

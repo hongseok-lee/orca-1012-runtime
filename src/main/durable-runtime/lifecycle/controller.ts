@@ -179,7 +179,7 @@ async function lockedReconcileState(tx: DurableTransaction, request: InitialWake
 
 // Normal steps retain adoption before pending/stale handling. Expiry-only
 // adoption is deferred until every terminal no-effect condition has passed.
-async function adoptOperation(tx: DurableTransaction, request: InitialWakeExpiryRequest,
+export async function adoptOperation(tx: DurableTransaction, request: InitialWakeExpiryRequest,
   operation: LifecycleOperation, clock: Date): Promise<LifecycleOperation> {
   const { context } = request
   // Actual lease has already been locked/validated by the gateway. This

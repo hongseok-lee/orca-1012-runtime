@@ -9,6 +9,10 @@ import { lockAggregates } from '../durable-runtime/db/locks.ts'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import { requestUnitIntent } from '../durable-runtime/lifecycle/intent.ts'
 import type { UnitIntentAuthority } from '../durable-runtime/lifecycle/types.ts'
+import { claimOwnerlessWakeRetirement } from '../durable-runtime/runtime/ownerless-wake-retirement.ts'
+import type { VerifiedControllerIdentity } from '../durable-runtime/runtime/gateway/types.ts'
+import { currentAuthoritySql } from '../durable-runtime/runtime/gateway/authority.ts'
+import { retireAgentPod } from '../durable-runtime/runtime/agent-pod-retirement.ts'
 import { agentPodPlanSource } from '../durable-runtime/runtime/agent-pod-plan-records.ts'
 import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtime/runtime/agent-pod-policy.ts'
 import type { createComputeCreationIdentityClient } from '../durable-runtime/runtime/compute-creation-identity.ts'
@@ -89,12 +93,13 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
    * failed: once no attempt of the Unit is live (none reserved, or its Pod was
    * deleted and orphan reconciliation stopped it), the operation and its
    * command are closed as FAILED and the Session may wake again. */
-  async function abandon(operationId: string, reason: string): Promise<boolean> {
+  async function abandon(operationId: string, reason: string, controller?: VerifiedControllerIdentity): Promise<boolean> {
     const result = await runDurableTransaction(pool, async tx => {
+      if (!controller || !(await tx.query(`SELECT 1 WHERE ${currentAuthoritySql}`, [controller.scope,controller.owner,controller.term])).rowCount) { return false }
       // An already terminal wake may still hold a command claimed by a lost owner.
       const op = (await tx.query<{ runtime_unit_id: string }>(`SELECT runtime_unit_id FROM durable_runtime.operations o
-        WHERE id=$1 AND kind='WAKE' AND (result IS NULL OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c
-          WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING')))`, [operationId])).rows[0]
+        WHERE id=$1 AND controller_scope=$2 AND kind='WAKE' AND (result IS NULL OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c
+          WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING')))`, [operationId,controller.scope])).rows[0]
       if (!op) { return false }
       const members = (await tx.query<{ session_id: string }>('SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1',
         [op.runtime_unit_id])).rows.map(row => logicalId('session', row.session_id))
@@ -113,19 +118,8 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     })
     return result.ok && result.commitOutcome === 'ACKNOWLEDGED' && result.value
   }
-  /** A failed wake that created its Pod: delete exactly that Pod (by UID). */
-  function deletePod(name: string): Promise<void> {
-    const token = readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim()
-    const url = new URL(`/api/v1/namespaces/${config.inventory.namespace}/pods/${name}`, config.inventory.apiOrigin)
-    return new Promise(resolve => {
-      const req = httpsRequest(url, { method: 'DELETE', ca, timeout: config.inventory.requestTimeoutMs,
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }, res => { res.resume(); res.on('end', () => resolve()) })
-      req.on('timeout', () => req.destroy()).on('error', () => resolve())
-      req.end(JSON.stringify({ apiVersion: 'v1', kind: 'DeleteOptions', gracePeriodSeconds: 0 }))
-    })
-  }
   /** Open wakes started under this state directory that no live owner holds. */
-  async function settleOwnerless(): Promise<void> {
+  async function settleOwnerless(signal: AbortSignal, controller: VerifiedControllerIdentity): Promise<void> {
     if (!existsSync(stateDirectory)) { return }
     const started = new Set(readdirSync(stateDirectory).flatMap(session => {
       try { return readdirSync(join(stateDirectory, session)) } catch { return [] }
@@ -137,8 +131,14 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       if (!started.has(id) || (entry && entry.dispatch.snapshot().status !== 'FAILED')) { continue }
       const reason = entry ? describe(entry) : 'REWAKE_OWNER_LOST'
       // Its Pod (if any) goes first; orphan reconciliation then fences the attempt and a later pass closes the wake.
-      await deletePod(`orca-unit-${id}`)
-      if (await abandon(id, reason) && entry) {
+      const attempt = await claimOwnerlessWakeRetirement(pool, controller, id)
+      if (attempt && !signal.aborted) {
+        const reviewer = readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim()
+        const retirement = await retireAgentPod({ apiOrigin: config.inventory.apiOrigin, namespace: config.inventory.namespace, ca, reviewer },
+          attempt, AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)]))
+        if (retirement === 'CONFLICT' || retirement === 'UNKNOWN') { lastError = `REWAKE_RETIRE_${retirement}` }
+      }
+      if (await abandon(id, reason, controller) && entry) {
         entries.delete(id); abandoned++; lastError = reason
         ownership.release(entry.unitId, 'rewake')
         const failure = failures.get(entry.sessionId) ?? { count: 0, nextAt: 0 }
@@ -155,7 +155,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
         const chunks: Buffer[] = []
         res.on('data', chunk => chunks.push(chunk)).on('end', () => {
           try {
-            const items = (JSON.parse(Buffer.concat(chunks).toString('utf8')) as { items?: Array<{ metadata: { name: string; uid: string; deletionTimestamp?: string }; status?: { phase?: string } }> }).items ?? []
+            const items = (JSON.parse(Buffer.concat(chunks).toString('utf8')) as { items?: { metadata: { name: string; uid: string; deletionTimestamp?: string }; status?: { phase?: string } }[] }).items ?? []
             const live = items.filter(item => !item.metadata.deletionTimestamp && item.status?.phase === 'Running')
             if (res.statusCode !== 200 || live.length !== 1) { reject(new Error('REWAKE_NFS_POD')); return }
             resolve({ name: live[0].metadata.name, uid: live[0].metadata.uid })
@@ -189,7 +189,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       ORDER BY u.id`)).rows
   }
 
-  async function wake(candidate: Awaited<ReturnType<typeof candidates>>[number]): Promise<void> {
+  async function wake(candidate: Awaited<ReturnType<typeof candidates>>[number], controller: VerifiedControllerIdentity): Promise<void> {
     let row = candidate
     const ready = (await pool.query<{ native: string }>(`SELECT next_state->'providerRef'->>'nativeSessionRef' AS native
       FROM durable_runtime.runtime_audit_events WHERE session_id=$1 AND kind='INITIAL_PROVIDER_READY' ORDER BY occurred_at DESC LIMIT 1`,
@@ -236,15 +236,15 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       executionEpoch: op.execution_epoch, intentRevision: op.intent_revision, specHash: sha(descriptor) } }
     // This wake owns the unit while its operation is open, then through the attempt it reserves.
     if (!(await ownership.claim(row.unit_id, row.session_id, 'rewake', { operationId, attemptId: target.identity.attemptId }))) {
-      await abandon(operationId, 'REWAKE_UNIT_OWNED')
+      await abandon(operationId, 'REWAKE_UNIT_OWNED', controller)
       throw new Error('REWAKE_UNIT_OWNED')
     }
     // Exact bytes the binding was verified with: the namespace profile plus this leaf's qualification.
-    const profileBytes = JSON.stringify({ ...baseProfile, qualificationRef: original.qualification, leafId: original.leaf }, null, 2) + '\n'
+    const profileBytes = `${JSON.stringify({ ...baseProfile, qualificationRef: original.qualification, leafId: original.leaf }, null, 2)}\n`
     const dir = join(stateDirectory, row.session_id, operationId)
     mkdirSync(dir, { recursive: true, mode: 0o700 })
     const write = (name: string, value: unknown) => { const path = join(dir, name)
-      writeFileSync(path, typeof value === 'string' ? value : JSON.stringify(value, null, 2) + '\n', { flag: 'wx', mode: 0o600 }); return path }
+      writeFileSync(path, typeof value === 'string' ? value : `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o600 }); return path }
     const collector = { ...(baseTarget.get('collector') as Record<string, unknown>), podName: nfs.name, podUid: nfs.uid }
     const targetFile = write('target.json', { policy: source.policy, request: target, policyRevision: baseTarget.get('policyRevision'),
       sessionId: row.session_id, actorId, originalAuditId: original.id, pinId: randomUUID(),
@@ -279,14 +279,14 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     /** Controller pass hook: queue at most one new wake per pass. */
     async wakePending(signal: AbortSignal): Promise<number> {
       if (signal.aborted) { return 0 }
-      await settleOwnerless()
+      await settleOwnerless(signal, controller)
       if (busy()) { return 0 }
       for (const row of await candidates()) {
         const failure = failures.get(row.session_id)
         // A candidate has no live attempt, so no other owner (e.g. the first-managed target) can serve it now.
         if ((failure && (failure.count >= MAX_WAKES || Date.now() < failure.nextAt)) ||
             [...entries.values()].some(entry => entry.sessionId === row.session_id && entry.dispatch.snapshot().providerReady)) { continue }
-        try { await wake(row); return 1 }
+        try { await wake(row, controller); return 1 }
         catch (error) {
           lastError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'REWAKE_FAILED'
           failures.set(row.session_id, { count: (failure?.count ?? 0) + 1, nextAt: Date.now() + RETRY_MS })
