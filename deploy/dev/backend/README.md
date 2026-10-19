@@ -278,3 +278,16 @@ Projected defaultMode 0444와 실제 token UID 1000/mode 0600을 구분합니다
 과거 fallback fingerprint는 SHA256(JSON.stringify(`['node-identity', projectNumber, zone, instanceName, numericInstanceId]`))이다. 분류는 원 ref·observation digest를 보존하는 읽기 projection이며, immutable history를 갱신하거나 backfill하지 않는다. 운영자가 과거 ref의 `audit` 문자열만 보고 genuine audit로 단정하면 안 된다. 실제 PG의 17건을 읽은 결과와 Node 인증 관측은 [실측 기록](evidence/node-identity-provenance-20261019.json)에 구분해 기록했다.
 
 이 provenance는 모두 **실행 target identity의 출처**다. `permanentComputeStop`/writer revoke 권한으로 승격하지 않는다. unit01의 실제 sandbox 종료 또는 기존 정확한 Compute 삭제 증거 요구는 유지된다. Logging 조회 권한의 HTTP 200·결과 0건은 삭제 operation이나 lost-node 복구 증거가 아니다.
+
+
+### Durable rewake retry (TODO-07)
+
+Rewake의 실패 Map은 정본이 아니다. migration `027-operation-recovery-retry.sql`이 기존 `operations`에 복구 root/claim/accounting metadata를 추가하고, 기존 `retry_at`·`deadline_at`을 재사용한다. 새 retry queue/engine은 만들지 않는다. 준비·NFS 조회 전에 현재 controller가 operation claim을 PG에 commit하며, 한 Unit의 여러 호출은 Session/Unit/operation/lease 경계에서 직렬화된다. 같은 현재 owner가 준비 중인 claim을 다른 호출이 ownerless로 처리하지 않는다.
+
+- 기존 정책인 실패 최대 3회와 실패 후 60초 간격을 유지한다. 각 실패 outcome의 한 번뿐인 accounting과 root count·retry time·소진 이유·audit/outbox·notification을 같은 transaction에 기록한다. 원 command/attempt의 불확실성과 실제 writer-stop 증거는 그대로 보존한다.
+- 사건 식별자는 원 WAKE/root operation이다. immutable Pod plan/name 때문에 물리 재시도는 child operation을 쓸 수 있지만 root의 같은 count/limit와 원 deadline을 상속한다. 새 process·controller term·child operation·compatible input으로 예산이나 마감을 갱신하지 않는다. DB trigger도 lineage·소비 횟수·deadline의 되돌림을 거부한다.
+- 현재 후속 rewake는 마지막 실제 `attempt.ready_at`/execution epoch를 사건 경계로 사용한다. 같은 실패 중 추가된 입력은 같은 예산을 공유한다. 다음 실제 READY 경계를 통과한 뒤 발생한 독립 장애는 새 사건이 될 수 있다. 입력 읽기·새 receipt 자체는 reset이 아니다. root의 READY anchor는 nullable이므로 **첫 READY 전의 원 WAKE**도 같은 schema/settlement를 쓸 수 있다. 초기 시작 자동 복구는 이 unit에서 구현하지 않았으며 다음 작업은 이 engine을 확장해 재사용해야 한다.
+- 마감 또는 횟수 소진은 `REWAKE_DEADLINE_EXHAUSTED` / `REWAKE_RETRY_EXHAUSTED`로 남기고 새 wake를 막는다. 원 DURABLE/UNKNOWN 입력을 지우거나 재전송하지 않는다. 기존 operation 조회의 `recovery`가 count/limit/due/deadline/root를 제공하고, notification에도 소진 사유가 남는다. 실제 READY 확인은 incident를 resolve하며 이미 소비한 예산을 되돌리지 않는다.
+- 과거 operation이 식별되는 경우 READY 이후 epoch의 알려진 실패를 합산하고 가장 이른 원 operation lineage를 가져온다. 이전 Map에만 있었던 **operation 생성 전 실패나 nextAt은 복원할 수 없다**. 없는 due에는 한 번의 보수적인 60초 cooldown을 두되 원 deadline을 늘리지 않는다. 원 deadline도 없으면 `REWAKE_DEADLINE_UNAVAILABLE`로 막는다. 옛 private 디렉터리는 초기 legacy 발견 힌트이며 새 claim·budget의 정본이 아니다.
+
+[실측과 한계](evidence/durable-rewake-retry-20261019.json)는 격리 실제 PG 경합·재접속·term takeover와 실제 `prepareOrcadRewake(...).wakePending(signal, controller)` 호출을 구분한다. unit02의 generation9 API health는 wakePending 실행을 증명하지 않았다. 이번 호출 검사는 의도한 준비 실패까지만 실행해 새 factory에서도 count/due를 보존했으며 provider/Pod/NFS 작업은 시작하지 않았다. 실제 Agent 회수나 HA failover를 반복 검증한 것으로 확대하지 않는다. 개발 적용 순서는 additive migration027 후 변경 소스의 기존 watch 반영이다.

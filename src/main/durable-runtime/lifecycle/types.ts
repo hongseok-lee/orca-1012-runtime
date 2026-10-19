@@ -25,6 +25,16 @@ export type LifecycleOperation = Readonly<OperationRow> & {
   readonly deadline_at: Date | null
   readonly retry_at: Date | null
   readonly result: JsonValue | null
+  readonly recovery_root_id: string | null
+  readonly recovery_anchor_attempt_id: string | null
+  readonly retry_count: string
+  readonly retry_limit: string | null
+  readonly retry_claimed_at: Date | null
+  readonly retry_owner: string | null
+  readonly retry_owner_term: string | null
+  readonly retry_accounted_at: Date | null
+  readonly retry_exhausted_reason: string | null
+  readonly recovery_resolved_at: Date | null
 }
 export type UnitIntentRequest = {
   readonly authority: UnitIntentAuthority
