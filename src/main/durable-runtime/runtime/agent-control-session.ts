@@ -14,7 +14,7 @@ const fail = (): Error => new Error('AGENT_CODEX_CONTROL_UNCONFIRMED')
 export type AgentControlIdentity = Readonly<{ controlId: string; pid: number; startTicks: string; device: string; inode: string }>
 export type AgentControlSessionEnvironment = Readonly<{
   config: Readonly<{ timeoutMs: number; namespace: string; container: string; bootstrapSha256: string
-    nativeArtifactFile: string; expected: KubernetesPodAuthExpected; policy: AgentCodexControlPolicy }>
+    nativeArtifactFile: string; nativeCompanionFile?:string; nativeBwrapFile?:string; expected: KubernetesPodAuthExpected; policy: AgentCodexControlPolicy }>
   origin: URL; ca: Buffer; reconnectBudgetMs: number; termOnInitialize: boolean
   reviewer(signal: AbortSignal): string | Promise<string>
   authenticate(input: Readonly<{ podBearer: string; expected: KubernetesPodAuthExpected }>, signal: AbortSignal): Promise<AuthenticatedPodObservation>
@@ -169,7 +169,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
         if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, expectedLaunch)) { throw fail() }
         openedNative = true; handlers = { ...supplied }
         // This opener is invoked by the original actual-COMMIT permit.
-        const pid = await supplyNativeAndCold(request, config.nativeArtifactFile, config.policy.nativeArtifact.byteLength)
+        const pid = await supplyNativeAndCold(request, config.nativeArtifactFile, config.policy.nativeArtifact.byteLength, config.nativeCompanionFile && config.policy.nativeArtifact.codeModeHost ? {file:config.nativeCompanionFile,byteLength:config.policy.nativeArtifact.codeModeHost.byteLength,
+          ...(config.nativeBwrapFile&&config.policy.nativeArtifact.sandboxBwrap?{sandboxBwrap:{file:config.nativeBwrapFile,byteLength:config.policy.nativeArtifact.sandboxBwrap.byteLength}}:{})} : undefined)
         if (pid === null) { lost = true; throw fail() }
         nativePid = pid; return connection
       } }),

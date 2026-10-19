@@ -1,11 +1,10 @@
-import { createHash } from 'node:crypto'
-import { constants, mkdirSync, lstatSync, openSync, writeSync, fstatSync, fchmodSync,
-  fsyncSync, closeSync, linkSync, unlinkSync, realpathSync } from 'node:fs'
+import { createNativeArtifactFile, type NativeFileIdentity } from './native-artifact-file.ts'
+import { mkdirSync, lstatSync, fstatSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils.ts'
 import type { InitialProviderPaths } from './initial-provider-paths.ts'
 
-export type CodexNativeArtifact = Readonly<{ sha256: string; byteLength: number }>
+export type CodexNativeArtifact = Readonly<NativeFileIdentity & { codeModeHost?: NativeFileIdentity; sandboxBwrap?:NativeFileIdentity }>
 
 /** Private Agent-side COLD preparation. Construction is inert. begin/append/
  * finish are reachable only from the original backend permit callback AFTER
@@ -19,8 +18,8 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
   // Claude's OAuth token reaches the native process only through its launch env.
   const native = provider, stateDirectory = provider === 'codex' ? '.codex' : '.claude'
   let phase: 'UNUSED' | 'WRITING' | 'READY' | 'FAILED' = 'UNUSED'
-  let fd: number | null = null, bytes = 0, directory = '', partial = ''
-  const initial = fstatSync(rootFd), digest = createHash('sha256')
+  let files: Map<string,ReturnType<typeof createNativeArtifactFile>> | null = null
+  const initial = fstatSync(rootFd)
   function rootCurrent(): void {
     const held = fstatSync(rootFd), named = lstatSync('/agent')
     if (!held.isDirectory() || !named.isDirectory() || named.isSymbolicLink() ||
@@ -44,7 +43,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       phase = 'FAILED'
       const homeRoot = child('/agent', 'home'), home = child(homeRoot, paths.agentId)
       if (home !== paths.home) { throw new Error('AGENT_COLD_HOME_MAPPING') }
-      child(home, stateDirectory); directory = child(home, '.orca-native')
+      child(home, stateDirectory); const directory = child(home, '.orca-native')
       // A first empty Folder workspace is materialized only AFTER COMMIT.
       // Git requires its real checkout and is never replaced by an empty one.
       const existing = paths.checkoutPreparation === 'EXISTING'
@@ -58,43 +57,32 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
           (checkout.mode & 0o777) !== 0o700 || realpathSync(paths.checkout) !== paths.checkout) {
         throw new Error('AGENT_COLD_CHECKOUT_REQUIRED')
       }
-      partial = join(directory, `${native}.partial`)
-      // A later wake replaces the staged/published executable of an earlier one.
-      if (existing) { for (const stale of [partial, join(directory, native)]) { try { unlinkSync(stale) } catch (error) {
-        if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') { throw error } } } }
-      fd = openSync(partial, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600)
+      files=new Map([[native,createNativeArtifactFile(directory,native,artifact,rootCurrent,existing)]])
+      if(artifact.codeModeHost) {
+        if(provider!=='codex') {throw Error('AGENT_COLD_COMPANION_PROVIDER')}
+        files.set('codex-code-mode-host',createNativeArtifactFile(directory,'codex-code-mode-host',artifact.codeModeHost,rootCurrent,existing))
+      }
+      if(artifact.sandboxBwrap) {
+        if(provider!=='codex') {throw Error('AGENT_COLD_COMPANION_PROVIDER')}
+        files.set('codex-resources/bwrap',createNativeArtifactFile(directory,'codex-resources/bwrap',artifact.sandboxBwrap,rootCurrent,existing))
+      }
+      for(const file of files.values()) {file.begin()}
       phase = 'WRITING'
     },
-    append(offset: unknown, encoded: unknown): void {
+    append(offset: unknown, encoded: unknown, name: unknown = native): void {
       rootCurrent()
-      if (phase !== 'WRITING' || fd === null || offset !== bytes || typeof encoded !== 'string' || encoded.length > 349528 ||
-          !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) { phase = 'FAILED'; throw new Error('AGENT_COLD_ARTIFACT_CHUNK') }
-      const chunk = Buffer.from(encoded, 'base64')
-      if (!chunk.length || chunk.length > 256 * 1024 || chunk.toString('base64') !== encoded || bytes + chunk.length > artifact.byteLength) {
-        phase = 'FAILED'; throw new Error('AGENT_COLD_ARTIFACT_BOUNDS')
-      }
-      let written = 0
-      while (written < chunk.length) {
-        const count = writeSync(fd, chunk, written, chunk.length - written)
-        if (count <= 0) { phase = 'FAILED'; throw new Error('AGENT_COLD_ARTIFACT_WRITE') }
-        written += count
-      }
-      digest.update(chunk); bytes += chunk.length
+      if(phase!=='WRITING' || !files || typeof name!=='string' || !files.has(name) || typeof encoded!=='string' || encoded.length>349528 ||
+          !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {phase='FAILED';throw Error('AGENT_COLD_ARTIFACT_CHUNK')}
+      const chunk=Buffer.from(encoded,'base64')
+      if(chunk.toString('base64')!==encoded) {phase='FAILED';throw Error('AGENT_COLD_ARTIFACT_CHUNK')}
+      files.get(name)!.append(offset,chunk)
     },
     finish(): void {
       rootCurrent()
-      if (phase !== 'WRITING' || fd === null || bytes !== artifact.byteLength) { phase = 'FAILED'; throw new Error('AGENT_COLD_ARTIFACT_INCOMPLETE') }
-      phase = 'FAILED'
-      if (digest.digest('hex') !== artifact.sha256) { throw new Error('AGENT_COLD_ARTIFACT_IDENTITY') }
-      const original = fstatSync(fd)
-      fchmodSync(fd, 0o700); fsyncSync(fd)
-      const final = join(directory, native)
-      linkSync(partial, final)
-      const published = lstatSync(final), staged = lstatSync(partial)
-      if (published.dev !== original.dev || published.ino !== original.ino || staged.dev !== original.dev || staged.ino !== original.ino) {
-        throw new Error('AGENT_COLD_ARTIFACT_PUBLICATION')
-      }
-      closeSync(fd); fd = null; unlinkSync(partial)
+      if(phase!=='WRITING' || !files) {phase='FAILED';throw Error('AGENT_COLD_ARTIFACT_INCOMPLETE')}
+      phase='FAILED'
+      // All files must authenticate before COLD; companion publishes first.
+      for(const name of ['codex-code-mode-host','codex-resources/bwrap',native]) {files.get(name)?.finish()}
       if (provider === 'claude') { rootCurrent(); phase = 'READY'; return }
       // Authentication text is private data. It is never hashed or printed.
       try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error('AGENT_COLD_AUTH_SHAPE') } }
@@ -104,7 +92,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
     },
     ready(): boolean { return phase === 'READY' },
     close(): void {
-      if (fd !== null) { closeSync(fd); fd = null }
+      for(const file of files?.values()??[]) {file.close()}
       // Preserve partial evidence/files; no automatic rollback/deletion/retry.
       if (phase !== 'READY') { phase = 'FAILED' }
     },

@@ -17,6 +17,8 @@ export type AgentCodexTransportConfiguration = Readonly<{
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
   bootstrapSha256: string
   bootstrapBytes: Uint8Array
+  nativeBwrapFile?: string
+  nativeCompanionFile?: string
   nativeArtifactFile: string
   expected: KubernetesPodAuthExpected
   policy: AgentCodexControlPolicy
@@ -47,7 +49,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   const artifact = Buffer.from(original.bootstrapBytes)
   const config = immutableSnapshot({ apiOrigin: original.apiOrigin,
     namespace: original.namespace, container: original.container, timeoutMs: original.timeoutMs,
-    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile,
+    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile, nativeCompanionFile:original.nativeCompanionFile, nativeBwrapFile:original.nativeBwrapFile,
     expected: original.expected, policy: original.policy })
   const reviewer = original.readReviewerBearer.bind(original)
   const reconnectBudgetMs = original.reconnectBudgetMs ?? original.timeoutMs
