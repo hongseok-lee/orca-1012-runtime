@@ -35,7 +35,7 @@ export function readOrcadStartupConfig(): OrcadStartupConfig {
 export async function prepareOrcadStartup(
   input: OrcadStartupConfig, ownCatalog: (catalog: OrcadStartupOwner | null) => void,
   readProviderSettings?: () => InitialCodexNativeSettings, readCodexCredential?:ManagedCodexCredentialReader
-): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp' | 'durableTerminalInputCommitted' | 'durableTerminalOutputAvailable'>> {
+): Promise<Pick<OrcaRuntimeRpcServerOptions, 'durableCatalogRead' | 'opsHttp' | 'durableTerminalInputCommitted' | 'durableTerminalOutputAvailable' | 'durableTerminalRuntime'>> {
   const ops = input.ops === null ? null : captureOrcadOpsConfig(input.ops)
   const controller = input.controller == null ? null : captureOrcadControllerConfig(input.controller)
   if (ops && !input.catalog) { invalidOrcadOpsConfig('OPS_STARTUP_CATALOG_REQUIRED') }
@@ -65,7 +65,8 @@ export async function prepareOrcadStartup(
     browserSessions.assertOpen()
     return readConfig ? Object.freeze({ durableCatalogRead: readConfig,
       ...(controllerOwner ? { durableTerminalInputCommitted: controllerOwner.onTerminalInputCommitted,
-        durableTerminalOutputAvailable: controllerOwner.assertTerminalOutputAvailable } : {}),
+        durableTerminalOutputAvailable: controllerOwner.assertTerminalOutputAvailable,
+        durableTerminalRuntime: controllerOwner.currentTerminalRuntime } : {}),
       ...(opsHttp ? { opsHttp } : {}) }) : Object.freeze({})
   } catch (error) {
     await browserSessions.stop().catch(() => {})

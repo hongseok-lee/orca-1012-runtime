@@ -36,6 +36,7 @@ export function createAgentTerminal(input: Readonly<{
   const incarnationId = randomUUID()
   let opening: Promise<Readonly<{ incarnationId: string; pid: number }>> | undefined
   let pty: IPty | undefined, live = false, uncertain = false, endByte = 0
+  let dimensions = { cols: 80, rows: 24 }
   let retained = Buffer.alloc(0)
   const writes = new Map<string, { hash: string; result: AgentTerminalWrite }>()
   const requireLive = (expected: string) => {
@@ -47,18 +48,18 @@ export function createAgentTerminal(input: Readonly<{
     inspect() {
       assertCurrent()
       return pty ? Object.freeze({ incarnationId, pid: pty.pid, live, uncertain,
-        startByte: endByte - retained.length, endByte }) : null
+        startByte: endByte - retained.length, endByte, ...dimensions }) : null
     },
     /** Explicit creation only, once for the lifetime of this control. */
     open(cols: number, rows: number) {
       assertCurrent()
-      const dimensions = size(cols, rows)
+      const requested = size(cols, rows)
       if (!opening) {
         opening = (async () => {
           const child = await spawn('/bin/bash', ['--noprofile', '--norc'], {
-            cwd, env, ...dimensions, name: 'xterm-256color', encoding: null
+            cwd, env, ...requested, name: 'xterm-256color', encoding: null
           })
-          pty = child; live = true
+          pty = child; live = true; dimensions = requested
           child.onData(data => {
             const bytes = Buffer.isBuffer(data) ? data : Buffer.from(data)
             const startByte = endByte
@@ -113,8 +114,8 @@ export function createAgentTerminal(input: Readonly<{
       return result
     },
     resize(expected: string, cols: number, rows: number): void {
-      const dimensions = size(cols, rows), child = requireLive(expected)
-      try { child.resize(dimensions.cols, dimensions.rows) }
+      const requested = size(cols, rows), child = requireLive(expected)
+      try { child.resize(requested.cols, requested.rows); dimensions = requested }
       catch { uncertain = true; throw new Error('AGENT_TERMINAL_RESIZE_UNKNOWN') }
     },
     /** Requests shutdown of the owned PTY; not proof that its descendants or

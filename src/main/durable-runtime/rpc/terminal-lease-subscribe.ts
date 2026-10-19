@@ -1,3 +1,6 @@
+import type { TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
+import { createCatalogTerminalRuntimeReader } from './terminal-runtime-read.ts'
+import { streamCatalogTerminal } from './terminal-runtime-stream.ts'
 import { TerminalSubscribe } from '../../../shared/rpc-contract/terminal-stream-params.ts'
 import type { RpcContext, RpcStreamingMethodDeclaration } from '../../runtime/rpc/core.ts'
 import { capturedJson } from '../structured/durable-common.ts'
@@ -6,12 +9,9 @@ import { withDurableTransaction } from '../db/connection.ts'
 import { resolveCatalogTerminalTarget } from './terminal-target.ts'
 import { TerminalDraftStoreError } from '../terminal/durable-contracts.ts'
 
-/** A durable terminal tab has no PTY in this process: its provider runs in the
- * Agent Pod and chat renders the journaled native transcript. Subscribing only
- * acknowledges the client's input lease; input itself goes through
- * terminal.send and the durable floor. The stream stays open until the client
- * unsubscribes or its connection ends. Other handles keep the original owner. */
-export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadConfig) {
+/** Chat retains its logical input lease. Raw Terminal borrows the existing
+ * Agent PTY; observation never wakes or replaces a runtime. */
+export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadConfig, lookup?: TerminalRuntimeLookup) {
   return async (original: unknown, context: RpcContext, emit: (frame: unknown) => void,
     legacy: RpcStreamingMethodDeclaration['handler']): Promise<void> => {
     const params = TerminalSubscribe.parse(capturedJson(original))
@@ -26,7 +26,10 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
     assertCurrent()
     if (!found) { return legacy(params as never, capturedContext, emit) }
     if (found.lifecycle !== 'OPEN') { throw new TerminalDraftStoreError('TERMINAL_CATALOG_TARGET_CLOSED') }
-    return holdCatalogTerminalInputLease(params, capturedContext, emit)
+    if (found.chat) { return holdCatalogTerminalInputLease(params, capturedContext, emit) }
+    if (!lookup) { throw new TerminalDraftStoreError('TERMINAL_RUNTIME_UNAVAILABLE') }
+    const reader = createCatalogTerminalRuntimeReader(config, capturedContext, params.terminal, found, lookup)
+    return streamCatalogTerminal(params, capturedContext, emit, reader)
   }
 }
 

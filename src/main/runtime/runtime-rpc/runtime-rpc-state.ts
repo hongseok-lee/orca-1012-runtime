@@ -114,12 +114,13 @@ export class RuntimeRpcState {
     methods,
     durableCatalogRead,
     durableTerminalInputCommitted,
+    durableTerminalRuntime,
     durableTerminalOutputAvailable,
     opsHttp
   }: OrcaRuntimeRpcServerOptions) {
     this.runtime = runtime
     this.durableCatalogRead = durableCatalogRead ? new DurableCatalogReadAdapter(durableCatalogRead,
-      { onTerminalInputCommitted: durableTerminalInputCommitted }) : null
+      { onTerminalInputCommitted: durableTerminalInputCommitted, terminalRuntime: durableTerminalRuntime }) : null
     const declarations = methods ?? ALL_RPC_METHODS
     const catalogMethods = this.durableCatalogRead?.bind(declarations) ?? declarations
     this.dispatcher = new RpcDispatcher({ runtime, methods: durableCatalogRead

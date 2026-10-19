@@ -3,7 +3,7 @@ import { createCatalogBrowserStreamRecovery } from './browser-stream-recovery.ts
 import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
 import { createCatalogTerminalSendRpc } from './terminal-send.ts'
 import { createCatalogTerminalLeaseSubscribe } from './terminal-lease-subscribe.ts'
-import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts'
+import type { TerminalInputCommittedSink, TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
 import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
 import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
@@ -38,10 +38,10 @@ export class DurableCatalogReadAdapter {
   private readonly terminalSendRpc: ReturnType<typeof createCatalogTerminalSendRpc>
   private readonly terminalLease: ReturnType<typeof createCatalogTerminalLeaseSubscribe>
   private disposed = false
-  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink}) {
+  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup}) {
     this.config = captureDurableCatalogReadConfig(config)
     this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted)
-    this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config)
+    this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config, options?.terminalRuntime)
     this.clipboardRpc = this.config.attachments === undefined ? null : createCatalogClipboardRpc(this.config, this.config.attachments)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
     this.metadata = createCatalogMetadataFacade(this.config)
