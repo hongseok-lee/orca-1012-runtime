@@ -1,0 +1,90 @@
+{
+  "task": "TODO-03",
+  "sourceBase": "1f712c41774d5199398734aadae60d32eab46089",
+  "liveReadonlyObservation": {
+    "at": "2026-10-19T12:18:07.584Z",
+    "source": "Actual TokenReview + Kubernetes Pod/Node HTTPS; existing Agent remains Running; readonly product PostgreSQL history",
+    "preparedHandleKind": "PREPARED_EXECUTION_TARGET",
+    "podUid": "5630bba6-d534-4194-a05f-1362e596a5f7",
+    "podResourceVersion": "1792399500661279006",
+    "nodeUid": "fae9f33d-7446-46df-a163-b58f3639fb56",
+    "nodeResourceVersion": "1792412256855663017",
+    "computeIdentityProvenance": "AUTHENTICATED_KUBERNETES_NODE",
+    "computeIdentityEvidenceRef": "kubernetes-node-identity:sha256:9de70e30badeb2fbf248b15e445739dc45ba7b965de154fe59aba920a76e807a",
+    "kubernetesEvidenceRef": "kubernetes-pod-auth:sha256:9de70e30badeb2fbf248b15e445739dc45ba7b965de154fe59aba920a76e807a",
+    "inventedGoogleReceipt": false,
+    "cloudAuditCalled": false,
+    "newGrantOrTargetRowWritten": false,
+    "historical": {
+      "total": 17,
+      "provenanceCounts": {
+        "LEGACY_AMBIGUOUS": 10,
+        "LEGACY_SYNTHETIC_NODE_IDENTITY": 7
+      },
+      "mode": "read-only; no history update or backfill"
+    }
+  },
+  "checks": {
+    "newProvenanceCases": 3,
+    "existingCompositionCases": 8,
+    "existingCreationAndDeletionCompatibilityCases": 8,
+    "initialBundledRun": {
+      "passed": 18,
+      "failed": 1,
+      "failure": "Existing compatibility vector removed the currently required deletion responseShape.errorPresent field."
+    },
+    "correctedCaseOnlyRerun": {
+      "passed": 1,
+      "failed": 0,
+      "correction": "Retain required deletion error marker while removing only creation-specific shape metadata; deletion production verifier unchanged."
+    },
+    "focusedStrictRuntimeTypes": "passed: identity provenance, composition and record closure",
+    "changedProductOxlint": "0 warnings, 0 errors; 10 files",
+    "setupLimits": [
+      "Direct Node TS loading failed on existing extensionless imports; existing esbuild bundling resolved loading.",
+      "Broader controlled-execution typecheck in isolated source could not resolve omitted existing Codex/Claude modules; focused runtime closure passed. No native dependency install or full project typecheck claimed."
+    ]
+  },
+  "loggingPermission": {
+    "priorUnitObservation": "HTTP403 before root grant",
+    "workerSinglePostGrantProbe": {
+      "stage": "COMPUTE_AUDIT_PERMISSION_AFTER_ROOT_GRANT",
+      "at": "2026-10-19T12:14:37.793Z",
+      "httpStatus": 403,
+      "errorStatus": "PERMISSION_DENIED",
+      "errorCode": 403,
+      "entryCount": 0,
+      "nextPagePresent": false
+    },
+    "rootFollowup": {
+      "httpStatus": 200,
+      "entriesCount": 0,
+      "source": "Root report from same backend Pod and exact entries:list filter after IAM grant",
+      "exactObservedAt": "not supplied to worker",
+      "iamRole": "roles/logging.viewer"
+    },
+    "currentPermissionLimitation": "resolved by root follow-up; no further worker probe",
+    "propagationCauseProven": false,
+    "workerIamMutation": false,
+    "actualLostNodeRecoveryTested": false
+  },
+  "developmentIntegration": {
+    "status": "passed",
+    "generation": 9,
+    "pid": 27815,
+    "bundleHash": "ab478a231c99e5458ef2d56a5e171545a85cfc31a9e4c0a69d112cd2f50364b7",
+    "authenticatedStatusGet": {
+      "ok": true,
+      "appVersion": "0.1.0+ab478a231c99"
+    },
+    "source": "10 changed product files from unit02 over merged PR176 source; one existing composition module absent from sparse checkout supplied from unit02 source",
+    "build": "existing source watcher, incremental esbuild; no image build"
+  },
+  "limits": [
+    "Live Node path used actual TokenReview and existing Pod/Node API; target/grant rows were not written and existing Agent was not stopped.",
+    "Live history classification read 17 existing target rows; no history update/backfill. The 10 ambiguous rows cannot be certified as genuine audit from stored hashes.",
+    "Genuine creation/deletion parser cases used synthetic audit fixtures; no live Google creation/deletion operation was requested or verified.",
+    "No new provider rewake, protected NFS writer handoff, HA failover or native iPhone/Mac test in this unit. Prior unit lifecycle evidence remains distinct.",
+    "Backend-only change; existing UI evidence reused, no new screenshot."
+  ]
+}

@@ -126,7 +126,7 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
     await write(`UPDATE durable_runtime.execution_grants SET state='ACTIVE',revision=revision+1 WHERE attempt_id=$4
       AND runtime_unit_id=$5 AND execution_epoch=$6 AND state='RESERVED' AND ${currentAuthoritySql} RETURNING id`,
     [target.attemptId, input.context.runtimeUnitId, target.executionEpoch])
-    await recordExecutionTarget(tx, input.context, lease.executionRecord)
+    const execution = await recordExecutionTarget(tx, input.context, lease.executionRecord)
     const store = new StorageStore(authority)
     const observed = await store.observeMount(tx, { sessionId: input.sessionId, unitId: input.context.runtimeUnitId,
       expectedUnitRevision: expectedRevision, actorId: input.context.controller.owner, bindingId: mounted.bindingId,
@@ -145,7 +145,8 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
       WHERE id=$4 AND revision=$5 AND phase='PROVISIONING' AND ${currentAuthoritySql} RETURNING id`,
     [input.context.runtimeUnitId, expectedRevision])
     const event = { kind: 'INITIAL_PROVIDER_GRANTS_ACTIVATED', attemptId: target.attemptId, podUid: target.podUid,
-      executionEpoch: target.executionEpoch, bindingId: mounted.bindingId, gate: 'CLOSED', providerReady: false }
+      executionEpoch: target.executionEpoch, bindingId: mounted.bindingId, gate: 'CLOSED', providerReady: false,
+      computeIdentityProvenance: execution.computeIdentityProvenance, computeIdentityEvidenceRef: execution.computeIdentityEvidenceRef }
     const audit = await appendAudit(tx, { actorId: input.context.controller.owner, runtimeUnitId: input.context.runtimeUnitId,
       operationId: input.context.operationId, sessionId: input.sessionId, kind: event.kind, nextState: event,
       occurredAt: new Date(), receivedAt: new Date(), producerId: randomUUID(), producerSeq: counter('sequence:producer', '1'),

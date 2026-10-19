@@ -4,15 +4,15 @@ import type { ControlledCreationWindow } from './controlled-creation-window.ts'
 import { authenticatedAgentControlValid } from './agent-codex-transport.ts'
 import type { AuthenticatedAgentControl } from './agent-codex-transport.ts'
 import { captureCompositionConfiguration } from './execution-target-composition-input.ts'
-import { captureCompositionPod, compositionComputeScope, captureCompositionCreation, compositionObservation } from './execution-target-composition-observation.ts'
+import { captureCompositionPod, compositionComputeScope, captureCompositionCreation, captureCompositionNodeIdentity, compositionObservation } from './execution-target-composition-observation.ts'
 import type { CompositionScopeInput } from './execution-target-composition-observation.ts'
 import type { ExecutionTargetCompositionConfiguration } from './execution-target-composition-types.ts'
 import { ExecutionTargetCompositionError } from './execution-target-composition-types.ts'
 
-/** Reuses the original Pod/Node/Compute projections and ACTUAL creation client.
+/** Reuses the original Pod/Node projections and explicit identity source.
  * The Pod authentication is already owned by the live private control, so it is
- * not repeated and its bearer never leaves that boundary. Historical Compute
- * creation is checked against that authenticated current Node numeric identity;
+ * not repeated and its bearer never leaves that boundary. The audit mode checks
+ * historical creation; node mode records only the authenticated Node identity.
  * this flat result is not a physical pin or permanent-stop proof. */
 export function createControlledExecutionTargetObserver(configuration: ExecutionTargetCompositionConfiguration) {
   const config = captureCompositionConfiguration(configuration)
@@ -31,9 +31,10 @@ export function createControlledExecutionTargetObserver(configuration: Execution
       runtimeUnitId: observed.pod.runtimeUnitId, operationId: observed.pod.operationId, executionEpoch: observed.pod.executionEpoch,
       specHash: observed.pod.specHash, nodeName: observed.node.name, nodeUid: observed.node.uid }) }) })
   const pod = captureCompositionPod(config, input, observed), scope = compositionComputeScope(config, pod)
-  const creation = await config.observeCreation({ scope, startTime, endTime }, signal)
+  const identity = config.observeCreation
+    ? captureCompositionCreation(scope, await config.observeCreation({ scope, startTime, endTime }, signal))
+    : captureCompositionNodeIdentity(pod)
   if (signal.aborted || !authenticatedAgentControlValid(control)) { throw new ExecutionTargetCompositionError('PREPARED_INVALID') }
-  const digest = captureCompositionCreation(scope, creation)
-  return compositionObservation(config, input, pod, scope, digest)
+  return compositionObservation(config, input, pod, scope, identity)
   } })
 }

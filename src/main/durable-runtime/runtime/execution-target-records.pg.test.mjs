@@ -61,7 +61,7 @@ await test('execution target original records: isolated PG callback 1', async (t
 
   const exact = await fixture()
   const original = await record(exact)
-  assert.deepEqual(original, { ...exact.input, recordedAt: original.recordedAt })
+  assert.deepEqual(original, { ...exact.input, recordedAt: original.recordedAt, computeIdentityProvenance: 'UNCLASSIFIED' })
   assert.ok(Object.isFrozen(original))
   assert.equal(Object.getPrototypeOf(original), Object.prototype)
   assert.equal(original.numericInstanceId, '18446744073709551615')
@@ -179,7 +179,7 @@ await test('execution target original records: isolated PG callback 1', async (t
     }
     try{return await recordExecutionTarget(tx,mutable.context,mutable.input)}finally{tx.query=query}
   })
-  assert.deepEqual(captured,{...expected,recordedAt:captured.recordedAt})
+  assert.deepEqual(captured,{...expected,recordedAt:captured.recordedAt,computeIdentityProvenance:'UNCLASSIFIED'})
   const readKey={...expected}
   const capturedRead=await transaction(async tx=>{
     const query=tx.query

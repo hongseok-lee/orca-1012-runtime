@@ -15,7 +15,6 @@ import { currentAuthoritySql } from '../durable-runtime/runtime/gateway/authorit
 import { retireAgentPod } from '../durable-runtime/runtime/agent-pod-retirement.ts'
 import { agentPodPlanSource } from '../durable-runtime/runtime/agent-pod-plan-records.ts'
 import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtime/runtime/agent-pod-policy.ts'
-import type { createComputeCreationIdentityClient } from '../durable-runtime/runtime/compute-creation-identity.ts'
 import { canonicalInput } from '../durable-runtime/runtime/gateway/input.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { TerminalInputCommittedSink } from '../durable-runtime/input/runtime-input-types.ts'
@@ -30,22 +29,6 @@ const sha = (bytes: string | Buffer): string => createHash('sha256').update(byte
 type Dispatch = NonNullable<ReturnType<typeof prepareOrcadFirstManagedInitial>>
 type Entry = { sessionId: string; unitId: string; operationId: string; dispatch: Dispatch; error: string | null }
 type Native = Readonly<{ nativeArtifactFile: string; nativeSha256: string; nativeByteLength: number }>
-
-/** A Pod's node is already authenticated through its Kubernetes Pod identity; a
- * later wake takes that node identity as its creation evidence instead of a
- * one-shot Cloud Audit Logs token (personal-scale deployment, single writer kept). */
-function nodeIdentityCreationObserver(): ReturnType<typeof createComputeCreationIdentityClient> {
-  return Object.freeze({
-    async observe(input: Parameters<ReturnType<typeof createComputeCreationIdentityClient>['observe']>[0]) {
-      const at = new Date().toISOString(), scope = input.scope
-      return Object.freeze({ ok: true as const, observation: Object.freeze({ status: 'CREATE_OPERATION_COMPLETED' as const,
-        source: 'CLOUD_AUDIT_LOGS' as const, identity: Object.freeze({ ...scope }), operationId: `node-identity:${scope.numericInstanceId}`,
-        producer: 'compute.googleapis.com' as const, first: Object.freeze({ insertId: 'node-identity', timestamp: at }),
-        last: Object.freeze({ insertId: 'node-identity', timestamp: at }),
-        evidenceDigest: sha(JSON.stringify(['node-identity', scope.projectNumber, scope.zone, scope.instanceName, scope.numericInstanceId])) }) })
-    },
-  }) as ReturnType<typeof createComputeCreationIdentityClient>
-}
 
 /** Starts a new Agent Pod for a READY-before Session whose Pod is gone (orphan
  * reconciled) once its input waits: a new WAKE operation, the same Pod shape and
@@ -77,7 +60,6 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   const actorId = agentPodText(baseTarget.get('actorId')), stateDirectory = text('stateDirectory'), timeoutMs = agentPodInteger(raw.get('timeoutMs'))
   if (timeoutMs > 2_147_483_647 || !baseProfile || typeof baseProfile !== 'object') { return deny() }
   const ca = readOrcadControllerCredential(config.inventory.caFile, 'CA')
-  const observer = nodeIdentityCreationObserver()
   const entries = new Map<string, Entry>()
   let lastError: string | null = null, started = 0, abandoned = 0
   // Per Session: failed wakes and when the next one may start (bounded retry).
@@ -263,7 +245,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     outputSpoolDirectory: spool, creationWindow: 'AUTHENTICATED_NODE', timeoutMs })
     const { rewake: _rewake, ...rest } = config
     const dispatch = prepareOrcadFirstManagedInitial({ ...rest, firstManagedInitial: { configFile: targetFile, coldConfigFile: coldFile } },
-      pool, ca, undefined, readSettings, { nativeSessionRef: ready.native, creationObserver: observer })
+      pool, ca, undefined, readSettings, { nativeSessionRef: ready.native, creationObserver: 'AUTHENTICATED_KUBERNETES_NODE' })
     if (!dispatch) { throw new Error('REWAKE_DISPATCH') }
     entries.set(operationId, { sessionId: row.session_id, unitId: row.unit_id, operationId, dispatch, error: null })
     started++

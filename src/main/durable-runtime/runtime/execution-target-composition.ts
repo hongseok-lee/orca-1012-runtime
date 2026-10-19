@@ -5,7 +5,7 @@ import { snapshotCreationInput } from './compute-creation-identity-input.ts'
 import { recordExecutionTarget } from './execution-target-records.ts'
 import type { ExecutionTargetObservation } from './execution-target-records.ts'
 import { captureCompositionConfiguration, captureCompositionContext, captureCompositionInput } from './execution-target-composition-input.ts'
-import { captureCompositionCreation, captureCompositionPod, compositionComputeScope,
+import { captureCompositionCreation, captureCompositionNodeIdentity, captureCompositionPod, compositionComputeScope,
   compositionObservation } from './execution-target-composition-observation.ts'
 import type { ExecutionTargetComposition, ExecutionTargetCompositionConfiguration,
   ExecutionTargetPrepareInput, PreparedExecutionTarget } from './execution-target-composition-types.ts'
@@ -101,10 +101,11 @@ export function createExecutionTargetComposition(
           throw new ExecutionTargetCompositionError('INPUT_INVALID')
         }
         check()
-        const rawCreation = await awaitObservation(() => config.observeCreation(creationInput, cancellation.signal), cancellation.signal)
+        const identity = config.observeCreation
+          ? captureCompositionCreation(scope, await awaitObservation(() => config.observeCreation!(creationInput, cancellation.signal), cancellation.signal))
+          : captureCompositionNodeIdentity(pod)
         check()
-        const creationDigest = captureCompositionCreation(scope, rawCreation)
-        const observation = compositionObservation(config, input, pod, scope, creationDigest)
+        const observation = compositionObservation(config, input, pod, scope, identity)
         check()
         const handle = Object.freeze({ kind: 'PREPARED_EXECUTION_TARGET' }) as PreparedExecutionTarget
         prepared.set(handle, Object.freeze({ observation, operationId: input.operationId }))
