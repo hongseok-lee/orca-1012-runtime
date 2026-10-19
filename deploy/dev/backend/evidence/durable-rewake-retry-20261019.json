@@ -1,0 +1,87 @@
+{
+  "task": "TODO-07",
+  "base": "5d0e1887e6f3e3e95990e8c4996bbf1d5f839ac4",
+  "policy": {
+    "maximumFailedWakes": 3,
+    "failureDelayMs": 60000,
+    "source": "existing rewake constants; count/limit/deadline owned by original operation lineage",
+    "incidentIdentity": "original WAKE/root operation",
+    "readyAnchor": "persisted actual attempts.ready_at/execution epoch; optional for initial lineage, no manufactured READY"
+  },
+  "focusedPostgres": {
+    "passed": 2,
+    "failed": 0,
+    "environment": "isolated real PostgreSQL, synthetic rows, final migration027 from source",
+    "boundaries": [
+      "one concurrent committed claim",
+      "one failure charge despite double settlement",
+      "stale controller denied; current takeover preserves original stage/deadline/count/owner identity",
+      "fresh pool preserves due/count/deadline",
+      "immutable child identities inherit same root budget and exact deadline even with a different requested deadline",
+      "third failure remains exhausted; fresh compatible intent does not create an operation or reset budget",
+      "DURABLE/UNKNOWN inputs remain unchanged; Ops projection and one notification expose count/exhaustion reason",
+      "deadline/count rewind rejected by PG trigger",
+      "initial root with nullable READY anchor can settle and exhaust without fabricating READY; automatic initial dispatch not implemented"
+    ]
+  },
+  "actualHook": {
+    "at": "2026-10-19T12:40:12.920Z",
+    "source": "Actual prepareOrcadRewake(...).wakePending(signal,currentController) from product source; isolated real PostgreSQL; existing dev configuration read privately",
+    "firstReturn": 0,
+    "freshFactoryReturn": 0,
+    "expectedPreparationFailure": "REWAKE_SOURCE",
+    "retryCount": "1",
+    "retryAt": "2026-10-19 12:41:12.806665+00",
+    "deadlineAt": "2026-10-19 12:50:12.748+00",
+    "cooldownAndBudgetPreserved": true,
+    "inputStates": [
+      "DURABLE",
+      "UNKNOWN"
+    ],
+    "newPodOrProviderStarted": false,
+    "externalNfsLookupReached": false,
+    "claimAuthority": "current controller argument used through actual hook and durable claim"
+  },
+  "unit02EvidenceLimit": "Generation9 authenticated API health did not exercise wakePending or detect its missing controller parameter.",
+  "checks": {
+    "focusedRuntimeTypecheck": "passed",
+    "changedProductOxlint": "0 warnings, 0 errors; 6 TS files",
+    "whitespace": "passed",
+    "priorSandboxTests": "not repeated"
+  },
+  "development": {
+    "migration": {
+      "stage": "DEV_ADDITIVE_MIGRATION",
+      "at": "2026-10-19T12:41:06.351Z",
+      "before": "026-unknown-dispatch-history.sql",
+      "after": "027-operation-recovery-retry.sql",
+      "recoveryRowsInitially": "0"
+    },
+    "sourceFilesApplied": 7,
+    "generation": 10,
+    "pid": 28505,
+    "bundleHash": "206c1e4ecb21e5c5a2f48c0d117966bb615f87e1d41e4c4d94219272f5eedce0",
+    "authenticatedStatusGet": {
+      "ok": true,
+      "appVersion": "0.1.0+206c1e4ecb21"
+    },
+    "method": "existing incremental source watcher; additive migration before source; no image or dependency install"
+  },
+  "failuresCorrected": [
+    "Initial isolated migration trigger lacked fixed search_path (42704); fixed in final migration and verified on a fresh separately named owned fixture DB, without editing an applied ledger.",
+    "Fixture initially cleared owner before synthetic old execution/storage grant revocation (23514); fixed fixture ordering, production fencing guard unchanged.",
+    "Standalone hook loading needed existing unchanged source links and CommonJS bundling; ESM loader attempts failed before hook execution.",
+    "Lint curly/import formatting issues fixed; no budget behavior change."
+  ],
+  "legacyLimits": [
+    "Known failed WAKE operations after the READY generation are imported into one lineage; prior process-only pre-operation failures and nextAt cannot be reconstructed.",
+    "Missing legacy due gets one conservative cooldown; original deadline is not extended. Missing original deadline blocks as REWAKE_DEADLINE_UNAVAILABLE."
+  ],
+  "limits": [
+    "PG term takeover and fresh factory/pool reconstruction are synthetic controller scenarios, not a live HA failover claim.",
+    "Actual hook intentionally stops at REWAKE_SOURCE before NFS lookup, Pod/provider startup; no real provider retry, sandbox retirement or protected NFS handoff in this unit.",
+    "Initial-start automatic recovery belongs to separately dispatched future work; schema/settlement extension only is covered here.",
+    "Backend-only change; unchanged historical UI evidence reused, no new native iPhone/Mac/Expo screenshot.",
+    "No IAM or Cloud Logging probe; earlier authorized HTTP200/zero matching entries is not actual lost-node recovery."
+  ]
+}

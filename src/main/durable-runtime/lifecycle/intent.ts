@@ -57,6 +57,19 @@ async function selectIntentOperation(
     return { operation: blocker.rows[0], blocked: true }
   }
   const kind = unit.desired_mode === 'RUNNING' ? 'WAKE' : unit.desired_mode === 'SUSPENDED' ? 'SLEEP' : 'DELETE'
+  if (kind === 'WAKE') {
+    // Input joins the same unresolved recovery incident. A fresh receipt or
+    // operation must not bypass its cooldown, exhaustion or original deadline.
+    const recovery = (await tx.query<LifecycleOperation>(`SELECT r.* FROM durable_runtime.operations r
+      WHERE r.runtime_unit_id=$1 AND r.recovery_root_id=r.id AND r.recovery_anchor_attempt_id=(
+        SELECT a.id FROM durable_runtime.attempts a WHERE a.runtime_unit_id=$1 AND a.ready_at IS NOT NULL
+        ORDER BY a.execution_epoch DESC,a.ready_at DESC,a.id LIMIT 1) LIMIT 1`, [unit.id])).rows[0]
+    if (recovery) {
+      const open = (await tx.query<LifecycleOperation>(`SELECT * FROM durable_runtime.operations WHERE recovery_root_id=$1
+        AND retry_claimed_at IS NOT NULL AND retry_accounted_at IS NULL AND result IS NULL ORDER BY retry_claimed_at DESC LIMIT 1`, [recovery.id])).rows[0]
+      return { operation: open ?? recovery, blocked: !open }
+    }
+  }
   const existing = await tx.query<LifecycleOperation>(`SELECT * FROM durable_runtime.operations
     WHERE runtime_unit_id=$1 AND intent_revision=$2 AND kind=$3 AND result IS NULL ORDER BY id`,
     [unit.id, unit.intent_revision, kind])
@@ -82,6 +95,15 @@ async function selectIntentOperation(
       return { operation: terminal.rows[0], blocked: true }
     }
   }
+  return { operation: await insertIntentOperation(tx,unit,policy), blocked:false }
+}
+
+/** Shared operation construction; internal recovery callers inherit their root
+ * deadline in the SAME transaction before any command/effect can be exposed. */
+export async function insertIntentOperation(tx: DurableTransaction, unit: RuntimeUnitRow,
+  policy: UnitIntentRequest['policy']): Promise<LifecycleOperation> {
+  if (!tx.isLockHeld(2,unit.id)) { throw new DurableDatabaseError('LIFECYCLE_UNIT_LOCK_REQUIRED') }
+  const kind = unit.desired_mode === 'RUNNING' ? 'WAKE' : unit.desired_mode === 'SUSPENDED' ? 'SLEEP' : 'DELETE'
   await initializeLifecycleScope(tx)
   const operationId = logicalId('operation', randomUUID())
   const inserted = await tx.query<LifecycleOperation>(`INSERT INTO durable_runtime.operations
@@ -93,7 +115,7 @@ async function selectIntentOperation(
     LEFT JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id
     WHERE u.id=$2 RETURNING *`,
     [operationId, unit.id, kind, `orca-unit-${operationId}`, policy.operationDeadlineMs, LIFECYCLE_CONTROLLER_SCOPE])
-  return { operation: inserted.rows[0], blocked: false }
+  return inserted.rows[0]
 }
 
 /** Same-transaction Catalog entry. Records intent, never invokes an actuator. */

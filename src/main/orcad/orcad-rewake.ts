@@ -3,15 +3,11 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { request as httpsRequest } from 'node:https'
 import { join } from 'node:path'
 import type { Pool } from 'pg'
-import { counter, logicalId } from '../../shared/durable-runtime/identity.ts'
-import { runDurableTransaction } from '../durable-runtime/db/connection.ts'
-import { lockAggregates } from '../durable-runtime/db/locks.ts'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
-import { requestUnitIntent } from '../durable-runtime/lifecycle/intent.ts'
-import type { UnitIntentAuthority } from '../durable-runtime/lifecycle/types.ts'
+import { claimRewakeOperation, settleRewakeOperation } from '../durable-runtime/lifecycle/rewake-retry.ts'
+import type { RewakeOperationClaim } from '../durable-runtime/lifecycle/rewake-retry.ts'
 import { claimOwnerlessWakeRetirement } from '../durable-runtime/runtime/ownerless-wake-retirement.ts'
 import type { VerifiedControllerIdentity } from '../durable-runtime/runtime/gateway/types.ts'
-import { currentAuthoritySql } from '../durable-runtime/runtime/gateway/authority.ts'
 import { retireAgentPod } from '../durable-runtime/runtime/agent-pod-retirement.ts'
 import { agentPodPlanSource } from '../durable-runtime/runtime/agent-pod-plan-records.ts'
 import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtime/runtime/agent-pod-policy.ts'
@@ -62,70 +58,50 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   const ca = readOrcadControllerCredential(config.inventory.caFile, 'CA')
   const entries = new Map<string, Entry>()
   let lastError: string | null = null, started = 0, abandoned = 0
-  // Per Session: failed wakes and when the next one may start (bounded retry).
-  const failures = new Map<string, { count: number; nextAt: number }>()
-  const RETRY_MS = 60_000, MAX_WAKES = 3
   const describe = (entry: Entry): string => {
     const s = entry.dispatch.snapshot()
     return [s.errorCode, s.executionErrorCode, s.preparationErrorCode, s.reservationCode, s.target?.errorCode, s.assignment?.errorCode, s.coldFailure]
       .filter(code => !!code).join(':').replace(/[^A-Z0-9_:]/g, '_').slice(0, 150) || 'REWAKE_FAILED'
   }
 
-  /** A wake this process (or an earlier one) started whose owner is gone or
-   * failed: once no attempt of the Unit is live (none reserved, or its Pod was
-   * deleted and orphan reconciliation stopped it), the operation and its
-   * command are closed as FAILED and the Session may wake again. */
-  async function abandon(operationId: string, reason: string, controller?: VerifiedControllerIdentity): Promise<boolean> {
-    const result = await runDurableTransaction(pool, async tx => {
-      if (!controller || !(await tx.query(`SELECT 1 WHERE ${currentAuthoritySql}`, [controller.scope,controller.owner,controller.term])).rowCount) { return false }
-      // An already terminal wake may still hold a command claimed by a lost owner.
-      const op = (await tx.query<{ runtime_unit_id: string }>(`SELECT runtime_unit_id FROM durable_runtime.operations o
-        WHERE id=$1 AND controller_scope=$2 AND kind='WAKE' AND (result IS NULL OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c
-          WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING')))`, [operationId,controller.scope])).rows[0]
-      if (!op) { return false }
-      const members = (await tx.query<{ session_id: string }>('SELECT session_id FROM durable_runtime.runtime_members WHERE runtime_unit_id=$1',
-        [op.runtime_unit_id])).rows.map(row => logicalId('session', row.session_id))
-      await lockAggregates(tx, { sessionIds: members, runtimeUnitIds: [logicalId('runtime-unit', op.runtime_unit_id)] })
-      // A live attempt keeps its writer; a stopped one was fenced by orphan reconciliation.
-      const live = await tx.query('SELECT 1 FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND stopped_at IS NULL', [op.runtime_unit_id])
-      if (live.rowCount) { return false }
-      const failed = JSON.stringify({ state: 'FAILED', reason })
-      await tx.query(`UPDATE durable_runtime.runtime_commands SET state='RESOLVED',settled_at=clock_timestamp(),result=$2::jsonb,revision=revision+1
-        WHERE operation_id=$1 AND state IN ('ACCEPTED','EXECUTING')`, [operationId, failed])
-      await tx.query(`UPDATE durable_runtime.operations SET step='FAILED',step_revision=step_revision+1,revision=revision+1,result=$2::jsonb
-        WHERE id=$1 AND result IS NULL`, [operationId, failed])
-      await tx.query(`UPDATE durable_runtime.runtime_units SET phase='ABSENT',revision=revision+1
-        WHERE id=$1 AND active_attempt_id IS NULL AND phase='PROVISIONING'`, [op.runtime_unit_id])
-      return true
-    })
-    return result.ok && result.commitOutcome === 'ACKNOWLEDGED' && result.value
-  }
-  /** Open wakes started under this state directory that no live owner holds. */
+  /** PG owns new claims; old private directories are discovery hints only for
+   * importing operations created before durable recovery metadata existed. */
   async function settleOwnerless(signal: AbortSignal, controller: VerifiedControllerIdentity): Promise<void> {
-    if (!existsSync(stateDirectory)) { return }
-    const started = new Set(readdirSync(stateDirectory).flatMap(session => {
+    const legacy = existsSync(stateDirectory) ? new Set(readdirSync(stateDirectory).flatMap(session => {
       try { return readdirSync(join(stateDirectory, session)) } catch { return [] }
-    }))
-    const open = (await pool.query<{ id: string }>(`SELECT o.id FROM durable_runtime.operations o WHERE o.kind='WAKE' AND (o.result IS NULL
-      OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING')))`)).rows
-    for (const { id } of open) {
-      const entry = entries.get(id)
-      if (!started.has(id) || (entry && entry.dispatch.snapshot().status !== 'FAILED')) { continue }
-      const reason = entry ? describe(entry) : 'REWAKE_OWNER_LOST'
-      // Its Pod (if any) goes first; orphan reconciliation then fences the attempt and a later pass closes the wake.
-      const attempt = await claimOwnerlessWakeRetirement(pool, controller, id)
-      if (attempt && !signal.aborted) {
-        const reviewer = readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim()
-        const retirement = await retireAgentPod({ apiOrigin: config.inventory.apiOrigin, namespace: config.inventory.namespace, ca, reviewer },
-          attempt, AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)]))
-        if (retirement === 'CONFLICT' || retirement === 'UNKNOWN') { lastError = `REWAKE_RETIRE_${retirement}` }
+    })) : new Set<string>()
+    const open = (await pool.query<{id:string;runtime_unit_id:string;recovery_root_id:string|null;
+      retry_owner:string|null;retry_owner_term:string|null;expired:boolean}>(`SELECT o.id,o.runtime_unit_id,o.recovery_root_id,
+      o.retry_owner,o.retry_owner_term,o.deadline_at<=clock_timestamp() AS expired FROM durable_runtime.operations o
+      WHERE o.kind='WAKE' AND o.retry_accounted_at IS NULL AND ((o.recovery_root_id IS NOT NULL AND o.retry_claimed_at IS NOT NULL)
+        OR (o.recovery_root_id IS NULL AND (o.result IS NULL OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c
+          WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING')))))`)).rows
+    for (const op of open) {
+      if(signal.aborted) {break}
+      const entry = entries.get(op.id)
+      if(!op.recovery_root_id) {
+        if(!legacy.has(op.id)) {continue}
+        await claimRewakeOperation(pool,controller,op.runtime_unit_id,lifecyclePolicy)
+      } else if(!entry && op.retry_owner===controller.owner && op.retry_owner_term===controller.term && !op.expired) {
+        // An overlapping invocation of THIS current owner may still be preparing.
+        continue
       }
-      if (await abandon(id, reason, controller) && entry) {
-        entries.delete(id); abandoned++; lastError = reason
-        ownership.release(entry.unitId, 'rewake')
-        const failure = failures.get(entry.sessionId) ?? { count: 0, nextAt: 0 }
-        failures.set(entry.sessionId, { count: failure.count + 1, nextAt: Date.now() + RETRY_MS })
-      } else if (!entry) { abandoned++ }
+      const state=entry?.dispatch.snapshot()
+      if(entry && !state?.providerReady && state?.status!=='FAILED' && !op.expired) {continue}
+      const reason=entry?describe(entry):'REWAKE_OWNER_LOST'
+      if(!state?.providerReady) {
+        const attempt=await claimOwnerlessWakeRetirement(pool,controller,op.id)
+        if(attempt && !signal.aborted) {
+          const reviewer=readOrcadControllerCredential(config.inventory.tokenFile,'TOKEN').toString('utf8').trim()
+          const retired=await retireAgentPod({apiOrigin:config.inventory.apiOrigin,namespace:config.inventory.namespace,ca,reviewer},
+            attempt,AbortSignal.any([signal,AbortSignal.timeout(config.inventory.requestTimeoutMs)]))
+          if(retired==='CONFLICT'||retired==='UNKNOWN') {lastError=`REWAKE_RETIRE_${retired}`}
+        }
+      }
+      if(await settleRewakeOperation(pool,controller,op.id,reason)) {
+        if(entry && !state?.providerReady) {entries.delete(op.id);ownership.release(entry.unitId,'rewake')}
+        if(!state?.providerReady) {abandoned++;lastError=reason}
+      }
     }
   }
 
@@ -168,11 +144,14 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
         AND EXISTS(SELECT 1 FROM durable_runtime.messages x WHERE x.session_id=s.id AND x.intake_status='DURABLE' AND x.cancel_revision=0)
         AND NOT EXISTS(SELECT 1 FROM durable_runtime.operations o WHERE o.runtime_unit_id=u.id AND o.kind='WAKE' AND o.result IS NULL
           AND o.step<>'INTENT_QUEUED')
+        AND NOT EXISTS(SELECT 1 FROM durable_runtime.operations r WHERE r.runtime_unit_id=u.id AND r.recovery_root_id=r.id
+          AND r.recovery_anchor_attempt_id=(SELECT a.id FROM durable_runtime.attempts a WHERE a.runtime_unit_id=u.id AND a.ready_at IS NOT NULL
+            ORDER BY a.execution_epoch DESC,a.ready_at DESC,a.id LIMIT 1)
+          AND (r.retry_exhausted_reason IS NOT NULL OR (r.retry_at>clock_timestamp() AND r.deadline_at>clock_timestamp())))
       ORDER BY u.id`)).rows
   }
 
-  async function wake(candidate: Awaited<ReturnType<typeof candidates>>[number], controller: VerifiedControllerIdentity): Promise<void> {
-    let row = candidate
+  async function wake(row: Awaited<ReturnType<typeof candidates>>[number], controller: VerifiedControllerIdentity, claim: RewakeOperationClaim): Promise<void> {
     const ready = (await pool.query<{ native: string }>(`SELECT next_state->'providerRef'->>'nativeSessionRef' AS native
       FROM durable_runtime.runtime_audit_events WHERE session_id=$1 AND kind='INITIAL_PROVIDER_READY' ORDER BY occurred_at DESC LIMIT 1`,
     [row.session_id])).rows[0]
@@ -183,34 +162,11 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       AND next_state->'scope'->>'sessionId'=$1 AND next_state->'scope'->>'bindingId'=$2 ORDER BY occurred_at DESC LIMIT 1`,
     [row.session_id, row.binding_id])).rows[0]
     if (!ready?.native || !plan || !original?.qualification || !original.leaf) { throw new Error('REWAKE_SOURCE') }
-    // External lookups first: a transient failure here leaves no wake operation behind.
+    // The durable operation/budget claim precedes this external lookup.
     const nfs = await nfsPod()
-    // A Unit fenced before epochs advanced on orphan reconciliation still has its
-    // stopped attempt on the current epoch; the new attempt needs the next one.
-    await runDurableTransaction(pool, async tx => {
-      await lockAggregates(tx, { sessionIds: [logicalId('session', row.session_id)], runtimeUnitIds: [logicalId('runtime-unit', row.unit_id)] })
-      await tx.query(`UPDATE durable_runtime.runtime_units u SET execution_epoch=execution_epoch+1,revision=revision+1
-        WHERE u.id=$1 AND u.active_attempt_id IS NULL AND EXISTS(SELECT 1 FROM durable_runtime.attempts a
-          WHERE a.runtime_unit_id=u.id AND a.execution_epoch=u.execution_epoch AND a.stopped_at IS NOT NULL)
-        AND NOT EXISTS(SELECT 1 FROM durable_runtime.attempts a WHERE a.runtime_unit_id=u.id AND a.stopped_at IS NULL)`, [row.unit_id])
-    })
-    const unitNow = (await pool.query<{ revision: string; intent_revision: string }>(
-      'SELECT revision::text,intent_revision::text FROM durable_runtime.runtime_units WHERE id=$1', [row.unit_id])).rows[0]
-    row = { ...row, unit_revision: unitNow.revision, intent_revision: unitNow.intent_revision }
-    // The same Pod shape and binding as the Unit's last plan, under a new WAKE operation.
     const source = agentPodPlanSource(plan.plan)
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: internal controller scope for this Unit's wake intent.
-    const authority = Object.freeze({ principalId: actorId, runtimeUnitId: logicalId('runtime-unit', row.unit_id),
-      scope: `rewake:runtime-unit:${row.unit_id}` }) as unknown as UnitIntentAuthority
-    const intent = await requestUnitIntent(pool, { authority, operationKey: `rewake:${randomUUID()}`, desired: 'RUNNING',
-      expectedRevision: counter('row:runtime-unit', row.unit_revision), expectedIntentRevision: counter('intent-revision', row.intent_revision),
-      policy: lifecyclePolicy })
-    if (intent.status !== 'COMMITTED') { throw new Error('REWAKE_INTENT') }
-    const operationId = String((intent.receipt.response as { operationId?: unknown }).operationId)
-    const op = (await pool.query<{ external_resource_name: string; execution_epoch: string; intent_revision: string; step: string }>(
-      `SELECT external_resource_name,execution_epoch::text,intent_revision::text,step FROM durable_runtime.operations
-       WHERE id=$1 AND runtime_unit_id=$2 AND kind='WAKE' AND result IS NULL`, [operationId, row.unit_id])).rows[0]
-    if (!op || op.step !== 'INTENT_QUEUED') { throw new Error('REWAKE_OPERATION') }
+    const operationId=claim.operationId
+    const op={external_resource_name:claim.resourceName,execution_epoch:claim.executionEpoch,intent_revision:claim.intentRevision}
     const request = source.request as { protectedBindings: unknown[]; profile: unknown }
     const descriptor = canonicalInput({ version: 'orca-first-managed-closed-bootstrap-v1', policy: source.policy,
       protectedBindings: request.protectedBindings, profile: request.profile } as never)
@@ -218,7 +174,6 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       executionEpoch: op.execution_epoch, intentRevision: op.intent_revision, specHash: sha(descriptor) } }
     // This wake owns the unit while its operation is open, then through the attempt it reserves.
     if (!(await ownership.claim(row.unit_id, row.session_id, 'rewake', { operationId, attemptId: target.identity.attemptId }))) {
-      await abandon(operationId, 'REWAKE_UNIT_OWNED', controller)
       throw new Error('REWAKE_UNIT_OWNED')
     }
     // Exact bytes the binding was verified with: the namespace profile plus this leaf's qualification.
@@ -259,19 +214,25 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
 
   return Object.freeze({
     /** Controller pass hook: queue at most one new wake per pass. */
-    async wakePending(signal: AbortSignal): Promise<number> {
+    async wakePending(signal: AbortSignal, controller: VerifiedControllerIdentity): Promise<number> {
       if (signal.aborted) { return 0 }
       await settleOwnerless(signal, controller)
       if (busy()) { return 0 }
       for (const row of await candidates()) {
-        const failure = failures.get(row.session_id)
         // A candidate has no live attempt, so no other owner (e.g. the first-managed target) can serve it now.
-        if ((failure && (failure.count >= MAX_WAKES || Date.now() < failure.nextAt)) ||
-            [...entries.values()].some(entry => entry.sessionId === row.session_id && entry.dispatch.snapshot().providerReady)) { continue }
-        try { await wake(row, controller); return 1 }
+        // This candidate has no live writer. A READY cache from an earlier
+        // stopped attempt cannot suppress the next independent recovery incident.
+        for(const [id,entry] of entries) {
+          if(entry.unitId===row.unit_id && entry.dispatch.snapshot().providerReady) {
+            await entry.dispatch.close().catch(()=>undefined);entries.delete(id);ownership.release(entry.unitId,'rewake')
+          }
+        }
+        const claim=await claimRewakeOperation(pool,controller,row.unit_id,lifecyclePolicy)
+        if(!claim) {continue}
+        try { await wake(row, controller, claim); return 1 }
         catch (error) {
           lastError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'REWAKE_FAILED'
-          failures.set(row.session_id, { count: (failure?.count ?? 0) + 1, nextAt: Date.now() + RETRY_MS })
+          await settleRewakeOperation(pool,controller,claim.operationId,lastError)
           return 0
         }
       }
