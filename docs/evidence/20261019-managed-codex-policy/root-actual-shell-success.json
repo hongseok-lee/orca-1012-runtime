@@ -1,0 +1,49 @@
+{
+  "status": "ACTUAL_AUTH_POLICY_SHELL_CONFIRMED",
+  "observedAt": "2026-10-19T22:32:22.585Z",
+  "sameNativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295",
+  "turnPolicy": {
+    "at": "2026-10-19T22:32:03.166Z",
+    "turnId": "01a1564b-0bc7-77d1-95e7-105b226d1c37",
+    "approvalPolicy": "never",
+    "sandboxPolicy": {
+      "type": "danger-full-access"
+    },
+    "model": "gpt-6.1-sol",
+    "cwd": "/agent/checkout"
+  },
+  "shell": {
+    "command": "printf TASK04C_AUTH_SHELL_OK",
+    "exitCode": 0,
+    "stdout": "TASK04C_AUTH_SHELL_OK",
+    "executedAt": "2026-10-19T22:32:06.312Z",
+    "outputAt": "2026-10-19T22:32:06.561Z"
+  },
+  "input": {
+    "originalSequence": 7,
+    "additionalInputsByRoot": 0,
+    "deliveryState": "SETTLED",
+    "completedAt": "2026-10-19T22:32:08.593Z",
+    "earlierSequence6": "SETTLED with PROVIDER_TURN_FAILED; never resent"
+  },
+  "recovery": {
+    "normalManualOperation": "090b25ab-14bb-4c0f-a0ab-33958fa03e25",
+    "normalController": true,
+    "newPodUid": "bc0fedbb-c924-4a2c-a2aa-098a80478f83",
+    "homePreserved": true,
+    "previousExhaustedIncidentsPreserved": true,
+    "forcedDelete": false,
+    "normalManagedAuthRefresh": "COMPLETED; authenticated inference independently demonstrated by actual tool execution"
+  },
+  "rootChanges": [
+    "Both initial and revalidated binding dispatches capture the same existing managed credential owner.",
+    "Cold failure diagnostics distinguish deployment/configuration/directory/protection and retain bounded error codes without raw error messages."
+  ],
+  "limits": [
+    "No new UI screenshot; prior Loading tabs issue remains for client/Terminal work.",
+    "No installed iPhone/Mac or full HA verification.",
+    "Prior broad type closure limitations remain; focused tests and actual execution are distinct.",
+    "Controller previously stopped on external timeout; root graceful retirement and source restart recovered it. Automatic controller supervisor recovery is not claimed.",
+    "Diagnostic system-code bound widening from40 to80 is source-only; successful live behavior used40."
+  ]
+}

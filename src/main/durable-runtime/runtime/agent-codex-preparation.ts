@@ -1,3 +1,5 @@
+import { supplyProtectedManagedCodexCredential } from './managed-codex-credential-supply.ts'
+import type { ManagedCodexCredential } from '../providers/codex/managed-credential-owner.ts'
 import { createNativeArtifactFile, type NativeFileIdentity } from './native-artifact-file.ts'
 import { mkdirSync, lstatSync, fstatSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
@@ -11,7 +13,7 @@ export type CodexNativeArtifact = Readonly<NativeFileIdentity & { codeModeHost?:
  * grant COMMIT; they write only this owned protected HOME, never /shared.
  * A 289 MB native executable is streamed, not retained in the 64 MiB /tmp. */
 export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativeArtifact, codexAuth: string,
-  paths: InitialProviderPaths, provider: 'codex' | 'claude' = 'codex') {
+  paths: InitialProviderPaths, provider: 'codex' | 'claude' = 'codex', credential?: ManagedCodexCredential) {
   if (!/^[0-9a-f]{64}$/.test(artifact.sha256) || !Number.isSafeInteger(artifact.byteLength) || artifact.byteLength < 1 ||
       typeof codexAuth !== 'string' || Buffer.byteLength(codexAuth) > 1024 * 1024 ||
       provider === 'claude' && codexAuth !== '') { throw new Error('AGENT_COLD_PREPARATION_POLICY') }
@@ -59,11 +61,11 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       }
       files=new Map([[native,createNativeArtifactFile(directory,native,artifact,rootCurrent,existing)]])
       if(artifact.codeModeHost) {
-        if(provider!=='codex') {throw Error('AGENT_COLD_COMPANION_PROVIDER')}
+        if(provider!=='codex') {throw new Error('AGENT_COLD_COMPANION_PROVIDER')}
         files.set('codex-code-mode-host',createNativeArtifactFile(directory,'codex-code-mode-host',artifact.codeModeHost,rootCurrent,existing))
       }
       if(artifact.sandboxBwrap) {
-        if(provider!=='codex') {throw Error('AGENT_COLD_COMPANION_PROVIDER')}
+        if(provider!=='codex') {throw new Error('AGENT_COLD_COMPANION_PROVIDER')}
         files.set('codex-resources/bwrap',createNativeArtifactFile(directory,'codex-resources/bwrap',artifact.sandboxBwrap,rootCurrent,existing))
       }
       for(const file of files.values()) {file.begin()}
@@ -72,14 +74,14 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
     append(offset: unknown, encoded: unknown, name: unknown = native): void {
       rootCurrent()
       if(phase!=='WRITING' || !files || typeof name!=='string' || !files.has(name) || typeof encoded!=='string' || encoded.length>349528 ||
-          !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {phase='FAILED';throw Error('AGENT_COLD_ARTIFACT_CHUNK')}
+          !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {phase='FAILED';throw new Error('AGENT_COLD_ARTIFACT_CHUNK')}
       const chunk=Buffer.from(encoded,'base64')
-      if(chunk.toString('base64')!==encoded) {phase='FAILED';throw Error('AGENT_COLD_ARTIFACT_CHUNK')}
+      if(chunk.toString('base64')!==encoded) {phase='FAILED';throw new Error('AGENT_COLD_ARTIFACT_CHUNK')}
       files.get(name)!.append(offset,chunk)
     },
     finish(): void {
       rootCurrent()
-      if(phase!=='WRITING' || !files) {phase='FAILED';throw Error('AGENT_COLD_ARTIFACT_INCOMPLETE')}
+      if(phase!=='WRITING' || !files) {phase='FAILED';throw new Error('AGENT_COLD_ARTIFACT_INCOMPLETE')}
       phase='FAILED'
       // All files must authenticate before COLD; companion publishes first.
       for(const name of ['codex-code-mode-host','codex-resources/bwrap',native]) {files.get(name)?.finish()}
@@ -87,7 +89,8 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       // Authentication text is private data. It is never hashed or printed.
       try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error('AGENT_COLD_AUTH_SHAPE') } }
       catch { throw new Error('AGENT_COLD_AUTH_INVALID') }
-      writeFileAtomically(join(paths.home, '.codex', 'auth.json'), codexAuth, { mode: 0o600 })
+      if(credential) {supplyProtectedManagedCodexCredential(paths.home,credential,rootCurrent)}
+      else {writeFileAtomically(join(paths.home, '.codex', 'auth.json'), codexAuth, { mode: 0o600 })}
       rootCurrent(); phase = 'READY'
     },
     ready(): boolean { return phase === 'READY' },

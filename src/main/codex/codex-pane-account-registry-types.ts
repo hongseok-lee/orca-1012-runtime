@@ -13,6 +13,8 @@ export type CodexPaneHomeRoute =
 export type CodexPaneAccountRecord = {
   /** 'host' or 'wsl:<distro>' — the selection lane this pane launched from. */
   selectionKey: string
+  /** Durable Agent attribution outlives a daemon PTY inventory. */
+  lifetime?: 'durable-agent'
   /** Managed account id, or null for the system-default account. */
   accountId: string | null
   /** Absent only on records written before route provenance was introduced. */

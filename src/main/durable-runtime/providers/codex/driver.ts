@@ -1,3 +1,4 @@
+import type { CodexExecutionPolicy } from './execution-policy.ts'
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import type {
@@ -19,6 +20,7 @@ export type CodexColdLaunch = {
   readonly command: string
   readonly args: readonly string[]
   readonly options: Readonly<Record<string, string>>
+  readonly executionPolicy?: CodexExecutionPolicy
   readonly resumePath?: string | null
   readonly env?: Readonly<Record<string, string>>
 }
@@ -29,6 +31,7 @@ export class DurableCodexDriver {
   readonly #protocol: CodexProtocolSession
   #binding: ReadyProviderBinding | null = null
   #options: Readonly<Record<string, string>> = {}
+  #executionPolicy: CodexExecutionPolicy | undefined
   #submissions = new Map<string, ProviderSubmissionIdentity>()
   #receipts = new Map<string, CodexNativeReceipt>()
   #proofs = new Map<string, Extract<ProviderDispatchResult, { state: 'ADMITTED' }>>()
@@ -78,11 +81,12 @@ export class DurableCodexDriver {
         cwd: original.request.checkout, codexHome: original.request.persistentHome,
         resumeThreadId: native.kind === 'RESUME' ? native.providerRef.nativeSessionRef : null,
         resumePath: original.request.launch.resumePath,
-        env: original.request.launch.env
+        env: original.request.launch.env, executionPolicy: original.request.launch.executionPolicy
       })
       // This private cast follows an exact native thread/start or thread/resume response.
       const providerRef: ProviderRef = Object.freeze({ provider: 'codex', nativeSessionRef: opened.threadId as RuntimeReference<'provider-session'> })
       this.#options = immutableSnapshot(original.request.launch.options)
+      this.#executionPolicy = original.request.launch.executionPolicy
       this.#binding = immutableSnapshot({ ...original.request.binding, providerRef })
       return this.#binding
     })
@@ -91,12 +95,13 @@ export class DurableCodexDriver {
   /** Re-binds to the native thread an earlier owner recorded READY for this
    * binding, over a re-attached connection. No provider effect or permit: the
    * process, thread and writer grant already exist and are not recreated. */
-  async adopt(binding: ReadyProviderBinding, checkout: string, options: Readonly<Record<string, string>>): Promise<ReadyProviderBinding> {
-    const original = immutableSnapshot({ binding, options })
+  async adopt(binding: ReadyProviderBinding, checkout: string, options: Readonly<Record<string, string>>, executionPolicy?: CodexExecutionPolicy): Promise<ReadyProviderBinding> {
+    const original = immutableSnapshot({ binding, options, executionPolicy })
     if (this.#binding || original.binding.connectionInstanceId !== this.connectionInstanceId ||
         original.binding.providerRef.provider !== 'codex') {throw new Error('CODEX_ADOPT_BINDING_MISMATCH')}
-    await this.#protocol.adopt({ threadId: original.binding.providerRef.nativeSessionRef, cwd: checkout })
+    await this.#protocol.adopt({ threadId: original.binding.providerRef.nativeSessionRef, cwd: checkout, executionPolicy: original.executionPolicy })
     this.#options = immutableSnapshot(original.options)
+    this.#executionPolicy = original.executionPolicy
     this.#binding = immutableSnapshot(original.binding)
     return this.#binding
   }
@@ -128,7 +133,7 @@ export class DurableCodexDriver {
       input.push({ type: 'image', url: `data:${mime};base64,${bytes.toString('base64')}` })
     }
     const nativeRequestId = `codex:${binding.connectionInstanceId}:${frozen.deliveryAttemptId}`
-    const actual = immutableSnapshot({ clientMessageId: nativeRequestId, input, options: this.#options })
+    const actual = immutableSnapshot({ clientMessageId: nativeRequestId, input, options: this.#options, ...(this.#executionPolicy ? { executionPolicy: this.#executionPolicy } : {}) })
     const serialized = JSON.stringify(codexTurnStartParams(binding.providerRef.nativeSessionRef, actual))
     const identity: ProviderSubmissionIdentity = immutableSnapshot({
       binding, messageId: frozen.sealed.messageId, deliveryAttemptId: frozen.deliveryAttemptId,
@@ -233,7 +238,7 @@ export class DurableCodexDriver {
     if (event.method === 'TURN_START_RESPONSE' || event.method === 'CORRELATED_TURN_STARTED') {
       this.#verifyAdmission(event.receipt, identity)
     }
-    if (event.method === 'turn/completed' && event.terminalStatus === 'completed') {
+    if (event.method === 'turn/completed' && (event.terminalStatus === 'completed' || event.terminalStatus === 'failed')) {
       // Only the actual protocol-owned receipt for this submission can issue a
       // completion proof. Preserve the existing admission/stop predicates.
       if (!this.#protocol.ownsReceipt(event.receipt) ||
@@ -244,6 +249,7 @@ export class DurableCodexDriver {
           event.receipt.clientMessageId !== identity.nativeRequestId ||
           sha256(event.receipt.submission) !== identity.submissionHash) {return}
       const completed = immutableSnapshot({kind: 'PROVIDER_TARGET_COMPLETED', source: 'PROVIDER_PROTOCOL',
+        terminalStatus: event.terminalStatus,
         evidenceRef: `codex:turn-completed:${event.receipt.connectionId}:${event.receipt.turnId}`,
         observedAt: event.observedAt, attemptId: identity.binding.attemptId, podUid: identity.binding.podUid,
         executionEpoch: identity.binding.executionEpoch, messageId: identity.messageId,

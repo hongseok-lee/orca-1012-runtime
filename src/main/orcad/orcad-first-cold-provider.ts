@@ -1,3 +1,5 @@
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
+import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { readCodexNativeDistribution } from './orcad-native-distribution.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { fstatSync, createReadStream } from 'node:fs'
@@ -14,7 +16,7 @@ import { createComputeCreationIdentityClient } from '../durable-runtime/runtime/
 import { logicalId } from '../../shared/durable-runtime/identity.ts'
 import type { FirstManagedBindingOwnerConfig } from '../durable-runtime/storage/first-managed-binding-owner.ts'
 import type { InitialEmptyFolderDeclaration } from '../durable-runtime/runtime/initial-provider-paths.ts'
-import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
+import { captureManagedCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { ControlledCreationWindow } from '../durable-runtime/runtime/controlled-creation-window.ts'
 import { createTerminalInputRuntime } from '../durable-runtime/input/runtime-input.ts'
@@ -27,11 +29,6 @@ import type { InitialProviderPaths } from '../durable-runtime/runtime/initial-pr
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_FIRST_COLD_CONFIG')
-/** Managed Agents run without approval prompts: Codex always gets --yolo (or its long form from settings). */
-export function codexYolo(args: readonly string[]): string[] {
-  return args.includes('--yolo') || args.includes('--dangerously-bypass-approvals-and-sandbox') ? [...args] : ['--yolo', ...args]
-}
-
 /** Private anonymous pipe only. A regular file/argv/env token cannot enter
  * this one-shot development Audit supplier. No token hash or error body. */
 export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string> {
@@ -71,7 +68,7 @@ export type OrcadColdRewake = Readonly<{
 
 export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, pool: Pool, ca: Uint8Array, initial: Readonly<{
   sessionId: string; planDigest: string; directory: FirstManagedBindingOwnerConfig
-}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake) {
+}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake,readCodexCredential?:ManagedCodexCredentialReader) {
   const file = config.firstManagedInitial?.coldConfigFile
   if (!file) { return undefined }
   try {
@@ -107,7 +104,9 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     // Read only the already imported product-managed credential. Never hash,
     // serialize to evidence, publish, or inspect the root original again.
     if (claude && text('provider') !== 'claude') { return deny() }
-    const codexAuth = claude ? '' : readPrivateOrcadControllerConfigBytes(text('codexAuthFile')).toString('utf8')
+    if(!claude&&!readCodexCredential) {return deny()}
+    // Legacy field is accepted for config compatibility, never an alternate source.
+    const codexAuth = ''
     const claudeToken = claude ? agentPodText(readPrivateOrcadControllerConfigBytes(text('claudeTokenFile')).toString('utf8').trim()) : ''
     const ownerToken = agentPodText(readPrivateOrcadControllerConfigBytes(text('ownerTokenFile')).toString('utf8'))
     const originalAuditId = logicalId('event', text('originalAuditId')), pinId = logicalId('storage-namespace-pin', text('pinId'))
@@ -140,7 +139,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     // Same launch/env/policy for the cold path and for adoption of this exact Pod.
     function agentDeployment(pod: Readonly<{ podName: string; podUid: string; runtimeUnitId: string; operationId: string
       executionEpoch: string; specHash: string }>, paths: InitialProviderPaths) {
-      const native = captureInitialCodexNativePolicy(readSettings())
+      const native = captureManagedCodexNativePolicy(readSettings())
       if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
           native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
       // Claude's native session id is fixed by the Orca session, as on the desktop lane.
@@ -149,10 +148,11 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: rewake?.nativeSessionRef ? ['--dangerously-skip-permissions', '--resume', rewake.nativeSessionRef]
           : ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
-        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: paths.checkout,
+        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
-        bootstrapSha256, nativeArtifactFile, ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
+        bootstrapSha256, nativeArtifactFile,
+        ...(!claude&&readCodexCredential?{readManagedCredential:()=>readCodexCredential(paths.agentId,rewake===undefined)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
         onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
         policy: Object.freeze({ ...(claude ? { provider: 'claude' as const } : {}), protectedRoot: '/agent', launch, nativeArtifact, codexAuth,
@@ -183,12 +183,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       async deployment({ plan, podUid, paths }, signal) {
         // Legacy READY hosts may still be adopted. Reject incomplete deployment
         // only when a new native COLD is actually requested, before protection/grants.
-        if (!claude && !nativeDistribution) {throw Error('CODEX_NATIVE_DISTRIBUTION_REQUIRED')}
+        if (!claude && !nativeDistribution) {throw new Error('CODEX_NATIVE_DISTRIBUTION_REQUIRED')}
         if (signal.aborted) { return deny() }
         const id = plan.plan.identity
         const prepared = agentDeployment({ podName: id.resourceName, podUid, runtimeUnitId: id.unitId, operationId: id.operationId,
           executionEpoch: id.executionEpoch, specHash: id.specHash }, paths)
-        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, ...creation, nativeOptions: prepared.native.options,
+        return Object.freeze({ originalAuditId, pinId, ownerToken, actorId, ...creation, nativeOptions: prepared.native.options, codexPolicy: prepared.native.executionPolicy,
           config: Object.freeze({ directory: initial.directory, nfsServer: plan.plan.mountExpectations.protected[0].server,
             mounts: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, dataset, timeoutMs, readReviewerBearer }),
             execution: Object.freeze({ clusterIdentityRef, namespace, dataset, audience: 'orca-runtime-agent', projectId, projectNumber,
@@ -218,7 +218,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
           const prepared = agentDeployment(target, paths)
           // A vanished Pod must not hold the pass: re-attach briefly, then leave it to orphan reconciliation.
           return Object.freeze({ transport: createAgentCodexTransport({ ...prepared.agent, reconnectBudgetMs: 30_000 }), checkout: paths.checkout,
-            nativeOptions: prepared.native.options })
+            nativeOptions: prepared.native.options, codexPolicy: prepared.native.executionPolicy })
         } })
       // A failed adoption leaves the attempt to orphan reconciliation; the next pass may try again.
       // Published before adopt(): its onReady drains output and sends pending input through current().

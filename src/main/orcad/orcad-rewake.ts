@@ -1,3 +1,8 @@
+import { RECOVERY_OPERATION_CURRENT_SQL } from '../durable-runtime/lifecycle/recovery-chain.ts'
+import { captureOrcadWakePolicy } from './orcad-wake-policy.ts'
+import type { LifecyclePolicy } from '../durable-runtime/lifecycle/types.ts'
+import { readRewakeCandidates } from './orcad-rewake-candidates.ts'
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { certifiedNativeSessionRef } from '../durable-runtime/runtime/native-session-certification.ts'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
@@ -35,7 +40,7 @@ type Native = Readonly<{ nativeArtifactFile: string; nativeSha256: string; nativ
  * original first-managed attempt/grant/protection path, so one writer holds the
  * protected leaf at a time. One wake runs at a time in this process. */
 export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, readSettings: () => InitialCodexNativeSettings,
-  ownership: UnitOwnership) {
+  ownership: UnitOwnership,readCodexCredential?:ManagedCodexCredentialReader,wakePolicy?:LifecyclePolicy) {
   const file = config.rewake?.configFile
   if (!file) { return null }
   const parsed = parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8'))
@@ -53,9 +58,9 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       ...(key === 'codex' ? { codexAuthFile: agentPodText(n.get('codexAuthFile')) } : { provider: 'claude', claudeTokenFile: agentPodText(n.get('claudeTokenFile')) }) })
   }
   const codex = native('codex'), claude = native('claude')
-  const lifecycle = agentPodFields(raw.get('lifecyclePolicy'), ['operationDeadlineMs', 'idleDurationMs'])
-  const lifecyclePolicy = Object.freeze({ operationDeadlineMs: agentPodInteger(lifecycle.get('operationDeadlineMs')),
-    idleDurationMs: lifecycle.get('idleDurationMs') === null ? null : agentPodInteger(lifecycle.get('idleDurationMs')) })
+  const configuredPolicy = captureOrcadWakePolicy(raw.get('lifecyclePolicy'))
+  if(wakePolicy && JSON.stringify(wakePolicy)!==JSON.stringify(configuredPolicy)) {throw new Error('CONTROLLER_WAKE_POLICY_CHANGED')}
+  const lifecyclePolicy = wakePolicy ?? configuredPolicy
   const baseTarget = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(text('baseTargetFile')).toString('utf8')),
     ['policy', 'request', 'policyRevision', 'sessionId', 'actorId', 'originalAuditId', 'pinId', 'binding', 'executorId',
       'ownerTokenFile', 'acceptedProfileFile', 'expectedProfileDigest', 'podTokenFile', 'podTimeoutMs', 'credential', 'collector'])
@@ -80,7 +85,8 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     const open = (await pool.query<{id:string;runtime_unit_id:string;recovery_root_id:string|null;
       retry_owner:string|null;retry_owner_term:string|null;expired:boolean}>(`SELECT o.id,o.runtime_unit_id,o.recovery_root_id,
       o.retry_owner,o.retry_owner_term,o.deadline_at<=clock_timestamp() AS expired FROM durable_runtime.operations o
-      WHERE o.kind='WAKE' AND o.retry_accounted_at IS NULL AND ((o.recovery_root_id IS NOT NULL AND o.retry_claimed_at IS NOT NULL)
+      WHERE o.kind='WAKE' AND o.retry_accounted_at IS NULL AND (${RECOVERY_OPERATION_CURRENT_SQL} OR EXISTS(
+        SELECT 1 FROM durable_runtime.runtime_commands c WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING','UNKNOWN'))) AND ((o.recovery_root_id IS NOT NULL AND o.retry_claimed_at IS NOT NULL)
         OR (o.recovery_root_id IS NULL AND (o.result IS NULL OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c
           WHERE c.operation_id=o.id AND c.state IN ('ACCEPTED','EXECUTING')))))`)).rows
     for (const op of open) {
@@ -142,29 +148,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   }
 
   // Both first starts and later losses use the same durable operation claim.
-  async function candidates() {
-    return (await pool.query<{ unit_id: string; unit_revision: string; intent_revision: string; session_id: string; provider: 'codex' | 'claude';
-      workspace_id: string; reserved_path: string; binding_id: string; binding_revision: string; binding_epoch: string; canonical_directory: string }>(`
-      SELECT u.id AS unit_id,u.revision::text AS unit_revision,u.intent_revision::text,s.id AS session_id,g.provider,s.workspace_id,
-        w.reserved_path,b.id AS binding_id,b.revision::text AS binding_revision,b.epoch::text AS binding_epoch,b.canonical_directory
-      FROM durable_runtime.runtime_units u JOIN durable_runtime.runtime_members m ON m.runtime_unit_id=u.id
-      JOIN durable_runtime.sessions s ON s.id=m.session_id AND s.lifecycle='OPEN' JOIN durable_runtime.agents g ON g.id=s.agent_id
-      JOIN durable_runtime.catalog_workspace_metadata w ON w.workspace_id=s.workspace_id
-      JOIN durable_runtime.runtime_member_storage_bindings mb ON mb.runtime_unit_id=u.id AND mb.session_id=s.id
-      JOIN durable_runtime.storage_bindings b ON b.id=mb.storage_binding_id
-      -- Accepted input that still waits is demand to run, even if fencing suspended the Unit after it arrived.
-      WHERE u.desired_mode IN ('RUNNING','SUSPENDED') AND u.active_attempt_id IS NULL AND g.provider IN ('codex','claude')
-        AND b.access_state IN ('UNVERIFIED','VERIFIED') AND b.writer_attempt_id IS NULL
-        AND NOT EXISTS(SELECT 1 FROM durable_runtime.attempts a WHERE a.runtime_unit_id=u.id AND a.stopped_at IS NULL)
-        AND EXISTS(SELECT 1 FROM durable_runtime.messages x WHERE x.session_id=s.id AND x.intake_status='DURABLE' AND x.cancel_revision=0)
-        AND NOT EXISTS(SELECT 1 FROM durable_runtime.operations o WHERE o.runtime_unit_id=u.id AND o.kind='WAKE' AND o.result IS NULL
-          AND o.step<>'INTENT_QUEUED')
-        AND NOT EXISTS(SELECT 1 FROM durable_runtime.operations r WHERE r.runtime_unit_id=u.id AND r.recovery_root_id=r.id
-          AND r.recovery_anchor_attempt_id IS NOT DISTINCT FROM (SELECT a.id FROM durable_runtime.attempts a WHERE a.runtime_unit_id=u.id AND a.ready_at IS NOT NULL
-            ORDER BY a.execution_epoch DESC,a.ready_at DESC,a.id LIMIT 1)
-          AND (r.retry_exhausted_reason IS NOT NULL OR (r.retry_at>clock_timestamp() AND r.deadline_at>clock_timestamp())))
-      ORDER BY u.id`)).rows
-  }
+  const candidates = () => readRewakeCandidates(pool)
 
   async function wake(row: Awaited<ReturnType<typeof candidates>>[number], controller: VerifiedControllerIdentity, claim: RewakeOperationClaim): Promise<void> {
     const observations = await pool.query<{kind:string;next_state:unknown}>(`SELECT kind,next_state
@@ -231,8 +215,12 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     const existingCheckout = !!plan || !!(await pool.query('SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1 LIMIT 1',[row.binding_id])).rowCount
     const options = { recoverNative:!!plan&&!ready?.native, ...(ready?.native ? {nativeSessionRef:ready.native} : {}), reuseProfile, existingCheckout,
       creationObserver: 'AUTHENTICATED_KUBERNETES_NODE' as const }
-    let dispatch = prepareOrcadFirstManagedInitial({ ...rest, firstManagedInitial: { configFile: targetFile, coldConfigFile: coldFile } },
-      pool, ca, undefined, readSettings, options)
+    // Both the original binding and its revalidated replacement use the same
+    // deployment dependencies, including the selected credential owner.
+    const createDispatch = (configFile: string, coldConfigFile: string) =>
+      prepareOrcadFirstManagedInitial({ ...rest, firstManagedInitial: { configFile, coldConfigFile } },
+        pool, ca, undefined, readSettings, options, readCodexCredential)
+    let dispatch = createDispatch(targetFile, coldFile)
     if (!dispatch) { throw new Error('REWAKE_DISPATCH') }
     const bindingProof=(await pool.query<{identity_proof_ref:string|null}>('SELECT identity_proof_ref FROM durable_runtime.storage_bindings WHERE id=$1',[row.binding_id])).rows[0]
     const ownProof=original?(await pool.query<{ref:string}>("SELECT next_state->>'evidenceRef' AS ref FROM durable_runtime.runtime_audit_events WHERE id=$1",[original.id])).rows[0]?.ref:null
@@ -247,7 +235,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       const finalTarget=JSON.parse(readPrivateOrcadControllerConfigBytes(targetFile).toString('utf8'))
       finalTarget.originalAuditId=original.id;finalTarget.binding.expectedRevision=binding.revision
       const finalCold=JSON.parse(readPrivateOrcadControllerConfigBytes(coldFile).toString('utf8'));finalCold.originalAuditId=original.id
-      dispatch=prepareOrcadFirstManagedInitial({...rest,firstManagedInitial:{configFile:write('target.json',finalTarget),coldConfigFile:write('cold-final.json',finalCold)}},pool,ca,undefined,readSettings,options)
+      dispatch = createDispatch(write('target.json', finalTarget), write('cold-final.json', finalCold))
       if(!dispatch) {throw new Error('REWAKE_DISPATCH')}
     }
     entries.set(operationId, { sessionId: row.session_id, unitId: row.unit_id, operationId, dispatch, error: null })

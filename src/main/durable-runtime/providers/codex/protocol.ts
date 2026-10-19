@@ -1,3 +1,4 @@
+import { CodexExecutionPolicyMismatch, CodexExecutionPolicyTracker, type CodexExecutionPolicy, type CodexExecutionPolicyObservation } from './execution-policy.ts'
 import { randomUUID } from 'node:crypto'
 import { captureCatalogJson } from '../../catalog/immutable.ts'
 import { CodexConnectionBusyError, codexTurnStartParams, record, text, threadIdOf, turnIdOf } from './protocol-types.ts'
@@ -16,6 +17,7 @@ export type CodexProtocolDependencies = {
   requestTimeoutMs?: number
   onEvent?: (event: CodexProtocolEvent) => void
   onNativeNotification?: (event: CodexNativeNotification) => void
+  onExecutionPolicyObservation?: (observation: CodexExecutionPolicyObservation) => void
   /** Stable native connection identity, e.g. the Pod-local control id; a fresh UUID when absent. */
   connectionId?: string
   /** Sequence of the transport frame being delivered; stable across re-attach and owners. */
@@ -28,6 +30,9 @@ export class CodexProtocolSession {
   readonly connectionId: string
   #connection: CodexAppServerConnection | null = null
   #threadId: string | null = null
+  #cwd: string | null = null
+  #policyBlocked = false
+  readonly #policyTracker: CodexExecutionPolicyTracker
   #historyPath: string | null = null
   #closed = false
   #opening = false
@@ -44,6 +49,7 @@ export class CodexProtocolSession {
 
   constructor(private readonly dependencies: CodexProtocolDependencies) {
     this.#nativeNotification = dependencies.onNativeNotification?.bind(dependencies)
+    this.#policyTracker = new CodexExecutionPolicyTracker(dependencies.onExecutionPolicyObservation?.bind(dependencies), dependencies.requestTimeoutMs)
     this.connectionId = dependencies.connectionId ?? randomUUID()
   }
 
@@ -78,17 +84,29 @@ export class CodexProtocolSession {
   /** Binds to a native thread already open on a connection an earlier owner
    * created. No process or thread is created; on failure the live connection
    * is left untouched, since closing it would stop the provider. */
-  async adopt(input: { threadId: string; cwd: string }): Promise<Readonly<{ threadId: string; connectionId: string }>> {
+  async adopt(input: { threadId: string; cwd: string; executionPolicy?: CodexExecutionPolicy }): Promise<Readonly<{ threadId: string; connectionId: string }>> {
     if (this.#connection || this.#opening || this.#closed || !this.dependencies.attach) {throw new Error('CODEX_CONNECTION_ALREADY_USED')}
     this.#opening = true
     try {
       const connection = await this.dependencies.attach(this.#handlers())
       this.#connection = connection
-      const opened = await connection.request('thread/resume', { threadId: input.threadId, cwd: input.cwd, excludeTurns: true },
+      const opened = await connection.request('thread/resume', { threadId: input.threadId, cwd: input.cwd, excludeTurns: true,
+        ...(input.executionPolicy ? { approvalPolicy: input.executionPolicy.approvalPolicy, sandbox: input.executionPolicy.sandbox } : {}) },
         { timeoutMs: this.dependencies.requestTimeoutMs })
       if (threadIdOf(opened) !== input.threadId) {throw new Error('CODEX_NATIVE_THREAD_MISMATCH')}
+      if (input.executionPolicy) {
+        try { this.#policyTracker.verify(opened, input.executionPolicy, 'ADOPT', input.threadId) }
+        catch (error) {
+          if (!(error instanceof CodexExecutionPolicyMismatch)) { throw error }
+          // Installed 0.160.1 explicitly ignores resume overrides for an already
+          // loaded thread. Retain the identity; certify no permission here. The
+          // next ordinary turn carries the typed override and is read back.
+          this.#policyTracker.observe({ stage: 'ADOPT', state: 'AWAITING_TURN_OVERRIDE', threadId: input.threadId, ...error.diagnostic })
+        }
+      }
       if (connection.closed || this.#closed) {throw new Error('CODEX_CONNECTION_CLOSED')}
       this.#threadId = input.threadId
+      this.#cwd = input.cwd
       this.#historyPath = text(record(record(opened)?.thread)?.path)
       return Object.freeze({ threadId: input.threadId, connectionId: this.connectionId })
     } catch (error) {
@@ -103,6 +121,7 @@ export class CodexProtocolSession {
     command: string; args: readonly string[]; cwd: string; codexHome: string
     resumeThreadId: string | null; resumePath?: string | null
     env?: Readonly<Record<string, string>>
+    executionPolicy?: CodexExecutionPolicy
   }): Promise<Readonly<{ threadId: string; historyPath: string | null; connectionId: string }>> {
     if (this.#connection || this.#opening || this.#closed) {throw new Error('CODEX_CONNECTION_ALREADY_USED')}
     // Reserve before the opener's first await; a refused executor never enters open.
@@ -113,21 +132,26 @@ export class CodexProtocolSession {
         env: { ...input.env, CODEX_HOME: input.codexHome }
       }, this.#handlers())
       this.#connection = connection
-      const params = { threadId: input.resumeThreadId, cwd: input.cwd, ...(input.resumePath ? { path: input.resumePath } : {}) }
+      const policy = input.executionPolicy ? { approvalPolicy: input.executionPolicy.approvalPolicy, sandbox: input.executionPolicy.sandbox } : {}
+      const params = { threadId: input.resumeThreadId, cwd: input.cwd, ...policy, ...(input.resumePath ? { path: input.resumePath } : {}) }
       const opened = input.resumeThreadId
         ? await connection.request('thread/resume', { ...params, excludeTurns: true }, { timeoutMs: this.dependencies.requestTimeoutMs })
-        : await connection.request('thread/start', { cwd: input.cwd }, { timeoutMs: this.dependencies.requestTimeoutMs })
+        : await connection.request('thread/start', { cwd: input.cwd, ...policy }, { timeoutMs: this.dependencies.requestTimeoutMs })
       const threadId = threadIdOf(opened)
       if (!threadId || (input.resumeThreadId !== null && input.resumeThreadId !== threadId)) {
         throw new Error('CODEX_NATIVE_THREAD_MISMATCH')
       }
+      if (input.executionPolicy) { this.#policyTracker.verify(opened, input.executionPolicy, 'OPEN', threadId) }
       if (connection.closed || this.#closed) {throw new Error('CODEX_CONNECTION_CLOSED')}
       this.#threadId = threadId
+      this.#cwd = input.cwd
       this.#historyPath = text(record(record(opened)?.thread)?.path)
       return Object.freeze({ threadId, historyPath: this.#historyPath, connectionId: this.connectionId })
     } catch (error) {
       this.#closed = true
-      await this.#connection?.close()
+      // Managed policy refusal/mismatch leaves the physical lifetime intact.
+      // No input has been dispatched; the lifecycle owner retains the host.
+      if (!input.executionPolicy) { await this.#connection?.close() }
       throw error
     } finally {
       this.#opening = false
@@ -136,6 +160,7 @@ export class CodexProtocolSession {
 
   async dispatch(input: RequestState['input']): Promise<CodexProtocolResult> {
     if (!this.#connection || !this.#threadId || this.closed) {return Object.freeze({ effect: 'UNKNOWN', reason: 'CONNECTION_CLOSED' })}
+    if (this.#policyBlocked) { throw new Error('CODEX_EXECUTION_POLICY_UNCONFIRMED') }
     const snapshot = structuredClone(input)
     const params = codexTurnStartParams(this.#threadId, snapshot)
     const submission = JSON.stringify(params)
@@ -171,6 +196,28 @@ export class CodexProtocolSession {
       const turnId = turnIdOf(reply)
       if (turnId && (reportedThread === null || reportedThread === this.#threadId)) {
         this.#admit(state, turnId, 'TURN_START_RESPONSE')
+      }
+      if (snapshot.executionPolicy) {
+        try {
+          const nativeTurnId = state.receipt?.turnId
+          // turn/start can acknowledge a queued operation before its thread
+          // applies turn settings. Read only after that exact turn has started.
+          if (!nativeTurnId || !await this.#policyTracker.awaitStarted(nativeTurnId)) { throw new Error('CODEX_EXECUTION_POLICY_UNCONFIRMED') }
+          // This reads the loaded thread after the supported turn-level override.
+          // It does not resend the input or change an already-running turn.
+          const effective = await this.#connection.request('thread/resume', { threadId: this.#threadId, cwd: this.#cwd,
+            excludeTurns: true }, { timeoutMs: this.dependencies.requestTimeoutMs })
+          if (threadIdOf(effective) !== this.#threadId) { throw new Error('CODEX_NATIVE_THREAD_MISMATCH') }
+          this.#policyTracker.verify(effective, snapshot.executionPolicy, 'TURN', this.#threadId)
+        } catch (error) {
+          this.#policyBlocked = true
+          if (!(error instanceof CodexExecutionPolicyMismatch)) {
+            this.#policyTracker.observe({ stage: 'TURN', state: 'UNCONFIRMED', threadId: this.#threadId,
+              approvalPolicy: null, sandboxType: null })
+          }
+          // Input admission is a separate fact. Preserve an actual native receipt
+          // or UNKNOWN, never replay an entered input to repair policy evidence.
+        }
       }
       if (state.receipt) {return Object.freeze({ effect: 'ADMITTED', receipt: state.receipt })}
       const receipt = await Promise.race([
@@ -262,6 +309,7 @@ export class CodexProtocolSession {
     const root = record(params)
     if (!this.#closed && threadId === this.#threadId && turnId) {
       if (method === 'turn/started') {
+        this.#policyTracker.started(turnId)
         // A primary-thread notification without a caller identity may be an old turn.
         const clientId = text(root?.clientUserMessageId) ?? text(record(root?.turn)?.clientUserMessageId)
         const state = clientId ? this.#requests.get(clientId) : undefined

@@ -24,6 +24,8 @@ export type FixedInputDelivery = {
 // Actual method-specific provider verification supplies this brand; no factory.
 export type ProviderCompletedProof = Omit<ProviderAdmissionProof, 'kind'> & {
   readonly kind: 'PROVIDER_TARGET_COMPLETED'
+  /** Terminal completion is not necessarily success; absent on historical proofs. */
+  readonly terminalStatus?: 'completed' | 'failed'
 }
 export type InputDeliveryObservation =
   | { readonly kind: 'ADMITTED'; readonly proof: ProviderAdmissionProof }

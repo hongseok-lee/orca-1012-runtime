@@ -12,7 +12,6 @@
  * Chromium proves available at startup.
  */
 import process from 'node:process'
-import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import { setAppEnvironment, type AppEnvironment } from '../../shared/app-environment'
 import { setSecretStore, type SecretStore } from '../../shared/secret-store'
 import type { ServePairingReadiness, ServeReadiness } from '../server/serve-readiness'
@@ -176,14 +175,9 @@ async function startOrcadRuntime(
   // No default settings or consumed-owner retry stands in for this ordering.
   const runtimeUserDataPath = getAppEnvironment().getPath('userData')
   initOrcaProfilePaths()
-  const profile = ensureActiveOrcaProfile(runtimeUserDataPath)
-  const store = new Store({ dataFile: profile.dataFile, storageAuthority: 'runtime' })
-  const providerSettings = (): InitialCodexNativeSettings => {
-    const settings = store.getSettings()
-    return { agentDefaultArgs: settings.agentDefaultArgs, agentDefaultEnv: settings.agentDefaultEnv,
-      nativeChatSessionOptions: settings.nativeChatSessionOptions }
-  }
-  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) }, providerSettings)
+  const profile = ensureActiveOrcaProfile(runtimeUserDataPath), store = new Store({ dataFile: profile.dataFile, storageAuthority: 'runtime' })
+  const provider = (await import('./orcad-managed-provider-settings.ts')).createOrcadManagedProviderSettings(store, runtimeUserDataPath)
+  const durableServices = await startup.prepareOrcadStartup(startupConfig, catalog => { durableCatalog = catalog; removeControllerDiagnostics = installOrcadControllerDiagnostics(catalog) }, provider.readSettings, provider.readCredential)
   setRuntimeBrowserCommandsFactory(
     createOrcadCatalogBrowserFactory(browserProvider, durableServices.durableCatalogRead), {
       headless: browserProvider !== null, screencast: browserProvider?.kind === 'chromium',

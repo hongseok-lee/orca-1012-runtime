@@ -1,6 +1,10 @@
+import { captureManagedCodexCredential,supplyProtectedManagedCodexCredential } from './managed-codex-credential-supply.ts'
+import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
+import { readProtectedManagedCodexAuth } from './managed-codex-auth-file.ts'
+import { MANAGED_CODEX_AUTH_REFRESH_CAPABILITY, MANAGED_CODEX_AUTH_REFRESH_METHOD, handleManagedCodexAuthRefresh, createResidentManagedCodexAuthRefresh } from './managed-codex-auth-refresh.ts'
 import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch } from './native-session-checkpoint.ts'
 import { randomUUID } from 'node:crypto'
-import { constants, openSync, fstatSync, closeSync, readFileSync } from 'node:fs'
+import { constants, openSync, fstatSync, closeSync, readFileSync, lstatSync } from 'node:fs'
 import { isDeepStrictEqual } from 'node:util'
 import { createInterface } from 'node:readline'
 import { spawnSync } from 'node:child_process'
@@ -27,6 +31,7 @@ export type AgentCodexControlPolicy = Readonly<{
   launch: Launch
   nativeArtifact: CodexNativeArtifact
   codexAuth: string
+  managedCredential?: ManagedCodexCredential
   bindChallenge: string
   paths: InitialProviderPaths
 }>
@@ -49,6 +54,8 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   let coldUsed = false, stopping = false, uncertain = false
   const root = policy.protectedRoot
   const paths = policy.paths
+  let selectedCredential=policy.managedCredential
+  const refreshManagedAuth=createResidentManagedCodexAuthRefresh(()=>connection,()=>selectedCredential?JSON.stringify([selectedCredential.accountId,selectedCredential.revision]):readProtectedManagedCodexAuth(paths.home),()=>selectedCredential?.expectedEmail)
   if (root !== '/agent' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(paths.agentId) ||
       paths.home !== `${root}/home/${paths.agentId}` ||
       paths.checkout !== `${root}/checkout` || !['FRESH_EMPTY_FOLDER', 'EXISTING'].includes(paths.checkoutPreparation) ||
@@ -61,7 +68,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const fd = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW)
   const stat = fstatSync(fd)
   if (!stat.isDirectory()) { closeSync(fd); throw new Error('AGENT_CODEX_PROTECTED_ROOT') }
-  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider)
+  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential)
   const seen = new Set<string>()
   let resolveClosed!: () => void
   const closed = new Promise<void>(resolve => { resolveClosed = resolve })
@@ -91,7 +98,8 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   catch { releaseRoot(); throw new Error('AGENT_CODEX_POD_CREDENTIAL') }
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
-    root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer })
+    root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
+    capabilities:provider==='codex'?[MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
@@ -188,6 +196,10 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         }
         return
       }
+      if(request.method===MANAGED_CODEX_AUTH_REFRESH_METHOD) {
+        response(id,await handleManagedCodexAuthRefresh({provider,phase,connection,params:request.params,refresh:refreshManagedAuth,applyCredential:value=>{const source=captureManagedCodexCredential(value);
+          supplyProtectedManagedCodexCredential(paths.home,source,()=>{const held=fstatSync(fd),named=lstatSync(root);if(held.dev!==stat.dev||held.ino!==stat.ino||named.dev!==held.dev||named.ino!==held.ino||named.isSymbolicLink()){throw new Error('AGENT_MANAGED_CREDENTIAL_ROOT')}});selectedCredential=source}}));return
+      }
       if (!connection || phase !== 'READY' || typeof request.method !== 'string' || !nativeMethods.has(request.method)) {
         failure(id, 'AGENT_NATIVE_METHOD'); return
       }
@@ -197,7 +209,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         const result=await connection.request(request.method,params as Record<string,unknown>)
         if(provider==='codex' && ['thread/start','thread/resume'].includes(request.method) && result && typeof result==='object') {
           const thread=Reflect.get(result,'thread'),native=thread && typeof thread==='object'?Reflect.get(thread,'id'):null
-          if(typeof native!=='string') {throw Error('NATIVE_THREAD_RESPONSE')}
+          if(typeof native!=='string') {throw new Error('NATIVE_THREAD_RESPONSE')}
           recordNativeSessionCheckpoint(paths.home,'codex',native)
         }
         response(id,result)

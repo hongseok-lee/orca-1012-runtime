@@ -54,6 +54,8 @@ export async function observeInputDeliveryInTransaction(
           ? 'PROVIDER_TARGET_COMPLETED'
           : 'PROVIDER_TARGET_STOPPED'
     if (
+      (observation.kind === 'SETTLED' && observation.proof.terminalStatus !== undefined &&
+        !['completed', 'failed'].includes(observation.proof.terminalStatus)) ||
       proof.kind !== kind ||
       proof.attemptId !== fixed.attemptId ||
       proof.podUid !== fixed.podUid ||
@@ -130,7 +132,9 @@ export async function observeInputDeliveryInTransaction(
           observedAt: evidence.observedAt,
           provider: observation.proof.providerRef.provider,
           nativeSessionRef: observation.proof.providerRef.nativeSessionRef,
-          nativeTurnId: observation.proof.providerRef.nativeTurnId ?? null
+          nativeTurnId: observation.proof.providerRef.nativeTurnId ?? null,
+          ...(observation.kind === 'SETTLED' && observation.proof.terminalStatus
+            ? { terminalStatus: observation.proof.terminalStatus } : {})
         }
   const next = await tx.query<{ next_event_seq: string }>(
     'SELECT next_event_seq FROM durable_runtime.sessions WHERE id=$1',
@@ -167,13 +171,14 @@ export async function observeInputDeliveryInTransaction(
       `UPDATE durable_runtime.delivery_attempts SET state=$2,provider_ref=COALESCE(provider_ref,$3),
       admitted_at=CASE WHEN $2 IN ('ADMITTED','SETTLED') THEN COALESCE(admitted_at,$4) ELSE admitted_at END,
       completed_at=CASE WHEN $2 IN ('SETTLED','INTERRUPTED') THEN $4 ELSE completed_at END,
-      failure_reason=CASE WHEN $2='UNKNOWN' THEN $5 ELSE failure_reason END WHERE id=$1`,
+      failure_reason=CASE WHEN $2='UNKNOWN' OR $5='PROVIDER_TURN_FAILED' THEN $5 ELSE failure_reason END WHERE id=$1`,
       [
         fixed.deliveryAttemptId,
         observation.kind,
         providerRef,
         observedAt,
-        observation.kind === 'UNKNOWN' ? observation.uncertainty.reasonCode : null
+        observation.kind === 'UNKNOWN' ? observation.uncertainty.reasonCode
+          : observation.kind === 'SETTLED' && observation.proof.terminalStatus === 'failed' ? 'PROVIDER_TURN_FAILED' : null
       ]
     )
     await tx.query(

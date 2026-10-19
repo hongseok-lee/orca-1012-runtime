@@ -1,3 +1,4 @@
+import { RECOVERY_OPERATION_PLANNABLE_SQL } from '../lifecycle/recovery-chain.ts'
 import type { Pool, PoolClient } from 'pg'
 import type { OperationRow, RuntimeUnitRow, RuntimeCommandRow, RuntimeEventProducerRow, RuntimeEventQueueRow } from '../db/rows.ts'
 import { DurableDatabaseError, DurableTransaction, safeDatabaseError } from '../db/connection.ts'
@@ -45,7 +46,7 @@ export async function readControllerTakeoverSnapshot(pool: Pool,
       o.external_resource_name,o.deadline_at,o.retry_at,o.revision,(o.result IS NOT NULL) AS terminal,
       (o.retry_at IS NULL OR o.retry_at<=clock_timestamp()) AS retry_due,
       (o.deadline_at IS NOT NULL AND o.deadline_at<=clock_timestamp()) AS deadline_expired
-      FROM durable_runtime.operations o WHERE o.controller_scope=$1 AND (o.result IS NULL OR EXISTS(
+      FROM durable_runtime.operations o WHERE o.controller_scope=$1 AND ((o.result IS NULL AND ${RECOVERY_OPERATION_PLANNABLE_SQL}) OR EXISTS(
         SELECT 1 FROM durable_runtime.runtime_commands c WHERE c.operation_id=o.id
         AND c.state IN ('ACCEPTED','EXECUTING','UNKNOWN')))
       ORDER BY coalesce(o.retry_at,o.deadline_at,'-infinity'::timestamptz),o.id`, [identity.scope])

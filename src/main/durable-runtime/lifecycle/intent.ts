@@ -1,8 +1,9 @@
+import { RECOVERY_CHAIN_HEAD_SQL } from './recovery-chain.ts'
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import type { SessionId } from '../../../shared/durable-runtime/identity.ts'
-import { runDurableMutation } from '../db/atomic.ts'
+import { runDurableMutation, type ReceiptIdentity } from '../db/atomic.ts'
 import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts'
 import type { RuntimeUnitRow } from '../db/rows.ts'
 import { appendAudit, enqueueOutbox } from '../journal/store.ts'
@@ -44,7 +45,7 @@ export async function ensureIntentOperation(
 // Only recordUnitIntent's authenticated receipt transaction may pass the
 // pre-acceptance terminal boundary. Pending reconciliation cannot renew it.
 async function selectIntentOperation(
-  tx: DurableTransaction, unit: RuntimeUnitRow, policy: UnitIntentRequest['policy'], explicitReception: boolean
+  tx: DurableTransaction, unit: RuntimeUnitRow, policy: UnitIntentRequest['policy'], explicitReception: boolean, manualReceipt?: ReceiptIdentity
 ): Promise<{ operation: LifecycleOperation; blocked: boolean }> {
   if (!tx.isLockHeld(2, unit.id)) {
     throw new DurableDatabaseError('LIFECYCLE_UNIT_LOCK_REQUIRED')
@@ -61,10 +62,25 @@ async function selectIntentOperation(
     // Input joins the same unresolved recovery incident. A fresh receipt or
     // operation must not bypass its cooldown, exhaustion or original deadline.
     const recovery = (await tx.query<LifecycleOperation>(`SELECT r.* FROM durable_runtime.operations r
-      WHERE r.runtime_unit_id=$1 AND r.recovery_root_id=r.id AND r.recovery_anchor_attempt_id IS NOT DISTINCT FROM (
+      WHERE r.runtime_unit_id=$1 AND ${RECOVERY_CHAIN_HEAD_SQL} AND r.recovery_anchor_attempt_id IS NOT DISTINCT FROM (
         SELECT a.id FROM durable_runtime.attempts a WHERE a.runtime_unit_id=$1 AND a.ready_at IS NOT NULL
-        ORDER BY a.execution_epoch DESC,a.ready_at DESC,a.id LIMIT 1) LIMIT 1`, [unit.id])).rows[0]
+        ORDER BY a.execution_epoch DESC,a.ready_at DESC,a.id LIMIT 1)
+        LIMIT 1`, [unit.id])).rows[0]
     if (recovery) {
+      if (manualReceipt && recovery.retry_exhausted_reason && !unit.active_attempt_id) {
+        const next = await insertIntentOperation(tx, unit, policy)
+        const resumed = (await tx.query<LifecycleOperation>(`UPDATE durable_runtime.operations SET recovery_root_id=id,
+          recovery_anchor_attempt_id=$2,retry_limit=$3,recovery_predecessor_id=$4,recovery_manual_receipt=$5::jsonb,
+          revision=revision+1 WHERE id=$1 RETURNING *`, [next.id,recovery.recovery_anchor_attempt_id,recovery.retry_limit,
+          recovery.id,JSON.stringify({...manualReceipt.key,payloadHash:manualReceipt.payloadHash})])).rows[0]
+        await appendAudit(tx,{actorId:manualReceipt.key.principalId,runtimeUnitId:unit.id,operationId:resumed.id,
+          kind:'REWAKE_MANUAL_RESUME_ACCEPTED',reasonCode:'EXPLICIT_OPERATOR_WAKE',
+          previousState:{rootOperationId:recovery.id,exhaustionReason:recovery.retry_exhausted_reason,
+            retryCount:recovery.retry_count,deadlineAt:recovery.deadline_at?.toISOString()??null},
+          nextState:{rootOperationId:resumed.id,predecessorOperationId:recovery.id,deadlineAt:resumed.deadline_at!.toISOString()},
+          occurredAt:new Date(),receivedAt:new Date(),producerId:resumed.id,producerSeq:counter('sequence:producer','1'),evidenceRefs:[]})
+        return {operation:resumed,blocked:false}
+      }
       const open = (await tx.query<LifecycleOperation>(`SELECT * FROM durable_runtime.operations WHERE recovery_root_id=$1
         AND retry_claimed_at IS NOT NULL AND retry_accounted_at IS NULL AND result IS NULL ORDER BY retry_claimed_at DESC LIMIT 1`, [recovery.id])).rows[0]
       return { operation: open ?? recovery, blocked: !open }
@@ -120,7 +136,7 @@ export async function insertIntentOperation(tx: DurableTransaction, unit: Runtim
 
 /** Same-transaction Catalog entry. Records intent, never invokes an actuator. */
 export async function recordUnitIntent(
-  tx: DurableTransaction, input: UnitIntentRequest, discoveredMembers: readonly SessionId[]
+  tx: DurableTransaction, input: UnitIntentRequest, discoveredMembers: readonly SessionId[], manualReceipt?: ReceiptIdentity
 ): Promise<IntentRecorded> {
   const request = snapshotIntentRequest(input)
   validate(request)
@@ -159,7 +175,7 @@ export async function recordUnitIntent(
   await tx.query(`UPDATE durable_runtime.operations SET step='CANCELLED',step_revision=step_revision+1,
     revision=revision+1,result='{"state":"SUPERSEDED_BEFORE_ACCEPTANCE"}'::jsonb WHERE id=ANY($1::uuid[])`,
     [obsolete.rows.map(row => row.id)])
-  const selected = await selectIntentOperation(tx, unit, request.policy, true)
+  const selected = await selectIntentOperation(tx, unit, request.policy, true, manualReceipt)
   const result: IntentRecorded = {
     runtimeUnitId: id, desired: unit.desired_mode, intentRevision: unit.intent_revision,
     revision: unit.revision, operationId: selected.operation.id, sharedIntent: shared,
@@ -181,7 +197,19 @@ export async function recordUnitIntent(
 
 /** Authenticated unit scope is supplied first. P1-03 receipt-first replay skips
  * current intent/lifecycle checks, and alone owns uncertain COMMIT resolution. */
-export async function requestUnitIntent(pool: Pool, input: UnitIntentRequest): Promise<IntentMutation> {
+export function requestUnitIntent(pool: Pool, input: UnitIntentRequest): Promise<IntentMutation> {
+  return requestIntent(pool,input,false)
+}
+/** Only the existing authenticated Ops wake owner calls this entry. Receipt
+ * replay is unchanged; pending input and controller reconciliation cannot opt in. */
+export function requestManualUnitWake(pool: Pool, input: UnitIntentRequest): Promise<IntentMutation> {
+  if(input.desired!=='RUNNING' || !input.authority.scope.startsWith('ops:') ||
+    !input.authority.scope.endsWith(`:runtime-unit:${input.authority.runtimeUnitId}`)) {
+    throw new DurableDatabaseError('LIFECYCLE_MANUAL_WAKE_AUTHORITY')
+  }
+  return requestIntent(pool,input,true)
+}
+async function requestIntent(pool: Pool, input: UnitIntentRequest, manual: boolean): Promise<IntentMutation> {
   const request = snapshotIntentRequest(input)
   validate(request)
   const payload = [request.authority.runtimeUnitId, request.authority.scope,
@@ -195,5 +223,5 @@ export async function requestUnitIntent(pool: Pool, input: UnitIntentRequest): P
   const members = await discoverUnitMembers(pool, request.authority.runtimeUnitId)
   return runDurableMutation(pool, { ...identity, locks: {
     sessionIds: members, runtimeUnitIds: [request.authority.runtimeUnitId]
-  } }, async tx => ({ ...await recordUnitIntent(tx, request, members) }))
+  } }, async tx => ({ ...await recordUnitIntent(tx, request, members, manual ? identity : undefined) }))
 }

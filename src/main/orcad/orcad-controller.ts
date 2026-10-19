@@ -1,3 +1,5 @@
+import type { LifecyclePolicy } from '../durable-runtime/lifecycle/types.ts'
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { readOrcadControllerCredential as credential } from './orcad-controller-credential.ts'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host.ts'
 import type { AbortableInventoryTransport, ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
@@ -78,7 +80,7 @@ async function prepareOrcadControllerInventoryWithCA(config: OrcadControllerConf
 }
 
 /** Wrap the original Pool owner before validation/I/O. Entry cleanup runs RPC first; publication wraps this owner outside. */
-export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSettings?: () => InitialCodexNativeSettings): OrcadControllerOwner {
+export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSettings?: () => InitialCodexNativeSettings,readCodexCredential?:ManagedCodexCredentialReader,wakePolicy?:LifecyclePolicy): OrcadControllerOwner {
   const readConfig = catalog.readConfig, stopCatalog = catalog.stop.bind(catalog)
   let worker: ControllerWorker | null = null, closing = false
   let starting: Promise<void> | null = null, completion: Promise<void> | null = null
@@ -143,7 +145,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           const auditToken = config.firstManagedInitial.coldConfigFile
             ? await (await import('./orcad-first-cold-provider.ts')).readFirstColdAuditPipe(config.inventory.requestTimeoutMs) : undefined
           if (closing) { return }
-          selectedInitial = prepareInitial(config, captured.pool, ca, auditToken, readProviderSettings)
+          selectedInitial = prepareInitial(config, captured.pool, ca, auditToken, readProviderSettings,undefined,readCodexCredential)
           if (!selectedInitial) { invalidOrcadControllerConfig('CONTROLLER_FIRST_MANAGED_CONFIG') }
           selectedCallbacks = captureCallbacks(selectedInitial, { isClosing: () => closing, assertCurrentHost: captured.assertCurrentHost })
         }
@@ -171,13 +173,13 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
         ownership = unitOwnership
         if (config.rewake) {
           if (!readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_REWAKE_CONFIG') }
-          rewake = (await import('./orcad-rewake.ts')).prepareOrcadRewake(captured.pool, config, readProviderSettings, unitOwnership)
+          rewake = (await import('./orcad-rewake.ts')).prepareOrcadRewake(captured.pool, config, readProviderSettings, unitOwnership,readCodexCredential,wakePolicy)
         }
         const selectedRewake = rewake
         if (config.adoption) {
           if (!ca || !readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_ADOPTION_CONFIG') }
           adoptedRuntimes = (await import('./orcad-adopted-runtimes.ts')).prepareOrcadAdoptedRuntimes(captured.pool, config, ca,
-            readProviderSettings, unitOwnership)
+            readProviderSettings, unitOwnership,readCodexCredential)
         }
         if (closing) { return }
         // The first-managed target serves its Session only while it holds the unit's claim:

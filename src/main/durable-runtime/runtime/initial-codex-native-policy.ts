@@ -1,3 +1,4 @@
+import { managedCodexExecutionPolicy } from '../providers/codex/execution-policy.ts'
 import type { GlobalSettings } from '../../../shared/global-settings-types.ts'
 import { resolveTuiAgentLaunchArgs, resolveTuiAgentLaunchEnv } from '../../../shared/tui-agent-launch-defaults.ts'
 import { resolveStructuredLaunchSeedOptions } from '../../../shared/native-chat-session-option-defaults.ts'
@@ -15,4 +16,14 @@ export function captureInitialCodexNativePolicy(original: InitialCodexNativeSett
   const env = resolveTuiAgentLaunchEnv('codex', settings.agentDefaultEnv)
   const options = resolveStructuredLaunchSeedOptions(settings.nativeChatSessionOptions, 'codex') ?? {}
   return immutableSnapshot({ args, env, options })
+}
+
+/** Original managed-Agent contract: maximum provider permissions on start and
+ * recovery. Keep argv and app-server RPC policy together at this boundary.
+ * Generic desktop/TUI settings capture remains unchanged. */
+export function captureManagedCodexNativePolicy(original: InitialCodexNativeSettings) {
+  const native = captureInitialCodexNativePolicy(original)
+  const bypass = native.args.includes('--yolo') || native.args.includes('--dangerously-bypass-approvals-and-sandbox')
+  return immutableSnapshot({ ...native, args: bypass ? native.args : ['--yolo', ...native.args],
+    executionPolicy: managedCodexExecutionPolicy })
 }

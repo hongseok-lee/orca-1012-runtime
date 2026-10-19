@@ -214,3 +214,17 @@ test('native wire bytes hash includes the exact primary thread and request field
   assert.equal(actual.threadId, result.admission.providerRef.nativeSessionRef)
   assert.equal(actual.clientUserMessageId, result.identity.nativeRequestId)
 })
+
+test('failed terminal observation retains failure and never resubmits the original turn', async () => {
+  const f = fixture()
+  await f.ready()
+  const permit = fixturePermit()
+  await f.driver.dispatch(request(), permit.permit)
+  f.notify('turn/completed', { threadId: 'fixture-thread', turn: { id: 'fixture-turn', status: 'failed' } })
+  const done = f.events.find(event => event.kind === 'COMPLETED')
+  assert.equal(done?.kind === 'COMPLETED' && done.completed?.terminalStatus, 'failed')
+  f.exit()
+  assert.equal(f.events.filter(event => event.kind === 'UNKNOWN').length, 0)
+  assert.equal(f.calls.filter(call => call.method === 'turn/start').length, 1)
+  assert.equal(permit.calls, 1)
+})

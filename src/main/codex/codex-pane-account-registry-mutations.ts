@@ -138,6 +138,7 @@ function recordsEqual(
     left?.selectionKey === right.selectionKey &&
     left.accountId === right.accountId &&
     left.homeRoute === right.homeRoute &&
+    left.lifetime === right.lifetime &&
     left.shellStartupHomeOverride?.home === right.shellStartupHomeOverride?.home &&
     left.shellStartupHomeOverride?.shell === right.shellStartupHomeOverride?.shell &&
     left.shellStartupHomeOverride?.configHome === right.shellStartupHomeOverride?.configHome &&
@@ -151,7 +152,7 @@ function trimRegistry(registry: CodexPaneAccountRegistryFile): void {
   if (trackedPtyIds.length <= MAX_TRACKED_PANES) {
     return
   }
-  for (const staleId of trackedPtyIds.slice(0, trackedPtyIds.length - MAX_TRACKED_PANES)) {
+  for (const staleId of trackedPtyIds.filter(id => registry.panes[id].lifetime !== 'durable-agent').slice(0, trackedPtyIds.length - MAX_TRACKED_PANES)) {
     delete registry.panes[staleId]
   }
 }

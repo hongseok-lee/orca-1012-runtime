@@ -1,3 +1,4 @@
+import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import { claudeResumeLaunch } from './native-session-checkpoint.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
@@ -8,6 +9,7 @@ import type { DurableTransaction } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
 import type { AgentPodPlanRecord } from '../db/agent-pod-plan-record-rows.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
+import type { CodexExecutionPolicy } from '../providers/codex/execution-policy.ts'
 import type { CodexColdLaunch } from '../providers/codex/driver.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
@@ -47,6 +49,7 @@ export type InitialCodexExecutorConfiguration = Readonly<{
     originalAuditId: string
     pinId: string; ownerToken: string; actorId: string
     nativeOptions: Readonly<Record<string, string>>
+    codexPolicy?: CodexExecutionPolicy
   }> & ControlledCreationWindow>
   sink: ProviderObservationSink
   onNativeNotification?: CodexProtocolDependencies['onNativeNotification']
@@ -79,6 +82,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let readyExecutor: ExecutorId | null = null
   let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
   const claude = original.provider === 'claude'
+  const authRefresh=new ManagedCodexAuthRefreshState(result=>process.stderr.write(`${JSON.stringify({type:'codex_managed_auth_refresh',sessionId:selected.sessionId,...result})}\n`))
   function nativeStart(provider: 'codex' | 'claude') {
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the native session this Session's earlier READY recorded.
     return selected.resume ? { kind: 'RESUME' as const, providerRef: { provider, nativeSessionRef: selected.resume.nativeSessionRef } as ProviderRef }
@@ -93,6 +97,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         context.controller.owner !== controller.owner || context.controller.term !== controller.term) { return deny('DISPATCH_OWNER') }
     // SQL staging/operation/claim and observation belong to the input owner.
     // This seam owns only the same held physical lifetime and original driver.
+    authRefresh.assertDispatchAllowed()
     const effect = createProviderEffectPermit(borrowed, context, { kind: 'DISPATCH', binding: native,
       commandClaim: request.commandClaim, messageId: request.sealed.messageId, deliveryAttemptId: request.deliveryAttemptId,
       sealedRevision: request.sealed.sealedRevision, sealedPayloadHash: request.sealed.payloadHash,
@@ -104,7 +109,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
     snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch }) : null,
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch,
+        refreshManagedAuth:()=>{const control=protection?.control();return control?authRefresh.refresh(control):Promise.resolve({state:'FAILED' as const,code:'REFRESH_UNCONFIRMED' as const})} }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
       used = true
@@ -132,11 +138,14 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           return Object.freeze({ paths, ...rows.rows[0] })
         })
         if (!source.ok || source.commitOutcome !== 'ACKNOWLEDGED' || source.cleanupFailed) { return deny('SOURCE_UNCONFIRMED') }
-        active(); phase = 'HELD_PROTECTION'
+        active(); phase = 'DEPLOYMENT'
         const prepared = await deployment({ plan, podUid: source.value.pod_uid, paths: source.value.paths }, signal)
+        if (!claude && !prepared.codexPolicy) { return deny('POLICY_REQUIRED') }
+        phase = 'PROTECTION_CONFIGURATION'
         protection = createInitialProviderProtection(borrowed, prepared.config)
         // The original directory identity must come from the collector/Storage
         // owner already bound to this reservation, not from a path-only tuple.
+        phase = 'DIRECTORY_SOURCE'
         const directoryRead = await runDurableTransaction(borrowed, async tx => {
           await lockAggregates(tx, { sessionIds: [selected.sessionId], runtimeUnitIds: [context.runtimeUnitId] })
           const accepted = captureFirstManagedBindingProfile(prepared.config.directory.acceptedProfileBytes,
@@ -146,6 +155,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         })
         if (!directoryRead.ok || directoryRead.commitOutcome !== 'ACKNOWLEDGED' || directoryRead.cleanupFailed ||
             directoryRead.value.evidenceRef !== source.value.identity_proof_ref) { return deny('DIRECTORY_SOURCE_REQUIRED') }
+        phase = 'HELD_PROTECTION'
         const owner = await protection.prepare({ plan, bindingId: plan.plan.mountExpectations.protected[0].bindingId,
           originalDirectoryReference: directoryRead.value.evidenceRef, originalDirectory: directoryRead.value.candidate,
           pinId: prepared.pinId, ownerToken: prepared.ownerToken, actorId: prepared.actorId,
@@ -220,6 +230,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           native = await claudeDriver.cold(cold, gate.execution.claim, permit.permit, prepared.config.agent.timeoutMs)
         } else {
           const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification,
+            onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
+              sessionId: selected.sessionId, ...observation })}\n`),
             ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, sink)
           driver = codexDriver
           const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
@@ -231,7 +243,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
               launch.env.CODEX_HOME !== `${home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
           const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: nativeRequest('codex'),
             persistentHome: `${home}/.codex`, checkout: source.value.paths.checkout,
-            launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
+            launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions, executionPolicy: prepared.codexPolicy } })
           const permit = createProviderEffectPermit(borrowed, context,
             { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
             { provider: 'codex', home, providerState: cold.persistentHome, request: cold,
@@ -239,6 +251,10 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           active(); phase = 'NATIVE_COLD'
           native = await codexDriver.cold(cold, gate.execution.claim, permit.permit)
         }
+        // Refresh the freshly supplied managed credential through the same
+        // official control contract before this cold owner admits any input.
+        // A failure retains the host and is enforced by the dispatch gate.
+        if (!claude && hosted) { await authRefresh.refresh(control) }
         phase = 'NATIVE_IDENTITY_SETTLEMENT'
         if((!claude || (driver instanceof ClaudeDurableProvider && driver.nativeSessionObserved())) && !await recordInitialNativeObservation(borrowed,context,native,b=>driver!.ownsReadyBinding(b))) {return deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED')}
         phase = 'READY_SETTLEMENT'
@@ -251,7 +267,10 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         onReady?.()
       } catch (error) {
         // Only a fixed code is kept for diagnostics, never a message body.
-        failure = `${phase}:${error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'UNCLASSIFIED'}`
+        const systemCode = error instanceof Error && 'code' in error && typeof error.code === 'string' && /^[A-Z0-9_]{1,80}$/.test(error.code)
+          ? error.code : null
+        const errorType = error instanceof Error && /^[A-Za-z]{1,40}$/.test(error.name) ? error.name.toUpperCase() : 'UNCLASSIFIED'
+        failure = `${phase}:${error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : systemCode ?? errorType}`
         phase = 'RETAINED_UNCONFIRMED'
         throw error
       }

@@ -1,3 +1,4 @@
+import { settleJournaledAttemptTurns } from '../durable-runtime/runtime/orphaned-turn-settlement.ts'
 import type { Pool } from 'pg'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import { listOrphanCandidates, observeAgentPod, reconcileOrphanedAttempt, type OrphanCandidate } from '../durable-runtime/runtime/orphan-reconcile.ts'
@@ -16,9 +17,22 @@ export function prepareOrcadOrphanReconcile(pool: Pool, config: OrcadControllerC
   const reconcileOrphans: NonNullable<ControllerPassRequest['reconcileOrphans']> = async (signal, controller) => {
     passes++
     let handled = 0
+    // Terminal provider frames remain authoritative after finalizer cleanup; a
+    // previous owner may have journaled the frame before its input settlement.
+    const terminalStopped = await pool.query<{ id: string; pod_uid: string }>(`SELECT DISTINCT a.id,a.pod_uid
+      FROM durable_runtime.attempts a JOIN durable_runtime.delivery_attempts d ON d.attempt_id=a.id AND d.state='ADMITTED'
+      JOIN durable_runtime.agent_control_hosts h ON h.attempt_id=a.id
+      JOIN durable_runtime.session_events e ON e.session_id=d.session_id
+      WHERE a.stopped_at IS NOT NULL AND e.body->>'kind'='TERMINAL_CODEX_NOTIFICATION'
+        AND e.body->'notification'->>'connectionId'=h.connection_instance_id
+        AND e.body->'notification'->>'method'='turn/completed'
+        AND e.body->'notification'->'params'->'turn'->>'id'=d.provider_ref
+        AND e.body->'notification'->'params'->'turn'->>'status' IN ('completed','failed') LIMIT 32`)
+    for (const row of terminalStopped.rows) { await settleJournaledAttemptTurns(pool, row.id, row.pod_uid) }
     const api = () => ({ apiOrigin: config.inventory.apiOrigin, ca: caBytes, namespace: config.inventory.namespace,
       reviewer: readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim() })
     for (const candidate of await listOrphanCandidates(pool)) {
+      await settleJournaledAttemptTurns(pool, candidate.attemptId, candidate.podUid)
       if (signal.aborted) { break }
       const bounded = AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)])
       const observed = await observeAgentPod(api(), candidate, bounded)
@@ -63,6 +77,7 @@ export function prepareOrcadOrphanReconcile(pool: Pool, config: OrcadControllerC
         AND NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e WHERE e.attempt_id=a.id AND e.kind='AGENT_STOP_FINALIZER_RELEASED')
       ORDER BY a.stopped_at LIMIT 32`)
     for (const candidate of stopped.rows) {
+      await settleJournaledAttemptTurns(pool, candidate.attemptId, candidate.podUid)
       if (signal.aborted || !(await pool.query(`SELECT 1 WHERE ${currentAuthoritySql}`, [controller.scope,controller.owner,controller.term])).rowCount) { break }
       const bounded = AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)])
       if (await releaseAgentPodStopFinalizer(api(), candidate, bounded)) {

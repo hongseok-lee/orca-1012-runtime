@@ -1,3 +1,5 @@
+import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
+import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -7,7 +9,7 @@ import { invalidOrcadControllerConfig, parseUniqueOrcadControllerJson, readPriva
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
 import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtime/runtime/agent-pod-policy.ts'
 import { createKubernetesPodAuthenticator } from '../durable-runtime/runtime/kubernetes-pod-auth.ts'
-import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
+import { captureManagedCodexNativePolicy } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import { createTerminalInputRuntime } from '../durable-runtime/input/runtime-input.ts'
 import { readPendingTerminalInputs } from '../durable-runtime/input/pending-terminal-input.ts'
@@ -16,7 +18,6 @@ import { createTerminalCodexOutput } from '../durable-runtime/output/terminal-co
 import { createAdoptedCodexExecutor } from '../durable-runtime/runtime/adopted-codex-executor.ts'
 import type { AdoptedCodexTarget } from '../durable-runtime/runtime/adopted-codex-executor.ts'
 import { createAgentCodexTransport } from '../durable-runtime/runtime/agent-codex-transport.ts'
-import { codexYolo } from './orcad-first-cold-provider.ts'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 import { logicalId } from '../../shared/durable-runtime/identity.ts'
@@ -38,7 +39,7 @@ type Entry = Readonly<{
  * for orphan reconciliation. It adopts only after claiming the unit's attempt
  * in this process's unit ownership (one owner per unit). */
 export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerConfig, ca: Uint8Array,
-  readSettings: () => InitialCodexNativeSettings, ownership: UnitOwnership) {
+  readSettings: () => InitialCodexNativeSettings, ownership: UnitOwnership,readCodexCredential?:ManagedCodexCredentialReader) {
   const file = config.adoption?.configFile
   if (!file) { return null }
   const raw = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8')),
@@ -59,13 +60,14 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
 
   function transportFor(target: AdoptedCodexTarget) {
     if (!target.controlSha256) { return deny() }
-    const home = `/agent/home/${target.agentId}`, native = captureInitialCodexNativePolicy(readSettings())
-    // Re-attach only: the bundle must be the one the recorded host verified; no policy is ever sent.
+    const home = `/agent/home/${target.agentId}`, native = captureManagedCodexNativePolicy(readSettings())
+    // Re-attach only: the bundle must be the one the recorded host verified; no host launch policy is resent.
     const bootstrapBytes = readFileSync(join(artifacts, `agent-control-${target.controlSha256}.cjs`))
-    const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: '/agent/checkout',
+    const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: '/agent/checkout',
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
     const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, reconnectBudgetMs: 30_000,
-      bootstrapBytes, bootstrapSha256: target.controlSha256, nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
+      bootstrapBytes, bootstrapSha256: target.controlSha256,
+      ...(readCodexCredential?{readManagedCredential:()=>readCodexCredential(target.agentId,false)}:{}), journal:createAgentControlJournal(pool,target.podUid), nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
       onProviderChildExit:(exit)=>recordProviderChildExit(pool,target,exit),
       expected: Object.freeze({ serviceAccountName: text('runtimeServiceAccountName'), serviceAccountUid: text('runtimeServiceAccountUid'),
         podName: target.podName, podUid: target.podUid, runtimeUnitId: target.runtimeUnitId, operationId: target.operationId,
@@ -73,7 +75,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
       policy: Object.freeze({ protectedRoot: '/agent', launch, nativeArtifact: Object.freeze({ sha256: '0'.repeat(64), byteLength: 1 }), codexAuth: '',
         bindChallenge: '00000000-0000-4000-8000-000000000000', paths: Object.freeze({ workspaceId: '', agentId: target.agentId, home,
           checkout: '/agent/checkout' as const, checkoutPreparation: 'FRESH_EMPTY_FOLDER' as const, canonicalDirectory: '', sourceHome: '', sourceCheckout: '' }) }) })
-    return Object.freeze({ transport, checkout: '/agent/checkout', nativeOptions: native.options })
+    return Object.freeze({ transport, checkout: '/agent/checkout', nativeOptions: native.options, codexPolicy: native.executionPolicy })
   }
 
   async function adoptSession(sessionId: string, provider: 'codex' | 'claude', controller: Parameters<NonNullable<ControllerPassRequest['adoptRuntimes']>>[1]): Promise<boolean> {
