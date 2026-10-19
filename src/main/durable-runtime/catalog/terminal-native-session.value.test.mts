@@ -17,7 +17,7 @@ test('original Terminal native identity wins, absent retains legacy, invalid nev
   assert.equal(resolveMobileNativeChatFileSessionId({ ...legacy, nativeChatSession: identity }), identity.sessionId)
   assert.equal(resolveMobileNativeChat(legacy)?.sessionId, 'legacy-thread')
   assert.equal(resolveMobileNativeChatFileSessionId(legacy), 'legacy-thread')
-  for (const invalid of [null, { agent: 'claude', sessionId: 'wrong' }, { agent: 'codex', sessionId: '' },
+  for (const invalid of [null, { agent: 'gemini', sessionId: 'wrong' }, { agent: 'codex', sessionId: '' },
     { agent: 'codex', sessionId: ' padded ' }, { agent: 'codex', sessionId: 'line\nbreak' }]) {
     assert.equal(isRuntimeTerminalNativeChatSession(invalid), false)
     assert.equal(resolveMobileNativeChat({ ...legacy, nativeChatSession: invalid } as never), null)
@@ -33,4 +33,15 @@ test('original Terminal native identity wins, absent retains legacy, invalid nev
   assert.deepEqual(parseCatalogTab({ ...row, terminal_native_chat_session: identity }), { ...tab, nativeChatSession: identity })
   assert.equal(Object.hasOwn(row.payload, 'nativeChatSession'), false)
   assert.throws(() => parseCatalogTab({ ...row, payload: { ...tab, nativeChatSession: identity } }), /CATALOG_NATIVE_SESSION_STORED_PAYLOAD/)
+})
+
+test('a READY native session is addressed by its durable handle; without one the stored tab is unchanged', () => {
+  const identity = { agent: 'codex' as const, sessionId: 'synthetic-original-thread' }
+  const pending = { type: 'terminal' as const, id: 'tab', title: 'Synthetic', isActive: true,
+    parentTabId: 'tab', leafId: 'leaf', status: 'pending-handle' as const, terminal: null }
+  const row = { public_tab_id: 'tab', payload: pending, terminal_handle: 'term_durable', kind: 'terminal' } as unknown as CatalogTab
+  assert.deepEqual({ ...parseCatalogTab({ ...row, terminal_native_chat_session: identity }) },
+    { ...pending, status: 'ready', terminal: 'term_durable', nativeChatSession: identity })
+  assert.deepEqual({ ...parseCatalogTab(row) }, pending)
+  assert.throws(() => parseCatalogTab({ ...row, terminal_handle: null, terminal_native_chat_session: identity } as never), /CATALOG_NATIVE_SESSION_REFERENCE/)
 })

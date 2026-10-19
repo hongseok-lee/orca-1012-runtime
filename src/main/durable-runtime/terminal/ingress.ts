@@ -2,6 +2,7 @@ import { TerminalSend } from '../../../shared/rpc-contract/terminal-unary-params
 import { assertTerminalInputWithinLimit } from '../../../shared/terminal-input'
 import { isTerminalQueryReply } from '../../../shared/terminal-query-reply'
 import {
+  AGENT_TUI_CLEAR_INPUT_LINE,
   AGENT_TUI_CLEAR_MAX_LINES,
   buildAgentTuiClearInput
 } from '../../../shared/agent-tui-input-clear'
@@ -124,6 +125,10 @@ export function snapshotUnaryTerminalIngress(
 }
 
 export function isConfirmedTerminalDraftClear(text: string): boolean {
+  // Mobile native chat clears its single unsubmitted line with a lone Ctrl+U.
+  if (text === AGENT_TUI_CLEAR_INPUT_LINE) {
+    return true
+  }
   for (let lines = 1; lines <= AGENT_TUI_CLEAR_MAX_LINES; lines += 1) {
     if (text === buildAgentTuiClearInput(lines)) {
       return true
