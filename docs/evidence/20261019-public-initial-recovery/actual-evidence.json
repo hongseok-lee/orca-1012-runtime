@@ -1,0 +1,155 @@
+{
+  "scope": "Actual development Codex text startup and same-Session provider-child recovery; no installed-device/full-HA/pre-READY live fault/tool-capability claim",
+  "sessionId": "acb34107-68a9-41ec-b678-537973bdcf55",
+  "publicCreateAt": "2026-10-19T13:16:30Z",
+  "earlyInputAcceptedAt": "2026-10-19T13:17:49.985Z",
+  "idleOwnedChildSigtermAt": "2026-10-19T13:26:44.864Z",
+  "newIndependentInputAcceptedAt": "2026-10-19T13:27:10.177Z",
+  "finalObservation": {
+    "at": "2026-10-19T13:30:03.693Z",
+    "attempts": [
+      {
+        "id": "4c20a2c3-c1df-49fa-9d36-be632db51551",
+        "pod_uid": "c877a092-b921-423f-9b62-3ed83571cdea",
+        "status": "STOPPED",
+        "ready_at": "2026-10-19T13:21:50.798Z",
+        "stopped_at": "2026-10-19T13:27:11.075Z",
+        "reason": "WRITER_STOP_CONFIRMED",
+        "execution_epoch": "0"
+      },
+      {
+        "id": "737d3edc-5712-4c9a-843c-1af58aca8621",
+        "pod_uid": "ccfa5615-fb90-48ac-bbff-438176193231",
+        "status": "READY",
+        "ready_at": "2026-10-19T13:27:45.329Z",
+        "stopped_at": null,
+        "reason": null,
+        "execution_epoch": "1"
+      }
+    ],
+    "ready": [
+      {
+        "provider_ref": {
+          "provider": "codex",
+          "nativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295"
+        },
+        "occurred_at": "2026-10-19T13:21:50.805Z"
+      },
+      {
+        "provider_ref": {
+          "provider": "codex",
+          "nativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295"
+        },
+        "occurred_at": "2026-10-19T13:27:45.338Z"
+      }
+    ],
+    "input": [
+      {
+        "id": "e8803c10-a4e7-4553-8af0-4deb8a2fedcd",
+        "intake_status": "SETTLED"
+      },
+      {
+        "id": "aed7dce9-9784-4aaa-b037-1f1ad8ff0c32",
+        "intake_status": "SETTLED"
+      }
+    ],
+    "operations": [
+      {
+        "id": "dee8be0c-9d18-4eeb-bb63-e4e4625039db",
+        "recovery_root_id": "dee8be0c-9d18-4eeb-bb63-e4e4625039db",
+        "recovery_anchor_attempt_id": null,
+        "retry_count": "0",
+        "retry_at": null,
+        "deadline_at": "2026-10-19 13:26:30.501444+00",
+        "retry_exhausted_reason": null,
+        "recovery_resolved_at": "2026-10-19T13:21:52.339Z",
+        "result": {
+          "ready": true,
+          "state": "SUCCEEDED",
+          "providerBindings": [
+            {
+              "provider": "codex",
+              "nativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295"
+            }
+          ]
+        }
+      },
+      {
+        "id": "e13cfc0e-697d-4c21-9953-fd373ac98619",
+        "recovery_root_id": "e13cfc0e-697d-4c21-9953-fd373ac98619",
+        "recovery_anchor_attempt_id": "4c20a2c3-c1df-49fa-9d36-be632db51551",
+        "retry_count": "0",
+        "retry_at": null,
+        "deadline_at": "2026-10-19 13:37:11.242505+00",
+        "retry_exhausted_reason": null,
+        "recovery_resolved_at": "2026-10-19T13:27:46.822Z",
+        "result": {
+          "ready": true,
+          "state": "SUCCEEDED",
+          "providerBindings": [
+            {
+              "provider": "codex",
+              "nativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "stopTimeline": [
+    {
+      "kind": "PROVIDER_CHILD_EXIT_OBSERVED",
+      "at": "2026-10-19T13:26:44.985Z",
+      "attemptId": "4c20a2c3-c1df-49fa-9d36-be632db51551",
+      "podUid": "c877a092-b921-423f-9b62-3ed83571cdea",
+      "sandboxStopped": false
+    },
+    {
+      "kind": "AGENT_CONTAINER_EXIT_OBSERVED",
+      "at": "2026-10-19T13:27:11.056Z",
+      "attemptId": "4c20a2c3-c1df-49fa-9d36-be632db51551",
+      "podUid": "c877a092-b921-423f-9b62-3ed83571cdea",
+      "cause": {
+        "reason": "Error",
+        "exitCode": 137,
+        "finishedAt": "2026-10-19T13:27:10Z",
+        "containerId": "containerd://95e59b62acc9e8782c8585669d0fe8721b609d2c5187ca7c4483a15e2dce818e"
+      }
+    },
+    {
+      "kind": "AGENT_ORPHAN_RECONCILED",
+      "at": "2026-10-19T13:27:11.078Z",
+      "attemptId": "4c20a2c3-c1df-49fa-9d36-be632db51551",
+      "podUid": "c877a092-b921-423f-9b62-3ed83571cdea",
+      "proofRef": "kubernetes-sandbox-stop:sha256:f888396c3e656853146926f02f60f9995475f883b30fbc1cf1213924b24d8b76",
+      "revoked": {
+        "mounts": 1,
+        "bindings": 1,
+        "writeGrants": 1,
+        "executionGrants": 1
+      },
+      "uncertainDeliveries": 0
+    },
+    {
+      "kind": "AGENT_STOP_FINALIZER_RELEASED",
+      "at": "2026-10-19T13:27:11.194Z",
+      "attemptId": "4c20a2c3-c1df-49fa-9d36-be632db51551",
+      "podUid": "c877a092-b921-423f-9b62-3ed83571cdea"
+    }
+  ],
+  "ui": {
+    "surface": "Expo Web",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "dpr": 3
+    },
+    "capturedAt": "2026-10-19T13:25:36.086Z",
+    "visibleResponse": "TASK04_INITIAL_OK",
+    "materialWarnings": [
+      "codex-code-mode-host executable missing: Code Mode unavailable",
+      "bubblewrap fallback uses bundled executable"
+    ],
+    "codingToolCapabilityProven": false
+  }
+}

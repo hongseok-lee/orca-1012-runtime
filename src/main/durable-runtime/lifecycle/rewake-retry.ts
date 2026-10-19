@@ -72,15 +72,14 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
     if(!(await tx.query(`SELECT 1 WHERE ${currentAuthoritySql}`,[controller.scope,controller.owner,controller.term])).rowCount) {return null}
     const anchor=(await tx.query<{id:string;execution_epoch:string}>(`SELECT id,execution_epoch::text FROM durable_runtime.attempts
       WHERE runtime_unit_id=$1 AND ready_at IS NOT NULL ORDER BY execution_epoch DESC,ready_at DESC,id LIMIT 1`,[unitId])).rows[0]
-    if(!anchor) {return null}
     let initialized=false
-    let root=(await tx.query<RecoveryOperation>('SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND recovery_root_id=id AND recovery_anchor_attempt_id IS NOT DISTINCT FROM $2::uuid',[unitId,anchor.id])).rows[0]
+    let root=(await tx.query<RecoveryOperation>('SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND recovery_root_id=id AND recovery_anchor_attempt_id IS NOT DISTINCT FROM $2::uuid',[unitId,anchor?.id??null])).rows[0]
     if(!root) {
       initialized=true
       // Import distinguishable legacy operations after this READY generation.
       // Lost pre-operation Map failures/due times cannot be reconstructed.
       const legacy=(await tx.query<RecoveryOperation>(`SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND kind='WAKE'
-        AND execution_epoch>$2 AND recovery_root_id IS NULL ORDER BY execution_epoch,deadline_at NULLS LAST,id`,[unitId,anchor.execution_epoch])).rows
+        AND ($2::bigint IS NULL OR execution_epoch>$2) AND recovery_root_id IS NULL ORDER BY execution_epoch,deadline_at NULLS LAST,id`,[unitId,anchor?.execution_epoch??null])).rows
       if(!legacy.length) {
         if(unit.active_attempt_id) {return null}
         unit=(await tx.query<RuntimeUnitRow>(`UPDATE durable_runtime.runtime_units SET desired_mode='RUNNING',
@@ -92,7 +91,7 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
       await tx.query(`UPDATE durable_runtime.operations SET recovery_root_id=id,recovery_anchor_attempt_id=$2,retry_limit=$3,retry_count=$4,
         retry_at=CASE WHEN $4::bigint>0 THEN coalesce(retry_at,clock_timestamp()+$5::bigint*interval '1 millisecond') ELSE retry_at END,
         retry_exhausted_reason=CASE WHEN deadline_at IS NULL THEN 'REWAKE_DEADLINE_UNAVAILABLE' ELSE NULL END,revision=revision+1 WHERE id=$1`,
-      [root.id,anchor.id,LIMIT,failed,DELAY_MS])
+      [root.id,anchor?.id??null,LIMIT,failed,DELAY_MS])
       for(const old of legacy) {
         await tx.query(`UPDATE durable_runtime.operations SET recovery_root_id=$2,recovery_anchor_attempt_id=$3,retry_limit=$4,
           deadline_at=(SELECT deadline_at FROM durable_runtime.operations WHERE id=$2),
@@ -100,7 +99,7 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
           retry_accounted_at=CASE WHEN result IS NOT NULL THEN clock_timestamp() ELSE NULL END,
           retry_claimed_at=CASE WHEN step<>'INTENT_QUEUED' OR result IS NOT NULL OR EXISTS(SELECT 1 FROM durable_runtime.agent_pod_plans p WHERE p.operation_id=$1)
             OR EXISTS(SELECT 1 FROM durable_runtime.runtime_commands c WHERE c.operation_id=$1) THEN clock_timestamp() ELSE NULL END,
-          revision=revision+1 WHERE id=$1`,[old.id,root.id,anchor.id,LIMIT])
+          revision=revision+1 WHERE id=$1`,[old.id,root.id,anchor?.id??null,LIMIT])
       }
       await tx.query("UPDATE durable_runtime.operations SET retry_owner='legacy-owner-unavailable',retry_owner_term=controller_term WHERE recovery_root_id=$1 AND retry_claimed_at IS NOT NULL AND retry_owner IS NULL",[root.id])
       root=(await tx.query<RecoveryOperation>('SELECT * FROM durable_runtime.operations WHERE id=$1',[root.id])).rows[0]
@@ -125,9 +124,9 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
         reconcile_due_at=clock_timestamp(),revision=revision+1 WHERE id=$1 RETURNING *`,[unitId])).rows[0]
       if(!selected) {selected=await insertIntentOperation(tx,unit,policy)}
       await tx.query(`UPDATE durable_runtime.operations SET recovery_root_id=$2,recovery_anchor_attempt_id=$3,retry_limit=$4,
-        deadline_at=$5,execution_epoch=$6,intent_revision=$7,expected_pod_uid=NULL,retry_claimed_at=clock_timestamp(),
-        retry_owner=$8,retry_owner_term=$9,revision=revision+1 WHERE id=$1`,
-      [selected.id,root.id,anchor.id,root.retry_limit,root.deadline_at,unit.execution_epoch,unit.intent_revision,controller.owner,controller.term])
+        deadline_at=(SELECT deadline_at FROM durable_runtime.operations WHERE id=$2),execution_epoch=$5,intent_revision=$6,expected_pod_uid=NULL,retry_claimed_at=clock_timestamp(),
+        retry_owner=$7,retry_owner_term=$8,revision=revision+1 WHERE id=$1`,
+      [selected.id,root.id,anchor?.id??null,root.retry_limit,unit.execution_epoch,unit.intent_revision,controller.owner,controller.term])
     }
     const authority=await authorize(tx,controller,unit,[root.id,...rows.map(o=>o.id),...(selected?[selected.id]:[])],clock)
     if(root.retry_exhausted_reason) {

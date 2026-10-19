@@ -52,6 +52,7 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       // Create-only for a first wake: an existing directory is not evidence of an
       // empty original workspace. A later wake keeps the Session's own checkout.
       if (!existing) { mkdirSync(paths.checkout, { mode: 0o700 }) }
+      else {try {lstatSync(paths.checkout)} catch(e) {if((e as NodeJS.ErrnoException).code!=='ENOENT') {throw e}; mkdirSync(paths.checkout,{mode:0o700})}}
       const checkout = lstatSync(paths.checkout)
       if (!checkout.isDirectory() || checkout.isSymbolicLink() || checkout.uid !== process.getuid?.() ||
           (checkout.mode & 0o777) !== 0o700 || realpathSync(paths.checkout) !== paths.checkout) {

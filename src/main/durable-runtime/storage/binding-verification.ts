@@ -1,11 +1,15 @@
 import { DurableDatabaseError, type DurableTransaction } from '../db/connection.ts';
 import { lockAggregates } from '../db/locks.ts';
+import { sameDirectory } from './canonical.ts';
+import { captureAuthenticatedManagedLeafObservation } from './prepared-directory-observation.ts';
 import { counter, logicalId, type RowRevision } from '../../../shared/durable-runtime/identity.ts';
 import type { StorageEvidenceAuthority, VerifiedDirectoryEvidence } from './evidence.ts';
 import type { Binding, StorageScope } from './store.ts';
 
 export type BindingVerificationInput = StorageScope & {
   bindingId: Binding['id']; expectedBindingRevision: RowRevision<'storage-binding'>;
+  /** Internal collector may refresh a fully stopped binding for a new Session. */
+  refreshStopped?: boolean;
   directoryEvidenceRef: string;
 };
 type VerificationRow = Binding & { identity_verified_at: Date | null; seal_id: string | null };
@@ -31,6 +35,7 @@ export async function verifyBindingInTransaction(
     bindingId: logicalId('storage-binding', original.bindingId),
     expectedUnitRevision: counter('row:runtime-unit', original.expectedUnitRevision),
     expectedBindingRevision: counter('row:storage-binding', original.expectedBindingRevision),
+    refreshStopped: original.refreshStopped === true,
     directoryEvidenceRef: reference(original.directoryEvidenceRef), actorId: reference(original.actorId),
   });
   const query = tx.query.bind(tx), directory = authority.directory.bind(authority);
@@ -72,6 +77,19 @@ export async function verifyBindingInTransaction(
   const history = await query<{ grants: boolean; mounts: boolean }>(
     `SELECT EXISTS(SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1) AS grants,
       EXISTS(SELECT 1 FROM durable_runtime.storage_mounts WHERE storage_binding_id=$1) AS mounts`, [input.bindingId]);
+  if (input.refreshStopped && binding.access_state === 'VERIFIED') {
+    if(binding.revision!==input.expectedBindingRevision || binding.writer_attempt_id!==null || binding.seal_id!==null || !binding.identity_proof_ref) {deny('STORAGE_REFRESH_STALE');}
+    if((await query(`SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1 AND state<>'REVOKED'
+      UNION ALL SELECT 1 FROM durable_runtime.storage_mounts WHERE storage_binding_id=$1 AND observed_state<>'REVOKED'`,[binding.id])).rowCount) {deny('STORAGE_REFRESH_WRITER');}
+    const prior=(await query<{next_state:Record<string,unknown>}>(`SELECT next_state FROM durable_runtime.runtime_audit_events
+      WHERE kind='STORAGE_DIRECTORY_OBSERVATION_PREPARED' AND next_state->>'evidenceRef'=$1`,[binding.identity_proof_ref])).rows;
+    if(prior.length!==1 || !sameDirectory(captureAuthenticatedManagedLeafObservation(prior[0].next_state.observation).candidate,evidence.candidate)) {deny('STORAGE_REFRESH_IDENTITY');}
+    checkPin();
+    const refreshed=(await query<Binding>(`UPDATE durable_runtime.storage_bindings SET identity_proof_ref=$3,
+      identity_verified_at=clock_timestamp(),revision=revision+1 WHERE id=$1 AND revision=$2 RETURNING *`,[binding.id,binding.revision,input.directoryEvidenceRef])).rows[0];
+    await record(tx,input,refreshed,'STORAGE_BINDING_VERIFIED');
+    return refreshed;
+  }
   if (binding.epoch !== '0' || binding.writer_attempt_id !== null || binding.seal_id !== null ||
       history.rows[0].grants || history.rows[0].mounts) { deny('STORAGE_BINDING_USED'); }
   if (binding.access_state === 'VERIFIED') {

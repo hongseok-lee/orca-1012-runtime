@@ -1,3 +1,4 @@
+import { certifiedNativeSessionRef } from '../runtime/native-session-certification.ts'
 import { randomUUID } from 'node:crypto'
 import { logicalId, counter } from '../../../shared/durable-runtime/identity.ts'
 import type { RuntimeTerminalNativeChatSession } from '../../../shared/runtime-mobile-session-tab-contracts.ts'
@@ -31,7 +32,7 @@ type ReadyRow = {
   tab_lifecycle: string; session_lifecycle: string; deleted_at: Date | null;
   provider: string; binding_revision: string; workspace_dataset: string; agent_dataset: string; unit_dataset: string;
   unit_id: string; audit_id: string; audit_unit: string; audit_operation: string;
-  audit_attempt: string | null; audit_pod: string | null; next_state: unknown;
+  audit_attempt: string | null; audit_pod: string | null; next_state: unknown; observed_ref: unknown;
   attempt_id: string | null; attempt_unit: string | null; attempt_pod: string | null;
   attempt_epoch: string | null; ready_at: Date | null;
   operation_unit: string | null; operation_epoch: string | null; operation_result: unknown;
@@ -44,7 +45,7 @@ async function readyRows(tx: DurableTransaction, ids: readonly string[]): Promis
     s.provider_binding_revision::text AS binding_revision,w.dataset_name AS workspace_dataset,
     g.dataset_name AS agent_dataset,u.dataset_name AS unit_dataset,u.id AS unit_id,
     a.id AS audit_id,a.runtime_unit_id AS audit_unit,a.operation_id AS audit_operation,
-    a.attempt_id AS audit_attempt,a.pod_uid AS audit_pod,a.next_state,
+    a.attempt_id AS audit_attempt,a.pod_uid AS audit_pod,a.next_state,observed.next_state->'providerRef' AS observed_ref,
     p.id AS attempt_id,p.runtime_unit_id AS attempt_unit,p.pod_uid AS attempt_pod,
     p.execution_epoch::text AS attempt_epoch,p.ready_at,
     op.runtime_unit_id AS operation_unit,op.execution_epoch::text AS operation_epoch,op.result AS operation_result,
@@ -56,6 +57,11 @@ async function readyRows(tx: DurableTransaction, ids: readonly string[]): Promis
     JOIN durable_runtime.runtime_members m ON m.session_id=s.id
     JOIN durable_runtime.runtime_units u ON u.id=m.runtime_unit_id
     JOIN durable_runtime.runtime_audit_events a ON a.session_id=s.id AND a.kind='INITIAL_PROVIDER_READY'
+    LEFT JOIN LATERAL (SELECT e.next_state FROM durable_runtime.runtime_audit_events e
+      WHERE e.kind='INITIAL_PROVIDER_NATIVE_OBSERVED' AND e.session_id=s.id AND e.attempt_id::text=a.next_state->>'attemptId'
+      AND e.pod_uid=a.next_state->>'podUid'
+      AND e.next_state->'providerRef'=COALESCE(a.next_state->'providerRef',a.next_state->'launchProviderRef')
+      ORDER BY e.occurred_at DESC LIMIT 1) observed ON true
     LEFT JOIN durable_runtime.attempts p ON p.id::text=a.next_state->>'attemptId' AND p.runtime_unit_id=a.runtime_unit_id
     LEFT JOIN durable_runtime.operations op ON op.id=a.operation_id
     LEFT JOIN durable_runtime.outbox_events b ON b.id=a.id
@@ -66,7 +72,9 @@ function originalReady(row: ReadyRow): RuntimeTerminalNativeChatSession | undefi
   if ((provider !== 'codex' && provider !== 'claude') || row.tab_lifecycle !== 'OPEN' || row.session_lifecycle !== 'OPEN' || row.deleted_at !== null) { return undefined }
   const event = object(row.next_state)
   if (decimal(event.providerBindingRevision) !== row.binding_revision) { return undefined }
-  const ref = object(event.providerRef), operation = object(row.operation_result)
+  if (!certifiedNativeSessionRef(provider,row.observed_ref ? 'INITIAL_PROVIDER_NATIVE_OBSERVED' : 'INITIAL_PROVIDER_READY',
+    row.observed_ref ? {providerRef:row.observed_ref} : event)) { return undefined }
+  const ref = object(row.observed_ref ?? event.providerRef), operation = object(row.operation_result)
   const connection = text(event.connectionInstanceId), attempt = text(event.attemptId), epoch = decimal(event.executionEpoch)
   const pod = text(event.podUid), native = text(ref.nativeSessionRef)
   if (event.kind !== 'INITIAL_PROVIDER_READY' || ref.provider !== provider || !connection ||
@@ -77,8 +85,8 @@ function originalReady(row: ReadyRow): RuntimeTerminalNativeChatSession | undefi
       (row.audit_pod !== null && row.audit_pod !== pod) || !row.outbox_matches ||
       row.outbox_kind !== 'runtime-unit' || row.outbox_unit !== row.unit_id ||
       operation.state !== 'SUCCEEDED' || operation.ready !== true || !Array.isArray(operation.providerBindings) ||
-      operation.providerBindings.length !== 1) { return invalid() }
-  const settled = object(operation.providerBindings[0])
+      operation.providerBindings.length !== (event.nativeSessionObserved === false ? 0 : 1)) { return invalid() }
+  const settled = object(event.nativeSessionObserved === false ? operation.launchProviderRef : operation.providerBindings[0])
   if (settled.provider !== provider || settled.nativeSessionRef !== native) { return invalid() }
   // The original audit/outbox pair carries the connection lineage. No current
   // activity, live attempt/grant or provider process is inferred from this ID.

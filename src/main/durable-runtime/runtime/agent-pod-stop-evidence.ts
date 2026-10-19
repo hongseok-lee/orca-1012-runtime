@@ -13,6 +13,7 @@ export type AgentPodStopEvidence = Readonly<{
 export type AgentPodObservation = Readonly<{
   state: 'GONE' | 'PRESENT' | 'UNKNOWN' | 'STOPPED'; podName: string; podUid: string; observedAt: string; observedUid: string | null
   stopping: boolean; stopEvidence: AgentPodStopEvidence | null
+  containerExit?: Readonly<{containerId:string;finishedAt:string;exitCode:number;reason:string|null}> | null
 }>
 export type AgentPodApi = Readonly<{ apiOrigin: string; ca: Uint8Array; namespace: string; reviewer: string }>
 const collected = new WeakSet<AgentPodStopEvidence>()
@@ -71,8 +72,17 @@ export async function observeAgentPod(api: AgentPodApi, candidate: AgentPodIdent
     const observedAt = new Date().toISOString(), uid = text(object(object(pod).metadata).uid)
     const stopEvidence = projectAgentPodStop(pod, api.namespace, candidate, observedAt)
     if (stopEvidence) { collected.add(stopEvidence) }
+    const root=object(pod),spec=object(root.spec),status=object(root.status),annotations=object(object(root.metadata).annotations)
+    const rows=Array.isArray(status.containerStatuses)?status.containerStatuses.map(object):[]
+    const agent=rows.find(row=>row.name==='agent'),terminated=object(object(agent?.state).terminated)
+    const containerExit=uid===candidate.podUid && spec.restartPolicy==='Never' &&
+      annotations['orca.dev/attempt-id']===candidate.attemptId && text(terminated.containerID) &&
+      agent?.containerID===terminated.containerID && text(terminated.finishedAt) &&
+      Number.isInteger(terminated.exitCode) && !['ContainerStatusUnknown','ContainerCannotRun'].includes(String(terminated.reason))
+      ? Object.freeze({containerId:String(terminated.containerID),finishedAt:String(terminated.finishedAt),exitCode:Number(terminated.exitCode),reason:text(terminated.reason)}) : null
+
     return Object.freeze({ ...base, state: !uid ? 'UNKNOWN' : uid !== candidate.podUid ? 'GONE' : stopEvidence ? 'STOPPED' : 'PRESENT',
-      observedAt, observedUid: uid, stopping: !!object(object(pod).metadata).deletionTimestamp || ['Succeeded','Failed'].includes(String(object(object(pod).status).phase)), stopEvidence })
+      observedAt, observedUid: uid, containerExit, stopping: !!object(object(pod).metadata).deletionTimestamp || ['Succeeded','Failed'].includes(String(object(object(pod).status).phase)), stopEvidence })
   } catch (error) {
     const code = error && typeof error === 'object' ? Reflect.get(error, 'code') : null
     return Object.freeze({ ...base, state: code === 'POD_NOT_FOUND' ? 'GONE' : 'UNKNOWN', observedAt: new Date().toISOString(), observedUid: null, stopping: false, stopEvidence: null })

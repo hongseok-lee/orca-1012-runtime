@@ -29,6 +29,9 @@ const digest = (value: unknown): string => createHash('sha256').update(JSON.stri
 
 /** Internal driver; no public RPC registration or production permit implementation. */
 export class ClaudeDurableProvider {
+  #nativeSessionObserved = false
+  nativeSessionObserved(): boolean { return this.#nativeSessionObserved }
+
   #connection?: ClaudeProtocolConnection
   #ready?: ReadyProviderBinding
   #active?: Pending
@@ -38,7 +41,15 @@ export class ClaudeDurableProvider {
   #interrupting = false
 
   constructor(readonly openTransport: OpenClaudeTransport, readonly sink: ProviderObservationSink,
-    readonly connectionInstanceId: string = randomUUID() /* the control id for a hosted provider */) {}
+    readonly connectionInstanceId: string = randomUUID(),
+    readonly onNativeSessionObserved?: (binding: ReadyProviderBinding) => Promise<void>) {}
+
+  #certify(binding: ReadyProviderBinding): void {
+    this.#nativeSessionObserved = true
+    if (this.#ready) {
+      void this.onNativeSessionObserved?.(binding).catch(() => { this.#faulted = true; this.#connectionLost() })
+    }
+  }
 
   ownsReadyBinding(binding: ReadyProviderBinding): boolean {
     return !!this.#ready && !this.#faulted && !!this.#connection && !this.#connection.closed &&
@@ -53,7 +64,9 @@ export class ClaudeDurableProvider {
     const lost = () => { this.#faulted = true; this.#connectionLost() }
     this.#connection = await attach({ onFault: lost, onExit: lost, onMessage: (message) => {
       const init = readClaudeInit(message)
-      if (!init) { this.#observe(message, ready) } else if (init.providerSessionId !== ready.providerRef.nativeSessionRef) { lost() }
+      if (!init) { this.#observe(message, ready) }
+      else if (init.providerSessionId !== ready.providerRef.nativeSessionRef) { lost() }
+      else { this.#certify(ready) }
     } })
     this.#ready = ready
     return ready
@@ -113,6 +126,7 @@ export class ClaudeDurableProvider {
                 // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Actual init/SessionStart response supplies this native identity, never a logical UUID.
                 const providerRef = { provider: 'claude', nativeSessionRef: init.providerSessionId } as ProviderRef
                 initial = immutableSnapshot({ ...request.binding, providerRef })
+                this.#certify(initial)
                 resolveInit(initial)
               } else if (initial) {
                 this.#observe(message, initial)

@@ -16,6 +16,7 @@ export const AGENT_CLAUDE_METHODS: ReadonlySet<string> = new Set(['claude/send',
 export async function openAgentClaudeNative(launch: AgentClaudeLaunch, handlers: Readonly<{
   onNotification(method: string, params: unknown): void
   onExit(): void
+  onFault(): void
 }>): Promise<AgentNativeConnection> {
   // Same SDK options as the desktop structured Claude lane (user-message
   // replay is Orca's send receipt); launch args add e.g. --session-id.
@@ -26,7 +27,7 @@ export async function openAgentClaudeNative(launch: AgentClaudeLaunch, handlers:
   const connection = await openClaudeStreamJsonConnection({ pathToClaudeCodeExecutable: launch.command, options,
     cwd: launch.cwd, env: { ...launch.env } }, {
     onMessage: message => handlers.onNotification('claude/message', message),
-    onFault: () => handlers.onExit(),
+    onFault: () => handlers.onFault(),
     onExit: () => handlers.onExit(),
   })
   // The CLI emits system/init only with a first turn; its answer to the SDK

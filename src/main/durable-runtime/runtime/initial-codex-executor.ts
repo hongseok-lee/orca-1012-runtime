@@ -1,3 +1,4 @@
+import { claudeResumeLaunch } from './native-session-checkpoint.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -26,6 +27,7 @@ import { prepareInitialProviderStep } from './initial-provider-step.ts'
 import { activateInitialProviderGrants } from './initial-provider-grants.ts'
 import { createProviderEffectPermit } from './provider-effect-permit.ts'
 import type { ProviderProtectionOwner } from './provider-effect-permit.ts'
+import { recordInitialNativeObservation, recordNativeCheckpointGuard } from './provider-start-observation.ts'
 import { settleInitialProviderReady } from './initial-provider-ready.ts'
 import { captureFirstManagedBindingProfile } from '../storage/first-managed-binding-owner-profile.ts'
 import { readOriginalFirstManagedDirectory } from '../storage/initial-directory-revalidation-guard.ts'
@@ -53,6 +55,8 @@ export type InitialCodexExecutorConfiguration = Readonly<{
   provider?: 'claude'
   /** A later wake of a Session whose earlier Pod is gone: reuse its checkout and
    * HOME and resume this native session instead of starting a new one. */
+  recoverNative?: boolean
+  existingCheckout?: boolean
   resume?: Readonly<{ nativeSessionRef: string }>
 }>
 const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIAL_CODEX_${suffix}`) }
@@ -63,7 +67,7 @@ const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIA
  * it cannot create a second control, native connection or cold attempt. */
 export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExecutorConfiguration) {
   const selected = immutableSnapshot({ sessionId: original.sessionId, planDigest: original.planDigest, emptyFolder: original.emptyFolder,
-    resume: original.resume ?? null })
+    resume: original.resume ?? null, existingCheckout: original.existingCheckout === true, recoverNative:original.recoverNative===true })
   const deployment = original.deployment.bind(original), sink = original.sink.bind(original)
   const onReady = original.onReady?.bind(original)
   const onNativeNotification = original.onNativeNotification?.bind(original)
@@ -114,7 +118,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         phase = 'CATALOG_SOURCE'
         const source = await runDurableTransaction(borrowed, async tx => {
           await lockAggregates(tx, { sessionIds: [selected.sessionId], runtimeUnitIds: [context.runtimeUnitId] })
-          const paths = await readInitialProviderPaths(tx, context.runtimeUnitId, selected.sessionId, selected.emptyFolder, selected.resume !== null)
+          const paths = await readInitialProviderPaths(tx, context.runtimeUnitId, selected.sessionId, selected.emptyFolder, selected.existingCheckout || selected.resume !== null)
           const rows = await tx.query<{ tab_id: string; terminal_handle: string; pod_uid: string; identity_proof_ref: string }>(
             `SELECT t.id AS tab_id,t.terminal_handle,a.pod_uid,b.identity_proof_ref
              FROM durable_runtime.runtime_members m JOIN durable_runtime.runtime_units u ON u.id=m.runtime_unit_id
@@ -180,24 +184,33 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         // A host-capable control already tagged its HELLO; its id and frame
         // sequence then name notifications identically for any later owner.
         const hosted = control.frameSequence() > 0
-        const launch = prepared.config.agent.policy.launch, home = source.value.paths.home
+        const checkpoint=await control.readNativeSession()
+        if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint.state)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
+        if(checkpoint.state==='UNKNOWN') {return deny('NATIVE_IDENTITY_UNCONFIRMED')}
+        if (selected.resume && checkpoint.state==='FOUND' && selected.resume.nativeSessionRef !== checkpoint.nativeSessionRef) { return deny('NATIVE_IDENTITY_MISMATCH') }
+        const resumeRef=selected.resume?.nativeSessionRef??(checkpoint?.state==='FOUND'?checkpoint.nativeSessionRef:null)
+        const originalLaunch=prepared.config.agent.policy.launch, home=source.value.paths.home
+        const launch=claude && checkpoint?.state==='FOUND' ? claudeResumeLaunch(originalLaunch,checkpoint.nativeSessionRef) : originalLaunch
+        const nativeRequest=(provider:'codex'|'claude')=>resumeRef ? {kind:'RESUME' as const,providerRef:{provider,nativeSessionRef:resumeRef} as ProviderRef} : nativeStart(provider)
         let native: ReadyProviderBinding
         if (claude) {
           if (!hosted) { return deny('CLAUDE_HOST_REQUIRED') }
           const sessionAt = launch.args.indexOf('--session-id'), nativeSessionId = sessionAt === -1 ? null : launch.args[sessionAt + 1]
-          if ((selected.resume ? sessionAt !== -1 : !nativeSessionId) || launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
+          if ((resumeRef ? sessionAt !== -1 : !nativeSessionId) || launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
               launch.command !== `${home}/.orca-native/claude`) { return deny('LAUNCH_MAPPING') }
           const attach = agentClaudeTransport(control, handlers => transport.open(launch, handlers), onNativeNotification)
-          const claudeDriver = new ClaudeDurableProvider((_request, handlers) => attach(handlers), sink, control.controlId)
+          const claudeDriver = new ClaudeDurableProvider((_request, handlers) => attach(handlers), sink, control.controlId, async binding => {
+            if (!await recordInitialNativeObservation(borrowed, context, binding, b => driver?.ownsReadyBinding(b) === true)) { deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED') }
+          })
           driver = claudeDriver
           const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
             tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
             providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),
             runtimeUnitId: context.runtimeUnitId, attemptId: lease.target.attemptId, podUid: lease.target.podUid,
             executionEpoch: lease.target.executionEpoch, connectionInstanceId: claudeDriver.connectionInstanceId })
-          const cold: ClaudeColdRequest = immutableSnapshot({ mode: 'COLD', binding, native: nativeStart('claude'), persistentHome: home,
+          const cold: ClaudeColdRequest = immutableSnapshot({ mode: 'COLD', binding, native: nativeRequest('claude'), persistentHome: home,
             checkout: source.value.paths.checkout,
-            launch: { executable: launch.command, args: launch.args, options: selected.resume ? {} : { sessionId: nativeSessionId }, env: launch.env } })
+            launch: { executable: launch.command, args: launch.args, options: resumeRef ? {} : { sessionId: nativeSessionId }, env: launch.env } })
           const permit = createProviderEffectPermit(borrowed, context,
             { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
             { provider: 'claude', home, providerState: `${home}/.claude`, request: cold,
@@ -216,7 +229,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
             executionEpoch: lease.target.executionEpoch, connectionInstanceId: codexDriver.connectionInstanceId })
           if (launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
               launch.env.CODEX_HOME !== `${home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
-          const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: nativeStart('codex'),
+          const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: nativeRequest('codex'),
             persistentHome: `${home}/.codex`, checkout: source.value.paths.checkout,
             launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
           const permit = createProviderEffectPermit(borrowed, context,
@@ -226,6 +239,8 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           active(); phase = 'NATIVE_COLD'
           native = await codexDriver.cold(cold, gate.execution.claim, permit.permit)
         }
+        phase = 'NATIVE_IDENTITY_SETTLEMENT'
+        if((!claude || (driver instanceof ClaudeDurableProvider && driver.nativeSessionObserved())) && !await recordInitialNativeObservation(borrowed,context,native,b=>driver!.ownsReadyBinding(b))) {return deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED')}
         phase = 'READY_SETTLEMENT'
         const settled = await settleInitialProviderReady(borrowed, { context, claim: gate.execution.claim,
           planDigest: selected.planDigest }, native, driver, owner, hosted ? Object.freeze({ provider: claude ? 'claude' as const : 'codex' as const,

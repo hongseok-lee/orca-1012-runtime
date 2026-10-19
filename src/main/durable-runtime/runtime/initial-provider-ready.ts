@@ -21,7 +21,7 @@ export type ReadyControlHost = Readonly<{ provider: 'codex' | 'claude'; controlI
   controlSha256: string }>
 
 /** The original driver of this cold (Codex DurableCodexDriver or ClaudeDurableProvider). */
-export type ReadyDriver = Readonly<{ ownsReadyBinding(binding: ReadyProviderBinding): boolean; readonly connectionInstanceId: string }>
+export type ReadyDriver = Readonly<{ ownsReadyBinding(binding: ReadyProviderBinding): boolean; readonly connectionInstanceId: string; nativeSessionObserved?(): boolean }>
 
 /** Only the original driver's actual thread/start response may settle READY.
  * This does not start a provider, replay an effect or release its held pins. */
@@ -31,6 +31,7 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
   if (!driver.ownsReadyBinding(binding)) { return deny() }
   // Claude runs only under a recorded host; an unhosted READY stays Codex.
   const provider = host?.provider ?? 'codex'
+  const nativeObserved = provider === 'codex' || driver.nativeSessionObserved?.() === true
   const input = immutableSnapshot(original), take = owner.takePreparedProtection.bind(owner)
   const native = immutableSnapshot(binding), lease = take()
   const connect = pool.connect.bind(pool), borrowed: Pool = Object.create(pool, { connect: { value: connect } })
@@ -92,14 +93,18 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
       WHERE id=$4 AND phase='REHYDRATING' AND active_attempt_id=$5 AND ${currentAuthoritySql} RETURNING revision`,
     [...auth, native.runtimeUnitId, native.attemptId])
     if (unit.rowCount !== 1) { return deny() }
-    const result = { ready: true, providerBindings: [{ ...native.providerRef }] }
+    const result = { ready: true, nativeSessionObserved: nativeObserved,
+      providerBindings: nativeObserved ? [{ ...native.providerRef }] : [],
+      ...(!nativeObserved ? { launchProviderRef: { ...native.providerRef } } : {}) }
     const settled = await settleOwnedExecution(authority, input.claim, { state: 'RESOLVED', result, evidenceRefs: [] })
     if ((await tx.query(`UPDATE durable_runtime.operations SET result=$5::jsonb,revision=revision+1
       WHERE id=$4 AND result IS NULL AND step='RELEASE_GATE' AND ${currentAuthoritySql}`,
     [...auth, input.context.operationId, JSON.stringify({ state: 'SUCCEEDED', ...result })])).rowCount !== 1) { return deny() }
     const event = { kind: 'INITIAL_PROVIDER_READY', attemptId: native.attemptId, podUid: native.podUid,
       executionEpoch: native.executionEpoch, providerBindingRevision: native.providerBindingRevision,
-      providerRef: { ...native.providerRef }, connectionInstanceId: native.connectionInstanceId }
+      nativeSessionObserved: nativeObserved,
+      ...(nativeObserved ? { providerRef: { ...native.providerRef } } : { launchProviderRef: { ...native.providerRef } }),
+      connectionInstanceId: native.connectionInstanceId }
     const audit = await appendAudit(tx, { actorId: input.context.controller.owner, runtimeUnitId: native.runtimeUnitId,
       operationId: input.context.operationId, sessionId: native.sessionId, kind: event.kind, nextState: event,
       occurredAt: new Date(), receivedAt: new Date(), producerId: randomUUID(), producerSeq: counter('sequence:producer', '1'), evidenceRefs: [] })
@@ -114,7 +119,13 @@ export async function settleInitialProviderReady(pool: Pool, original: Readonly<
     }
     // Final rank10: publish only the original driver's committed native read
     // identity together with READY. No metadata state or principal is made.
-    await publishCatalogTerminalNativeSessionReady(tx, audit, native)
+    // Init may race READY settlement after the launch-ready snapshot. The
+    // committed native observation can certify the identity without rewriting
+    // that original snapshot or missing its first Catalog notification.
+    const observed = nativeObserved || (await tx.query(`SELECT 1 FROM durable_runtime.runtime_audit_events
+      WHERE attempt_id=$1 AND pod_uid=$2 AND kind='INITIAL_PROVIDER_NATIVE_OBSERVED'
+      AND next_state->'providerRef'=$3::jsonb`, [native.attemptId,native.podUid,JSON.stringify(native.providerRef)])).rowCount === 1
+    if (observed) { await publishCatalogTerminalNativeSessionReady(tx, audit, native) }
     await authority.assertCurrent(); pins()
     return Object.freeze({ receipt: Object.freeze({ identity: originalIdentity(settled), state: 'RESOLVED' as const, result }),
       unitRevision: unit.rows[0].revision })

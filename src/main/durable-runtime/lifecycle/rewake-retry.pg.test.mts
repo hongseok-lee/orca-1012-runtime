@@ -73,15 +73,27 @@ await test('one durable retry lineage survives reconnect/takeover, serializes cl
  await assert.rejects(pool.query('UPDATE durable_runtime.operations SET deadline_at=deadline_at+interval \'1 hour\' WHERE id=$1',[first.rootOperationId]),{code:'23514'})
  await assert.rejects(pool.query('UPDATE durable_runtime.operations SET retry_count=0 WHERE id=$1',[first.rootOperationId]),{code:'23514'})
 })
-await test('deadline cannot renew and the operation schema/settlement supports a real initial lineage without fake READY',async()=>{
+await test('initial WAKE without READY retains original root/deadline across failed start and takeover',async()=>{
  const f=await seed(false),unit=f.candidate.runtimeUnitId
- assert.equal(await claimRewakeOperation(pool,controller,unit,policy),null,'unit03 does not dispatch initial recovery')
- await pool.query(`UPDATE durable_runtime.operations SET controller_scope=$2,controller_term=$3,result=NULL,step='INTENT_QUEUED',
-  recovery_root_id=id,recovery_anchor_attempt_id=NULL,retry_limit=3,retry_claimed_at=clock_timestamp(),retry_owner=$4,retry_owner_term=$3,
-  deadline_at=clock_timestamp()-interval '1 second' WHERE id=$1`,[f.operation,controller.scope,controller.term,controller.owner])
- assert.equal(await settleRewakeOperation(pool,controller,f.operation,'INITIAL_PREPARATION_FAILED'),true)
- const after=await root(f.operation);assert.equal(after.retry_count,'1');assert.equal(after.retry_exhausted_reason,'REWAKE_DEADLINE_EXHAUSTED')
- assert.equal(after.recovery_anchor_attempt_id,null)
- assert.equal((await pool.query('SELECT ready_at FROM durable_runtime.attempts WHERE id=$1',[f.candidate.attemptId])).rows[0].ready_at,null)
+ await pool.query(`UPDATE durable_runtime.operations SET controller_scope=$2,controller_term=$3,result='{"state":"FAILED"}',step='FAILED',retry_at=clock_timestamp()-interval '1 second',deadline_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[f.operation,controller.scope,controller.term])
+ const first=await claimRewakeOperation(pool,controller,unit,policy);assert.ok(first)
+ assert.equal(first.rootOperationId,f.operation);assert.notEqual(first.operationId,f.operation)
+ const before=await root(f.operation);assert.equal(before.recovery_anchor_attempt_id,null)
+ const precision=(await pool.query(`SELECT c.deadline_at::text AS child,r.deadline_at::text AS root FROM durable_runtime.operations c
+  JOIN durable_runtime.operations r ON r.id=c.recovery_root_id WHERE c.id=$1`,[first.operationId])).rows[0]
+ assert.equal(precision.child,precision.root,'SQL inheritance retains original PG microseconds, on the common initial/post-READY child path')
+ assert.equal(await settleRewakeOperation(pool,controller,first.operationId,'INITIAL_START_INTERRUPTED'),true)
+ const after=await root(f.operation);assert.equal(after.retry_count,'2');assert.ok(after.retry_at)
+ assert.equal(after.deadline_at,before.deadline_at)
+ const old=controller;controller={...controller,owner:'initial-takeover',term:counter('controller-term',String(BigInt(controller.term)+1n))}
+ await pool.query('UPDATE durable_runtime.controller_leases SET owner=$2,term=$3 WHERE scope=$1',[controller.scope,controller.owner,controller.term])
+ assert.equal(await claimRewakeOperation(pool,controller,unit,policy),null)
+ assert.equal(await claimRewakeOperation(pool,old,unit,policy),null)
+ await pool.query("UPDATE durable_runtime.operations SET retry_at=clock_timestamp()-interval '1 second' WHERE id=$1",[f.operation])
+ const retry=await claimRewakeOperation(pool,controller,unit,policy);assert.ok(retry)
+ assert.equal(retry.rootOperationId,f.operation);assert.notEqual(retry.operationId,f.operation);assert.equal(retry.deadlineAt,first.deadlineAt)
+ assert.equal((await root(f.operation)).retry_count,'2')
+ assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND ready_at IS NOT NULL',[unit])).rows[0].n,0)
+ assert.deepEqual((await pool.query('SELECT intake_status FROM durable_runtime.messages WHERE session_id=$1 ORDER BY seq',[f.session])).rows.map(r=>r.intake_status),['DURABLE','UNKNOWN'])
 })
 }finally{await pool.end()}
