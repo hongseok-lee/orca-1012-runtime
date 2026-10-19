@@ -10,6 +10,7 @@ import type { DurableTransaction } from '../db/connection.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
 import { agentClaudeTransport } from './agent-claude-transport.ts'
+import { settleOrphanedTurn } from './orphaned-turn-settlement.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 import type { ProviderDispatchRequest, ProviderDispatchResult, ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
@@ -59,6 +60,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
   const provider = original.provider ?? 'codex'
   let control: AdoptedAgentControl | null = null, context: GatewayContext | null = null
   let workload: VerifiedWorkloadIdentity | null = null
+  const own = new Set<string>()
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
     commitGuard?: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult> {
     const supplied = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
@@ -70,6 +72,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
       commandClaim: request.commandClaim, messageId: request.sealed.messageId, deliveryAttemptId: request.deliveryAttemptId,
       sealedRevision: request.sealed.sealedRevision, sealedPayloadHash: request.sealed.payloadHash,
       contextRevision: request.context.revision, contextHash: request.context.hash }, adopted, commitGuard)
+    own.add(request.deliveryAttemptId)
     return activeDriver.dispatch(request, effect.permit)
   }
   return Object.freeze({
@@ -118,6 +121,11 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
           runtimeUnitId: logicalId('runtime-unit', row.runtime_unit_id), attemptId: logicalId('attempt', row.attempt_id),
           podUid: row.pod_uid as PodUid, executionEpoch: counter('execution-epoch', row.execution_epoch),
           connectionInstanceId: row.connection_instance_id, providerRef })
+        // Completion of a turn the lost owner admitted is recorded here (live or replayed).
+        const notify: typeof onNativeNotification = notification => {
+          onNativeNotification?.(notification)
+          void settleOrphanedTurn(pool, binding as ReadyProviderBinding, notification, own).catch(() => { /* retried by the next completion or recovery */ })
+        }
         const attach = async (handlers: Parameters<Transport['adopt']>[2]) => {
           adoption.current = prepared.transport.adopt(identity, lastSeq, handlers)
           control = await adoption.current.ready
@@ -130,10 +138,10 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
           const claudeDriver = new ClaudeDurableProvider(() => Promise.reject(new Error('ADOPTED_CLAUDE_NO_COLD')), sink, row.connection_instance_id)
           driver = claudeDriver
           adopted = await claudeDriver.adopt(binding, agentClaudeTransport({ controlId: row.control_id,
-            frameSequence: () => adoption.current?.frameSequence() ?? 0 }, attach, onNativeNotification))
+            frameSequence: () => adoption.current?.frameSequence() ?? 0 }, attach, notify))
         } else {
           const codexDriver = new DurableCodexDriver({
-            open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification,
+            open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification: notify,
             connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0, attach }, sink)
           driver = codexDriver
           adopted = await codexDriver.adopt(binding, prepared.checkout, prepared.nativeOptions)

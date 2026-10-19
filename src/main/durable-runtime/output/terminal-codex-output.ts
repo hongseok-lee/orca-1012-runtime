@@ -159,7 +159,9 @@ export function createTerminalCodexOutput(input: Readonly<{
       if (closed) { if (failure) { throw failure }; return }
       try { await drain() } finally { closed = true; closeSync(fd) }
     },
-    snapshot() { return Object.freeze({closed, failed: Boolean(failure), spooled: records.size,
+    snapshot() { return Object.freeze({closed, failed: Boolean(failure),
+      failureCode: failure && typeof failure === 'object' ? String(Reflect.get(failure, 'code') ?? Reflect.get(failure, 'message') ?? 'UNKNOWN') : null,
+      spooled: records.size,
       pending: records.size - acknowledged.size, committed: commits}) }
   })
 }

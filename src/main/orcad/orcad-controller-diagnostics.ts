@@ -64,7 +64,7 @@ function project(snapshot: OrcadControllerSnapshot) {
     firstManagedInitial: initial == null ? null : { phase: initial.phase, status: initial.status,
       errorCode: optional(initial.errorCode), executionPhase: initial.executionPhase, executionErrorCode: optional(initial.executionErrorCode),
       coldPhase: optional(initial.coldPhase ?? null), coldFailure: optional(initial.coldFailure ?? null),
-      coldInput: optional(initial.coldInput ?? null), adoption: optional(initial.adoption ?? null) },
+      coldInput: optional(initial.coldInput ?? null), adoption: optional(initial.adoption ?? null), output: optional(initial.output ?? null) },
     adoptedRuntimes: snapshot.adoptedRuntimes ? { adopted: count(snapshot.adoptedRuntimes.adopted), failed: count(snapshot.adoptedRuntimes.failed),
       firstError: optional(snapshot.adoptedRuntimes.firstError), lastInput: optional(snapshot.adoptedRuntimes.lastInput) } : null,
     lastFailure: snapshot.lastFailure === null ? null : {

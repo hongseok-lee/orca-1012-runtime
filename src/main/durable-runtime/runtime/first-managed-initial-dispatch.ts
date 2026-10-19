@@ -58,6 +58,7 @@ export type FirstManagedInitialDispatchSnapshot = Readonly<{
   coldFailure?: string | null
   coldInput?: string | null
   adoption?: string | null
+  output?: string | null
 }>
 type Callbacks = Required<Pick<ControllerPassRequest, 'planStep' | 'executeCommitted' | 'lookupOriginal'>>
 
@@ -235,10 +236,12 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
     close: async () => { await cold?.close?.() },
     snapshot: () => {
     const provider = coldSnapshot?.()
-    const extra = provider as { inputPhase?: string; inputError?: string | null; adoption?: { phase: string | null; error: string | null } } | undefined
+    const extra = provider as { inputPhase?: string; inputError?: string | null; adoption?: { phase: string | null; error: string | null }
+      output?: { failed: boolean; failureCode: string | null; pending: number; committed: number } } | undefined
     return provider ? Object.freeze({ ...state, coldPhase: provider.phase, coldFailure: provider.failure ?? null,
       coldInput: extra?.inputPhase ? `${extra.inputPhase}:${extra.inputError ?? 'NONE'}` : null,
       adoption: extra?.adoption ? `${extra.adoption.phase ?? 'NONE'}:${extra.adoption.error ?? 'NONE'}` : null,
+      output: extra?.output ? `${extra.output.failed ? 'FAILED' : 'OK'}:${(extra.output.failureCode ?? 'NONE').replace(/[^A-Z0-9_]/g, '_').slice(0, 60)}:${extra.output.pending}:${extra.output.committed}` : null,
       gate: provider.providerReady ? 'OPEN' as const : 'CLOSED' as const,
       providerReady: provider.providerReady, writerGrantActivated: provider.writerGrantActivated }) : state
   } })

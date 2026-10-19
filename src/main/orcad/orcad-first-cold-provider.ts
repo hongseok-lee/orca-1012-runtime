@@ -173,7 +173,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const adoptedExecutorId = 'orca-adopted-codex-runtime' as ExecutorId
     const adoptRuntimes: NonNullable<ControllerPassRequest['adoptRuntimes']> = async (_signal, controller) => {
       // Never compete with this process's own cold owner, and never adopt twice.
-      if (originalExecutor.current() || adopted?.current() || !['UNUSED', 'READY'].includes(originalExecutor.phase())) { return 0 }
+      if (originalExecutor.current() || adopted?.current() || adopted?.phase() === 'READY' || !['UNUSED', 'READY'].includes(originalExecutor.phase())) { return 0 }
       const candidate = createAdoptedCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), executorId: adoptedExecutorId,
         ...(claude ? { provider: 'claude' as const } : {}),
         journaledSequence: connectionId => output.journaledSequence(connectionId),
@@ -194,8 +194,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
             nativeOptions: prepared.native.options })
         } })
       // A failed adoption leaves the attempt to orphan reconciliation; the next pass may try again.
-      try { await candidate.adopt(controller); adopted = candidate; adoptError = null; return 1 }
-      catch (error) { adoptError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'ADOPTION_FAILED'; return 0 }
+      // Published before adopt(): its onReady drains output and sends pending input through current().
+      adopted = candidate
+      try { await candidate.adopt(controller); adoptError = null; return 1 }
+      catch (error) {
+        adopted = null
+        adoptError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'ADOPTION_FAILED'; return 0 }
     }
     return Object.freeze({ ...originalExecutor, adoptRuntimes,
       ownsSession: (sessionId: string) => sessionId === initial.sessionId,
