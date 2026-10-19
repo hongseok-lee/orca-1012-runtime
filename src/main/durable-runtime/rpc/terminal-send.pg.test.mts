@@ -9,6 +9,8 @@ import { createCatalogTerminalSendRpc } from './terminal-send.ts'
 import { fixtureRuntime, fixtureContext } from './fixture-support.mts'
 import { TerminalConnectionOwner } from '../../runtime/rpc/terminal-connection-owner.ts'
 import { buildAgentTuiClearInputForText } from '../../../shared/agent-tui-input-clear.ts'
+import { createCatalogTerminalLeaseSubscribe } from './terminal-lease-subscribe.ts'
+import { RuntimeSubscriptionRegistry } from '../../runtime/runtime-subscription-registry.ts'
 
 if (process.env.ORCA_TERMINAL_PUBLIC_DB !== 'orca_public_clipboard_20261014' ||
     process.env.PGDATABASE !== process.env.ORCA_TERMINAL_PUBLIC_DB) {
@@ -75,6 +77,34 @@ await test('public managed Terminal preserves owner, draft, receipt and uncertai
     [session, JSON.stringify(['terminal', f.terminalHandle]), f.terminalHandle])).rows[0]
   const texts = async () => (await pool.query(`SELECT body_or_blob_ref->'payload'->>'text' AS text
     FROM durable_runtime.input_components WHERE session_id=$1 ORDER BY input_seq`, [session])).rows.map(row => row.text)
+  // Subscription uses the same authenticated target as send, before any frame
+  // or registration. Possessing a managed handle alone grants no access.
+  const subscribe = createCatalogTerminalLeaseSubscribe(configuration(pool))
+  const frames: unknown[] = [], registry = new RuntimeSubscriptionRegistry()
+  const subscribeRuntime = new Proxy(runtime, { get(target, key) {
+    if (key === 'registerOwnedSubscriptionCleanup') { return registry.registerOwned.bind(registry) }
+    return Reflect.get(target, key, target)
+  } })
+  const subscribeContext = { ...context, runtime: subscribeRuntime }
+  const streamParams = { terminal: f.terminalHandle, client: { id: 'phone', type: 'mobile' },
+    capabilities: { mobileInputLeaseOnly: 1 } }
+  const beforeSubscribe = await state()
+  await assert.rejects(subscribe(streamParams, { ...subscribeContext, authenticatedCallerFingerprint: undefined },
+    frame => frames.push(frame), async () => { throw new Error('managed target escaped') }), /AUTHENTICATED/)
+  await assert.rejects(createCatalogTerminalLeaseSubscribe({ ...configuration(pool), projectGroupIds: [] })(
+    streamParams, subscribeContext, frame => frames.push(frame), async () => { throw new Error('managed target escaped') }), /selector_not_found/)
+  assert.deepEqual(frames, [])
+  const abort = new AbortController()
+  await subscribe(streamParams, { ...subscribeContext, signal: abort.signal }, frame => {
+    frames.push(frame)
+    if ((frame as { type: string }).type === 'subscribed') { abort.abort() }
+  }, async () => { throw new Error('managed target escaped') })
+  assert.deepEqual(frames, [{ type: 'subscribed', streamId: null, lines: [], truncated: false }, { type: 'end' }])
+  assert.deepEqual(await state(), beforeSubscribe)
+  let legacySubscriptions = 0
+  await subscribe({ terminal: `unowned:${randomUUID()}` }, subscribeContext, () => { throw new Error('unexpected frame') },
+    async () => { legacySubscriptions++ })
+  assert.equal(legacySubscriptions, 1)
   // Caller mutation is captured before the first checkout/await, including callbacks.
   const mutable = { terminal: f.terminalHandle, text: 'iPhone original\n😀 /logical/image.png', enter: true }
   const mutableContext = { ...context, requestId: randomUUID() }

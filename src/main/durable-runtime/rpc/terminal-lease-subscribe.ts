@@ -2,6 +2,9 @@ import { TerminalSubscribe } from '../../../shared/rpc-contract/terminal-stream-
 import type { RpcContext, RpcStreamingMethodDeclaration } from '../../runtime/rpc/core.ts'
 import { capturedJson } from '../structured/durable-common.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
+import { withDurableTransaction } from '../db/connection.ts'
+import { resolveCatalogTerminalTarget } from './terminal-target.ts'
+import { TerminalDraftStoreError } from '../terminal/durable-contracts.ts'
 
 /** A durable terminal tab has no PTY in this process: its provider runs in the
  * Agent Pod and chat renders the journaled native transcript. Subscribing only
@@ -12,10 +15,24 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
   return async (original: unknown, context: RpcContext, emit: (frame: unknown) => void,
     legacy: RpcStreamingMethodDeclaration['handler']): Promise<void> => {
     const params = TerminalSubscribe.parse(capturedJson(original))
-    config.assertCurrentHost()
-    const found = await config.pool.query(
-      "SELECT 1 FROM durable_runtime.tabs WHERE terminal_handle=$1 AND kind='terminal' AND lifecycle='OPEN'", [params.terminal])
-    if (found.rowCount === 0) { return legacy(params as never, context, emit) }
+    const capturedContext = { ...context, clientCapabilities: Object.freeze([...(context.clientCapabilities ?? [])]) }
+    const assertCurrent = () => {
+      config.assertCurrentHost()
+      if (capturedContext.signal?.aborted) { throw new TerminalDraftStoreError('TERMINAL_SUBSCRIPTION_ABORTED') }
+    }
+    assertCurrent()
+    const found = await withDurableTransaction(config.pool,
+      tx => resolveCatalogTerminalTarget(tx, config, capturedContext, params.terminal, assertCurrent))
+    assertCurrent()
+    if (!found) { return legacy(params as never, capturedContext, emit) }
+    if (found.lifecycle !== 'OPEN') { throw new TerminalDraftStoreError('TERMINAL_CATALOG_TARGET_CLOSED') }
+    return holdCatalogTerminalInputLease(params, capturedContext, emit)
+  }
+}
+
+/** Owns stream cleanup only; the caller must resolve Catalog access first. */
+export async function holdCatalogTerminalInputLease(params: ReturnType<typeof TerminalSubscribe.parse>,
+  context: RpcContext, emit: (frame: unknown) => void): Promise<void> {
     const subscriptionId = params.client?.id ? `${params.terminal}:${params.client.id}` : params.terminal
     const signal = context.signal
     await new Promise<void>(resolve => {
@@ -34,5 +51,4 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
       signal?.addEventListener('abort', onAbort, { once: true })
       emit({ type: 'subscribed', streamId: null, lines: [], truncated: false })
     })
-  }
 }
