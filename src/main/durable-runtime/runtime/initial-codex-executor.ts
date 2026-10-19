@@ -15,6 +15,7 @@ import { agentClaudeTransport } from './agent-claude-transport.ts'
 import type { ProviderBinding, ProviderColdRequest, ProviderDispatchRequest, ProviderDispatchResult,
   ProviderObservationSink, ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import { immutableSnapshot } from '../providers/shared/immutable-snapshot.ts'
+import type { ProviderRef } from './runtime-evidence.ts'
 import type { CommandClaim, ExecutorId, GatewayContext } from './gateway/types.ts'
 import type { ControlledCreationWindow } from './controlled-creation-window.ts'
 import { settleInitialEnsureAssigned } from './initial-provider-command-settlement.ts'
@@ -50,6 +51,9 @@ export type InitialCodexExecutorConfiguration = Readonly<{
   onReady?(): void
   /** Absent means Codex. Claude runs under the same Pod-local control host. */
   provider?: 'claude'
+  /** A later wake of a Session whose earlier Pod is gone: reuse its checkout and
+   * HOME and resume this native session instead of starting a new one. */
+  resume?: Readonly<{ nativeSessionRef: string }>
 }>
 const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIAL_CODEX_${suffix}`) }
 
@@ -58,7 +62,8 @@ const deny = (suffix: string): never => { throw new DurableDatabaseError(`INITIA
  * Every uncertain step retains its original resources and consumes this owner;
  * it cannot create a second control, native connection or cold attempt. */
 export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExecutorConfiguration) {
-  const selected = immutableSnapshot({ sessionId: original.sessionId, planDigest: original.planDigest, emptyFolder: original.emptyFolder })
+  const selected = immutableSnapshot({ sessionId: original.sessionId, planDigest: original.planDigest, emptyFolder: original.emptyFolder,
+    resume: original.resume ?? null })
   const deployment = original.deployment.bind(original), sink = original.sink.bind(original)
   const onReady = original.onReady?.bind(original)
   const onNativeNotification = original.onNativeNotification?.bind(original)
@@ -70,6 +75,11 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let readyExecutor: ExecutorId | null = null
   let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
   const claude = original.provider === 'claude'
+  function nativeStart(provider: 'codex' | 'claude') {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the native session this Session's earlier READY recorded.
+    return selected.resume ? { kind: 'RESUME' as const, providerRef: { provider, nativeSessionRef: selected.resume.nativeSessionRef } as ProviderRef }
+      : { kind: 'NEW' as const }
+  }
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
     commitGuard?: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult> {
     const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
@@ -104,7 +114,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         phase = 'CATALOG_SOURCE'
         const source = await runDurableTransaction(borrowed, async tx => {
           await lockAggregates(tx, { sessionIds: [selected.sessionId], runtimeUnitIds: [context.runtimeUnitId] })
-          const paths = await readInitialProviderPaths(tx, context.runtimeUnitId, selected.sessionId, selected.emptyFolder)
+          const paths = await readInitialProviderPaths(tx, context.runtimeUnitId, selected.sessionId, selected.emptyFolder, selected.resume !== null)
           const rows = await tx.query<{ tab_id: string; terminal_handle: string; pod_uid: string; identity_proof_ref: string }>(
             `SELECT t.id AS tab_id,t.terminal_handle,a.pod_uid,b.identity_proof_ref
              FROM durable_runtime.runtime_members m JOIN durable_runtime.runtime_units u ON u.id=m.runtime_unit_id
@@ -153,7 +163,9 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           sessionId: selected.sessionId, expectedUnitRevision: counter('row:runtime-unit', ensured.unitRevision),
           planDigest: selected.planDigest }, owner)
         const grants = activated.database
-        if (!grants.ok || grants.commitOutcome !== 'ACKNOWLEDGED' || grants.cleanupFailed) { return deny('GRANT_COMMIT_UNCONFIRMED') }
+        // Keep the transaction's own fixed code for diagnosis (e.g. which guard refused).
+        if (!grants.ok) { throw new DurableDatabaseError(grants.error.code) }
+        if (grants.commitOutcome !== 'ACKNOWLEDGED' || grants.cleanupFailed) { return deny('GRANT_COMMIT_UNCONFIRMED') }
         writerActivated = true
         active(); phase = 'RELEASE_GATE_CLAIM'
         const gate = await prepareInitialProviderStep(borrowed, { context, sessionId: selected.sessionId,
@@ -173,7 +185,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         if (claude) {
           if (!hosted) { return deny('CLAUDE_HOST_REQUIRED') }
           const sessionAt = launch.args.indexOf('--session-id'), nativeSessionId = sessionAt === -1 ? null : launch.args[sessionAt + 1]
-          if (!nativeSessionId || launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
+          if ((selected.resume ? sessionAt !== -1 : !nativeSessionId) || launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
               launch.command !== `${home}/.orca-native/claude`) { return deny('LAUNCH_MAPPING') }
           const attach = agentClaudeTransport(control, handlers => transport.open(launch, handlers), onNativeNotification)
           const claudeDriver = new ClaudeDurableProvider((_request, handlers) => attach(handlers), sink, control.controlId)
@@ -183,9 +195,9 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
             providerBindingRevision: counter('row:provider-binding', grants.value.providerBindingRevision),
             runtimeUnitId: context.runtimeUnitId, attemptId: lease.target.attemptId, podUid: lease.target.podUid,
             executionEpoch: lease.target.executionEpoch, connectionInstanceId: claudeDriver.connectionInstanceId })
-          const cold: ClaudeColdRequest = immutableSnapshot({ mode: 'COLD', binding, native: { kind: 'NEW' }, persistentHome: home,
+          const cold: ClaudeColdRequest = immutableSnapshot({ mode: 'COLD', binding, native: nativeStart('claude'), persistentHome: home,
             checkout: source.value.paths.checkout,
-            launch: { executable: launch.command, args: launch.args, options: { sessionId: nativeSessionId }, env: launch.env } })
+            launch: { executable: launch.command, args: launch.args, options: selected.resume ? {} : { sessionId: nativeSessionId }, env: launch.env } })
           const permit = createProviderEffectPermit(borrowed, context,
             { kind: 'COLD', binding, commandClaim: gate.execution.claim, coldRequest: cold }, owner,
             { provider: 'claude', home, providerState: `${home}/.claude`, request: cold,
@@ -204,7 +216,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
             executionEpoch: lease.target.executionEpoch, connectionInstanceId: codexDriver.connectionInstanceId })
           if (launch.cwd !== source.value.paths.checkout || launch.env.HOME !== home ||
               launch.env.CODEX_HOME !== `${home}/.codex` || launch.args.at(-1) !== 'app-server') { return deny('LAUNCH_MAPPING') }
-          const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: { kind: 'NEW' },
+          const cold: ProviderColdRequest<CodexColdLaunch> = immutableSnapshot({ mode: 'COLD', binding, native: nativeStart('codex'),
             persistentHome: `${home}/.codex`, checkout: source.value.paths.checkout,
             launch: { command: launch.command, args: launch.args.slice(0, -1), env: launch.env, options: prepared.nativeOptions } })
           const permit = createProviderEffectPermit(borrowed, context,

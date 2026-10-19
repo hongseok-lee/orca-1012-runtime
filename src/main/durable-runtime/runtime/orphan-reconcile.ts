@@ -90,7 +90,9 @@ export async function reconcileOrphanedAttempt(pool: Pool, controller: OrphanCon
     if ((await tx.query(`UPDATE durable_runtime.attempts SET status='STOPPED',stopped_at=clock_timestamp(),reason='ORPHAN_POD_ABSENT'
       WHERE id=$1 AND stopped_at IS NULL`, [candidate.attemptId])).rowCount !== 1) { return deny('ATTEMPT_CAS') }
     // The unit is idle until a new input wakes it; no new attempt is created here.
+    // The fenced attempt keeps its execution epoch; the next attempt gets the next one.
     const unit = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units SET active_attempt_id=NULL,phase='ABSENT',
+      execution_epoch=execution_epoch+1,
       desired_mode=CASE WHEN desired_mode='DELETED' THEN desired_mode ELSE 'SUSPENDED' END,intent_revision=intent_revision+1,
       reconcile_due_at=NULL,idle_due_at=NULL,revision=revision+1
       WHERE id=$4 AND active_attempt_id=$5 AND ${currentAuthoritySql} RETURNING revision`, [...auth, candidate.runtimeUnitId, candidate.attemptId])

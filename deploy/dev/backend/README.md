@@ -219,6 +219,24 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 }
 ```
 
+- `rewake.configFile`: Pod가 사라져(orphan 정리로 attempt `STOPPED`) 실행 주인이 없는 세션에 대기 입력(`DURABLE`)이 있으면 새 WAKE 작업으로 같은 leaf·같은 Pod 모양의 새 Agent Pod를 띄우고 같은 native 세션을 이어 받는다(Codex `thread/resume`, Claude `--resume`). READY가 되면 대기 입력을 보낸다. 실패한 재기동은 그 Pod를 지워 orphan 정리로 fencing한 뒤 작업을 마감하고 1분 간격으로 최대 3번 다시 시도한다. 형식:
+
+```json
+{
+  "baseTargetFile": "<이전 first-managed target.json: credential·collector·podTokenFile·executorId>",
+  "baseProfileFile": "<namespace accepted profile JSON (leafId·qualificationRef는 세션별로 채움)>",
+  "controlArtifactFile": "<agent-control-<sha>.cjs>", "controlSha256": "<sha>",
+  "codex": { "nativeArtifactFile": "…", "nativeSha256": "…", "nativeByteLength": 0, "codexAuthFile": "…" },
+  "claude": { "nativeArtifactFile": "…", "nativeSha256": "…", "nativeByteLength": 0, "claudeTokenFile": "…" },
+  "runtimeServiceAccountUid": "…", "clusterIdentityRef": "…", "projectId": "…", "projectNumber": "…",
+  "stateDirectory": "/home/orca-dev/.local/state/orca-dev/rewake/runs", "timeoutMs": 240000,
+  "nfsPodLabel": "app.kubernetes.io/name=orca-dev-nfs",
+  "lifecyclePolicy": { "operationDeadlineMs": 600000, "idleDurationMs": null }
+}
+```
+
+  WAKE 마감은 Spot 노드 확보와 cold start를 덮도록 10분으로 둔다. 실패한 Pod를 지우려면 `orca-first-managed-pod-create` Role에 pods `delete`가 필요하다. 한 프로세스 안에서 runtime unit의 주인은 하나다(`orcad-unit-ownership.ts`). first-managed·adoption·재기동 모두 unit의 현재 attempt(또는 진행 중 WAKE 작업)를 claim한 뒤에만 붙거나 띄우며, claim은 PG에서 그 attempt가 active·미정지이거나 작업이 열려 있을 때만 유효하다.
+
 `controlArtifactDirectory`에는 `node config/scripts/build-agent-control.mjs <dir>`로 만든 `agent-control-<sha256>.cjs`(mode 0600)가 있어야 한다. 기록된 host와 같은 sha의 bundle로만 다시 붙는다. `outputSpoolRoot` 아래에는 세션별 spool 디렉터리가 생긴다. dev runner(`dev-orcad.mjs`)는 요청하지 않은 runtime 종료가 나면 같은 generation을 다시 띄운다.
 
 현재 Backend는 Deployment owner가 없는 독립 Pod입니다. SA/volume 같은 불변 spec 필드를 실제 반영하려면 Root가 정확 UID 조건의 정상 종료와 Pod 재생성, 같은 NFS source/dependency/private 설정·watch 복구를 함께 배분해야 합니다. 기존 lock의 owner와 Pod UID를 대조하는 위 복구 절차를 유지하며 원 runner/runtime이 종료됐다는 근거 없이 lock을 삭제하지 않습니다. 새 설치·cache 복사·container/release image build를 이 준비의 부수 작업으로 추가하지 않습니다.

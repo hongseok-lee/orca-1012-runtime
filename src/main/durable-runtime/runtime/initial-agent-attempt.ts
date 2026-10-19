@@ -81,9 +81,9 @@ async function reserveInitialAgentAttemptInternal(tx: DurableTransaction, origin
     "SELECT next_state FROM durable_runtime.runtime_audit_events WHERE id=$1 AND kind='INITIAL_AGENT_ATTEMPT_RESERVED'", [eventId])).rows[0]
   const attempts = (await query<{ id: string; status: string; mode: string; pod_uid: string | null; incarnation: string | null;
     execution_epoch: string; resource_profile_revision: string; effective_resources: JsonValue; ready_at: Date | null; started_at: Date | null; stopped_at: Date | null }>(
-    'SELECT * FROM durable_runtime.attempts WHERE runtime_unit_id=$1', [identity.unitId])).rows
+    'SELECT * FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND stopped_at IS NULL', [identity.unitId])).rows
   const executions = (await query<{ id: string; attempt_id: string; execution_epoch: string; state: string; revision: string }>(
-    'SELECT * FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1', [identity.unitId])).rows
+    "SELECT * FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1 AND state<>'REVOKED'", [identity.unitId])).rows
   const result = (disposition: 'RESERVED' | 'REPLAYED'): InitialAgentAttemptReservation => Object.freeze({ disposition,
     visibility: 'TRANSACTION_LOCAL', attemptId: identity.attemptId, executionGrantId, storageGrants, planDigest, unitRevision,
     kubernetesExecutionAuthorized: false, physicalPinIssuerImplemented: false })

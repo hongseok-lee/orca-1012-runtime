@@ -23,6 +23,8 @@ export type OrcadControllerConfig = Readonly<{
   orphanReconcile?: true
   /** Re-attach every READY session whose control host an earlier process recorded. */
   adoption?: Readonly<{ configFile: string }>
+  /** Start a new Pod for a Session whose Pod is gone once input waits for it. */
+  rewake?: Readonly<{ configFile: string }>
 }>
 export class OrcadControllerConfigurationError extends OrcadDurableCatalogConfigurationError {
   constructor(code = 'CONTROLLER_STARTUP_CONFIG') {
@@ -92,10 +94,11 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
   const hasInputRecoveryAll = value !== null && typeof value === 'object' && Object.hasOwn(value, 'inputRecoveryAll')
   const hasOrphanReconcile = value !== null && typeof value === 'object' && Object.hasOwn(value, 'orphanReconcile')
   const hasAdoption = value !== null && typeof value === 'object' && Object.hasOwn(value, 'adoption')
+  const hasRewake = value !== null && typeof value === 'object' && Object.hasOwn(value, 'rewake')
   const input = record(value, ['datasetName', 'inventory', 'policy',
     ...(hasStructuredOutput ? ['structuredOutput'] : []), ...(hasFirstManagedInitial ? ['firstManagedInitial'] : []),
     ...(hasInputRecoveryTarget ? ['inputRecoveryTarget'] : []), ...(hasOrphanReconcile ? ['orphanReconcile'] : []),
-    ...(hasAdoption ? ['adoption'] : []), ...(hasInputRecoveryAll ? ['inputRecoveryAll'] : [])])
+    ...(hasAdoption ? ['adoption'] : []), ...(hasRewake ? ['rewake'] : []), ...(hasInputRecoveryAll ? ['inputRecoveryAll'] : [])])
   if (hasInputRecoveryAll && (input.inputRecoveryAll !== true || hasInputRecoveryTarget)) { invalidOrcadControllerConfig() }
   if (hasOrphanReconcile && input.orphanReconcile !== true) { invalidOrcadControllerConfig() }
   const inputRecoveryTarget = hasInputRecoveryTarget ? captureOrcadInputRecoveryTarget(input.inputRecoveryTarget) : undefined
@@ -125,6 +128,7 @@ export function captureOrcadControllerConfig(value: unknown): OrcadControllerCon
     ...(hasInputRecoveryAll ? { inputRecoveryAll: true as const } : {}),
     ...(hasOrphanReconcile ? { orphanReconcile: true as const } : {}),
     ...(hasAdoption ? { adoption: Object.freeze({ configFile: absolute(record(input.adoption, ['configFile']).configFile) }) } : {}),
+    ...(hasRewake ? { rewake: Object.freeze({ configFile: absolute(record(input.rewake, ['configFile']).configFile) }) } : {}),
     inventory: Object.freeze({ apiOrigin: apiOrigin(inventory.apiOrigin), namespace, dataset,
       caFile: absolute(inventory.caFile), tokenFile: absolute(inventory.tokenFile),
       requestTimeoutMs: positive(inventory.requestTimeoutMs, true), watchTimeoutSeconds: positive(inventory.watchTimeoutSeconds, true),

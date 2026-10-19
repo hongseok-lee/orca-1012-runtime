@@ -103,7 +103,7 @@ export async function readOriginalFirstManagedDirectory(tx: DurableTransaction, 
 function exactSingle(locked: LockedInitialAgentAttemptContext, accepted: Accepted): void {
   const binding = locked.expected[0], mount = locked.protectedBindings[0], p = accepted.record
   if (locked.expected.length !== 1 || locked.protectedBindings.length !== 1 || !binding || !mount ||
-      binding.bindingId !== mount.bindingId || binding.storageEpoch !== '0' || mount.leafId !== p.leafId ||
+      binding.bindingId !== mount.bindingId || mount.leafId !== p.leafId ||
       mount.serverPath !== `/exports/runtime-domains/${p.profile.datasetName}/${p.leafId}` || locked.dataset !== p.profile.datasetName ||
       locked.unit.revision !== locked.expectedUnitRevision || locked.unit.active_attempt_id !== null) {
     deny('FIRST_SCOPE_REQUIRED')
@@ -123,10 +123,11 @@ async function unused(tx: DurableTransaction, accepted: Accepted, sessionId: str
   if (rows.rowCount !== 1 || !b || b.backend_id !== p.profile.backendId || b.export_id !== p.profile.exportId ||
       b.canonical_directory !== `/${p.profile.datasetName}/${p.leafId}` || b.revision !== expected.expectedRevision ||
       b.identity_proof_ref !== evidenceRef || b.identity_verified_at === null || b.access_state !== 'VERIFIED' ||
-      b.epoch !== '0' || b.writer_attempt_id !== null || b.seal_id !== null) { return deny('BINDING_CHANGED_OR_USED') }
+      b.epoch !== expected.storageEpoch || b.writer_attempt_id !== null || b.seal_id !== null) { return deny('BINDING_CHANGED_OR_USED') }
+  // A first wake has no history; a later one only fenced, revoked history (single writer).
   const history = await tx.query<{ grants: boolean; mounts: boolean }>(`SELECT
-    EXISTS(SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1) AS grants,
-    EXISTS(SELECT 1 FROM durable_runtime.storage_mounts WHERE storage_binding_id=$1) AS mounts`, [expected.bindingId])
+    EXISTS(SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1 AND state<>'REVOKED') AS grants,
+    EXISTS(SELECT 1 FROM durable_runtime.storage_mounts WHERE storage_binding_id=$1 AND observed_state<>'REVOKED') AS mounts`, [expected.bindingId])
   if (history.rows[0].grants || history.rows[0].mounts) { return deny('PAST_USE') }
   const associations = (await tx.query<{ session_id: string; storage_binding_id: string }>(`SELECT session_id,storage_binding_id
     FROM durable_runtime.runtime_member_storage_bindings WHERE runtime_unit_id=$1 ORDER BY session_id,storage_binding_id`,

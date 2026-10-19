@@ -50,7 +50,8 @@ export async function prepareInitialProviderStep(pool: Pool, original: Readonly<
     }
     const authority = await LockedGatewayAuthority.acquire(tx, context)
     const pending = await tx.query<{ id: string }>(`SELECT id FROM durable_runtime.runtime_commands
-      WHERE runtime_unit_id=$1 AND state IN ('ACCEPTED','EXECUTING','UNKNOWN')`, [context.runtimeUnitId])
+      WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))`,
+    [context.runtimeUnitId])
     if (pending.rowCount) { return { disposition: 'LOOKUP_ORIGINAL', commandId: pending.rows[0].id } }
     const target = await tx.query<{ pod_uid: string; attempt_id: string; execution_epoch: string }>(
       `SELECT a.pod_uid,a.id AS attempt_id,u.execution_epoch FROM durable_runtime.runtime_units u

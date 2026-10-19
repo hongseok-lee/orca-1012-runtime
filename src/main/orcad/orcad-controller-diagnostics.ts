@@ -50,7 +50,8 @@ function project(snapshot: OrcadControllerSnapshot) {
       confirmedLease: lease == null ? null : { scope: lease.scope, owner: lease.owner, term: lease.term,
         revision: lease.revision, expiresAt: lease.expiresAt },
       lastPass: pass == null ? null : { status: state(pass.status, ['FINISHED', 'STOPPED']), reason: code(pass.reason),
-        items: pass.items.map(item => ({ kind: state(item.kind, ['RECONCILE', 'QUEUE', 'INVENTORY']), disposition: code(item.disposition) })) },
+        items: pass.items.map(item => ({ kind: state(item.kind, ['RECONCILE', 'QUEUE', 'INVENTORY']), disposition: code(item.disposition),
+          identity: typeof item.identity === 'string' ? item.identity.slice(0, 8).replace(/[^0-9a-f-]/g, '') : null })) },
       lastFailure: failure == null ? null : { stage: state(failure.stage, ['ACQUIRE', 'RENEW', 'PASS', 'RELEASE', 'START']), code: code(failure.code) },
       stoppedBy: stopped == null ? null : { stage: state(stopped.stage, ['ACQUIRE', 'RENEW', 'PASS', 'RELEASE', 'START', 'STOP']), code: code(stopped.code) },
       inFlight: flight == null ? null : { acquire: flag(flight.acquire), renew: flag(flight.renew), pass: flag(flight.pass),
@@ -67,6 +68,16 @@ function project(snapshot: OrcadControllerSnapshot) {
       coldInput: optional(initial.coldInput ?? null), adoption: optional(initial.adoption ?? null), output: optional(initial.output ?? null) },
     adoptedRuntimes: snapshot.adoptedRuntimes ? { adopted: count(snapshot.adoptedRuntimes.adopted), failed: count(snapshot.adoptedRuntimes.failed),
       firstError: optional(snapshot.adoptedRuntimes.firstError), lastInput: optional(snapshot.adoptedRuntimes.lastInput) } : null,
+    owners: snapshot.owners ? snapshot.owners.map(owner => owner.replace(/[^0-9a-z:-]/g, '_').slice(0, 40)) : null,
+    rewake: snapshot.rewake ? { started: count(snapshot.rewake.started), active: count(snapshot.rewake.active),
+      lastError: optional(snapshot.rewake.lastError), status: snapshot.rewake.last?.status ?? null,
+      errorCode: optional(snapshot.rewake.last?.errorCode ?? null), executionPhase: snapshot.rewake.last?.executionPhase ?? null,
+      executionErrorCode: optional(snapshot.rewake.last?.executionErrorCode ?? null),
+      preparationErrorCode: optional(snapshot.rewake.last?.preparationErrorCode ?? null),
+      preparation: snapshot.rewake.last ? `${snapshot.rewake.last.preparationPhase ?? 'NONE'}:${snapshot.rewake.last.preparationOutcome ?? 'NONE'}:${snapshot.rewake.last.pinState ?? 'NONE'}:${snapshot.rewake.last.createRequested}` : null,
+      assignment: snapshot.rewake.last?.assignment?.errorCode ?? snapshot.rewake.last?.assignment?.disposition ?? null,
+      target: snapshot.rewake.last?.target?.errorCode ?? snapshot.rewake.last?.target?.disposition ?? null, coldPhase: optional(snapshot.rewake.last?.coldPhase ?? null),
+      coldFailure: optional(snapshot.rewake.last?.coldFailure ?? null), coldInput: optional(snapshot.rewake.last?.coldInput ?? null) } : null,
     lastFailure: snapshot.lastFailure === null ? null : {
       stage: state(snapshot.lastFailure.stage, ['START', 'STOP', 'INVENTORY']), code: code(snapshot.lastFailure.code)
     }

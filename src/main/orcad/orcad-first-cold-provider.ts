@@ -57,9 +57,16 @@ export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string>
 /** Startup-only optional specialization. Old/absent configuration is inert.
  * Uses the same controller callback and original clients; no extra controller,
  * row-to-authority cast, public RPC or flat observation supplier is introduced. */
+export type OrcadColdRewake = Readonly<{
+  /** The native session the Session's earlier READY recorded; resumed, never replaced. */
+  nativeSessionRef: string
+  /** Creation evidence for a later wake, in place of the one-shot audit-token supplier. */
+  creationObserver: ReturnType<typeof createComputeCreationIdentityClient>
+}>
+
 export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, pool: Pool, ca: Uint8Array, initial: Readonly<{
   sessionId: string; planDigest: string; directory: FirstManagedBindingOwnerConfig
-}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings) {
+}>, originalAuditToken?: string, originalReadSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake) {
   const file = config.firstManagedInitial?.coldConfigFile
   if (!file) { return undefined }
   try {
@@ -104,9 +111,9 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       if (text('creationWindow') !== 'AUTHENTICATED_NODE') { return deny() }
       creation = Object.freeze({ creationWindow: 'AUTHENTICATED_NODE' })
     } else { creation = Object.freeze({ creationStartTime: text('creationStartTime'), creationEndTime: text('creationEndTime') }) }
-    if (!originalAuditToken || !/^[A-Za-z0-9._~+/=-]+$/.test(originalAuditToken)) { return deny() }
-    let auditToken = originalAuditToken, supplied = false
-    const creationObserver = createComputeCreationIdentityClient({ timeoutMs,
+    if (!rewake && (!originalAuditToken || !/^[A-Za-z0-9._~+/=-]+$/.test(originalAuditToken))) { return deny() }
+    let auditToken = originalAuditToken ?? '', supplied = false
+    const creationObserver = rewake?.creationObserver ?? createComputeCreationIdentityClient({ timeoutMs,
       tokenProvider: Object.freeze({ async getAccessToken(signal: AbortSignal) {
         if (signal.aborted || supplied || !auditToken) { return deny() }
         supplied = true; const value = auditToken; auditToken = ''; return value
@@ -129,8 +136,10 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
           native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
       // Claude's native session id is fixed by the Orca session, as on the desktop lane.
+      // A later wake resumes that same session in the new Pod (the launch args are what the Pod's Claude gets).
       const launch = claude
-        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
+        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: rewake ? ['--dangerously-skip-permissions', '--resume', rewake.nativeSessionRef]
+          : ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
         : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
@@ -147,6 +156,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const output = createTerminalCodexOutput({ pool, spoolDirectory: text('outputSpoolDirectory'), current })
     executor = createInitialCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), planDigest: initial.planDigest,
       ...(claude ? { provider: 'claude' as const } : {}),
+      ...(rewake ? { resume: Object.freeze({ nativeSessionRef: rewake.nativeSessionRef }) } : {}),
       emptyFolder,
       sink: inputRuntime.observe,
       onNativeNotification: output.onNativeNotification,
@@ -155,6 +165,10 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         // notifications retained before READY now become drainable.
         void output.drain().catch(() => { /* The output owner retains the failure/spool. */ })
         inputRuntime.ready()
+        // Input accepted while no Pod was READY (queued early, or before this
+        // owner existed) goes out now; the input runtime ignores a repeat.
+        void readPendingTerminalInputs(pool, initial.sessionId).then(list => { for (const item of list) { inputRuntime.committed(item) } })
+          .catch(() => { inputError = 'PENDING_INPUT_READ' })
       },
       async deployment({ plan, podUid, paths }, signal) {
         if (signal.aborted) { return deny() }
@@ -202,7 +216,9 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         adoptError = error instanceof Error && /^[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : 'ADOPTION_FAILED'; return 0 }
     }
     return Object.freeze({ ...originalExecutor, adoptRuntimes,
-      ownsSession: (sessionId: string) => sessionId === initial.sessionId,
+      // Owned while a cold start runs or a provider owner is held; a lost owner no longer claims the Session.
+      ownsSession: (sessionId: string) => sessionId === initial.sessionId &&
+        (current() !== null || !['UNUSED', 'READY', 'RETAINED_UNCONFIRMED'].includes(originalExecutor.phase())),
       onTerminalInputCommitted: inputRuntime.committed,
       assertOutputAvailable(): void {
         const state = output.snapshot()

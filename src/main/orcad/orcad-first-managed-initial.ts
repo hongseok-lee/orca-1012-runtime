@@ -7,7 +7,7 @@ import type { FirstManagedBindingOwnerConfig } from '../durable-runtime/storage/
 import { captureOrcadControllerConfig, invalidOrcadControllerConfig, OrcadControllerConfigurationError,
   parseUniqueOrcadControllerJson, readPrivateOrcadControllerConfigBytes, type OrcadControllerConfig } from './orcad-controller-config.ts'
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
-import { prepareOrcadFirstColdProvider } from './orcad-first-cold-provider.ts'
+import { prepareOrcadFirstColdProvider, type OrcadColdRewake } from './orcad-first-cold-provider.ts'
 import { createAgentPodPlanner } from '../durable-runtime/runtime/agent-pod-plan.ts'
 import { prepareAgentPodPlan } from '../durable-runtime/runtime/agent-pod-plan-records.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
@@ -61,7 +61,7 @@ export function captureOrcadFirstManagedCallbacks(initial: ReturnType<typeof cre
  * transport is decoded from JSON. Only the existing strict planner composes
  * policy/request; this loader supplies the original captured inventory CA. */
 export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig, pool: Pool, capturedCA: Uint8Array, auditToken?: string,
-  readProviderSettings?: () => InitialCodexNativeSettings) {
+  readProviderSettings?: () => InitialCodexNativeSettings, rewake?: OrcadColdRewake) {
   const config = captureOrcadControllerConfig(original)
   if (!config.firstManagedInitial) { return null }
   try {
@@ -104,8 +104,8 @@ export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig,
         helperConfigMapUid: agentPodText(collector.get('helperConfigMapUid')), helperSha256: agentPodText(collector.get('helperSha256')),
         exportsSha256: agentPodText(collector.get('exportsSha256')), timeoutMs: timeout(collector.get('timeoutMs')) }) })
     const cold = prepareOrcadFirstColdProvider(config, pool, ca, { sessionId: agentPodText(raw.get('sessionId')),
-      planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken, readProviderSettings)
-    return createFirstManagedInitialDispatch({ pool, policy, request, ...(cold ? { cold } : {}),
+      planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken, readProviderSettings, rewake)
+    return createFirstManagedInitialDispatch({ pool, policy, request, ...(cold ? { cold } : {}), ...(rewake ? { rewake: true } : {}),
       policyRevision: agentPodText(raw.get('policyRevision')), sessionId: agentPodText(raw.get('sessionId')),
       actorId: agentPodText(raw.get('actorId')), originalAuditId: agentPodText(raw.get('originalAuditId')), pinId,
       binding: Object.freeze({ bindingId: agentPodText(b.get('bindingId')), expectedRevision: agentPodText(b.get('expectedRevision')),

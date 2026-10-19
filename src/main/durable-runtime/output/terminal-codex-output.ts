@@ -119,6 +119,10 @@ export function createTerminalCodexOutput(input: Readonly<{
         // Before first READY the spool is retained; a later unrelated owner
         // must never authenticate those bytes as its own producer.
         if (!ready && originals.size === 0) { return }
+        // A connection this process no longer holds (its attempt was fenced, or its
+        // owner was an earlier process) cannot be authenticated by the current owner:
+        // its bytes stay in the spool as evidence and never block the current output.
+        if (ready && record.notification.connectionId !== ready.binding.connectionInstanceId) { continue }
         return deny('ORIGINAL_OWNER_UNAVAILABLE')
       }
       await consume(record, original)

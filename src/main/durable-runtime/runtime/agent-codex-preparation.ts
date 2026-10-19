@@ -47,16 +47,20 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       child(home, stateDirectory); directory = child(home, '.orca-native')
       // A first empty Folder workspace is materialized only AFTER COMMIT.
       // Git requires its real checkout and is never replaced by an empty one.
-      if (paths.checkoutPreparation !== 'FRESH_EMPTY_FOLDER') { throw new Error('AGENT_COLD_CHECKOUT_UNPREPARED') }
-      // Create-only: an existing directory is not evidence of an empty original
-      // workspace, and partial preparation is never silently restarted.
-      mkdirSync(paths.checkout, { mode: 0o700 })
+      const existing = paths.checkoutPreparation === 'EXISTING'
+      if (!existing && paths.checkoutPreparation !== 'FRESH_EMPTY_FOLDER') { throw new Error('AGENT_COLD_CHECKOUT_UNPREPARED') }
+      // Create-only for a first wake: an existing directory is not evidence of an
+      // empty original workspace. A later wake keeps the Session's own checkout.
+      if (!existing) { mkdirSync(paths.checkout, { mode: 0o700 }) }
       const checkout = lstatSync(paths.checkout)
       if (!checkout.isDirectory() || checkout.isSymbolicLink() || checkout.uid !== process.getuid?.() ||
           (checkout.mode & 0o777) !== 0o700 || realpathSync(paths.checkout) !== paths.checkout) {
         throw new Error('AGENT_COLD_CHECKOUT_REQUIRED')
       }
       partial = join(directory, `${native}.partial`)
+      // A later wake replaces the staged/published executable of an earlier one.
+      if (existing) { for (const stale of [partial, join(directory, native)]) { try { unlinkSync(stale) } catch (error) {
+        if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') { throw error } } } }
       fd = openSync(partial, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600)
       phase = 'WRITING'
     },

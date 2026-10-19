@@ -162,14 +162,19 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     }
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
-    const pending = new Map(snapshot.commands.map(command => [command.runtime_unit_id, command]))
+    // Input commands (an UNKNOWN delivery stays for its owner, R03) belong to input
+    // recovery below; only lifecycle commands hold a Unit's next lifecycle step.
+    const pending = new Map(snapshot.commands.filter(command => !['stageInput', 'dispatchInput'].includes(command.command_name))
+      .map(command => [command.runtime_unit_id, command]))
     const recoveredUnits = new Set<RuntimeUnitId>()
     if (request.recoverInput) {
       for (const command of snapshot.commands) {
         if (!room()) { break }
         const operation = snapshot.operations.find(item => item.id === command.operation_id)
+        // An UNKNOWN delivery is already this recovery's final answer (kept, never resent);
+        // re-running it every pass would also starve the Unit's lifecycle steps.
         if (!operation || operation.kind !== 'INPUT_DELIVERY' || command.command_name !== 'dispatchInput' ||
-            !units.has(command.runtime_unit_id)) { continue }
+            command.state === 'UNKNOWN' || !units.has(command.runtime_unit_id)) { continue }
         await gate()
         const context = Object.freeze({ controller: request.controller,
           runtimeUnitId: command.runtime_unit_id, operationId: command.operation_id })
@@ -219,13 +224,17 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
         const expired = expiredInitialWakes.get(unitId)
         const operation = command
           ? snapshot.operations.find(o => o.id === command.operation_id)
-          : expired ?? snapshot.operations.find(o => o.runtime_unit_id === unitId && !o.terminal && o.retry_due)
-        work++
+          // Input deliveries are settled by their input owner, not reconciled as lifecycle steps.
+          : expired ?? snapshot.operations.find(o => o.runtime_unit_id === unitId && !o.terminal && o.retry_due &&
+            ['WAKE', 'SLEEP', 'DELETE'].includes(o.kind))
+        // Only a step that does something spends the pass budget; units with nothing
+        // to do must not starve a later unit's step (units are visited in id order).
         if (!operation) {
           items.push({ kind: 'RECONCILE', identity: unitId, disposition: 'NO_ORIGINAL_OPERATION' })
           continue
         }
         if (!command && expired) {
+          work++
           const expiryRequest: InitialWakeExpiryRequest = {
             context: Object.freeze({ controller: request.controller, runtimeUnitId: unitId, operationId: expired.id }),
             mutationKey: `initial-wake-expiry:${expired.id}:${unit.revision}:${expired.step_revision}:${randomUUID()}`,
@@ -246,6 +255,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
           items.push({ kind: 'RECONCILE', identity: operation.id, disposition: command ? 'LOOKUP_REQUIRED' : 'NO_STEP_HANDLER' })
           continue
         }
+        work++
         if (!command && !request.executeCommitted) {
           items.push({ kind: 'RECONCILE', identity: operation.id, disposition: 'NO_EXECUTOR' })
           continue

@@ -30,6 +30,8 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
   executorId: ExecutorId; externalBudgetMs: number
   readOwnerToken(pinId: string, signal: AbortSignal): Promise<string>
   podConfig: AgentPodCreateConfig; firstManagedDirectory: FirstManagedBindingOwnerConfig
+  /** A later wake of the same Unit: its resource profile was recorded by the first wake. */
+  rewake?: boolean
   cold?: ReturnType<typeof createInitialCodexExecutor> & Readonly<{
     onTerminalInputCommitted?: TerminalInputCommittedSink
     assertOutputAvailable?(): void
@@ -49,6 +51,8 @@ export type FirstManagedInitialDispatchSnapshot = Readonly<{
   preparationPhase: FirstManagedInitialResult['phase'] | null
   preparationOutcome: FirstManagedInitialResult['outcome'] | null
   preparationErrorCode: string | null; pinState: FirstManagedInitialResult['pin']['state'] | null
+  /** The reservation transaction's own outcome (its error code or disposition). */
+  reservationCode?: string | null
   executionPhase: InitialAgentPodExecutionResult['phase'] | null
   executionErrorCode: string | null
   target: TransactionSnapshot | null; assignment: TransactionSnapshot | null
@@ -86,6 +90,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
     assertOutputAvailable?(): void
     adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
     ownsSession?(sessionId: string): boolean
+    targetSessionId: string
     close(): Promise<void>
   }> {
   const prepared = prepareAgentPodPlan(createAgentPodPlanner(original.policy).plan(original.request))
@@ -183,11 +188,26 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
         if (!confirmed(recorded)) { return deny('PLAN_NOT_CONFIRMED') }
         remaining(deadline, signal)
         state = Object.freeze({ ...state, phase: 'PROFILE' })
-        const profile = await runDurableTransaction(borrowed, tx => recordInitialAgentResourceProfile(tx, context,
-          { planDigest, policyRevision }))
-        state = Object.freeze({ ...state, profile: transactionSnapshot(profile, profile.ok ? profile.value.disposition : null) })
-        if (!confirmed(profile)) { return deny('PROFILE_NOT_CONFIRMED') }
-        const expectedUnitRevision = counter('row:runtime-unit', profile.value.currentUnitRevision)
+        let currentUnitRevision: string
+        if (original.rewake) {
+          const reused = await runDurableTransaction(borrowed, async tx => {
+            const unit = (await tx.query<{ revision: string }>(`SELECT u.revision FROM durable_runtime.runtime_units u
+              JOIN durable_runtime.resource_profiles p ON p.runtime_unit_id=u.id AND p.revision=$2 WHERE u.id=$1`,
+            [id.unitId, plan.pod.metadata.annotations['orca.dev/resource-profile-revision']])).rows[0]
+            if (!unit) { return deny('REWAKE_PROFILE') }
+            return unit.revision
+          })
+          state = Object.freeze({ ...state, profile: transactionSnapshot(reused, reused.ok ? 'REUSED' : null) })
+          if (!confirmed(reused)) { return deny('PROFILE_NOT_CONFIRMED') }
+          currentUnitRevision = reused.value
+        } else {
+          const profile = await runDurableTransaction(borrowed, tx => recordInitialAgentResourceProfile(tx, context,
+            { planDigest, policyRevision }))
+          state = Object.freeze({ ...state, profile: transactionSnapshot(profile, profile.ok ? profile.value.disposition : null) })
+          if (!confirmed(profile)) { return deny('PROFILE_NOT_CONFIRMED') }
+          currentUnitRevision = profile.value.currentUnitRevision
+        }
+        const expectedUnitRevision = counter('row:runtime-unit', currentUnitRevision)
         remaining(deadline, signal)
         const ownerToken = await readOwnerToken(pinId, signal)
         const remainingMs = remaining(deadline, signal)
@@ -197,6 +217,8 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
         const preparation = result.preparation
         state = Object.freeze({ ...state, preparationPhase: preparation?.phase ?? null,
           preparationOutcome: preparation?.outcome ?? null, preparationErrorCode: preparation?.errorCode ?? null,
+          reservationCode: preparation?.reservation ? (preparation.reservation.engineError?.code ?? (preparation.reservation.database?.ok === false
+            ? preparation.reservation.database.error.code : preparation.reservation.database?.ok ? String(preparation.reservation.database.value.disposition) : 'NO_DATABASE')) : null,
           pinState: preparation?.pin.state ?? null })
         if (!preparation || preparation.outcome !== 'RESERVED' || !result.execution) { return deny('PREPARATION_NOT_RESERVED') }
         observeExecution(result.execution)
@@ -233,6 +255,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
     assertOutputAvailable: cold?.assertOutputAvailable?.bind(cold),
     adoptRuntimes: cold?.adoptRuntimes?.bind(cold),
     ownsSession: (sessionId: string) => cold?.ownsSession?.(sessionId) ?? false,
+    targetSessionId: sessionId,
     close: async () => { await cold?.close?.() },
     snapshot: () => {
     const provider = coldSnapshot?.()

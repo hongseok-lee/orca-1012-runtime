@@ -8,7 +8,8 @@ export type InitialProviderPaths = Readonly<{
   agentId: string
   home: string
   checkout: '/agent/checkout'
-  checkoutPreparation: 'FRESH_EMPTY_FOLDER'
+  /** EXISTING: a later wake of the same Session reuses its checkout and HOME. */
+  checkoutPreparation: 'FRESH_EMPTY_FOLDER' | 'EXISTING'
   canonicalDirectory: string
   sourceHome: string
   sourceCheckout: string
@@ -30,7 +31,7 @@ const object = (value: unknown): Record<string, unknown> => {
 export function captureInitialProviderPaths(original: Readonly<{
   workspaceId: string; agentId: string; kind: string; repositoryKind: string; reservedPath: string
   canonicalDirectory: string; launchRequest: unknown
-}>, originalDeclaration: InitialEmptyFolderDeclaration): InitialProviderPaths {
+}>, originalDeclaration: InitialEmptyFolderDeclaration, existing = false): InitialProviderPaths {
   const input = immutableSnapshot(original), server = object(object(input.launchRequest).server)
   const declaration = originalDeclaration ? immutableSnapshot(originalDeclaration) : null
   const mapping = object(server.storagePathMapping), home = server.agentHomePath
@@ -58,13 +59,13 @@ export function captureInitialProviderPaths(original: Readonly<{
   return Object.freeze({ workspaceId: input.workspaceId, agentId: input.agentId, home: agentHome, checkout,
     sourceHome: home, sourceCheckout: input.reservedPath,
     canonicalDirectory: mapping.canonicalDirectory,
-    checkoutPreparation: 'FRESH_EMPTY_FOLDER' })
+    checkoutPreparation: existing ? 'EXISTING' : 'FRESH_EMPTY_FOLDER' })
 }
 
 /** The original executor calls this after its Session/Unit locks. The single
  * member and stored launch mapping must still describe the selected target. */
 export async function readInitialProviderPaths(tx: DurableTransaction, unitId: string, sessionId: string,
-  declaration: InitialEmptyFolderDeclaration): Promise<InitialProviderPaths> {
+  declaration: InitialEmptyFolderDeclaration, existing = false): Promise<InitialProviderPaths> {
   const rows = await tx.query<{ workspace_id: string; agent_id: string; kind: string; repository_kind: string; reserved_path: string;
     canonical_directory: string; launch_request: unknown }>(
     `SELECT s.workspace_id,s.agent_id,w.kind,COALESCE(r.payload->>'kind','git') AS repository_kind,w.reserved_path,t.launch_request,b.canonical_directory
@@ -82,5 +83,5 @@ export async function readInitialProviderPaths(tx: DurableTransaction, unitId: s
   if (members.rowCount !== 1 || rows.rowCount !== 1) { return deny() }
   const row = rows.rows[0]
   return captureInitialProviderPaths({ workspaceId: row.workspace_id, agentId: row.agent_id, kind: row.kind, repositoryKind: row.repository_kind,
-    reservedPath: row.reserved_path, canonicalDirectory: row.canonical_directory, launchRequest: row.launch_request }, declaration)
+    reservedPath: row.reserved_path, canonicalDirectory: row.canonical_directory, launchRequest: row.launch_request }, declaration, existing)
 }

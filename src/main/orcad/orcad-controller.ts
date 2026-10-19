@@ -1,10 +1,12 @@
 import { readOrcadControllerCredential as credential } from './orcad-controller-credential.ts'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host.ts'
-import type { AbortableInventoryTransport } from '../durable-runtime/ha/pass.ts'
+import type { AbortableInventoryTransport, ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import type { ControllerWorker, ControllerWorkerSnapshot } from '../durable-runtime/ha/worker.ts'
 import type { FirstManagedInitialDispatchSnapshot } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
 import type { prepareOrcadFirstManagedInitial, captureOrcadFirstManagedCallbacks } from './orcad-first-managed-initial.ts'
 import type { prepareOrcadAdoptedRuntimes } from './orcad-adopted-runtimes.ts'
+import type { prepareOrcadRewake } from './orcad-rewake.ts'
+import { createUnitOwnership, type UnitOwnership } from './orcad-unit-ownership.ts'
 import { persistControllerInventoryObservation } from '../durable-runtime/lifecycle/controller-inventory-observation.ts'
 import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
@@ -32,12 +34,14 @@ export type OrcadControllerSnapshot = Readonly<{
   firstManagedInitial?: FirstManagedInitialDispatchSnapshot
   inputRecovery?: OrcadInputRecoverySnapshot
   adoptedRuntimes?: Readonly<{ adopted: number; failed: number; firstError: string | null; lastInput: string | null }>
+  rewake?: Readonly<{ started: number; active: number; lastError: string | null; last: FirstManagedInitialDispatchSnapshot | null }>
+  owners?: readonly string[]
 }>
 export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
   onTerminalInputCommitted: TerminalInputCommittedSink
-  assertTerminalOutputAvailable(): void
+  assertTerminalOutputAvailable(sessionId: string): void
 }>
 
 /** Real PR58 transport, with owned file readers. Raw CA/token bytes never enter snapshots/errors or an exported accessor. */
@@ -83,17 +87,26 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
   let firstManagedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
   let inputRecovery: ReturnType<typeof prepareOrcadInputRecovery> | null = null
   let adoptedRuntimes: ReturnType<typeof prepareOrcadAdoptedRuntimes> = null
+  let rewake: ReturnType<typeof prepareOrcadRewake> = null
+  let ownership: UnitOwnership | null = null
   let total = 0, list = 0, watch = 0
   return Object.freeze({
     readConfig,
     onTerminalInputCommitted(input: Parameters<TerminalInputCommittedSink>[0]) {
       // Only the already authenticated ingress creates this value. No receipt
       // or PG principal is reconstructed into a new authenticated authority.
-      if (!closing) { firstManagedInitial?.onTerminalInputCommitted?.(input); adoptedRuntimes?.onTerminalInputCommitted(input) }
+      if (closing) { return }
+      // Only the unit's claimed owner stages it; with no claim yet (a first cold
+      // before its attempt) every owner sees it and the one that starts serves it.
+      const owner = ownership?.ownerOfSession(input.authority.sessionId) ?? null
+      if (!owner || owner === 'first-managed') { firstManagedInitial?.onTerminalInputCommitted?.(input) }
+      if (!owner || owner === 'adopted') { adoptedRuntimes?.onTerminalInputCommitted(input) }
+      if (!owner || owner === 'rewake') { rewake?.onTerminalInputCommitted(input) }
     },
-    assertTerminalOutputAvailable(): void {
+    assertTerminalOutputAvailable(sessionId: string): void {
       if (closing) { throw new Error('TERMINAL_OUTPUT_UNAVAILABLE') }
-      firstManagedInitial?.assertOutputAvailable?.()
+      // Only the Session's claimed owner reports its output; another Session's owner never gates it.
+      if (ownership?.ownerOfSession(sessionId) === 'first-managed') { firstManagedInitial?.assertOutputAvailable?.() }
     },
     startController(input: OrcadControllerConfig): Promise<void> {
       if (closing) { invalidOrcadControllerConfig('CONTROLLER_STARTUP_CLOSED') }
@@ -116,7 +129,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
         captured.assertCurrentHost()
         // Explicit target startup captures CA once; both consumers own copies
         // of these exact bytes. Unset configuration retains the original path.
-        const ca = config.firstManagedInitial || config.adoption ? Buffer.from(credential(config.inventory.caFile, 'CA')) : null
+        const ca = config.firstManagedInitial || config.adoption || config.rewake ? Buffer.from(credential(config.inventory.caFile, 'CA')) : null
         const transport = ca ? await prepareOrcadControllerInventoryWithCA(config, ca)
           : await prepareOrcadControllerInventory(config)
         let selectedInitial: ReturnType<typeof prepareOrcadFirstManagedInitial> = null
@@ -154,15 +167,44 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           ? (await import('./orcad-orphan-reconcile.ts')).prepareOrcadOrphanReconcile(captured.pool, config,
             ca ?? Buffer.from(credential(config.inventory.caFile, 'CA')))
           : null
+        const unitOwnership = createUnitOwnership(captured.pool)
+        ownership = unitOwnership
+        if (config.rewake) {
+          if (!readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_REWAKE_CONFIG') }
+          rewake = (await import('./orcad-rewake.ts')).prepareOrcadRewake(captured.pool, config, readProviderSettings, unitOwnership)
+        }
+        const selectedRewake = rewake
         if (config.adoption) {
           if (!ca || !readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_ADOPTION_CONFIG') }
           adoptedRuntimes = (await import('./orcad-adopted-runtimes.ts')).prepareOrcadAdoptedRuntimes(captured.pool, config, ca,
-            readProviderSettings, sessionId => selectedInitial?.ownsSession?.(sessionId) ?? false)
+            readProviderSettings, unitOwnership)
         }
         if (closing) { return }
-        const adoptionHooks = [selectedInitial?.adoptRuntimes, adoptedRuntimes?.adoptRuntimes].filter(hook => !!hook)
+        // The first-managed target serves its Session only while it holds the unit's claim:
+        // it claims the unit's current attempt before adopting it, or as soon as its own cold start reserved it.
+        const initialAdopt = selectedInitial?.adoptRuntimes
+        const firstManagedAdopt = initialAdopt && selectedInitial ? async (signal: AbortSignal, controller: Parameters<typeof initialAdopt>[1]) => {
+          const target = selectedInitial.targetSessionId
+          const unit = (await captured.pool.query<{ unit_id: string; attempt_id: string | null }>(`SELECT u.id AS unit_id,u.active_attempt_id AS attempt_id
+            FROM durable_runtime.runtime_members m JOIN durable_runtime.runtime_units u ON u.id=m.runtime_unit_id WHERE m.session_id=$1`, [target])).rows[0]
+          if (!unit?.attempt_id || !(await unitOwnership.claim(unit.unit_id, target, 'first-managed', { attemptId: unit.attempt_id }))) { return 0 }
+          return selectedInitial.ownsSession?.(target) ? 0 : initialAdopt(signal, controller)
+        } : undefined
+        const adoptionHooks = [firstManagedAdopt, adoptedRuntimes?.adoptRuntimes,
+          selectedRewake ? (signal: AbortSignal) => selectedRewake.wakePending(signal) : undefined].filter(hook => !!hook)
+        // A wake started by this process owns its operation; the configured first target keeps its own.
+        const lifecycleCallbacks = selectedRewake ? Object.freeze({
+          planStep: (...args: Parameters<NonNullable<ControllerPassRequest['planStep']>>) =>
+            selectedCallbacks?.planStep(...args) ?? selectedRewake.planStep(...args),
+          executeCommitted: (...args: Parameters<NonNullable<ControllerPassRequest['executeCommitted']>>) =>
+            selectedRewake.ownsOperation(args[2].operationId) || !selectedCallbacks
+              ? selectedRewake.executeCommitted(...args) : selectedCallbacks.executeCommitted(...args),
+          lookupOriginal: (...args: Parameters<NonNullable<ControllerPassRequest['lookupOriginal']>>) =>
+            selectedRewake.ownsOperation(args[0].operation_id) || !selectedCallbacks
+              ? selectedRewake.lookupOriginal(...args) : selectedCallbacks.lookupOriginal(...args),
+        }) : selectedCallbacks
         worker = createControllerWorker(captured.pool, config.policy, {
-          ...selectedCallbacks,
+          ...lifecycleCallbacks,
           ...(adoptionHooks.length ? { adoptRuntimes: async (signal: AbortSignal, controller: Parameters<NonNullable<typeof adoptionHooks[0]>>[1]) => {
             let handled = 0
             for (const hook of adoptionHooks) { handled += await hook(signal, controller) }
@@ -218,7 +260,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
             invalidOrcadControllerConfig('CONTROLLER_STOP_UNAVAILABLE')
           }
         } finally {
-          try { await firstManagedInitial?.close(); await adoptedRuntimes?.close() } finally { await stopCatalog() }
+          try { await firstManagedInitial?.close(); await adoptedRuntimes?.close(); await rewake?.close() } finally { await stopCatalog() }
         }
       })
       return completion
@@ -226,6 +268,8 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
     controllerSnapshot(): OrcadControllerSnapshot { return Object.freeze({ worker: worker?.snapshot() ?? null, latestObservation, lastFailure,
       ...(firstManagedInitial ? { firstManagedInitial: firstManagedInitial.snapshot() } : {}),
       ...(inputRecovery ? { inputRecovery: inputRecovery.snapshot() } : {}),
-      ...(adoptedRuntimes ? { adoptedRuntimes: adoptedRuntimes.snapshot() } : {}) }) }
+      ...(adoptedRuntimes ? { adoptedRuntimes: adoptedRuntimes.snapshot() } : {}),
+      ...(rewake ? { rewake: rewake.snapshot() } : {}),
+      ...(ownership ? { owners: ownership.snapshot() } : {}) }) }
   })
 }
