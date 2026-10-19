@@ -293,3 +293,13 @@ test('actual binary decoder separates frozen Input bytes from negotiated output 
     assert.equal(reduceTerminalDraft(null, raw.snapshot).kind, 'RAW_CURRENT')
   }
 })
+
+test('mobile native chat lone Ctrl+U clears the draft before its body', () => {
+  const old = draftOf(reduceTerminalDraft(null, unary('old-body', 'stale typed text')))
+  const cleared = reduceTerminalDraft(old, unary('mobile-clear', '\x15', { enter: false }))
+  assert.equal(cleared.kind, 'DRAFT_EDIT')
+  assert.deepEqual(draftOf(cleared).chunks, [])
+  const submitted = reduceTerminalDraft(draftOf(cleared), unary('mobile-body', 'from the phone', { enter: true }))
+  assert.equal(submitted.kind, 'SUBMIT_CANDIDATE')
+  assert.equal(submitted.candidate?.text, 'from the phone')
+})

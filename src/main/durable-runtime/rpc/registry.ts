@@ -37,6 +37,12 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
       const original = method.handler.bind(method)
       return {...method, handler: (params: never, context: RpcContext) => adapter.sendTerminal(params, context, original)}
     }
+    if (method.name === 'terminal.subscribe') {
+      if (!('stream' in method && method.stream)) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      const original = method.handler.bind(method)
+      return { ...method, handler: (params: never, context: RpcContext, emit: (result: unknown) => void) =>
+        adapter.subscribeTerminal(params, context, emit, original) }
+    }
     if (clipboard.has(method.name)) {
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       return { ...method, handler: (params: never, context: RpcContext) => adapter.clipboard(method.name, params, context) }

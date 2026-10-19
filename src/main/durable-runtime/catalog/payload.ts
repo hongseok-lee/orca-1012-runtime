@@ -86,8 +86,10 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
     } else {throw new CatalogError('CATALOG_PAYLOAD')}
     if (value.viewMode !== undefined && !['terminal', 'chat'].includes(String(value.viewMode))) {throw new CatalogError('CATALOG_PAYLOAD')}
     if (row.terminal_native_chat_session !== undefined) {
-      if (!isRuntimeTerminalNativeChatSession(row.terminal_native_chat_session)) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
-      return { ...value, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
+      if (!isRuntimeTerminalNativeChatSession(row.terminal_native_chat_session) || !row.terminal_handle) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
+      // A READY native session is addressed by its durable handle: clients take
+      // the input lease and send through it even with no PTY in this process.
+      return { ...value, status: 'ready', terminal: row.terminal_handle, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
     }
   } else if (value.type === 'agent-session') {
     text(value, 'sessionId')
