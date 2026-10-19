@@ -28,7 +28,7 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
     assertCurrent()
     if (!found) { return legacy(params as never, capturedContext, emit) }
     if (found.lifecycle !== 'OPEN') { throw new TerminalDraftStoreError('TERMINAL_CATALOG_TARGET_CLOSED') }
-    if (found.chat) { return holdCatalogTerminalInputLease(params, capturedContext, emit) }
+    if (found.chat || params.client?.type === 'mobile' && params.capabilities?.mobileInputLeaseOnly === 1) { return holdCatalogTerminalInputLease(params, capturedContext, emit) }
     if (!lookup) { throw new TerminalDraftStoreError('TERMINAL_RUNTIME_UNAVAILABLE') }
     const reader = createCatalogTerminalRuntimeReader(config, capturedContext, params.terminal, found, lookup)
     const actions = createCatalogTerminalActions(config, capturedContext, params.terminal, found, lookup)

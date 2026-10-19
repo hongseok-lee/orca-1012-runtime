@@ -1,3 +1,4 @@
+import { createCatalogTerminalDisplay } from './terminal-display.ts'
 import { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
 import { createCatalogBrowserStreamRecovery } from './browser-stream-recovery.ts'
@@ -39,9 +40,11 @@ export class DurableCatalogReadAdapter {
   private readonly terminalSendRpc: ReturnType<typeof createCatalogTerminalSendRpc>
   private readonly terminalLease: ReturnType<typeof createCatalogTerminalLeaseSubscribe>
   private readonly rawSubscriptions = createTerminalRawSubscriptions()
+  private readonly terminalDisplay: ReturnType<typeof createCatalogTerminalDisplay>
   private disposed = false
   constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup; onCancelRequested?: (sessionId: string) => void}) {
     this.config = captureDurableCatalogReadConfig(config)
+    this.terminalDisplay = createCatalogTerminalDisplay(this.config)
     const raw = this.rawSubscriptions
     this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted, raw, options?.onCancelRequested)
     this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config, options?.terminalRuntime, raw)
@@ -69,6 +72,11 @@ export class DurableCatalogReadAdapter {
   async sendTerminal(params: unknown, context: RpcContext,
     legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
     try { this.requireOpen(); return await this.terminalSendRpc(params, context, legacy) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
+  async displayTerminal(method: string, params: unknown, context: RpcContext,
+    legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
+    try { this.requireOpen(); return await this.terminalDisplay(method, params, context, legacy) }
     catch (error) { throw catalogReadFailure(error) }
   }
   async subscribeTerminal(params: unknown, context: RpcContext, emit: (frame: unknown) => void,
