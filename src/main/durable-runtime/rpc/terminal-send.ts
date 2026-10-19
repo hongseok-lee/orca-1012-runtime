@@ -1,3 +1,4 @@
+import { stopCatalogTerminal } from './terminal-stop.ts'
 import type { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
 import { resolveCatalogTerminalTarget } from './terminal-target.ts'
 import { TerminalSend } from '../../../shared/rpc-contract/terminal-unary-params.ts'
@@ -19,7 +20,7 @@ import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts
 
 /** Existing unary schema only. The optional internal sink observes confirmed
  * new intake; provider work never delays or changes this original ACK. */
-export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, onCommitted?: TerminalInputCommittedSink, raw?: ReturnType<typeof createTerminalRawSubscriptions>) {
+export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, onCommitted?: TerminalInputCommittedSink, raw?: ReturnType<typeof createTerminalRawSubscriptions>, onCancel?: (sessionId: string) => void) {
   const owner = config.pool, connect = owner.connect.bind(owner), query = owner.query.bind(owner)
   const pool = new Proxy(owner, {get(target, key) {
     if (key === 'connect') { return connect }
@@ -78,12 +79,16 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
       assertCurrent()
       if (existing.status === 'UNAVAILABLE') { throw new TerminalDraftStoreError('TERMINAL_RECEIPT_UNAVAILABLE') }
       if (existing.status === 'FOUND') { return committedWire(await applyManagedTerminalIngress(pool, probe)) }
-      if (resolveOnly) { throw new TerminalDraftStoreError('TERMINAL_COMMIT_UNCERTAIN_RESOLVE_SAME_KEY') }
       if (!resolved.chat) {
+        if (resolveOnly) { throw new TerminalDraftStoreError('TERMINAL_COMMIT_UNCERTAIN_RESOLVE_SAME_KEY') }
         if (!raw) { throw new TerminalDraftStoreError('TERMINAL_MANAGED_RAW_NOT_CONNECTED') }
         return raw.send(params,capturedContext)
       }
       const classification = classifyTerminalIngress(probe.snapshot)
+      if (classification.kind === 'STOP_CANDIDATE') {
+        return stopCatalogTerminal(config,capturedContext,params.terminal,resolved,assertCurrent,onCancel,resolveOnly)
+      }
+      if (resolveOnly) { throw new TerminalDraftStoreError('TERMINAL_COMMIT_UNCERTAIN_RESOLVE_SAME_KEY') }
       if (!['CLEAR', 'CHAT_FRAGMENT', 'CHAT_SUBMIT'].includes(classification.kind)) {
         throw new TerminalDraftStoreError('TERMINAL_SEMANTIC_NOT_CONNECTED')
       }

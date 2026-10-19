@@ -1,3 +1,4 @@
+import type { ProviderCancelTarget, ProviderCancelResult } from '../providers/shared/contracts.ts'
 import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import { claudeResumeLaunch } from './native-session-checkpoint.ts'
 import type { Pool } from 'pg'
@@ -104,12 +105,23 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
       contextRevision: request.context.revision, contextHash: request.context.hash }, owner, undefined, commitGuard)
     return activeDriver.dispatch(request, effect.permit)
   }
+  async function cancel(context: GatewayContext, target: ProviderCancelTarget, claim: CommandClaim,
+    guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderCancelResult> {
+    const native = ready, active = driver, owner = readyProtection, controller = readyContext?.controller
+    if (!native || !active || !owner || !controller || !active.ownsReadyBinding(native) ||
+        context.runtimeUnitId !== native.runtimeUnitId || context.controller.scope !== controller.scope ||
+        context.controller.owner !== controller.owner || context.controller.term !== controller.term) { return deny('CANCEL_OWNER') }
+    const effect = createProviderEffectPermit(borrowed, context, { kind: 'CANCEL', binding: native,
+      commandClaim: claim, messageId: target.identity.messageId, deliveryAttemptId: target.identity.deliveryAttemptId,
+      nativeTurnId: target.providerRef.nativeTurnId }, owner, undefined, guard)
+    return active.cancel(target, claim, effect.permit)
+  }
   return Object.freeze({
     phase: () => phase,
     snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch, terminal: protection?.control()?.terminal,
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: protection?.control()?.terminal,
         refreshManagedAuth:()=>{const control=protection?.control();return control?authRefresh.refresh(control):Promise.resolve({state:'FAILED' as const,code:'REFRESH_UNCONFIRMED' as const})} }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }

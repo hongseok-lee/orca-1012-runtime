@@ -5,8 +5,8 @@ import type { InputAuthority } from './types.ts'
 import type { SessionFence } from '../../../shared/durable-runtime/identity.ts'
 import type { TerminalDraftBinding } from '../terminal/types.ts'
 import type { ManagedCatalogTargetPin } from '../terminal/catalog-target.ts'
-import type { GatewayContext, ExecutorId } from '../runtime/gateway/types.ts'
-import type { ReadyProviderBinding, ProviderDispatchRequest, ProviderDispatchResult } from '../providers/shared/contracts.ts'
+import type { GatewayContext, ExecutorId, CommandClaim } from '../runtime/gateway/types.ts'
+import type { ReadyProviderBinding, ProviderDispatchRequest, ProviderDispatchResult, ProviderCancelTarget, ProviderCancelResult } from '../providers/shared/contracts.ts'
 
 /** Issued only after the existing authenticated Terminal owner observes intake COMMIT.
  * A stored principal/receipt alone is not an authenticated intake producer. */
@@ -25,6 +25,9 @@ export type ReadyTerminalInputPort = Readonly<{
   terminal?: AgentTerminalControl['terminal']
   context: GatewayContext
   executorId: ExecutorId
+  cancelTarget?(deliveryAttemptId: string, nativeTurnId: string): ProviderCancelTarget | null
+  cancel?(context: GatewayContext, target: ProviderCancelTarget, claim: CommandClaim,
+    guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderCancelResult>
   dispatch(context: GatewayContext, request: ProviderDispatchRequest,
     guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult>
 }>

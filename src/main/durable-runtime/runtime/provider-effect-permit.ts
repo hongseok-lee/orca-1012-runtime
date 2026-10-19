@@ -1,3 +1,4 @@
+import { assertProviderCancelTarget } from './provider-cancel-target.ts'
 import { assertInitialWakeDeadline } from './initial-wake-deadline.ts'
 import { isDeepStrictEqual } from 'node:util'
 import path from 'node:path'
@@ -66,7 +67,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
   // Private SQL-only target guard owned by the authenticated intake adapter.
   // Capture before await; it neither replaces grants nor supplies an effect.
   const commitGuard = originalCommitGuard
-  if (identity.kind !== 'COLD' && identity.kind !== 'DISPATCH') { deny('PROVIDER_EFFECT_KIND') }
+  if (identity.kind !== 'COLD' && identity.kind !== 'DISPATCH' && identity.kind !== 'CANCEL') { deny('PROVIDER_EFFECT_KIND') }
   if (!Object.isFrozen(protectionOwner)) { deny('PROVIDER_PROTECTION_OWNER_REQUIRED') }
   const take = protectionOwner.takePreparedProtection, connect = pool.connect
   if (typeof take !== 'function' || typeof connect !== 'function') { deny('PROVIDER_PROTECTION_OWNER_REQUIRED') }
@@ -170,7 +171,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
         if (context.runtimeUnitId !== binding.runtimeUnitId || row.state !== 'EXECUTING' ||
             row.execution_token !== claim.executionToken || row.executor_id !== claim.executorId ||
             row.owner_controller_term !== context.controller.term || claim.controllerTerm !== context.controller.term ||
-            row.command_name !== (identity.kind === 'COLD' ? 'releaseGate' : 'dispatchInput')) { deny('PROVIDER_COMMAND_NOT_CURRENT') }
+            row.command_name !== (identity.kind === 'COLD' ? 'releaseGate' : identity.kind === 'CANCEL' ? 'cancel' : 'dispatchInput')) { deny('PROVIDER_COMMAND_NOT_CURRENT') }
         await gateway.assertExecutionTarget(claim.identity.originalEnvelope, false)
         if (identity.kind === 'COLD') {
           const gate = captureReleaseGateInput(row.input)
@@ -246,6 +247,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
           if (!entry || entry.evidence.evidenceRef !== stored.evidence_ref || !d || !directoryValid(d) ||
               !isDeepStrictEqual(d.candidate, entry.evidence.directory)) { deny('PROVIDER_DIRECTORY_PIN_REQUIRED') }
         }
+        if (identity.kind === 'CANCEL') { await assertProviderCancelTarget(tx, identity, row.input) }
         if (identity.kind === 'DISPATCH') {
           const delivery = await tx.query(
             `SELECT d.id FROM durable_runtime.delivery_attempts d JOIN durable_runtime.messages m ON m.id=d.message_id

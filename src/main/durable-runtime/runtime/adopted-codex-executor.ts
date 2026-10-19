@@ -1,3 +1,5 @@
+import type { CommandClaim } from './gateway/types.ts'
+import type { ProviderCancelTarget, ProviderCancelResult } from '../providers/shared/contracts.ts'
 import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
@@ -80,10 +82,21 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
     own.add(request.deliveryAttemptId)
     return activeDriver.dispatch(request, effect.permit)
   }
+  async function cancel(supplied: GatewayContext, target: ProviderCancelTarget, claim: CommandClaim,
+    guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderCancelResult> {
+    const native = ready, active = driver, adopted = control, owner = context?.controller
+    if (!native || !active || !adopted?.valid() || !owner || !active.ownsReadyBinding(native) ||
+        supplied.runtimeUnitId !== native.runtimeUnitId || supplied.controller.scope !== owner.scope ||
+        supplied.controller.owner !== owner.owner || supplied.controller.term !== owner.term) { return deny('CANCEL_OWNER') }
+    const effect = createAdoptedDispatchPermit(pool, supplied, { kind: 'CANCEL', binding: native,
+      commandClaim: claim, messageId: target.identity.messageId, deliveryAttemptId: target.identity.deliveryAttemptId,
+      nativeTurnId: target.providerRef.nativeTurnId }, adopted, guard)
+    return active.cancel(target, claim, effect.permit)
+  }
   return Object.freeze({
     phase: () => phase, authRefreshSnapshot:()=>authRefresh.snapshot(),
     current: () => ready && driver?.ownsReadyBinding(ready) && control?.valid() && context && workload
-      ? Object.freeze({ binding: ready, driver, context, executorId: selected.executorId, dispatch, terminal: control.terminal,
+      ? Object.freeze({ binding: ready, driver, context, executorId: selected.executorId, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: control.terminal,
         refreshManagedAuth:()=>authRefresh.refresh(control!),
         protection: Object.freeze({ takePreparedProtection: () => Object.freeze({ workloadIdentity: workload! }) }) }) : null,
     async adopt(controller: GatewayContext['controller']): Promise<void> {

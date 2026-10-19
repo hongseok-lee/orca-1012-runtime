@@ -10,7 +10,7 @@ import { CatalogReadError, type CapturedCatalogReadConfig } from './config.ts'
 import { resolveCatalogStructuredCancel } from './structured-cancel-resolution.ts'
 
 /** Independent handler only. Public registry wiring belongs to the designated owner. */
-export function createCatalogStructuredCancelRpc(input: CapturedCatalogReadConfig) {
+export function createCatalogStructuredCancelRpc(input: CapturedCatalogReadConfig, onCancel?: (sessionId: string) => void) {
   const owner = input.pool, connect = owner.connect.bind(owner), query = owner.query.bind(owner)
   const pool = new Proxy(owner, { get(target, key) {
     if (key === 'connect') { return connect }
@@ -48,6 +48,7 @@ export function createCatalogStructuredCancelRpc(input: CapturedCatalogReadConfi
     if (outcome.status === 'UNCERTAIN') {
       throw new CatalogReadError('STRUCTURED_CANCEL_COMMIT_UNCERTAIN_RESOLVE_SAME_KEY')
     }
+    try { onCancel?.(outcome.sessionId) } catch { /* committed intent survives notification failure */ }
     return outcome.wireResult
   }
 }

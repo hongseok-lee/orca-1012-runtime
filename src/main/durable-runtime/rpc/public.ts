@@ -40,10 +40,10 @@ export class DurableCatalogReadAdapter {
   private readonly terminalLease: ReturnType<typeof createCatalogTerminalLeaseSubscribe>
   private readonly rawSubscriptions = createTerminalRawSubscriptions()
   private disposed = false
-  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup}) {
+  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup; onCancelRequested?: (sessionId: string) => void}) {
     this.config = captureDurableCatalogReadConfig(config)
     const raw = this.rawSubscriptions
-    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted, raw)
+    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted, raw, options?.onCancelRequested)
     this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config, options?.terminalRuntime, raw)
     this.clipboardRpc = this.config.attachments === undefined ? null : createCatalogClipboardRpc(this.config, this.config.attachments)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
@@ -55,7 +55,7 @@ export class DurableCatalogReadAdapter {
     this.browserCreate = createCatalogBrowserCreateRpc(this.config)
     this.browserStream = createCatalogBrowserStreamRecovery(this.config, () => this.requireOpen())
     this.structuredSend = createCatalogStructuredSendRpc(this.config)
-    this.structuredCancel = createCatalogStructuredCancelRpc(this.config)
+    this.structuredCancel = createCatalogStructuredCancelRpc(this.config, options?.onCancelRequested)
     this.structuredHolds = createCatalogStructuredHolds(this.config)
   }
   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
