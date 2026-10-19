@@ -33,6 +33,29 @@ def substitute(text, values):
     return re.sub(r"\$\{([A-Z_][A-Z0-9_]*)\}", lambda match: values[match[1]], text)
 
 
+SAFE_TO_EVICT_FALSE = 'cluster-autoscaler.kubernetes.io/safe-to-evict: "false"'
+AUTOPILOT_SAFE_TO_EVICT_MIN_CPU_MILLI = 500
+
+
+def cpu_milli(value):
+    return int(value[:-1]) if value.endswith("m") else int(float(value) * 1000)
+
+
+def check_autoscaler_eviction(name, text):
+    """About one Pod runs per Autopilot node, so a scale-down only moves a live
+    Pod. A regular (on-demand) Pod of 500m CPU or more must opt out; Autopilot
+    rejects the opt-out on Spot Pods and below 500m."""
+    for doc in re.split(r"(?m)^---$", text):
+        if not re.search(r"(?m)^kind: (Deployment|StatefulSet|Pod)$", doc):
+            continue
+        spot = "cloud.google.com/gke-spot" in doc
+        pinned = SAFE_TO_EVICT_FALSE in doc
+        cpu = max((cpu_milli(v) for v in re.findall(r"(?m)^ +cpu: ([0-9.]+m?)\b", doc)), default=0)
+        eligible = not spot and cpu >= AUTOPILOT_SAFE_TO_EVICT_MIN_CPU_MILLI
+        if pinned != eligible:
+            raise ValueError(f"{name}: safe-to-evict=false is required exactly for non-Spot Pods of >=500m CPU.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--namespace", required=True, type=resource_name)
@@ -79,6 +102,7 @@ def main():
             continue
         text = nfs_text if source == nfs_template else source.read_text(encoding="utf-8")
         rendered = substitute(text, values)
+        check_autoscaler_eviction(source.name, rendered)
         target = private_output(args.output_dir / source.name.removesuffix(".in"), rendered)
         print(target.name)
 

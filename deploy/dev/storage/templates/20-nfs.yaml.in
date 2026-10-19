@@ -70,12 +70,16 @@ spec:
       annotations:
         orca.dev/exports-sha256: "${NFS_EXPORTS_SHA256}"
         orca.dev/managed-storage-sha256: "${MANAGED_STORAGE_SHA256}"
+        # The single NFS server holds every Agent leaf; node scale-down must not
+        # move it (each move broke in-flight leaf pins and binding checks).
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
       labels:
         app.kubernetes.io/name: orca-dev-nfs
         orca.dev/dataset: ${DATASET}
     spec:
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
+      # No Spot selector: Autopilot places this on regular (on-demand) capacity.
       nodeSelector:
         kubernetes.io/arch: amd64
       initContainers:
@@ -130,7 +134,7 @@ spec:
           protocol: TCP
         resources:
           requests:
-            cpu: 250m
+            cpu: 500m  # Autopilot minimum for safe-to-evict=false
             memory: 512Mi
             ephemeral-storage: 256Mi
           limits:

@@ -5,9 +5,19 @@ This directory reproduces the storage part of the root [foundation PR specificat
 | Role | Placement | CPU / memory requests | Ephemeral request / limit | Memory limit | Disk |
 | --- | --- | --- | --- | --- | --- |
 | PostgreSQL | Spot, required selector | 250m / 512Mi | 512Mi / 512Mi | 512Mi | 10Gi `pd-balanced`, Retain |
-| Userspace NFS | On-demand, observed on a non-Spot node | 250m / 512Mi | 256Mi / 256Mi | 512Mi | 50Gi `pd-ssd`, Retain |
+| Userspace NFS | On-demand, observed on a non-Spot node | 500m / 512Mi (Autopilot minimum for `safe-to-evict=false`) | 256Mi / 256Mi | 512Mi | 50Gi `pd-ssd`, Retain |
 
 Neither server specifies a CPU limit. PostgreSQL's StatefulSet keeps PVCs on deletion and scale-down. Both CSI StorageClasses use `WaitForFirstConsumer`, `ext4`, and `Retain`. The RWX PV refers to the NFS export; its 50Gi capacity does not allocate another disk. PGDATA and pg_wal use the PostgreSQL block filesystem, separate from Agent/dev homes.
+
+### Autoscaler scale-down (`safe-to-evict`)
+
+GKE Autopilot here runs about one Pod per node, so a cluster-autoscaler `ScaleDown` never packs anything: it only evicts a live Pod to another node. Before the opt-out the single NFS server was moved 20 times in 14 hours this way (none were Spot preemptions); each move broke in-flight leaf pins and binding checks, and every NFS client (backend, Expo, Agent Pods) is left with `Stale file handle` on its mounts because unfs3 file handles do not survive a server restart; those client Pods must be recreated. The rule, enforced by `tools/render_storage.py` on every rendered Pod template:
+
+- **Regular (on-demand) Pod with 500m CPU or more → `cluster-autoscaler.kubernetes.io/safe-to-evict: "false"`.** It is the dominant choice: there is nothing to consolidate, only a restart to avoid.
+- **Spot Pod → never.** Autopilot rejects the annotation together with the `gke-spot` toleration (`autopilot-scaledown-limitation`); Spot Pods (PostgreSQL, Agent Pods) move on preemption anyway. During development the backend and Expo Pods (`deploy/dev/backend`, `deploy/dev/expo`) also run on regular nodes with the opt-out.
+- **Below 500m → not allowed.** Autopilot rejects the annotation unless the containers' CPU request sum (or the largest init container) is at least 500m (`autopilot-pod-limit-constraints`), which is why NFS requests 500m.
+
+The fixed namespace profile guards (`…-v1-fixed`, `…-v1-pods`) pin the NFS ReplicaSet name and UID. Any NFS Pod template change creates a new ReplicaSet, so replace both policies with the new name/UID right after `kubectl apply`, or the new Pod is rejected and NFS stays down.
 
 The four foundation templates are Namespace/StorageClasses (`00`), PostgreSQL (`10`), NFS (`20`), and the static RWX PV/PVC (`30`). An optional NFS ingress policy (`25`) is described below. PostgreSQL uses the pinned official public image shown in its template. **`UNFS_IMAGE` is a required operator-selected `repository@sha256:<64 lowercase hex>` input.** Use the previously validated userspace unfs3 image with its longsocket fix and compatible `unfsd` command. This directory neither builds an image nor substitutes an unverified image.
 

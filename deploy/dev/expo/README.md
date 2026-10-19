@@ -2,7 +2,7 @@
 
 The public implementation pin is `f56d1a9a8e73d7e673b2a81bdb31edbfca2cba5e` (upstream `776e424e76405a06851dd9ec9ff3b58ffbdb3eea`). It includes the root-approved default timer receiver correction in `mobile/src/transport/rpc-session-liveness-watchdog.ts`. Injected timers, native feature behavior, timeout/retry policy and RPC contracts are preserved. Backend common patches belong to the backend role.
 
-`pod.yaml` pins official Linux amd64 Node 24.15.0 bookworm, non-slim, and Playwright 1.59.1 noble. The Spot Pod runs as UID/GID 1000:1000, with separate NFS role HOME/source subPaths and no fsGroup sweep. Total requests are 1 CPU, 4 GiB memory and 8 GiB ephemeral storage: Expo 750m/3 GiB/6 GiB and browser 250m/1 GiB/2 GiB. CPU and memory limits are absent. Review server dry-run and actual admission before creating; resource, security, placement or storage changes require root review.
+`pod.yaml` pins official Linux amd64 Node 24.15.0 bookworm, non-slim, and Playwright 1.59.1 noble. During development the Pod runs on a regular (on-demand) node with `cluster-autoscaler.kubernetes.io/safe-to-evict: "false"` (see `../storage/README.md`). It runs as UID/GID 1000:1000, with separate NFS role HOME/source subPaths and no fsGroup sweep. Total requests are 1 CPU, 4 GiB memory and 8 GiB ephemeral storage: Expo 750m/3 GiB/6 GiB and browser 250m/1 GiB/2 GiB. CPU and memory limits are absent. Review server dry-run and actual admission before creating; resource, security, placement or storage changes require root review.
 
 All application, dependency and browser execution runs in the remote dev Pod. Management-host operations only relay files and authorized kubectl traffic. No image, desktop or release build is required. Use the separate private kubeconfig and exact root-approved context on **every** command:
 
@@ -47,7 +47,7 @@ if (( ORCA_MIRROR_EXITS[0] != 0 || ORCA_MIRROR_EXITS[1] != 0 )); then
 fi
 ```
 
-`prepare-mirror.py` refuses an existing destination and unsafe paths/links. It independently verifies local SHA256, permissions and preserved hardlink/symlink layout against the server stream. The actual copy verified 108,104 entries; every copied link resolves inside `/tmp/orca-expo-local`, and lock/generated engine hashes match. Spot replacement loses the ephemeral copy: prepare it again from the preserved approved installed inputs without repeating install. Replace only a known stopped ephemeral copy, never the NFS originals.
+`prepare-mirror.py` refuses an existing destination and unsafe paths/links. It independently verifies local SHA256, permissions and preserved hardlink/symlink layout against the server stream. The actual copy verified 108,104 entries; every copied link resolves inside `/tmp/orca-expo-local`, and lock/generated engine hashes match. Any Pod replacement loses the ephemeral copy: prepare it again from the preserved approved installed inputs without repeating install. Replace only a known stopped ephemeral copy, never the NFS originals.
 
 ## CI dev server, approved sync and owned restart
 

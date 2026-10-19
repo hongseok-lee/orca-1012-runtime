@@ -12,18 +12,14 @@ metadata:
   annotations:
     orca.dev/upstream-source: 776e424e76405a06851dd9ec9ff3b58ffbdb3eea
     orca.dev/source-parent: cb7c83095e53f0ed8e04cc2e1fad38b4c9f498c3
+    # Development: regular node, never moved by autoscaler scale-down (needs >=500m CPU).
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
 spec:
   automountServiceAccountToken: false
   restartPolicy: Always
   terminationGracePeriodSeconds: 25
   nodeSelector:
     kubernetes.io/arch: amd64
-    cloud.google.com/gke-spot: 'true'
-  tolerations:
-  - key: cloud.google.com/gke-spot
-    operator: Equal
-    value: 'true'
-    effect: NoSchedule
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
