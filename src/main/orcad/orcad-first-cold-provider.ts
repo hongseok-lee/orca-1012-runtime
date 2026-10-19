@@ -16,6 +16,7 @@ import { captureInitialCodexNativePolicy } from '../durable-runtime/runtime/init
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { ControlledCreationWindow } from '../durable-runtime/runtime/controlled-creation-window.ts'
 import { createTerminalInputRuntime } from '../durable-runtime/input/runtime-input.ts'
+import { readPendingTerminalInputs } from '../durable-runtime/input/pending-terminal-input.ts'
 import { createTerminalCodexOutput } from '../durable-runtime/output/terminal-codex-output.ts'
 import { createAdoptedCodexExecutor } from '../durable-runtime/runtime/adopted-codex-executor.ts'
 import { createAgentCodexTransport } from '../durable-runtime/runtime/agent-codex-transport.ts'
@@ -177,7 +178,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         ...(claude ? { provider: 'claude' as const } : {}),
         journaledSequence: connectionId => output.journaledSequence(connectionId),
         sink: inputRuntime.observe, onNativeNotification: output.onNativeNotification,
-        onReady() { void output.drain().catch(() => { /* retained by the output owner */ }); inputRuntime.ready() },
+        onReady() {
+          void output.drain().catch(() => { /* retained by the output owner */ }); inputRuntime.ready()
+          // Input the lost owner accepted but never dispatched goes out now.
+          void readPendingTerminalInputs(pool, initial.sessionId).then(list => { for (const item of list) { inputRuntime.committed(item) } })
+            .catch(() => { inputError = 'PENDING_INPUT_READ' })
+        },
         async deployment(target) {
           // Only the protected root and checkout are used by an adopted control; nothing is prepared or copied.
           const paths: InitialProviderPaths = Object.freeze({ workspaceId: '', agentId: target.agentId, home: `/agent/home/${target.agentId}`,
