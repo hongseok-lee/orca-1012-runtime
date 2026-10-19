@@ -19,6 +19,7 @@ import { codexYolo } from './orcad-first-cold-provider.ts'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 import { logicalId } from '../../shared/durable-runtime/identity.ts'
+import type { UnitOwnership } from './orcad-unit-ownership.ts'
 
 const deny = (): never => invalidOrcadControllerConfig('CONTROLLER_ADOPTION_CONFIG')
 // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixed internal executor name for adopted dispatch commands.
@@ -33,10 +34,10 @@ type Entry = Readonly<{
 /** Takes over every READY Codex or Claude session whose Pod-local control host an earlier
  * backend process recorded, one owner per session. It never starts a Pod,
  * control, native process or cold attempt; a session whose host is gone stays
- * for orphan reconciliation. `owned` excludes a session another owner of this
- * process (the first-managed cold provider) already serves. */
+ * for orphan reconciliation. It adopts only after claiming the unit's attempt
+ * in this process's unit ownership (one owner per unit). */
 export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerConfig, ca: Uint8Array,
-  readSettings: () => InitialCodexNativeSettings, owned: (sessionId: string) => boolean) {
+  readSettings: () => InitialCodexNativeSettings, ownership: UnitOwnership) {
   const file = config.adoption?.configFile
   if (!file) { return null }
   const raw = agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8')),
@@ -105,19 +106,21 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
   }
 
   const adoptRuntimes: NonNullable<ControllerPassRequest['adoptRuntimes']> = async (signal, controller) => {
-    const found = await pool.query<{ session_id: string; provider: 'codex' | 'claude' }>(`SELECT h.session_id,h.provider FROM durable_runtime.agent_control_hosts h
+    const found = await pool.query<{ session_id: string; provider: 'codex' | 'claude'; unit_id: string; attempt_id: string }>(
+      `SELECT h.session_id,h.provider,a.runtime_unit_id AS unit_id,a.id AS attempt_id FROM durable_runtime.agent_control_hosts h
       JOIN durable_runtime.attempts a ON a.id=h.attempt_id JOIN durable_runtime.runtime_units u ON u.active_attempt_id=a.id
       JOIN durable_runtime.sessions s ON s.id=h.session_id
       WHERE h.provider IN ('codex','claude') AND h.control_sha256 IS NOT NULL AND a.status='READY' AND a.stopped_at IS NULL
       AND u.phase='READY' AND s.lifecycle='OPEN' ORDER BY h.recorded_at`)
     let adopted = 0
-    for (const { session_id: sessionId, provider } of found.rows) {
+    for (const { session_id: sessionId, provider, unit_id: unitId, attempt_id: attemptId } of found.rows) {
       if (signal.aborted) { break }
       const entry = entries.get(sessionId)
       // An adopted owner stays this session's owner: its in-flight deliveries and observations live in it.
-      if (owned(sessionId) || entry?.executor.current() || entry?.executor.phase() === 'READY') { continue }
+      if (entry?.executor.current() || entry?.executor.phase() === 'READY') { continue }
+      if (!(await ownership.claim(unitId, sessionId, 'adopted', { attemptId }))) { continue }
       if (entry) { entries.delete(sessionId); entry.input.dispose(); await entry.output.close().catch(() => undefined) }
-      if (await adoptSession(sessionId, provider, controller)) { adopted++ }
+      if (await adoptSession(sessionId, provider, controller)) { adopted++ } else { ownership.release(unitId, 'adopted') }
     }
     return adopted
   }

@@ -100,22 +100,25 @@ function capturePlan(original: unknown) {
     const dataset = agentPodText(labels.get('orca.dev/dataset'))
     // Reconstruction validates only the planner's fixed structure and internal
     // digest. Reconstructed policy is NOT authenticated external authority.
-    const planner = createAgentPodPlanner({ namespace: metadata.get('namespace'), dataset, image: container.get('image'),
+    const policy = { namespace: metadata.get('namespace'), dataset, image: container.get('image'),
       entrypoint,
       ...(spec.has('serviceAccountName') ? { runtimeAuthentication: { serviceAccountName: spec.get('serviceAccountName'), audience: 'orca-runtime-agent' } } : {}),
       paths: { home: envValue('HOME'), claudeState: envValue('CLAUDE_CONFIG_DIR'), codexState: envValue('CODEX_HOME'), checkout },
       nfsServer: protectedBindings[0].server, protectedExportRoot: `/exports/runtime-domains/${dataset}`,
       protectedMounts: protectedBindings.map(b => ({ key: b.key, clientPath: b.clientPath })),
-      shared: { claimName: shared.get('claimName'), claimUid: shared.get('claimUid'), pvUid: shared.get('pvUid'), serverPath: shared.get('serverPath') } })
-    const rebuilt = planner.plan({ identity: p.get('identity'),
+      shared: { claimName: shared.get('claimName'), claimUid: shared.get('claimUid'), pvUid: shared.get('pvUid'), serverPath: shared.get('serverPath') } }
+    const planner = createAgentPodPlanner(policy)
+    const request = { identity: p.get('identity'),
       protectedBindings: protectedBindings.map(b => ({ key: b.key, bindingId: b.bindingId, leafId: b.leafId,
         claimName: b.claimName, claimUid: b.claimUid, pvUid: b.pvUid, serverPath: b.serverPath, mode: b.mode })),
       profile: { revision: annotations.get('orca.dev/resource-profile-revision'), cpuMilli: quantity(requests.get('cpu'), 'm'),
         memoryMi: quantity(requests.get('memory'), 'Mi'), ephemeralMi: quantity(requests.get('ephemeral-storage'), 'Mi'),
-        temporaryMi: quantity(emptyDir.get('sizeLimit'), 'Mi') } })
+        temporaryMi: quantity(emptyDir.get('sizeLimit'), 'Mi') } }
+    const rebuilt = planner.plan(request)
     const plan = legacyClosedRead ? legacyClosedPlanForRead(rebuilt, checkout) : rebuilt
     if (canonicalInput(snapshot(plan)) !== encoded) { return invalid() }
-    return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset, legacyClosedRead })
+    return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset, legacyClosedRead,
+      source: Object.freeze({ policy, request }) })
   } catch { return invalid() }
 }
 
@@ -124,6 +127,14 @@ export function prepareAgentPodPlan(original: unknown): Readonly<{ plan: Unautho
   const captured = capturePlan(original)
   if (captured.legacyClosedRead) { return invalid() }
   return Object.freeze({ plan: captured.plan, planDigest: captured.planDigest })
+}
+
+/** The planner policy/request a recorded plan was built from, so a later wake
+ * of the same Unit plans its new attempt with the same Pod shape and bindings. */
+export function agentPodPlanSource(original: unknown): Readonly<{ policy: unknown; request: Record<string, unknown> }> {
+  const captured = capturePlan(original)
+  if (captured.legacyClosedRead) { return invalid() }
+  return captured.source
 }
 
 function projection(row: AgentPodPlanRow): AgentPodPlanRecord {

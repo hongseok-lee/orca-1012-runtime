@@ -94,8 +94,10 @@ export class ClaudeDurableProvider {
           this.#connectionLost()
         }
         const timer = setTimeout(() => fail('CLAUDE_NATIVE_IDENTITY_UNCONFIRMED'), readinessTimeoutMs)
+        // Init arrives only with a turn: a session named by this launch (its own
+        // --session-id, or the resumed one) is served once open answers initialize.
         const presetSession = request.native.kind === 'NEW' && typeof request.launch.options.sessionId === 'string'
-          ? request.launch.options.sessionId : null
+          ? request.launch.options.sessionId : request.native.kind === 'RESUME' ? request.native.providerRef.nativeSessionRef : null
         try {
           const opening = Promise.resolve().then(() => this.openTransport(request, {
             onMessage: (message) => {

@@ -85,6 +85,12 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
       if (value.terminal !== row.terminal_handle || !value.terminal) {throw new CatalogError('CATALOG_PAYLOAD')}
     } else {throw new CatalogError('CATALOG_PAYLOAD')}
     if (value.viewMode !== undefined && !['terminal', 'chat'].includes(String(value.viewMode))) {throw new CatalogError('CATALOG_PAYLOAD')}
+    // An Agent tab is addressed by its durable handle even before its first READY:
+    // input sent then is kept DURABLE and dispatched when the provider becomes READY.
+    if (row.terminal_native_chat_session === undefined && value.status === 'pending-handle' && row.terminal_handle &&
+        (value.launchAgent === 'codex' || value.launchAgent === 'claude')) {
+      return { ...value, status: 'ready', terminal: row.terminal_handle } as unknown as RuntimeMobileSessionClientTab
+    }
     if (row.terminal_native_chat_session !== undefined) {
       if (!isRuntimeTerminalNativeChatSession(row.terminal_native_chat_session) || !row.terminal_handle) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
       // A READY native session is addressed by its durable handle: clients take

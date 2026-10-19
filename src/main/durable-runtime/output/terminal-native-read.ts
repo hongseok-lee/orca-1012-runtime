@@ -90,7 +90,7 @@ export async function readManagedTerminalNativeChat(config: CapturedCatalogReadC
     const eligible = projected.messages.filter(item => item.offset < before), limit = params.limit ?? 40
     const page = eligible.slice(-limit)
     active()
-    return {kind: 'PAGE' as const, headKey, epoch, messages: page.map(item => item.message),
+    return {kind: 'PAGE' as const, sessionId, headKey, epoch, messages: page.map(item => item.message),
       hasMore: eligible.length > page.length, beforeOffset: page[0]?.offset ?? 0,
       ...(params.beforeOffset === undefined && projected.lifecycle ? {lifecycle: projected.lifecycle} : {})}
   })

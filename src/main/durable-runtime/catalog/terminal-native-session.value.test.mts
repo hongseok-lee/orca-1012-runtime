@@ -45,3 +45,13 @@ test('a READY native session is addressed by its durable handle; without one the
   assert.deepEqual({ ...parseCatalogTab(row) }, pending)
   assert.throws(() => parseCatalogTab({ ...row, terminal_handle: null, terminal_native_chat_session: identity } as never), /CATALOG_NATIVE_SESSION_REFERENCE/)
 })
+
+test('an Agent tab is addressed by its durable handle before its first READY; other tabs are unchanged', () => {
+  const pending = { type: 'terminal' as const, id: 'tab', title: 'Agent', isActive: true, parentTabId: 'tab', leafId: 'leaf',
+    status: 'pending-handle' as const, terminal: null, launchAgent: 'claude' }
+  const row = { public_tab_id: 'tab', payload: pending, terminal_handle: 'term_durable', kind: 'terminal' } as unknown as CatalogTab
+  assert.deepEqual({ ...parseCatalogTab(row) }, { ...pending, status: 'ready', terminal: 'term_durable' })
+  const { launchAgent: _agent, ...shell } = pending
+  assert.deepEqual({ ...parseCatalogTab({ ...row, payload: shell } as never) }, shell)
+})
+

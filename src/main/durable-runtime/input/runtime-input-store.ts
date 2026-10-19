@@ -96,19 +96,22 @@ export async function stageTerminalRuntimeInput(tx: DurableTransaction, input: C
   const pendingRevision = counter('message-revision', pending.revision)
   const operationId = logicalId('operation', randomUUID()), deliveryAttemptId = logicalId('delivery-attempt', randomUUID())
   const controller = ready.context.controller
-  const inserted = await tx.query(`INSERT INTO durable_runtime.operations
+  // The unit may have been fenced and woken again since this input was accepted
+  // (its intent advanced); the input still goes to the current READY attempt
+  // as long as the unit runs. A reset Session is refused by its session fence.
+  const inserted = await tx.query<{ intent_revision: string }>(`INSERT INTO durable_runtime.operations
     (id,runtime_unit_id,kind,intent_revision,controller_scope,controller_term,step,step_revision,expected_pod_uid,execution_epoch)
     SELECT $4,$5,'INPUT_DELIVERY',u.intent_revision,$1,$3,'INPUT',0,$6,$7 FROM durable_runtime.runtime_units u
     JOIN durable_runtime.operations original ON original.id=$8 AND original.runtime_unit_id=u.id
-    WHERE u.id=$5 AND u.intent_revision=$9 AND u.execution_epoch=$7 AND u.active_attempt_id=$10
-      AND original.controller_scope=$1 AND original.controller_term=$3 AND ${currentAuthoritySql} RETURNING id`,
+    WHERE u.id=$5 AND u.intent_revision>=$9 AND u.desired_mode='RUNNING' AND u.execution_epoch=$7 AND u.active_attempt_id=$10
+      AND original.controller_scope=$1 AND original.controller_term=$3 AND ${currentAuthoritySql} RETURNING intent_revision::text`,
   [controller.scope, controller.owner, controller.term, operationId, target.runtimeUnitId, binding.podUid,
     binding.executionEpoch, ready.context.operationId, target.intentRevision, binding.attemptId])
   if (inserted.rowCount !== 1) { throw new InputStoreError('TERMINAL_RUNTIME_OWNER_STALE') }
   const context: GatewayContext = Object.freeze({runtimeUnitId: target.runtimeUnitId, operationId, controller})
   const envelope: CommandEnvelope = Object.freeze({operationId, controllerTerm: controller.term,
     stepRevision: counter('step-revision', '0'), executionEpoch: binding.executionEpoch,
-    intentRevision: target.intentRevision, podTarget: 'EXISTING_POD', expectedPodUid: binding.podUid})
+    intentRevision: counter('intent-revision', inserted.rows[0].intent_revision), podTarget: 'EXISTING_POD', expectedPodUid: binding.podUid})
   const sealed = await sealInputMessageInTransaction(tx, {authority: input.authority,
     messageId: target.messageId, expectedRevision: pendingRevision})
   const stage = command(envelope, 'stageInput', {messageId: target.messageId, sealedRevision: sealed.sealedRevision,

@@ -22,8 +22,7 @@ export async function assertManagedCatalogTarget(
     JOIN durable_runtime.agents g ON g.id=s.agent_id
     WHERE t.id=$1 AND t.session_id=$2 AND t.terminal_handle=$3
       AND t.revision=$4 AND m.binding_revision=$5 AND m.payload=$6::jsonb
-      AND g.provider=$7 AND g.provider IN ('claude','codex')
-      AND m.payload->>'viewMode'='chat' AND t.lifecycle='OPEN'
+      AND g.provider=$7 AND g.provider IN ('claude','codex') AND t.lifecycle='OPEN'
     FOR SHARE OF t,m,g`, [pin.tabId, binding.sessionId, binding.logicalHandle,
     pin.tabRevision, pin.bindingRevision, pin.payload, pin.provider])
   if (found.rows.length !== 1) { throw new TerminalDraftStoreError('TERMINAL_CATALOG_TARGET_CHANGED') }

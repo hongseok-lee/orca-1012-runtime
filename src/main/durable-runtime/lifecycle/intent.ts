@@ -51,7 +51,8 @@ async function selectIntentOperation(
   }
   const blocker = await tx.query<LifecycleOperation>(`SELECT o.* FROM durable_runtime.runtime_commands c
     JOIN durable_runtime.operations o ON o.id=c.operation_id AND o.runtime_unit_id=c.runtime_unit_id
-    WHERE c.runtime_unit_id=$1 AND c.state IN ('ACCEPTED','EXECUTING','UNKNOWN')`, [unit.id])
+    WHERE c.runtime_unit_id=$1 AND c.state IN ('ACCEPTED','EXECUTING','UNKNOWN')
+    AND o.kind IN ('WAKE','SLEEP','DELETE')`, [unit.id])
   if (blocker.rows[0]) {
     return { operation: blocker.rows[0], blocked: true }
   }
@@ -66,8 +67,9 @@ async function selectIntentOperation(
     return { operation: existing.rows[0], blocked: false }
   }
   // A previously started unresolved operation is not bypassed by a new name.
+  // Input deliveries are not lifecycle operations and never hold a wake back.
   const started = await tx.query<LifecycleOperation>(`SELECT * FROM durable_runtime.operations
-    WHERE runtime_unit_id=$1 AND result IS NULL AND step<>'INTENT_QUEUED' ORDER BY id`, [unit.id])
+    WHERE runtime_unit_id=$1 AND result IS NULL AND step<>'INTENT_QUEUED' AND kind IN ('WAKE','SLEEP','DELETE') ORDER BY id`, [unit.id])
   if (started.rows[0]) {
     return { operation: started.rows[0], blocked: true }
   }

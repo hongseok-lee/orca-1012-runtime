@@ -115,10 +115,13 @@ async function validated(tx: DurableTransaction, captured: Captured, query: Dura
     "SELECT * FROM durable_runtime.operations WHERE id=$1 AND runtime_unit_id=$2", [id.operationId, id.unitId])).rows[0];
   function scope(e: InitialAgentOriginalExecution["identity"]["originalEnvelope"]): void {
     if (id.executionEpoch !== e.executionEpoch || id.intentRevision !== e.intentRevision) { return deny("PLAN"); }
-    if (!unit || !operation || unit.dataset_name !== dataset || unit.desired_mode !== "RUNNING" || unit.active_attempt_id !== id.attemptId ||
-        unit.execution_epoch !== id.executionEpoch || unit.intent_revision !== id.intentRevision || operation.kind !== "WAKE" || operation.result !== null ||
-        operation.execution_epoch !== id.executionEpoch || operation.intent_revision !== id.intentRevision || operation.controller_term !== context.controller.term ||
-        operation.step_revision !== e.stepRevision || operation.expected_pod_uid !== null || operation.external_resource_name !== id.resourceName) { return deny("STALE"); }
+    if (!unit || !operation || unit.dataset_name !== dataset || unit.desired_mode !== "RUNNING") { return deny("STALE"); }
+    if (unit.active_attempt_id !== id.attemptId) { return deny("STALE_ATTEMPT"); }
+    if (unit.execution_epoch !== id.executionEpoch || unit.intent_revision !== id.intentRevision) { return deny("STALE_UNIT"); }
+    if (operation.kind !== "WAKE" || operation.result !== null || operation.execution_epoch !== id.executionEpoch ||
+        operation.intent_revision !== id.intentRevision || operation.controller_term !== context.controller.term) { return deny("STALE_OPERATION"); }
+    if (operation.step_revision !== e.stepRevision) { return deny("STALE_STEP"); }
+    if (operation.expected_pod_uid !== null || operation.external_resource_name !== id.resourceName) { return deny("STALE_TARGET"); }
   }
   if (captured.kind === "CLAIM") { scope(captured.claim.identity.originalEnvelope); }
   const command = (await query<CommandRow>(`SELECT * FROM durable_runtime.runtime_commands
@@ -179,12 +182,12 @@ async function validated(tx: DurableTransaction, captured: Captured, query: Dura
     if (!found || found.aggregate_id !== id.unitId || found.aggregate_kind !== "runtime-unit" || found.revision !== revision || !equal(found.event, event)) { return deny("PARTIAL_RECORD"); }
   }
   await outbox(reservationId, reservedRevision, reservationEvent);
-  const attempts = (await query<AttemptRow>("SELECT * FROM durable_runtime.attempts WHERE runtime_unit_id=$1", [id.unitId])).rows;
+  const attempts = (await query<AttemptRow>("SELECT * FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND stopped_at IS NULL", [id.unitId])).rows;
   const attempt = attempts[0];
   if (attempts.length !== 1 || !attempt || attempt.id !== id.attemptId || attempt.mode !== "COLD" || attempt.execution_epoch !== id.executionEpoch ||
       attempt.resource_profile_revision !== profileRevision || attempt.incarnation !== null || attempt.ready_at !== null || attempt.started_at !== null || attempt.stopped_at !== null) { return deny("ATTEMPT"); }
   const executions = (await query<{ id: string; attempt_id: string; execution_epoch: string; state: string; revision: string }>(
-    "SELECT * FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1", [id.unitId])).rows;
+    "SELECT * FROM durable_runtime.execution_grants WHERE runtime_unit_id=$1 AND state<>'REVOKED'", [id.unitId])).rows;
   const grant = executions[0];
   if (executions.length !== 1 || !grant || grant.id !== executionGrantId || grant.attempt_id !== id.attemptId ||
       grant.execution_epoch !== id.executionEpoch || grant.state !== "RESERVED" || grant.revision !== "0") { return deny("GRANTS"); }

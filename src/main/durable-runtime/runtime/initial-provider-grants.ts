@@ -109,9 +109,9 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
       deny('INITIAL_PROVIDER_RESERVATION_STALE')
     }
     // This specialization never revives or replaces another execution/writer.
-    if ((await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2',
+    if ((await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2 AND stopped_at IS NULL',
       [input.context.runtimeUnitId, target.attemptId])).rowCount || (await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
-      JOIN durable_runtime.storage_bindings b ON b.id=g.storage_binding_id WHERE g.attempt_id<>$4
+      JOIN durable_runtime.storage_bindings b ON b.id=g.storage_binding_id WHERE g.attempt_id<>$4 AND g.state<>'REVOKED'
       AND b.backend_id=$1 AND b.export_id=$2 AND (b.canonical_directory=$3 OR b.canonical_directory='/' OR $3='/'
       OR left(b.canonical_directory,length($3)+1)=$3||'/' OR left($3,length(b.canonical_directory)+1)=b.canonical_directory||'/')`,
     [binding.backend_id, binding.export_id, binding.canonical_directory, target.attemptId])).rowCount) { deny('INITIAL_PROVIDER_OLD_WRITER') }
@@ -137,8 +137,9 @@ export async function activateInitialProviderGrants(pool: Pool, original: Readon
     if (observed.status !== 'APPLIED') { deny('INITIAL_PROVIDER_MOUNT_NOT_ACTIVE') }
     const providerBinding = await tx.query<{ provider_binding_revision: string }>(`UPDATE durable_runtime.sessions
       SET provider_binding_revision=provider_binding_revision+1,revision=revision+1
-      WHERE id=$4 AND lifecycle='OPEN' AND provider_binding_revision=0 AND ${currentAuthoritySql}
+      WHERE id=$4 AND lifecycle='OPEN' AND ${currentAuthoritySql}
       RETURNING provider_binding_revision`, [...auth, input.sessionId])
+    // Each new attempt's provider binding gets the next revision (first wake: 1); an earlier one's READY no longer matches.
     if (providerBinding.rowCount !== 1) { deny('INITIAL_PROVIDER_BINDING_NOT_FRESH') }
     await write(`UPDATE durable_runtime.runtime_units SET phase='REHYDRATING',revision=revision+1
       WHERE id=$4 AND revision=$5 AND phase='PROVISIONING' AND ${currentAuthoritySql} RETURNING id`,

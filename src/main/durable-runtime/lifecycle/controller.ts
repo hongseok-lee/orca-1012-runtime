@@ -72,10 +72,9 @@ export async function prepareReconcileStep(pool: Pool, caller: ReconcileStepRequ
     }
     if (request.step === 'ENSURE_ATTEMPT') {
       if (unit.desired_mode !== 'RUNNING') { throw new DurableDatabaseError('LIFECYCLE_STEP_STALE') }
-      // Absence/STOPPED/status strings are not permanent compute-stop proof.
-      // No G04 verifier is supplied, so any earlier attempt keeps new writer
-      // admission BLOCKED. Never reset epoch/grants or infer safe replacement.
-      const prior = await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1', [context.runtimeUnitId])
+      // An earlier attempt blocks a new writer until orphan reconciliation has
+      // observed its Pod absent and stopped it (grants revoked, epoch fenced).
+      const prior = await tx.query('SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND stopped_at IS NULL', [context.runtimeUnitId])
       const grants = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
         WHERE g.state<>'REVOKED' AND EXISTS(SELECT 1 FROM durable_runtime.runtime_member_storage_bindings m
           WHERE m.storage_binding_id=g.storage_binding_id AND m.runtime_unit_id=$1)`, [context.runtimeUnitId])
@@ -160,8 +159,11 @@ async function lockedReconcileState(tx: DurableTransaction, request: InitialWake
   let operation = (await tx.query<LifecycleOperation>('SELECT * FROM durable_runtime.operations WHERE id=$1', [context.operationId])).rows[0]
   const clock = (await tx.query<{ now: Date }>('SELECT clock_timestamp() AS now')).rows[0].now
   if (mode === 'STEP') { operation = await adoptOperation(tx, request, operation, clock) }
+  // Same rule as the one-unresolved-command index: an UNKNOWN input dispatch is
+  // kept history (R03) and never holds the Unit's lifecycle step.
   const pending = await tx.query<CommandRow>(`SELECT * FROM durable_runtime.runtime_commands
-    WHERE runtime_unit_id=$1 AND state IN ('ACCEPTED','EXECUTING','UNKNOWN')`, [context.runtimeUnitId])
+    WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))`,
+  [context.runtimeUnitId])
   if (pending.rows[0]) {
     const command = pending.rows[0]
     if (mode === 'STEP' && command.operation_id === operation.id) { await takeOverCommand(authority, originalIdentity(command)) }

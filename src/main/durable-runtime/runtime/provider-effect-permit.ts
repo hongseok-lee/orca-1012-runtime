@@ -177,12 +177,14 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
           if (!gate.coldStart) { deny('PROVIDER_MANIFEST_GATE_UNCONNECTED') }
           if (gate.coldStart) {
             const plan = await readAgentPodPlan(tx, context.operationId)
-            if (!coldPolicy || coldPolicy.request.native.kind !== 'NEW' || !plan ||
+            // NEW starts the Session's first native session; RESUME continues it in a later wake.
+            const resumed = coldPolicy?.request.native.kind === 'RESUME'
+            if (!coldPolicy || !['NEW', 'RESUME'].includes(coldPolicy.request.native.kind) || !plan ||
                 plan.planDigest !== gate.coldStart.planDigest || plan.plan.identity.attemptId !== binding.attemptId ||
                 plan.plan.identity.unitId !== binding.runtimeUnitId || plan.plan.identity.executionEpoch !== binding.executionEpoch) {
               deny('PROVIDER_NEW_GATE_PLAN')
             }
-            const history = await tx.query(`SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2
+            const history = resumed ? { rowCount: 0 } : await tx.query(`SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2
               UNION ALL SELECT id FROM durable_runtime.provider_context_deliveries WHERE session_id=$3
               UNION ALL SELECT id FROM durable_runtime.delivery_attempts WHERE session_id=$3
                 AND (provider_ref IS NOT NULL OR state IN ('EFFECT_POSSIBLE','ADMITTED','SETTLED','UNKNOWN','INTERRUPTED'))
@@ -194,7 +196,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
               JOIN durable_runtime.storage_bindings old ON old.id=g.storage_binding_id
               JOIN durable_runtime.runtime_member_storage_bindings member ON member.runtime_unit_id=$1 AND member.session_id=$2
               JOIN durable_runtime.storage_bindings current ON current.id=member.storage_binding_id
-              WHERE g.attempt_id<>$3 AND old.backend_id=current.backend_id AND old.export_id=current.export_id
+              WHERE g.attempt_id<>$3 AND g.state<>'REVOKED' AND old.backend_id=current.backend_id AND old.export_id=current.export_id
               AND (old.canonical_directory=current.canonical_directory OR old.canonical_directory='/' OR current.canonical_directory='/'
                 OR left(old.canonical_directory,length(current.canonical_directory)+1)=current.canonical_directory||'/'
                 OR left(current.canonical_directory,length(old.canonical_directory)+1)=old.canonical_directory||'/')`,
