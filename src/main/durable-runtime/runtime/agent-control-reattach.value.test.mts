@@ -20,7 +20,7 @@ test('HELLO must name the protected root and bind challenge of the policy', () =
 })
 
 test('ATTACHED is accepted only for the same control process and protected root', () => {
-  assert.deepEqual(checkAttached(attached(), expected), { outcome: 'VERIFY', podBearer: token, nextRequestId: 9 })
+  assert.deepEqual(checkAttached(attached(), expected), { outcome: 'VERIFY', podBearer: token, nextRequestId: 9, gap:null })
   // A different process at the same controlId, or a different root, is never adopted.
   assert.equal(checkAttached(attached({}, { pid: 26 }), expected).outcome, 'FINAL')
   assert.equal(checkAttached(attached({}, { startTicks: '1' }), expected).outcome, 'FINAL')
@@ -72,4 +72,11 @@ test('attemptAttach maps the exec answer: 404 is final, other HTTP failures retr
   assert.deepEqual(await run(({ unexpected }) => unexpected(503)), { value: 'RETRY', terminated: 1 })
   assert.deepEqual(await run(({ firstFrame }) => { void firstFrame?.({ event: 'ATTACHED' }) }), { value: 'ATTACHED', terminated: 0 })
   assert.deepEqual(await run(({ firstFrame }) => { void firstFrame?.({}) }, 'FINAL'), { value: 'FINAL', terminated: 1 })
+})
+
+test('gap quarantine authenticates identity but does not certify replay completeness',()=>{
+  const gap={from:3,to:9}
+  assert.deepEqual(checkAttached(attached({gap}),{...expected,allowGap:true}),{outcome:'VERIFY',podBearer:token,nextRequestId:9,gap})
+  assert.equal(checkAttached(attached({gap}),{...expected,allowGap:true,pid:999}).outcome,'FINAL')
+  assert.equal(checkAttached(attached({gap:{from:9,to:3}}),{...expected,allowGap:true}).outcome,'FINAL')
 })

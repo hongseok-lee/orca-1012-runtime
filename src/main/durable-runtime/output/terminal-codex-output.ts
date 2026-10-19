@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import { constants, closeSync, fsyncSync, openSync, readFileSync, lstatSync, fstatSync, writeSync } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -139,7 +140,7 @@ export function createTerminalCodexOutput(input: Readonly<{
       const captured = captureCatalogJson(event) as unknown as CodexNativeNotification
       const id = key(captured), prior = records.get(id)
       if (prior) {
-        if (JSON.stringify(prior.notification) !== JSON.stringify(captured)) { deny('SOURCE_CONFLICT') }
+        if (!isDeepStrictEqual(captureCatalogJson({...prior.notification,observedAt:null}),captureCatalogJson({...captured,observedAt:null}))) { deny('SOURCE_CONFLICT') }
       } else {
         const record = Object.freeze({eventId: randomUUID(), notification: captured})
         try { append(captureCatalogJson({record})); records.set(id, record) }

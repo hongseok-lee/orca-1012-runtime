@@ -1,3 +1,5 @@
+import { agentControlReaders } from './agent-control-readers.ts'
+import { AgentControlFrameCursor } from './agent-control-frame-cursor.ts'
 import { claudeResumeLaunch, type NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import { isDeepStrictEqual } from 'node:util'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../codex/codex-app-server-connection-types.ts'
@@ -8,6 +10,7 @@ import type { ManagedLeafSocket } from '../storage/managed-leaf-collector-types.
 import type { AgentCodexControlPolicy } from './agent-codex-control.ts'
 import { attemptAttach, checkAttached, checkHello, createExecChannelDecoder, openAgentControlExec, reattachWithin } from './agent-control-reattach.ts'
 import type { AttachOutcome } from './agent-control-reattach.ts'
+import type { ControlJournal } from './agent-control-journal.ts'
 import { supplyNativeAndCold } from './agent-control-native-supply.ts'
 
 const fail = (): Error => new Error('AGENT_CODEX_CONTROL_UNCONFIRMED')
@@ -19,6 +22,7 @@ export type AgentControlSessionEnvironment = Readonly<{
   reviewer(signal: AbortSignal): string | Promise<string>
   authenticate(input: Readonly<{ podBearer: string; expected: KubernetesPodAuthExpected }>, signal: AbortSignal): Promise<AuthenticatedPodObservation>
   onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
+  journal?: ControlJournal
   controllerTerm(): number
 }>
 export type AuthenticatedAgentControl = Readonly<{
@@ -62,7 +66,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
   let nextId = 1, stopAcknowledged = false
   // A host-capable control tags every frame with hostSeq; an older control
   // without the Pod-local host keeps the original loss rule.
-  let hostCapable = false, lastSeq = 0, sinceAck = 0, reconnecting = false
+  let hostCapable = false, sinceAck = 0, reconnecting = false
+  const cursor=new AgentControlFrameCursor(env.journal,config.policy.provider!=='claude')
   let identity: AgentControlIdentity | undefined, pod: AuthenticatedPodObservation | undefined
   let attachWait: ((record: Record<string, unknown>) => Promise<void>) | null = null
   let attachSettle: ((outcome: AttachOutcome) => void) | null = null
@@ -128,10 +133,10 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     return closing
   }
   const valid = (): boolean => !lost && !closing && (!socketClosed || reconnecting)
-  const frameSequence = (): number => lastSeq
+  const frameSequence = (): number => cursor.sequence
   const connection: CodexAppServerConnection = Object.freeze({
     get pid() { return nativePid }, get closed() { return lost || socketClosed && !reconnecting },
-    request: (method, params, options) => request(method, params, options?.timeoutMs),
+    request: (method,params,options)=>cursor.request(controlId,method,params,pending.size,p=>request(method,p,options?.timeoutMs)),
     // The existing Agent-side connection owns initialization/reply
     // channels. No public method or response can create another process.
     notify() {}, respond() {}, respondWithError() {}, close,
@@ -148,22 +153,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
-      async readNativeSession() {
-        if(openedNative || lost || socketClosed || closing) {throw fail()}
-        const value=await request('NATIVE_STATE')
-        if(!value || typeof value!=='object') {throw fail()}
-        const state=Reflect.get(value,'state')
-        if(state==='NONE' || state==='UNKNOWN') {nativeCheckpoint={state};return nativeCheckpoint}
-        if(state!=='FOUND' || Reflect.get(value,'provider')!==(config.policy.provider??'codex') || typeof Reflect.get(value,'nativeSessionRef')!=='string') {throw fail()}
-        nativeCheckpoint={state:'FOUND',provider:Reflect.get(value,'provider'),nativeSessionRef:Reflect.get(value,'nativeSessionRef')}
-        return nativeCheckpoint
-      },
-      async readMountProbe() {
-        if (openedNative || lost || socketClosed || closing) { throw fail() }
-        const observed = await request('MOUNT_PROBE')
-        if (!observed || typeof observed !== 'object' || typeof Reflect.get(observed, 'output') !== 'string') { throw fail() }
-        return Reflect.get(observed, 'output')
-      },
+      ...agentControlReaders(request,()=>!openedNative && !lost && !socketClosed && !closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value}),
       transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
         const expectedLaunch=config.policy.provider==='claude' && nativeCheckpoint?.state==='FOUND' ? claudeResumeLaunch(config.policy.launch,nativeCheckpoint.nativeSessionRef) : config.policy.launch
         if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, expectedLaunch)) { throw fail() }
@@ -182,11 +172,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     const record = value as Record<string, unknown>
     if (attachWait) { const wait = attachWait; attachWait = null; await wait(record); return }
     if (record.hostSeq !== undefined) {
-      if (!Number.isSafeInteger(record.hostSeq) || Number(record.hostSeq) < 1) { throw fail() }
-      // Replay after re-attach can overlap what this owner already applied.
-      if (Number(record.hostSeq) <= lastSeq) { return }
+      if(!cursor.accept(record.hostSeq)) {return}
       hostCapable = true
-      lastSeq = Number(record.hostSeq)
       delete record.hostSeq
     }
     if (record.event === 'HELLO') { await hello(record); return }
@@ -197,7 +184,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     }
     if (record.event === 'NATIVE_EXIT') {
       if(!pod || !identity || !hostCapable || record.controlId!==controlId) {throw fail()}
-      await env.onProviderChildExit?.({controlId,hostSeq:lastSeq})
+      await env.onProviderChildExit?.({controlId,hostSeq:cursor.sequence})
       failure('PROVIDER_CHILD_EXIT'); return
     }
     if(record.event==='NATIVE_UNAVAILABLE') {failure('PROVIDER_TRANSPORT_FAULT');return}
@@ -216,9 +203,9 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
   }
   /** Only after the frame's effect (e.g. the output spool append) has run. */
   function acknowledge(): void {
-    if (hostCapable && ++sinceAck >= 64 && handshake && !socketClosed && !reconnecting) {
+    if (env.journal && cursor.gapThrough===null && hostCapable && ++sinceAck >= 64 && handshake && !socketClosed && !reconnecting) {
       sinceAck = 0
-      try { write({ hostAck: lastSeq }) } catch { /* the next frame acknowledges */ }
+      try { write({ hostAck: cursor.durable }) } catch { /* the next frame acknowledges */ }
     }
   }
   let delivery = Promise.resolve()
@@ -240,7 +227,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     socket = target; handshake = false; socketClosed = false
     channel = createExecChannelDecoder(line => {
       const parsed: unknown = JSON.parse(line)
-      delivery = delivery.then(() => frame(parsed)).then(acknowledge).catch(() => { failure('FRAME') })
+      delivery=delivery.then(()=>cursor.deliver(()=>controlId,parsed,frame)).then(acknowledge).catch(()=>failure('FRAME'))
     })
     target.on('error', () => { if (target === socket && !transferred) { failure() } })
     target.on('message', (raw: unknown, binary: boolean) => {
@@ -266,16 +253,19 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     terminate: () => socket?.terminate(),
     async verify(record, signal) {
       if (!identity) { return 'FINAL' }
-      const check = checkAttached(record, { ...identity, bindChallenge: challenge, protectedRoot: config.policy.protectedRoot })
+      const check = checkAttached(record, { ...identity, bindChallenge: challenge, protectedRoot: config.policy.protectedRoot, allowGap: !!env.journal && config.policy.provider!=='claude' && pending.size===0 })
       if (check.outcome !== 'VERIFY') { return check.outcome }
       const observed = await env.authenticate({ podBearer: check.podBearer, expected: config.expected }, signal)
       if (observed.pod.uid !== config.expected.podUid) { return 'FINAL' }
       pod = observed
+      if(check.gap) {
+        cursor.quarantine(check.gap)
+      }
       if (check.nextRequestId !== null && check.nextRequestId > nextId) { nextId = check.nextRequestId }
       return 'ATTACHED'
     },
     open: (bearer, unexpected) => openSocket(bearer, () => {
-      if (socket) { rawWrite(socket, encode({ method: 'ATTACH', controlId, term: env.controllerTerm(), lastSeq })) }
+      if (socket) { rawWrite(socket, encode({ method: 'ATTACH', controlId, term: env.controllerTerm(), lastSeq:env.journal?cursor.resume():cursor.sequence })) }
     }, unexpected),
   })
   async function reconnect(): Promise<void> {
@@ -288,7 +278,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       loss = null
       for (const bytes of queued.splice(0)) { rawWrite(socket, bytes) }
       sinceAck = 0
-      try { write({ hostAck: lastSeq }) } catch { /* the next frame acknowledges */ }
+      if(env.journal && cursor.gapThrough===null) {try { write({ hostAck: cursor.durable }) } catch { /* the next frame acknowledges */ }}
       start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close })); start = null
       return
     }
@@ -314,17 +304,20 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       })
     },
     /** Re-attaches to the control recorded by the earlier owner, replaying
-     * frames after lastSeq into the supplied handlers before any live frame. */
+     * frames after cursor.sequence into the supplied handlers before any live frame. */
     adopt(recorded: AgentControlIdentity, journaledSeq: number,
       supplied: CodexAppServerConnectionHandlers): Readonly<{ frameSequence(): number; ready: Promise<AdoptedAgentControl> }> {
       if (used || !Number.isSafeInteger(journaledSeq) || journaledSeq < 0) { return Object.freeze({ frameSequence, ready: Promise.reject(fail()) }) }
       used = true; challenge = null
-      identity = Object.freeze({ ...recorded }); controlId = recorded.controlId; lastSeq = journaledSeq
+      identity = Object.freeze({ ...recorded }); controlId = recorded.controlId; cursor.sequence = journaledSeq
       hostCapable = true; transferred = true; openedNative = true; handlers = { ...supplied }
       const ready = new Promise<AdoptedAgentControl>((resolve, reject) => {
         start = { resolve: value => resolve(value as AdoptedAgentControl), reject }
         socketClosed = true
-        void reconnect()
+        void (async()=>{
+          await cursor.restore(controlId,journaledSeq,item=>handlers.onNotification?.(String(item.method),item.params))
+          await reconnect()
+        })().catch(()=>failure('JOURNAL'))
       })
       // Replayed frames reach the handlers before ready settles; they need the sequence now.
       return Object.freeze({ frameSequence, ready })

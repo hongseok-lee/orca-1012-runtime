@@ -62,16 +62,20 @@ export function createExecChannelDecoder(line: (text: string) => void) {
 export type AttachedExpectation = Readonly<{
   controlId: string; pid: number; startTicks: string; device: string; inode: string; protectedRoot: string
   /** The nonce this owner sent on INITIALIZE; null when adopting a control another owner created. */
+  allowGap?: boolean
   bindChallenge: string | null
 }>
-export type AttachedCheck = Readonly<{ outcome: 'FINAL' } | { outcome: 'RETRY' } | { outcome: 'VERIFY'; podBearer: string; nextRequestId: number | null }>
+export type AttachedCheck = Readonly<{ outcome: 'FINAL' } | { outcome: 'RETRY' } | { outcome: 'VERIFY'; podBearer: string; nextRequestId: number | null; gap: {from:number;to:number}|null }>
 /** First frame of a re-attach. The host must answer for the very same control
  * process and protected root this owner authenticated originally. A refusal
  * from the same-Pod host (gone, newer term, other control) is final. */
 export function checkAttached(record: Readonly<Record<string, unknown>>, expected: AttachedExpectation): AttachedCheck {
   if (record.event === 'HOST_REJECTED') { return { outcome: 'FINAL' } }
+  const rawGap=record.gap
+  const gap=rawGap && typeof rawGap==='object' && Number.isSafeInteger(Reflect.get(rawGap,'from')) && Number.isSafeInteger(Reflect.get(rawGap,'to')) && Reflect.get(rawGap,'from')>0 && Reflect.get(rawGap,'to')>=Reflect.get(rawGap,'from')
+    ? {from:Number(Reflect.get(rawGap,'from')),to:Number(Reflect.get(rawGap,'to'))}:null
   const hello = record.hello, root = hello && typeof hello === 'object' ? Reflect.get(hello, 'root') : null
-  if (record.event !== 'ATTACHED' || record.controlId !== expected.controlId || record.gap !== null ||
+  if (record.event !== 'ATTACHED' || record.controlId !== expected.controlId || record.gap !== null && (!expected.allowGap || !gap) ||
       !hello || typeof hello !== 'object' || Reflect.get(hello, 'controlId') !== expected.controlId ||
       Reflect.get(hello, 'pid') !== expected.pid || Reflect.get(hello, 'startTicks') !== expected.startTicks ||
       expected.bindChallenge !== null && Reflect.get(hello, 'bindChallenge') !== expected.bindChallenge || !root || typeof root !== 'object' ||
@@ -80,7 +84,7 @@ export function checkAttached(record: Readonly<Record<string, unknown>>, expecte
   const podBearer = Reflect.get(hello, 'podBearer')
   if (!bearerValid(podBearer)) { return { outcome: 'RETRY' } }
   const next = record.nextRequestId
-  return { outcome: 'VERIFY', podBearer, nextRequestId: Number.isSafeInteger(next) ? Number(next) : null }
+  return { outcome: 'VERIFY', podBearer, nextRequestId: Number.isSafeInteger(next) ? Number(next) : null, gap }
 }
 
 /** Bounded re-attach with backoff. Returns true once attached. */

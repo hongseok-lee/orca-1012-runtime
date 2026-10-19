@@ -1,3 +1,4 @@
+import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { readCodexNativeDistribution } from './orcad-native-distribution.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { fstatSync, createReadStream } from 'node:fs'
@@ -147,7 +148,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
-        bootstrapSha256, nativeArtifactFile, ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
+        bootstrapSha256, nativeArtifactFile, journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
         onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
         policy: Object.freeze({ ...(claude ? { provider: 'claude' as const } : {}), protectedRoot: '/agent', launch, nativeArtifact, codexAuth,

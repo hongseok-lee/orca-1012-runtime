@@ -1,11 +1,13 @@
-# Managed Codex execution-policy evidence
+# Managed Codex policy and reconnect evidence
 
-TODO19 restores the already-authorized managed-Agent permission-skip contract. [Structured evidence](actual-evidence.json) separates focused protocol checks, actual native metadata, authentication failure, and absent shell verification.
+TODO19 restores the authorized managed-Agent permission-skip contract and the directly required transport reconnect boundary. [Structured evidence](actual-evidence.json) separates native policy confirmation, durable gap recovery, and absent shell stdout/exit.
 
-The installed0.160.1 app-server explicitly reported that `thread/resume` ignores policy overrides for a loaded thread. Adoption therefore records `AWAITING_TURN_OVERRIDE`; the next normal `turn/start` supplies the trusted typed override and one same-thread read-back checks its effective policy. New cold starts remain strict. Native input admission remains a separate fact; failed policy confirmation blocks later input without replaying the entered input or killing its host.
+Installed0.160.1 ignores `thread/resume` policy overrides for an already-loaded thread. Adoption records `AWAITING_TURN_OVERRIDE`; the original ordinary turn supplies typed policy, and read-back follows its matching `turn/started`. The actual turn confirmed `never / dangerFullAccess` at16:27:58Z on the same native thread and host.
 
-Current live limit: token_revoked401 and unconfirmed adoption; no new shell input or successful stdout/exit evidence. No permission, kernel, namespace or fencing workaround was applied.
+The original transport ACKed every host frame but resumed from sparse notification sequences. Gap1381 was **not** assumed to be a response. New raw-frame persistence and a transactionally contiguous PG prefix give ACK and resume one basis. A quarantined historical gap permits only a full same-thread history read: terminal turns, settled effects and exact retained output must match before the private snapshot, UNKNOWN gap, audit/outbox and cursor barrier commit. Missing/unsettled retention remains blocked. Raw notification replay preserves original output identity across receive-time and JSONB key-order differences.
 
-The existing [CodeMode42 and shell-failure records](../20261019-native-artifact/actual-evidence.json), [actual browser Loading-tabs screenshot](../20261019-native-artifact/ui-observed.png), and [initial reply with warnings](../20261019-public-initial-recovery/initial-reply.png) are reused unchanged. No successful shell or fresh UI screenshot is claimed.
+Actual explicit resync committed16:27:57Z against5 completed native turns and already-retained output. Original accepted seq6 was then ADMITTED once. It hit a fresh Responses WebSocket401/token_revoked despite normal authorized credential-file supply; **no actual shell call, exit or stdout was observed**. The original control cannot forward the installed supported account-refresh RPC. No native restart or direct pipe injection was used.
 
-Wire shapes come from the installed CLI's exported0.160.1 schema. Current [official App Server documentation](https://learn.chatgpt.com/docs/app-server) supports per-turn policy overrides, but its newer enum/profile examples must not replace the pinned schema literals.
+The existing [CodeMode42 and shell-failure records](../20261019-native-artifact/actual-evidence.json), [browser Loading-tabs screenshot](../20261019-native-artifact/ui-observed.png), and [initial reply with warnings](../20261019-public-initial-recovery/initial-reply.png) are reused unchanged. They do not prove this unit's shell execution.
+
+Wire shapes come from the installed CLI's exported0.160.1 schema. [Official App Server documentation](https://learn.chatgpt.com/docs/app-server) describes policy overrides and managed-auth account refresh; newer examples do not replace pinned schema literals. The installed experimental internal token-login variant was not used.

@@ -1,3 +1,4 @@
+import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -64,7 +65,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
     const launch = Object.freeze({ command: `${home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: '/agent/checkout',
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
     const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, reconnectBudgetMs: 30_000,
-      bootstrapBytes, bootstrapSha256: target.controlSha256, nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
+      bootstrapBytes, bootstrapSha256: target.controlSha256, journal:createAgentControlJournal(pool,target.podUid), nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
       onProviderChildExit:(exit)=>recordProviderChildExit(pool,target,exit),
       expected: Object.freeze({ serviceAccountName: text('runtimeServiceAccountName'), serviceAccountUid: text('runtimeServiceAccountUid'),
         podName: target.podName, podUid: target.podUid, runtimeUnitId: target.runtimeUnitId, operationId: target.operationId,

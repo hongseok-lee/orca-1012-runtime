@@ -1,7 +1,7 @@
 {
   "task": "TODO19",
   "base": "8096e5fd88c72bd29aae89edd05cd21e54a83c73",
-  "scope": "Managed Codex execution policy only; existing native session/Agent retained",
+  "scope": "Trusted managed Codex policy propagation and directly required durable contiguous control ACK/reconnect cursor; same task-owned native session/host retained",
   "focusedChecks": {
     "passed": 4,
     "failedFinal": 0,
@@ -16,7 +16,9 @@
   "static": {
     "newPolicyAndManagedResolverTypecheck": "PASS",
     "changedFilesLint": "PASS: 10 files, 0 warnings, 0 errors",
-    "fullDriverTypeClosure": "Not passed: existing missing resources/evidence/types.ts and VerifiedEvidence assertion at unchanged driver uncertainty boundary"
+    "fullDriverTypeClosure": "Not passed: existing missing resources/evidence/types.ts and VerifiedEvidence assertion at unchanged driver uncertainty boundary",
+    "newControlJournalCursorReadersTypecheck": "PASS",
+    "changedTransportFilesLint": "PASS:10 files,0 warnings,0 errors"
   },
   "development": {
     "initialIntegrationAt": "2026-10-19T15:08:41.746Z",
@@ -32,7 +34,32 @@
       "runtimeId": "3b2e17bb-1afc-4446-a330-1c11e31840ba"
     },
     "finalSourceIntegrationAt": "2026-10-19T15:24:30.198Z",
-    "backendBundleSha256": "780f7049868a5aa615f60497d9d35d06cf27ac0e24bb2ac50a04755d960967e8"
+    "backendBundleSha256": "780f7049868a5aa615f60497d9d35d06cf27ac0e24bb2ac50a04755d960967e8",
+    "transportMigrationAt": "2026-10-19T16:27:22.712Z",
+    "transportIntegrationAt": "2026-10-19T16:27:43.155Z",
+    "transportBackendPid": 39073,
+    "finalTransportSourceAt": "2026-10-19T16:37:28.543Z",
+    "backendGeneration23IsHistorical": true,
+    "authenticatedApiBeforeFinalReplayDelta": {
+      "at": "2026-10-19T16:35:39.968Z",
+      "method": "worktree.list",
+      "ok": true,
+      "runtimeId": "e7e94e15-81ce-4ff8-96d8-f689fd296a4b"
+    },
+    "finalAuthenticatedApi": {
+      "at": "2026-10-19T16:38:52.802Z",
+      "method": "worktree.list",
+      "ok": true,
+      "runtimeId": "f0ba2c35-e1d7-490f-b14c-9522249c6910"
+    },
+    "finalBackendPid": 40058,
+    "finalSameControlAdoption": {
+      "at": "2026-10-19T16:38:51.804Z",
+      "taskOwnedAdopted": true,
+      "effectivePolicy": "CONFIRMED never/dangerFullAccess",
+      "adoptedRuntimes": 3,
+      "adoptionFailures": 0
+    }
   },
   "existingAgent": {
     "sessionId": "acb34107-68a9-41ec-b678-537973bdcf55",
@@ -42,15 +69,41 @@
     "nativeSessionRef": "01a15453-5375-7771-86da-c7a9f78f6295",
     "restarted": false,
     "newSessionCreated": false,
-    "newInputSubmitted": false,
-    "priorInputsSettled": 5
+    "newInputSubmitted": true,
+    "priorInputsSettled": 5,
+    "acceptedMessageId": "162262d6-b7ef-4362-9d60-d9699e499ae2",
+    "acceptedSeq": 6,
+    "acceptedAt": "2026-10-19T16:04:37.887Z",
+    "automaticRetransmission": false,
+    "nativeHostPid": 37,
+    "nativeStartTicks": "56163",
+    "finalIdentityGuardAt": "2026-10-19T16:38:51.885Z",
+    "hostStartTicks": "53267"
   },
   "actualNativeObservations": {
     "threadResumeAt": "2026-10-19T15:09:31Z",
     "source": "Existing task-owned native diagnostic log; selected policy message only",
     "message": "resume_running_thread: thread/resume overrides ignored for loaded thread 01a15453-5375-7771-86da-c7a9f78f6295: approval_policy requested=Never active=OnRequest; sandbox requested=DangerFullAccess active=ReadOnly { network_access: false }",
-    "persistedApprovalMode": "on-request",
-    "persistedSandboxPolicy": {
+    "policyVerifiedAfterNewTurn": true,
+    "freshAuthenticationError": {
+      "at": "2026-10-19T16:27:58Z",
+      "operation": "actual original seq6 Responses WebSocket",
+      "status": 401,
+      "message": "HTTP error: 401 Unauthorized, url: wss://chatgpt.com/backend-api/codex/responses",
+      "analyticsMessage": "Encountered invalidated oauth token for user, failing request",
+      "code": "token_revoked",
+      "classification": "product authentication, not usage/credits",
+      "normalCredentialSupplyAt": "2026-10-19T16:01:36.631Z",
+      "rootCredentialProbe": {
+        "at": "2026-10-19T15:55:32.670Z",
+        "status": 200,
+        "modelsCount": 9
+      },
+      "causeLimit": "Live native still fails after normal credential-file supply. Stale in-process auth is a hypothesis, not proven internal cache causality."
+    },
+    "adoptionLimit": "Original control/root/Pod identity matched. Actual gap1381 resolved with explicit retained-history barrier; adoption and actual next-turn policy confirmation succeeded.",
+    "historicalPersistedApprovalMode": "on-request",
+    "historicalPersistedSandboxPolicy": {
       "type": "managed",
       "file_system": {
         "type": "restricted",
@@ -68,23 +121,36 @@
       },
       "network": "restricted"
     },
-    "policyVerifiedAfterNewTurn": false,
-    "freshAuthenticationError": {
-      "at": "2026-10-19T15:11:23Z",
-      "operation": "models refresh",
-      "status": 401,
-      "message": "Encountered invalidated oauth token for user, failing request",
-      "code": "token_revoked",
-      "classification": "authentication, not usage/credits"
-    },
-    "adoptionLimit": "Generic AGENT_CODEX_CONTROL_UNCONFIRMED observed after failed adoption; no claim that authentication uniquely explains this transport/control error."
+    "actualEffectiveTurn": {
+      "at": "2026-10-19T16:27:58.192Z",
+      "turnId": "01a154fd-be6d-7793-99ef-eb00ca632735",
+      "approvalPolicy": "never",
+      "sandboxPolicy": {
+        "type": "danger-full-access"
+      },
+      "readback": {
+        "state": "CONFIRMED",
+        "approvalPolicy": "never",
+        "sandboxType": "dangerFullAccess"
+      },
+      "nativePersistedSandboxPolicy": {
+        "type": "disabled"
+      },
+      "cwd": "/agent/checkout",
+      "nativePersistedApprovalMode": "never"
+    }
   },
   "actualShell": {
-    "state": "NOT_RUN_AUTH_AND_ADOPTION_BLOCKED",
-    "inputSubmitted": false,
+    "state": "ORIGINAL_INPUT_ADMITTED_POLICY_CONFIRMED_LIVE_AUTH_401_NO_TOOL_OUTPUT",
+    "inputSubmitted": true,
     "exitCode": null,
     "stdout": null,
-    "assistantProseUsedAsEvidence": false
+    "assistantProseUsedAsEvidence": false,
+    "acceptedSeq": 6,
+    "toolInvocationObserved": false,
+    "automaticRetransmission": false,
+    "lastObservedAt": "2026-10-19T16:36:04.209Z",
+    "durableInputState": "ADMITTED"
   },
   "reusedEvidence": {
     "codeMode42": "../20261019-native-artifact/actual-evidence.json",
@@ -93,9 +159,40 @@
     "initialReplyAndWarnings": "../20261019-public-initial-recovery/initial-reply.png"
   },
   "limits": [
-    "No actual new shell success or verified post-turn native policy yet; normal login/supply restoration requested from root without tokens.",
-    "Loaded-thread compatibility path is focused-fixture verified; latest task-owned adoption remains unconfirmed.",
-    "No new UI capture; prior Expo Web Loading tabs remains unresolved and is not attributed to this backend change.",
-    "No installed-device/fullHA/lost-node/provider lifecycle rerun, full image build, privilege/sysctl/RBAC or protected-home/writer-fencing change."
-  ]
+    "Actual shell exit/stdout remains absent: original admitted seq6 encountered product401/token_revoked after policy confirmation. No new input or automatic retransmission.",
+    "Installed0.160.1 supports managed account/read{refreshToken:true}; the original live control method allowlist cannot forward it or login/start. No direct pipe injection, healthy host restart or unstable internal-token login was used.",
+    "No new UI capture; unchanged Expo Web Loading tabs is unresolved, not attributed to this backend change.",
+    "No installed-device/fullHA/lost-node/provider lifecycle rerun, image build, privilege/sysctl/RBAC or protected-home/writer-fencing change."
+  ],
+  "transportChecks": {
+    "attachAndRetentionBoundaryPassed": 8,
+    "cursorAndRawReplayPassed": 5,
+    "isolatedPgPassed": 1,
+    "semantics": "Actual source boundaries with synthetic transport/provider facts; isolated real PG journal COMMIT/concurrency/restart behavior. No lost-node/fullHA claim.",
+    "diskReopenCorrection": "PASS: disk-loaded plain objects normalized with new null-prototype JSON capture; exact changed content remains a conflict"
+  },
+  "transport": {
+    "rootCause": "Host ACK counted every frame; persisted resume cursor counted sparse native notifications only. Restart could ask for an ACK-pruned response frame.",
+    "oldGap": {
+      "from": 1381,
+      "to": 1381,
+      "actualFrameKind": "UNKNOWN",
+      "notAssumedHarmless": true
+    },
+    "durability": "Immutable PG raw frames and transactionally contiguous all-frame cursor; ACK and resume use that same prefix. Raw notification replay survives output-spool-owner change.",
+    "resync": {
+      "at": "2026-10-19T16:27:57.651859Z",
+      "throughSeq": 1381,
+      "nativeTerminalTurns": 5,
+      "basis": "Full same-native-thread terminal history; all prior deliveries SETTLED and all native item/completion output already retained in PG.",
+      "recorded": "Private full native snapshot, explicit UNKNOWN missing kind, audit/outbox and cursor in one transaction.",
+      "notFabricated": "No missing frame was manufactured or relabeled a Google/native response."
+    },
+    "cursorAt162820": 1397,
+    "maxDurableRawFrameAt162820": 1397,
+    "limits": [
+      "Partial/truncated/mismatched histories and UNKNOWN/active deliveries remain blocked.",
+      "Historical terminal snapshot resync is Codex-only; unsupported providers keep healthy gap-free traffic without ACKing an unproved prefix, and actual unproved gaps remain blocked."
+    ]
+  }
 }

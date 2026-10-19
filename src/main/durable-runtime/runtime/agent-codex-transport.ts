@@ -1,3 +1,4 @@
+import type { ControlJournal } from './agent-control-journal.ts'
 import { createHash } from 'node:crypto'
 import type { CodexAppServerConnectionHandlers } from '../../codex/codex-app-server-connection-types.ts'
 import { immutableSnapshot } from '../providers/shared/recovery-renderer.ts'
@@ -14,6 +15,7 @@ export { agentCodexBootstrap, agentControlTransfer } from './agent-control-boots
 export type { AdoptedAgentControl, AgentControlIdentity, AuthenticatedAgentControl } from './agent-control-session.ts'
 
 export type AgentCodexTransportConfiguration = Readonly<{
+  journal?: ControlJournal
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
   bootstrapSha256: string
   bootstrapBytes: Uint8Array
@@ -61,6 +63,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
       config.timeoutMs > 2_147_483_647 || !/^[a-z0-9-]+$/.test(config.namespace) || !/^[a-z0-9-]+$/.test(config.container)) { throw fail() }
   if (createHash('sha256').update(artifact).digest('hex') !== config.bootstrapSha256) { throw fail() }
   const environment: AgentControlSessionEnvironment = Object.freeze({ config, origin, ca, reconnectBudgetMs, reviewer,
+    journal: original.journal,
     termOnInitialize: !!original.controllerTerm,
     onProviderChildExit:original.onProviderChildExit?.bind(original),
     controllerTerm: original.controllerTerm ? original.controllerTerm.bind(original) : () => 0,
