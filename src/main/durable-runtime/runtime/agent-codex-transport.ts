@@ -1,3 +1,5 @@
+import type { AgentTerminalSupply } from './agent-control-native-supply.ts'
+import type { AgentTerminalFrame } from './agent-terminal-protocol.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import type { ControlJournal } from './agent-control-journal.ts'
 import { createHash } from 'node:crypto'
@@ -35,6 +37,7 @@ export type AgentCodexTransportConfiguration = Readonly<{
   /** How long a handed-over control may stay detached while this process
    * re-attaches before it is reported lost. Defaults to timeoutMs. */
   onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
+  onTerminalFrame?(frame: AgentTerminalFrame): void | Promise<void>
   reconnectBudgetMs?: number
 }>
 const issued = new WeakSet<AuthenticatedAgentControl>()
@@ -73,6 +76,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     journal: original.journal,
     termOnInitialize: !!original.controllerTerm,
     onProviderChildExit:original.onProviderChildExit?.bind(original),
+    onTerminalFrame:original.onTerminalFrame?.bind(original),
     controllerTerm: original.controllerTerm ? original.controllerTerm.bind(original) : () => 0,
     authenticate: original.podAuthenticator.authenticatePod.bind(original.podAuthenticator) })
   let preparedOnce = false, adoptedOnce = false
@@ -116,4 +120,3 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
     },
   })
 }
-import type { AgentTerminalSupply } from './agent-control-native-supply.ts'

@@ -20,6 +20,8 @@ import type { CodexNativeArtifact } from './agent-codex-preparation.ts'
 import type { InitialProviderPaths } from './initial-provider-paths.ts'
 import { AGENT_CLAUDE_METHODS, openAgentClaudeNative } from './agent-claude-native.ts'
 import type { AgentNativeConnection } from './agent-claude-native.ts'
+import { createAgentTerminalControl } from './agent-terminal-control.ts'
+import { AGENT_TERMINAL_CAPABILITY, isAgentTerminalMethod } from './agent-terminal-protocol.ts'
 
 type Launch = Parameters<CodexProtocolDependencies['open']>[0]
 /** Installed by trusted deployment/bootstrap composition, not decoded from a
@@ -68,7 +70,20 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const fd = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW)
   const stat = fstatSync(fd)
   if (!stat.isDirectory()) { closeSync(fd); throw new Error('AGENT_CODEX_PROTECTED_ROOT') }
-  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential)
+  let preparation: ReturnType<typeof createAgentCodexPreparation>
+  try { preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential) }
+  catch (error) { closeSync(fd); throw error }
+  const terminal = policy.nativeArtifact.terminal ? createAgentTerminalControl({ home: paths.home, cwd: paths.checkout,
+    env: { ...process.env, ...policy.launch.env } as Record<string, string>, artifact: policy.nativeArtifact.terminal,
+    assertCurrent() {
+      if (phase !== 'READY' || uncertain || stopping) { throw new Error('AGENT_TERMINAL_GATE') }
+      const held = fstatSync(fd), named = lstatSync(root)
+      if (held.dev !== stat.dev || held.ino !== stat.ino || named.dev !== held.dev || named.ino !== held.ino || named.isSymbolicLink()) {
+        throw new Error('AGENT_TERMINAL_ROOT_CHANGED')
+      }
+    },
+    send(frame) { send({ ...frame, controlId }) }
+  }) : null
   const seen = new Set<string>()
   let resolveClosed!: () => void
   const closed = new Promise<void>(resolve => { resolveClosed = resolve })
@@ -99,7 +114,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
-    capabilities:provider==='codex'?[MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[] })
+    capabilities:[...(provider==='codex'?[MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
@@ -119,10 +134,11 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
       if (stopping) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
       if (request.method === 'CLOSE') {
         stopping = true; phase = 'STOPPING'
+        try { terminal?.requestClose() } catch { /* physical stop remains required */ }
         // A lost native request can still be reconciled with the ORIGINAL
         // connection's owned process proof. It never permits another COLD.
         const stopped = connection ? await connection.close() : !coldUsed
-        if (!stopped) { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_STOP_UNCONFIRMED'); return }
+        if (!stopped || terminal?.requiresPhysicalStop()) { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_STOP_UNCONFIRMED'); return }
         response(id, { stopped: true, controlId }); releaseRoot(); return
       }
       if (uncertain) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
@@ -170,7 +186,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
               },
               onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId, provider }) },
             })
-            phase = 'READY'; response(id, { nativePid: connection.pid })
+            phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
           } catch (error) {
             // Pod-local diagnostic only (host log); the backend still sees the fixed code.
             process.stderr.write(`AGENT_CLAUDE_COLD_FAILED ${error instanceof Error ? error.message.slice(0, 400) : 'unknown'}\n`)
@@ -186,7 +202,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
               'Durable Codex driver does not support this reply channel'),
             onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
           })
-          phase = 'READY'; response(id, { nativePid: connection.pid })
+          phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
         } catch (error) {
           // Initialization may fail without a proven process-tree exit. Keep
           // the original owned handle so CLOSE can reconcile THAT process;
@@ -194,6 +210,12 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
           if (error instanceof CodexAppServerHandshakeExitUnprovenError) { connection = error.connection }
           uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_COLD_FAILED')
         }
+        return
+      }
+      if (isAgentTerminalMethod(request.method)) {
+        if (!terminal) { failure(id, 'AGENT_TERMINAL_UNSUPPORTED'); return }
+        try { response(id, terminal.request(request.method, request.params)) }
+        catch { failure(id, 'AGENT_TERMINAL_UNCONFIRMED') }
         return
       }
       if(request.method===MANAGED_CODEX_AUTH_REFRESH_METHOD) {

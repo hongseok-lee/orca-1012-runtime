@@ -2,6 +2,24 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { AgentControlFrameCursor } from './agent-control-frame-cursor.ts'
 import type { ControlJournal } from './agent-control-journal.ts'
+test('restored PTY output waits for its consumer before later provider frames', async () => {
+  let release!: () => void
+  const consumed = new Promise<void>(resolve => { release = resolve })
+  const order: string[] = []
+  const journal: ControlJournal = { load: async () => ({ cursor: 2, notifications: [
+    { hostSeq: 1, event: 'PTY_OUTPUT' }, { hostSeq: 2, event: 'NOTIFICATION' }
+  ] }), record: async () => 2, resync: async () => 2 }
+  const cursor = new AgentControlFrameCursor(journal)
+  const restored = cursor.restore('control', 0, async frame => {
+    order.push(String(frame.event))
+    if (frame.event === 'PTY_OUTPUT') { await consumed; order.push('pty-consumed') }
+  })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(order, ['PTY_OUTPUT'])
+  release(); await restored
+  assert.deepEqual(order, ['PTY_OUTPUT', 'pty-consumed', 'NOTIFICATION'])
+  assert.equal(cursor.sequence, 2)
+})
 test('ACK and resume share durable all-frame prefix; uncommitted effect cannot move either',async()=>{
   let finish!:(n:number)=>void
   const journal:ControlJournal={load:async()=>({cursor:0,notifications:[]}),record:()=>new Promise(r=>{finish=r}),resync:async()=>{throw new Error('unexpected')}}

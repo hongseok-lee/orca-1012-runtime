@@ -44,6 +44,11 @@ export function createAgentTerminal(input: Readonly<{
     return pty!
   }
   return Object.freeze({
+    inspect() {
+      assertCurrent()
+      return pty ? Object.freeze({ incarnationId, pid: pty.pid, live, uncertain,
+        startByte: endByte - retained.length, endByte }) : null
+    },
     /** Explicit creation only, once for the lifetime of this control. */
     open(cols: number, rows: number) {
       assertCurrent()

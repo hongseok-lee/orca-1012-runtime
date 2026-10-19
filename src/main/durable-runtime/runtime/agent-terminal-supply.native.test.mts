@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import type * as NodePty from 'node-pty'
 import { createHash } from 'node:crypto'
-import { createRequire } from 'node:module'
 import { mkdtempSync, mkdirSync, chmodSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { readAgentTerminalDistribution } from '../../orcad/orcad-terminal-distribution.ts'
 import { createNativeArtifactFile } from './native-artifact-file.ts'
 import { supplyNativeAndCold } from './agent-control-native-supply.ts'
-import { createAgentTerminal } from './agent-terminal.ts'
+import { createAgentTerminalControl } from './agent-terminal-control.ts'
+import { readAgentTerminalFrame } from './agent-terminal-protocol.ts'
 
 const distributionFile = process.env.ORCA_TERMINAL_TEST_DISTRIBUTION
 if (!distributionFile?.startsWith('/tmp/task05-terminal-distribution-') || !distributionFile.endsWith('/terminal-distribution.json')) {
@@ -25,7 +24,7 @@ test('verified packaged PTY loads after normal chunk transfer; a corrupt addon p
   writeFileSync(join(root, 'provider'), native)
   try {
     for (const corrupt of [true, false]) {
-      const home = join(root, String(corrupt)); mkdirSync(home, { mode: 0o700 }); chmodSync(home, 0o700)
+      const agentHome = join(root, String(corrupt)), home = join(agentHome, '.orca-native'); mkdirSync(home, { recursive: true, mode: 0o700 }); chmodSync(home, 0o700)
       const files = new Map([
         ['terminal-pty.node', createNativeArtifactFile(home, 'terminal-pty.node', corrupt ? { ...distribution.addon, sha256: '0'.repeat(64) } : distribution.addon, () => {})],
         ['terminal-runtime.cjs', createNativeArtifactFile(home, 'terminal-runtime.cjs', distribution.runtime, () => {})],
@@ -49,18 +48,25 @@ test('verified packaged PTY loads after normal chunk transfer; a corrupt addon p
         assert.equal(await transfer, 123)
         assert.equal(cold, true)
         assert.deepEqual(readFileSync(join(home, 'terminal-pty.node')), readFileSync(distribution.addon.file))
-        const runtime: typeof NodePty = createRequire(import.meta.url)(join(home, 'terminal-runtime.cjs'))
-        let text = '', ready!: () => void, exited!: () => void
+        let text = '', ready!: () => void, exited!: () => void, seq = 0
         const output = new Promise<void>(resolve => { ready = resolve })
         const exit = new Promise<void>(resolve => { exited = resolve })
-        const terminal = createAgentTerminal({ cwd: home, env: { PATH: '/usr/bin:/bin', HOME: home, PS1: '', TERM: 'xterm-256color' },
-          assertCurrent() {}, spawn: async (...args) => runtime.spawn(...args),
-          onOutput(frame) { text += Buffer.from(frame.bytes, 'base64').toString('utf8'); if (text.includes('PACKED\r\n')) { ready() } },
-          onExit() { exited() }
+        const terminal = createAgentTerminalControl({ home: agentHome, cwd: agentHome,
+          artifact: distribution, env: { PATH: '/usr/bin:/bin', HOME: agentHome, PS1: '', TERM: 'xterm-256color' },
+          assertCurrent() {},
+          send(value) {
+            const frame = readAgentTerminalFrame({ ...value, controlId: 'control-test', hostSeq: ++seq }, 'control-test')
+            if (frame.event === 'PTY_EXIT') { exited(); return }
+            text += Buffer.from(frame.bytes, 'base64').toString('utf8')
+            if (text.includes('PACKED\r\n')) { ready() }
+          }
         })
         try {
-          const opened = await terminal.open(80, 24)
-          terminal.write(opened.incarnationId, 'packaged-shell', Buffer.from("printf '\\120\\101\\103\\113\\105\\104\\n'\r").toString('base64'))
+          assert.equal(terminal.request('PTY_STATUS', {}), null)
+          assert.equal(terminal.requiresPhysicalStop(), false)
+          const opened = await terminal.openDuringCold()
+          assert.equal(terminal.requiresPhysicalStop(), true)
+          terminal.request('PTY_WRITE', { incarnationId: opened.incarnationId, requestId: 'packaged-shell', bytes: Buffer.from("printf '\\120\\101\\103\\113\\105\\104\\n'\r").toString('base64') })
           await bounded(output)
           assert.equal(text.match(/PACKED\r\n/g)?.length, 1)
         } finally { terminal.requestClose(); await bounded(exit) }

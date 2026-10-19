@@ -7,6 +7,7 @@ import type { KubernetesPodAuthExpected, AuthenticatedPodObservation } from './k
 import type { AgentCodexControlPolicy } from './agent-codex-control.ts'
 import type { ControlJournal } from './agent-control-journal.ts'
 import type { AgentTerminalSupply } from './agent-control-native-supply.ts'
+import type { AgentTerminalControl, AgentTerminalFrame } from './agent-terminal-protocol.ts'
 export type AgentControlIdentity = Readonly<{ controlId: string; pid: number; startTicks: string; device: string; inode: string }>
 export type AgentControlSessionEnvironment = Readonly<{
   readManagedCredential?():ManagedCodexCredential
@@ -16,6 +17,7 @@ export type AgentControlSessionEnvironment = Readonly<{
   reviewer(signal: AbortSignal): string | Promise<string>
   authenticate(input: Readonly<{ podBearer: string; expected: KubernetesPodAuthExpected }>, signal: AbortSignal): Promise<AuthenticatedPodObservation>
   onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
+  onTerminalFrame?(frame: AgentTerminalFrame): void | Promise<void>
   journal?: ControlJournal
   controllerTerm(): number
 }>
@@ -34,10 +36,10 @@ export type AuthenticatedAgentControl = Readonly<{
   /** Fixed diagnostic code of why the control stopped being valid, if it did. */
   lossReason(): string | null
   physicalPinIssued: false
-}> & ManagedCodexAuthControl
+}> & ManagedCodexAuthControl & AgentTerminalControl
 /** A control handed over by an earlier owner and re-attached by this one. It
  * never initializes, transfers native code or sends COLD. */
 export type AdoptedAgentControl = Readonly<{
   identity: AgentControlIdentity; pod: AuthenticatedPodObservation; connection: CodexAppServerConnection
   valid(): boolean; frameSequence(): number; close(): Promise<boolean>
-}> & ManagedCodexAuthControl
+}> & ManagedCodexAuthControl & AgentTerminalControl
