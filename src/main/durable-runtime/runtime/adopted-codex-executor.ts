@@ -8,6 +8,7 @@ import { appendAudit } from '../journal/store.ts'
 import { currentAuthoritySql } from './gateway/authority.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
+import { recordInitialNativeObservation } from './provider-start-observation.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
 import { agentClaudeTransport } from './agent-claude-transport.ts'
 import { settleJournaledOrphanedTurns, settleOrphanedTurn } from './orphaned-turn-settlement.ts'
@@ -88,7 +89,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         const found = await pool.query<Row>(`SELECT a.id AS attempt_id,a.runtime_unit_id,a.pod_uid,a.execution_epoch::text,a.incarnation,
           h.control_id,h.control_pid,h.control_start_ticks,h.root_device,h.root_inode,h.connection_instance_id,h.control_sha256,
           p.operation_id,p.resource_name,p.spec_hash,t.id AS tab_id,t.terminal_handle,s.provider_binding_revision::text,s.agent_id,
-          (SELECT e.next_state->'providerRef'->>'nativeSessionRef' FROM durable_runtime.runtime_audit_events e
+          (SELECT COALESCE(e.next_state->'providerRef',e.next_state->'launchProviderRef')->>'nativeSessionRef' FROM durable_runtime.runtime_audit_events e
             WHERE e.kind='INITIAL_PROVIDER_READY' AND e.next_state->>'attemptId'=a.id::text ORDER BY e.occurred_at DESC LIMIT 1) AS native_session_ref,
           r.producer_id,r.incarnation AS producer_incarnation
           FROM durable_runtime.sessions s JOIN durable_runtime.runtime_members m ON m.session_id=s.id
@@ -135,7 +136,9 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         phase = 'ATTACH'
         if (provider === 'claude') {
           // The Claude process is alive in the Pod: re-attach and replay, nothing to resume.
-          const claudeDriver = new ClaudeDurableProvider(() => Promise.reject(new Error('ADOPTED_CLAUDE_NO_COLD')), sink, row.connection_instance_id)
+          const claudeDriver = new ClaudeDurableProvider(() => Promise.reject(new Error('ADOPTED_CLAUDE_NO_COLD')), sink, row.connection_instance_id, async native => {
+            if (context && !await recordInitialNativeObservation(pool, context, native, b => driver?.ownsReadyBinding(b) === true)) { deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED') }
+          })
           driver = claudeDriver
           adopted = await claudeDriver.adopt(binding, agentClaudeTransport({ controlId: row.control_id,
             frameSequence: () => adoption.current?.frameSequence() ?? 0 }, attach, notify))
@@ -178,6 +181,8 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         if (!owned.ok || owned.commitOutcome !== 'ACKNOWLEDGED' || owned.cleanupFailed) { return deny('OPERATION_ADOPTION_UNCONFIRMED') }
         context = Object.freeze({ runtimeUnitId: binding.runtimeUnitId, operationId: logicalId('operation', row.operation_id), controller })
         ready = adopted; phase = 'READY'
+        if (driver instanceof ClaudeDurableProvider && driver.nativeSessionObserved() &&
+            !await recordInitialNativeObservation(pool, context, adopted, b => driver?.ownsReadyBinding(b) === true)) { deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED') }
         // Turns the lost owner saw finish but never recorded.
         void settleJournaledOrphanedTurns(pool, adopted, own).catch(() => { /* recovered at the next adoption */ })
         onReady?.()

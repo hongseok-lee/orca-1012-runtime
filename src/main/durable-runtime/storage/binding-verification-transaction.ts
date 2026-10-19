@@ -48,6 +48,7 @@ export async function verifyBindingWithPreparedPin(
     bindingId: logicalId('storage-binding', original.bindingId),
     expectedUnitRevision: counter('row:runtime-unit', original.expectedUnitRevision),
     expectedBindingRevision: counter('row:storage-binding', original.expectedBindingRevision),
+    refreshStopped: original.refreshStopped === true,
     directoryEvidenceRef: reference(original.directoryEvidenceRef), actorId: reference(original.actorId),
   });
   if (!Object.isFrozen(authority) || !Object.isFrozen(owner)) {

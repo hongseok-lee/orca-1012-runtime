@@ -3,6 +3,7 @@ import type { Pool } from 'pg'
 import { createFirstManagedInitialDispatch } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
 import { agentPodFields, agentPodInteger, agentPodText, captureAgentPodPolicy } from '../durable-runtime/runtime/agent-pod-policy.ts'
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
+import { createFirstManagedBindingOwner } from '../durable-runtime/storage/first-managed-binding-owner.ts'
 import type { FirstManagedBindingOwnerConfig } from '../durable-runtime/storage/first-managed-binding-owner.ts'
 import { captureOrcadControllerConfig, invalidOrcadControllerConfig, OrcadControllerConfigurationError,
   parseUniqueOrcadControllerJson, readPrivateOrcadControllerConfigBytes, type OrcadControllerConfig } from './orcad-controller-config.ts'
@@ -105,7 +106,7 @@ export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig,
         exportsSha256: agentPodText(collector.get('exportsSha256')), timeoutMs: timeout(collector.get('timeoutMs')) }) })
     const cold = prepareOrcadFirstColdProvider(config, pool, ca, { sessionId: agentPodText(raw.get('sessionId')),
       planDigest: prepareAgentPodPlan(createAgentPodPlanner(policy).plan(request)).planDigest, directory: firstManagedDirectory }, auditToken, readProviderSettings, rewake)
-    return createFirstManagedInitialDispatch({ pool, policy, request, ...(cold ? { cold } : {}), ...(rewake ? { rewake: true } : {}),
+    const dispatch = createFirstManagedInitialDispatch({ pool, policy, request, ...(cold ? { cold } : {}), ...(rewake?.reuseProfile ? { rewake: true } : {}),
       policyRevision: agentPodText(raw.get('policyRevision')), sessionId: agentPodText(raw.get('sessionId')),
       actorId: agentPodText(raw.get('actorId')), originalAuditId: agentPodText(raw.get('originalAuditId')), pinId,
       binding: Object.freeze({ bindingId: agentPodText(b.get('bindingId')), expectedRevision: agentPodText(b.get('expectedRevision')),
@@ -122,6 +123,8 @@ export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig,
       },
       firstManagedDirectory, podConfig: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, dataset,
         timeoutMs: timeout(raw.get('podTimeoutMs')), readBearerToken: (signal: AbortSignal) => projectedBearer(podTokenFile, signal) }) })
+    const bindingOwner = createFirstManagedBindingOwner(pool, firstManagedDirectory)
+    return Object.freeze({ ...dispatch, verifyFirstBinding: bindingOwner.verifyFirstBinding })
   } catch (error) {
     if (error instanceof OrcadControllerConfigurationError) { throw error }
     return deny()

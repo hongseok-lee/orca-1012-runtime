@@ -1,7 +1,7 @@
 import type { Pool } from 'pg'
 import type { ControllerPassRequest } from '../durable-runtime/ha/pass.ts'
 import { listOrphanCandidates, observeAgentPod, reconcileOrphanedAttempt, type OrphanCandidate } from '../durable-runtime/runtime/orphan-reconcile.ts'
-import { releaseAgentPodStopFinalizer } from '../durable-runtime/runtime/agent-pod-retirement.ts'
+import { retireAgentPod, releaseAgentPodStopFinalizer } from '../durable-runtime/runtime/agent-pod-retirement.ts'
 import { currentAuthoritySql } from '../durable-runtime/runtime/gateway/authority.ts'
 import type { OrcadControllerConfig } from './orcad-controller-config.ts'
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
@@ -22,7 +22,24 @@ export function prepareOrcadOrphanReconcile(pool: Pool, config: OrcadControllerC
       if (signal.aborted) { break }
       const bounded = AbortSignal.any([signal, AbortSignal.timeout(config.inventory.requestTimeoutMs)])
       const observed = await observeAgentPod(api(), candidate, bounded)
-      if (observed.state === 'PRESENT' && !observed.stopping) { skipped++; continue }
+      const childExit=(await pool.query(`SELECT id FROM durable_runtime.runtime_audit_events WHERE attempt_id=$1
+        AND pod_uid=$2 AND kind='PROVIDER_CHILD_EXIT_OBSERVED' LIMIT 1`,[candidate.attemptId,candidate.podUid])).rowCount
+      if(observed.containerExit && (await pool.query(`SELECT 1 WHERE ${currentAuthoritySql}`,[controller.scope,controller.owner,controller.term])).rowCount) {
+        await pool.query(`INSERT INTO durable_runtime.runtime_audit_events(id,actor_id,runtime_unit_id,attempt_id,pod_uid,kind,
+          next_state,occurred_at,received_at,producer_id,producer_seq,evidence_refs,payload)
+          SELECT gen_random_uuid(),$1,$2,$3,$4,'AGENT_CONTAINER_EXIT_OBSERVED',$5::jsonb,clock_timestamp(),clock_timestamp(),gen_random_uuid(),1,'[]','{}'
+          WHERE NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events WHERE attempt_id=$3 AND kind='AGENT_CONTAINER_EXIT_OBSERVED')`,
+        [controller.owner,candidate.runtimeUnitId,candidate.attemptId,candidate.podUid,JSON.stringify(observed.containerExit)])
+      }
+      if (observed.state === 'PRESENT') {
+        if(!observed.containerExit && !childExit) {skipped++;continue}
+        if(!(await pool.query(`SELECT 1 WHERE ${currentAuthoritySql}`,[controller.scope,controller.owner,controller.term])).rowCount) {break}
+        // Child/root exit leaves host/tool writers possible. Retirement request
+        // is not proof: retain status/finalizer and wait for actual sandbox stop.
+        const retired=await retireAgentPod(api(),candidate,bounded)
+        lastError=retired==='REQUESTED'?'PROCESS_EXIT_RETIREMENT_PENDING':`PROCESS_EXIT_RETIRE_${retired}`
+        skipped++;continue
+      }
       if (observed.state === 'UNKNOWN') { skipped++; continue }
       let computeStop
       try {

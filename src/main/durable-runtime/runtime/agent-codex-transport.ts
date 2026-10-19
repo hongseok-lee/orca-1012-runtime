@@ -27,6 +27,7 @@ export type AgentCodexTransportConfiguration = Readonly<{
   controllerTerm?(): number
   /** How long a handed-over control may stay detached while this process
    * re-attaches before it is reported lost. Defaults to timeoutMs. */
+  onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
   reconnectBudgetMs?: number
 }>
 const issued = new WeakSet<AuthenticatedAgentControl>()
@@ -59,6 +60,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   if (createHash('sha256').update(artifact).digest('hex') !== config.bootstrapSha256) { throw fail() }
   const environment: AgentControlSessionEnvironment = Object.freeze({ config, origin, ca, reconnectBudgetMs, reviewer,
     termOnInitialize: !!original.controllerTerm,
+    onProviderChildExit:original.onProviderChildExit?.bind(original),
     controllerTerm: original.controllerTerm ? original.controllerTerm.bind(original) : () => 0,
     authenticate: original.podAuthenticator.authenticatePod.bind(original.podAuthenticator) })
   let preparedOnce = false, adoptedOnce = false

@@ -19,7 +19,7 @@ import { createFirstManagedObservationSource, requireFirstManagedObservation,
 
 export type { FirstManagedBindingOwnerConfig } from './first-managed-observation-source.ts';
 export type FirstManagedBindingInput = PreparedDirectoryObservationInput['scope'] & Readonly<{
-  pinId: string; ownerToken: string; leafId: string;
+  pinId: string; ownerToken: string; leafId: string; refreshStopped?: boolean;
 }>;
 type SafeBindingResult = Readonly<{
   database: BindingVerificationTransactionResult['database'];
@@ -43,6 +43,7 @@ export type FirstManagedBindingResult = Readonly<{
 type Operation = {
   holdInput: NamespaceHoldInput;
   scope: PreparedDirectoryObservationInput['scope'];
+  refreshStopped: boolean;
   tokenHash: string;
   hold: NamespaceTransactionResult | null;
   audit: DurableTransactionResult<PreparedDirectoryObservationRecord> | null;
@@ -221,7 +222,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
     } });
     operation.preparedOwner = owner;
     let verified;
-    try { verified = await verify(borrowed, { ...operation.scope, directoryEvidenceRef: evidenceRef }, authority, owner); }
+    try { verified = await verify(borrowed, { ...operation.scope, directoryEvidenceRef: evidenceRef, refreshStopped: operation.refreshStopped }, authority, owner); }
     catch {
       operation.reconciliation = true;
       return result(operation, 'VERIFY', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_VERIFIER_REJECTED');
@@ -258,7 +259,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
         }
         return Promise.resolve(result(existing, 'HOLD', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_PIN_ALREADY_ATTEMPTED'));
       }
-      const operation: Operation = { holdInput: Object.freeze({ ...profile.profile, digest: accepted.namespaceDigest,
+      const operation: Operation = { refreshStopped: originalInput.refreshStopped === true, holdInput: Object.freeze({ ...profile.profile, digest: accepted.namespaceDigest,
         actorId: scope.actorId, pinId, ownerToken }), scope, tokenHash: hash,
         hold: null, audit: null, binding: null, release: null, observationRef: null, evidenceRef: null,
         pinState: 'NOT_ACQUIRED', handedOff: false, releaseEligible: false, releaseAttempted: false, reconciliation: false,

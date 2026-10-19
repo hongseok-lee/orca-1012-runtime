@@ -1,3 +1,4 @@
+import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch } from './native-session-checkpoint.ts'
 import { randomUUID } from 'node:crypto'
 import { constants, openSync, fstatSync, closeSync, readFileSync } from 'node:fs'
 import { isDeepStrictEqual } from 'node:util'
@@ -130,6 +131,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         } catch { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_COLD_PREPARATION_FAILED') }
         return
       }
+      if(request.method==='NATIVE_STATE') {response(id,readNativeSessionCheckpoint(paths.home,provider));return}
       if (request.method === 'MOUNT_PROBE') {
         if (phase !== 'CLOSED_GATE' || coldUsed) { failure(id, 'AGENT_MOUNT_PROBE_GATE'); return }
         // Reuse the original fixed read-only probe within this authenticated
@@ -143,12 +145,22 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         if (coldUsed || phase !== 'CLOSED_GATE' || !preparation.ready() || !isDeepStrictEqual(request.launch, policy.launch)) {
           failure(id, 'AGENT_COLD_POLICY'); return
         }
+        const priorNative=readNativeSessionCheckpoint(paths.home,provider)
+        if(priorNative.state==='UNKNOWN') {failure(id,'NATIVE_IDENTITY_UNCONFIRMED');return}
+        const launch=provider==='claude' && priorNative.state==='FOUND' ? claudeResumeLaunch(policy.launch,priorNative.nativeSessionRef) : policy.launch
+        markNativeEntered(paths.home)
         coldUsed = true; phase = 'OPENING'
         if (provider === 'claude') {
           try {
-            connection = await openAgentClaudeNative(policy.launch, {
-              onNotification: (method, params) => send({ event: 'NOTIFICATION', controlId, method, params }),
-              onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
+            connection = await openAgentClaudeNative(launch, {
+              onFault: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_UNAVAILABLE', controlId }) },
+              onNotification: (method, params) => {
+                if(method==='claude/message' && params && typeof params==='object' && Reflect.get(params,'type')==='system' && Reflect.get(params,'subtype')==='init' && typeof Reflect.get(params,'session_id')==='string') {
+                  recordNativeSessionCheckpoint(paths.home,'claude',Reflect.get(params,'session_id'))
+                }
+                send({ event: 'NOTIFICATION', controlId, method, params })
+              },
+              onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId, provider }) },
             })
             phase = 'READY'; response(id, { nativePid: connection.pid })
           } catch (error) {
@@ -182,7 +194,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
       try {
         const params = request.params
         if (!params || typeof params !== 'object' || Array.isArray(params)) { failure(id, 'AGENT_NATIVE_PARAMS'); return }
-        response(id, await connection.request(request.method, params as Record<string, unknown>))
+        const result=await connection.request(request.method,params as Record<string,unknown>)
+        if(provider==='codex' && ['thread/start','thread/resume'].includes(request.method) && result && typeof result==='object') {
+          const thread=Reflect.get(result,'thread'),native=thread && typeof thread==='object'?Reflect.get(thread,'id'):null
+          if(typeof native!=='string') {throw Error('NATIVE_THREAD_RESPONSE')}
+          recordNativeSessionCheckpoint(paths.home,'codex',native)
+        }
+        response(id,result)
       } catch { failure(id, 'AGENT_NATIVE_REQUEST_UNCONFIRMED') }
     }).catch(() => { uncertain = true; phase = 'UNCONFIRMED' })
   })

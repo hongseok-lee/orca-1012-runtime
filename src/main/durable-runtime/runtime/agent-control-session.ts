@@ -1,3 +1,4 @@
+import { claudeResumeLaunch, type NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import { isDeepStrictEqual } from 'node:util'
 import type { CodexAppServerConnection, CodexAppServerConnectionHandlers } from '../../codex/codex-app-server-connection-types.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
@@ -17,6 +18,7 @@ export type AgentControlSessionEnvironment = Readonly<{
   origin: URL; ca: Buffer; reconnectBudgetMs: number; termOnInitialize: boolean
   reviewer(signal: AbortSignal): string | Promise<string>
   authenticate(input: Readonly<{ podBearer: string; expected: KubernetesPodAuthExpected }>, signal: AbortSignal): Promise<AuthenticatedPodObservation>
+  onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
   controllerTerm(): number
 }>
 export type AuthenticatedAgentControl = Readonly<{
@@ -28,6 +30,7 @@ export type AuthenticatedAgentControl = Readonly<{
   transport: Pick<CodexProtocolDependencies, 'open'>
   /** hostSeq of the control frame being delivered; stable across re-attach and backend processes. */
   frameSequence(): number
+  readNativeSession(): Promise<NativeSessionCheckpoint>
   readMountProbe(): Promise<string>
   close(): Promise<boolean>
   /** Fixed diagnostic code of why the control stopped being valid, if it did. */
@@ -69,6 +72,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
   let challenge: string | null = config.policy.bindChallenge
   const queued: Buffer[] = []
   let loss: string | null = null
+  let nativeCheckpoint:NativeSessionCheckpoint|null=null
   function failure(reason = 'FAILURE'): void {
     loss ??= reason
     lost = true
@@ -144,6 +148,16 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
+      async readNativeSession() {
+        if(openedNative || lost || socketClosed || closing) {throw fail()}
+        const value=await request('NATIVE_STATE')
+        if(!value || typeof value!=='object') {throw fail()}
+        const state=Reflect.get(value,'state')
+        if(state==='NONE' || state==='UNKNOWN') {nativeCheckpoint={state};return nativeCheckpoint}
+        if(state!=='FOUND' || Reflect.get(value,'provider')!==(config.policy.provider??'codex') || typeof Reflect.get(value,'nativeSessionRef')!=='string') {throw fail()}
+        nativeCheckpoint={state:'FOUND',provider:Reflect.get(value,'provider'),nativeSessionRef:Reflect.get(value,'nativeSessionRef')}
+        return nativeCheckpoint
+      },
       async readMountProbe() {
         if (openedNative || lost || socketClosed || closing) { throw fail() }
         const observed = await request('MOUNT_PROBE')
@@ -151,7 +165,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
         return Reflect.get(observed, 'output')
       },
       transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
-        if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, config.policy.launch)) { throw fail() }
+        const expectedLaunch=config.policy.provider==='claude' && nativeCheckpoint?.state==='FOUND' ? claudeResumeLaunch(config.policy.launch,nativeCheckpoint.nativeSessionRef) : config.policy.launch
+        if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, expectedLaunch)) { throw fail() }
         openedNative = true; handlers = { ...supplied }
         // This opener is invoked by the original actual-COMMIT permit.
         const pid = await supplyNativeAndCold(request, config.nativeArtifactFile, config.policy.nativeArtifact.byteLength)
@@ -179,7 +194,12 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       if (typeof record.method !== 'string') { throw fail() }
       handlers.onNotification?.(record.method, record.params); return
     }
-    if (record.event === 'NATIVE_EXIT') { failure(); return }
+    if (record.event === 'NATIVE_EXIT') {
+      if(!pod || !identity || !hostCapable || record.controlId!==controlId) {throw fail()}
+      await env.onProviderChildExit?.({controlId,hostSeq:lastSeq})
+      failure('PROVIDER_CHILD_EXIT'); return
+    }
+    if(record.event==='NATIVE_UNAVAILABLE') {failure('PROVIDER_TRANSPORT_FAULT');return}
     if (record.event === 'HOST_EVICTED') { return }
     if (typeof record.id !== 'string') { throw fail() }
     const wait = pending.get(record.id)

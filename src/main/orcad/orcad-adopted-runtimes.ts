@@ -1,3 +1,4 @@
+import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Pool } from 'pg'
@@ -65,6 +66,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
     const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, reconnectBudgetMs: 30_000,
       bootstrapBytes, bootstrapSha256: target.controlSha256, nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
+      onProviderChildExit:(exit)=>recordProviderChildExit(pool,target,exit),
       expected: Object.freeze({ serviceAccountName: text('runtimeServiceAccountName'), serviceAccountUid: text('runtimeServiceAccountUid'),
         podName: target.podName, podUid: target.podUid, runtimeUnitId: target.runtimeUnitId, operationId: target.operationId,
         executionEpoch: target.executionEpoch, specHash: target.specHash }),

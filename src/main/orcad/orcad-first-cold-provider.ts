@@ -1,3 +1,4 @@
+import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
 import { fstatSync, createReadStream } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
@@ -59,7 +60,10 @@ export async function readFirstColdAuditPipe(timeoutMs: number): Promise<string>
  * row-to-authority cast, public RPC or flat observation supplier is introduced. */
 export type OrcadColdRewake = Readonly<{
   /** The native session the Session's earlier READY recorded; resumed, never replaced. */
-  nativeSessionRef: string
+  nativeSessionRef?: string
+  reuseProfile?: boolean
+  recoverNative?: boolean
+  existingCheckout?: boolean
   /** Explicit identity source for later wakes; no inferred Compute creation completion. */
   creationObserver: 'AUTHENTICATED_KUBERNETES_NODE'
 }>
@@ -138,7 +142,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       // Claude's native session id is fixed by the Orca session, as on the desktop lane.
       // A later wake resumes that same session in the new Pod (the launch args are what the Pod's Claude gets).
       const launch = claude
-        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: rewake ? ['--dangerously-skip-permissions', '--resume', rewake.nativeSessionRef]
+        ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: rewake?.nativeSessionRef ? ['--dangerously-skip-permissions', '--resume', rewake.nativeSessionRef]
           : ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
         : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...codexYolo(native.args), 'app-server'], cwd: paths.checkout,
@@ -146,6 +150,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
         bootstrapSha256, nativeArtifactFile, podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
+        onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
         policy: Object.freeze({ ...(claude ? { provider: 'claude' as const } : {}), protectedRoot: '/agent', launch, nativeArtifact, codexAuth,
           bindChallenge: randomUUID(), paths }) }) })
     }
@@ -156,7 +161,8 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const output = createTerminalCodexOutput({ pool, spoolDirectory: text('outputSpoolDirectory'), current })
     executor = createInitialCodexExecutor(pool, { sessionId: logicalId('session', initial.sessionId), planDigest: initial.planDigest,
       ...(claude ? { provider: 'claude' as const } : {}),
-      ...(rewake ? { resume: Object.freeze({ nativeSessionRef: rewake.nativeSessionRef }) } : {}),
+      ...(rewake?.nativeSessionRef ? { resume: Object.freeze({ nativeSessionRef: rewake.nativeSessionRef }) } : {}),
+      existingCheckout: rewake?.existingCheckout, recoverNative:rewake?.recoverNative,
       emptyFolder,
       sink: inputRuntime.observe,
       onNativeNotification: output.onNativeNotification,

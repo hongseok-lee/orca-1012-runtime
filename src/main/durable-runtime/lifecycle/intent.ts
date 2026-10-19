@@ -61,7 +61,7 @@ async function selectIntentOperation(
     // Input joins the same unresolved recovery incident. A fresh receipt or
     // operation must not bypass its cooldown, exhaustion or original deadline.
     const recovery = (await tx.query<LifecycleOperation>(`SELECT r.* FROM durable_runtime.operations r
-      WHERE r.runtime_unit_id=$1 AND r.recovery_root_id=r.id AND r.recovery_anchor_attempt_id=(
+      WHERE r.runtime_unit_id=$1 AND r.recovery_root_id=r.id AND r.recovery_anchor_attempt_id IS NOT DISTINCT FROM (
         SELECT a.id FROM durable_runtime.attempts a WHERE a.runtime_unit_id=$1 AND a.ready_at IS NOT NULL
         ORDER BY a.execution_epoch DESC,a.ready_at DESC,a.id LIMIT 1) LIMIT 1`, [unit.id])).rows[0]
     if (recovery) {
