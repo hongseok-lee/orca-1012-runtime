@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { streamCatalogTerminal } from './terminal-runtime-stream.ts'
 import { RuntimeSubscriptionRegistry } from '../../runtime/runtime-subscription-registry.ts'
-import { decodeTerminalStreamFrame, TerminalStreamOpcode as Opcode } from '../../../shared/terminal-stream-protocol.ts'
+import { decodeTerminalStreamFrame, encodeTerminalStreamJson, type TerminalStreamFrame, TerminalStreamOpcode as Opcode } from '../../../shared/terminal-stream-protocol.ts'
 import { handleTerminalBinaryFrame } from '../../../../mobile/src/transport/rpc-client-terminal-binary-frame.ts'
 import { createAgentTerminal } from '../runtime/agent-terminal.ts'
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -14,15 +14,16 @@ function harness(backpressure = false) {
   const registry = new RuntimeSubscriptionRegistry(), abort = new AbortController()
   const frames: NonNullable<ReturnType<typeof decodeTerminalStreamFrame>>[] = [], mobile: unknown[] = [], json: unknown[] = []
   const terminalSnapshots = new Map()
+  let receive: (frame: TerminalStreamFrame) => void = () => {}
   const context = { connectionId: 'connection', signal: abort.signal,
     runtime: { registerOwnedSubscriptionCleanup: registry.registerOwned.bind(registry) },
-    registerBinaryStreamHandler: () => () => {},
+    registerBinaryStreamHandler: (_id: number, handler: typeof receive) => { receive = handler; return () => { receive = () => {} } },
     sendBinary: (bytes: Uint8Array) => {
       frames.push(decodeTerminalStreamFrame(bytes)!)
       handleTerminalBinaryFrame(bytes, { terminalSnapshots, getListener: () => item => mobile.push(item) })
       return !backpressure
     } }
-  return { context, frames, mobile, json, abort, emit: (frame: unknown) => { json.push(frame) } }
+  return { context, frames, mobile, json, abort, receive: (frame: TerminalStreamFrame) => receive(frame), emit: (frame: unknown) => { json.push(frame) } }
 }
 const status = async () => ({ incarnationId: 'incarnation', cols: 80, rows: 24 })
 const output = (bytes: Buffer, startByte: number, live: boolean, truncated = false) => ({
@@ -74,10 +75,9 @@ test('real native PTY output reaches the existing mobile binary decoder with act
     assertCurrent() {}, onOutput() {}, onExit() { exited() } })
   const timeout = setTimeout(() => h.abort.abort(), 5000)
   try {
-    const opened = await terminal.open(80, 24)
-    terminal.resize(opened.incarnationId, 91, 37)
+    await terminal.open(80, 24)
     const inspect = terminal.inspect()!
-    assert.equal(inspect.cols, 91); assert.equal(inspect.rows, 37)
+    assert.equal(inspect.cols, 80); assert.equal(inspect.rows, 24)
     const sendBinary = h.context.sendBinary
     h.context.sendBinary = bytes => {
       const result = sendBinary(bytes)
@@ -88,12 +88,20 @@ test('real native PTY output reaches the existing mobile binary decoder with act
     await streamCatalogTerminal(params, h.context as never, frame => {
       h.emit(frame)
       if ((frame as { type: string }).type === 'subscribed') {
-        terminal.write(opened.incarnationId, 'one', Buffer.from("stty -echo; stty size; printf '\\123\\124\\122\\105\\101\\115\\137\\117\\113\\n'\r").toString('base64'))
+        const streamId = (frame as { streamId: number }).streamId
+        h.receive({ streamId, seq: 0, opcode: Opcode.Resize, payload: encodeTerminalStreamJson({ cols: 91, rows: 37 }) })
+        h.receive({ streamId, seq: 0, opcode: Opcode.Input, payload: Buffer.from("stty -echo; stty size\r") })
+        h.receive({ streamId, seq: 0, opcode: Opcode.Input, payload: Buffer.from("printf '\\123\\124\\122\\105\\101\\115\\137\\117\\113\\n'\r") })
       }
-    }, { status: async () => terminal.inspect(), read: async (id, cursor) => terminal.read(id, cursor) })
+    }, { status: async () => terminal.inspect(), read: async (id, cursor) => terminal.read(id, cursor) }, {
+      close() {},
+      write: async (id, bytes, key) => terminal.write(id,key,Buffer.from(bytes).toString('base64')),
+      resize: async (id, cols, rows) => { terminal.resize(id,cols,rows); return { resized:true } }
+    })
     const rendered = h.mobile.map(v => (v as { serialized?: string; chunk?: string }).serialized ?? (v as { chunk?: string }).chunk ?? '').join('')
     assert.match(rendered, /37 91\r\n/)
     assert.match(rendered, /STREAM_OK\r\n/)
+    assert.equal(terminal.inspect()!.cols,91); assert.equal(terminal.inspect()!.rows,37)
   } finally {
     clearTimeout(timeout); terminal.requestClose(); await exit; await rm(cwd, { recursive: true })
   }

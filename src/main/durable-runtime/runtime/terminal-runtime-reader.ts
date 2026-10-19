@@ -2,11 +2,10 @@ import type { ReadyTerminalInputPort, TerminalRuntimeLookup } from '../input/run
 
 const unavailable = (): never => { throw new Error('TERMINAL_RUNTIME_UNAVAILABLE') }
 
-/** Borrow one existing control for observation only. The caller supplies the
+/** Pin one existing control. The caller supplies the
  * authenticated Catalog/PG guard; routing is not authority. A replacement
  * execution requires a fresh subscription, never a silent retarget. */
-export function borrowTerminalRuntimeReader(sessionId: string, lookup: TerminalRuntimeLookup,
-  assertAuthorized: (port: ReadyTerminalInputPort) => Promise<void>) {
+export function pinTerminalRuntime(sessionId: string, lookup: TerminalRuntimeLookup) {
   const initial = lookup(sessionId), terminal = initial?.terminal
   if (!initial || initial.binding.sessionId !== sessionId || !terminal?.supported()) { return unavailable() }
   const binding = initial.binding, controller = initial.context.controller
@@ -23,6 +22,13 @@ export function borrowTerminalRuntimeReader(sessionId: string, lookup: TerminalR
     }
     return port
   }
+  return Object.freeze({ current })
+}
+
+export function borrowTerminalRuntimeReader(sessionId: string, lookup: TerminalRuntimeLookup,
+  assertAuthorized: (port: ReadyTerminalInputPort) => Promise<void>) {
+  const { current } = pinTerminalRuntime(sessionId, lookup)
+  const terminal = current().terminal!
   async function request(method: 'PTY_STATUS' | 'PTY_READ', params?: Record<string, unknown>): Promise<unknown> {
     await assertAuthorized(current())
     current()

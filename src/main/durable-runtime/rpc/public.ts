@@ -1,3 +1,4 @@
+import { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
 import { createCatalogBrowserStreamRecovery } from './browser-stream-recovery.ts'
 import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
@@ -37,11 +38,13 @@ export class DurableCatalogReadAdapter {
   private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
   private readonly terminalSendRpc: ReturnType<typeof createCatalogTerminalSendRpc>
   private readonly terminalLease: ReturnType<typeof createCatalogTerminalLeaseSubscribe>
+  private readonly rawSubscriptions = createTerminalRawSubscriptions()
   private disposed = false
   constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup}) {
     this.config = captureDurableCatalogReadConfig(config)
-    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted)
-    this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config, options?.terminalRuntime)
+    const raw = this.rawSubscriptions
+    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted, raw)
+    this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config, options?.terminalRuntime, raw)
     this.clipboardRpc = this.config.attachments === undefined ? null : createCatalogClipboardRpc(this.config, this.config.attachments)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
     this.metadata = createCatalogMetadataFacade(this.config)
@@ -147,6 +150,7 @@ export class DurableCatalogReadAdapter {
   dispose(): void {
     if (this.disposed) { return }
     this.disposed = true
+    this.rawSubscriptions.dispose()
     this.browserStream.dispose()
     try { this.subscriptions.dispose() } finally {
       try { this.structuredSubscriptions.dispose() } finally { this.structuredHolds.dispose() }

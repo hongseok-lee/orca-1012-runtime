@@ -1,8 +1,10 @@
+import { TERMINAL_INPUT_MAX_BYTES } from '../../../shared/terminal-input.ts'
+import type { createCatalogTerminalActions } from './terminal-runtime-actions.ts'
 import { StringDecoder } from 'node:string_decoder'
 import { iterateTerminalStreamTextPayloads } from '../../runtime/rpc/methods/terminal/terminal-stream-replay.ts'
 import type { RpcContext } from '../../runtime/rpc/core.ts'
 import type { TerminalSubscribe } from '../../../shared/rpc-contract/terminal-stream-params.ts'
-import { TerminalStreamOpcode as Opcode, encodeTerminalStreamFrame, encodeTerminalStreamJson } from '../../../shared/terminal-stream-protocol.ts'
+import { TerminalStreamOpcode as Opcode, encodeTerminalStreamFrame, encodeTerminalStreamJson, decodeTerminalStreamJson } from '../../../shared/terminal-stream-protocol.ts'
 import { allocateTerminalSubscriptionStreamId } from '../../runtime/rpc/methods/terminal/terminal-subscription-stream-id.ts'
 import type { borrowTerminalRuntimeReader } from '../runtime/terminal-runtime-reader.ts'
 
@@ -23,19 +25,19 @@ function readOutput(value: unknown, incarnationId: string, fromByte: number) {
   return { bytes, endByte: Number(r.endByte), live: r.live, truncated: r.truncated }
 }
 
-/** Existing binary wire, read-only until the authenticated floor/input adapter
- * is attached. Retained bytes are observations, never input to a new process. */
+/** Existing binary wire with scoped input/viewport controls. Retained output
+ * bytes are observations, never input to a new process. */
 export async function streamCatalogTerminal(params: ReturnType<typeof TerminalSubscribe.parse>, context: RpcContext,
-  emit: (frame: unknown) => void, reader: Reader): Promise<void> {
+  emit: (frame: unknown) => void, reader: Reader, actions?: ReturnType<typeof createCatalogTerminalActions>, onReady?: (incarnationId: string) => () => void): Promise<void> {
   if (!context.sendBinary || !context.registerBinaryStreamHandler || params.capabilities?.terminalBinaryStream !== 1) {
     throw new Error('binary_terminal_stream_required')
   }
   const streamId = allocateTerminalSubscriptionStreamId()
-  let closed = false, seq = 0, cursor = 0, timer: ReturnType<typeof setTimeout> | undefined
-  let wake: (() => void) | undefined, unregister = () => {}
+  let closed = false, seq = 0, ingress = 0, cursor = 0, timer: ReturnType<typeof setTimeout> | undefined
+  let wake: (() => void) | undefined, unregister = () => {}, detach = () => {}
   const end = () => {
     if (closed) { return }
-    closed = true; clearTimeout(timer); wake?.(); unregister()
+    closed = true; actions?.close(); detach(); clearTimeout(timer); wake?.(); unregister()
     context.signal?.removeEventListener('abort', abort)
     try { emit({ type: 'end' }) } catch { /* disconnected */ }
   }
@@ -62,14 +64,34 @@ export async function streamCatalogTerminal(params: ReturnType<typeof TerminalSu
     const initial = readOutput(await reader.read(incarnationId, 0), incarnationId, 0)
     if (closed) { return }
     unregister = context.registerBinaryStreamHandler(streamId, frame => {
-      if (closed) { return }
+      if (closed || frame.streamId !== streamId) { return }
       if (frame.opcode === Opcode.Unsubscribe) { abort(); return }
-      if ([Opcode.Input, Opcode.Resize, Opcode.ClaimViewport].includes(frame.opcode)) {
+      const reject = () => {
+        if (closed) { return }
+        try { send(Opcode.Error, encodeTerminalStreamJson({ code: 'TERMINAL_WRITE_UNAVAILABLE' })) } catch { abort() }
+      }
+      // Existing desktop sends seq=0 for every control frame. The socket already
+      // orders delivery; sequence is not a client idempotency key.
+      const key = JSON.stringify(['BINARY', streamId, ++ingress])
+      if (frame.opcode === Opcode.Input) {
+        if (!actions || frame.payload.length > TERMINAL_INPUT_MAX_BYTES) { reject(); return }
         try {
-          send(Opcode.Error, encodeTerminalStreamJson({ code: 'TERMINAL_WRITE_UNAVAILABLE' }))
-        } catch { abort() }
+          void actions.write(incarnationId, frame.payload, key).then(result => {
+            if (result.status !== 'WRITTEN') { reject() }
+          }, reject)
+        } catch { reject() }
+      } else if (frame.opcode === Opcode.Resize || frame.opcode === Opcode.ClaimViewport) {
+        const viewport = decodeTerminalStreamJson<{ cols?: unknown; rows?: unknown }>(frame.payload)
+        if (!actions || typeof viewport?.cols !== 'number' || typeof viewport.rows !== 'number') { reject(); return }
+        const { cols, rows } = viewport
+        try {
+          void actions.resize(incarnationId, cols, rows, key).then(() => {
+            if (!closed) { send(Opcode.Resized, encodeTerminalStreamJson({ cols, rows })) }
+          }).catch(reject)
+        } catch { reject() }
       }
     })
+    detach = onReady?.(incarnationId) ?? (() => {})
     emit({ type: 'subscribed', streamId, lines: [], truncated: initial.truncated, cols: status.cols, rows: status.rows })
     send(Opcode.SnapshotStart, encodeTerminalStreamJson({ kind: 'scrollback', cols: status.cols, rows: status.rows,
       truncated: initial.truncated }))

@@ -1,3 +1,5 @@
+import type { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
+import { createCatalogTerminalActions } from './terminal-runtime-actions.ts'
 import type { TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
 import { createCatalogTerminalRuntimeReader } from './terminal-runtime-read.ts'
 import { streamCatalogTerminal } from './terminal-runtime-stream.ts'
@@ -11,7 +13,7 @@ import { TerminalDraftStoreError } from '../terminal/durable-contracts.ts'
 
 /** Chat retains its logical input lease. Raw Terminal borrows the existing
  * Agent PTY; observation never wakes or replaces a runtime. */
-export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadConfig, lookup?: TerminalRuntimeLookup) {
+export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadConfig, lookup?: TerminalRuntimeLookup, raw?: ReturnType<typeof createTerminalRawSubscriptions>) {
   return async (original: unknown, context: RpcContext, emit: (frame: unknown) => void,
     legacy: RpcStreamingMethodDeclaration['handler']): Promise<void> => {
     const params = TerminalSubscribe.parse(capturedJson(original))
@@ -29,7 +31,9 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
     if (found.chat) { return holdCatalogTerminalInputLease(params, capturedContext, emit) }
     if (!lookup) { throw new TerminalDraftStoreError('TERMINAL_RUNTIME_UNAVAILABLE') }
     const reader = createCatalogTerminalRuntimeReader(config, capturedContext, params.terminal, found, lookup)
-    return streamCatalogTerminal(params, capturedContext, emit, reader)
+    const actions = createCatalogTerminalActions(config, capturedContext, params.terminal, found, lookup)
+    return streamCatalogTerminal(params, capturedContext, emit, reader, actions,
+      raw && capturedContext.terminalInputConnection ? incarnationId => raw.attach(params.terminal, capturedContext, incarnationId, actions) : undefined)
   }
 }
 

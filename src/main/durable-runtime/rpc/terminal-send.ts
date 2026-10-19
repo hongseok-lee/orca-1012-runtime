@@ -1,3 +1,4 @@
+import type { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
 import { resolveCatalogTerminalTarget } from './terminal-target.ts'
 import { TerminalSend } from '../../../shared/rpc-contract/terminal-unary-params.ts'
 import type { RpcContext } from '../../runtime/rpc/core.ts'
@@ -18,7 +19,7 @@ import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts
 
 /** Existing unary schema only. The optional internal sink observes confirmed
  * new intake; provider work never delays or changes this original ACK. */
-export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, onCommitted?: TerminalInputCommittedSink) {
+export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, onCommitted?: TerminalInputCommittedSink, raw?: ReturnType<typeof createTerminalRawSubscriptions>) {
   const owner = config.pool, connect = owner.connect.bind(owner), query = owner.query.bind(owner)
   const pool = new Proxy(owner, {get(target, key) {
     if (key === 'connect') { return connect }
@@ -78,7 +79,10 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
       if (existing.status === 'UNAVAILABLE') { throw new TerminalDraftStoreError('TERMINAL_RECEIPT_UNAVAILABLE') }
       if (existing.status === 'FOUND') { return committedWire(await applyManagedTerminalIngress(pool, probe)) }
       if (resolveOnly) { throw new TerminalDraftStoreError('TERMINAL_COMMIT_UNCERTAIN_RESOLVE_SAME_KEY') }
-      if (!resolved.chat) { throw new TerminalDraftStoreError('TERMINAL_MANAGED_RAW_NOT_CONNECTED') }
+      if (!resolved.chat) {
+        if (!raw) { throw new TerminalDraftStoreError('TERMINAL_MANAGED_RAW_NOT_CONNECTED') }
+        return raw.send(params,capturedContext)
+      }
       const classification = classifyTerminalIngress(probe.snapshot)
       if (!['CLEAR', 'CHAT_FRAGMENT', 'CHAT_SUBMIT'].includes(classification.kind)) {
         throw new TerminalDraftStoreError('TERMINAL_SEMANTIC_NOT_CONNECTED')
@@ -87,10 +91,9 @@ export function createCatalogTerminalSendRpc(config: CapturedCatalogReadConfig, 
         await lockAggregates(tx, {sessionIds: [resolved.sessionId]})
         assertCurrent()
         const floor = await readTerminalFloorInTransaction(tx, binding('0'))
-        if (floor && floor.binding.mode !== 'AGENT_CHAT_COMPAT') { throw new TerminalDraftStoreError('TERMINAL_FLOOR_OWNED_BY_ANOTHER_CALLER') }
         // Another device/caller holds the floor: this sender takes it over at
         // the next generation (last sender wins). Its unsent draft stays its own.
-        const foreign = !!floor && (floor.binding.principalId !== principal || floor.binding.pairedDeviceId !== device)
+        const foreign = !!floor && (floor.binding.principalId !== principal || floor.binding.pairedDeviceId !== device || floor.binding.mode !== 'AGENT_CHAT_COMPAT')
         const draft = floor && !foreign ? await readTerminalDraftInTransaction(tx, floor.binding) : null
         assertCurrent()
         return {floor, foreign, draftRevision: draft?.draft.revision ?? '0'}
