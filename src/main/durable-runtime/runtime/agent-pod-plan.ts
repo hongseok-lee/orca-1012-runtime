@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { WRITER_STOP_FINALIZER } from './agent-pod-stop-evidence.ts'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
 import { AgentPodPlanError, agentPodArray, agentPodFields, agentPodInteger, agentPodName, agentPodPath,
   agentPodText, agentPodUuid, agentPodWithin, captureAgentPodPolicy } from './agent-pod-policy.ts'
@@ -102,6 +103,7 @@ export function createAgentPodPlanner(deploymentPolicy: unknown) {
           Object.freeze({ name: 'temporary', emptyDir: Object.freeze({ sizeLimit: `${profile.temporaryMi}Mi` }) })]) })
       const pod = Object.freeze({ apiVersion: 'v1', kind: 'Pod', metadata: Object.freeze({
         name: identity.resourceName, namespace: policy.namespace,
+        finalizers: Object.freeze([WRITER_STOP_FINALIZER]),
         labels: Object.freeze({ 'orca.dev/role': 'runtime-agent', 'orca.dev/dataset': policy.dataset, 'orca.dev/runtime-unit': identity.unitId }),
         annotations: Object.freeze({ 'orca.dev/operation-id': identity.operationId, 'orca.dev/attempt-id': identity.attemptId,
           'orca.dev/execution-epoch': identity.executionEpoch, 'orca.dev/intent-revision': identity.intentRevision,

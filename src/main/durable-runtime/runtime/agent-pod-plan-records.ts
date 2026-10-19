@@ -59,7 +59,9 @@ function capturePlan(original: unknown) {
     const json = snapshot(original), encoded = canonicalInput(json)
     const p = agentPodFields(json, ['kind','identity','pod','mountExpectations','podSpecSHA256','readinessObserved','storageGrantIssued','physicalPinIssued'])
     const pod = agentPodFields(p.get('pod'), ['apiVersion','kind','metadata','spec'])
-    const metadata = agentPodFields(pod.get('metadata'), ['name','namespace','labels','annotations'])
+    const metadataInput = pod.get('metadata')
+    const hasFinalizer = metadataInput !== null && typeof metadataInput === 'object' && Object.hasOwn(metadataInput, 'finalizers')
+    const metadata = agentPodFields(metadataInput, ['name','namespace','labels','annotations', ...(hasFinalizer ? ['finalizers'] : [])])
     const labels = agentPodFields(metadata.get('labels'), ['orca.dev/role','orca.dev/dataset','orca.dev/runtime-unit'])
     const annotationInput = metadata.get('annotations')
     const hasCheckout = annotationInput !== null && typeof annotationInput === 'object' &&
@@ -115,7 +117,12 @@ function capturePlan(original: unknown) {
         memoryMi: quantity(requests.get('memory'), 'Mi'), ephemeralMi: quantity(requests.get('ephemeral-storage'), 'Mi'),
         temporaryMi: quantity(emptyDir.get('sizeLimit'), 'Mi') } }
     const rebuilt = planner.plan(request)
-    const plan = legacyClosedRead ? legacyClosedPlanForRead(rebuilt, checkout) : rebuilt
+    const current = legacyClosedRead ? legacyClosedPlanForRead(rebuilt, checkout) : rebuilt
+    // Historical plans retain their exact bytes; new plans always retain stop status.
+    const { finalizers: _finalizers, ...legacyMetadata } = current.pod.metadata
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Historical metadata omits only the new retention finalizer; strict canonical comparison follows.
+    const plan = hasFinalizer ? current : Object.freeze({ ...current,
+      pod: Object.freeze({ ...current.pod, metadata: Object.freeze(legacyMetadata) }) }) as UnauthorizedAgentPodPlan
     if (canonicalInput(snapshot(plan)) !== encoded) { return invalid() }
     return Object.freeze({ plan, encoded, planDigest: createHash('sha256').update(encoded).digest('hex'), dataset, legacyClosedRead,
       source: Object.freeze({ policy, request }) })

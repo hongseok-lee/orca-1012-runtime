@@ -194,7 +194,7 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 
 ### Agent 재부착·정리 설정 (PR #167–#169)
 
-위 예제에 아래 키를 더하면 backend가 재기동하거나 교체돼도 Agent 세션이 이어집니다. 실행 중이던 provider를 다시 붙이고, 사라진 Pod의 grant를 회수하며, owner를 잃은 입력을 UNKNOWN으로 정리합니다(재전송 없음).
+위 예제에 아래 키를 더하면 backend가 재기동하거나 교체돼도 Agent 세션이 이어집니다. 실행 중이던 provider를 다시 붙이고, 실제 종료 증거가 확인된 attempt의 grant를 회수하며, owner를 잃은 입력을 UNKNOWN으로 정리합니다(재전송 없음).
 
 ```json
 {
@@ -204,7 +204,11 @@ Controller private JSON은 runtime UID 1000 소유의 일반 파일, mode 0600�
 }
 ```
 
-- `orphanReconcile`: Agent Pod가 GONE(404 또는 다른 UID)이면 그 attempt의 write/exec grant·mount를 회수하고 binding을 epoch+1로 올린다. attempt는 `STOPPED ORPHAN_POD_ABSENT`가 된다.
+- `orphanReconcile`: Pod 404·다른 UID·terminal phase만으로 writer를 해제하지 않는다. 정확한 UID의 인증된 종료 증거(모든 실제 container terminated, `restartPolicy: Never`, 삭제 시작, `PodReadyToStartContainers=False`) 또는 기존 collector의 정확한 Compute 영구 삭제 증거가 있어야 write/exec grant·mount를 회수하고 storage/execution epoch를 올린다. attempt는 `STOPPED WRITER_STOP_CONFIRMED`가 된다.
+- 종료 증거가 없는 사라진/종료 중 Pod는 writer와 epoch를 보존하고 `REVOKING/BLOCKED`로 유지한다. 실제 상태 변경은 기존 audit/outbox와 notification에 한 번 기록하며, 증거 확인 시 notification을 해소한다. DURABLE/UNKNOWN 입력은 재전송하거나 삭제하지 않는다.
+- 새 Agent Pod는 `orca.dev/writer-stop` finalizer로 종료 상태를 DB 회수 commit까지 보존한다. 이전 plan의 live Pod도 삭제 전에 UID/resourceVersion 조건부 PATCH로 보존하며, 삭제는 원 UID의 `DeleteOptions.preconditions.uid`와 기본 grace를 사용한다. 삭제 응답은 종료 증명이 아니다. commit 후 finalizer 정리는 controller takeover 후에도 재시도한다. Agent create/delete Role에는 이 finalizer용 `pods/patch`가 필요하다.
+- 실패한 ownerless WAKE는 현재 controller 권한으로 기존 operation/command를 takeover한 후 정확한 미준비 Pod만 종료 요청한다. READY runtime은 재부착 경로에 남긴다. Node나 공용 기반 시설을 삭제하지 않는다.
+- Compute fallback은 기존 실행 target과 완전한 Compute 삭제 audit를 읽는다. Cloud Logging 조회 권한이 없거나 증거가 불완전하면 writer를 해제하지 않는다. [실측 기록](evidence/writer-lifecycle-20261019.json)의 개발 identity는 Logging 403이므로 lost-node fallback은 검증되지 않았다.
 - `inputRecoveryAll`: 이전 controller term에서 실행되다 owner를 잃은 모든 `dispatchInput`을 기존 owner-loss 규칙으로 UNKNOWN 정리한다. `inputRecoveryTarget`과 함께 쓸 수 없다.
 - `adoption.configFile`: host가 기록된(`agent_control_hosts.control_sha256`) 모든 READY Codex/Claude 세션을 다시 붙이는 registry 설정이다. 파일은 UID 1000·mode 0600이며 형식은 다음과 같다.
 

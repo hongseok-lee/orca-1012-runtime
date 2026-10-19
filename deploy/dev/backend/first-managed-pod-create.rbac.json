@@ -18,7 +18,9 @@
             "pods"
           ],
           "verbs": [
-            "create"
+            "create",
+            "delete",
+            "patch"
           ]
         }
       ]

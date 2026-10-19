@@ -1,0 +1,98 @@
+{
+  "scope": "TODO-01 + TODO-02; backend writer lifecycle; synthetic owned Agent sandbox and isolated real PostgreSQL",
+  "sourceBase": "5f33e0e50eac187b145900ab2aa1895bc7164e88",
+  "liveStop": {
+    "requestedAt": "2026-10-19T11:52:35.575Z",
+    "firstStopObservedAt": "2026-10-19T11:52:46.031Z",
+    "podName": "writer-stop-task01-e8ac7178",
+    "podUid": "9b5a391e-ce40-4c15-a912-1ecbc423cd52",
+    "deleteRequest": "UID precondition, no gracePeriodSeconds override",
+    "restartPolicy": "Never",
+    "deletionTimestampPresent": true,
+    "PodReadyToStartContainers": "False",
+    "allContainersActuallyTerminated": true,
+    "containers": [
+      {
+        "name": "agent",
+        "containerId": "containerd://0b1280b1adf4c5b6c5b8a944050e0011e39ca1dd225ce6ef490d5ae995a04791",
+        "finishedAt": "2026-10-19T11:52:45Z",
+        "exitCode": 137
+      }
+    ],
+    "evidenceKind": "KUBERNETES_SANDBOX_TERMINATED",
+    "proofRef": "kubernetes-sandbox-stop:sha256:c8a67c4e3e9f21a75cfb9c985a18bae9dc694b67ac826988b1a8644e1a05c5e8"
+  },
+  "liveReconcile": {
+    "at": "2026-10-19T11:55:19.660Z",
+    "source": "real Kubernetes API + isolated real PostgreSQL, synthetic session/grants",
+    "status": "RECONCILED",
+    "revoked": {
+      "executionGrants": 1,
+      "writeGrants": 1,
+      "mounts": 1,
+      "bindings": 1
+    },
+    "bindingAfter": {
+      "epoch": "1",
+      "access_state": "VERIFIED",
+      "writer_attempt_id": null
+    },
+    "inputStatesAfter": [
+      "DURABLE",
+      "UNKNOWN"
+    ],
+    "finalizerReleasedAfterCommit": true
+  },
+  "verification": {
+    "transportValue": {
+      "pass": 5,
+      "fail": 0,
+      "boundaries": [
+        "exact terminated statuses and no restart",
+        "404/reused UID insufficient",
+        "UID delete/grace/receipt separation",
+        "legacy retention and cleanup UID/RV"
+      ]
+    },
+    "postgres": {
+      "pass": 2,
+      "fail": 0,
+      "cases": [
+        "missing Pod retains writer; blocked transition emits once even when unit already BLOCKED; terminal proof revokes; stale authority rejected; input preserved; next epoch writer reserved; old proof cannot touch new attempt",
+        "new leader takes over original EXECUTING WAKE command without replay or execution-token replacement"
+      ]
+    },
+    "strictRuntimeTypecheck": "passed",
+    "changedProductOxlint": "0 warnings, 0 errors",
+    "initialSetupFailure": "Node strip-only cannot transform TypeScript parameter properties; used existing Node --experimental-transform-types; no dependency installation"
+  },
+  "computeFallback": {
+    "permissionProbeAt": "2026-10-19T12:01:35.419Z",
+    "httpStatus": 403,
+    "status": "PERMISSION_DENIED",
+    "availableInDevIdentity": false,
+    "lostNodeRecoveryVerified": false
+  },
+  "developmentIntegration": {
+    "sourceWatch": "existing incremental esbuild supervisor; no image build",
+    "initialCompileFailure": "existing Compute stop modules missing from sparse dev checkout; supplied unchanged existing main dependencies",
+    "initialSuccessfulGeneration": 7,
+    "initialSuccessfulBundleHash": "fdbb22c9f7716d0ef9f30395565aebe43a1f2d6d7770970018cc7ce7fd430efd",
+    "initialAuthenticatedStatus": "ok; appVersion 0.1.0+fdbb22c9f771",
+    "finalGeneration": 8,
+    "rbac": "existing namespace Agent create/delete role adds pods patch only",
+    "finalPid": 27242,
+    "finalBundleHash": "75388c074f395811ce80f4112d4ed8e08d374e345fb80128af193298ec8e93ff",
+    "finalAuthenticatedStatus": {
+      "ok": true,
+      "appVersion": "0.1.0+75388c074f39"
+    }
+  },
+  "limits": [
+    "One owned synthetic sandbox; no real provider/account or protected NFS home mounted.",
+    "Real PostgreSQL rows were synthetic in an isolated database, not user sessions.",
+    "No live NFS partition, lost-node fallback, full HA failover or provider cold-resume verification.",
+    "Backend-only change; no fresh UI screenshot or native iPhone test. Existing Expo Pod was Failed before this task.",
+    "No Node/VM/shared infrastructure deletion, dependency reinstall or full image build."
+  ]
+}
