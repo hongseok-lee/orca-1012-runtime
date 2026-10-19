@@ -238,7 +238,7 @@ export class DurableCodexDriver {
     if (event.method === 'TURN_START_RESPONSE' || event.method === 'CORRELATED_TURN_STARTED') {
       this.#verifyAdmission(event.receipt, identity)
     }
-    if (event.method === 'turn/completed' && event.terminalStatus === 'completed') {
+    if (event.method === 'turn/completed' && (event.terminalStatus === 'completed' || event.terminalStatus === 'failed')) {
       // Only the actual protocol-owned receipt for this submission can issue a
       // completion proof. Preserve the existing admission/stop predicates.
       if (!this.#protocol.ownsReceipt(event.receipt) ||
@@ -249,6 +249,7 @@ export class DurableCodexDriver {
           event.receipt.clientMessageId !== identity.nativeRequestId ||
           sha256(event.receipt.submission) !== identity.submissionHash) {return}
       const completed = immutableSnapshot({kind: 'PROVIDER_TARGET_COMPLETED', source: 'PROVIDER_PROTOCOL',
+        terminalStatus: event.terminalStatus,
         evidenceRef: `codex:turn-completed:${event.receipt.connectionId}:${event.receipt.turnId}`,
         observedAt: event.observedAt, attemptId: identity.binding.attemptId, podUid: identity.binding.podUid,
         executionEpoch: identity.binding.executionEpoch, messageId: identity.messageId,

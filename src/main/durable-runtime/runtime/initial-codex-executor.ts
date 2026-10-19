@@ -248,6 +248,10 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           active(); phase = 'NATIVE_COLD'
           native = await codexDriver.cold(cold, gate.execution.claim, permit.permit)
         }
+        // Refresh the freshly supplied managed credential through the same
+        // official control contract before this cold owner admits any input.
+        // A failure retains the host and is enforced by the dispatch gate.
+        if (!claude && hosted) { await authRefresh.refresh(control) }
         phase = 'NATIVE_IDENTITY_SETTLEMENT'
         if((!claude || (driver instanceof ClaudeDurableProvider && driver.nativeSessionObserved())) && !await recordInitialNativeObservation(borrowed,context,native,b=>driver!.ownsReadyBinding(b))) {return deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED')}
         phase = 'READY_SETTLEMENT'

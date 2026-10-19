@@ -1,5 +1,5 @@
 {
-  "scope": "Root-dispatched PR181 normal managed auth-refresh follow-up, same worker/Agent/native; no lifecycle transition executed",
+  "scope": "Root-dispatched PR181 normal managed auth-refresh follow-up and subsequently authorized exact-owned lifecycle transition",
   "officialContract": {
     "installedVersion": "0.160.1",
     "method": "account/read",
@@ -13,7 +13,7 @@
   "implementation": {
     "capability": "managed-codex-auth-refresh-v1",
     "privateControlMethod": "REFRESH_CODEX_MANAGED_AUTH",
-    "normalPath": "Authenticated control HELLO/ATTACH capability -> original managed adoption history/identity checks -> managed refresh observation; current cold/adopted owner exposes same refresh method.",
+    "normalPath": "Authenticated versioned control -> exact official account/read refresh. The normal cold owner now invokes it before exposing READY/input; adoption invokes it after native identity/history adoption. Both retain the same dispatch failure gate.",
     "protection": "Failed refresh gates subsequent provider dispatch before its permit, retaining healthy host and admitted input. No replay/restart/login-mode switch.",
     "retryBoundary": "Resident outcome retained for identical normal supplied credential bytes held privately in memory only; changed supply may reopen official refresh. No token digest/log/persistent secret or parallel retry engine.",
     "projection": "Only COMPLETED/chatgpt, fixed FAILED code, or UNAVAILABLE/HOST_CAPABILITY_MISSING leaves the Agent endpoint. Official account email/token fields are not forwarded."
@@ -33,7 +33,20 @@
     ],
     "narrowAuthModuleAndReaderTypecheck": "PASS",
     "changed8FileLint": "PASS0warnings0errors",
-    "priorPolicyCursorLifecycleTests": "Reused, not rerun"
+    "priorPolicyCursorLifecycleTests": "Reused, not rerun",
+    "newLifecycleBoundaryChecks": {
+      "passed": 3,
+      "failedFinal": 0,
+      "cases": [
+        "failed original terminal retains failure/no duplicate dispatch",
+        "unknown and running are not terminal",
+        "trusted exact-Agent Codex credential source selection; other defaults unchanged"
+      ]
+    },
+    "changed10FileLint": "PASS0warnings0errors",
+    "sourceSelectorTypecheck": "PASS",
+    "broaderObservationSettlementTypecheck": "LIMIT: existing partial dev checkout missing resources/evidence/types.ts; not passed",
+    "coldOwnerChangedFileLint": "PASS0warnings0errors"
   },
   "development": {
     "productSourceFiles": 7,
@@ -55,25 +68,6 @@
       "ok": true,
       "runtimeId": "c29f0a1a-df6a-4ead-b039-f16d0092af35"
     }
-  },
-  "currentActual": {
-    "observedAt": "2026-10-19T17:45:14.413Z",
-    "sameTaskOwnedHostAdopted": true,
-    "adoptionFailures": 0,
-    "authRefresh": {
-      "state": "UNAVAILABLE",
-      "reason": "HOST_CAPABILITY_MISSING"
-    },
-    "officialRefreshSentToOldHost": false,
-    "seq6": {
-      "messageId": "162262d6-b7ef-4362-9d60-d9699e499ae2",
-      "state": "ADMITTED",
-      "messageCount": 6,
-      "observedAt": "2026-10-19T17:45:14.485825Z",
-      "automaticallyRetransmitted": false
-    },
-    "actualShellExit": null,
-    "actualShellStdout": null
   },
   "historicalFactsPreserved": {
     "rootLoginLastProbe": {
@@ -101,10 +95,118 @@
     }
   },
   "remainingLimits": [
-    "Existing live host cannot hot-update its in-memory method allowlist/capability. No live official-refresh or shell success obtained.",
-    "Minimum target-only lifecycle proposal sent to root, not executed: graceful exact UID retirement, actual stop/storage proof, same Agent protected home/native checkpoint in a new attempt/host. No Node/shared infrastructure action.",
-    "Any approved new COLD must bind the explicitly selected fresh task credential source; existing preparation otherwise writes the configured bootstrap source. No account-selection policy was invented or global credential pointer changed.",
-    "Original seq6 ADMITTED is never automatically retransmitted; root must decide lifecycle/input handling. No direct pipe injection, hidden login, privileged Pod/sysctl/RBAC or writer-fencing change.",
-    "Unchanged actual Expo Loading-tabs/initial warnings evidence reused. No new screenshot, installed-device/fullHA/lost-node or provider lifecycle test."
-  ]
+    "Original deadline elapsed while retry Pod remained ContainerCreating and seq7 DURABLE; no new native resume, official refresh, model request or real shell exit/stdout. Persisted exhaustion reason was still NULL at18:17:09Z; it is not claimed as recorded.",
+    "First-start/CodeMode42/old sandbox lifecycle evidence is reused, not rerun.",
+    "Original failed seq6 was terminally settled with explicit failed outcome, never resent. Only one separately authorized new seq7 was accepted.",
+    "Kernel/Pod privileges/protected-home isolation and writer-stop semantics unchanged. Installed-device/fullHA/lost-node recovery unverified; browser Loading-tabs remains unresolved."
+  ],
+  "historicalBeforeLifecycle": {
+    "observedAt": "2026-10-19T17:45:14.413Z",
+    "sameTaskOwnedHostAdopted": true,
+    "adoptionFailures": 0,
+    "authRefresh": {
+      "state": "UNAVAILABLE",
+      "reason": "HOST_CAPABILITY_MISSING"
+    },
+    "officialRefreshSentToOldHost": false,
+    "seq6": {
+      "messageId": "162262d6-b7ef-4362-9d60-d9699e499ae2",
+      "state": "ADMITTED",
+      "messageCount": 6,
+      "observedAt": "2026-10-19T17:45:14.485825Z",
+      "automaticallyRetransmitted": false
+    },
+    "actualShellExit": null,
+    "actualShellStdout": null,
+    "historical": true
+  },
+  "lifecycleTransition": {
+    "authorization": "Explicit user \ud574\ubd10 / root dispatch",
+    "originalInput": {
+      "sequence": 6,
+      "messageId": "162262d6-b7ef-4362-9d60-d9699e499ae2",
+      "nativeTurnId": "01a154fd-be6d-7793-99ef-eb00ca632735",
+      "terminalFrameRecordedAt": "2026-10-19T16:27:58.751Z",
+      "currentState": "SETTLED",
+      "terminalStatus": "failed",
+      "failureReason": "PROVIDER_TURN_FAILED",
+      "automaticallyRetransmitted": false,
+      "shellOutput": null
+    },
+    "gracefulRetirement": {
+      "at": "2026-10-19T18:02:54.054Z",
+      "oldPodUid": "ccfa5615-fb90-48ac-bbff-438176193231",
+      "uidPrecondition": true,
+      "forceDeletion": false,
+      "actualSandboxStopAt": "2026-10-19T18:03:20.719Z",
+      "containerFinishedAt": "2026-10-19T18:03:19Z",
+      "containerExitCode": 137,
+      "proofRef": "kubernetes-sandbox-stop:sha256:0b02d98fd676baf9840856221bb70cdecbc66305e0708266b7295b9229306dd1",
+      "writerRevocationCommitAt": "2026-10-19T18:04:57.216303Z",
+      "oldWriteGrant": "REVOKED",
+      "oldBindingWriter": null
+    },
+    "targetCredentialSource": {
+      "normalManagedImportAt": "2026-10-19T18:03:56.854Z",
+      "targetOnlyBindingAt": "2026-10-19T18:05:25.057Z",
+      "generatedColdSourceVerifiedAt": "2026-10-19T18:08:37.750Z",
+      "otherSourcesChanged": false,
+      "secretOutput": false
+    },
+    "distinctNewVerificationInput": {
+      "acceptedAt": "2026-10-19T18:06:39.646Z",
+      "messageId": "094af8d0-b2dc-4d1c-bab5-a77458567619",
+      "sequence": 7,
+      "normalPairedEncryptedTerminalSend": true,
+      "marker": "TASK04C_AUTH_SHELL_OK",
+      "automaticallyResent": false,
+      "state": "DURABLE"
+    },
+    "newAttempt": {
+      "id": "7de3dc11-062b-479e-a25d-9d5ab81fb373",
+      "podUid": "228ac76c-3382-4bb1-b788-cfd819398c8d",
+      "operationId": "d42c824d-af16-4476-8ca1-0854d61b9b09",
+      "deadlineAt": "2026-10-19T18:16:40.303661Z",
+      "retryCount": 0,
+      "currentStage": "BOUND/REHYDRATING at18:08:51Z",
+      "sameAgent": true,
+      "sameHome": true,
+      "nativeSessionRefExpected": "01a15453-5375-7771-86da-c7a9f78f6295",
+      "nativeSessionResumeConfirmed": false
+    },
+    "officialRefresh": null,
+    "actualAuthenticatedShellExit": null,
+    "actualAuthenticatedShellStdout": null,
+    "firstNewAttemptFailure": {
+      "attemptId": "7de3dc11-062b-479e-a25d-9d5ab81fb373",
+      "podUid": "228ac76c-3382-4bb1-b788-cfd819398c8d",
+      "cause": "Necessary dev source integration caused backend takeover during pre-READY startup; existing ownerless policy requested normal graceful retirement",
+      "operationAdoptedAt": "2026-10-19T18:08:46.981Z",
+      "kubernetesKillingAt": "2026-10-19T18:08:47Z",
+      "containerFinishedAt": "2026-10-19T18:09:12Z",
+      "containerExitCode": 137,
+      "oomProven": false,
+      "operatorInvokedExistingStopReconcileAt": "2026-10-19T18:12:10.605Z",
+      "actualStopProofRef": "kubernetes-sandbox-stop:sha256:8a390ef537b7d2ea439ba29a7e75c9900a107ed6d1a26a1990d5d62ae22776f7",
+      "writerGrantsRevoked": true,
+      "automaticFullHaRecoveryClaimed": false
+    },
+    "durableRetry": {
+      "rootOperationId": "d42c824d-af16-4476-8ca1-0854d61b9b09",
+      "retryCount": 1,
+      "retryAt": "2026-10-19T18:14:01.008045Z",
+      "childOperationId": "00d691f2-dc90-49d9-bf60-ffe54fd5b070",
+      "attemptId": "03f5dc0e-5891-4eb0-b5d8-45b74b2c1840",
+      "podUid": "ffd3b919-cd08-407f-bf25-6b3d55b04cbb",
+      "deadlineAt": "2026-10-19T18:16:40.303661Z",
+      "deadlineOrBudgetReset": false,
+      "sourcePublicationDuringRetry": false,
+      "scheduledAt": "2026-10-19T18:15:05Z",
+      "currentStage": "ContainerCreating after original deadline",
+      "observedAt": "2026-10-19T18:17:09.645677Z",
+      "deadlineElapsed": true,
+      "persistedExhaustionReason": null,
+      "exhaustionPersistenceVerified": false
+    }
+  }
 }

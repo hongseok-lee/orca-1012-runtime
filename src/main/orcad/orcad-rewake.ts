@@ -1,3 +1,4 @@
+import { captureRewakeCodexAuthSources, rewakeNativeFiles } from './orcad-rewake-auth.ts'
 import { certifiedNativeSessionRef } from '../durable-runtime/runtime/native-session-certification.ts'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
@@ -41,7 +42,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   const parsed = parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8'))
   const hasStorageTargets=parsed!==null&&typeof parsed==='object'&&Object.hasOwn(parsed,'storageTargets')
   const raw = agentPodFields(parsed,
-    ['baseTargetFile', 'baseProfileFile', ...(hasStorageTargets?['storageTargets']:[]), 'controlArtifactFile', 'controlSha256', 'codex', 'claude', 'runtimeServiceAccountUid',
+    ['baseTargetFile', 'baseProfileFile', ...(parsed!==null&&typeof parsed==='object'&&Object.hasOwn(parsed,'codexAuthSources')?['codexAuthSources']:[]), ...(hasStorageTargets?['storageTargets']:[]), 'controlArtifactFile', 'controlSha256', 'codex', 'claude', 'runtimeServiceAccountUid',
       'clusterIdentityRef', 'projectId', 'projectNumber', 'stateDirectory', 'timeoutMs', 'nfsPodLabel', 'lifecyclePolicy'])
   const text = (key: string) => agentPodText(raw.get(key))
   const native = (key: 'codex' | 'claude'): Native & Record<string, unknown> => {
@@ -53,6 +54,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       ...(key === 'codex' ? { codexAuthFile: agentPodText(n.get('codexAuthFile')) } : { provider: 'claude', claudeTokenFile: agentPodText(n.get('claudeTokenFile')) }) })
   }
   const codex = native('codex'), claude = native('claude')
+  const codexAuthSources = captureRewakeCodexAuthSources(raw.get('codexAuthSources'))
   const lifecycle = agentPodFields(raw.get('lifecyclePolicy'), ['operationDeadlineMs', 'idleDurationMs'])
   const lifecyclePolicy = Object.freeze({ operationDeadlineMs: agentPodInteger(lifecycle.get('operationDeadlineMs')),
     idleDurationMs: lifecycle.get('idleDurationMs') === null ? null : agentPodInteger(lifecycle.get('idleDurationMs')) })
@@ -144,8 +146,8 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   // Both first starts and later losses use the same durable operation claim.
   async function candidates() {
     return (await pool.query<{ unit_id: string; unit_revision: string; intent_revision: string; session_id: string; provider: 'codex' | 'claude';
-      workspace_id: string; reserved_path: string; binding_id: string; binding_revision: string; binding_epoch: string; canonical_directory: string }>(`
-      SELECT u.id AS unit_id,u.revision::text AS unit_revision,u.intent_revision::text,s.id AS session_id,g.provider,s.workspace_id,
+      agent_id: string; workspace_id: string; reserved_path: string; binding_id: string; binding_revision: string; binding_epoch: string; canonical_directory: string }>(`
+      SELECT u.id AS unit_id,u.revision::text AS unit_revision,u.intent_revision::text,s.id AS session_id,g.provider,g.id AS agent_id,s.workspace_id,
         w.reserved_path,b.id AS binding_id,b.revision::text AS binding_revision,b.epoch::text AS binding_epoch,b.canonical_directory
       FROM durable_runtime.runtime_units u JOIN durable_runtime.runtime_members m ON m.runtime_unit_id=u.id
       JOIN durable_runtime.sessions s ON s.id=m.session_id AND s.lifecycle='OPEN' JOIN durable_runtime.agents g ON g.id=s.agent_id
@@ -218,7 +220,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       acceptedProfileFile: write('accepted-profile.json', profileBytes), expectedProfileDigest: sha(profileBytes),
       podTokenFile: baseTarget.get('podTokenFile'), podTimeoutMs: baseTarget.get('podTimeoutMs'), credential: baseTarget.get('credential'), collector })
     const spool = join(dir, 'terminal-output'); mkdirSync(spool, { mode: 0o700 })
-    const nativeFiles = row.provider === 'claude' ? claude : codex
+    const nativeFiles = rewakeNativeFiles(row.provider, row.agent_id, row.provider === 'claude' ? claude : codex, codexAuthSources)
     const coldFile = write('cold.json', { emptyFolderFile: write('empty-folder.json', { kind: 'FRESH_EMPTY_FOLDER', workspaceId: row.workspace_id,
       canonicalDirectory: row.canonical_directory, checkout: '/agent/checkout', sourceCheckout: row.reserved_path }),
     ...nativeFiles, controlArtifactFile: text('controlArtifactFile'), controlSha256: text('controlSha256'),

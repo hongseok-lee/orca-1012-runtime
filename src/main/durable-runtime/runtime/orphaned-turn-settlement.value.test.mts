@@ -12,3 +12,11 @@ test('completion frames name the native turn they close', () => {
   assert.equal(completedNativeTurn(frame('claude/message', { type: 'assistant' })), null)
   assert.equal(completedNativeTurn(frame('item/completed', { turn: { id: 'x', status: 'completed' } })), null)
 })
+
+// New failure boundary: terminal failure closes this original turn without implying success.
+test('failed original turns are terminal; unknown and running are not', () => {
+  assert.equal(completedNativeTurn(frame('turn/completed', { threadId: 't', turn: { id: 'failed-turn', status: 'failed' } })), 'failed-turn')
+  for (const status of ['inProgress', 'unknown', null]) {
+    assert.equal(completedNativeTurn(frame('turn/completed', { threadId: 't', turn: { id: 'failed-turn', status } })), null)
+  }
+})
