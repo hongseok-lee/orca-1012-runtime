@@ -32,6 +32,10 @@ export function bindDurableCatalogReadMethods(methods: readonly RpcAnyMethodDecl
   const metadata = new Set<string>(CATALOG_PUBLIC_METADATA_METHODS)
   const creation = new Set<string>(CATALOG_PUBLIC_CREATION_METHODS), structured = new Set<string>(CATALOG_STRUCTURED_CREATE_METHODS)
   return Object.freeze(methods.map(method => {
+    if (method.name === 'preflight.detectAgents' || method.name === 'preflight.refreshAgents') {
+      if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
+      return {...method, handler: (_params: never, context: RpcContext) => adapter.detectManagedAgents(context)}
+    }
     if (method.name === 'terminal.send') {
       if ('stream' in method && method.stream) { throw new CatalogReadError('CATALOG_REGISTRY_KIND') }
       const original = method.handler.bind(method)

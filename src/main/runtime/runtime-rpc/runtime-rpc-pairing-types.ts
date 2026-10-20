@@ -62,6 +62,7 @@ export type OrcaRuntimeRpcServerOptions = {
   methods?: readonly RpcAnyMethodDeclaration[]
   // Explicit server composition; absent preserves the existing runtime path.
   durableCatalogRead?: DurableCatalogReadConfig
+  durableManagedProviders?: () => readonly ('codex' | 'claude')[]
   durableCancelRequested?: (sessionId: string) => void
   durableTerminalRuntime?: TerminalRuntimeLookup
   durableTerminalInputCommitted?: TerminalInputCommittedSink

@@ -1,3 +1,4 @@
+import { captureCatalogReadContext } from './context.ts'
 import { createCatalogTerminalDisplay } from './terminal-display.ts'
 import { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
@@ -41,9 +42,11 @@ export class DurableCatalogReadAdapter {
   private readonly terminalLease: ReturnType<typeof createCatalogTerminalLeaseSubscribe>
   private readonly rawSubscriptions = createTerminalRawSubscriptions()
   private readonly terminalDisplay: ReturnType<typeof createCatalogTerminalDisplay>
+  private readonly managedProviders: () => readonly ('codex' | 'claude')[]
   private disposed = false
-  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup; onCancelRequested?: (sessionId: string) => void}) {
+  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup; onCancelRequested?: (sessionId: string) => void; managedProviders?: () => readonly ('codex' | 'claude')[]}) {
     this.config = captureDurableCatalogReadConfig(config)
+    this.managedProviders = options?.managedProviders ?? (() => [])
     this.terminalDisplay = createCatalogTerminalDisplay(this.config)
     const raw = this.rawSubscriptions
     this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted, raw, options?.onCancelRequested)
@@ -73,6 +76,11 @@ export class DurableCatalogReadAdapter {
     legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
     try { this.requireOpen(); return await this.terminalSendRpc(params, context, legacy) }
     catch (error) { throw catalogReadFailure(error) }
+  }
+  detectManagedAgents(context: RpcContext): readonly string[] {
+    this.requireOpen()
+    captureCatalogReadContext(this.config, context)
+    return [...this.managedProviders()]
   }
   async displayTerminal(method: string, params: unknown, context: RpcContext,
     legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {

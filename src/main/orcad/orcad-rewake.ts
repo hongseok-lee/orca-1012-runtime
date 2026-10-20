@@ -251,6 +251,8 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
   const byOperation = (operationId: string) => entries.get(operationId)?.dispatch
 
   return Object.freeze({
+    // Both native distributions above were captured from this deployment.
+    providers: Object.freeze(['codex', 'claude'] as const),
     /** Controller pass hook: queue at most one new wake per pass. */
     async wakePending(signal: AbortSignal, controller: VerifiedControllerIdentity): Promise<number> {
       if (signal.aborted) { return 0 }

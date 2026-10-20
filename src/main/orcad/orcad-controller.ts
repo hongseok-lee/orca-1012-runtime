@@ -44,6 +44,7 @@ export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
   onTerminalInputCommitted: TerminalInputCommittedSink
+  managedProviders(): readonly ('codex' | 'claude')[]
   onCancelRequested(sessionId: string): void
   currentTerminalRuntime: TerminalRuntimeLookup
   assertTerminalOutputAvailable(sessionId: string): void
@@ -108,6 +109,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
     readConfig,
     currentTerminalRuntime,
     onCancelRequested: cancellation.notify,
+    managedProviders: () => closing ? [] : rewake?.providers ?? [],
     onTerminalInputCommitted(input: Parameters<TerminalInputCommittedSink>[0]) {
       // Only the already authenticated ingress creates this value. No receipt
       // or PG principal is reconstructed into a new authenticated authority.
