@@ -129,3 +129,18 @@ test('options cannot replace native targeting fields', async () => {
   await assert.rejects(f.session.dispatch({ ...submission, options: { threadId: 'injected-thread' } }), /UNSUPPORTED_OPTION/)
   assert.equal(f.calls.filter((call) => call.method === 'turn/start').length, 0)
 })
+
+test('Stop waits for the exact terminal notification arriving after its ACK', async () => {
+  const f = fixture()
+  await f.session.open(cold)
+  const sent = await f.session.dispatch(submission)
+  if (sent.effect !== 'ADMITTED') { throw new Error('fixture admission missing') }
+  f.interrupt(() => {
+    setTimeout(() => f.notify('turn/completed', {threadId: 'native-thread', turn: {id: sent.receipt.turnId, status: 'interrupted'}}), 5)
+    return {}
+  })
+  const stopped = await f.session.interrupt(sent.receipt)
+  assert.equal(stopped.terminal?.terminalStatus, 'interrupted')
+  assert.equal(stopped.descendantsStopped, true)
+  assert.equal(f.calls.filter(call => call.method === 'turn/interrupt').length, 1)
+})

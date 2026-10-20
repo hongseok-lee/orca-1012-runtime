@@ -88,7 +88,7 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
     const durable = row.terminal_durable_chat_session
     if (durable !== undefined && (!isRuntimeTerminalNativeChatSession(durable) ||
         durable.sessionId !== row.session_id || !row.terminal_handle)) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
-    const history = durable ? {durableChatSession: durable} : {}
+    const history = durable ? {durableChatSession: durable, agentStatus: row.terminal_activity ?? null} : {}
     // An Agent tab is addressed by its durable handle even before its first READY:
     // input sent then is kept DURABLE and dispatched when the provider becomes READY.
     if (row.terminal_native_chat_session === undefined && value.status === 'pending-handle' && row.terminal_handle &&

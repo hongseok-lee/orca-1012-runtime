@@ -178,6 +178,8 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         } else {
           const codexDriver = new DurableCodexDriver({
             open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification: notify,
+            capture: pid => control?.turnProcesses?.capture?.(pid) ?? Promise.resolve(undefined),
+            terminate: (pid, baseline) => control?.turnProcesses?.terminate?.(pid, baseline) ?? Promise.resolve(false),
             onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
               sessionId: selected.sessionId, ...observation })}\n`),
             connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0, attach }, inputSink)

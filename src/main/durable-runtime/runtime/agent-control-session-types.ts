@@ -39,6 +39,7 @@ export type AuthenticatedAgentControl = Readonly<{
   /** Fixed diagnostic code of why the control stopped being valid, if it did. */
   lossReason(): string | null
   physicalPinIssued: false
+  turnProcesses?: Pick<CodexProtocolDependencies, 'capture' | 'terminate'>
 }> & ManagedCodexAuthControl & AgentTerminalControl
 /** A control handed over by an earlier owner and re-attached by this one. It
  * never initializes, transfers native code or sends COLD. */
@@ -46,4 +47,5 @@ export type AdoptedAgentControl = Readonly<{
   identity: AgentControlIdentity; pod: AuthenticatedPodObservation; connection: CodexAppServerConnection
   valid(): boolean; frameSequence(): number; close(): Promise<boolean>
   readNativeHistory(): Promise<NativeSessionCheckpoint>
+  turnProcesses?: Pick<CodexProtocolDependencies, 'capture' | 'terminate'>
 }> & ManagedCodexAuthControl & AgentTerminalControl

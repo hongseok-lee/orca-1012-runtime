@@ -77,7 +77,12 @@ export function createProviderCancelRuntime(pool: Pool, lookup: TerminalRuntimeL
       current()
       let result
       try { result=await port.cancel(context,target,claim,async () => { current() }) }
-      catch { result=undefined }
+      catch (error) {
+        // Preserve a bounded internal refusal code; never expose provider text or credentials.
+        const code = error && typeof error === 'object' && 'code' in error ? error.code : null
+        report(typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,95}$/.test(code) ? code : 'CANCEL_PROVIDER_UNCONFIRMED')
+        result=undefined
+      }
       const settled=await runDurableTransaction(pool,async tx=>{
         await lockAggregates(tx,{sessionIds:[b.sessionId],runtimeUnitIds:[b.runtimeUnitId]})
         const gateway=await LockedGatewayAuthority.acquire(tx,context)

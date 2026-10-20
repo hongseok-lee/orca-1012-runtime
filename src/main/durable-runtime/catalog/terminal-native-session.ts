@@ -115,10 +115,30 @@ export async function enrichCatalogTerminalNativeSessions(tx: DurableTransaction
       AND s.lifecycle='OPEN' AND w.deleted_at IS NULL AND t.terminal_handle IS NOT NULL
       AND g.provider IN ('codex','claude')`, [ids])
   const addresses = new Map(durable.rows.map(row => [row.tab_id, {agent: row.provider, sessionId: row.session_id}]))
+  const activityRows = await tx.query<{tab_id: string; provider: string; state: string; current: boolean; observed_at: Date}>(`
+    SELECT t.id AS tab_id,g.provider,d.state,(u.active_attempt_id=d.attempt_id AND u.execution_epoch=d.execution_epoch) AS current,
+      COALESCE(d.completed_at,d.admitted_at,d.effect_possible_at) AS observed_at
+    FROM durable_runtime.tabs t JOIN durable_runtime.sessions s ON s.id=t.session_id
+    JOIN durable_runtime.agents g ON g.id=s.agent_id
+    JOIN LATERAL (SELECT delivery.* FROM durable_runtime.delivery_attempts delivery
+      JOIN durable_runtime.messages message ON message.id=delivery.message_id
+      WHERE delivery.session_id=s.id ORDER BY message.accepted_at DESC LIMIT 1) d ON true
+    JOIN durable_runtime.runtime_units u ON u.id=d.runtime_unit_id
+    WHERE t.id=ANY($1::uuid[])`, [ids])
+  const activities = new Map(activityRows.rows.map(row => [row.tab_id, row]))
   const ready = uniqueReady(await readyRows(tx, ids))
   return tabs.map(original => {
     const address = addresses.get(original.tab_id)
-    const tab = address ? {...original, terminal_durable_chat_session: address} : original
+    const activity = activities.get(original.tab_id)
+    const at = activity?.observed_at?.getTime() ?? 0
+    const terminal_activity = activity ? {
+      state: activity.state === 'ADMITTED' && activity.current ? 'working' as const
+        : ['SETTLED','INTERRUPTED','CANCELLED'].includes(activity.state) ? 'done' as const : 'blocked' as const,
+      prompt: '', updatedAt: at, stateStartedAt: at, agentType: activity.provider,
+      paneKey: `${original.public_tab_id}:${original.payload.leafId ?? ''}`,
+      terminalHandle: original.terminal_handle ?? undefined
+    } : undefined
+    const tab = address ? {...original, terminal_durable_chat_session: address, terminal_activity} : original
     const found = ready.get(tab.tab_id)
     if (!found) { return tab }
     if (found.row.session_id !== tab.session_id || found.row.workspace_id !== tab.workspace_id ||

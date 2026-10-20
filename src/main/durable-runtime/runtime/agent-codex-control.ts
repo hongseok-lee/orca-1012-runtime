@@ -1,3 +1,4 @@
+import { agentTurnProcesses, TURN_PROCESSES_CAPABILITY, CAPTURE_TURN_PROCESSES, STOP_TURN_PROCESSES } from './agent-turn-processes.ts'
 import {nativeRequestFailure} from './native-request-failure.ts'
 import {createAgentExternalAuthBridge,AGENT_EXTERNAL_AUTH_CAPABILITY,AGENT_EXTERNAL_AUTH_SUPPLY,AGENT_EXTERNAL_AUTH_STATUS} from './agent-external-auth.ts'
 import {createExternalCodexAuth} from './external-codex-auth.ts'
@@ -95,6 +96,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
     },
     send(frame) { send({ ...frame, controlId }) }
   }) : null
+  const turnProcesses = agentTurnProcesses()
   const seen = new Set<string>()
   let resolveClosed!: () => void
   const closed = new Promise<void>(resolve => { resolveClosed = resolve })
@@ -125,7 +127,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
-    capabilities:[NATIVE_HISTORY_EVIDENCE_CAPABILITY,...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
+    capabilities:[NATIVE_HISTORY_EVIDENCE_CAPABILITY,...(provider==='codex'?[TURN_PROCESSES_CAPABILITY]:[]),...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
@@ -249,6 +251,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         if(externalAuth) {failure(id,'AGENT_EXTERNAL_AUTH_REQUIRED');return}
         response(id,await handleManagedCodexAuthRefresh({provider,phase,connection,params:request.params,refresh:refreshManagedAuth,applyCredential:value=>{const source=captureManagedCodexCredential(value);
           supplyProtectedManagedCodexCredential(paths.home,source,()=>{const held=fstatSync(fd),named=lstatSync(root);if(held.dev!==stat.dev||held.ino!==stat.ino||named.dev!==held.dev||named.ino!==held.ino||named.isSymbolicLink()){throw new Error('AGENT_MANAGED_CREDENTIAL_ROOT')}});selectedCredential=source}}));return
+      }
+      if (request.method === CAPTURE_TURN_PROCESSES || request.method === STOP_TURN_PROCESSES) {
+        if (provider !== 'codex' || !connection?.pid || phase !== 'READY') { failure(id, 'AGENT_TURN_PROCESS_UNAVAILABLE'); return }
+        try { response(id, request.method === CAPTURE_TURN_PROCESSES
+          ? await turnProcesses.capture(connection.pid) : await turnProcesses.stop(connection.pid, request.params)) }
+        catch { failure(id, 'AGENT_TURN_PROCESS_UNCONFIRMED') }
+        return
       }
       if (!connection || phase !== 'READY' || typeof request.method !== 'string' || !nativeMethods.has(request.method)) {
         failure(id, 'AGENT_NATIVE_METHOD'); return

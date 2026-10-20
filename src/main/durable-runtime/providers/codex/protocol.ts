@@ -40,6 +40,7 @@ export class CodexProtocolSession {
   #receipts = new WeakSet<object>()
   #byTurn = new Map<string, RequestState>()
   #terminals = new Map<string, CodexProtocolEvent>()
+  #terminalWaiters = new Map<string, () => void>()
   #pending: string | null = null
   #latestRequest: RequestState | null = null
   #activeRequest: RequestState | null = null
@@ -277,6 +278,16 @@ export class CodexProtocolSession {
         }).catch(() => false)
         : Promise.resolve(false)
       const [ack, descendantsStopped] = await Promise.all([acknowledged, stopped])
+      // Native ACK and terminal notification are separate frames. Wait for the
+      // original target, without issuing another interrupt or inventing success.
+      if (ack && !this.#terminals.has(receipt.turnId)) {
+        let timer: ReturnType<typeof setTimeout> | undefined
+        try {
+          await new Promise<void>(resolve => { this.#terminalWaiters.set(receipt.turnId, resolve)
+            timer = setTimeout(resolve, this.dependencies.requestTimeoutMs ?? 10_000)
+          })
+        } finally { clearTimeout(timer); this.#terminalWaiters.delete(receipt.turnId) }
+      }
       return Object.freeze({ requested: true, terminal: this.#terminals.get(receipt.turnId) ?? null, descendantsStopped, acknowledged: ack })
     } finally {
       this.#interrupting = false
@@ -320,7 +331,7 @@ export class CodexProtocolSession {
         const state = this.#byTurn.get(turnId)
         if (state?.receipt && (status === 'completed' || status === 'interrupted' || status === 'failed')) {
           const event: CodexProtocolEvent = Object.freeze({ connectionId: this.connectionId, threadId, turnId, method, observedAt: this.#now(), terminalStatus: status, receipt: state.receipt })
-          this.#terminals.set(turnId, event)
+          this.#terminals.set(turnId, event); this.#terminalWaiters.get(turnId)?.()
           // Only the exact original terminal releases this connection's turn slot.
           if (state === this.#activeRequest) {this.#activeRequest = null}
           this.dependencies.onEvent?.(event)

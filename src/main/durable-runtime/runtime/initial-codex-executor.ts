@@ -251,7 +251,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           // The native artifact transfer runs inside this cold; bound it like the control timeout.
           native = await claudeDriver.cold(cold, gate.execution.claim, permit.permit, prepared.config.agent.timeoutMs)
         } else {
-          const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification,
+          const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), ...control.turnProcesses, onNativeNotification,
             onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
               sessionId: selected.sessionId, ...observation })}\n`),
             ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, inputSink)

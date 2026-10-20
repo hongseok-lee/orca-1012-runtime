@@ -1,3 +1,4 @@
+import type { AgentStatusEntry } from '../../../shared/agent-status-types.ts'
 import type { Pool } from 'pg'
 import type {
   CatalogHeadRow, CatalogProjectGroupRow, CatalogRepositoryRow,
@@ -28,6 +29,7 @@ export type CatalogTab = CatalogTabMetadataRow & {
   /** Derived in this read transaction, never part of the persisted payload. */
   terminal_native_chat_session?: RuntimeTerminalNativeChatSession
   terminal_durable_chat_session?: RuntimeTerminalNativeChatSession
+  terminal_activity?: AgentStatusEntry
 }
 export type CatalogSnapshot = {
   readonly heads: readonly CatalogHeadRow[]

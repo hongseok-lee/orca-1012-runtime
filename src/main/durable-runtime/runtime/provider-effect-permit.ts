@@ -213,7 +213,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
            AND u.execution_epoch=$5 AND g.execution_epoch=$5 AND g.state='ACTIVE'
            AND u.desired_mode='RUNNING' AND a.stopped_at IS NULL AND s.id=$6 AND s.lifecycle='OPEN'
            AND s.provider_binding_revision=$7 AND tab.id=$8 AND tab.terminal_handle=$9 AND tab.lifecycle='OPEN'
-           AND (($10='COLD' AND u.phase='REHYDRATING') OR ($10='DISPATCH' AND u.phase='READY'))`,
+           AND (($10='COLD' AND u.phase='REHYDRATING') OR ($10 IN ('DISPATCH','CANCEL') AND u.phase='READY'))`,
           [binding.runtimeUnitId, binding.attemptId, binding.podUid, target.incarnation, binding.executionEpoch,
             binding.sessionId, binding.providerBindingRevision, binding.tabId, binding.terminalHandle, identity.kind])
         if (active.rowCount !== 1) { deny('PROVIDER_EXECUTION_GRANT_REQUIRED') }

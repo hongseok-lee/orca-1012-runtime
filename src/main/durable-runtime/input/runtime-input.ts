@@ -1,3 +1,4 @@
+import { publishTerminalActivity } from '../catalog/terminal-activity.ts'
 import type { Pool } from 'pg'
 import { runDurableTransaction, safeDatabaseError } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
@@ -140,9 +141,11 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
         if (observation.kind === 'ADMITTED') {
           await recordContextDeliveryInTransaction(tx, pending.input.authority, pending.request.context, observation.contextDelivery)
         }
-        return observeInputDeliveryInTransaction(tx, pending.input.authority, {messageId: pending.request.sealed.messageId,
+        const result = await observeInputDeliveryInTransaction(tx, pending.input.authority, {messageId: pending.request.sealed.messageId,
           deliveryAttemptId: pending.request.deliveryAttemptId, runtimeUnitId: binding.runtimeUnitId,
           attemptId: binding.attemptId, podUid: binding.podUid, executionEpoch: binding.executionEpoch}, delivery)
+        await publishTerminalActivity(tx, binding.sessionId)
+        return result
       })
       if (!stored.ok) { throw stored.error }
       notice('OBSERVED')
