@@ -1,0 +1,17 @@
+[
+  {
+    "at": "2026-10-20T01:31:26.929Z",
+    "installedVersion": "0.160.1",
+    "externalLoginAccepted": true,
+    "accountType": "chatgpt",
+    "requiresOpenaiAuth": true,
+    "refreshRequests": 0,
+    "sourceUnchanged": true,
+    "nativeThreads": 0,
+    "inputs": 0,
+    "inferenceVerified": false
+  },
+  {
+    "closed": true
+  }
+]
