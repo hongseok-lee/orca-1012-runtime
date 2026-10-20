@@ -15,7 +15,7 @@ const fail=()=>new Error('CODEX_ACCOUNT_SERVICE_UNAVAILABLE')
 /** One broker per account namespace, shared by cold and adopted Agents. Native
  * auth is opened lazily only under the PG rotation claim, on the original HOME. */
 export function orcadManagedAccountAccess(pool:Pool,config:OrcadControllerConfig,read:ManagedCodexCredentialReader,agentId:string):ManagedCodexAccessReader {
-  const file=config.firstManagedInitial?.coldConfigFile
+  const file=config.firstManagedInitial?.coldConfigFile??config.rewake?.configFile
   if(!file||!read.sourceHome) {throw fail()}
   const raw=parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(file).toString('utf8'))
   if(!raw||typeof raw!=='object') {throw fail()}
