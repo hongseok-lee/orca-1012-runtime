@@ -1,3 +1,4 @@
+import { ensureUnitStorageVolume } from '../durable-runtime/storage/unit-storage-volume.ts'
 import { readCatalogUnitStorageAllocation } from '../durable-runtime/catalog/unit-storage-allocation.ts'
 import { RECOVERY_OPERATION_CURRENT_SQL } from '../durable-runtime/lifecycle/recovery-chain.ts'
 import { captureOrcadWakePolicy } from './orcad-wake-policy.ts'
@@ -35,11 +36,8 @@ type Dispatch = NonNullable<ReturnType<typeof prepareOrcadFirstManagedInitial>>
 type Entry = { sessionId: string; unitId: string; operationId: string; dispatch: Dispatch; error: string | null }
 type Native = Readonly<{ nativeArtifactFile: string; nativeSha256: string; nativeByteLength: number; nativeDistributionFile?:string }>
 
-/** Starts a new Agent Pod for a READY-before Session whose Pod is gone (orphan
- * reconciled) once its input waits: a new WAKE operation, the same Pod shape and
- * binding, and the same native session resumed. Each wake runs through the
- * original first-managed attempt/grant/protection path, so one writer holds the
- * protected leaf at a time. One wake runs at a time in this process. */
+/** Starts initial or recovery Agents using durable wake budgets and protected
+ * storage ownership. Each live dispatch owns one exact operation. */
 export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, readSettings: () => InitialCodexNativeSettings,
   ownership: UnitOwnership,readCodexCredential?:ManagedCodexCredentialReader,wakePolicy?:LifecyclePolicy) {
   const file = config.rewake?.configFile
@@ -189,7 +187,13 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     const source = plan ? prototype : {...prototype,policy:{...(prototype.policy as Record<string,unknown>),entrypoint:{command:CLOSED_AGENT_BOOTSTRAP.command,args:CLOSED_AGENT_BOOTSTRAP.args}}}
     const operationId=claim.operationId
     const op={external_resource_name:claim.resourceName,execution_epoch:claim.executionEpoch,intent_revision:claim.intentRevision}
-    const request = { ...templateRequest, protectedBindings: templateRequest.protectedBindings.map(b=>({...b,bindingId:row.binding_id,leafId:leaf})) }
+    const protectedBinding = allocation && !plan
+      ? await ensureUnitStorageVolume({ apiOrigin: config.inventory.apiOrigin, ca,
+        reviewer: readOrcadControllerCredential(config.inventory.tokenFile, 'TOKEN').toString('utf8').trim(),
+        policy: source.policy, unitId: row.unit_id, bindingId: row.binding_id, template: configuredBinding,
+        signal: AbortSignal.timeout(config.inventory.requestTimeoutMs) })
+      : { ...configuredBinding, bindingId: row.binding_id }
+    const request = { ...templateRequest, protectedBindings: [protectedBinding] }
     const descriptor = canonicalInput({ version: 'orca-first-managed-closed-bootstrap-v1', policy: source.policy,
       protectedBindings: request.protectedBindings, profile: request.profile } as never)
     const target = { ...request, identity: { unitId: row.unit_id, operationId, attemptId: randomUUID(), resourceName: op.external_resource_name,
@@ -227,8 +231,6 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     const existingCheckout = !!plan || !!(await pool.query('SELECT 1 FROM durable_runtime.storage_write_grants WHERE storage_binding_id=$1 LIMIT 1',[row.binding_id])).rowCount
     const options = { recoverNative:!!plan&&!ready?.native, ...(ready?.native ? {nativeSessionRef:ready.native} : {}), reuseProfile, existingCheckout,
       creationObserver: 'AUTHENTICATED_KUBERNETES_NODE' as const }
-    // Both the original binding and its revalidated replacement use the same
-    // deployment dependencies, including the selected credential owner.
     const createDispatch = (configFile: string, coldConfigFile: string) =>
       prepareOrcadFirstManagedInitial({ ...rest, firstManagedInitial: { configFile, coldConfigFile } },
         pool, ca, undefined, readSettings, options, readCodexCredential)
@@ -310,16 +312,10 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     }) satisfies NonNullable<ControllerPassRequest['lookupOriginal']>,
     ownsOperation: (operationId: string) => entries.has(operationId),
     currentTerminalRuntime(sessionId: string): ReadyTerminalInputPort | null {
-      let selected: ReadyTerminalInputPort | null = null
-      for (const entry of entries.values()) {
-        if (entry.sessionId !== sessionId) { continue }
-        const current = entry.dispatch.currentTerminalRuntime?.(sessionId)
-        if (!current) { continue }
-        // Never choose a historical wake by map iteration order.
-        if (selected) { return null }
-        selected = current
-      }
-      return selected
+      const ready = [...entries.values()].filter(entry => entry.sessionId === sessionId)
+        .map(entry => entry.dispatch.currentTerminalRuntime?.(sessionId)).filter(port => port != null)
+      // Ambiguous live owners cannot be resolved by map iteration order.
+      return ready.length === 1 ? ready[0] : null
     },
     onTerminalInputCommitted: ((input) => {
       for (const entry of entries.values()) { if (entry.sessionId === input.authority.sessionId) { entry.dispatch.onTerminalInputCommitted?.(input) } }
