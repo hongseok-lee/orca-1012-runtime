@@ -49,3 +49,15 @@ release → same-session wake, and stop/delete interruption handling. An UNKNOWN
 cancel command can still block lifecycle reconciliation; it must not be marked
 resolved merely to unblock a test. PR remains draft until acceptance is resolved
 or its scope and remaining limitations are explicitly reviewed.
+
+## Live Terminal, 23:07 UTC
+
+After development source publication, the controller was ACTIVE under a new
+lease and reattached the existing Agent (same Pod, no input replay). In the Expo
+iPhone-sized browser, a new `printf "TODO09_AFTER_RECONNECT\\n"` command was entered
+once using live input and the Enter accessory. The PTY echo, resulting output
+and prompt are visible below. Native browser scale and emulated DPR are both 3.
+
+![Actual terminal output](terminal-output.png)
+
+This is browser visual evidence, not installed iPhone or Desktop parity.
