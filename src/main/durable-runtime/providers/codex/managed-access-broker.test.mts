@@ -46,3 +46,11 @@ test('selection changes during renewal and foreign account refresh requests neve
   await assert.rejects(broker.read('a'),/CODEX_ACCESS_OWNER_CHANGED/)
   assert.throws(()=>selectedManagedCodexAccess({...f.source,authJson:'private-invalid'}),/^Error: CODEX_ACCESS_SOURCE$/)
 })
+
+test('rolling source back to an already completed rotation cannot reuse its spent token',async()=>{
+  const f=fixture(),broker=createManagedCodexAccessBroker(f.hooks),original=f.source
+  await broker.read('a');assert.equal(f.refreshes,1)
+  f.source=original
+  await assert.rejects(broker.read('a'),/CODEX_ACCESS_REFRESH_UNCONFIRMED/)
+  assert.equal(f.refreshes,1)
+})

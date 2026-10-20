@@ -39,7 +39,7 @@ export function createManagedCodexAccessBroker(input:Readonly<{
   withAccountLock<T>(accountId:string|null,body:()=>Promise<T>):Promise<T>
   refreshSource(agentId:string,source:ManagedCodexCredential):Promise<void>
   /** Durable under the same account lock; STARTED survives owner loss. */
-  readRotation(accountId:string|null):Promise<Readonly<{revision:string;state:'STARTED'|'COMPLETED'}>|null>
+  readRotation(accountId:string|null,revision:string):Promise<Readonly<{revision:string;state:'STARTED'|'COMPLETED'}>|null>
   recordRotation(accountId:string|null,revision:string,state:'STARTED'|'COMPLETED'):Promise<void>
   now?():number
 }>) {
@@ -65,8 +65,8 @@ export function createManagedCodexAccessBroker(input:Readonly<{
       const source=input.read(agentId,false),access=selectedManagedCodexAccess(source)
       if(source.accountId!==original.accountId||access.chatgptAccountId!==initial.chatgptAccountId) {return fail('OWNER_CHANGED')}
       if(source.revision!==original.revision&&usable(access)) {return access}
-      const prior=await input.readRotation(source.accountId)
-      if(prior?.revision===source.revision&&prior.state==='STARTED') {return fail('REFRESH_UNCONFIRMED')}
+      const prior=await input.readRotation(source.accountId,source.revision)
+      if(prior?.revision===source.revision) {return fail('REFRESH_UNCONFIRMED')}
       // Set before I/O: even a timeout must not consume the same rotating token twice.
       await input.recordRotation(source.accountId,source.revision,'STARTED')
       try {await input.refreshSource(agentId,source)}catch{return fail('REFRESH_UNCONFIRMED')}
