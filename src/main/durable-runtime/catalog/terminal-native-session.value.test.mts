@@ -30,7 +30,7 @@ test('original Terminal native identity wins, absent retains legacy, invalid nev
   assert.equal(mobileSessionTabsEqual([tab], [{ ...tab, nativeChatSession: identity }]), false)
   assert.equal(mobileSessionTabsEqual([{ ...tab, nativeChatSession: identity }], [{ ...tab, nativeChatSession: { ...identity } }]), true)
   const row = { public_tab_id: 'tab', payload: tab, terminal_handle: 'terminal', kind: 'terminal' } as CatalogTab
-  assert.deepEqual(parseCatalogTab({ ...row, terminal_native_chat_session: identity }), { ...tab, nativeChatSession: identity })
+  assert.deepEqual(parseCatalogTab({ ...row, terminal_native_chat_session: identity }), { ...tab, viewMode: 'terminal', nativeChatSession: identity })
   assert.equal(Object.hasOwn(row.payload, 'nativeChatSession'), false)
   assert.throws(() => parseCatalogTab({ ...row, payload: { ...tab, nativeChatSession: identity } }), /CATALOG_NATIVE_SESSION_STORED_PAYLOAD/)
 })
@@ -41,8 +41,8 @@ test('a READY native session is addressed by its durable handle; without one the
     parentTabId: 'tab', leafId: 'leaf', status: 'pending-handle' as const, terminal: null }
   const row = { public_tab_id: 'tab', payload: pending, terminal_handle: 'term_durable', kind: 'terminal' } as unknown as CatalogTab
   assert.deepEqual({ ...parseCatalogTab({ ...row, terminal_native_chat_session: identity }) },
-    { ...pending, status: 'ready', terminal: 'term_durable', nativeChatSession: identity })
-  assert.deepEqual({ ...parseCatalogTab(row) }, pending)
+    { ...pending, viewMode: 'terminal', status: 'ready', terminal: 'term_durable', nativeChatSession: identity })
+  assert.deepEqual({ ...parseCatalogTab(row) }, { ...pending, viewMode: 'terminal' })
   assert.throws(() => parseCatalogTab({ ...row, terminal_handle: null, terminal_native_chat_session: identity } as never), /CATALOG_NATIVE_SESSION_REFERENCE/)
 })
 
@@ -50,8 +50,16 @@ test('an Agent tab is addressed by its durable handle before its first READY; ot
   const pending = { type: 'terminal' as const, id: 'tab', title: 'Agent', isActive: true, parentTabId: 'tab', leafId: 'leaf',
     status: 'pending-handle' as const, terminal: null, launchAgent: 'claude' }
   const row = { public_tab_id: 'tab', payload: pending, terminal_handle: 'term_durable', kind: 'terminal' } as unknown as CatalogTab
-  assert.deepEqual({ ...parseCatalogTab(row) }, { ...pending, status: 'ready', terminal: 'term_durable' })
+  assert.deepEqual({ ...parseCatalogTab(row) }, { ...pending, viewMode: 'terminal', status: 'ready', terminal: 'term_durable' })
   const { launchAgent: _agent, ...shell } = pending
-  assert.deepEqual({ ...parseCatalogTab({ ...row, payload: shell } as never) }, shell)
+  assert.deepEqual({ ...parseCatalogTab({ ...row, payload: shell } as never) }, { ...shell, viewMode: 'terminal' })
 })
 
+
+
+test('server mode changes are retained by mobile tab reconciliation', () => {
+  const tab = { type: 'terminal' as const, id: 'tab', title: 'Agent', isActive: true,
+    terminal: 'term', viewMode: 'terminal' as const }
+  assert.equal(mobileSessionTabsEqual([tab], [{ ...tab, viewMode: 'chat' }]), false)
+  assert.equal(mobileSessionTabsEqual([tab], [{ ...tab }]), true)
+})

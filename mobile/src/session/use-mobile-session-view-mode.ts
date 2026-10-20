@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
+import type { RpcClient } from '../transport/rpc-client'
 import {
   loadDefaultSessionView,
   readSessionViewOverridesPreference,
@@ -50,8 +51,12 @@ export type MobileSessionViewModeController = {
 export function useMobileSessionViewMode(args: {
   hostId: string
   worktreeId: string
+  serverTabs?: readonly { id: string; type: string; viewMode?: MobileSessionView }[]
+  client?: Pick<RpcClient, 'sendRequest'> | null
+  onModeError?: (message: string) => void
 }): MobileSessionViewModeController {
-  const { hostId, worktreeId } = args
+  const { hostId, worktreeId, serverTabs, client, onModeError } = args
+  const pendingServerModes = useRef(new Set<string>())
   const [viewOverridesState, setViewOverridesState] = useState<ViewOverridesState>(() => ({
     hostId,
     worktreeId,
@@ -128,6 +133,11 @@ export function useMobileSessionViewMode(args: {
 
   const isTabChatView = useCallback(
     (tabId: string): boolean => {
+      const tab = serverTabs?.find((entry) => entry.id === tabId && entry.type === 'terminal')
+      // A server-advertised mode is authoritative across devices and reconnects.
+      if (tab?.viewMode !== undefined) {
+        return tab.viewMode === 'chat'
+      }
       if (!isOverrideScope(viewOverridesState, hostId, worktreeId)) {
         return false
       }
@@ -136,11 +146,36 @@ export function useMobileSessionViewMode(args: {
       // defaulting other tabs to terminal avoids activating stale cross-host chat.
       return (override ?? (viewOverridesState.loaded ? defaultView : 'terminal')) === 'chat'
     },
-    [defaultView, hostId, viewOverridesState, worktreeId]
+    [defaultView, hostId, serverTabs, viewOverridesState, worktreeId]
   )
 
   const toggleTabChatView = useCallback(
     (tabId: string) => {
+      const tab = serverTabs?.find((entry) => entry.id === tabId && entry.type === 'terminal')
+      if (tab?.viewMode !== undefined) {
+        const key = JSON.stringify([hostId, worktreeId, tabId])
+        if (pendingServerModes.current.has(key)) {
+          return
+        }
+        if (!client) {
+          onModeError?.('View change not sent (disconnected)')
+          return
+        }
+        pendingServerModes.current.add(key)
+        // Do not optimistically expose a composer whose input the host still
+        // treats as raw bytes. The normal tabs stream publishes committed mode.
+        void client.sendRequest('session.tabs.setTabProps', {
+          worktree: `id:${worktreeId}`,
+          tabId,
+          viewMode: tab.viewMode === 'chat' ? 'terminal' : 'chat'
+        }, { failWhenDisconnected: true }).then((response) => {
+          if (!response.ok) {
+            onModeError?.('Could not change session view')
+          }
+        }, () => onModeError?.('View change unconfirmed; reconnect to refresh session state'))
+          .finally(() => pendingServerModes.current.delete(key))
+        return
+      }
       const current = viewOverridesStateRef.current
       const currentScope = isOverrideScope(current, hostId, worktreeId)
         ? current
@@ -201,7 +236,7 @@ export function useMobileSessionViewMode(args: {
         setViewOverridesState(reconciledState)
       })
     },
-    [ensureViewOverridesRuntime, hostId, worktreeId]
+    [client, ensureViewOverridesRuntime, hostId, onModeError, serverTabs, worktreeId]
   )
 
   return { isTabChatView, toggleTabChatView }

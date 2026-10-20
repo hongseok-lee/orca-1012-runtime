@@ -89,14 +89,15 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
     // input sent then is kept DURABLE and dispatched when the provider becomes READY.
     if (row.terminal_native_chat_session === undefined && value.status === 'pending-handle' && row.terminal_handle &&
         (value.launchAgent === 'codex' || value.launchAgent === 'claude')) {
-      return { ...value, status: 'ready', terminal: row.terminal_handle } as unknown as RuntimeMobileSessionClientTab
+      return { ...value, viewMode: value.viewMode ?? 'terminal', status: 'ready', terminal: row.terminal_handle } as unknown as RuntimeMobileSessionClientTab
     }
     if (row.terminal_native_chat_session !== undefined) {
       if (!isRuntimeTerminalNativeChatSession(row.terminal_native_chat_session) || !row.terminal_handle) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
       // A READY native session is addressed by its durable handle: clients take
       // the input lease and send through it even with no PTY in this process.
-      return { ...value, status: 'ready', terminal: row.terminal_handle, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
+      return { ...value, viewMode: value.viewMode ?? 'terminal', status: 'ready', terminal: row.terminal_handle, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
     }
+    return { ...value, viewMode: value.viewMode ?? 'terminal' } as unknown as RuntimeMobileSessionClientTab
   } else if (value.type === 'agent-session') {
     text(value, 'sessionId')
     if (!value.sessionId || !['claude', 'codex'].includes(String(value.agent))) {throw new CatalogError('CATALOG_PAYLOAD')}

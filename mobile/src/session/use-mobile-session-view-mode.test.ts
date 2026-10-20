@@ -380,4 +380,50 @@ describe('useMobileSessionViewMode', () => {
 
     expect(controller?.isTabChatView('t1')).toBe(false)
   })
+  it('uses server mode and waits for committed tabs before changing the composer', async () => {
+    vi.mocked(loadDefaultSessionView).mockResolvedValue('chat')
+    const pending = deferred<{ ok: true; result: { updated: true } }>()
+    const sendRequest = vi.fn(() => pending.promise)
+    let mode: MobileSessionView = 'terminal'
+    function Harness(): null {
+      controller = useMobileSessionViewMode({
+        hostId: 'h', worktreeId: 'w', client: { sendRequest } as never,
+        serverTabs: [{ id: 't1', type: 'terminal', viewMode: mode }]
+      })
+      return null
+    }
+    await act(async () => { renderer = create(createElement(Harness)) })
+    expect(controller?.isTabChatView('t1')).toBe(false)
+    act(() => { controller?.toggleTabChatView('t1'); controller?.toggleTabChatView('t1') })
+    expect(sendRequest).toHaveBeenCalledTimes(1)
+    expect(sendRequest).toHaveBeenCalledWith('session.tabs.setTabProps',
+      { worktree: 'id:w', tabId: 't1', viewMode: 'chat' }, { failWhenDisconnected: true })
+    expect(controller?.isTabChatView('t1')).toBe(false)
+    await act(async () => { pending.resolve({ ok: true, result: { updated: true } }) })
+    expect(controller?.isTabChatView('t1')).toBe(false)
+    mode = 'chat'
+    await act(async () => { renderer?.update(createElement(Harness)) })
+    expect(controller?.isTabChatView('t1')).toBe(true)
+    expect(updateSessionViewOverride).not.toHaveBeenCalled()
+    mode = 'terminal'
+    await act(async () => { renderer?.update(createElement(Harness)) })
+    expect(controller?.isTabChatView('t1')).toBe(false)
+  })
+
+  it('keeps server mode on failed mutations and reports the failure', async () => {
+    const onModeError = vi.fn()
+    const sendRequest = vi.fn().mockResolvedValue({ ok: false, error: { code: 'forbidden' } })
+    function Harness(): null {
+      controller = useMobileSessionViewMode({ hostId: 'h', worktreeId: 'w',
+        client: { sendRequest } as never, onModeError,
+        serverTabs: [{ id: 't1', type: 'terminal', viewMode: 'terminal' }] })
+      return null
+    }
+    await act(async () => { renderer = create(createElement(Harness)) })
+    await act(async () => { controller?.toggleTabChatView('t1') })
+    expect(controller?.isTabChatView('t1')).toBe(false)
+    expect(onModeError).toHaveBeenCalledWith('Could not change session view')
+    expect(updateSessionViewOverride).not.toHaveBeenCalled()
+  })
+
 })

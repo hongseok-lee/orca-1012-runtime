@@ -23,6 +23,7 @@ export type MobileTerminalSessionTab = {
   terminal: string | null
   agentStatus?: AgentStatusEntry | null
   nativeChatSession?: RuntimeTerminalNativeChatSession
+  viewMode?: 'terminal' | 'chat'
   /** Host-provided launch context still parked as an unsent TUI-input draft. */
   launchDraft?: string
   launchDraftCreatedAt?: number
@@ -129,6 +130,7 @@ function mobileSessionTabEqual(
         a.leafId === b.leafId &&
         a.status === b.status &&
         a.terminal === b.terminal &&
+        a.viewMode === b.viewMode &&
         // A frame whose only delta is the launch draft appearing or retracting
         // still has to reach the chat composer.
         a.launchDraft === b.launchDraft &&

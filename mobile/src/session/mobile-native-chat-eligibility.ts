@@ -32,6 +32,7 @@ export type MobileNativeChatTab = {
   launchAgent?: string | null
   agentStatus?: AgentStatusEntry | null
   nativeChatSession?: RuntimeTerminalNativeChatSession
+  viewMode?: 'terminal' | 'chat'
   /** Host-provided launch context still parked as an unsent TUI-input draft. */
   launchDraft?: string
   launchDraftCreatedAt?: number

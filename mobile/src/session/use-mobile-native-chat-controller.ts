@@ -27,6 +27,7 @@ export function useMobileNativeChatController(args: {
   client: RpcClient | null
   hostId: string
   worktreeId: string
+  sessionTabs?: readonly (MobileNativeChatTab & { id: string })[]
   activeSessionTab: MobileNativeChatTab | null
   activeSessionTabId: string | null
   activeHandleRef: MutableRefObject<string | null>
@@ -70,6 +71,9 @@ export function useMobileNativeChatController(args: {
     streamScopeKey,
     toggleTabChatView
   } = useMobileNativeChatActiveResolution({
+    client,
+    sessionTabs: args.sessionTabs,
+    onModeError: onSendError,
     hostId,
     worktreeId,
     activeSessionTab,
