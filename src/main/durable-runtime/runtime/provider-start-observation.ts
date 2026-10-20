@@ -27,7 +27,8 @@ export async function recordNativeHistoryObservation(pool:Pool,context:GatewayCo
     if(!current.rowCount) {return false}
     await appendAudit(tx,{actorId:context.controller.owner,sessionId:binding.sessionId,runtimeUnitId:binding.runtimeUnitId,
       operationId:context.operationId,attemptId:binding.attemptId,podUid:binding.podUid,kind:'PROVIDER_NATIVE_HISTORY_OBSERVED',
-      nextState:{providerRef:{...binding.providerRef},source:'AUTHENTICATED_AGENT_HOME',state:checkpoint.state},
+      nextState:{providerRef:{...binding.providerRef},source:'AUTHENTICATED_AGENT_HOME',state:checkpoint.state,
+        ...('inputState' in checkpoint?{inputState:checkpoint.inputState}: {})},
       occurredAt:new Date(),receivedAt:new Date(),producerId:randomUUID(),producerSeq:counter('sequence:producer','1'),evidenceRefs:[]})
     await authority.assertCurrent();return owns()
   })

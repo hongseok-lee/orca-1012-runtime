@@ -5,7 +5,7 @@ import { captureManagedCodexCredential,supplyProtectedManagedCodexCredential } f
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import { readProtectedManagedCodexAuth } from './managed-codex-auth-file.ts'
 import { MANAGED_CODEX_AUTH_REFRESH_CAPABILITY, MANAGED_CODEX_AUTH_REFRESH_METHOD, handleManagedCodexAuthRefresh, createResidentManagedCodexAuthRefresh } from './managed-codex-auth-refresh.ts'
-import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch } from './native-session-checkpoint.ts'
+import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch, initializeNativeInputBoundary, markNativeInputEntered } from './native-session-checkpoint.ts'
 import {NATIVE_HISTORY_EVIDENCE_CAPABILITY} from './agent-control-readers.ts'
 import { randomUUID } from 'node:crypto'
 import { constants, openSync, fstatSync, closeSync, readFileSync, lstatSync } from 'node:fs'
@@ -188,6 +188,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         if(priorNative.state==='UNKNOWN') {failure(id,'NATIVE_IDENTITY_UNCONFIRMED');return}
         if(priorNative.state==='PROVISIONAL') {failure(id,'NATIVE_HISTORY_NOT_PERSISTED');return}
         const launch=provider==='claude' && priorNative.state==='FOUND' ? claudeResumeLaunch(policy.launch,priorNative.nativeSessionRef) : policy.launch
+        if(provider==='codex'&&priorNative.state==='NONE') {initializeNativeInputBoundary(paths.home)}
         markNativeEntered(paths.home)
         coldUsed = true; phase = 'OPENING'
         if (provider === 'claude') {
@@ -250,6 +251,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
       try {
         const params = request.params
         if (!params || typeof params !== 'object' || Array.isArray(params)) { failure(id, 'AGENT_NATIVE_PARAMS'); return }
+        if(provider==='codex'&&request.method==='turn/start') {markNativeInputEntered(paths.home,Reflect.get(params,'threadId'))}
         const result=await connection.request(request.method,params as Record<string,unknown>)
         if(provider==='codex' && ['thread/start','thread/resume'].includes(request.method) && result && typeof result==='object') {
           const thread=Reflect.get(result,'thread'),native=thread && typeof thread==='object'?Reflect.get(thread,'id'):null

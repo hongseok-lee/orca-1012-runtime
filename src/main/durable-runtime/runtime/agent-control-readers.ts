@@ -27,6 +27,11 @@ export function agentControlReaders(request:(method:string)=>Promise<unknown>,av
       else {
         if(!['FOUND','PROVISIONAL'].includes(String(state)) || Reflect.get(value,'provider')!==provider || typeof Reflect.get(value,'nativeSessionRef')!=='string') {fail()}
         checkpoint={state:state as 'FOUND'|'PROVISIONAL',provider:Reflect.get(value,'provider'),nativeSessionRef:Reflect.get(value,'nativeSessionRef')}
+        const inputState=Reflect.get(value,'inputState')
+        if(inputState!==undefined) {
+          if(!['NOT_STARTED','EFFECT_POSSIBLE','UNTRACKED'].includes(inputState)) {fail()}
+          checkpoint={...checkpoint,inputState}
+        }
       }
       if(!available()) {fail()}
       observed(checkpoint);return checkpoint
