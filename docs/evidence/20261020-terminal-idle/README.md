@@ -44,11 +44,10 @@ The pre-existing development controller was found STOPPED/PASS/DB_FAILURE on
 error cause, so neither a precise root cause nor automatic controller recovery
 is claimed here. This is separate from the browser pixel discrepancy.
 
-Still required: live terminal output/reconnect evidence, actual idle → writer
-release → same-session wake, and stop/delete interruption handling. An UNKNOWN
-cancel command can still block lifecycle reconciliation; it must not be marked
-resolved merely to unblock a test. PR remains draft until acceptance is resolved
-or its scope and remaining limitations are explicitly reviewed.
+UNKNOWN cancel is retained as uncertain history, but no longer excludes new
+lifecycle commands through the unresolved-command index or pending-pass map.
+Migration 035 and isolated PG coverage verify that no historical result is
+invented or replayed. Running DELETE acceptance is still pending.
 
 ## Live Terminal, 23:07 UTC
 
@@ -61,3 +60,32 @@ and prompt are visible below. Native browser scale and emulated DPR are both 3.
 ![Actual terminal output](terminal-output.png)
 
 This is browser visual evidence, not installed iPhone or Desktop parity.
+
+## Actual idle → stop → same native session, 23:17–23:22 UTC
+
+A new Agent received one request for `IDLE_BEFORE_SLEEP`, then remained idle
+with its Expo screen open. With the one-minute acceptance policy, the original
+attempt stopped at 23:17:13.486Z. Actual sandbox-stop evidence and both execution
+and write grant revocations completed SLEEP. A **new** input requested
+`IDLE_AFTER_WAKE`; no manual WAKE was used for this sequence. The restored Agent
+responded in the same native session `01a15b99-4ed0-7f80-89ce-d7eeb00d2674`.
+It then slept again. Reloading the asleep Terminal left the unit ABSENT/SUSPENDED,
+with no active attempt and unchanged work activity. Original UNKNOWN inputs were
+not resent.
+
+![Before automatic sleep](idle-before-sleep.png)
+![Same session after automatic wake](idle-after-wake.png)
+
+## Durable CR/LF projection correction
+
+The asleep Terminal initially appeared empty even though its PTY frames were
+journaled. The reused compact status-preview reducer intentionally discarded
+text preceding CR, which is wrong for a durable Terminal display. The display
+now uses the existing cursor-aware row reducer: CR moves the cursor and LF
+completes the row. The real PG test includes CR/LF split across frames and
+UTF-8 split across frames. No forced canvas refresh was added.
+
+Previously discarded projection text is not automatically reconstructed across
+possible user clear-buffer boundaries. The source journal is unchanged; newly
+projected output uses the corrected semantics. Installed iPhone/Desktop parity
+and full two-Serve HA remain separate tasks.
