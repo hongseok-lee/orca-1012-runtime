@@ -134,7 +134,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       ...authControl, ...terminalControl,bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
-      ...agentControlReaders(request,()=>!openedNative && !lost && !socketClosed && !closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value}),
+      ...agentControlReaders(request,()=>!lost && !socketClosed && !closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value},()=>!openedNative && !lost && !socketClosed && !closing),
       transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
         const expectedLaunch=config.policy.provider==='claude' && nativeCheckpoint?.state==='FOUND' ? claudeResumeLaunch(config.policy.launch,nativeCheckpoint.nativeSessionRef) : config.policy.launch
         if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, expectedLaunch)) { throw fail() }

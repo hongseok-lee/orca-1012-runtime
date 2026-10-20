@@ -12,8 +12,8 @@ function bytes(path:string):string|null {
   }
   try {return readFileSync(fd,'utf8')} finally {closeSync(fd)}
 }
-/** Protected per-Agent HOME checkpoint, not a Google/cloud audit record or a
- * writer-stop proof. Only actual native thread/init responses write FOUND. */
+/** Protected per-Agent HOME identity, not a writer-stop proof. For Codex a
+ * native response stays PROVISIONAL until matching native-owned history exists. */
 export function readNativeSessionCheckpoint(home:string,provider:'codex'|'claude'):NativeSessionCheckpoint {
   const value=bytes(file(home))
   if(value!==null) {

@@ -8,6 +8,31 @@ import { publishCatalogTerminalNativeSessionReady } from '../catalog/terminal-na
 import { LockedGatewayAuthority } from './gateway/authority.ts'
 import type { GatewayContext } from './gateway/types.ts'
 import type { ReadyProviderBinding } from '../providers/shared/contracts.ts'
+import type { NativeSessionCheckpoint } from './native-session-checkpoint.ts'
+
+/** History availability is independent of a live driver's READY/response ID.
+ * This records an authenticated HOME read, never successful input delivery. */
+export async function recordNativeHistoryObservation(pool:Pool,context:GatewayContext,binding:ReadyProviderBinding,
+  checkpoint:NativeSessionCheckpoint,owns:()=>boolean):Promise<boolean> {
+  if(!owns()) {return false}
+  if((checkpoint.state==='FOUND'||checkpoint.state==='PROVISIONAL') &&
+      (checkpoint.provider!==binding.providerRef.provider||checkpoint.nativeSessionRef!==binding.providerRef.nativeSessionRef)) {return false}
+  const result=await runDurableTransaction(pool,async tx=>{
+    await lockAggregates(tx,{sessionIds:[binding.sessionId],runtimeUnitIds:[binding.runtimeUnitId]})
+    const authority=await LockedGatewayAuthority.acquire(tx,context)
+    if(!owns()) {return false}
+    const current=await tx.query(`SELECT 1 FROM durable_runtime.runtime_units u JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id
+      WHERE u.id=$1 AND a.id=$2 AND a.pod_uid=$3 AND a.execution_epoch=$4 AND a.stopped_at IS NULL`,
+    [binding.runtimeUnitId,binding.attemptId,binding.podUid,binding.executionEpoch])
+    if(!current.rowCount) {return false}
+    await appendAudit(tx,{actorId:context.controller.owner,sessionId:binding.sessionId,runtimeUnitId:binding.runtimeUnitId,
+      operationId:context.operationId,attemptId:binding.attemptId,podUid:binding.podUid,kind:'PROVIDER_NATIVE_HISTORY_OBSERVED',
+      nextState:{providerRef:{...binding.providerRef},source:'AUTHENTICATED_AGENT_HOME',state:checkpoint.state},
+      occurredAt:new Date(),receivedAt:new Date(),producerId:randomUUID(),producerSeq:counter('sequence:producer','1'),evidenceRefs:[]})
+    await authority.assertCurrent();return owns()
+  })
+  return result.ok&&result.commitOutcome==='ACKNOWLEDGED'&&!result.cleanupFailed&&result.value
+}
 
 /** Actual original driver's native response, separate from READY settlement.
  * A caller-selected logical/native launch ID is never recorded through this seam. */
