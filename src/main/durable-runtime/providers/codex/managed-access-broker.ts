@@ -37,7 +37,8 @@ export function selectedManagedCodexAccess(source:ManagedCodexCredential):Manage
 export function createManagedCodexAccessBroker(input:Readonly<{
   read:ManagedCodexCredentialReader
   withAccountLock<T>(accountId:string|null,body:()=>Promise<T>):Promise<T>
-  refreshSource(agentId:string,source:ManagedCodexCredential):Promise<void>
+  refreshSource(agentId:string,source:ManagedCodexCredential,onStopped:()=>Promise<void>):Promise<void>
+  recordNativeStopped(accountId:string|null,revision:string):Promise<void>
   /** Durable under the same account lock; STARTED survives owner loss. */
   readRotation(accountId:string|null,revision:string):Promise<Readonly<{revision:string;state:'STARTED'|'COMPLETED'}>|null>
   recordRotation(accountId:string|null,revision:string,state:'STARTED'|'COMPLETED'):Promise<void>
@@ -69,7 +70,7 @@ export function createManagedCodexAccessBroker(input:Readonly<{
       if(prior?.revision===source.revision) {return fail('REFRESH_UNCONFIRMED')}
       // Set before I/O: even a timeout must not consume the same rotating token twice.
       await input.recordRotation(source.accountId,source.revision,'STARTED')
-      try {await input.refreshSource(agentId,source)}catch{return fail('REFRESH_UNCONFIRMED')}
+      try {await input.refreshSource(agentId,source,()=>input.recordNativeStopped(source.accountId,source.revision))}catch{return fail('REFRESH_UNCONFIRMED')}
       const refreshed=selectedManagedCodexAccess(input.read(agentId,false))
       if(refreshed.accountId!==initial.accountId||refreshed.chatgptAccountId!==initial.chatgptAccountId) {return fail('OWNER_CHANGED')}
       if(refreshed.revision===source.revision||!usable(refreshed)) {return fail('REFRESH_UNCONFIRMED')}

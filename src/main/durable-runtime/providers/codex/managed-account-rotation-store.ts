@@ -15,8 +15,8 @@ export function createManagedAccountRotationStore(pool:Pool,scope:string,assertC
     if(accountId!==null&&(typeof accountId!=='string'||!accountId||accountId.length>256)) {throw failure('ACCOUNT')}
     return JSON.stringify(['account',accountId])
   }
-  const held=(accountId:string|null)=>{
-    assertCurrent()
+  const held=(accountId:string|null,requireCurrent=true)=>{
+    if(requireCurrent) {assertCurrent()}
     const owner=context.getStore()
     if(!owner||owner.lost||owner.accountKey!==accountKey(accountId)) {throw failure('LOCK_REQUIRED')}
     return owner
@@ -61,9 +61,22 @@ export function createManagedAccountRotationStore(pool:Pool,scope:string,assertC
       [scope,owner.accountKey,revision(sourceRevision)])
       held(accountId);return result.rows[0]??null
     },
+    // Cleanup proof survives requester expiry; only the original live PG claim may record it.
+    async recordNativeStopped(accountId:string|null,sourceRevision:string):Promise<void> {
+      const owner=held(accountId,false),source=revision(sourceRevision),claim=owner.claims.get(source)
+      if(!claim) {throw failure('CLAIM_REQUIRED')}
+      const result=await owner.client.query(`UPDATE durable_runtime.managed_codex_account_rotations
+        SET native_stopped_at=COALESCE(native_stopped_at,clock_timestamp())
+        WHERE scope=$1 AND account_key=$2 AND source_revision=$3 AND claim_id=$4 AND state='STARTED'`,
+      [scope,owner.accountKey,source,claim])
+      held(accountId,false);if(result.rowCount!==1) {throw failure('CLAIM_CHANGED')}
+    },
     async recordRotation(accountId:string|null,sourceRevision:string,state:'STARTED'|'COMPLETED'):Promise<void> {
       const owner=held(accountId),source=revision(sourceRevision)
       if(state==='STARTED') {
+        const unresolved=await owner.client.query(`SELECT 1 FROM durable_runtime.managed_codex_account_rotations
+          WHERE scope=$1 AND account_key=$2 AND native_stopped_at IS NULL LIMIT 1`,[scope,owner.accountKey])
+        held(accountId);if(unresolved.rowCount) {throw failure('NATIVE_STOP_UNCONFIRMED')}
         const claim=randomUUID()
         const result=await owner.client.query(`INSERT INTO durable_runtime.managed_codex_account_rotations
           (scope,account_key,source_revision,claim_id,state) VALUES($1,$2,$3,$4,'STARTED')
@@ -76,7 +89,7 @@ export function createManagedAccountRotationStore(pool:Pool,scope:string,assertC
         if(!claim) {throw failure('CLAIM_REQUIRED')}
         const result=await owner.client.query(`UPDATE durable_runtime.managed_codex_account_rotations
           SET state='COMPLETED',completed_at=clock_timestamp()
-          WHERE scope=$1 AND account_key=$2 AND source_revision=$3 AND claim_id=$4 AND state='STARTED'`,
+          WHERE scope=$1 AND account_key=$2 AND source_revision=$3 AND claim_id=$4 AND state='STARTED' AND native_stopped_at IS NOT NULL`,
         [scope,owner.accountKey,source,claim])
         held(accountId);if(result.rowCount!==1) {throw failure('CLAIM_CHANGED')}
         owner.claims.delete(source)

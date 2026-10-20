@@ -1,3 +1,5 @@
+import {createAgentExternalAuthBridge,AGENT_EXTERNAL_AUTH_CAPABILITY,AGENT_EXTERNAL_AUTH_SUPPLY,AGENT_EXTERNAL_AUTH_STATUS} from './agent-external-auth.ts'
+import {createExternalCodexAuth} from './external-codex-auth.ts'
 import { captureManagedCodexCredential,supplyProtectedManagedCodexCredential } from './managed-codex-credential-supply.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import { readProtectedManagedCodexAuth } from './managed-codex-auth-file.ts'
@@ -34,6 +36,7 @@ export type AgentCodexControlPolicy = Readonly<{
   nativeArtifact: CodexNativeArtifact
   codexAuth: string
   managedCredential?: ManagedCodexCredential
+  externalAuth?: boolean
   bindChallenge: string
   paths: InitialProviderPaths
 }>
@@ -56,6 +59,10 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   let coldUsed = false, stopping = false, uncertain = false
   const root = policy.protectedRoot
   const paths = policy.paths
+  if(policy.externalAuth&&(provider!=='codex'||policy.codexAuth!==''||policy.managedCredential||
+    JSON.stringify(policy.launch.args.slice(-3))!==JSON.stringify(['-c','cli_auth_credentials_store="ephemeral"','app-server']))) {throw new Error('AGENT_EXTERNAL_AUTH_POLICY')}
+  const accessBridge=createAgentExternalAuthBridge(event=>send({...event,controlId}))
+  const externalAuth=policy.externalAuth?createExternalCodexAuth({connection:()=>connection as CodexAppServerConnection|null,readAccess:accessBridge.read}):null
   let selectedCredential=policy.managedCredential
   const refreshManagedAuth=createResidentManagedCodexAuthRefresh(()=>connection,()=>selectedCredential?JSON.stringify([selectedCredential.accountId,selectedCredential.revision]):readProtectedManagedCodexAuth(paths.home),()=>selectedCredential?.expectedEmail)
   if (root !== '/agent' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(paths.agentId) ||
@@ -71,7 +78,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const stat = fstatSync(fd)
   if (!stat.isDirectory()) { closeSync(fd); throw new Error('AGENT_CODEX_PROTECTED_ROOT') }
   let preparation: ReturnType<typeof createAgentCodexPreparation>
-  try { preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential) }
+  try { preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential,policy.externalAuth) }
   catch (error) { closeSync(fd); throw error }
   const terminal = policy.nativeArtifact.terminal ? createAgentTerminalControl({ home: paths.home, cwd: paths.checkout,
     env: { ...process.env, ...policy.launch.env } as Record<string, string>, artifact: policy.nativeArtifact.terminal,
@@ -99,7 +106,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   function response(id: string, value: unknown): void { send({ id, controlId, result: value }) }
   function failure(id: string, code: string): void { send({ id, controlId, error: { code } }) }
   function releaseRoot(): void {
-    preparation.close(); closeSync(fd); clearInterval(retained); reader.close(); phase = 'STOPPED'; resolveClosed()
+    accessBridge.close(); preparation.close(); closeSync(fd); clearInterval(retained); reader.close(); phase = 'STOPPED'; resolveClosed()
   }
   output.on('error', () => { uncertain = true; phase = 'UNCONFIRMED' })
   reader.on('close', () => {
@@ -114,11 +121,10 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
-    capabilities:[...(provider==='codex'?[MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
+    capabilities:[...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
-    serial = serial.then(async () => {
       let request: Record<string, unknown>
       try {
         if (Buffer.byteLength(line) > 1024 * 1024) { throw new Error('FRAME_SIZE') }
@@ -131,6 +137,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         uncertain = true; phase = 'UNCONFIRMED'; return
       }
       seen.add(id)
+      if(request.method===AGENT_EXTERNAL_AUTH_SUPPLY) {
+        if(!externalAuth||stopping||uncertain) {failure(id,'AGENT_EXTERNAL_AUTH_UNAVAILABLE');return}
+        try {response(id,{accepted:accessBridge.supply(request.params)})}
+        catch {failure(id,'AGENT_EXTERNAL_AUTH_UNCONFIRMED')}
+        return
+      }
+    serial = serial.then(async () => {
       if (stopping) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
       if (request.method === 'CLOSE') {
         stopping = true; phase = 'STOPPING'
@@ -186,7 +199,8 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
               },
               onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId, provider }) },
             })
-            phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
+            if(externalAuth) {await externalAuth.initialize()}
+          phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
           } catch (error) {
             // Pod-local diagnostic only (host log); the backend still sees the fixed code.
             process.stderr.write(`AGENT_CLAUDE_COLD_FAILED ${error instanceof Error ? error.message.slice(0, 400) : 'unknown'}\n`)
@@ -196,12 +210,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         }
         let codex: CodexAppServerConnection | null = null
         try {
-          connection = codex = await openCodexAppServerConnection(policy.launch, {
+          connection = codex = await openCodexAppServerConnection({...policy.launch,...(externalAuth?{envToDelete:['OPENAI_API_KEY','CODEX_API_KEY','CODEX_ACCESS_TOKEN']}:{})}, {
             onNotification: (method, params) => send({ event: 'NOTIFICATION', controlId, method, params }),
-            onServerRequest: pending => codex?.respondWithError(pending.id, -32000,
-              'Durable Codex driver does not support this reply channel'),
+            onServerRequest: pending => {if(!externalAuth?.handle(pending)) {codex?.respondWithError(pending.id, -32000,
+              'Durable Codex driver does not support this reply channel')}},
             onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
           })
+          if(externalAuth) {await externalAuth.initialize()}
           phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
         } catch (error) {
           // Initialization may fail without a proven process-tree exit. Keep
@@ -218,7 +233,11 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         catch { failure(id, 'AGENT_TERMINAL_UNCONFIRMED') }
         return
       }
+      if(request.method===AGENT_EXTERNAL_AUTH_STATUS) {
+        response(id,{ready:!!externalAuth?.ready()&&phase==='READY'&&!uncertain&&!stopping});return
+      }
       if(request.method===MANAGED_CODEX_AUTH_REFRESH_METHOD) {
+        if(externalAuth) {failure(id,'AGENT_EXTERNAL_AUTH_REQUIRED');return}
         response(id,await handleManagedCodexAuthRefresh({provider,phase,connection,params:request.params,refresh:refreshManagedAuth,applyCredential:value=>{const source=captureManagedCodexCredential(value);
           supplyProtectedManagedCodexCredential(paths.home,source,()=>{const held=fstatSync(fd),named=lstatSync(root);if(held.dev!==stat.dev||held.ino!==stat.ino||named.dev!==held.dev||named.ino!==held.ino||named.isSymbolicLink()){throw new Error('AGENT_MANAGED_CREDENTIAL_ROOT')}});selectedCredential=source}}));return
       }

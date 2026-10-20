@@ -1,3 +1,4 @@
+import {orcadManagedAccountAccess} from './orcad-managed-account-access.ts'
 import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { recordProviderChildExit } from '../durable-runtime/runtime/provider-start-observation.ts'
@@ -67,7 +68,7 @@ export function prepareOrcadAdoptedRuntimes(pool: Pool, config: OrcadControllerC
       env: { ...native.env, HOME: home, CODEX_HOME: `${home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
     const transport = createAgentCodexTransport({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, reconnectBudgetMs: 30_000,
       bootstrapBytes, bootstrapSha256: target.controlSha256,
-      ...(readCodexCredential?{readManagedCredential:()=>readCodexCredential(target.agentId,false)}:{}), journal:createAgentControlJournal(pool,target.podUid), nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
+      ...(readCodexCredential?{readManagedAccess:orcadManagedAccountAccess(pool,config,readCodexCredential,target.agentId)}:{}), journal:createAgentControlJournal(pool,target.podUid), nativeArtifactFile: '', podAuthenticator, readReviewerBearer,
       onProviderChildExit:(exit)=>recordProviderChildExit(pool,target,exit),
       expected: Object.freeze({ serviceAccountName: text('runtimeServiceAccountName'), serviceAccountUid: text('runtimeServiceAccountUid'),
         podName: target.podName, podUid: target.podUid, runtimeUnitId: target.runtimeUnitId, operationId: target.operationId,

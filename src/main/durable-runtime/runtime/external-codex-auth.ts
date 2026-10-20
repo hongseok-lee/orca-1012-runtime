@@ -19,6 +19,7 @@ export function createExternalCodexAuth(input:Readonly<{
   }
   const tokens=(access:ManagedCodexAccess)=>({accessToken:access.accessToken,chatgptAccountId:access.chatgptAccountId})
   return Object.freeze({
+    ready:()=>installed!==null,
     async initialize():Promise<void> {
       if(initializationStarted) {throw failure()}
       initializationStarted=true

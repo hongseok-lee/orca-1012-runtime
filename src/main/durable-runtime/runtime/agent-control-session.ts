@@ -1,3 +1,4 @@
+import {AGENT_EXTERNAL_AUTH_SUPPLY,dispatchAgentExternalAuth,initializeAgentAuthPolicy,externalAgentAuthControl,externalAuthCapable as supportsExternalAuth} from './agent-external-auth.ts'
 import { managedCodexAuthControl, managedCodexAuthRefreshSupported } from './managed-codex-auth-refresh.ts'
 import type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
 export type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
@@ -27,13 +28,12 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
   let socket: ManagedLeafSocket | undefined, handshake = false, transferred = false
   let lost = false, socketClosed = false, openedNative = false, controlId = '', used = false
   let handlers: CodexAppServerConnectionHandlers = {}, nativePid: number | undefined
-  let closing: Promise<boolean> | undefined, nativeExitReported = false
-  let resolveClosed!: (confirmed: boolean) => void
+  let closing: Promise<boolean> | undefined, nativeExitReported = false, resolveClosed!: (confirmed: boolean) => void
   const closed = new Promise<boolean>(done => { resolveClosed = done })
   let channel = createExecChannelDecoder(() => { throw fail() })
   const pending = new Map<string, Pending>()
   let nextId = 1, stopAcknowledged = false, managedAuthCapable=false
-  let terminalCapable = false
+  let terminalCapable = false, externalAuthCapable=false
   // A host-capable control tags every frame with hostSeq; an older control
   // without the Pod-local host keeps the original loss rule.
   let hostCapable = false, sinceAck = 0, reconnecting = false
@@ -110,14 +110,14 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
     return closing
   }
   const valid = (): boolean => !lost && !closing && (!socketClosed || reconnecting)
-  const authControl=managedCodexAuthControl(()=>managedAuthCapable,valid,(method,params)=>request(method,params),env.readManagedCredential)
+  const legacyAuthControl=managedCodexAuthControl(()=>managedAuthCapable,valid,(method,params)=>request(method,params),env.readManagedCredential)
+  const authControl=externalAgentAuthControl(!!env.readManagedAccess,()=>externalAuthCapable,valid,request,legacyAuthControl)
   const terminalControl = createAgentTerminalClient(() => terminalCapable, (method, params) => request(method, params, config.timeoutMs, true))
   const frameSequence = (): number => cursor.sequence
   const connection: CodexAppServerConnection = Object.freeze({
     get pid() { return nativePid }, get closed() { return lost || socketClosed && !reconnecting },
     request: (method,params,options)=>cursor.request(controlId,method,params,pending.size,p=>request(method,p,options?.timeoutMs)),
-    // The existing Agent-side connection owns initialization/reply
-    // channels. No public method or response can create another process.
+    // Initialization/reply stays with the existing Agent-side connection.
     notify() {}, respond() {}, respondWithError() {}, close,
   })
   async function hello(record: Record<string, unknown>): Promise<void> {
@@ -128,6 +128,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
     if (lost || socketClosed || helloSignal.aborted || pod.pod.uid !== config.expected.podUid) { throw fail() }
     transferred = true;managedAuthCapable=managedCodexAuthRefreshSupported(record.capabilities)
     terminalCapable = supportsAgentTerminal(record.capabilities)
+    externalAuthCapable=supportsExternalAuth(record.capabilities)
     identity = Object.freeze({ controlId, pid: checked.pid, startTicks: checked.startTicks, device: checked.device, inode: checked.inode })
     const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: checked.pid, startTicks: checked.startTicks,
       ...authControl, ...terminalControl,bindChallenge: config.policy.bindChallenge,
@@ -164,6 +165,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       await env.onTerminalFrame?.(readAgentTerminalFrame({ ...record, hostSeq: cursor.sequence }, controlId))
       return
     }
+    if(dispatchAgentExternalAuth(record,controlId,externalAuthCapable,env.readManagedAccess,()=>valid()&&!socketClosed&&!reconnecting,params=>request(AGENT_EXTERNAL_AUTH_SUPPLY,params,8000))) {return}
     if (record.event === 'NOTIFICATION') {
       if (typeof record.method !== 'string') { throw fail() }
       handlers.onNotification?.(record.method, record.params); return
@@ -245,6 +247,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       if (observed.pod.uid !== config.expected.podUid) { return 'FINAL' }
       pod = observed;managedAuthCapable=managedCodexAuthRefreshSupported(Reflect.get(record.hello as object,'capabilities'))
       terminalCapable = supportsAgentTerminal(Reflect.get(record.hello as object, 'capabilities'))
+      externalAuthCapable=supportsExternalAuth(Reflect.get(record.hello as object,'capabilities'))
       if(check.gap) {
         cursor.quarantine(check.gap)
       }
@@ -284,8 +287,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
         if (signal.aborted) { cancelled(); return }
         try {
           openSocket(bearer, () => {
-            try { const source=config.policy.provider!=='claude'?env.readManagedCredential?.():undefined
-              write({ method: 'INITIALIZE', policy: source?{...config.policy,codexAuth:source.authJson,managedCredential:source}:config.policy, ...(env.termOnInitialize ? { term: env.controllerTerm() } : {}) }) }
+            try {write({method:'INITIALIZE',policy:initializeAgentAuthPolicy(config.policy,!!env.readManagedAccess,env.readManagedCredential),
+              ...(env.termOnInitialize?{term:env.controllerTerm()}:{})})}
             catch { failure() }
           }, () => failure())
         } catch { failure() }

@@ -10,11 +10,11 @@ export function createManagedAccountSourceRefresh(input:Readonly<{
   open(codexHome:string):Promise<CodexAppServerConnection>
   assertCurrent():void
 }>) {
-  return async(agentId:string,expected:ManagedCodexCredential):Promise<void>=>{
+  return async(agentId:string,expected:ManagedCodexCredential,onStopped:()=>Promise<void>):Promise<void>=>{
     input.assertCurrent()
     if(!input.read.sourceHome) {throw fail('OWNER_UNAVAILABLE')}
     const home=input.read.sourceHome(agentId,expected)
-    let connection:CodexAppServerConnection|null=null,failureCode:string|null=null
+    let connection:CodexAppServerConnection|null=null,failureCode:string|null=null,stopped=false
     try {
       connection=await input.open(home)
       input.assertCurrent()
@@ -33,10 +33,10 @@ export function createManagedAccountSourceRefresh(input:Readonly<{
       // Native errors can contain token/server response data; expose one bounded code.
       failureCode='REFRESH_UNCONFIRMED'
     } finally {
-      let stopped=false
       try {stopped=connection!==null&&await connection.close()}catch{/* Preserve the durable STARTED claim. */}
       if(!stopped) {failureCode='STOP_UNCONFIRMED'}
     }
+    if(stopped) {await onStopped()}
     if(failureCode) {throw fail(failureCode)}
     input.assertCurrent()
   }

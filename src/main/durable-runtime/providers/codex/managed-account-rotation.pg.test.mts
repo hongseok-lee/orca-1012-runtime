@@ -19,6 +19,7 @@ test('PG account rotation commits before OAuth, excludes another owner and retai
       const rows=(await pool.query('SELECT state FROM durable_runtime.managed_codex_account_rotations WHERE scope=$1',[scope])).rows
       assert.deepEqual(rows,[{state:'STARTED'}])
       await assert.rejects(a.withAccountLock(account,async()=>{}),/NESTED_LOCK/)
+      await a.recordNativeStopped(account,'1:2:3:4')
     })
     await assert.rejects(a.withAccountLock(account,async()=>{
       await a.recordRotation(account,'1:2:4:4','STARTED')
@@ -28,13 +29,26 @@ test('PG account rotation commits before OAuth, excludes another owner and retai
       assert.deepEqual(await b.readRotation(account,'1:2:3:4'),{revision:'1:2:3:4',state:'STARTED'})
       assert.deepEqual(await b.readRotation(account,'1:2:4:4'),{revision:'1:2:4:4',state:'STARTED'})
       await assert.rejects(b.recordRotation(account,'1:2:4:4','COMPLETED'),/CLAIM_REQUIRED/)
-      await assert.rejects(b.recordRotation(account,'1:2:3:4','STARTED'),/ALREADY_ATTEMPTED/)
-      await b.recordRotation(account,'1:2:5:4','STARTED')
-      await b.recordRotation(account,'1:2:5:4','COMPLETED')
+      await assert.rejects(b.recordRotation(account,'1:2:5:4','STARTED'),/NATIVE_STOP_UNCONFIRMED/)
+      await assert.rejects(b.recordNativeStopped(account,'1:2:4:4'),/CLAIM_REQUIRED/)
     })
-    await a.withAccountLock(account,async()=>{
-      assert.deepEqual(await a.readRotation(account,'1:2:5:4'),{revision:'1:2:5:4',state:'COMPLETED'})
-      await assert.rejects(a.recordRotation(account,'1:2:5:4','STARTED'),/ALREADY_ATTEMPTED/)
+    let current=true
+    const expiring=createManagedAccountRotationStore(pool,scope,()=>{if(!current) {throw new Error('REQUEST_EXPIRED')}})
+    await assert.rejects(expiring.withAccountLock('expired',async()=>{
+      await expiring.recordRotation('expired','1:2:6:4','STARTED')
+      current=false
+      await expiring.recordNativeStopped('expired','1:2:6:4')
+      await assert.rejects(expiring.recordRotation('expired','1:2:6:4','COMPLETED'),/REQUEST_EXPIRED/)
+    }),/REQUEST_EXPIRED/)
+    const cleanup=await pool.query('SELECT native_stopped_at FROM durable_runtime.managed_codex_account_rotations WHERE scope=$1 AND account_key=$2',[scope,JSON.stringify(['account','expired'])])
+    assert.ok(cleanup.rows[0].native_stopped_at,'original owner retains stop proof even after request expiration')
+    await a.withAccountLock('completed',async()=>{
+      await a.recordRotation('completed','1:2:5:4','STARTED')
+      await assert.rejects(a.recordRotation('completed','1:2:5:4','COMPLETED'),/CLAIM_CHANGED/)
+      await a.recordNativeStopped('completed','1:2:5:4')
+      await a.recordRotation('completed','1:2:5:4','COMPLETED')
+      assert.deepEqual(await a.readRotation('completed','1:2:5:4'),{revision:'1:2:5:4',state:'COMPLETED'})
+      await assert.rejects(a.recordRotation('completed','1:2:5:4','STARTED'),/ALREADY_ATTEMPTED/)
     })
   } finally {await pool.end()}
 })

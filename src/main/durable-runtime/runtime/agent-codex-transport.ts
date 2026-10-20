@@ -1,3 +1,4 @@
+import type {ManagedCodexAccessReader} from './agent-external-auth.ts'
 import type { AgentTerminalSupply } from './agent-control-native-supply.ts'
 import type { AgentTerminalFrame } from './agent-terminal-protocol.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
@@ -19,6 +20,7 @@ export type { AdoptedAgentControl, AgentControlIdentity, AuthenticatedAgentContr
 
 export type AgentCodexTransportConfiguration = Readonly<{
   readManagedCredential?():ManagedCodexCredential
+  readManagedAccess?:ManagedCodexAccessReader
   journal?: ControlJournal
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
   bootstrapSha256: string
@@ -72,7 +74,7 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
       !/^[0-9a-f]{64}$/.test(config.bootstrapSha256) || !Number.isSafeInteger(config.timeoutMs) || config.timeoutMs <= 0 ||
       config.timeoutMs > 2_147_483_647 || !/^[a-z0-9-]+$/.test(config.namespace) || !/^[a-z0-9-]+$/.test(config.container)) { throw fail() }
   if (createHash('sha256').update(artifact).digest('hex') !== config.bootstrapSha256) { throw fail() }
-  const environment: AgentControlSessionEnvironment = Object.freeze({readManagedCredential:original.readManagedCredential, config, origin, ca, reconnectBudgetMs, reviewer,
+  const environment: AgentControlSessionEnvironment = Object.freeze({readManagedAccess:original.readManagedAccess,readManagedCredential:original.readManagedCredential, config, origin, ca, reconnectBudgetMs, reviewer,
     journal: original.journal,
     termOnInitialize: !!original.controllerTerm,
     onProviderChildExit:original.onProviderChildExit?.bind(original),

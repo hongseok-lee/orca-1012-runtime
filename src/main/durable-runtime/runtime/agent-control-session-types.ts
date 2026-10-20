@@ -1,3 +1,4 @@
+import type {ManagedCodexAccessReader} from './agent-external-auth.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import type { ManagedCodexAuthControl } from './managed-codex-auth-refresh.ts'
 import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
@@ -11,6 +12,7 @@ import type { AgentTerminalControl, AgentTerminalFrame } from './agent-terminal-
 export type AgentControlIdentity = Readonly<{ controlId: string; pid: number; startTicks: string; device: string; inode: string }>
 export type AgentControlSessionEnvironment = Readonly<{
   readManagedCredential?():ManagedCodexCredential
+  readManagedAccess?:ManagedCodexAccessReader
   config: Readonly<{ timeoutMs: number; namespace: string; container: string; bootstrapSha256: string
     nativeArtifactFile: string; nativeCompanionFile?:string; nativeBwrapFile?:string; terminalSupply?: AgentTerminalSupply; expected: KubernetesPodAuthExpected; policy: AgentCodexControlPolicy }>
   origin: URL; ca: Buffer; reconnectBudgetMs: number; termOnInitialize: boolean

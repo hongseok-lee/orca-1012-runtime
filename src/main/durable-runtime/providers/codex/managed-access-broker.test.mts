@@ -10,7 +10,7 @@ function credential(revision='1:2:3:4',exp=900,accountId='selected'):ManagedCode
 function fixture() {
   let source=credential(),refreshes=0,rotations: {revision:string;state:'STARTED'|'COMPLETED'}|null=null
   const hooks={read:()=>source,now:()=>time,withAccountLock:async<T,>(_id:string|null,body:()=>Promise<T>)=>body(),
-    readRotation:async()=>rotations,recordRotation:async(_id:string|null,revision:string,state:'STARTED'|'COMPLETED')=>{rotations={revision,state}},
+    readRotation:async()=>rotations,recordNativeStopped:async()=>{},recordRotation:async(_id:string|null,revision:string,state:'STARTED'|'COMPLETED')=>{rotations={revision,state}},
     refreshSource:async()=>{refreshes++;await Promise.resolve();source=credential('1:2:4:4',2000)}}
   return {hooks,set source(value:ManagedCodexCredential){source=value},get source(){return source},get refreshes(){return refreshes}}
 }

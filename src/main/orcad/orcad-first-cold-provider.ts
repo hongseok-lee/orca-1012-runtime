@@ -1,3 +1,4 @@
+import {orcadManagedAccountAccess} from './orcad-managed-account-access.ts'
 import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { readCodexNativeDistribution } from './orcad-native-distribution.ts'
@@ -155,11 +156,11 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: rewake?.nativeSessionRef ? ['--dangerously-skip-permissions', '--resume', rewake.nativeSessionRef]
           : ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
-        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
+        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, '-c', 'cli_auth_credentials_store="ephemeral"', 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
         bootstrapSha256, nativeArtifactFile,
-        ...(!claude&&readCodexCredential?{readManagedCredential:()=>readCodexCredential(paths.agentId,false)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}),
+        ...(!claude&&readCodexCredential?{readManagedAccess:orcadManagedAccountAccess(pool,config,readCodexCredential,paths.agentId)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}),
         ...(terminalDistribution ? { terminalSupply: { runtime: terminalDistribution.runtime, addon: terminalDistribution.addon } } : {}), podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
         onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
