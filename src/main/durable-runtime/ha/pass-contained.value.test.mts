@@ -34,5 +34,18 @@ await test('one failing hook is that item\'s result; the pass goes on and the le
     assert.equal(session.stops, 0)
     assert.equal(adopted, 1)
     assert.deepEqual(result.items.map(item => item.disposition), ['FAILED_ORPHAN_RECONCILE_SYNTHETIC', 'HANDLED_1'])
+    const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+    const budgeted = await runControllerPass(pool, session, { controller: identity, maximumWork: 10, externalBudgetMs: 1000,
+      reconcileOrphans: async () => { await delay(700); return 1 },
+      adoptRuntimes: async () => { await delay(700); return 1 } })
+    assert.equal(budgeted.status, 'FINISHED')
+    assert.equal(budgeted.reason, 'EXTERNAL_BUDGET')
+    assert.equal(session.stops, 0)
+    assert.deepEqual(budgeted.items.map(item => item.disposition), ['HANDLED_1', 'HANDLED_1'])
+    const timeout = await runControllerPass(pool, session, { controller: identity, maximumWork: 10, externalBudgetMs: 20,
+      reconcileOrphans: async signal => { await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), {once:true})); return 0 } })
+    assert.equal(timeout.status, 'STOPPED')
+    assert.equal(timeout.reason, 'CONTROLLER_EXTERNAL_TIMEOUT')
+    assert.equal(session.stops, 1)
   } finally { await pool.end() }
 })

@@ -100,8 +100,11 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
 
   async function external<T>(invoke: (signal: AbortSignal) => Promise<T>): Promise<T> {
     await gate()
-    const remaining = end - performance.now()
-    if (remaining <= 0) {throw new DurableDatabaseError('CONTROLLER_EXTERNAL_BUDGET')}
+    // Scheduling may stop between items, but earlier work must not consume a
+    // newly admitted operation's I/O budget (e.g. Pod startup after a slow LIST).
+    // Lease/PG deadlines still guard every operation independently.
+    const externalEnd = performance.now() + request.externalBudgetMs
+    const remaining = request.externalBudgetMs
     let timer: ReturnType<typeof setTimeout> | undefined
     let cancelled: (() => void) | undefined
     const timeout = new Promise<never>((_, reject) => {
@@ -109,7 +112,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
       local.signal.addEventListener('abort', cancelled, { once: true })
       // Chunk long caller budgets rather than letting JS overflow a timer.
       const tick = () => {
-        const left = end - performance.now()
+        const left = externalEnd - performance.now()
         if (left <= 0) {
           reject(new DurableDatabaseError('CONTROLLER_EXTERNAL_TIMEOUT'))
           local.abort()
