@@ -43,3 +43,11 @@ test('empty initialization recovers across generation switch and pre-ID crash wh
   assert.throws(()=>rotateNativeInitialization(home,beforeInput),/NATIVE_INITIALIZATION_CHANGED/)
  }finally{rmSync(home,{recursive:true})}
 })
+
+test('pre-COLD read of a fresh HOME stays NONE without materializing protected metadata',()=>{
+ const home=mkdtempSync(join(tmpdir(),'orca-native-fresh-'))
+ try {
+  assert.deepEqual(readNativeSessionCheckpoint(home,'codex'),{state:'NONE'})
+  assert.throws(()=>readFileSync(join(home,'.orca-native','native-session.json')), {code:'ENOENT'})
+ }finally{rmSync(home,{recursive:true})}
+})

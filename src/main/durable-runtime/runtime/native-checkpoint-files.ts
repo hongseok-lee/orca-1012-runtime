@@ -27,7 +27,12 @@ export function ownedDirectory(path:string):void {
   if(!stat.isDirectory()||stat.isSymbolicLink()||stat.uid!==process.getuid?.()) {throw new Error('NATIVE_SESSION_HOME')}
 }
 export function nativeCheckpointDirectory(home:string):Readonly<{path:string;generation:string}> {
-  const root=join(home,'.orca-native');ownedDirectory(root)
+  const root=join(home,'.orca-native')
+  try{ownedDirectory(root)}catch(e) {
+    // The first read precedes grant-authorized PREPARE_COLD, which creates
+    // this directory. Read-only absence must not create it or fail first start.
+    if((e as NodeJS.ErrnoException).code==='ENOENT') {return {path:root,generation:'base'}};throw e
+  }
   const pointer=nativeBytes(join(root,'active-generation.json'))
   if(pointer===null) {return {path:root,generation:'base'}}
   const {generation}=JSON.parse(pointer)
