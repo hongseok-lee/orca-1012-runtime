@@ -58,7 +58,7 @@ export async function ensureUnitStorageVolume(input: {
   const common = (v: VolumeRecord, kind: string) => {
     if (v.kind !== kind || v.metadata?.name !== name || !v.metadata?.uid || v.metadata?.deletionTimestamp ||
         v.metadata?.labels?.['orca.dev/dataset'] !== policy.dataset || v.metadata?.labels?.['orca.dev/runtime-unit'] !== unitId ||
-        v.spec?.storageClassName !== '' || v.spec?.volumeMode !== 'Filesystem' ||
+        (kind === 'PersistentVolume' ? (v.spec?.storageClassName ?? '') !== '' : v.spec?.storageClassName !== '') || v.spec?.volumeMode !== 'Filesystem' ||
         JSON.stringify(v.spec?.accessModes) !== JSON.stringify(['ReadWriteMany'])) { fail() }
   }
   const checkVolume = (v: VolumeRecord) => {

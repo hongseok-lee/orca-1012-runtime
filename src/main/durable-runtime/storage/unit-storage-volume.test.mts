@@ -21,7 +21,7 @@ test('unit NFS volumes reconcile lost CREATE responses and reject foreign mounts
     nfs: { server: p.nfsServer, path: template.serverPath }, claimRef: { namespace: p.namespace, name: template.claimName, uid: template.claimUid } } }
   const labels = { 'orca.dev/dataset': p.dataset, 'orca.dev/runtime-unit': unitId }
   const common = { accessModes: ['ReadWriteMany'], volumeMode: 'Filesystem', storageClassName: '' }
-  const pv = { kind: 'PersistentVolume', metadata: { name, uid: 'new-pv', labels }, spec: { ...common,
+  const pv = { kind: 'PersistentVolume', metadata: { name, uid: 'new-pv', labels }, spec: { ...common, storageClassName: undefined,
     capacity: { storage: '50Gi' }, mountOptions: ['vers=3','hard'], persistentVolumeReclaimPolicy: 'Retain',
     nfs: { server: p.nfsServer, path: `${p.protectedExportRoot}/${unitId}` }, claimRef: { namespace: p.namespace, name } } }
   const pvc = { kind: 'PersistentVolumeClaim', metadata: { name, namespace: p.namespace, uid: 'new-pvc', labels },
