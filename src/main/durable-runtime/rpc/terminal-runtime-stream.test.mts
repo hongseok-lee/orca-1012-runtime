@@ -155,3 +155,16 @@ test('logical raw stream survives Pod0 and rebinds without replaying old input',
   assert.equal(h.json.filter(f=>(f as {type:string}).type==='end').length,1)
   assert.ok(closed.includes('b'))
 })
+
+
+test('subscribe viewport is applied before the first mobile snapshot without waking a PTY', async () => {
+  const h=harness(), order:string[]=[]
+  let cols=80,rows=24
+  await streamCatalogTerminal({...params,client:{id:'phone',type:'mobile'},viewport:{cols:43,rows:31}},h.context as never,h.emit,
+    {status:async()=>({incarnationId:'incarnation',cols,rows}),read:async()=>{order.push('read');return output(Buffer.from('prompt$ '),0,false)}},
+    {close(){},write:async()=>{throw new Error('no input')},resize:async(id,c,r)=>{assert.equal(id,'incarnation');order.push('resize');cols=c;rows=r;return {resized:true}}})
+  assert.deepEqual(order,['resize','read'])
+  assert.deepEqual(h.json[0],{type:'subscribed',streamId:(h.json[0] as {streamId:number}).streamId,lines:[],truncated:false,cols:43,rows:31})
+  const rendered=h.mobile.map(v=>(v as {serialized?:string}).serialized??'').join('')
+  assert.equal(rendered,'prompt$ ')
+})

@@ -144,11 +144,25 @@ export async function streamCatalogTerminal(params: ReturnType<typeof TerminalSu
         if(!incarnationId || snapshotRequested) {
           const inspected=await selected.reader.status()
           if(inspected===null) {throw new Error('TERMINAL_RUNTIME_UNAVAILABLE')}
-          const status=record(inspected)
+          let status=record(inspected)
           if(closed) {break}
           if(typeof status.incarnationId!=='string' || !Number.isSafeInteger(status.cols) || !Number.isSafeInteger(status.rows)) {invalid()}
           const id=status.incarnationId as string
           if(incarnationId && incarnationId!==id) {throw new Error('TERMINAL_RUNTIME_UNAVAILABLE')}
+          // Mobile sends its measured viewport on subscribe. Publishing the old
+          // size makes its fit loop discard this stream before rendering output.
+          // Apply only on a new physical attachment, through the same fenced
+          // action path as binary Resize; never spawn or wake a missing PTY.
+          if (!incarnationId && params.viewport && selected.actions) {
+            const {cols,rows}=params.viewport
+            if(status.cols!==cols || status.rows!==rows) {
+              await selected.actions.resize(id,cols,rows,JSON.stringify(['SUBSCRIBE_VIEWPORT',streamId,id]))
+              status=record(await selected.reader.status())
+              if(status.incarnationId!==id || status.cols!==cols || status.rows!==rows) {
+                throw new Error('TERMINAL_VIEWPORT_UNCONFIRMED')
+              }
+            }
+          }
           const initial=readOutput(await selected.reader.read(id,0),id,0)
           if(closed) {break}
           incarnationId=id;decoder=new StringDecoder('utf8');cursor=initial.endByte;live=initial.live
