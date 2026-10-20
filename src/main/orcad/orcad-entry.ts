@@ -26,6 +26,7 @@ import { startOrcadWithLifecycle } from './orcad-lifecycle'
 import { stopOrcadRuntimeWithDurableCatalog } from './orcad-durable-catalog-cleanup'
 import * as startup from './orcad-ops'
 import { installOrcadControllerDiagnostics } from './orcad-controller-diagnostics'
+import {createOrcadAccountSelection} from './orcad-account-selection'
 
 let runOrcadQuitHandlers = (): void => {}
 
@@ -137,14 +138,12 @@ async function startOrcadRuntime(
 ): Promise<Pick<OrcadHandle, 'readiness'>> {
   const { OrcaRuntimeService } = await import('../runtime/orca-runtime')
   const { OrcaRuntimeRpcServer } = await import('../runtime/runtime-rpc')
-  const { registerHeadlessPtyRuntime, getLocalPtyProvider, getSshPtyProvider } =
-    await import('../ipc/pty')
+  const { registerHeadlessPtyRuntime, getLocalPtyProvider, getSshPtyProvider } = await import('../ipc/pty')
   const { getAppEnvironment } = await import('../../shared/app-environment')
   const { resolveAdvertisedPairingEndpoint } = await import('../runtime/pairing-endpoint')
   const { ServeReadinessPublisher } = await import('../server/serve-readiness')
   const { Store } = await import('../persistence/loading-store/store')
-  const { ensureActiveOrcaProfile, initOrcaProfilePaths } =
-    await import('../orca-profiles/profile-index-store')
+  const { ensureActiveOrcaProfile, initOrcaProfilePaths } = await import('../orca-profiles/profile-index-store')
   const { initSshHostKeyStoreFile } = await import('../ssh/ssh-host-key-store')
   const { startOrcadDaemon, stopOrcadDaemon } = await import('./orcad-daemon-supervision')
   const { daemonOwnsFreshPersistentPtys } = await import('../daemon/daemon-init')
@@ -244,6 +243,8 @@ async function startOrcadRuntime(
     buildAgentHookPtyEnv: () =>
       isAgentStatusHooksEnabled(store.getSettings()) ? agentHookServer.buildPtyEnv() : {}
   })
+
+  runtime.setAccountSelectionServices(createOrcadAccountSelection(store,runtimeUserDataPath))
 
   // Why here too and not only on the desktop: nothing else republishes `session.tabs` when a
   // pane's status row changes, and orcad's whole job is serving paired clients.

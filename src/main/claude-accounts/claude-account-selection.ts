@@ -175,7 +175,7 @@ export class ClaudeAccountSelection {
   }
 }
 
-function toClaudeAccountSummary(account: ClaudeManagedAccount): ClaudeManagedAccountSummary {
+export function toClaudeAccountSummary(account: ClaudeManagedAccount): ClaudeManagedAccountSummary {
   return {
     id: account.id,
     email: account.email,

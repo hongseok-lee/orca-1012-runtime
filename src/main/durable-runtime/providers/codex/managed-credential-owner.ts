@@ -31,18 +31,31 @@ export function createManagedCodexCredentialOwner(input:Readonly<{
   const locations=new WeakMap<ManagedCodexCredential,string>()
   const read:ManagedCodexCredentialReader=(agentId,captureSelection=false)=>{
     let owner=input.readOwner(key(agentId))
-    if(!owner&&captureSelection) {select(agentId,getSelectedCodexAccountIdForTarget(input.getSettings(),{runtime:'host'}));owner=input.readOwner(key(agentId))}
+    const capturing=!owner&&captureSelection
+    if(capturing) {
+      const accountId=getSelectedCodexAccountIdForTarget(input.getSettings(),{runtime:'host'})
+      owner={selectionKey:'host',accountId,homeRoute:accountId===null?'real-home':'account-home',lifetime:'durable-agent'}
+    }
     if(!owner||owner.lifetime!=='durable-agent'||owner.selectionKey!=='host') {throw new Error('CODEX_ACCOUNT_OWNER_UNATTRIBUTED')}
     const settings=input.getSettings(),account=owner.accountId===null?null:settings.codexManagedAccounts.find(a=>a.id===owner!.accountId)
     if(owner.accountId!==null&&(!account||account.managedHomeRuntime==='wsl')) {throw new Error('CODEX_ACCOUNT_OWNER_UNAVAILABLE')}
     const file=join(account?.managedHomePath??join(homedir(),'.codex'),'auth.json')
-    const fd=openSync(file,constants.O_RDONLY|constants.O_NOFOLLOW)
+    let fd:number
+    try {fd=openSync(file,constants.O_RDONLY|constants.O_NOFOLLOW)}catch(error) {
+      throw new Error((error as NodeJS.ErrnoException).code==='ENOENT'?'CODEX_ACCOUNT_AUTH_MISSING':'CODEX_ACCOUNT_AUTH_UNREADABLE')
+    }
     try {
       const before=fstatSync(fd,{bigint:true})
       if(!before.isFile()||before.uid!==BigInt(process.getuid!())||(before.mode&0o777n)!==0o600n||before.size>1048576n) {throw new Error('CODEX_ACCOUNT_AUTH_METADATA')}
       const authJson=account?readNodeCodexManagedAuth(input.userDataPath,{accountId:account.id,managedHomePath:account.managedHomePath}):readFileSync(fd,'utf8')
       const after=lstatSync(file,{bigint:true})
       if(before.dev!==after.dev||before.ino!==after.ino||before.mtimeNs!==after.mtimeNs||before.size!==after.size) {throw new Error('CODEX_ACCOUNT_AUTH_CHANGED')}
+      if(capturing) {
+        // Failed source reads must not pin a new Agent permanently to a missing
+        // credential. Existing owners never follow a changed global selection.
+        if(input.readOwner(key(agentId))||getSelectedCodexAccountIdForTarget(input.getSettings(),{runtime:'host'})!==owner.accountId) {throw new Error('CODEX_ACCOUNT_OWNER_CHANGED')}
+        select(agentId,owner.accountId)
+      }
       if(input.readOwner(key(agentId))?.accountId!==owner.accountId) {throw new Error('CODEX_ACCOUNT_OWNER_CHANGED')}
       const result={accountId:owner.accountId,revision:[before.dev,before.ino,before.mtimeNs,before.size].join(':'),authJson,...(account?{expectedEmail:account.email}:{})}
       locations.set(result,dirname(file));return result
