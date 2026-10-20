@@ -24,8 +24,7 @@ import { logicalId, counter } from '../../shared/durable-runtime/identity.ts'
 import { canonicalInput } from '../durable-runtime/runtime/gateway/input.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
 import type { TerminalInputCommittedSink, ReadyTerminalInputPort } from '../durable-runtime/input/runtime-input-types.ts'
-import type { OrcadControllerConfig } from './orcad-controller-config.ts'
-import { invalidOrcadControllerConfig, parseUniqueOrcadControllerJson, readPrivateOrcadControllerConfigBytes } from './orcad-controller-config.ts'
+import { invalidOrcadControllerConfig, parseUniqueOrcadControllerJson, readPrivateOrcadControllerConfigBytes, type OrcadControllerConfig } from './orcad-controller-config.ts'
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
 import { prepareOrcadFirstManagedInitial } from './orcad-first-managed-initial.ts'
 import type { UnitOwnership } from './orcad-unit-ownership.ts'
@@ -157,6 +156,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
     const ready = observations.rows.map(event => ({native:certifiedNativeSessionRef(row.provider,event.kind,event.next_state)})).find(event => event.native)
     const plan = (await pool.query<{ plan: unknown }>(`SELECT plan FROM durable_runtime.agent_pod_plans WHERE runtime_unit_id=$1
       ORDER BY recorded_at DESC LIMIT 1`, [row.unit_id])).rows[0]
+    if (row.provider === 'codex') { readCodexCredential?.(row.agent_id, !plan && !ready) }
     let original = (await pool.query<{ id: string; qualification: string; leaf: string }>(`SELECT id,next_state->>'qualificationRef' AS qualification,
       next_state->'observation'->>'leafId' AS leaf FROM durable_runtime.runtime_audit_events WHERE kind='STORAGE_DIRECTORY_OBSERVATION_PREPARED'
       AND next_state->'scope'->>'sessionId'=$1 AND next_state->'scope'->>'bindingId'=$2 ORDER BY occurred_at DESC LIMIT 1`,

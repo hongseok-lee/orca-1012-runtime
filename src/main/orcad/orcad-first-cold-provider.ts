@@ -145,6 +145,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     // Same launch/env/policy for the cold path and for adoption of this exact Pod.
     function agentDeployment(pod: Readonly<{ podName: string; podUid: string; runtimeUnitId: string; operationId: string
       executionEpoch: string; specHash: string }>, paths: InitialProviderPaths) {
+      if (!claude) { readCodexCredential?.(paths.agentId, rewake===undefined || rewake.existingCheckout===false) }
       const native = captureManagedCodexNativePolicy(readSettings())
       if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
           native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
@@ -158,7 +159,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
         bootstrapSha256, nativeArtifactFile,
-        ...(!claude&&readCodexCredential?{readManagedCredential:()=>readCodexCredential(paths.agentId,rewake===undefined)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}),
+        ...(!claude&&readCodexCredential?{readManagedCredential:()=>readCodexCredential(paths.agentId,false)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}),
         ...(terminalDistribution ? { terminalSupply: { runtime: terminalDistribution.runtime, addon: terminalDistribution.addon } } : {}), podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
         onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
