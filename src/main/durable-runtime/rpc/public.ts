@@ -1,3 +1,4 @@
+import { createCatalogTerminalInventory } from './terminal-inventory.ts'
 import { captureCatalogReadContext } from './context.ts'
 import { createCatalogTerminalDisplay } from './terminal-display.ts'
 import { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
@@ -81,6 +82,10 @@ export class DurableCatalogReadAdapter {
     this.requireOpen()
     captureCatalogReadContext(this.config, context)
     return [...this.managedProviders()]
+  }
+  async listTerminals(params: unknown, context: RpcContext): Promise<unknown> {
+    try { this.requireOpen(); return await createCatalogTerminalInventory(this.config)(params, context) }
+    catch (error) { throw catalogReadFailure(error) }
   }
   async displayTerminal(method: string, params: unknown, context: RpcContext,
     legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
