@@ -162,7 +162,7 @@ async function lockedReconcileState(tx: DurableTransaction, request: InitialWake
   // Same rule as the one-unresolved-command index: an UNKNOWN input dispatch is
   // kept history (R03) and never holds the Unit's lifecycle step.
   const pending = await tx.query<CommandRow>(`SELECT * FROM durable_runtime.runtime_commands
-    WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))`,
+    WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name NOT IN ('dispatchInput','cancel')))`,
   [context.runtimeUnitId])
   if (pending.rows[0]) {
     const command = pending.rows[0]

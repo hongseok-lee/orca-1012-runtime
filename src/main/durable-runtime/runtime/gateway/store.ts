@@ -173,7 +173,7 @@ export async function submitCommand(
   // blocks later input; the original is never resent).
   const unresolved = await authority.tx.query<CommandRow>(
     `SELECT * FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
-     AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))`,
+     AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name NOT IN ('dispatchInput','cancel')))`,
     [authority.context.runtimeUnitId]
   )
   if (unresolved.rows[0]) {

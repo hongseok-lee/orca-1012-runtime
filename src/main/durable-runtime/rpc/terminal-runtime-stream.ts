@@ -34,7 +34,7 @@ export type TerminalStreamSource = Readonly<{
 }>
 export type TerminalStreamLifecycle = Readonly<{ refresh(): Promise<TerminalStreamSource | null> }>
 const ownerUnavailable = (error: unknown) => error instanceof Error &&
-  ['TERMINAL_RUNTIME_UNAVAILABLE', 'AGENT_CODEX_CONTROL_UNCONFIRMED'].some(code =>
+  ['TERMINAL_RUNTIME_UNAVAILABLE', 'AGENT_CODEX_CONTROL_UNCONFIRMED', 'AGENT_TERMINAL_TRANSPORT_UNAVAILABLE'].some(code =>
     error.message === code || ('code' in error && error.code === code))
 
 /** One logical stream owns its wire ID. Replacing a live source discards its
@@ -167,9 +167,9 @@ export async function streamCatalogTerminal(params: ReturnType<typeof TerminalSu
           if(closed) {break}
           incarnationId=id;decoder=new StringDecoder('utf8');cursor=initial.endByte;live=initial.live
           detach();detach=live ? selected.attach?.(id)??(()=>{}) : ()=>{}
-          announce(Number(status.cols),Number(status.rows),initial.truncated)
+          announce(Number(status.cols),Number(status.rows),initial.truncated || status.retainedTruncated === true)
           send(Opcode.SnapshotStart,encodeTerminalStreamJson({kind:'scrollback',cols:status.cols,rows:status.rows,
-            truncated:initial.truncated,incarnationId:id}))
+            truncated:initial.truncated || status.retainedTruncated === true,incarnationId:id}))
           chunks(Opcode.SnapshotChunk,decoder.write(initial.bytes));send(Opcode.SnapshotEnd)
           send(Opcode.Metadata,encodeTerminalStreamJson({writeAvailable:live,incarnationId:id}))
           snapshotRequested=false

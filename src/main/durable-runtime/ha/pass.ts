@@ -1,3 +1,4 @@
+import { snapshotInventory } from './pass-inventory.ts'
 import { randomUUID } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
 import type { Pool } from 'pg'
@@ -13,6 +14,7 @@ import { listDueReconciliations } from '../lifecycle/due.ts'
 import { expireInitialWake, prepareReconcileStep, type InitialWakeExpiryRequest, type ReconcileStepRequest } from '../lifecycle/controller.ts'
 import { recoverListWatch, type ListWatchTransport, type ObservationSink } from '../lifecycle/watch.ts'
 import { positiveInteger } from './instance.ts'
+import { pendingLifecycleCommands } from './takeover.ts'
 import type { TakeoverCommand, TakeoverOperation, TakeoverQueueHead, TakeoverUnit } from './takeover.ts'
 import type { ControllerLeaseSession } from './session.ts'
 
@@ -59,16 +61,6 @@ export type ControllerPassItem = { readonly kind: 'RECONCILE' | 'QUEUE' | 'INVEN
   readonly identity: string; readonly disposition: string }
 export type ControllerPassResult = { readonly status: 'FINISHED' | 'STOPPED'; readonly reason: string;
   readonly items: readonly ControllerPassItem[] }
-
-function snapshotInventory(caller: ControllerPassRequest['inventory']): ControllerPassRequest['inventory'] {
-  if (!caller) {return undefined}
-  const transport = caller.transport
-  // Method references and their original receivers are fixed now. The actual
-  // AbortSignal is still supplied at invocation; transport state is not frozen.
-  return Object.freeze({ sink: caller.sink.bind(caller), transport: Object.freeze({
-    list: transport.list.bind(transport), watch: transport.watch.bind(transport), get: transport.get.bind(transport)
-  }) })
-}
 
 /** One finite invocation. Caller owns wakeups/renewals, connection/query
  * timeouts, authenticated controller identity and actual external transports.
@@ -162,10 +154,7 @@ export async function runControllerPass(pool: Pool, session: ControllerLeaseSess
     }
     const snapshot = await session.readTakeoverSnapshot(pool, startingLease, local.signal)
     const units = new Map(snapshot.units.map(unit => [unit.id, unit]))
-    // Input commands (an UNKNOWN delivery stays for its owner, R03) belong to input
-    // recovery below; only lifecycle commands hold a Unit's next lifecycle step.
-    const pending = new Map(snapshot.commands.filter(command => !['stageInput', 'dispatchInput'].includes(command.command_name))
-      .map(command => [command.runtime_unit_id, command]))
+    const pending = pendingLifecycleCommands(snapshot.commands)
     const recoveredUnits = new Set<RuntimeUnitId>()
     if (request.recoverInput) {
       for (const command of snapshot.commands) {

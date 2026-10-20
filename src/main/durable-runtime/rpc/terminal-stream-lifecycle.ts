@@ -1,3 +1,4 @@
+import { retainedTerminalStream } from './terminal-retained-stream.ts'
 import type { RpcContext } from '../../runtime/rpc/core.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
 import type { TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
@@ -13,8 +14,9 @@ import { TerminalDraftStoreError } from '../terminal/durable-contracts.ts'
  * fresh physical pin; no action object is retargeted across incarnations. */
 export function createCatalogTerminalStreamLifecycle(config: CapturedCatalogReadConfig, context: RpcContext,
   terminal: string, original: NonNullable<Awaited<ReturnType<typeof resolveCatalogTerminalTarget>>>,
-  lookup: TerminalRuntimeLookup, raw?: ReturnType<typeof createTerminalRawSubscriptions>): TerminalStreamLifecycle {
+  lookup: TerminalRuntimeLookup, raw?: ReturnType<typeof createTerminalRawSubscriptions>, viewport?: { cols: number; rows: number }): TerminalStreamLifecycle {
   let cached: TerminalStreamSource | null=null
+  const retained = retainedTerminalStream(config, context, terminal, original, viewport)
   const current=()=>{
     config.assertCurrentHost()
     if(context.signal?.aborted) {throw new TerminalDraftStoreError('TERMINAL_SUBSCRIPTION_ABORTED')}
@@ -37,9 +39,9 @@ export function createCatalogTerminalStreamLifecycle(config: CapturedCatalogRead
       return fresh
     })
     current()
-    if(!target) {return null}
+    if(!target) {return retained}
     const port=lookup(target.sessionId)
-    if(!port?.terminal?.supported()) {return null}
+    if(!port?.terminal?.supported()) {return retained}
     const key=JSON.stringify([port.binding,port.context.controller,target.targetPin.tabRevision])
     if(cached?.key===key) {return cached}
     const actions=createCatalogTerminalActions(config,context,terminal,target,lookup)

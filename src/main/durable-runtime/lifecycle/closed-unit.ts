@@ -27,7 +27,7 @@ export async function reconcileClosedUnits(pool: Pool, controller: VerifiedContr
           (await tx.query("SELECT 1 FROM durable_runtime.sessions WHERE id=ANY($1::uuid[]) AND lifecycle='OPEN'",[members])).rowCount) {return}
       let unit=(await tx.query<RuntimeUnitRow>('SELECT * FROM durable_runtime.runtime_units WHERE id=$1',[id])).rows[0]
       if((await tx.query(`SELECT 1 FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1 AND
-        (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput')) LIMIT 1`,[id])).rowCount) {return}
+        (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name NOT IN ('dispatchInput','cancel'))) LIMIT 1`,[id])).rowCount) {return}
       if(unit.desired_mode!=='DELETED') {
         unit=(await tx.query<RuntimeUnitRow>(`UPDATE durable_runtime.runtime_units SET desired_mode='DELETED',phase='DELETING',
           intent_revision=intent_revision+1,revision=revision+1,reconcile_due_at=clock_timestamp() WHERE id=$1 RETURNING *`,[id])).rows[0]

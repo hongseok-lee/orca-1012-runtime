@@ -35,10 +35,10 @@ export function prepareOrcadIdleLifecycle(pool: Pool, config: OrcadControllerCon
       SELECT u.id,u.revision::text,u.intent_revision::text,u.active_attempt_id,u.execution_epoch::text,a.pod_uid
       FROM durable_runtime.runtime_units u JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id
       WHERE u.desired_mode='RUNNING' AND u.phase='READY' AND u.idle_due_at<=clock_timestamp()
-      AND a.stopped_at IS NULL AND ${currentAuthoritySql} ORDER BY u.idle_due_at LIMIT 8`, auth)
-    let handled = 0
+      AND a.stopped_at IS NULL AND ${currentAuthoritySql} ORDER BY u.idle_due_at`, auth)
+    let handled = 0, observed = 0
     for (const unit of candidates.rows) {
-      if (signal.aborted || policy.idleDurationMs === null) { break }
+      if (signal.aborted || policy.idleDurationMs === null || observed >= 8) { break }
       const id = logicalId('runtime-unit', unit.id), members = await discoverUnitMembers(pool, id)
       const samples = new Map<string, { evidence: PreparedMemberActivity; idle: NonNullable<ReturnType<TerminalRuntimeLookup>>['idle']; lastWorkAt: number }>()
       let busy = false
@@ -46,7 +46,7 @@ export function prepareOrcadIdleLifecycle(pool: Pool, config: OrcadControllerCon
         const port = lookup(sessionId)
         if (!port?.idle?.supported() || port.binding.attemptId !== unit.active_attempt_id) { busy = true; break }
         let sample: Record<string, unknown> | null
-        try { sample = record(await port.idle.request('IDLE_OBSERVE')) }
+        try { observed++; sample = record(await port.idle.request('IDLE_OBSERVE')) }
         catch { busy = true; lastError = 'IDLE_OBSERVATION_UNAVAILABLE'; break }
         if (!sample || typeof sample.lastWorkAt !== 'number' || !Number.isFinite(sample.lastWorkAt) || typeof sample.sequence !== 'string' || !/^\d+$/.test(sample.sequence)) { busy = true; break }
         if (sample.idle !== true) { busy = true }

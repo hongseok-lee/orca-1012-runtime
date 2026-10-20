@@ -106,3 +106,11 @@ export async function assertLiveControllerLease(pool: Pool, caller: LeaseIdentit
     if (result.rowCount !== 1) {throw new DurableDatabaseError('CONTROLLER_LEASE_STALE')}
   } catch (error) { throw safeDatabaseError(error) }
 }
+
+/** Input dispatch recovery and historical UNKNOWN cancels do not own the next
+ * lifecycle step. Their original outcomes remain in the snapshot/history. */
+export function pendingLifecycleCommands(commands: readonly TakeoverCommand[]) {
+  return new Map(commands.filter(command => !['stageInput', 'dispatchInput'].includes(command.command_name) &&
+    !(command.command_name === 'cancel' && command.state === 'UNKNOWN'))
+    .map(command => [command.runtime_unit_id, command]))
+}

@@ -113,7 +113,7 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
     // Writer/command uncertainty is never solved by spending another attempt.
     const live=await tx.query(`SELECT 1 FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND stopped_at IS NULL
       UNION ALL SELECT 1 FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
-      AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))
+      AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name NOT IN ('dispatchInput','cancel')))
       UNION ALL SELECT 1 FROM durable_runtime.storage_write_grants g WHERE g.state<>'REVOKED' AND EXISTS(
         SELECT 1 FROM durable_runtime.runtime_member_storage_bindings m WHERE m.runtime_unit_id=$1 AND m.storage_binding_id=g.storage_binding_id)
       UNION ALL SELECT 1 FROM durable_runtime.storage_bindings b WHERE b.writer_attempt_id IS NOT NULL AND EXISTS(

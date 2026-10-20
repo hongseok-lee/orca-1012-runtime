@@ -87,7 +87,7 @@ export async function reserveSleep(tx: DurableTransaction, request: SleepReserva
   const inFlight = await tx.query(`SELECT d.id FROM durable_runtime.delivery_attempts d JOIN durable_runtime.attempts a ON a.id=d.attempt_id
     WHERE d.session_id=ANY($1::uuid[]) AND a.stopped_at IS NULL AND d.state IN ('DISPATCH_INTENT','STAGED','EFFECT_POSSIBLE','ADMITTED')`, [members])
   if (inFlight.rowCount) { return { status: 'DEFERRED', reason: 'IN_FLIGHT_DISPATCH' } }
-  const unresolved = await tx.query(`SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name<>'dispatchInput'))`, [unit.id])
+  const unresolved = await tx.query(`SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name NOT IN ('dispatchInput','cancel')))`, [unit.id])
   if (unresolved.rowCount) { return { status: 'DEFERRED', reason: 'UNRESOLVED_COMMAND' | 'NOT_IDLE_DUE' } }
   if (unit.active_attempt_id) {
     for (const sessionId of members) {
