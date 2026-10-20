@@ -106,8 +106,19 @@ function uniqueReady(rows: readonly ReadyRow[]): Map<string, { row: ReadyRow; id
 /** Caller supplies only authorization-filtered rows, inside its original RR. */
 export async function enrichCatalogTerminalNativeSessions(tx: DurableTransaction, tabs: readonly CatalogTab[]): Promise<CatalogTab[]> {
   const ids = tabs.filter(tab => tab.kind === 'terminal' && tab.lifecycle === 'OPEN' && tab.session_id !== null).map(tab => tab.tab_id)
+  const durable = await tx.query<{tab_id: string; session_id: string; provider: 'codex' | 'claude'}>(`
+    SELECT t.id AS tab_id,s.id AS session_id,g.provider FROM durable_runtime.tabs t
+    JOIN durable_runtime.sessions s ON s.id=t.session_id AND s.workspace_id=t.workspace_id
+    JOIN durable_runtime.agents g ON g.id=s.agent_id
+    JOIN durable_runtime.workspaces w ON w.id=t.workspace_id AND w.dataset_name=g.dataset_name
+    WHERE t.id=ANY($1::uuid[]) AND t.kind='terminal' AND t.lifecycle='OPEN'
+      AND s.lifecycle='OPEN' AND w.deleted_at IS NULL AND t.terminal_handle IS NOT NULL
+      AND g.provider IN ('codex','claude')`, [ids])
+  const addresses = new Map(durable.rows.map(row => [row.tab_id, {agent: row.provider, sessionId: row.session_id}]))
   const ready = uniqueReady(await readyRows(tx, ids))
-  return tabs.map(tab => {
+  return tabs.map(original => {
+    const address = addresses.get(original.tab_id)
+    const tab = address ? {...original, terminal_durable_chat_session: address} : original
     const found = ready.get(tab.tab_id)
     if (!found) { return tab }
     if (found.row.session_id !== tab.session_id || found.row.workspace_id !== tab.workspace_id ||

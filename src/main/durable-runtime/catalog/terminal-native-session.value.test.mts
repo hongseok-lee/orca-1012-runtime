@@ -63,3 +63,22 @@ test('server mode changes are retained by mobile tab reconciliation', () => {
   assert.equal(mobileSessionTabsEqual([tab], [{ ...tab, viewMode: 'chat' }]), false)
   assert.equal(mobileSessionTabsEqual([tab], [{ ...tab }]), true)
 })
+
+test('durable history remains addressable before READY and across provider identity changes', () => {
+  const durable = {agent: 'codex' as const, sessionId: 'catalog-session'}
+  const pending = {type: 'terminal' as const, id: 'tab', title: 'Agent', isActive: true,
+    parentTabId: 'tab', leafId: 'leaf', status: 'pending-handle' as const, terminal: null, launchAgent: 'codex'}
+  const row = {public_tab_id: 'tab', payload: pending, terminal_handle: 'term_durable', kind: 'terminal',
+    session_id: durable.sessionId, terminal_durable_chat_session: durable} as unknown as CatalogTab
+  const tab = parseCatalogTab(row)
+  assert.deepEqual(resolveMobileNativeChat(tab), {...durable, transcriptPath: null})
+  const ready = {...tab, nativeChatSession: {agent: 'codex' as const, sessionId: 'native-thread'}}
+  assert.deepEqual(resolveMobileNativeChat(ready), {...durable, transcriptPath: null})
+  // File attachments still use the provider identity, never the Catalog UUID.
+  assert.equal(resolveMobileNativeChatFileSessionId(ready), 'native-thread')
+  assert.equal(mobileSessionTabsEqual([tab], [{...tab}]), true)
+  assert.equal(mobileSessionTabsEqual([tab], [{...tab, durableChatSession: undefined}] as never), false)
+  assert.equal(resolveMobileNativeChat({...ready, durableChatSession: {agent: 'codex', sessionId: ''}}), null)
+  assert.throws(() => parseCatalogTab({...row, session_id: 'other'}), /CATALOG_NATIVE_SESSION_REFERENCE/)
+  assert.throws(() => parseCatalogTab({...row, payload: {...pending, durableChatSession: durable}}), /CATALOG_NATIVE_SESSION_STORED_PAYLOAD/)
+})

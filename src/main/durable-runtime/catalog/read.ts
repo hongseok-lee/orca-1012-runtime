@@ -27,6 +27,7 @@ export type CatalogTab = CatalogTabMetadataRow & {
   terminal_handle: string | null; lifecycle: 'OPEN' | 'CLOSED'; tab_revision: string
   /** Derived in this read transaction, never part of the persisted payload. */
   terminal_native_chat_session?: RuntimeTerminalNativeChatSession
+  terminal_durable_chat_session?: RuntimeTerminalNativeChatSession
 }
 export type CatalogSnapshot = {
   readonly heads: readonly CatalogHeadRow[]

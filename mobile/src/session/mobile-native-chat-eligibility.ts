@@ -32,6 +32,7 @@ export type MobileNativeChatTab = {
   launchAgent?: string | null
   agentStatus?: AgentStatusEntry | null
   nativeChatSession?: RuntimeTerminalNativeChatSession
+  durableChatSession?: RuntimeTerminalNativeChatSession
   viewMode?: 'terminal' | 'chat'
   /** Host-provided launch context still parked as an unsent TUI-input draft. */
   launchDraft?: string
@@ -60,6 +61,11 @@ export function resolveMobileNativeChat(
   }
   if (tab.type !== 'terminal') {
     return null
+  }
+  if (tab.durableChatSession !== undefined) {
+    return isRuntimeTerminalNativeChatSession(tab.durableChatSession)
+      ? {agent: tab.durableChatSession.agent, sessionId: tab.durableChatSession.sessionId, transcriptPath: null}
+      : null
   }
   if (tab.nativeChatSession !== undefined) {
     return isRuntimeTerminalNativeChatSession(tab.nativeChatSession)
