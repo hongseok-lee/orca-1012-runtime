@@ -12,8 +12,8 @@ export function agentControlReaders(request:(method:string)=>Promise<unknown>,av
       let checkpoint:NativeSessionCheckpoint
       if(state==='NONE' || state==='UNKNOWN') {checkpoint={state}}
       else {
-        if(state!=='FOUND' || Reflect.get(value,'provider')!==provider || typeof Reflect.get(value,'nativeSessionRef')!=='string') {fail()}
-        checkpoint={state:'FOUND',provider:Reflect.get(value,'provider'),nativeSessionRef:Reflect.get(value,'nativeSessionRef')}
+        if(!['FOUND','PROVISIONAL'].includes(String(state)) || Reflect.get(value,'provider')!==provider || typeof Reflect.get(value,'nativeSessionRef')!=='string') {fail()}
+        checkpoint={state:state as 'FOUND'|'PROVISIONAL',provider:Reflect.get(value,'provider'),nativeSessionRef:Reflect.get(value,'nativeSessionRef')}
       }
       observed(checkpoint);return checkpoint
     },

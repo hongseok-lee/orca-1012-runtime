@@ -185,6 +185,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         }
         const priorNative=readNativeSessionCheckpoint(paths.home,provider)
         if(priorNative.state==='UNKNOWN') {failure(id,'NATIVE_IDENTITY_UNCONFIRMED');return}
+        if(priorNative.state==='PROVISIONAL') {failure(id,'NATIVE_HISTORY_NOT_PERSISTED');return}
         const launch=provider==='claude' && priorNative.state==='FOUND' ? claudeResumeLaunch(policy.launch,priorNative.nativeSessionRef) : policy.launch
         markNativeEntered(paths.home)
         coldUsed = true; phase = 'OPENING'
@@ -252,7 +253,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         if(provider==='codex' && ['thread/start','thread/resume'].includes(request.method) && result && typeof result==='object') {
           const thread=Reflect.get(result,'thread'),native=thread && typeof thread==='object'?Reflect.get(thread,'id'):null
           if(typeof native!=='string') {throw new Error('NATIVE_THREAD_RESPONSE')}
-          recordNativeSessionCheckpoint(paths.home,'codex',native)
+          recordNativeSessionCheckpoint(paths.home,'codex',native,typeof Reflect.get(thread,'path')==='string'?Reflect.get(thread,'path'):undefined)
         }
         response(id,result)
       } catch(error) { send({id,controlId,error:{code:'AGENT_NATIVE_REQUEST_UNCONFIRMED',method:request.method,...nativeRequestFailure(error)}}) }

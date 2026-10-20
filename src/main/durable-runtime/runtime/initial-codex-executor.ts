@@ -210,6 +210,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         const checkpoint=await control.readNativeSession()
         if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint.state)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
         if(checkpoint.state==='UNKNOWN') {return deny('NATIVE_IDENTITY_UNCONFIRMED')}
+        if(checkpoint.state==='PROVISIONAL') {return deny('NATIVE_HISTORY_NOT_PERSISTED')}
         if (selected.resume && checkpoint.state==='FOUND' && selected.resume.nativeSessionRef !== checkpoint.nativeSessionRef) { return deny('NATIVE_IDENTITY_MISMATCH') }
         const resumeRef=selected.resume?.nativeSessionRef??(checkpoint?.state==='FOUND'?checkpoint.nativeSessionRef:null)
         const originalLaunch=prepared.config.agent.policy.launch, home=source.value.paths.home
