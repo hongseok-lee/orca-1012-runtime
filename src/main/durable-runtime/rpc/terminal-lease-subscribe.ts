@@ -30,7 +30,7 @@ export function createCatalogTerminalLeaseSubscribe(config: CapturedCatalogReadC
     if (found.chat || params.client?.type === 'mobile' && params.capabilities?.mobileInputLeaseOnly === 1) { return holdCatalogTerminalInputLease(params, capturedContext, emit) }
     if (!lookup) { throw new TerminalDraftStoreError('TERMINAL_RUNTIME_UNAVAILABLE') }
     return streamCatalogTerminal(params, capturedContext, emit, undefined, undefined, undefined,
-      createCatalogTerminalStreamLifecycle(config,capturedContext,params.terminal,found,lookup,raw))
+      createCatalogTerminalStreamLifecycle(config,capturedContext,params.terminal,found,lookup,raw,params.viewport))
   }
 }
 

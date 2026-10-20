@@ -129,6 +129,18 @@ function buildCarriedTailLines(
   return { lines, truncated: dropCount > 0 }
 }
 
+/** Durable Terminal display must interpret CR as cursor movement, including
+ * CR/LF split across frames. The compact preview path below deliberately keeps
+ * only the latest status redraw and is not a terminal display projection. */
+export function appendTerminalDisplayChunk(
+  previousLines: string[], previousPartialLine: string, normalizedChunk: string,
+  previousRedrawCursor: RetainedTailRedrawCursor | null
+) {
+  return appendNormalizedToMultilineTailBuffer(previousLines,
+    previousPartialLine.slice(-MAX_TAIL_PARTIAL_CHARS), normalizedChunk,
+    previousPartialLine.length > MAX_TAIL_PARTIAL_CHARS, previousRedrawCursor)
+}
+
 export function appendNormalizedToTailBuffer(
   previousLines: string[],
   previousPartialLine: string,

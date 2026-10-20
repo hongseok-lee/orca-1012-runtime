@@ -1,3 +1,4 @@
+import type { AgentIdleControl } from '../runtime/agent-idle-activity.ts'
 import type { AgentTerminalControl } from '../runtime/agent-terminal-protocol.ts'
 import type { ReceiptRecord } from '../db/atomic.ts'
 import type { DurableTransaction } from '../db/connection.ts'
@@ -23,6 +24,8 @@ export type TerminalInputCommittedSink = (input: CommittedTerminalInput) => void
 export type ReadyTerminalInputPort = Readonly<{
   binding: ReadyProviderBinding
   terminal?: AgentTerminalControl['terminal']
+  idle?: AgentIdleControl
+  closeForSleep?(): Promise<boolean>
   context: GatewayContext
   executorId: ExecutorId
   /** Known provider/auth prerequisites; false keeps accepted input DURABLE. */

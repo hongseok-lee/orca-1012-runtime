@@ -130,7 +130,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
     snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: protection?.control()?.terminal,
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: protection?.control()?.terminal, idle: protection?.control()?.idle, closeForSleep: () => protection?.control()?.close() ?? Promise.resolve(false),
         dispatchReady:()=>claude || authRefresh.dispatchReady(),
         refreshManagedAuth:()=>{const control=protection?.control();return control?authRefresh.refresh(control):Promise.resolve({state:'FAILED' as const,code:'REFRESH_UNCONFIRMED' as const})} }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {

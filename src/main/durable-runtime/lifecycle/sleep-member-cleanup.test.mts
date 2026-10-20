@@ -28,7 +28,7 @@ test('closed cleaned member remains locked but does not block idle sibling sleep
   } finally { await pool.end() }
 })
 
-test('closing member with incomplete cleanup conservatively defers sleep despite idle sibling', { skip: !enabled }, async () => {
+test('closing member with active work defers sleep despite idle sibling', { skip: !enabled }, async () => {
   const pool = ownPool()
   try {
     const f = await fixture(pool)
@@ -37,9 +37,9 @@ test('closing member with incomplete cleanup conservatively defers sleep despite
     const result = await withDurableTransaction(pool, tx => reserveSleep(tx, {
       unitId: f.unit, actorId: 'fixture-catalog', discoveredMembers: f.sessions,
       expectedRevision: counter('row:runtime-unit', '0'), expectedIntentRevision: counter('intent-revision', '0'),
-      policy, activityFreshnessMs: 60000, activity: activity(f, a)
+      policy, activityFreshnessMs: 60000, activity: activity(f, a, f.sessions[0])
     }))
-    assert.deepEqual(result, { status: 'DEFERRED', reason: 'SESSION_CLOSING' })
+    assert.deepEqual(result, { status: 'DEFERRED', reason: 'MEMBER_ACTIVE' })
     const unit = await pool.query('SELECT desired_mode,intent_revision FROM durable_runtime.runtime_units WHERE id=$1', [f.unit])
     assert.equal(unit.rows[0].desired_mode, 'RUNNING')
     assert.equal(unit.rows[0].intent_revision, '0')

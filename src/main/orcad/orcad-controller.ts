@@ -191,6 +191,9 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           if (!readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_REWAKE_CONFIG') }
           rewake = (await import('./orcad-rewake.ts')).prepareOrcadRewake(captured.pool, config, readProviderSettings, unitOwnership,readCodexCredential,wakePolicy)
         }
+        const idleLifecycle = (await import('./orcad-idle-lifecycle.ts')).prepareOrcadIdleLifecycle(captured.pool, config,
+          ca ?? Buffer.from(credential(config.inventory.caFile, 'CA')), currentTerminalRuntime,
+          wakePolicy ?? { operationDeadlineMs: 600000, idleDurationMs: null })
         const selectedRewake = rewake
         if (config.adoption) {
           if (!ca || !readProviderSettings) { invalidOrcadControllerConfig('CONTROLLER_ADOPTION_CONFIG') }
@@ -208,19 +211,25 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           if (!unit?.attempt_id || !(await unitOwnership.claim(unit.unit_id, target, 'first-managed', { attemptId: unit.attempt_id }))) { return 0 }
           return selectedInitial.ownsSession?.(target) ? 0 : initialAdopt(signal, controller)
         } : undefined
-        const adoptionHooks = [firstManagedAdopt, adoptedRuntimes?.adoptRuntimes,
+        const adoptionHooks = [firstManagedAdopt, adoptedRuntimes?.adoptRuntimes, idleLifecycle.sweep,
           selectedRewake ? (signal: AbortSignal, controller: Parameters<NonNullable<ControllerPassRequest['adoptRuntimes']>>[1]) => selectedRewake.wakePending(signal, controller) : undefined].filter(hook => !!hook)
         // A wake started by this process owns its operation; the configured first target keeps its own.
         const lifecycleCallbacks = selectedRewake ? Object.freeze({
           planStep: (...args: Parameters<NonNullable<ControllerPassRequest['planStep']>>) =>
-            selectedCallbacks?.planStep(...args) ?? selectedRewake.planStep(...args),
+            idleLifecycle.planStep(...args) ?? selectedCallbacks?.planStep(...args) ?? selectedRewake.planStep(...args),
           executeCommitted: (...args: Parameters<NonNullable<ControllerPassRequest['executeCommitted']>>) =>
+            args[0].executorId === idleLifecycle.executorId ? idleLifecycle.executeCommitted(...args) :
             selectedRewake.ownsOperation(args[2].operationId) || !selectedCallbacks
               ? selectedRewake.executeCommitted(...args) : selectedCallbacks.executeCommitted(...args),
           lookupOriginal: (...args: Parameters<NonNullable<ControllerPassRequest['lookupOriginal']>>) =>
+            args[0].command_name === 'fenceAttempt' ? idleLifecycle.lookupOriginal(...args) :
             selectedRewake.ownsOperation(args[0].operation_id) || !selectedCallbacks
               ? selectedRewake.lookupOriginal(...args) : selectedCallbacks.lookupOriginal(...args),
-        }) : selectedCallbacks
+        }) : {
+          planStep: (...args: Parameters<NonNullable<ControllerPassRequest['planStep']>>) => idleLifecycle.planStep(...args) ?? selectedCallbacks?.planStep(...args) ?? null,
+          executeCommitted: (...args: Parameters<NonNullable<ControllerPassRequest['executeCommitted']>>) => args[0].executorId === idleLifecycle.executorId ? idleLifecycle.executeCommitted(...args) : selectedCallbacks?.executeCommitted(...args) ?? Promise.resolve(),
+          lookupOriginal: (...args: Parameters<NonNullable<ControllerPassRequest['lookupOriginal']>>) => args[0].command_name === 'fenceAttempt' ? idleLifecycle.lookupOriginal(...args) : selectedCallbacks?.lookupOriginal(...args) ?? Promise.resolve()
+        }
         worker = createControllerWorker(captured.pool, config.policy, {
           ...lifecycleCallbacks,
           ...(adoptionHooks.length ? { adoptRuntimes: async (signal: AbortSignal, controller: Parameters<NonNullable<typeof adoptionHooks[0]>>[1]) => {

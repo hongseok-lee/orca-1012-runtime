@@ -2,7 +2,7 @@ import { StringDecoder } from 'node:string_decoder'
 import type { DurableTransaction } from '../db/connection.ts'
 import { readAgentTerminalFrame } from '../runtime/agent-terminal-protocol.ts'
 import { normalizeTerminalChunk } from '../../runtime/terminal-ansi-normalization.ts'
-import { appendNormalizedToTailBuffer } from '../../runtime/terminal-tail-buffer.ts'
+import { appendTerminalDisplayChunk } from '../../runtime/terminal-tail-buffer.ts'
 import { appendCompletedTerminalTranscript } from '../../runtime/terminal-tail-state.ts'
 import type { RetainedTailRedrawCursor } from '../../runtime/terminal-tail-redraw-buffer.ts'
 import { TerminalDraftStoreError } from './durable-contracts.ts'
@@ -17,7 +17,7 @@ const empty = (): TerminalDisplay => ({lines:[],transcript:[],chars:0,partial:''
   count:0,truncated:false,sources:{},current:null})
 function append(state: TerminalDisplay, text: string) {
   const normalized = normalizeTerminalChunk(text, state.ansi)
-  const tail = appendNormalizedToTailBuffer(state.lines,state.partial,normalized.text,state.redraw)
+  const tail = appendTerminalDisplayChunk(state.lines,state.partial,normalized.text,state.redraw)
   const transcript = appendCompletedTerminalTranscript(state.transcript,state.chars,tail.newlyCompletedLines,tail.newCompleteLines)
   state.lines=tail.lines; state.partial=tail.partialLine; state.redraw=tail.redrawCursor
   state.ansi=normalized.pendingAnsi; state.transcript=transcript.lines; state.chars=transcript.characters

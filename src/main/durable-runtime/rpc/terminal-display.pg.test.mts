@@ -61,8 +61,9 @@ test('retained display survives absent runtime, preserves UTF-8/cursor, and clea
     const read=async(cursor?:number)=>(await display('terminal.read',{terminal:f.terminalHandle,cursor},rpc,legacy) as {terminal:RuntimeTerminalRead}).terminal
     let seq=0,byte=0
     const output=async(bytes:Buffer)=>{await journal.record(controlId,{hostSeq:++seq,controlId,event:'PTY_OUTPUT',incarnationId,startByte:byte,endByte:byte+bytes.length,bytes:bytes.toString('base64')});byte+=bytes.length}
-    await output(Buffer.from('first\n'))
-    const unicode=Buffer.from('한글\n')
+    await output(Buffer.from('first\r'))
+    await output(Buffer.from('\n'))
+    const unicode=Buffer.from('한글\r\n')
     await output(unicode.subarray(0,2))
     const first=await read(0);assert.deepEqual(first.tail,['first']);assert.equal(first.nextCursor,'1')
     await output(unicode.subarray(2))
@@ -71,7 +72,14 @@ test('retained display survives absent runtime, preserves UTF-8/cursor, and clea
     const logicalTarget=await withDurableTransaction(pool,tx=>resolveCatalogTerminalTarget(tx,config,rpc,f.terminalHandle,()=>{}))
     assert.ok(logicalTarget)
     const logical=createCatalogTerminalStreamLifecycle(config,rpc,f.terminalHandle,logicalTarget,()=>null)
-    assert.equal(await logical.refresh(),null)
+    const retained=await logical.refresh();assert.ok(retained);assert.equal(retained.actions,undefined)
+    const beforeActivity=(await pool.query('SELECT last_work_event_at,idle_due_at,desired_mode FROM durable_runtime.runtime_units WHERE id=$1',[runtimeUnitId])).rows[0]
+    const status=await retained.reader.status() as {incarnationId:string;live:boolean}
+    assert.equal(status.live,false)
+    const retainedOutput=await retained.reader.read(status.incarnationId,0) as {bytes:string;live:boolean}
+    assert.equal(retainedOutput.live,false)
+    assert.match(Buffer.from(retainedOutput.bytes,'base64').toString(),/first\r\n한글/)
+    assert.deepEqual((await pool.query('SELECT last_work_event_at,idle_due_at,desired_mode FROM durable_runtime.runtime_units WHERE id=$1',[runtimeUnitId])).rows[0],beforeActivity)
     const forbidden=createCatalogTerminalStreamLifecycle({...config,projectGroupIds:[]},rpc,f.terminalHandle,logicalTarget,()=>null)
     await assert.rejects(forbidden.refresh(),/selector_not_found/)
 
@@ -79,6 +87,8 @@ test('retained display survives absent runtime, preserves UTF-8/cursor, and clea
     await assert.rejects(foreign('terminal.read',{terminal:f.terminalHandle},rpc,legacy),/selector_not_found/)
     const before=(await pool.query('SELECT count(*)::int AS n FROM durable_runtime.agent_control_frames WHERE control_id=$1',[controlId])).rows[0].n
     assert.deepEqual(await display('terminal.clearBuffer',{terminal:f.terminalHandle},rpc,legacy),{clear:{handle:f.terminalHandle,cleared:true}})
+    const clearStatus=await retained.reader.status() as {incarnationId:string}
+    assert.equal((await retained.reader.read(clearStatus.incarnationId,0) as {bytes:string}).bytes,'')
     const cleared=await read(0);assert.deepEqual(cleared.tail,[]);assert.equal(cleared.nextCursor,'2');assert.equal(cleared.truncated,true)
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM durable_runtime.agent_control_frames WHERE control_id=$1',[controlId])).rows[0].n,before)
     await output(Buffer.from('later\n'))

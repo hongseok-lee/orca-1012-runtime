@@ -1,3 +1,4 @@
+import type { AgentIdleControl } from './agent-idle-activity.ts'
 import type {ManagedCodexAccessReader} from './agent-external-auth.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import type { ManagedCodexAuthControl } from './managed-codex-auth-refresh.ts'
@@ -40,7 +41,7 @@ export type AuthenticatedAgentControl = Readonly<{
   lossReason(): string | null
   physicalPinIssued: false
   turnProcesses?: Pick<CodexProtocolDependencies, 'capture' | 'terminate'>
-}> & ManagedCodexAuthControl & AgentTerminalControl
+}> & ManagedCodexAuthControl & AgentTerminalControl & Readonly<{ idle: AgentIdleControl }>
 /** A control handed over by an earlier owner and re-attached by this one. It
  * never initializes, transfers native code or sends COLD. */
 export type AdoptedAgentControl = Readonly<{
@@ -48,4 +49,4 @@ export type AdoptedAgentControl = Readonly<{
   valid(): boolean; frameSequence(): number; close(): Promise<boolean>
   readNativeHistory(): Promise<NativeSessionCheckpoint>
   turnProcesses?: Pick<CodexProtocolDependencies, 'capture' | 'terminate'>
-}> & ManagedCodexAuthControl & AgentTerminalControl
+}> & ManagedCodexAuthControl & AgentTerminalControl & Readonly<{ idle: AgentIdleControl }>

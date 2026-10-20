@@ -10,7 +10,7 @@ import type { IntentRecorded, LifecyclePolicy } from './types.ts'
 
 declare const activityEvidence: unique symbol
 // Authentication/collection and pinning are outside the SQL transaction. No
-// production verifier/factory is supplied; absent evidence means UNKNOWN.
+// Resident activity collection is supplied by the controller; absent evidence means UNKNOWN.
 export type PreparedMemberActivity = {
   readonly [activityEvidence]: true
   readonly sessionId: SessionId
@@ -33,7 +33,7 @@ export type LifecycleActivityAuthority = {
 }
 export type SleepReservation =
   | { readonly status: 'RESERVED'; readonly intent: IntentRecorded }
-  | { readonly status: 'DEFERRED'; readonly reason: 'RUNNABLE_PENDING' | 'IN_FLIGHT_DISPATCH' | 'MEMBER_ACTIVE' | 'WRITER_UNVERIFIABLE' | 'SESSION_CLOSING' | 'UNRESOLVED_COMMAND' }
+  | { readonly status: 'DEFERRED'; readonly reason: 'RUNNABLE_PENDING' | 'IN_FLIGHT_DISPATCH' | 'MEMBER_ACTIVE' | 'WRITER_UNVERIFIABLE' | 'SESSION_CLOSING' | 'UNRESOLVED_COMMAND' | 'NOT_IDLE_DUE' }
 
 export type SleepReservationRequest = {
   readonly unitId: RuntimeUnitId
@@ -42,6 +42,7 @@ export type SleepReservationRequest = {
   readonly expectedRevision: RowRevision<'runtime-unit'>
   readonly expectedIntentRevision: IntentRevision
   readonly policy: LifecyclePolicy
+  readonly onlyWhenIdleDue?: boolean
   readonly activityFreshnessMs: number
   readonly activity: LifecycleActivityAuthority | null
 }
@@ -67,7 +68,7 @@ export async function reserveSleep(tx: DurableTransaction, request: SleepReserva
     throw new DurableDatabaseError('LIFECYCLE_POLICY')
   }
   const members = await lockUnitMembers(tx, input.unitId, input.discoveredMembers)
-  const rows = await tx.query<RuntimeUnitRow & { pod_uid: string | null; now: Date }>(`SELECT u.*,a.pod_uid,clock_timestamp() AS now
+  const rows = await tx.query<RuntimeUnitRow & { pod_uid: string | null; now: Date; last_work_event_at: Date | null; idle_due_at: Date | null }>(`SELECT u.*,a.pod_uid,clock_timestamp() AS now
     FROM durable_runtime.runtime_units u LEFT JOIN durable_runtime.attempts a ON a.id=u.active_attempt_id WHERE u.id=$1`, [input.unitId])
   const unit = rows.rows[0]
   if (unit.desired_mode === 'DELETED') {
@@ -76,20 +77,18 @@ export async function reserveSleep(tx: DurableTransaction, request: SleepReserva
   if (unit.revision !== input.expectedRevision || unit.intent_revision !== input.expectedIntentRevision) {
     throw new DurableDatabaseError('LIFECYCLE_STALE_REVISION')
   }
-  // CLOSED memberships remain in every lock and current writer/dispatch check.
-  // CLOSED alone is not permanent busy; CLOSING still means unfinished cleanup.
-  const closing = await tx.query("SELECT id FROM durable_runtime.sessions WHERE id=ANY($1::uuid[]) AND lifecycle='CLOSING'", [members])
-  if (closing.rowCount) { return { status: 'DEFERRED', reason: 'SESSION_CLOSING' } }
+  if (input.onlyWhenIdleDue && (!unit.idle_due_at || unit.idle_due_at > unit.now)) { return { status: 'DEFERRED', reason: 'NOT_IDLE_DUE' } }
+  // Closed/closing members remain in the same locks and activity checks. A
+  // logical close alone is not a writer-stop proof, nor permanent unit activity.
   const pending = await tx.query(`SELECT x.id FROM durable_runtime.messages x JOIN durable_runtime.sessions s ON s.id=x.session_id
     WHERE x.session_id=ANY($1::uuid[]) AND s.lifecycle='OPEN'
     AND x.intake_status IN ('DURABLE','DISPATCH_INTENT','STAGED') AND x.cancel_requested_at IS NULL`, [members])
   if (pending.rowCount) { return { status: 'DEFERRED', reason: 'RUNNABLE_PENDING' } }
   const inFlight = await tx.query(`SELECT d.id FROM durable_runtime.delivery_attempts d JOIN durable_runtime.attempts a ON a.id=d.attempt_id
-    WHERE d.session_id=ANY($1::uuid[]) AND (d.state IN ('DISPATCH_INTENT','STAGED','EFFECT_POSSIBLE','ADMITTED')
-    OR (d.state='UNKNOWN' AND a.stopped_at IS NULL))`, [members])
+    WHERE d.session_id=ANY($1::uuid[]) AND a.stopped_at IS NULL AND d.state IN ('DISPATCH_INTENT','STAGED','EFFECT_POSSIBLE','ADMITTED')`, [members])
   if (inFlight.rowCount) { return { status: 'DEFERRED', reason: 'IN_FLIGHT_DISPATCH' } }
-  const unresolved = await tx.query(`SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1 AND state IN ('ACCEPTED','EXECUTING','UNKNOWN')`, [unit.id])
-  if (unresolved.rowCount) { return { status: 'DEFERRED', reason: 'UNRESOLVED_COMMAND' } }
+  const unresolved = await tx.query(`SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1 AND (state IN ('ACCEPTED','EXECUTING') OR (state='UNKNOWN' AND command_name NOT IN ('dispatchInput','cancel')))`, [unit.id])
+  if (unresolved.rowCount) { return { status: 'DEFERRED', reason: 'UNRESOLVED_COMMAND' | 'NOT_IDLE_DUE' } }
   if (unit.active_attempt_id) {
     for (const sessionId of members) {
       let work: PreparedMemberActivity | null = null

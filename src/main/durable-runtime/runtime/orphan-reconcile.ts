@@ -106,13 +106,35 @@ export async function reconcileOrphanedAttempt(pool: Pool, controller: OrphanCon
       stopped_proof_ref=$2,revision=revision+1 WHERE attempt_id=$1 AND state<>'REVOKED' RETURNING id`, [candidate.attemptId, proofRef])
     if ((await tx.query(`UPDATE durable_runtime.attempts SET status='STOPPED',stopped_at=clock_timestamp(),reason='WRITER_STOP_CONFIRMED'
       WHERE id=$1 AND stopped_at IS NULL`, [candidate.attemptId])).rowCount !== 1) { return deny('ATTEMPT_CAS') }
-    // The unit is idle until a new input wakes it; no new attempt is created here.
-    // The fenced attempt keeps its execution epoch; the next attempt gets the next one.
+    await tx.query("UPDATE durable_runtime.sessions SET lifecycle='CLOSED',revision=revision+1 WHERE id=ANY($1::uuid[]) AND lifecycle='CLOSING'",[sessions])
+    // Complete the ORIGINAL sleep/delete only after physical stop and revocation.
+    // A new RUNNING intent accepted during stop must survive this cleanup.
+    const stops = await tx.query<{ id: string; intent_revision: string }>(`SELECT id,intent_revision::text FROM durable_runtime.operations
+      WHERE runtime_unit_id=$1 AND expected_pod_uid=$2 AND kind IN ('SLEEP','DELETE') AND result IS NULL ORDER BY id`,
+    [candidate.runtimeUnitId,candidate.podUid])
+    await lockAggregates(tx,{operationIds:stops.rows.map(row=>logicalId('operation',row.id))})
+    const commands = await tx.query<{ id: string; executor_id: string | null; execution_token: string | null }>(`UPDATE durable_runtime.runtime_commands
+      SET state='RESOLVED',result=jsonb_build_object('stopped',true,'proofRef',$2::text),settled_at=clock_timestamp(),revision=revision+1
+      WHERE operation_id=ANY($1::uuid[]) AND command_name='fenceAttempt' AND state IN ('ACCEPTED','EXECUTING','UNKNOWN')
+      RETURNING id,executor_id,execution_token`,[stops.rows.map(row=>row.id),proofRef])
+    for(const command of commands.rows) {
+      await tx.query(`INSERT INTO durable_runtime.runtime_command_history(id,command_id,stage,controller_term,executor_id,execution_token)
+        VALUES(gen_random_uuid(),$1,'PHYSICAL_STOP_CONFIRMED',$2,$3,$4)`,[command.id,controller.term,command.executor_id,command.execution_token])
+    }
+    await tx.query(`UPDATE durable_runtime.operations SET step='SUCCEEDED',step_revision=step_revision+1,revision=revision+1,
+      result=jsonb_build_object('state','SUCCEEDED','stopped',true,'proofRef',$2::text)
+      WHERE id=ANY($1::uuid[])`,[stops.rows.map(row=>row.id),proofRef])
+    const pending = await tx.query(`SELECT 1 FROM durable_runtime.messages m JOIN durable_runtime.sessions s ON s.id=m.session_id
+      JOIN durable_runtime.runtime_members rm ON rm.session_id=s.id WHERE rm.runtime_unit_id=$1 AND s.lifecycle='OPEN'
+      AND m.intake_status IN ('DURABLE','DISPATCH_INTENT','STAGED') AND m.cancel_requested_at IS NULL LIMIT 1`,[candidate.runtimeUnitId])
     const unit = await tx.query<{ revision: string }>(`UPDATE durable_runtime.runtime_units SET active_attempt_id=NULL,phase='ABSENT',
       execution_epoch=execution_epoch+1,
-      desired_mode=CASE WHEN desired_mode='DELETED' THEN desired_mode ELSE 'SUSPENDED' END,intent_revision=intent_revision+1,
-      reconcile_due_at=NULL,idle_due_at=NULL,revision=revision+1
-      WHERE id=$4 AND active_attempt_id=$5 AND ${currentAuthoritySql} RETURNING revision`, [...auth, candidate.runtimeUnitId, candidate.attemptId])
+      desired_mode=CASE WHEN desired_mode='DELETED' OR desired_mode='RUNNING' AND ($6 OR $7) THEN desired_mode ELSE 'SUSPENDED' END,
+      intent_revision=intent_revision+CASE WHEN desired_mode='RUNNING' AND NOT ($6 OR $7) THEN 1 ELSE 0 END,
+      reconcile_due_at=CASE WHEN desired_mode='RUNNING' AND ($6 OR $7) THEN clock_timestamp() ELSE NULL END,
+      idle_due_at=NULL,revision=revision+1
+      WHERE id=$4 AND active_attempt_id=$5 AND ${currentAuthoritySql} RETURNING revision`,
+    [...auth,candidate.runtimeUnitId,candidate.attemptId,!!pending.rowCount,stops.rows.length>0])
     if (unit.rowCount !== 1) { return deny('UNIT_CAS') }
     const uncertain = await tx.query(`SELECT id FROM durable_runtime.delivery_attempts WHERE attempt_id=$1 AND state IN ('EFFECT_POSSIBLE','UNKNOWN')`,
       [candidate.attemptId])
