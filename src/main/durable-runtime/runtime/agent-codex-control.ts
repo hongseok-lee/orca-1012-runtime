@@ -1,3 +1,4 @@
+import { createAgentIdleActivity, AGENT_IDLE_CAPABILITY } from './agent-idle-activity.ts'
 import { agentTurnProcesses, TURN_PROCESSES_CAPABILITY, CAPTURE_TURN_PROCESSES, STOP_TURN_PROCESSES } from './agent-turn-processes.ts'
 import {nativeRequestFailure} from './native-request-failure.ts'
 import {createAgentExternalAuthBridge,AGENT_EXTERNAL_AUTH_CAPABILITY,AGENT_EXTERNAL_AUTH_SUPPLY,AGENT_EXTERNAL_AUTH_STATUS} from './agent-external-auth.ts'
@@ -96,6 +97,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
     },
     send(frame) { send({ ...frame, controlId }) }
   }) : null
+  const idleActivity = createAgentIdleActivity()
   const turnProcesses = agentTurnProcesses()
   const seen = new Set<string>()
   let resolveClosed!: () => void
@@ -127,7 +129,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
-    capabilities:[NATIVE_HISTORY_EVIDENCE_CAPABILITY,...(provider==='codex'?[TURN_PROCESSES_CAPABILITY]:[]),...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
+    capabilities:[AGENT_IDLE_CAPABILITY,NATIVE_HISTORY_EVIDENCE_CAPABILITY,...(provider==='codex'?[TURN_PROCESSES_CAPABILITY]:[]),...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
@@ -157,7 +159,8 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         // A lost native request can still be reconciled with the ORIGINAL
         // connection's owned process proof. It never permits another COLD.
         const stopped = connection ? await connection.close() : !coldUsed
-        if (!stopped || terminal?.requiresPhysicalStop()) { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_STOP_UNCONFIRMED'); return }
+        const flushed = spawnSync('/bin/sync', ['-f', root], { timeout: 10000, stdio: 'ignore' }).status === 0
+        if (!flushed || !stopped || terminal?.requiresPhysicalStop()) { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_STOP_UNCONFIRMED'); return }
         response(id, { stopped: true, controlId }); releaseRoot(); return
       }
       if (uncertain) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
@@ -203,6 +206,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
             connection = await openAgentClaudeNative(launch, {
               onFault: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_UNAVAILABLE', controlId }) },
               onNotification: (method, params) => {
+                idleActivity.notification(method, params)
                 if(method==='claude/message' && params && typeof params==='object' && Reflect.get(params,'type')==='system' && Reflect.get(params,'subtype')==='init' && typeof Reflect.get(params,'session_id')==='string') {
                   recordNativeSessionCheckpoint(paths.home,'claude',Reflect.get(params,'session_id'))
                 }
@@ -211,7 +215,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
               onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId, provider }) },
             })
             if(externalAuth) {await externalAuth.initialize()}
-          phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
+          phase = 'READY'; await terminal?.openDuringCold(); idleActivity.initialize(); response(id, { nativePid: connection.pid })
           } catch (error) {
             // Pod-local diagnostic only (host log); the backend still sees the fixed code.
             process.stderr.write(`AGENT_CLAUDE_COLD_FAILED ${error instanceof Error ? error.message.slice(0, 400) : 'unknown'}\n`)
@@ -222,13 +226,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         let codex: CodexAppServerConnection | null = null
         try {
           connection = codex = await openCodexAppServerConnection({...policy.launch,...(externalAuth?{envToDelete:['OPENAI_API_KEY','CODEX_API_KEY','CODEX_ACCESS_TOKEN']}:{})}, {
-            onNotification: (method, params) => send({ event: 'NOTIFICATION', controlId, method, params }),
+            onNotification: (method, params) => { idleActivity.notification(method, params); send({ event: 'NOTIFICATION', controlId, method, params }) },
             onServerRequest: pending => {if(!externalAuth?.handle(pending)) {codex?.respondWithError(pending.id, -32000,
               'Durable Codex driver does not support this reply channel')}},
             onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
           })
           if(externalAuth) {await externalAuth.initialize()}
-          phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
+          phase = 'READY'; await terminal?.openDuringCold(); idleActivity.initialize(); response(id, { nativePid: connection.pid })
         } catch (error) {
           // Initialization may fail without a proven process-tree exit. Keep
           // the original owned handle so CLOSE can reconcile THAT process;
@@ -238,9 +242,15 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         }
         return
       }
+      if (request.method === 'IDLE_OBSERVE' || request.method === 'IDLE_QUIESCE' || request.method === 'IDLE_RESUME') {
+        if (phase !== 'READY' || !connection) { failure(id, 'AGENT_ACTIVITY_UNAVAILABLE'); return }
+        try { response(id, request.method === 'IDLE_RESUME' ? idleActivity.resume() : idleActivity.observe(request.method === 'IDLE_QUIESCE')) }
+        catch { failure(id, 'AGENT_ACTIVITY_UNCONFIRMED') }
+        return
+      }
       if (isAgentTerminalMethod(request.method)) {
         if (!terminal) { failure(id, 'AGENT_TERMINAL_UNSUPPORTED'); return }
-        try { response(id, terminal.request(request.method, request.params)) }
+        try { if (request.method === 'PTY_WRITE') { idleActivity.assertInput(); idleActivity.work() }; response(id, terminal.request(request.method, request.params)) }
         catch { failure(id, 'AGENT_TERMINAL_UNCONFIRMED') }
         return
       }
@@ -263,6 +273,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         failure(id, 'AGENT_NATIVE_METHOD'); return
       }
       try {
+        if (request.method === 'turn/start' || request.method === 'claude/send') { idleActivity.beginTurn() }
         const params = request.params
         if (!params || typeof params !== 'object' || Array.isArray(params)) { failure(id, 'AGENT_NATIVE_PARAMS'); return }
         if(provider==='codex'&&request.method==='turn/start') {markNativeInputEntered(paths.home,Reflect.get(params,'threadId'))}

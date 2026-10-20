@@ -56,10 +56,10 @@ export function createAdoptedDispatchPermit(pool: Pool, originalContext: Gateway
           JOIN durable_runtime.sessions s ON s.id=$6 JOIN durable_runtime.tabs tab ON tab.session_id=s.id
           WHERE u.id=$1 AND a.id=$2 AND a.pod_uid=$3 AND a.execution_epoch=$4 AND u.execution_epoch=$4 AND g.execution_epoch=$4
           AND g.state='ACTIVE' AND u.desired_mode='RUNNING' AND u.phase='READY' AND a.stopped_at IS NULL AND a.status='READY'
-          AND s.lifecycle='OPEN' AND s.provider_binding_revision=$5 AND tab.id=$7 AND tab.terminal_handle=$8 AND tab.lifecycle='OPEN'
+          AND (s.lifecycle='OPEN' OR $10='CANCEL' AND s.lifecycle='CLOSING') AND s.provider_binding_revision=$5 AND tab.id=$7 AND tab.terminal_handle=$8 AND (tab.lifecycle='OPEN' OR $10='CANCEL')
           AND h.pod_uid=$3`,
         [binding.runtimeUnitId, binding.attemptId, binding.podUid, binding.executionEpoch, binding.providerBindingRevision,
-          binding.sessionId, binding.tabId, binding.terminalHandle, binding.connectionInstanceId])
+          binding.sessionId, binding.tabId, binding.terminalHandle, binding.connectionInstanceId, identity.kind])
         if (active.rowCount !== 1) { deny('PROVIDER_EXECUTION_GRANT_REQUIRED') }
         const writers = await tx.query<{ id: StorageBindingId }>(`SELECT b.id FROM durable_runtime.runtime_member_storage_bindings m
           JOIN durable_runtime.storage_bindings b ON b.id=m.storage_binding_id

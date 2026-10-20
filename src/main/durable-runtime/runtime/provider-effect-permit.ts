@@ -211,8 +211,8 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
            JOIN durable_runtime.sessions s ON s.id=m.session_id JOIN durable_runtime.tabs tab ON tab.session_id=s.id
            WHERE u.id=$1 AND a.id=$2 AND a.pod_uid=$3 AND a.incarnation=$4 AND a.execution_epoch=$5
            AND u.execution_epoch=$5 AND g.execution_epoch=$5 AND g.state='ACTIVE'
-           AND u.desired_mode='RUNNING' AND a.stopped_at IS NULL AND s.id=$6 AND s.lifecycle='OPEN'
-           AND s.provider_binding_revision=$7 AND tab.id=$8 AND tab.terminal_handle=$9 AND tab.lifecycle='OPEN'
+           AND u.desired_mode='RUNNING' AND a.stopped_at IS NULL AND s.id=$6 AND (s.lifecycle='OPEN' OR $10='CANCEL' AND s.lifecycle='CLOSING')
+           AND s.provider_binding_revision=$7 AND tab.id=$8 AND tab.terminal_handle=$9 AND (tab.lifecycle='OPEN' OR $10='CANCEL')
            AND (($10='COLD' AND u.phase='REHYDRATING') OR ($10 IN ('DISPATCH','CANCEL') AND u.phase='READY'))`,
           [binding.runtimeUnitId, binding.attemptId, binding.podUid, target.incarnation, binding.executionEpoch,
             binding.sessionId, binding.providerBindingRevision, binding.tabId, binding.terminalHandle, identity.kind])

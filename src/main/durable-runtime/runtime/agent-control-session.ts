@@ -1,3 +1,4 @@
+import { supportsAgentIdle, type AgentIdleControl } from './agent-idle-activity.ts'
 import { remoteTurnProcesses, supportsTurnProcesses } from './agent-turn-processes.ts'; import {AGENT_EXTERNAL_AUTH_SUPPLY,dispatchAgentExternalAuth,initializeAgentAuthPolicy,externalAgentAuthControl,externalAuthCapable as supportsExternalAuth} from './agent-external-auth.ts'
 import { managedCodexAuthControl, managedCodexAuthRefreshSupported } from './managed-codex-auth-refresh.ts'
 import type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
@@ -33,7 +34,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
   const closed = new Promise<boolean>(done => { resolveClosed = done })
   let channel = createExecChannelDecoder(() => { throw fail() })
   const pending = new Map<string, Pending>()
-  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false, terminalCapable = false, externalAuthCapable=false, historyCapable=false, turnProcessesCapable=false
+  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false, terminalCapable = false, externalAuthCapable=false, historyCapable=false, turnProcessesCapable=false, idleCapable=false
   // Host frames carry hostSeq; older controls keep the original loss rule.
   let hostCapable = false, sinceAck = 0, reconnecting = false
   const cursor=new AgentControlFrameCursor(env.journal,config.policy.provider!=='claude')
@@ -74,7 +75,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
     rawWrite(socket, bytes)
   }
   function request(method: string, params?: Record<string, unknown>, timeoutMs = config.timeoutMs, currentOnly = false): Promise<unknown> {
-    if (currentOnly && (!terminalCapable || !valid() || socketClosed || reconnecting || !socket || !handshake)) {
+    if (currentOnly && (!valid() || socketClosed || reconnecting || !socket || !handshake)) {
       return Promise.reject(new Error('AGENT_TERMINAL_TRANSPORT_UNAVAILABLE'))
     }
     if (!controlId || lost && method !== 'CLOSE' || !Number.isSafeInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
@@ -99,17 +100,15 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
         const ack = await request('CLOSE')
         stopAcknowledged = !!ack && typeof ack === 'object' && Reflect.get(ack, 'stopped') === true && Reflect.get(ack, 'controlId') === controlId
         if (!stopAcknowledged) { return false }
-        let timer: ReturnType<typeof setTimeout> | undefined
-        try { return await Promise.race([closed, new Promise<boolean>(done => { timer = setTimeout(() => done(false), config.timeoutMs) })]) }
-        finally { clearTimeout(timer) }
+        return await awaitPodAuthValue(closed, AbortSignal.timeout(config.timeoutMs))
       } catch { return false }
-    })()
-    return closing
+    })(); return closing
   }
   const valid = (): boolean => !lost && !closing && (!socketClosed || reconnecting)
   const legacyAuthControl=managedCodexAuthControl(()=>managedAuthCapable,valid,(method,params)=>request(method,params),env.readManagedCredential)
   const authControl=externalAgentAuthControl(!!env.readManagedAccess,()=>externalAuthCapable,valid,request,legacyAuthControl)
   const turnProcesses = remoteTurnProcesses(() => turnProcessesCapable && valid(), request), terminalControl = createAgentTerminalClient(() => terminalCapable, (method, params) => request(method, params, config.timeoutMs, true))
+  const idle: AgentIdleControl = Object.freeze({ supported: () => idleCapable && valid(), request: method => request(method, undefined, config.timeoutMs, true) })
   const frameSequence = (): number => cursor.sequence
   const readers=agentControlReaders(request,()=>!lost&&!socketClosed&&!closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value},()=>!openedNative&&!lost&&!socketClosed&&!closing)
   const connection: CodexAppServerConnection = Object.freeze({
@@ -125,11 +124,12 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
     pod = await env.authenticate({ podBearer: checked.podBearer, expected: config.expected }, helloSignal)
     if (lost || socketClosed || helloSignal.aborted || pod.pod.uid !== config.expected.podUid) { throw fail() }
     transferred = true;managedAuthCapable=managedCodexAuthRefreshSupported(record.capabilities)
+    idleCapable = supportsAgentIdle(record.capabilities)
     turnProcessesCapable = supportsTurnProcesses(record.capabilities); terminalCapable = supportsAgentTerminal(record.capabilities)
     externalAuthCapable=supportsExternalAuth(record.capabilities);historyCapable=supportsNativeHistoryEvidence(record.capabilities)
     identity = Object.freeze({ controlId, pid: checked.pid, startTicks: checked.startTicks, device: checked.device, inode: checked.inode })
     const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: checked.pid, startTicks: checked.startTicks,
-      ...authControl, ...terminalControl, turnProcesses,bindChallenge: config.policy.bindChallenge,
+      ...authControl, ...terminalControl, idle, turnProcesses,bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
       ...readers,readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable),
@@ -245,7 +245,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       if (observed.pod.uid !== config.expected.podUid) { return 'FINAL' }
       pod = observed;managedAuthCapable=managedCodexAuthRefreshSupported(Reflect.get(record.hello as object,'capabilities'))
       turnProcessesCapable = supportsTurnProcesses(Reflect.get(record.hello as object, 'capabilities')); terminalCapable = supportsAgentTerminal(Reflect.get(record.hello as object, 'capabilities'))
-      externalAuthCapable=supportsExternalAuth(Reflect.get(record.hello as object,'capabilities'));historyCapable=supportsNativeHistoryEvidence(Reflect.get(record.hello as object,'capabilities'))
+      externalAuthCapable=supportsExternalAuth(Reflect.get(record.hello as object,'capabilities'));historyCapable=supportsNativeHistoryEvidence(Reflect.get(record.hello as object,'capabilities'));idleCapable=supportsAgentIdle(Reflect.get(record.hello as object,'capabilities'))
       if(check.gap) {
         cursor.quarantine(check.gap)
       }
@@ -267,7 +267,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       for (const bytes of queued.splice(0)) { rawWrite(socket, bytes) }
       sinceAck = 0
       if(env.journal && cursor.gapThrough===null) {try { write({ hostAck: cursor.durable }) } catch { /* the next frame acknowledges */ }}
-      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable), ...authControl, ...terminalControl, turnProcesses })); start = null
+      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable), ...authControl, ...terminalControl, idle, turnProcesses })); start = null
       return
     }
     queued.length = 0
