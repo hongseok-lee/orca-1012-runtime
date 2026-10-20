@@ -61,8 +61,9 @@ test('retained display survives absent runtime, preserves UTF-8/cursor, and clea
     const read=async(cursor?:number)=>(await display('terminal.read',{terminal:f.terminalHandle,cursor},rpc,legacy) as {terminal:RuntimeTerminalRead}).terminal
     let seq=0,byte=0
     const output=async(bytes:Buffer)=>{await journal.record(controlId,{hostSeq:++seq,controlId,event:'PTY_OUTPUT',incarnationId,startByte:byte,endByte:byte+bytes.length,bytes:bytes.toString('base64')});byte+=bytes.length}
-    await output(Buffer.from('first\n'))
-    const unicode=Buffer.from('한글\n')
+    await output(Buffer.from('first\r'))
+    await output(Buffer.from('\n'))
+    const unicode=Buffer.from('한글\r\n')
     await output(unicode.subarray(0,2))
     const first=await read(0);assert.deepEqual(first.tail,['first']);assert.equal(first.nextCursor,'1')
     await output(unicode.subarray(2))
