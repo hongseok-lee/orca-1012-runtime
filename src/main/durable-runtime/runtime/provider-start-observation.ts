@@ -9,6 +9,7 @@ import { LockedGatewayAuthority } from './gateway/authority.ts'
 import type { GatewayContext } from './gateway/types.ts'
 import type { ReadyProviderBinding } from '../providers/shared/contracts.ts'
 import type { NativeSessionCheckpoint } from './native-session-checkpoint.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
 
 /** History availability is independent of a live driver's READY/response ID.
  * This records an authenticated HOME read, never successful input delivery. */
@@ -28,7 +29,7 @@ export async function recordNativeHistoryObservation(pool:Pool,context:GatewayCo
     await appendAudit(tx,{actorId:context.controller.owner,sessionId:binding.sessionId,runtimeUnitId:binding.runtimeUnitId,
       operationId:context.operationId,attemptId:binding.attemptId,podUid:binding.podUid,kind:'PROVIDER_NATIVE_HISTORY_OBSERVED',
       nextState:{providerRef:{...binding.providerRef},source:'AUTHENTICATED_AGENT_HOME',state:checkpoint.state,
-        ...('inputState' in checkpoint?{inputState:checkpoint.inputState}: {})},
+        ...('inputState' in checkpoint?{inputState:checkpoint.inputState}: {}),...('generation' in checkpoint?{generation:checkpoint.generation}:{})},
       occurredAt:new Date(),receivedAt:new Date(),producerId:randomUUID(),producerSeq:counter('sequence:producer','1'),evidenceRefs:[]})
     await authority.assertCurrent();return owns()
   })
@@ -79,14 +80,15 @@ export async function recordProviderChildExit(pool:Pool,target:Readonly<{runtime
 }
 
 /** Original authenticated control read, committed before any native COLD.
- * V1 hosts durably mark entry before effects, so NONE survives interrupted
- * starts. An old uninstrumented releaseGate has no such record: ambiguous. */
-export async function recordNativeCheckpointGuard(pool:Pool,context:GatewayContext,attemptId:string,podUid:string,state:string):Promise<boolean> {
+ * V2 also binds an input-free initialization generation to the cold permit.
+ * An old uninstrumented releaseGate has no such record: ambiguous. */
+export async function recordNativeCheckpointGuard(pool:Pool,context:GatewayContext,attemptId:string,podUid:string,checkpoint:NativeSessionCheckpoint):Promise<boolean> {
   const result=await runDurableTransaction(pool,async tx=>{
     await lockAggregates(tx,{runtimeUnitIds:[context.runtimeUnitId]})
     const authority=await LockedGatewayAuthority.acquire(tx,context)
     await appendAudit(tx,{actorId:context.controller.owner,runtimeUnitId:context.runtimeUnitId,operationId:context.operationId,
-      attemptId,podUid,kind:'INITIAL_NATIVE_CHECKPOINT_GUARDED',nextState:{source:'AUTHENTICATED_AGENT_HOME',protocolVersion:1,state},
+      attemptId,podUid,kind:'INITIAL_NATIVE_CHECKPOINT_GUARDED',nextState:{source:'AUTHENTICATED_AGENT_HOME',protocolVersion:2,state:checkpoint.state,
+        ...('inputState' in checkpoint?{inputState:checkpoint.inputState}:{}),initialization:nativeInitializationProof(checkpoint)},
       occurredAt:new Date(),receivedAt:new Date(),producerId:randomUUID(),producerSeq:counter('sequence:producer','1'),evidenceRefs:[]})
     await authority.assertCurrent();return true
   })

@@ -37,13 +37,13 @@ test('new protocol marks possible input before native invocation and cannot back
  try {
   initializeNativeInputBoundary(home);markNativeEntered(home)
   recordNativeSessionCheckpoint(home,'codex','thread')
-  assert.deepEqual(readNativeSessionCheckpoint(home,'codex'),{state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread',inputState:'NOT_STARTED'})
+  assert.deepEqual(readNativeSessionCheckpoint(home,'codex'),{state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread',generation:'base',inputState:'NOT_STARTED'})
   assert.throws(()=>markNativeInputEntered(home,'foreign'),/NATIVE_INPUT_IDENTITY_UNCONFIRMED/)
   assert.equal(Reflect.get(readNativeSessionCheckpoint(home,'codex'),'inputState'),'NOT_STARTED')
   markNativeInputEntered(home,'thread')
   // Simulate a crash before any native request/response: the filesystem alone
   // must retain EFFECT_POSSIBLE, never infer that this input can be resent.
-  assert.deepEqual(readNativeSessionCheckpoint(home,'codex'),{state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread',inputState:'EFFECT_POSSIBLE'})
+  assert.deepEqual(readNativeSessionCheckpoint(home,'codex'),{state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread',generation:'base',inputState:'EFFECT_POSSIBLE'})
   markNativeInputEntered(home,'thread')
   assert.throws(()=>initializeNativeInputBoundary(home),/NATIVE_INPUT_BOUNDARY_ALREADY_ENTERED/)
   markNativeEntered(legacy);recordNativeSessionCheckpoint(legacy,'codex','old-thread')

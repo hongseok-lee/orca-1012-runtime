@@ -62,3 +62,13 @@ test('legacy host FOUND is not accepted as persisted history; capability loss du
   drop=true
   await assert.rejects(read(),/NATIVE_HISTORY_EVIDENCE_UNSUPPORTED/)
 })
+
+test('authenticated decoder preserves input-free generation evidence and refuses an invalid generation',async()=>{
+  let value:unknown={state:'UNBOUND',provider:'codex',generation:'base',previousNativeSessionRef:'old',inputState:'NOT_STARTED'}
+  const readers=agentControlReaders(async()=>value,()=>true,'codex',()=>{})
+  assert.deepEqual(await readers.readNativeSession(),value)
+  value={state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread',generation:'base',inputState:'NOT_STARTED'}
+  assert.deepEqual(await readers.readNativeSession(),value)
+  value={...value as object,generation:'../../foreign'}
+  await assert.rejects(readers.readNativeSession(),/AGENT_CODEX_CONTROL_UNCONFIRMED/)
+})

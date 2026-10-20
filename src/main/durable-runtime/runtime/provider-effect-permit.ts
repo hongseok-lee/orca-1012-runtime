@@ -1,3 +1,4 @@
+import {nativeInitializationHistorySql} from './native-initialization-history.ts'
 import { assertProviderCancelTarget } from './provider-cancel-target.ts'
 import { assertInitialWakeDeadline } from './initial-wake-deadline.ts'
 import { isDeepStrictEqual } from 'node:util'
@@ -186,20 +187,10 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
                 plan.plan.identity.unitId !== binding.runtimeUnitId || plan.plan.identity.executionEpoch !== binding.executionEpoch) {
               deny('PROVIDER_NEW_GATE_PLAN')
             }
-            const history = resumed ? { rowCount: 0 } : await tx.query(`SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2 AND stopped_at IS NULL
-              UNION ALL SELECT id FROM durable_runtime.provider_context_deliveries WHERE session_id=$3
-              UNION ALL SELECT id FROM durable_runtime.delivery_attempts WHERE session_id=$3
-                AND (provider_ref IS NOT NULL OR state IN ('EFFECT_POSSIBLE','ADMITTED','SETTLED','UNKNOWN','INTERRUPTED'))
-              UNION ALL SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
-                AND command_name='releaseGate' AND id<>$4
-                AND NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e
-                  WHERE e.kind='INITIAL_NATIVE_CHECKPOINT_GUARDED' AND e.attempt_id::text=runtime_commands.input->>'attemptId'
-                  AND e.next_state->>'protocolVersion'='1')
-              UNION ALL SELECT id FROM durable_runtime.runtime_audit_events WHERE runtime_unit_id=$1
-                AND kind IN ('INITIAL_PROVIDER_NATIVE_OBSERVED','INITIAL_PROVIDER_READY')
-              UNION ALL SELECT $2::uuid WHERE NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e
-                WHERE e.attempt_id=$2 AND e.kind='INITIAL_NATIVE_CHECKPOINT_GUARDED' AND e.next_state->>'state'='NONE')`,
-            [binding.runtimeUnitId, binding.attemptId, binding.sessionId, claim.commandId])
+            const initialization=coldPolicy.request.native.kind==='NEW'?coldPolicy.request.native.initialization??null:null
+            if(initialization&&coldPolicy.provider!=='codex') {deny('PROVIDER_INITIALIZATION_PROVIDER')}
+            const history = resumed ? {rowCount:0} : await tx.query(nativeInitializationHistorySql,
+              [binding.runtimeUnitId,binding.attemptId,binding.sessionId,claim.commandId,initialization===null?null:JSON.stringify(initialization)])
             if (history.rowCount) { deny('PROVIDER_NEW_GATE_HISTORY') }
             const oldWriters = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
               JOIN durable_runtime.storage_bindings old ON old.id=g.storage_binding_id

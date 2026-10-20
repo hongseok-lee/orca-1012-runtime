@@ -3,6 +3,7 @@ import { managedCodexAuthControl, managedCodexAuthRefreshSupported } from './man
 import type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
 export type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
 import { agentControlReaders, nativeHistoryReader, supportsNativeHistoryEvidence } from './agent-control-readers.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
 import { AgentControlFrameCursor } from './agent-control-frame-cursor.ts'
 import { claudeResumeLaunch, type NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import { isDeepStrictEqual } from 'node:util'
@@ -32,8 +33,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
   const closed = new Promise<boolean>(done => { resolveClosed = done })
   let channel = createExecChannelDecoder(() => { throw fail() })
   const pending = new Map<string, Pending>()
-  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false
-  let terminalCapable = false, externalAuthCapable=false, historyCapable=false
+  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false, terminalCapable = false, externalAuthCapable=false, historyCapable=false
   // Host frames carry hostSeq; older controls keep the original loss rule.
   let hostCapable = false, sinceAck = 0, reconnecting = false
   const cursor=new AgentControlFrameCursor(env.journal,config.policy.provider!=='claude')
@@ -84,7 +84,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
     return new Promise((done, bad) => {
       const timer = setTimeout(() => { pending.delete(id); if (!currentOnly) { lost = true }; bad(fail()) }, timeoutMs)
       pending.set(id, { method, resolve: done, reject: bad, timer })
-      try { write({ controlId, id, method, ...(method === 'COLD' ? { launch: config.policy.launch } : { params }) }, method === 'CLOSE', !currentOnly) }
+      try { write({ controlId, id, method, ...(method === 'COLD' ? { launch: config.policy.launch,initialization:nativeInitializationProof(nativeCheckpoint) } : { params }) }, method === 'CLOSE', !currentOnly) }
       catch {
         if (currentOnly) { clearTimeout(timer); pending.delete(id); bad(fail()) }
         else { failure() }

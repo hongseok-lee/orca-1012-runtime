@@ -7,6 +7,8 @@ import { readProtectedManagedCodexAuth } from './managed-codex-auth-file.ts'
 import { MANAGED_CODEX_AUTH_REFRESH_CAPABILITY, MANAGED_CODEX_AUTH_REFRESH_METHOD, handleManagedCodexAuthRefresh, createResidentManagedCodexAuthRefresh } from './managed-codex-auth-refresh.ts'
 import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch, initializeNativeInputBoundary, markNativeInputEntered } from './native-session-checkpoint.ts'
 import {NATIVE_HISTORY_EVIDENCE_CAPABILITY} from './agent-control-readers.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
+import {rotateNativeInitialization} from './native-initialization-rotation.ts'
 import { randomUUID } from 'node:crypto'
 import { constants, openSync, fstatSync, closeSync, readFileSync, lstatSync } from 'node:fs'
 import { isDeepStrictEqual } from 'node:util'
@@ -185,9 +187,12 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
           failure(id, 'AGENT_COLD_POLICY'); return
         }
         const priorNative=readNativeSessionCheckpoint(paths.home,provider)
+        const initialization=nativeInitializationProof(priorNative)
+        if(!isDeepStrictEqual(request.initialization??null,initialization)) {failure(id,'NATIVE_INITIALIZATION_CHANGED');return}
         if(priorNative.state==='UNKNOWN') {failure(id,'NATIVE_IDENTITY_UNCONFIRMED');return}
-        if(priorNative.state==='PROVISIONAL') {failure(id,'NATIVE_HISTORY_NOT_PERSISTED');return}
+        if((priorNative.state==='PROVISIONAL'||priorNative.state==='UNBOUND')&&!initialization) {failure(id,'NATIVE_HISTORY_NOT_PERSISTED');return}
         const launch=provider==='claude' && priorNative.state==='FOUND' ? claudeResumeLaunch(policy.launch,priorNative.nativeSessionRef) : policy.launch
+        if(initialization) {rotateNativeInitialization(paths.home,initialization)}
         if(provider==='codex'&&priorNative.state==='NONE') {initializeNativeInputBoundary(paths.home)}
         markNativeEntered(paths.home)
         coldUsed = true; phase = 'OPENING'

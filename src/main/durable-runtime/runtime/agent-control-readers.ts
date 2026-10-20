@@ -24,6 +24,13 @@ export function agentControlReaders(request:(method:string)=>Promise<unknown>,av
       const state=Reflect.get(value,'state')
       let checkpoint:NativeSessionCheckpoint
       if(state==='NONE' || state==='UNKNOWN') {checkpoint={state}}
+      else if(state==='UNBOUND') {
+        const generation=Reflect.get(value,'generation'),previousNativeSessionRef=Reflect.get(value,'previousNativeSessionRef')
+        if(provider!=='codex'||Reflect.get(value,'provider')!==provider||Reflect.get(value,'inputState')!=='NOT_STARTED'||
+            typeof generation!=='string'||!/^(base|[0-9a-f-]{36})$/.test(generation)||
+            (previousNativeSessionRef!==null&&typeof previousNativeSessionRef!=='string')) {fail()}
+        checkpoint={state,provider,generation,previousNativeSessionRef,inputState:'NOT_STARTED'}
+      }
       else {
         if(!['FOUND','PROVISIONAL'].includes(String(state)) || Reflect.get(value,'provider')!==provider || typeof Reflect.get(value,'nativeSessionRef')!=='string') {fail()}
         checkpoint={state:state as 'FOUND'|'PROVISIONAL',provider:Reflect.get(value,'provider'),nativeSessionRef:Reflect.get(value,'nativeSessionRef')}
@@ -31,6 +38,11 @@ export function agentControlReaders(request:(method:string)=>Promise<unknown>,av
         if(inputState!==undefined) {
           if(!['NOT_STARTED','EFFECT_POSSIBLE','UNTRACKED'].includes(inputState)) {fail()}
           checkpoint={...checkpoint,inputState}
+        }
+        const generation=Reflect.get(value,'generation')
+        if(generation!==undefined) {
+          if(typeof generation!=='string'||!/^(base|[0-9a-f-]{36})$/.test(generation)) {fail()}
+          checkpoint={...checkpoint,generation}
         }
       }
       if(!available()) {fail()}

@@ -33,6 +33,7 @@ import type { ProviderProtectionOwner } from './provider-effect-permit.ts'
 import { recordInitialNativeObservation, recordNativeCheckpointGuard, recordNativeHistoryObservation } from './provider-start-observation.ts'
 import { createNativeHistoryObserver } from './native-history-observer.ts'
 import { nativeColdIdentity } from './native-cold-identity.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
 import { settleInitialProviderReady } from './initial-provider-ready.ts'
 import { captureFirstManagedBindingProfile } from '../storage/first-managed-binding-owner-profile.ts'
 import { readOriginalFirstManagedDirectory } from '../storage/initial-directory-revalidation-guard.ts'
@@ -97,11 +98,6 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   }
   const claude = original.provider === 'claude'
   const authRefresh=new ManagedCodexAuthRefreshState(result=>process.stderr.write(`${JSON.stringify({type:'codex_managed_auth_refresh',sessionId:selected.sessionId,...result})}\n`))
-  function nativeStart(provider: 'codex' | 'claude') {
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the native session this Session's earlier READY recorded.
-    return selected.resume ? { kind: 'RESUME' as const, providerRef: { provider, nativeSessionRef: selected.resume.nativeSessionRef } as ProviderRef }
-      : { kind: 'NEW' as const }
-  }
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
     commitGuard?: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult> {
     const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
@@ -221,11 +217,13 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         // sequence then name notifications identically for any later owner.
         const hosted = control.frameSequence() > 0
         const checkpoint=await (claude?control.readNativeSession():control.readNativeHistory())
-        if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint.state)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
+        if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
         const resumeRef=nativeColdIdentity(claude?'claude':'codex',checkpoint,selected.resume?.nativeSessionRef)
+        const initialization=nativeInitializationProof(checkpoint)
         const originalLaunch=prepared.config.agent.policy.launch, home=source.value.paths.home
         const launch=claude && checkpoint?.state==='FOUND' ? claudeResumeLaunch(originalLaunch,checkpoint.nativeSessionRef) : originalLaunch
-        const nativeRequest=(provider:'codex'|'claude')=>resumeRef ? {kind:'RESUME' as const,providerRef:{provider,nativeSessionRef:resumeRef} as ProviderRef} : nativeStart(provider)
+        const nativeRequest=(provider:'codex'|'claude')=>resumeRef ? {kind:'RESUME' as const,providerRef:{provider,nativeSessionRef:resumeRef} as ProviderRef}
+          : {kind:'NEW' as const,...(initialization?{initialization}:{})}
         let native: ReadyProviderBinding
         if (claude) {
           if (!hosted) { return deny('CLAUDE_HOST_REQUIRED') }
