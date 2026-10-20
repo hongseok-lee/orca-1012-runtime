@@ -215,6 +215,15 @@ export class ClaudeDurableProvider {
     }
   }
 
+  cancelTarget(deliveryAttemptId: string, nativeTurnId: string): ProviderCancelTarget | null {
+    for (const pending of this.#pending.values()) {
+      if (pending.identity.deliveryAttemptId === deliveryAttemptId && pending.nativeRef?.nativeTurnId === nativeTurnId) {
+        return immutableSnapshot({ identity: pending.identity, providerRef: pending.nativeRef })
+      }
+    }
+    return null
+  }
+
   async cancel(target: ProviderCancelTarget, commandClaim: CommandClaim,
     permit: ProviderEffectPermit): Promise<ProviderCancelResult> {
     target = immutableSnapshot(target)

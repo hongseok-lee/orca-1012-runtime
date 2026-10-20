@@ -177,7 +177,11 @@ test('cancel ACK alone is unconfirmed; forged turn and connection cannot invoke 
   const f = fixture(); await f.ready()
   const result = await f.driver.dispatch(request(), fixturePermit().permit)
   if (result.state !== 'ADMITTED') {throw new Error('fixture missing')}
-  const target: ProviderCancelTarget = { identity: result.identity, providerRef: result.admission.providerRef }
+  const target = f.driver.cancelTarget(result.identity.deliveryAttemptId, result.admission.providerRef.nativeTurnId!)
+  assert.ok(target)
+  assert.deepEqual(target, { identity: result.identity, providerRef: result.admission.providerRef })
+  assert.equal(f.driver.cancelTarget('foreign-delivery',result.admission.providerRef.nativeTurnId!),null)
+  assert.equal(f.driver.cancelTarget(result.identity.deliveryAttemptId,'foreign-turn'),null)
   assert.equal((await f.driver.cancel(target, claim, fixturePermit().permit)).state, 'UNCONFIRMED')
   const wrong = { ...target, providerRef: { ...target.providerRef, nativeTurnId: 'new-foreign-turn' } } as ProviderCancelTarget
   assert.deepEqual(await f.driver.cancel(wrong, claim, fixturePermit().permit), { state: 'UNCONFIRMED', requested: false })

@@ -89,7 +89,7 @@ export function useTerminalLiveAccessoryInputCommit({
           // Why: accessory buttons do not emit native TextInput edits, so the
           // field is edited here and the mirror diff syncs the PTY echo.
           setLiveInputCapture(editedText)
-          liveInputRef.current?.setNativeProps({ text: editedText })
+          liveInputRef.current?.setNativeProps?.({ text: editedText })
           // Preserve undefined so Android's heuristic hold still settles on its timer.
           const sent = await applyLiveInputMirror(
             activeHandle,

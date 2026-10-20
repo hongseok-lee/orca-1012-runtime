@@ -1,3 +1,5 @@
+import type { CommandClaim } from './gateway/types.ts'
+import type { ProviderCancelTarget, ProviderCancelResult } from '../providers/shared/contracts.ts'
 import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import type { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
@@ -10,7 +12,8 @@ import { currentAuthoritySql } from './gateway/authority.ts'
 import type { DurableTransaction } from '../db/connection.ts'
 import type { CodexExecutionPolicy } from '../providers/codex/execution-policy.ts'
 import { DurableCodexDriver } from '../providers/codex/driver.ts'
-import { recordInitialNativeObservation } from './provider-start-observation.ts'
+import { recordInitialNativeObservation, recordNativeHistoryObservation } from './provider-start-observation.ts'
+import { createNativeHistoryObserver } from './native-history-observer.ts'
 import { ClaudeDurableProvider } from '../providers/claude/driver.ts'
 import { agentClaudeTransport } from './agent-claude-transport.ts'
 import { settleJournaledOrphanedTurns, settleOrphanedTurn } from './orphaned-turn-settlement.ts'
@@ -63,6 +66,16 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
   const provider = original.provider ?? 'codex'
   const authRefresh=new ManagedCodexAuthRefreshState(result=>process.stderr.write(`${JSON.stringify({type:'codex_managed_auth_refresh',sessionId:selected.sessionId,...result})}\n`))
   let control: AdoptedAgentControl | null = null, context: GatewayContext | null = null
+  let nativeHistory:ReturnType<typeof createNativeHistoryObserver>|null=null
+  const observeHistory=():void=>{
+    void nativeHistory?.observe().catch(()=>{
+      process.stderr.write(`${JSON.stringify({type:'native_history_observation_unconfirmed',sessionId:selected.sessionId})}\n`)
+    })
+  }
+  const inputSink:ProviderObservationSink=observation=>{
+    sink(observation)
+    if(observation.kind==='ADMITTED'||observation.kind==='COMPLETED'||observation.kind==='TARGET_STOPPED') {observeHistory()}
+  }
   let workload: VerifiedWorkloadIdentity | null = null
   const own = new Set<string>()
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
@@ -80,10 +93,22 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
     own.add(request.deliveryAttemptId)
     return activeDriver.dispatch(request, effect.permit)
   }
+  async function cancel(supplied: GatewayContext, target: ProviderCancelTarget, claim: CommandClaim,
+    guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderCancelResult> {
+    const native = ready, active = driver, adopted = control, owner = context?.controller
+    if (!native || !active || !adopted?.valid() || !owner || !active.ownsReadyBinding(native) ||
+        supplied.runtimeUnitId !== native.runtimeUnitId || supplied.controller.scope !== owner.scope ||
+        supplied.controller.owner !== owner.owner || supplied.controller.term !== owner.term) { return deny('CANCEL_OWNER') }
+    const effect = createAdoptedDispatchPermit(pool, supplied, { kind: 'CANCEL', binding: native,
+      commandClaim: claim, messageId: target.identity.messageId, deliveryAttemptId: target.identity.deliveryAttemptId,
+      nativeTurnId: target.providerRef.nativeTurnId }, adopted, guard)
+    return active.cancel(target, claim, effect.permit)
+  }
   return Object.freeze({
     phase: () => phase, authRefreshSnapshot:()=>authRefresh.snapshot(),
     current: () => ready && driver?.ownsReadyBinding(ready) && control?.valid() && context && workload
-      ? Object.freeze({ binding: ready, driver, context, executorId: selected.executorId, dispatch,
+      ? Object.freeze({ binding: ready, driver, context, executorId: selected.executorId, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: control.terminal,
+        dispatchReady:()=>provider==='claude' || authRefresh.dispatchReady(),
         refreshManagedAuth:()=>authRefresh.refresh(control!),
         protection: Object.freeze({ takePreparedProtection: () => Object.freeze({ workloadIdentity: workload! }) }) }) : null,
     async adopt(controller: GatewayContext['controller']): Promise<void> {
@@ -131,7 +156,9 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         // Completion of a turn the lost owner admitted is recorded here (live or replayed).
         const notify: typeof onNativeNotification = notification => {
           onNativeNotification?.(notification)
-          void settleOrphanedTurn(pool, binding as ReadyProviderBinding, notification, own).catch(() => { /* retried by the next completion or recovery */ })
+          // Replayed completion may belong to the lost owner, so its turn
+          // isn't in this driver's dispatch map. Recheck after settlement too.
+          void settleOrphanedTurn(pool, binding as ReadyProviderBinding, notification, own).then(settled=>{if(settled) {observeHistory()}}).catch(() => { /* retried by the next completion or recovery */ })
         }
         const attach = async (handlers: Parameters<Transport['adopt']>[2]) => {
           adoption.current = prepared.transport.adopt(identity, lastSeq, handlers)
@@ -151,9 +178,11 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         } else {
           const codexDriver = new DurableCodexDriver({
             open: () => Promise.reject(new Error('ADOPTED_CODEX_NO_COLD')), onNativeNotification: notify,
+            capture: pid => control?.turnProcesses?.capture?.(pid) ?? Promise.resolve(undefined),
+            terminate: (pid, baseline) => control?.turnProcesses?.terminate?.(pid, baseline) ?? Promise.resolve(false),
             onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
               sessionId: selected.sessionId, ...observation })}\n`),
-            connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0, attach }, sink)
+            connectionId: row.connection_instance_id, frameSequence: () => adoption.current?.frameSequence() ?? 0, attach }, inputSink)
           driver = codexDriver
           adopted = await codexDriver.adopt(binding, prepared.checkout, prepared.nativeOptions, prepared.codexPolicy)
         }
@@ -190,10 +219,17 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
         if (!owned.ok || owned.commitOutcome !== 'ACKNOWLEDGED' || owned.cleanupFailed) { return deny('OPERATION_ADOPTION_UNCONFIRMED') }
         context = Object.freeze({ runtimeUnitId: binding.runtimeUnitId, operationId: logicalId('operation', row.operation_id), controller })
         ready = adopted; phase = 'READY'
+        if(provider==='codex') {
+          const observedControl=control,observedContext=context
+          const owns=()=>ready===adopted&&driver?.ownsReadyBinding(adopted)===true&&observedControl.valid()
+          nativeHistory=createNativeHistoryObserver(adopted.providerRef.nativeSessionRef,()=>observedControl.readNativeHistory(),owns,
+            checkpoint=>recordNativeHistoryObservation(pool,observedContext,adopted,checkpoint,owns))
+          observeHistory()
+        }
         if (driver instanceof ClaudeDurableProvider && driver.nativeSessionObserved() &&
             !await recordInitialNativeObservation(pool, context, adopted, b => driver?.ownsReadyBinding(b) === true)) { deny('NATIVE_IDENTITY_COMMIT_UNCONFIRMED') }
         // Turns the lost owner saw finish but never recorded.
-        void settleJournaledOrphanedTurns(pool, adopted, own).catch(() => { /* recovered at the next adoption */ })
+        void settleJournaledOrphanedTurns(pool, adopted, own).then(observeHistory).catch(() => { /* recovered at the next adoption */ })
         onReady?.()
       } catch (error) {
         phase = 'ADOPT_FAILED'

@@ -20,6 +20,12 @@ test('one persisted product owner drives cold/resume/live refresh; native revisi
   const settings={activeCodexManagedAccountId:id,activeCodexManagedAccountIdsByRuntime:{host:id,wsl:{}},codexManagedAccounts:[{id,email:'owned@example.invalid',managedHomePath:sourceHome,createdAt:1,updatedAt:1,lastAuthenticatedAt:1}]}
   setAppEnvironment({getPath:()=>userData,getAppPath:()=>root,getVersion:()=>'',isPackaged:()=>true,onWillQuit:()=>{},exit:()=>{},getAppMetrics:()=>[]})
   const owner=createManagedCodexCredentialOwner({userDataPath:userData,getSettings:()=>settings,readOwner:getPersistedCodexPaneAccount,recordOwner:recordCodexPaneAccount})
+  settings.codexManagedAccounts.push({id:'missing-account',email:'missing@example.invalid',managedHomePath:join(userData,'codex-accounts','missing-account','home'),createdAt:1,updatedAt:1,lastAuthenticatedAt:1})
+  settings.activeCodexManagedAccountId='missing-account';settings.activeCodexManagedAccountIdsByRuntime.host='missing-account'
+  assert.throws(()=>owner.read('agent-missing',true),/CODEX_ACCOUNT_AUTH_MISSING/)
+  assert.equal(getPersistedCodexPaneAccount('durable-agent:agent-missing'),null,'failed source read must not pin invalid selection')
+  settings.activeCodexManagedAccountId=id;settings.activeCodexManagedAccountIdsByRuntime.host=id
+  assert.equal(owner.read('agent-missing',true).accountId,id)
   assert.throws(()=>owner.read('agent-one',false),/UNATTRIBUTED/)
   const initial=owner.read('agent-one',true)
   supplyProtectedManagedCodexCredential(home,initial,()=>{})

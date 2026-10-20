@@ -1,3 +1,4 @@
+import { catalogUnitStorageDirectory, readCatalogUnitStorageAllocation } from '../catalog/unit-storage-allocation.ts'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Pool } from 'pg'
@@ -78,12 +79,13 @@ await test('서로 다른 local/canonical 좌표의 생성 준비는 서버 mapp
     assert.ok(server && typeof server === 'object' && 'storagePathMapping' in server && 'agentHomePath' in server)
     const mapping = server.storagePathMapping
     assert.ok(mapping && typeof mapping === 'object' && 'localDirectory' in mapping && 'canonicalDirectory' in mapping)
-    assert.equal(mapping.localDirectory, localDirectory); assert.equal(mapping.canonicalDirectory, canonicalDirectory)
+    assert.equal(mapping.localDirectory, localDirectory); assert.equal(mapping.canonicalDirectory, catalogUnitStorageDirectory(canonicalDirectory, prepared.unit.id))
     assert.equal(server.agentHomePath, `${localDirectory}/homes/${prepared.agent.id}`)
     assert.ok(Object.isFrozen(prepared.launchRequest)); assert.ok(Object.isFrozen(server)); assert.ok(Object.isFrozen(mapping))
     assert.equal(Reflect.set(mapping, 'localDirectory', '/synthetic/changed'), false)
     assert.equal(prepared.storage.backendId, 'synthetic-backend'); assert.equal(prepared.storage.exportId, 'synthetic-export')
-    assert.equal(prepared.storage.canonicalDirectory, canonicalDirectory)
+    assert.equal(prepared.storage.canonicalDirectory, catalogUnitStorageDirectory(canonicalDirectory, prepared.unit.id))
+    assert.equal(readCatalogUnitStorageAllocation(prepared.launchRequest, prepared.unit.id, prepared.storage.canonicalDirectory)?.leafId, prepared.unit.id)
   }
   for (const kind of ['folder', 'git'] as const) {
     const repo: Repo = { id: 'synthetic-create', path: `${localDirectory}/repo`, displayName: 'Synthetic', kind,
@@ -94,6 +96,9 @@ await test('서로 다른 local/canonical 좌표의 생성 준비는 서버 mapp
     const prepared = prepareCatalogWorktreeLaunch(config, call, repo, [])
     assert.equal(prepared.workspace.reservedPath, kind === 'folder' ? repo.path : `${localDirectory}/worktrees/mapped-git`)
     checkMapping(prepared)
+    const independent = prepareCatalogWorktreeLaunch(config, call, repo, [])
+    assert.notEqual(independent.unit.id, prepared.unit.id)
+    assert.notEqual(independent.storage.canonicalDirectory, prepared.storage.canonicalDirectory)
     assert.equal(JSON.stringify(prepared.launchRequest.params), JSON.stringify(request))
     const workspace: CatalogWorkspace = { workspace_id: prepared.workspace.id, public_id: prepared.workspace.publicId,
       kind: prepared.workspace.kind, repo_id: repo.id, project_group_id: null, reserved_path: prepared.workspace.reservedPath,

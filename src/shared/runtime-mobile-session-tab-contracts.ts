@@ -31,6 +31,8 @@ export type RuntimeMobileSessionTerminalTab = {
   terminalTheme?: RuntimeMobileTerminalTheme
   agentStatus?: AgentStatusEntry | null
   nativeChatSession?: RuntimeTerminalNativeChatSession
+  /** Durable Catalog history address, available before provider READY; never a provider/file id. */
+  durableChatSession?: RuntimeTerminalNativeChatSession
   /** Event-only lead-turn end time for paired clients; never persisted in AgentStatusEntry. */
   turnCompletedAt?: number
   launchAgent?: TuiAgent

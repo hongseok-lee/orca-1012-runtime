@@ -18,6 +18,7 @@ import type { CatalogWorkspace } from '../catalog/read.ts'
 import { parseCatalogWorkspace } from '../catalog/payload.ts'
 import type { UnitIntentAuthority } from '../lifecycle/types.ts'
 import { CatalogError } from '../catalog/errors.ts'
+import { catalogUnitStorageDirectory } from '../catalog/unit-storage-allocation.ts'
 import type { CapturedCatalogReadConfig } from './config.ts'
 import { catalogLaunchContains, catalogLaunchPath, type CatalogLaunchRepositoryConfig } from './launch-config.ts'
 
@@ -52,6 +53,8 @@ function launchTail(
 ): PreparedCatalogLaunch {
   const sessionId = logicalId('session', randomUUID()), agentId = logicalId('agent', randomUUID())
   const unitId = logicalId('runtime-unit', unit?.unitId ?? randomUUID())
+  const canonicalDirectory = unit?.canonicalDirectory ??
+    catalogUnitStorageDirectory(repo.storage.canonicalDirectory, unitId)
   const tabId = logicalId('tab', randomUUID()), parentTabId = randomUUID(), leafId = randomUUID()
   const publicId = `${parentTabId}::${leafId}`, terminalHandle = `term_${randomUUID()}`
   const params = call.params as Record<string, unknown>, selectedProvider = provider(call)
@@ -71,12 +74,16 @@ function launchTail(
     scope: JSON.stringify(['catalog-launch-v1', config.datasetName, config.hostId, workspace.repoId, unitId]) }) as UnitIntentAuthority
   const original = call.original as Record<string, unknown>
   const launchRequest = { ...original, server: { agentHomePath: posix.join(repo.agentHomeRoot, agentId),
+    ...(canonicalDirectory === repo.storage.canonicalDirectory ? {} : {
+      storageAllocation: { kind: 'RUNTIME_UNIT_LEAF', unitId, leafId: unitId,
+        templateCanonicalDirectory: repo.storage.canonicalDirectory }
+    }),
     storagePathMapping: { localDirectory: repo.storage.localDirectory ?? repo.storage.canonicalDirectory,
-      canonicalDirectory: repo.storage.canonicalDirectory } } }
+      canonicalDirectory } } }
   const fields: Omit<PreparedCatalogLaunch, symbol> = { workspace, tab: { id: tabId, publicId, parentTabId, leafId, terminalHandle, uiOrder, payload },
     sessionId, agent: { id: agentId, provider: selectedProvider, create: true }, unit: { id: unitId, create: unit === null, authority },
     storage: { id: logicalId('storage-binding', unit?.bindingId ?? randomUUID()), createUnverified: unit === null,
-      backendId: repo.storage.backendId, exportId: repo.storage.exportId, canonicalDirectory: repo.storage.canonicalDirectory },
+      backendId: repo.storage.backendId, exportId: repo.storage.exportId, canonicalDirectory },
     launchRequest, policy: config.launch!.policy }
   // All fields are checked against the actual launch structure above. Only
   // this authenticated server issuer connects its private brand; core capture
@@ -136,7 +143,8 @@ export function prepareCatalogTerminalLaunch(
   if (workspace.kind !== 'GIT' && workspace.kind !== 'REPO_FOLDER') { throw new CatalogError('CATALOG_METHOD_NOT_CONNECTED') }
   if (workspace.repo_id !== repo.id || workspace.runtime_unit_id !== unit.unitId ||
       unit.backendId !== launch.storage.backendId || unit.exportId !== launch.storage.exportId ||
-      unit.canonicalDirectory !== launch.storage.canonicalDirectory ||
+      (unit.canonicalDirectory !== launch.storage.canonicalDirectory &&
+        unit.canonicalDirectory !== catalogUnitStorageDirectory(launch.storage.canonicalDirectory, unit.unitId)) ||
       !catalogLaunchContains(launch.storage.localDirectory ?? launch.storage.canonicalDirectory, catalogLaunchPath(workspace.reserved_path))) {
     throw new CatalogError('CATALOG_STORAGE_CONFIGURATION')
   }

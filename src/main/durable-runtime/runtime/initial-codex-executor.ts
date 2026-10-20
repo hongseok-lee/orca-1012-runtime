@@ -1,3 +1,4 @@
+import type { ProviderCancelTarget, ProviderCancelResult } from '../providers/shared/contracts.ts'
 import { ManagedCodexAuthRefreshState } from './managed-codex-auth-refresh.ts'
 import { claudeResumeLaunch } from './native-session-checkpoint.ts'
 import type { Pool } from 'pg'
@@ -29,7 +30,10 @@ import { prepareInitialProviderStep } from './initial-provider-step.ts'
 import { activateInitialProviderGrants } from './initial-provider-grants.ts'
 import { createProviderEffectPermit } from './provider-effect-permit.ts'
 import type { ProviderProtectionOwner } from './provider-effect-permit.ts'
-import { recordInitialNativeObservation, recordNativeCheckpointGuard } from './provider-start-observation.ts'
+import { recordInitialNativeObservation, recordNativeCheckpointGuard, recordNativeHistoryObservation } from './provider-start-observation.ts'
+import { createNativeHistoryObserver } from './native-history-observer.ts'
+import { nativeColdIdentity } from './native-cold-identity.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
 import { settleInitialProviderReady } from './initial-provider-ready.ts'
 import { captureFirstManagedBindingProfile } from '../storage/first-managed-binding-owner-profile.ts'
 import { readOriginalFirstManagedDirectory } from '../storage/initial-directory-revalidation-guard.ts'
@@ -81,13 +85,19 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
   let readyProtection: ProviderProtectionOwner | null = null, readyContext: GatewayContext | null = null
   let readyExecutor: ExecutorId | null = null
   let driver: DurableCodexDriver | ClaudeDurableProvider | null = null, ready: ReadyProviderBinding | null = null
+  let nativeHistory:ReturnType<typeof createNativeHistoryObserver>|null=null
+  const observeHistory=():void=>{
+    void nativeHistory?.observe().catch(()=>{
+      // Never replace a real admission/completion with a disk-read failure.
+      process.stderr.write(`${JSON.stringify({type:'native_history_observation_unconfirmed',sessionId:selected.sessionId})}\n`)
+    })
+  }
+  const inputSink:ProviderObservationSink=observation=>{
+    sink(observation)
+    if(observation.kind==='ADMITTED'||observation.kind==='COMPLETED'||observation.kind==='TARGET_STOPPED') {observeHistory()}
+  }
   const claude = original.provider === 'claude'
   const authRefresh=new ManagedCodexAuthRefreshState(result=>process.stderr.write(`${JSON.stringify({type:'codex_managed_auth_refresh',sessionId:selected.sessionId,...result})}\n`))
-  function nativeStart(provider: 'codex' | 'claude') {
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the native session this Session's earlier READY recorded.
-    return selected.resume ? { kind: 'RESUME' as const, providerRef: { provider, nativeSessionRef: selected.resume.nativeSessionRef } as ProviderRef }
-      : { kind: 'NEW' as const }
-  }
   async function dispatch(originalContext: GatewayContext, originalRequest: ProviderDispatchRequest,
     commitGuard?: (tx: DurableTransaction) => Promise<void>): Promise<ProviderDispatchResult> {
     const context = immutableSnapshot(originalContext), request = immutableSnapshot(originalRequest)
@@ -104,12 +114,24 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
       contextRevision: request.context.revision, contextHash: request.context.hash }, owner, undefined, commitGuard)
     return activeDriver.dispatch(request, effect.permit)
   }
+  async function cancel(context: GatewayContext, target: ProviderCancelTarget, claim: CommandClaim,
+    guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderCancelResult> {
+    const native = ready, active = driver, owner = readyProtection, controller = readyContext?.controller
+    if (!native || !active || !owner || !controller || !active.ownsReadyBinding(native) ||
+        context.runtimeUnitId !== native.runtimeUnitId || context.controller.scope !== controller.scope ||
+        context.controller.owner !== controller.owner || context.controller.term !== controller.term) { return deny('CANCEL_OWNER') }
+    const effect = createProviderEffectPermit(borrowed, context, { kind: 'CANCEL', binding: native,
+      commandClaim: claim, messageId: target.identity.messageId, deliveryAttemptId: target.identity.deliveryAttemptId,
+      nativeTurnId: target.providerRef.nativeTurnId }, owner, undefined, guard)
+    return active.cancel(target, claim, effect.permit)
+  }
   return Object.freeze({
     phase: () => phase,
     snapshot: () => Object.freeze({ phase, failure, writerGrantActivated: writerActivated,
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
-      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch,
+      ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: protection?.control()?.terminal,
+        dispatchReady:()=>claude || authRefresh.dispatchReady(),
         refreshManagedAuth:()=>{const control=protection?.control();return control?authRefresh.refresh(control):Promise.resolve({state:'FAILED' as const,code:'REFRESH_UNCONFIRMED' as const})} }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }
@@ -194,14 +216,14 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         // A host-capable control already tagged its HELLO; its id and frame
         // sequence then name notifications identically for any later owner.
         const hosted = control.frameSequence() > 0
-        const checkpoint=await control.readNativeSession()
-        if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint.state)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
-        if(checkpoint.state==='UNKNOWN') {return deny('NATIVE_IDENTITY_UNCONFIRMED')}
-        if (selected.resume && checkpoint.state==='FOUND' && selected.resume.nativeSessionRef !== checkpoint.nativeSessionRef) { return deny('NATIVE_IDENTITY_MISMATCH') }
-        const resumeRef=selected.resume?.nativeSessionRef??(checkpoint?.state==='FOUND'?checkpoint.nativeSessionRef:null)
+        const checkpoint=await (claude?control.readNativeSession():control.readNativeHistory())
+        if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
+        const resumeRef=nativeColdIdentity(claude?'claude':'codex',checkpoint,selected.resume?.nativeSessionRef)
+        const initialization=nativeInitializationProof(checkpoint)
         const originalLaunch=prepared.config.agent.policy.launch, home=source.value.paths.home
         const launch=claude && checkpoint?.state==='FOUND' ? claudeResumeLaunch(originalLaunch,checkpoint.nativeSessionRef) : originalLaunch
-        const nativeRequest=(provider:'codex'|'claude')=>resumeRef ? {kind:'RESUME' as const,providerRef:{provider,nativeSessionRef:resumeRef} as ProviderRef} : nativeStart(provider)
+        const nativeRequest=(provider:'codex'|'claude')=>resumeRef ? {kind:'RESUME' as const,providerRef:{provider,nativeSessionRef:resumeRef} as ProviderRef}
+          : {kind:'NEW' as const,...(initialization?{initialization}:{})}
         let native: ReadyProviderBinding
         if (claude) {
           if (!hosted) { return deny('CLAUDE_HOST_REQUIRED') }
@@ -229,10 +251,10 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           // The native artifact transfer runs inside this cold; bound it like the control timeout.
           native = await claudeDriver.cold(cold, gate.execution.claim, permit.permit, prepared.config.agent.timeoutMs)
         } else {
-          const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), onNativeNotification,
+          const codexDriver = new DurableCodexDriver({ open: transport.open.bind(transport), ...control.turnProcesses, onNativeNotification,
             onExecutionPolicyObservation: observation => process.stderr.write(`${JSON.stringify({ type: 'codex_execution_policy_observed',
               sessionId: selected.sessionId, ...observation })}\n`),
-            ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, sink)
+            ...(hosted ? { connectionId: control.controlId, frameSequence: control.frameSequence } : {}) }, inputSink)
           driver = codexDriver
           const binding: ProviderBinding = Object.freeze({ sessionId: selected.sessionId,
             tabId: logicalId('tab', source.value.tab_id), terminalHandle: source.value.terminal_handle,
@@ -264,6 +286,12 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
           device: control.root.device, inode: control.root.inode, controlSha256: prepared.config.agent.bootstrapSha256 }) : undefined)
         if (!settled.ready) { return deny('READY_COMMIT_UNCONFIRMED') }
         readyProtection = owner; readyContext = context; readyExecutor = claim.executorId; ready = native; phase = 'READY'
+        if(!claude) {
+          const owns=()=>ready===native&&driver?.ownsReadyBinding(native)===true&&control.valid()
+          nativeHistory=createNativeHistoryObserver(native.providerRef.nativeSessionRef,()=>control.readNativeHistory(),owns,
+            checkpoint=>recordNativeHistoryObservation(borrowed,context,native,checkpoint,owns))
+          observeHistory()
+        }
         onReady?.()
       } catch (error) {
         // Only a fixed code is kept for diagnostics, never a message body.

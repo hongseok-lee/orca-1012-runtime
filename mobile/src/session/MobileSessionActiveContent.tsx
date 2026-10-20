@@ -83,11 +83,12 @@ export function MobileSessionActiveContent({
     toastAnimatedStyle,
     createTabBusy
   } = controller
-  // A committed native transcript can be read before a legacy PTY handle exists.
+  // Durable history can be read before a provider or legacy PTY handle exists.
   // Keep the original pending-terminal path for all other tabs and view modes.
   const showExplicitNativeChat = nativeChatController.showNativeChat &&
     activeSessionTab?.type === 'terminal' &&
-    isRuntimeTerminalNativeChatSession(activeSessionTab.nativeChatSession)
+    (isRuntimeTerminalNativeChatSession(activeSessionTab.durableChatSession) ||
+      isRuntimeTerminalNativeChatSession(activeSessionTab.nativeChatSession))
   return showLoadingState ? (
     <View style={styles.emptyState}>
       <ActivityIndicator size="small" color={colors.textSecondary} />

@@ -54,11 +54,22 @@ try{
  const group=`manual-wake:${randomUUID()}`
  await pool.query('INSERT INTO durable_runtime.catalog_project_groups(id,payload) VALUES($1,$2)',[group,JSON.stringify({id:group})])
  await pool.query("INSERT INTO durable_runtime.catalog_workspace_metadata(workspace_id,kind,project_group_id,reserved_path,payload,create_request,runtime_unit_id) VALUES($1,'FOLDER_WORKSPACE',$2,$3,'{}','{}',$4)",[workspace,group,`/fixture/${workspace}`,unit])
+ await pool.query("UPDATE durable_runtime.messages SET intake_status='UNKNOWN' WHERE session_id=$1 AND intake_status='DURABLE'",[f.session])
+ const initialUnit=(await pool.query('SELECT revision::text,intent_revision::text FROM durable_runtime.runtime_units WHERE id=$1',[unit])).rows[0]
+ const firstManual=await requestManualUnitWake(pool,{
+   authority:{principalId:'fixture-authenticated-ops',runtimeUnitId:logicalId('runtime-unit',unit),scope:`ops:fixture:runtime-unit:${unit}`},
+   operationKey:randomUUID(),desired:'RUNNING',expectedRevision:counter('row:runtime-unit',initialUnit.revision),
+   expectedIntentRevision:counter('intent-revision',initialUnit.intent_revision),policy})
+ assert.notEqual(firstManual.status,'UNCERTAIN')
+ assert.ok((await readRewakeCandidates(pool)).some(r=>r.unit_id===unit),'first manual wake needs its original Ops receipt, not an exhausted predecessor')
  const old=await claimRewakeOperation(pool,controller,unit,policy);assert.ok(old)
+ assert.equal(old.operationId,body(firstManual).receipt.response.operationId,'claim must consume the original explicit request, not create a second wake')
  await pool.query("UPDATE durable_runtime.operations SET deadline_at=clock_timestamp()-interval '1 second' WHERE id=$1",[old.operationId])
  assert.equal(await settleRewakeOperation(pool,controller,old.operationId,'WAKE_DEADLINE_EXHAUSTED'),true)
  const oldRow=(await pool.query('SELECT to_jsonb(o) AS row FROM durable_runtime.operations o WHERE id=$1',[old.operationId])).rows[0].row
  assert.equal(oldRow.retry_exhausted_reason,'REWAKE_DEADLINE_EXHAUSTED')
+ await pool.query("UPDATE durable_runtime.messages SET intake_status='UNKNOWN' WHERE session_id=$1 AND intake_status='DURABLE'",[f.session])
+ assert.equal((await readRewakeCandidates(pool)).some(r=>r.unit_id===unit),false,'UNKNOWN alone cannot trigger automatic wake')
  const inputs=(await pool.query('SELECT to_jsonb(m) AS row FROM durable_runtime.messages m WHERE session_id=$1 ORDER BY seq',[f.session])).rows
  const request=async(key:string)=>{const u=(await pool.query('SELECT revision::text,intent_revision::text FROM durable_runtime.runtime_units WHERE id=$1',[unit])).rows[0];return {
    authority:{principalId:'fixture-authenticated-ops',runtimeUnitId:logicalId('runtime-unit',unit),scope:`ops:fixture:runtime-unit:${unit}`} as never,

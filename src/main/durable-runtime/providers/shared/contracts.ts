@@ -28,7 +28,7 @@ export type ProviderColdRequest<Launch> = {
   readonly mode: 'COLD'
   readonly binding: ProviderBinding
   readonly native:
-    | { readonly kind: 'NEW' }
+    | { readonly kind: 'NEW'; readonly initialization?:Readonly<{generation:string;previousNativeSessionRef:string|null}> }
     | { readonly kind: 'RESUME'; readonly providerRef: ProviderRef }
   readonly persistentHome: string
   readonly checkout: string

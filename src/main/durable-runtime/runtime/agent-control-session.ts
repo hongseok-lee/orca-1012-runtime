@@ -1,7 +1,9 @@
+import { remoteTurnProcesses, supportsTurnProcesses } from './agent-turn-processes.ts'; import {AGENT_EXTERNAL_AUTH_SUPPLY,dispatchAgentExternalAuth,initializeAgentAuthPolicy,externalAgentAuthControl,externalAuthCapable as supportsExternalAuth} from './agent-external-auth.ts'
 import { managedCodexAuthControl, managedCodexAuthRefreshSupported } from './managed-codex-auth-refresh.ts'
 import type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
 export type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
-import { agentControlReaders } from './agent-control-readers.ts'
+import { agentControlReaders, nativeHistoryReader, supportsNativeHistoryEvidence } from './agent-control-readers.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
 import { AgentControlFrameCursor } from './agent-control-frame-cursor.ts'
 import { claudeResumeLaunch, type NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import { isDeepStrictEqual } from 'node:util'
@@ -12,6 +14,8 @@ import type { ManagedLeafSocket } from '../storage/managed-leaf-collector-types.
 import { attemptAttach, checkAttached, checkHello, createExecChannelDecoder, openAgentControlExec, reattachWithin } from './agent-control-reattach.ts'
 import type { AttachOutcome } from './agent-control-reattach.ts'
 import { supplyNativeAndCold } from './agent-control-native-supply.ts'
+import { supportsAgentTerminal, readAgentTerminalFrame, createAgentTerminalClient } from './agent-terminal-protocol.ts'
+import type { CodexProtocolDependencies } from '../providers/codex/protocol.ts'
 
 const fail = (): Error => new Error('AGENT_CODEX_CONTROL_UNCONFIRMED')
 type Pending = { method: string; resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }
@@ -20,19 +24,17 @@ type Pending = { method: string; resolve(value: unknown): void; reject(error: Er
  * creates the control; ADOPT re-attaches to a control another owner created.
  * After hand-over a lost exec connection re-attaches within the budget, and
  * only an unrecoverable loss reaches the provider handlers as an exit. */
-export function createAgentControlSession(env: AgentControlSessionEnvironment) {
+export function createAgentControlSession(env: AgentControlSessionEnvironment, openExec = openAgentControlExec) {
   const config = env.config
   let socket: ManagedLeafSocket | undefined, handshake = false, transferred = false
   let lost = false, socketClosed = false, openedNative = false, controlId = '', used = false
   let handlers: CodexAppServerConnectionHandlers = {}, nativePid: number | undefined
-  let closing: Promise<boolean> | undefined, nativeExitReported = false
-  let resolveClosed!: (confirmed: boolean) => void
+  let closing: Promise<boolean> | undefined, nativeExitReported = false, resolveClosed!: (confirmed: boolean) => void
   const closed = new Promise<boolean>(done => { resolveClosed = done })
   let channel = createExecChannelDecoder(() => { throw fail() })
   const pending = new Map<string, Pending>()
-  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false
-  // A host-capable control tags every frame with hostSeq; an older control
-  // without the Pod-local host keeps the original loss rule.
+  let nextId = 1, stopAcknowledged = false, managedAuthCapable=false, terminalCapable = false, externalAuthCapable=false, historyCapable=false, turnProcessesCapable=false
+  // Host frames carry hostSeq; older controls keep the original loss rule.
   let hostCapable = false, sinceAck = 0, reconnecting = false
   const cursor=new AgentControlFrameCursor(env.journal,config.policy.provider!=='claude')
   let identity: AgentControlIdentity | undefined, pod: AuthenticatedPodObservation | undefined
@@ -40,11 +42,9 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
   let attachSettle: ((outcome: AttachOutcome) => void) | null = null
   let start: { resolve(value: unknown): void; reject(error: Error): void } | null = null
   let helloSignal: AbortSignal = new AbortController().signal
-  // The INITIALIZE nonce is known only to the owner that sent it.
   let challenge: string | null = config.policy.bindChallenge
   const queued: Buffer[] = []
-  let loss: string | null = null
-  let nativeCheckpoint:NativeSessionCheckpoint|null=null
+  let loss: string | null = null, nativeCheckpoint:NativeSessionCheckpoint|null=null
   function failure(reason = 'FAILURE'): void {
     loss ??= reason
     lost = true
@@ -60,10 +60,11 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       if (transferred && hostCapable) { target.terminate() } else { failure() }
     }])
   }
-  function write(frame: unknown, allowLost = false): void {
+  function write(frame: unknown, allowLost = false, allowQueue = true): void {
     if (lost && !allowLost) { throw fail() }
     const bytes = encode(frame)
     if (reconnecting || socketClosed) {
+      if (!allowQueue) { throw new Error('AGENT_TERMINAL_TRANSPORT_UNAVAILABLE') }
       // Detached: hold the frame for the re-attached connection instead of losing it.
       if (!hostCapable || !transferred || lost) { throw fail() }
       queued.push(bytes)
@@ -72,16 +73,22 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     if (!handshake || !socket) { throw fail() }
     rawWrite(socket, bytes)
   }
-  function request(method: string, params?: Record<string, unknown>, timeoutMs = config.timeoutMs): Promise<unknown> {
+  function request(method: string, params?: Record<string, unknown>, timeoutMs = config.timeoutMs, currentOnly = false): Promise<unknown> {
+    if (currentOnly && (!terminalCapable || !valid() || socketClosed || reconnecting || !socket || !handshake)) {
+      return Promise.reject(new Error('AGENT_TERMINAL_TRANSPORT_UNAVAILABLE'))
+    }
     if (!controlId || lost && method !== 'CLOSE' || !Number.isSafeInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) {
       return Promise.reject(fail())
     }
     const id = String(nextId++)
     return new Promise((done, bad) => {
-      const timer = setTimeout(() => { pending.delete(id); lost = true; bad(fail()) }, timeoutMs)
+      const timer = setTimeout(() => { pending.delete(id); if (!currentOnly) { lost = true }; bad(fail()) }, timeoutMs)
       pending.set(id, { method, resolve: done, reject: bad, timer })
-      try { write({ controlId, id, method, ...(method === 'COLD' ? { launch: config.policy.launch } : { params }) }, method === 'CLOSE') }
-      catch { failure() }
+      try { write({ controlId, id, method, ...(method === 'COLD' ? { launch: config.policy.launch,initialization:nativeInitializationProof(nativeCheckpoint) } : { params }) }, method === 'CLOSE', !currentOnly) }
+      catch {
+        if (currentOnly) { clearTimeout(timer); pending.delete(id); bad(fail()) }
+        else { failure() }
+      }
     })
   }
   async function close(): Promise<boolean> {
@@ -100,13 +107,15 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     return closing
   }
   const valid = (): boolean => !lost && !closing && (!socketClosed || reconnecting)
-  const authControl=managedCodexAuthControl(()=>managedAuthCapable,valid,(method,params)=>request(method,params),env.readManagedCredential)
+  const legacyAuthControl=managedCodexAuthControl(()=>managedAuthCapable,valid,(method,params)=>request(method,params),env.readManagedCredential)
+  const authControl=externalAgentAuthControl(!!env.readManagedAccess,()=>externalAuthCapable,valid,request,legacyAuthControl)
+  const turnProcesses = remoteTurnProcesses(() => turnProcessesCapable && valid(), request), terminalControl = createAgentTerminalClient(() => terminalCapable, (method, params) => request(method, params, config.timeoutMs, true))
   const frameSequence = (): number => cursor.sequence
+  const readers=agentControlReaders(request,()=>!lost&&!socketClosed&&!closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value},()=>!openedNative&&!lost&&!socketClosed&&!closing)
   const connection: CodexAppServerConnection = Object.freeze({
     get pid() { return nativePid }, get closed() { return lost || socketClosed && !reconnecting },
     request: (method,params,options)=>cursor.request(controlId,method,params,pending.size,p=>request(method,p,options?.timeoutMs)),
-    // The existing Agent-side connection owns initialization/reply
-    // channels. No public method or response can create another process.
+    // Initialization/reply stays with the existing Agent-side connection.
     notify() {}, respond() {}, respondWithError() {}, close,
   })
   async function hello(record: Record<string, unknown>): Promise<void> {
@@ -116,19 +125,21 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     pod = await env.authenticate({ podBearer: checked.podBearer, expected: config.expected }, helloSignal)
     if (lost || socketClosed || helloSignal.aborted || pod.pod.uid !== config.expected.podUid) { throw fail() }
     transferred = true;managedAuthCapable=managedCodexAuthRefreshSupported(record.capabilities)
+    turnProcessesCapable = supportsTurnProcesses(record.capabilities); terminalCapable = supportsAgentTerminal(record.capabilities)
+    externalAuthCapable=supportsExternalAuth(record.capabilities);historyCapable=supportsNativeHistoryEvidence(record.capabilities)
     identity = Object.freeze({ controlId, pid: checked.pid, startTicks: checked.startTicks, device: checked.device, inode: checked.inode })
     const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: checked.pid, startTicks: checked.startTicks,
-      ...authControl,bindChallenge: config.policy.bindChallenge,
+      ...authControl, ...terminalControl, turnProcesses,bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
-      ...agentControlReaders(request,()=>!openedNative && !lost && !socketClosed && !closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value}),
+      ...readers,readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable),
       transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
         const expectedLaunch=config.policy.provider==='claude' && nativeCheckpoint?.state==='FOUND' ? claudeResumeLaunch(config.policy.launch,nativeCheckpoint.nativeSessionRef) : config.policy.launch
         if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, expectedLaunch)) { throw fail() }
         openedNative = true; handlers = { ...supplied }
         // This opener is invoked by the original actual-COMMIT permit.
         const pid = await supplyNativeAndCold(request, config.nativeArtifactFile, config.policy.nativeArtifact.byteLength, config.nativeCompanionFile && config.policy.nativeArtifact.codeModeHost ? {file:config.nativeCompanionFile,byteLength:config.policy.nativeArtifact.codeModeHost.byteLength,
-          ...(config.nativeBwrapFile&&config.policy.nativeArtifact.sandboxBwrap?{sandboxBwrap:{file:config.nativeBwrapFile,byteLength:config.policy.nativeArtifact.sandboxBwrap.byteLength}}:{})} : undefined)
+          ...(config.nativeBwrapFile&&config.policy.nativeArtifact.sandboxBwrap?{sandboxBwrap:{file:config.nativeBwrapFile,byteLength:config.policy.nativeArtifact.sandboxBwrap.byteLength}}:{})} : undefined, config.terminalSupply)
         if (pid === null) { lost = true; throw fail() }
         nativePid = pid; return connection
       } }),
@@ -138,6 +149,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
   async function frame(value: unknown): Promise<void> {
     if (!value || typeof value !== 'object' || Array.isArray(value)) { throw fail() }
     const record = value as Record<string, unknown>
+    const sequenced = record.hostSeq !== undefined
     if (attachWait) { const wait = attachWait; attachWait = null; await wait(record); return }
     if (record.hostSeq !== undefined) {
       if(!cursor.accept(record.hostSeq)) {return}
@@ -146,6 +158,12 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     }
     if (record.event === 'HELLO') { await hello(record); return }
     if (record.controlId !== undefined && record.controlId !== controlId) { throw fail() }
+    if (record.event === 'PTY_OUTPUT' || record.event === 'PTY_EXIT') {
+      if (!sequenced || !terminalCapable) { throw fail() }
+      await env.onTerminalFrame?.(readAgentTerminalFrame({ ...record, hostSeq: cursor.sequence }, controlId))
+      return
+    }
+    if(dispatchAgentExternalAuth(record,controlId,externalAuthCapable,env.readManagedAccess,()=>valid()&&!socketClosed&&!reconnecting,params=>request(AGENT_EXTERNAL_AUTH_SUPPLY,params,8000))) {return}
     if (record.event === 'NOTIFICATION') {
       if (typeof record.method !== 'string') { throw fail() }
       handlers.onNotification?.(record.method, record.params); return
@@ -190,7 +208,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
     void reconnect()
   }
   function openSocket(bearer: string, opened: () => void, unexpected: (statusCode: number) => void): void {
-    const target = openAgentControlExec({ origin: env.origin, namespace: config.namespace, podName: config.expected.podName,
+    const target = openExec({ origin: env.origin, namespace: config.namespace, podName: config.expected.podName,
       container: config.container, bootstrapSha256: config.bootstrapSha256, ca: env.ca, timeoutMs: config.timeoutMs }, bearer)
     socket = target; handshake = false; socketClosed = false
     channel = createExecChannelDecoder(line => {
@@ -226,6 +244,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       const observed = await env.authenticate({ podBearer: check.podBearer, expected: config.expected }, signal)
       if (observed.pod.uid !== config.expected.podUid) { return 'FINAL' }
       pod = observed;managedAuthCapable=managedCodexAuthRefreshSupported(Reflect.get(record.hello as object,'capabilities'))
+      turnProcessesCapable = supportsTurnProcesses(Reflect.get(record.hello as object, 'capabilities')); terminalCapable = supportsAgentTerminal(Reflect.get(record.hello as object, 'capabilities'))
+      externalAuthCapable=supportsExternalAuth(Reflect.get(record.hello as object,'capabilities'));historyCapable=supportsNativeHistoryEvidence(Reflect.get(record.hello as object,'capabilities'))
       if(check.gap) {
         cursor.quarantine(check.gap)
       }
@@ -247,7 +267,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
       for (const bytes of queued.splice(0)) { rawWrite(socket, bytes) }
       sinceAck = 0
       if(env.journal && cursor.gapThrough===null) {try { write({ hostAck: cursor.durable }) } catch { /* the next frame acknowledges */ }}
-      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, ...authControl })); start = null
+      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable), ...authControl, ...terminalControl, turnProcesses })); start = null
       return
     }
     queued.length = 0
@@ -265,8 +285,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
         if (signal.aborted) { cancelled(); return }
         try {
           openSocket(bearer, () => {
-            try { const source=config.policy.provider!=='claude'?env.readManagedCredential?.():undefined
-              write({ method: 'INITIALIZE', policy: source?{...config.policy,codexAuth:source.authJson,managedCredential:source}:config.policy, ...(env.termOnInitialize ? { term: env.controllerTerm() } : {}) }) }
+            try {write({method:'INITIALIZE',policy:initializeAgentAuthPolicy(config.policy,!!env.readManagedAccess,env.readManagedCredential),
+              ...(env.termOnInitialize?{term:env.controllerTerm()}:{})})}
             catch { failure() }
           }, () => failure())
         } catch { failure() }
@@ -284,7 +304,11 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment) {
         start = { resolve: value => resolve(value as AdoptedAgentControl), reject }
         socketClosed = true
         void (async()=>{
-          await cursor.restore(controlId,journaledSeq,item=>handlers.onNotification?.(String(item.method),item.params))
+          await cursor.restore(controlId,journaledSeq,async item=>{
+            if (item.event === 'PTY_OUTPUT' || item.event === 'PTY_EXIT') {
+              await env.onTerminalFrame?.(readAgentTerminalFrame(item, controlId))
+            } else { handlers.onNotification?.(String(item.method),item.params) }
+          })
           await reconnect()
         })().catch(()=>failure('JOURNAL'))
       })

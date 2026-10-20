@@ -18,6 +18,7 @@ export type DurableStructuredCancelCall = DurableStructuredCall & Readonly<{
 export type DurableStructuredCancelOutcome =
   | Extract<MutationOutcome, { status: 'UNCERTAIN' }>
   | (Exclude<MutationOutcome, { status: 'UNCERTAIN' }> & Readonly<{
+      sessionId: string
       wireResult: AgentSessionMutationResult<AgentSessionCancelResult>
     }>)
 
@@ -100,5 +101,5 @@ export async function cancelDurableStructuredTurn(call: DurableStructuredCancelC
       value: { turnId, cancelled } }
   })
   if (outcome.status === 'UNCERTAIN') { return outcome }
-  return Object.freeze({ ...outcome, wireResult: storedWire(outcome.receipt.response, outcome.status === 'REPLAYED', turnId) })
+  return Object.freeze({ ...outcome, sessionId: alias.sessionId, wireResult: storedWire(outcome.receipt.response, outcome.status === 'REPLAYED', turnId) })
 }

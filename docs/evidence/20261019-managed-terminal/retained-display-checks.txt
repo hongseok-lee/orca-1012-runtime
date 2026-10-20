@@ -1,0 +1,19 @@
+Root direct implementation: retained terminal display / Pod-independent mobile lease
+
+Actual isolated PostgreSQL integration: PASS 1 / FAIL 0.
+- Public managed terminal.read uses retained control frames with no runtime lookup.
+- Runtime ABSENT still returns completed output and the same logical line cursor.
+- UTF-8 split across frames and separate reads reconstructs Korean correctly.
+- clearBuffer clears bounded display projection, preserves all source frames and cursor.
+- Later output remains pageable; foreign workspace access is rejected.
+- Mobile input-only subscription in raw view holds without runtime lookup and releases on abort.
+- 130 additional output frames cross the bounded 128-row batch with numeric source ordering.
+- Explicit unknown control resync gap is rejected instead of returning fabricated empty output.
+Changed-source lint: 6 files, 0 warnings / 0 errors.
+
+Migration032 applied only to owned fixture database. Provider/Pod/physical runtime is synthetic.
+No production migration, deployment, UI screenshot or full typecheck performed.
+This is retained stream output, not an ANSI screen snapshot. Screen reads explicitly refuse.
+Raw binary streams still require their live pinned PTY. Their Pod0 continuity, clearBuffer
+notification/snapshot integration, ACK/multiplex and viewport restoration remain unfinished.
+Projection preserves bounded display state and immutable source journal separately.

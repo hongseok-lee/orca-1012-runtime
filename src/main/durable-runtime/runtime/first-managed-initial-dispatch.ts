@@ -21,7 +21,7 @@ import { createFirstManagedInitialAgentPodExecution, createInitialAgentPodLookup
 import type { InitialAgentPodExecutionResult } from './initial-agent-pod-execution.ts'
 import { recordInitialAgentResourceProfile } from './initial-agent-resource-profile.ts'
 import type { createInitialCodexExecutor } from './initial-codex-executor.ts'
-import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts'
+import type { TerminalInputCommittedSink, TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
 
 export type FirstManagedInitialDispatchConfig = Readonly<{
   pool: Pool; policy: unknown; request: unknown; policyRevision: string
@@ -34,6 +34,7 @@ export type FirstManagedInitialDispatchConfig = Readonly<{
   rewake?: boolean
   cold?: ReturnType<typeof createInitialCodexExecutor> & Readonly<{
     onTerminalInputCommitted?: TerminalInputCommittedSink
+    currentTerminalRuntime?: TerminalRuntimeLookup
     assertOutputAvailable?(): void
     close?(): Promise<void>
     adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
@@ -87,6 +88,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
   https?: AgentPodCreateHttps, collectorDependencies?: ManagedLeafCollectorDependencies): Readonly<Callbacks & {
     snapshot(): FirstManagedInitialDispatchSnapshot
     onTerminalInputCommitted?: TerminalInputCommittedSink
+    currentTerminalRuntime?: TerminalRuntimeLookup
     assertOutputAvailable?(): void
     adoptRuntimes?: ControllerPassRequest['adoptRuntimes']
     ownsSession?(sessionId: string): boolean
@@ -252,6 +254,7 @@ export function createFirstManagedInitialDispatch(original: FirstManagedInitialD
   }
   return Object.freeze({ ...callbacks,
     onTerminalInputCommitted: cold?.onTerminalInputCommitted?.bind(cold),
+    currentTerminalRuntime: cold?.currentTerminalRuntime?.bind(cold),
     assertOutputAvailable: cold?.assertOutputAvailable?.bind(cold),
     adoptRuntimes: cold?.adoptRuntimes?.bind(cold),
     ownsSession: (sessionId: string) => cold?.ownsSession?.(sessionId) ?? false,

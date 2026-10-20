@@ -24,14 +24,14 @@ export class AgentControlFrameCursor {
   }
   resume():number {return this.durable || this.legacyFloor}
   ack():number|null {return this.journal && this.gapThrough===null?this.durable:null}
-  async restore(controlId:string,fallback:number,notify:(frame:ControlFrame)=>void):Promise<void> {
+  async restore(controlId:string,fallback:number,notify:(frame:ControlFrame)=>void|Promise<void>):Promise<void> {
     this.sequence=fallback
     if(!this.journal) {return}
     const saved=await this.journal.load(controlId)
     this.durable=saved.cursor
     this.legacyFloor=saved.cursor?0:fallback
     if(this.legacyFloor>0 && this.terminalSnapshotSupported) {this.gapThrough=this.legacyFloor}
-    for(const item of saved.notifications) {this.sequence=Number(item.hostSeq);notify(item)}
+    for(const item of saved.notifications) {this.sequence=Number(item.hostSeq);await notify(item)}
     this.sequence=saved.cursor || fallback
   }
   quarantine(gap:{from:number;to:number}):void {

@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-20T02:10:57.515Z",
+  "operationId": "9fdfdbac-6370-4a3c-b167-53c44f49115e",
+  "podUid": "ebbf5067-4b3d-4396-84d9-cc666684552b",
+  "backendRevision": "ca67042f",
+  "controlSha256": "7a3d5872083876ee7709581dcad81359f5de7d296910b2b2dacad4d1260c0104",
+  "auth": {
+    "privateAccessRequestObserved": true,
+    "loginCompletedSuccess": true,
+    "authMode": "chatgptAuthTokens"
+  },
+  "native": {
+    "firstRequestError": "AGENT_NATIVE_REQUEST_UNCONFIRMED",
+    "upstreamReasonRetained": false,
+    "readyVerified": false,
+    "inferenceVerified": false
+  },
+  "operationResult": "WAKE_DEADLINE_EXHAUSTED",
+  "activeAttempt": null,
+  "originalUnknownResent": false
+}

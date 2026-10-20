@@ -1,0 +1,13 @@
+# Account transition and callback preparation
+
+The user identified the previously selected account as rate-limited and authorized use of the current VM login. Read-only comparison confirmed different provider account IDs; the earlier description of an older copy of the **same** login was incorrect. Both JWT expiry values were still in the future. These facts do not establish the precise cause of the earlier HTTP401/native auth callback refusal.
+
+The authorized current login was imported into the backend's previously absent system-default credential file and selected through the authenticated account-selection API. Existing managed accounts and existing Agent owner pins were not overwritten. A fresh public UI Agent received one early input; no manual WAKE was issued. The original failed input was not replayed.
+
+A separate concrete implementation defect was found: first source renewal synchronously read, hashed and copied a 289,166,920-byte native executable inside the bounded native-auth callback. The original durable rotation STARTED at07:27:05.223Z, and executable creation was recorded at07:27:09.379Z. The callback budget is8s. This blocked the backend event loop and consumed the callback budget before native initialization/refresh/close. Exact causality for the concurrent DB_FAILURE has not been proven.
+
+Change1045a6a4 streams and verifies the executable asynchronously, starting once at account-service construction, before a later refresh callback. The private output becomes executable only after exact size/hash validation. Source renewal also reports only bounded stage/category/numeric code/timing/stop-proof metadata; provider error text and tokens are excluded. Controller and callback timeouts were not increased. No repeated OAuth rotation of the unfinished original revision was attempted.
+
+Validation: artifact integrity/yield test1PASS; source-renewal cleanup and sanitized-failure tests2PASS; changed-source lint6 files clean. This is not proof of successful source OAuth renewal. Current VM and backend still have separate credential files: long-term cross-process ownership of imported credentials must not be inferred from a successful access-only login.
+
+The new operation initially remained queued because the controller had stopped at07:27Z while the API remained responsive. Diagnostic SIGUSR2 at11:24:25Z reported STOPPED/PASS/DB_FAILURE. Source publication at11:24:41Z uses the existing watcher to recover the controller; the same original durable input/operation must be observed, not replaced. Actual automatic startup/Stop acceptance is still pending at this checkpoint. Production dual-Serve automatic takeover remains TODO14.

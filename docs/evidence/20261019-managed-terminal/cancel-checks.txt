@@ -1,0 +1,20 @@
+Root direct implementation: durable fixed-target cancellation
+
+Real isolated PostgreSQL integration: PASS 1 / FAIL 0.
+- Pending legacy Stop cancels its original input; duplicate Escape preserves later input.
+- Admitted Stop creates one committed INPUT_CANCEL command before provider effect.
+- Actual Codex driver over synthetic transport emits matching interrupted observation.
+- Synthetic descendant proof is required before message INTERRUPTED / intent CONFIRMED.
+- Duplicate notification and recovery sweep do not issue a second native interrupt.
+- All local migrations, including 031, applied only to the owned fixture database.
+
+Focused Codex cancellation protocol checks: PASS 3 / FAIL 0.
+ACK alone unconfirmed; forged targets refused; old targets cannot stop later descendants.
+
+Changed-source lint: 20 files, 0 warnings / 0 errors.
+This is not a live provider, Agent Pod, physical process stop, or UI result.
+Initial failure: fixture had no PID, so descendant proof correctly stayed unconfirmed.
+Fixture now supplies a synthetic PID with synthetic capture/terminate callbacks.
+Legacy ESC has no target identifier: its first target remains pinned for the connection.
+A different explicit target uses structured cancel; full legacy repeated-gesture parity
+and adopted preexisting turns remain unfinished. No production migration or deployment.

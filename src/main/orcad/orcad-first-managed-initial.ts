@@ -2,7 +2,7 @@ import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/co
 import { isAbsolute, normalize } from 'node:path'
 import type { Pool } from 'pg'
 import { createFirstManagedInitialDispatch } from '../durable-runtime/runtime/first-managed-initial-dispatch.ts'
-import { agentPodFields, agentPodInteger, agentPodText, captureAgentPodPolicy } from '../durable-runtime/runtime/agent-pod-policy.ts'
+import { AgentPodPlanError, agentPodFields, agentPodInteger, agentPodText, captureAgentPodPolicy } from '../durable-runtime/runtime/agent-pod-policy.ts'
 import type { ExecutorId } from '../durable-runtime/runtime/gateway/types.ts'
 import { createFirstManagedBindingOwner } from '../durable-runtime/storage/first-managed-binding-owner.ts'
 import type { FirstManagedBindingOwnerConfig } from '../durable-runtime/storage/first-managed-binding-owner.ts'
@@ -128,6 +128,7 @@ export function prepareOrcadFirstManagedInitial(original: OrcadControllerConfig,
     return Object.freeze({ ...dispatch, verifyFirstBinding: bindingOwner.verifyFirstBinding })
   } catch (error) {
     if (error instanceof OrcadControllerConfigurationError) { throw error }
+    if (error instanceof AgentPodPlanError) { return deny(`CONTROLLER_FIRST_MANAGED_${error.code}`) }
     return deny()
   }
 }

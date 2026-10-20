@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import {createNativeHistoryObserver} from './native-history-observer.ts'
+import {agentControlReaders,nativeHistoryReader,supportsNativeHistoryEvidence,NATIVE_HISTORY_EVIDENCE_CAPABILITY} from './agent-control-readers.ts'
+import type {NativeSessionCheckpoint} from './native-session-checkpoint.ts'
+
+test('live input history promotion and later loss are recorded separately; failed commits remain retryable',async()=>{
+  let checkpoint:NativeSessionCheckpoint={state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread'}
+  let owned=true,commit=true
+  const recorded:string[]=[]
+  const observer=createNativeHistoryObserver('thread',async()=>checkpoint,()=>owned,async value=>{
+    recorded.push(value.state);return commit
+  })
+  await observer.observe()
+  checkpoint={state:'FOUND',provider:'codex',nativeSessionRef:'thread'}
+  commit=false;await observer.observe()
+  commit=true;await Promise.all([observer.observe(),observer.observe()])
+  checkpoint={state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread'}
+  await observer.observe()
+  assert.deepEqual(recorded,['PROVISIONAL','FOUND','FOUND','PROVISIONAL'])
+  checkpoint={state:'FOUND',provider:'codex',nativeSessionRef:'foreign'}
+  await assert.rejects(observer.observe(),/NATIVE_HISTORY_IDENTITY_MISMATCH/)
+  owned=false;await observer.observe()
+  assert.equal(recorded.length,4)
+})
+
+test('native disk reads remain available after opening while mount qualification stays closed',async()=>{
+  let connected=true,opened=false,calls=0
+  const readers=agentControlReaders(async method=>{
+    calls++
+    if(method==='MOUNT_PROBE') {return {output:'mount'}}
+    return {state:'FOUND',provider:'codex',nativeSessionRef:'thread'}
+  },()=>connected,'codex',()=>{},()=>connected&&!opened)
+  assert.equal(await readers.readMountProbe(),'mount')
+  opened=true
+  assert.equal((await readers.readNativeSession()).state,'FOUND')
+  await assert.rejects(readers.readMountProbe(),/AGENT_CODEX_CONTROL_UNCONFIRMED/)
+  connected=false
+  await assert.rejects(readers.readNativeSession(),/AGENT_CODEX_CONTROL_UNCONFIRMED/)
+  assert.equal(calls,2)
+})
+
+test('ownership lost during authenticated read cannot publish history evidence',async()=>{
+  let owned=true,records=0
+  const observer=createNativeHistoryObserver('thread',async()=>{
+    owned=false;return {state:'FOUND',provider:'codex',nativeSessionRef:'thread'}
+  },()=>owned,async()=>{records++;return true})
+  await observer.observe()
+  assert.equal(records,0)
+})
+
+test('legacy host FOUND is not accepted as persisted history; capability loss during read is rejected',async()=>{
+  let capability:unknown=[],reads=0,drop=false
+  const read=nativeHistoryReader(async()=>{
+    reads++;if(drop) {capability=[]}
+    return {state:'FOUND',provider:'codex',nativeSessionRef:'thread'}
+  },()=>supportsNativeHistoryEvidence(capability))
+  await assert.rejects(read(),/NATIVE_HISTORY_EVIDENCE_UNSUPPORTED/)
+  assert.equal(reads,0)
+  capability=[NATIVE_HISTORY_EVIDENCE_CAPABILITY]
+  assert.equal((await read()).state,'FOUND')
+  drop=true
+  await assert.rejects(read(),/NATIVE_HISTORY_EVIDENCE_UNSUPPORTED/)
+})
+
+test('authenticated decoder preserves input-free generation evidence and refuses an invalid generation',async()=>{
+  let value:unknown={state:'UNBOUND',provider:'codex',generation:'base',previousNativeSessionRef:'old',inputState:'NOT_STARTED'}
+  const readers=agentControlReaders(async()=>value,()=>true,'codex',()=>{})
+  assert.deepEqual(await readers.readNativeSession(),value)
+  value={state:'PROVISIONAL',provider:'codex',nativeSessionRef:'thread',generation:'base',inputState:'NOT_STARTED'}
+  assert.deepEqual(await readers.readNativeSession(),value)
+  value={...value as object,generation:'../../foreign'}
+  await assert.rejects(readers.readNativeSession(),/AGENT_CODEX_CONTROL_UNCONFIRMED/)
+})

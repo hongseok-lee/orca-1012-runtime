@@ -6,17 +6,20 @@ import { join } from 'node:path'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils.ts'
 import type { InitialProviderPaths } from './initial-provider-paths.ts'
 
-export type CodexNativeArtifact = Readonly<NativeFileIdentity & { codeModeHost?: NativeFileIdentity; sandboxBwrap?:NativeFileIdentity }>
+export type CodexNativeArtifact = Readonly<NativeFileIdentity & { codeModeHost?: NativeFileIdentity; sandboxBwrap?:NativeFileIdentity;
+  terminal?: Readonly<{ platform: 'linux'; arch: string; nodeAbi: string; runtime: NativeFileIdentity; addon: NativeFileIdentity }> }>
 
 /** Private Agent-side COLD preparation. Construction is inert. begin/append/
  * finish are reachable only from the original backend permit callback AFTER
  * grant COMMIT; they write only this owned protected HOME, never /shared.
  * A 289 MB native executable is streamed, not retained in the 64 MiB /tmp. */
 export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativeArtifact, codexAuth: string,
-  paths: InitialProviderPaths, provider: 'codex' | 'claude' = 'codex', credential?: ManagedCodexCredential) {
+  paths: InitialProviderPaths, provider: 'codex' | 'claude' = 'codex', credential?: ManagedCodexCredential, externalAuth=false) {
   if (!/^[0-9a-f]{64}$/.test(artifact.sha256) || !Number.isSafeInteger(artifact.byteLength) || artifact.byteLength < 1 ||
       typeof codexAuth !== 'string' || Buffer.byteLength(codexAuth) > 1024 * 1024 ||
       provider === 'claude' && codexAuth !== '') { throw new Error('AGENT_COLD_PREPARATION_POLICY') }
+  if (artifact.terminal && (artifact.terminal.platform !== process.platform || artifact.terminal.arch !== process.arch ||
+      artifact.terminal.nodeAbi !== process.versions.modules)) { throw new Error('AGENT_TERMINAL_NATIVE_ABI') }
   // Claude's OAuth token reaches the native process only through its launch env.
   const native = provider, stateDirectory = provider === 'codex' ? '.codex' : '.claude'
   let phase: 'UNUSED' | 'WRITING' | 'READY' | 'FAILED' = 'UNUSED'
@@ -68,6 +71,10 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
         if(provider!=='codex') {throw new Error('AGENT_COLD_COMPANION_PROVIDER')}
         files.set('codex-resources/bwrap',createNativeArtifactFile(directory,'codex-resources/bwrap',artifact.sandboxBwrap,rootCurrent,existing))
       }
+      if (artifact.terminal) {
+        files.set('terminal-runtime.cjs', createNativeArtifactFile(directory, 'terminal-runtime.cjs', artifact.terminal.runtime, rootCurrent, existing))
+        files.set('terminal-pty.node', createNativeArtifactFile(directory, 'terminal-pty.node', artifact.terminal.addon, rootCurrent, existing))
+      }
       for(const file of files.values()) {file.begin()}
       phase = 'WRITING'
     },
@@ -84,8 +91,8 @@ export function createAgentCodexPreparation(rootFd: number, artifact: CodexNativ
       if(phase!=='WRITING' || !files) {phase='FAILED';throw new Error('AGENT_COLD_ARTIFACT_INCOMPLETE')}
       phase='FAILED'
       // All files must authenticate before COLD; companion publishes first.
-      for(const name of ['codex-code-mode-host','codex-resources/bwrap',native]) {files.get(name)?.finish()}
-      if (provider === 'claude') { rootCurrent(); phase = 'READY'; return }
+      for(const name of ['codex-code-mode-host','codex-resources/bwrap','terminal-pty.node','terminal-runtime.cjs',native]) {files.get(name)?.finish()}
+      if (provider === 'claude' || externalAuth) { rootCurrent(); phase = 'READY'; return }
       // Authentication text is private data. It is never hashed or printed.
       try { const parsed: unknown = JSON.parse(codexAuth); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { throw new Error('AGENT_COLD_AUTH_SHAPE') } }
       catch { throw new Error('AGENT_COLD_AUTH_INVALID') }

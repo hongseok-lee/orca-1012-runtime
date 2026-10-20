@@ -1,8 +1,15 @@
+import { agentTurnProcesses, TURN_PROCESSES_CAPABILITY, CAPTURE_TURN_PROCESSES, STOP_TURN_PROCESSES } from './agent-turn-processes.ts'
+import {nativeRequestFailure} from './native-request-failure.ts'
+import {createAgentExternalAuthBridge,AGENT_EXTERNAL_AUTH_CAPABILITY,AGENT_EXTERNAL_AUTH_SUPPLY,AGENT_EXTERNAL_AUTH_STATUS} from './agent-external-auth.ts'
+import {createExternalCodexAuth} from './external-codex-auth.ts'
 import { captureManagedCodexCredential,supplyProtectedManagedCodexCredential } from './managed-codex-credential-supply.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import { readProtectedManagedCodexAuth } from './managed-codex-auth-file.ts'
 import { MANAGED_CODEX_AUTH_REFRESH_CAPABILITY, MANAGED_CODEX_AUTH_REFRESH_METHOD, handleManagedCodexAuthRefresh, createResidentManagedCodexAuthRefresh } from './managed-codex-auth-refresh.ts'
-import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch } from './native-session-checkpoint.ts'
+import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch, initializeNativeInputBoundary, markNativeInputEntered } from './native-session-checkpoint.ts'
+import {NATIVE_HISTORY_EVIDENCE_CAPABILITY} from './agent-control-readers.ts'
+import {nativeInitializationProof} from './native-initialization-proof.ts'
+import {rotateNativeInitialization} from './native-initialization-rotation.ts'
 import { randomUUID } from 'node:crypto'
 import { constants, openSync, fstatSync, closeSync, readFileSync, lstatSync } from 'node:fs'
 import { isDeepStrictEqual } from 'node:util'
@@ -20,6 +27,8 @@ import type { CodexNativeArtifact } from './agent-codex-preparation.ts'
 import type { InitialProviderPaths } from './initial-provider-paths.ts'
 import { AGENT_CLAUDE_METHODS, openAgentClaudeNative } from './agent-claude-native.ts'
 import type { AgentNativeConnection } from './agent-claude-native.ts'
+import { createAgentTerminalControl } from './agent-terminal-control.ts'
+import { AGENT_TERMINAL_CAPABILITY, isAgentTerminalMethod } from './agent-terminal-protocol.ts'
 
 type Launch = Parameters<CodexProtocolDependencies['open']>[0]
 /** Installed by trusted deployment/bootstrap composition, not decoded from a
@@ -32,6 +41,7 @@ export type AgentCodexControlPolicy = Readonly<{
   nativeArtifact: CodexNativeArtifact
   codexAuth: string
   managedCredential?: ManagedCodexCredential
+  externalAuth?: boolean
   bindChallenge: string
   paths: InitialProviderPaths
 }>
@@ -54,6 +64,10 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   let coldUsed = false, stopping = false, uncertain = false
   const root = policy.protectedRoot
   const paths = policy.paths
+  if(policy.externalAuth&&(provider!=='codex'||policy.codexAuth!==''||policy.managedCredential||
+    JSON.stringify(policy.launch.args.slice(-3))!==JSON.stringify(['-c','cli_auth_credentials_store="ephemeral"','app-server']))) {throw new Error('AGENT_EXTERNAL_AUTH_POLICY')}
+  const accessBridge=createAgentExternalAuthBridge(event=>send({...event,controlId}))
+  const externalAuth=policy.externalAuth?createExternalCodexAuth({connection:()=>connection as CodexAppServerConnection|null,readAccess:accessBridge.read}):null
   let selectedCredential=policy.managedCredential
   const refreshManagedAuth=createResidentManagedCodexAuthRefresh(()=>connection,()=>selectedCredential?JSON.stringify([selectedCredential.accountId,selectedCredential.revision]):readProtectedManagedCodexAuth(paths.home),()=>selectedCredential?.expectedEmail)
   if (root !== '/agent' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(paths.agentId) ||
@@ -68,7 +82,21 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const fd = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW)
   const stat = fstatSync(fd)
   if (!stat.isDirectory()) { closeSync(fd); throw new Error('AGENT_CODEX_PROTECTED_ROOT') }
-  const preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential)
+  let preparation: ReturnType<typeof createAgentCodexPreparation>
+  try { preparation = createAgentCodexPreparation(fd, policy.nativeArtifact, policy.codexAuth, paths, provider,policy.managedCredential,policy.externalAuth) }
+  catch (error) { closeSync(fd); throw error }
+  const terminal = policy.nativeArtifact.terminal ? createAgentTerminalControl({ home: paths.home, cwd: paths.checkout,
+    env: { ...process.env, ...policy.launch.env } as Record<string, string>, artifact: policy.nativeArtifact.terminal,
+    assertCurrent() {
+      if (phase !== 'READY' || uncertain || stopping) { throw new Error('AGENT_TERMINAL_GATE') }
+      const held = fstatSync(fd), named = lstatSync(root)
+      if (held.dev !== stat.dev || held.ino !== stat.ino || named.dev !== held.dev || named.ino !== held.ino || named.isSymbolicLink()) {
+        throw new Error('AGENT_TERMINAL_ROOT_CHANGED')
+      }
+    },
+    send(frame) { send({ ...frame, controlId }) }
+  }) : null
+  const turnProcesses = agentTurnProcesses()
   const seen = new Set<string>()
   let resolveClosed!: () => void
   const closed = new Promise<void>(resolve => { resolveClosed = resolve })
@@ -84,7 +112,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   function response(id: string, value: unknown): void { send({ id, controlId, result: value }) }
   function failure(id: string, code: string): void { send({ id, controlId, error: { code } }) }
   function releaseRoot(): void {
-    preparation.close(); closeSync(fd); clearInterval(retained); reader.close(); phase = 'STOPPED'; resolveClosed()
+    accessBridge.close(); preparation.close(); closeSync(fd); clearInterval(retained); reader.close(); phase = 'STOPPED'; resolveClosed()
   }
   output.on('error', () => { uncertain = true; phase = 'UNCONFIRMED' })
   reader.on('close', () => {
@@ -99,11 +127,10 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
-    capabilities:provider==='codex'?[MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[] })
+    capabilities:[NATIVE_HISTORY_EVIDENCE_CAPABILITY,...(provider==='codex'?[TURN_PROCESSES_CAPABILITY]:[]),...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
-    serial = serial.then(async () => {
       let request: Record<string, unknown>
       try {
         if (Buffer.byteLength(line) > 1024 * 1024) { throw new Error('FRAME_SIZE') }
@@ -116,13 +143,21 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         uncertain = true; phase = 'UNCONFIRMED'; return
       }
       seen.add(id)
+      if(request.method===AGENT_EXTERNAL_AUTH_SUPPLY) {
+        if(!externalAuth||stopping||uncertain) {failure(id,'AGENT_EXTERNAL_AUTH_UNAVAILABLE');return}
+        try {response(id,{accepted:accessBridge.supply(request.params)})}
+        catch {failure(id,'AGENT_EXTERNAL_AUTH_UNCONFIRMED')}
+        return
+      }
+    serial = serial.then(async () => {
       if (stopping) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
       if (request.method === 'CLOSE') {
         stopping = true; phase = 'STOPPING'
+        try { terminal?.requestClose() } catch { /* physical stop remains required */ }
         // A lost native request can still be reconciled with the ORIGINAL
         // connection's owned process proof. It never permits another COLD.
         const stopped = connection ? await connection.close() : !coldUsed
-        if (!stopped) { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_STOP_UNCONFIRMED'); return }
+        if (!stopped || terminal?.requiresPhysicalStop()) { uncertain = true; phase = 'UNCONFIRMED'; failure(id, 'AGENT_STOP_UNCONFIRMED'); return }
         response(id, { stopped: true, controlId }); releaseRoot(); return
       }
       if (uncertain) { failure(id, 'AGENT_CONTROL_UNCONFIRMED'); return }
@@ -154,8 +189,13 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
           failure(id, 'AGENT_COLD_POLICY'); return
         }
         const priorNative=readNativeSessionCheckpoint(paths.home,provider)
+        const initialization=nativeInitializationProof(priorNative)
+        if(!isDeepStrictEqual(request.initialization??null,initialization)) {failure(id,'NATIVE_INITIALIZATION_CHANGED');return}
         if(priorNative.state==='UNKNOWN') {failure(id,'NATIVE_IDENTITY_UNCONFIRMED');return}
+        if((priorNative.state==='PROVISIONAL'||priorNative.state==='UNBOUND')&&!initialization) {failure(id,'NATIVE_HISTORY_NOT_PERSISTED');return}
         const launch=provider==='claude' && priorNative.state==='FOUND' ? claudeResumeLaunch(policy.launch,priorNative.nativeSessionRef) : policy.launch
+        if(initialization) {rotateNativeInitialization(paths.home,initialization)}
+        if(provider==='codex'&&priorNative.state==='NONE') {initializeNativeInputBoundary(paths.home)}
         markNativeEntered(paths.home)
         coldUsed = true; phase = 'OPENING'
         if (provider === 'claude') {
@@ -170,7 +210,8 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
               },
               onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId, provider }) },
             })
-            phase = 'READY'; response(id, { nativePid: connection.pid })
+            if(externalAuth) {await externalAuth.initialize()}
+          phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
           } catch (error) {
             // Pod-local diagnostic only (host log); the backend still sees the fixed code.
             process.stderr.write(`AGENT_CLAUDE_COLD_FAILED ${error instanceof Error ? error.message.slice(0, 400) : 'unknown'}\n`)
@@ -180,13 +221,14 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         }
         let codex: CodexAppServerConnection | null = null
         try {
-          connection = codex = await openCodexAppServerConnection(policy.launch, {
+          connection = codex = await openCodexAppServerConnection({...policy.launch,...(externalAuth?{envToDelete:['OPENAI_API_KEY','CODEX_API_KEY','CODEX_ACCESS_TOKEN']}:{})}, {
             onNotification: (method, params) => send({ event: 'NOTIFICATION', controlId, method, params }),
-            onServerRequest: pending => codex?.respondWithError(pending.id, -32000,
-              'Durable Codex driver does not support this reply channel'),
+            onServerRequest: pending => {if(!externalAuth?.handle(pending)) {codex?.respondWithError(pending.id, -32000,
+              'Durable Codex driver does not support this reply channel')}},
             onExit: () => { uncertain = true; phase = 'UNCONFIRMED'; send({ event: 'NATIVE_EXIT', controlId }) },
           })
-          phase = 'READY'; response(id, { nativePid: connection.pid })
+          if(externalAuth) {await externalAuth.initialize()}
+          phase = 'READY'; await terminal?.openDuringCold(); response(id, { nativePid: connection.pid })
         } catch (error) {
           // Initialization may fail without a proven process-tree exit. Keep
           // the original owned handle so CLOSE can reconcile THAT process;
@@ -196,9 +238,26 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
         }
         return
       }
+      if (isAgentTerminalMethod(request.method)) {
+        if (!terminal) { failure(id, 'AGENT_TERMINAL_UNSUPPORTED'); return }
+        try { response(id, terminal.request(request.method, request.params)) }
+        catch { failure(id, 'AGENT_TERMINAL_UNCONFIRMED') }
+        return
+      }
+      if(request.method===AGENT_EXTERNAL_AUTH_STATUS) {
+        response(id,{ready:!!externalAuth?.ready()&&phase==='READY'&&!uncertain&&!stopping});return
+      }
       if(request.method===MANAGED_CODEX_AUTH_REFRESH_METHOD) {
+        if(externalAuth) {failure(id,'AGENT_EXTERNAL_AUTH_REQUIRED');return}
         response(id,await handleManagedCodexAuthRefresh({provider,phase,connection,params:request.params,refresh:refreshManagedAuth,applyCredential:value=>{const source=captureManagedCodexCredential(value);
           supplyProtectedManagedCodexCredential(paths.home,source,()=>{const held=fstatSync(fd),named=lstatSync(root);if(held.dev!==stat.dev||held.ino!==stat.ino||named.dev!==held.dev||named.ino!==held.ino||named.isSymbolicLink()){throw new Error('AGENT_MANAGED_CREDENTIAL_ROOT')}});selectedCredential=source}}));return
+      }
+      if (request.method === CAPTURE_TURN_PROCESSES || request.method === STOP_TURN_PROCESSES) {
+        if (provider !== 'codex' || !connection?.pid || phase !== 'READY') { failure(id, 'AGENT_TURN_PROCESS_UNAVAILABLE'); return }
+        try { response(id, request.method === CAPTURE_TURN_PROCESSES
+          ? await turnProcesses.capture(connection.pid) : await turnProcesses.stop(connection.pid, request.params)) }
+        catch { failure(id, 'AGENT_TURN_PROCESS_UNCONFIRMED') }
+        return
       }
       if (!connection || phase !== 'READY' || typeof request.method !== 'string' || !nativeMethods.has(request.method)) {
         failure(id, 'AGENT_NATIVE_METHOD'); return
@@ -206,14 +265,15 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
       try {
         const params = request.params
         if (!params || typeof params !== 'object' || Array.isArray(params)) { failure(id, 'AGENT_NATIVE_PARAMS'); return }
+        if(provider==='codex'&&request.method==='turn/start') {markNativeInputEntered(paths.home,Reflect.get(params,'threadId'))}
         const result=await connection.request(request.method,params as Record<string,unknown>)
         if(provider==='codex' && ['thread/start','thread/resume'].includes(request.method) && result && typeof result==='object') {
           const thread=Reflect.get(result,'thread'),native=thread && typeof thread==='object'?Reflect.get(thread,'id'):null
           if(typeof native!=='string') {throw new Error('NATIVE_THREAD_RESPONSE')}
-          recordNativeSessionCheckpoint(paths.home,'codex',native)
+          recordNativeSessionCheckpoint(paths.home,'codex',native,typeof Reflect.get(thread,'path')==='string'?Reflect.get(thread,'path'):undefined)
         }
         response(id,result)
-      } catch { failure(id, 'AGENT_NATIVE_REQUEST_UNCONFIRMED') }
+      } catch(error) { send({id,controlId,error:{code:'AGENT_NATIVE_REQUEST_UNCONFIRMED',method:request.method,...nativeRequestFailure(error)}}) }
     }).catch(() => { uncertain = true; phase = 'UNCONFIRMED' })
   })
   return Object.freeze({ phase: () => phase, closed })

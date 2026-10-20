@@ -1,9 +1,13 @@
+import { createCatalogTerminalInventory } from './terminal-inventory.ts'
+import { captureCatalogReadContext } from './context.ts'
+import { createCatalogTerminalDisplay } from './terminal-display.ts'
+import { createTerminalRawSubscriptions } from './terminal-raw-subscriptions.ts'
 import { createCatalogBrowserCreateRpc } from './browser-create.ts'
 import { createCatalogBrowserStreamRecovery } from './browser-stream-recovery.ts'
 import { createCatalogClipboardRpc, type CatalogClipboardMethod } from './clipboard.ts'
 import { createCatalogTerminalSendRpc } from './terminal-send.ts'
 import { createCatalogTerminalLeaseSubscribe } from './terminal-lease-subscribe.ts'
-import type { TerminalInputCommittedSink } from '../input/runtime-input-types.ts'
+import type { TerminalInputCommittedSink, TerminalRuntimeLookup } from '../input/runtime-input-types.ts'
 import { createCatalogStructuredRpc, type CatalogStructuredCreateMethod } from './structured-create.ts'
 import { createCatalogStructuredHistoryRpc } from './structured-history.ts'
 import { createCatalogStructuredSubscriptions } from './structured-subscriptions.ts'
@@ -37,11 +41,17 @@ export class DurableCatalogReadAdapter {
   private readonly clipboardRpc: ReturnType<typeof createCatalogClipboardRpc> | null
   private readonly terminalSendRpc: ReturnType<typeof createCatalogTerminalSendRpc>
   private readonly terminalLease: ReturnType<typeof createCatalogTerminalLeaseSubscribe>
+  private readonly rawSubscriptions = createTerminalRawSubscriptions()
+  private readonly terminalDisplay: ReturnType<typeof createCatalogTerminalDisplay>
+  private readonly managedProviders: () => readonly ('codex' | 'claude')[]
   private disposed = false
-  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink}) {
+  constructor(config: DurableCatalogReadConfig, options?: {onTerminalInputCommitted?: TerminalInputCommittedSink; terminalRuntime?: TerminalRuntimeLookup; onCancelRequested?: (sessionId: string) => void; managedProviders?: () => readonly ('codex' | 'claude')[]}) {
     this.config = captureDurableCatalogReadConfig(config)
-    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted)
-    this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config)
+    this.managedProviders = options?.managedProviders ?? (() => [])
+    this.terminalDisplay = createCatalogTerminalDisplay(this.config)
+    const raw = this.rawSubscriptions
+    this.terminalSendRpc = createCatalogTerminalSendRpc(this.config, options?.onTerminalInputCommitted, raw, options?.onCancelRequested)
+    this.terminalLease = createCatalogTerminalLeaseSubscribe(this.config, options?.terminalRuntime, raw)
     this.clipboardRpc = this.config.attachments === undefined ? null : createCatalogClipboardRpc(this.config, this.config.attachments)
     this.subscriptions = new CatalogReadSubscriptions(this.config)
     this.metadata = createCatalogMetadataFacade(this.config)
@@ -52,7 +62,7 @@ export class DurableCatalogReadAdapter {
     this.browserCreate = createCatalogBrowserCreateRpc(this.config)
     this.browserStream = createCatalogBrowserStreamRecovery(this.config, () => this.requireOpen())
     this.structuredSend = createCatalogStructuredSendRpc(this.config)
-    this.structuredCancel = createCatalogStructuredCancelRpc(this.config)
+    this.structuredCancel = createCatalogStructuredCancelRpc(this.config, options?.onCancelRequested)
     this.structuredHolds = createCatalogStructuredHolds(this.config)
   }
   bind(methods: readonly RpcAnyMethodDeclaration[]): readonly RpcAnyMethodDeclaration[] { return bindDurableCatalogReadMethods(methods, this) }
@@ -66,6 +76,20 @@ export class DurableCatalogReadAdapter {
   async sendTerminal(params: unknown, context: RpcContext,
     legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
     try { this.requireOpen(); return await this.terminalSendRpc(params, context, legacy) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
+  detectManagedAgents(context: RpcContext): readonly string[] {
+    this.requireOpen()
+    captureCatalogReadContext(this.config, context)
+    return [...this.managedProviders()]
+  }
+  async listTerminals(params: unknown, context: RpcContext): Promise<unknown> {
+    try { this.requireOpen(); return await createCatalogTerminalInventory(this.config)(params, context) }
+    catch (error) { throw catalogReadFailure(error) }
+  }
+  async displayTerminal(method: string, params: unknown, context: RpcContext,
+    legacy: (params: never, context: RpcContext) => unknown): Promise<unknown> {
+    try { this.requireOpen(); return await this.terminalDisplay(method, params, context, legacy) }
     catch (error) { throw catalogReadFailure(error) }
   }
   async subscribeTerminal(params: unknown, context: RpcContext, emit: (frame: unknown) => void,
@@ -147,6 +171,7 @@ export class DurableCatalogReadAdapter {
   dispose(): void {
     if (this.disposed) { return }
     this.disposed = true
+    this.rawSubscriptions.dispose()
     this.browserStream.dispose()
     try { this.subscriptions.dispose() } finally {
       try { this.structuredSubscriptions.dispose() } finally { this.structuredHolds.dispose() }

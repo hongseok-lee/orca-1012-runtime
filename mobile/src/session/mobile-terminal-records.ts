@@ -23,6 +23,8 @@ export type MobileTerminalSessionTab = {
   terminal: string | null
   agentStatus?: AgentStatusEntry | null
   nativeChatSession?: RuntimeTerminalNativeChatSession
+  durableChatSession?: RuntimeTerminalNativeChatSession
+  viewMode?: 'terminal' | 'chat'
   /** Host-provided launch context still parked as an unsent TUI-input draft. */
   launchDraft?: string
   launchDraftCreatedAt?: number
@@ -129,11 +131,14 @@ function mobileSessionTabEqual(
         a.leafId === b.leafId &&
         a.status === b.status &&
         a.terminal === b.terminal &&
+        a.viewMode === b.viewMode &&
         // A frame whose only delta is the launch draft appearing or retracting
         // still has to reach the chat composer.
         a.launchDraft === b.launchDraft &&
         a.launchDraftCreatedAt === b.launchDraftCreatedAt &&
         JSON.stringify(a.agentStatus ?? null) === JSON.stringify(b.agentStatus ?? null) &&
+        a.durableChatSession?.agent === b.durableChatSession?.agent &&
+        a.durableChatSession?.sessionId === b.durableChatSession?.sessionId &&
         a.nativeChatSession?.agent === b.nativeChatSession?.agent &&
         a.nativeChatSession?.sessionId === b.nativeChatSession?.sessionId &&
         mobileTerminalThemesEqual(a.terminalTheme, b.terminalTheme)

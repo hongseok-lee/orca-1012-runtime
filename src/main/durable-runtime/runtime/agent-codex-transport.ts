@@ -1,3 +1,6 @@
+import type {ManagedCodexAccessReader} from './agent-external-auth.ts'
+import type { AgentTerminalSupply } from './agent-control-native-supply.ts'
+import type { AgentTerminalFrame } from './agent-terminal-protocol.ts'
 import type {ManagedCodexCredential} from '../providers/codex/managed-credential-owner.ts'
 import type { ControlJournal } from './agent-control-journal.ts'
 import { createHash } from 'node:crypto'
@@ -17,11 +20,13 @@ export type { AdoptedAgentControl, AgentControlIdentity, AuthenticatedAgentContr
 
 export type AgentCodexTransportConfiguration = Readonly<{
   readManagedCredential?():ManagedCodexCredential
+  readManagedAccess?:ManagedCodexAccessReader
   journal?: ControlJournal
   apiOrigin: string; ca: Uint8Array; namespace: string; container: string; timeoutMs: number
   bootstrapSha256: string
   bootstrapBytes: Uint8Array
   nativeBwrapFile?: string
+  terminalSupply?: AgentTerminalSupply
   nativeCompanionFile?: string
   nativeArtifactFile: string
   expected: KubernetesPodAuthExpected
@@ -34,6 +39,7 @@ export type AgentCodexTransportConfiguration = Readonly<{
   /** How long a handed-over control may stay detached while this process
    * re-attaches before it is reported lost. Defaults to timeoutMs. */
   onProviderChildExit?(exit:Readonly<{controlId:string;hostSeq:number}>):Promise<void>
+  onTerminalFrame?(frame: AgentTerminalFrame): void | Promise<void>
   reconnectBudgetMs?: number
 }>
 const issued = new WeakSet<AuthenticatedAgentControl>()
@@ -53,9 +59,13 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
   const artifact = Buffer.from(original.bootstrapBytes)
   const config = immutableSnapshot({ apiOrigin: original.apiOrigin,
     namespace: original.namespace, container: original.container, timeoutMs: original.timeoutMs,
-    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile, nativeCompanionFile:original.nativeCompanionFile, nativeBwrapFile:original.nativeBwrapFile,
+    bootstrapSha256: original.bootstrapSha256, nativeArtifactFile: original.nativeArtifactFile, nativeCompanionFile:original.nativeCompanionFile, nativeBwrapFile:original.nativeBwrapFile, terminalSupply: original.terminalSupply,
     expected: original.expected, policy: original.policy })
   const reviewer = original.readReviewerBearer.bind(original)
+  const terminal = config.policy.nativeArtifact.terminal
+  if (!!terminal !== !!config.terminalSupply || terminal && config.terminalSupply &&
+      (terminal.runtime.byteLength !== config.terminalSupply.runtime.byteLength ||
+       terminal.addon.byteLength !== config.terminalSupply.addon.byteLength)) { throw fail() }
   const reconnectBudgetMs = original.reconnectBudgetMs ?? original.timeoutMs
   if (!Number.isSafeInteger(reconnectBudgetMs) || reconnectBudgetMs < 0 || reconnectBudgetMs > 2_147_483_647) { throw fail() }
   let origin: URL
@@ -64,10 +74,11 @@ export function createAgentCodexTransport(original: AgentCodexTransportConfigura
       !/^[0-9a-f]{64}$/.test(config.bootstrapSha256) || !Number.isSafeInteger(config.timeoutMs) || config.timeoutMs <= 0 ||
       config.timeoutMs > 2_147_483_647 || !/^[a-z0-9-]+$/.test(config.namespace) || !/^[a-z0-9-]+$/.test(config.container)) { throw fail() }
   if (createHash('sha256').update(artifact).digest('hex') !== config.bootstrapSha256) { throw fail() }
-  const environment: AgentControlSessionEnvironment = Object.freeze({readManagedCredential:original.readManagedCredential, config, origin, ca, reconnectBudgetMs, reviewer,
+  const environment: AgentControlSessionEnvironment = Object.freeze({readManagedAccess:original.readManagedAccess,readManagedCredential:original.readManagedCredential, config, origin, ca, reconnectBudgetMs, reviewer,
     journal: original.journal,
     termOnInitialize: !!original.controllerTerm,
     onProviderChildExit:original.onProviderChildExit?.bind(original),
+    onTerminalFrame:original.onTerminalFrame?.bind(original),
     controllerTerm: original.controllerTerm ? original.controllerTerm.bind(original) : () => 0,
     authenticate: original.podAuthenticator.authenticatePod.bind(original.podAuthenticator) })
   let preparedOnce = false, adoptedOnce = false

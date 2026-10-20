@@ -1,3 +1,4 @@
+import { publishTerminalActivity } from '../catalog/terminal-activity.ts'
 import type { Pool } from 'pg'
 import { runDurableTransaction, safeDatabaseError } from '../db/connection.ts'
 import { lockAggregates } from '../db/locks.ts'
@@ -56,6 +57,8 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
   }
   const execute = async (input: CommittedTerminalInput, port: ReadyTerminalInputPort): Promise<void> => {
     assertReady(port)
+    // Recheck when this queued continuation starts, before allocating an effect.
+    if (port.dispatchReady?.() === false) { return }
     const stagedOutcome = await runDurableTransaction(pool, tx => stageTerminalRuntimeInput(tx, input, port))
     if (!stagedOutcome.ok) { throw stagedOutcome.error }
     const staged = stagedOutcome.value
@@ -88,7 +91,7 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
   const pump = (): void => {
     if (closed || launching || active) { return }
     const port = current()
-    if (!port) { return }
+    if (!port || port.dispatchReady?.() === false) { return }
     for (const [key, input] of waiting) {
       if (input.authority.sessionId !== port.binding.sessionId) { continue }
       const target = messageKey(input)
@@ -138,9 +141,11 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
         if (observation.kind === 'ADMITTED') {
           await recordContextDeliveryInTransaction(tx, pending.input.authority, pending.request.context, observation.contextDelivery)
         }
-        return observeInputDeliveryInTransaction(tx, pending.input.authority, {messageId: pending.request.sealed.messageId,
+        const result = await observeInputDeliveryInTransaction(tx, pending.input.authority, {messageId: pending.request.sealed.messageId,
           deliveryAttemptId: pending.request.deliveryAttemptId, runtimeUnitId: binding.runtimeUnitId,
           attemptId: binding.attemptId, podUid: binding.podUid, executionEpoch: binding.executionEpoch}, delivery)
+        await publishTerminalActivity(tx, binding.sessionId)
+        return result
       })
       if (!stored.ok) { throw stored.error }
       notice('OBSERVED')

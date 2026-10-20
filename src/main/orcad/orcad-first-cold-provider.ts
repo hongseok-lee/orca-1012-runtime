@@ -1,3 +1,4 @@
+import {orcadManagedAccountAccess} from './orcad-managed-account-access.ts'
 import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { createAgentControlJournal } from '../durable-runtime/runtime/agent-control-journal.ts'
 import { readCodexNativeDistribution } from './orcad-native-distribution.ts'
@@ -6,6 +7,7 @@ import { fstatSync, createReadStream } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import type { OrcadControllerConfig } from './orcad-controller-config.ts'
+import { readAgentTerminalDistribution } from './orcad-terminal-distribution.ts'
 import { invalidOrcadControllerConfig, parseUniqueOrcadControllerJson, readPrivateOrcadControllerConfigBytes } from './orcad-controller-config.ts'
 import { readOrcadControllerCredential } from './orcad-controller-credential.ts'
 import { agentPodFields, agentPodInteger, agentPodText } from '../durable-runtime/runtime/agent-pod-policy.ts'
@@ -78,9 +80,10 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     const nodeWindow = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'creationWindow')
     // provider: "claude" selects Claude with its OAuth token file in place of the Codex auth file.
     const distribution=parsed!==null&&typeof parsed==='object'&&Object.hasOwn(parsed,'nativeDistributionFile')
+    const hasTerminal = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'terminalDistributionFile')
     const claude = parsed !== null && typeof parsed === 'object' && Object.hasOwn(parsed, 'provider')
     const raw = agentPodFields(parsed,
-      ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256',...(distribution?['nativeDistributionFile']:[]),
+      ['emptyFolderFile','nativeArtifactFile','nativeSha256','nativeByteLength','controlArtifactFile','controlSha256',...(distribution?['nativeDistributionFile']:[]), ...(hasTerminal ? ['terminalDistributionFile'] : []),
         ...(claude ? ['provider', 'claudeTokenFile'] : ['codexAuthFile']),
         'runtimeServiceAccountName','runtimeServiceAccountUid','originalAuditId','pinId','ownerTokenFile','actorId',
         'clusterIdentityRef','projectId','projectNumber','outputSpoolDirectory', ...(nodeWindow ? ['creationWindow'] : ['creationStartTime','creationEndTime']), 'timeoutMs'])
@@ -96,7 +99,11 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       canonicalDirectory: agentPodText(declaration.get('canonicalDirectory')), checkout: '/agent/checkout',
       sourceCheckout: agentPodText(declaration.get('sourceCheckout')) })
     const nativeDistribution=!claude&&distribution?readCodexNativeDistribution(text('nativeDistributionFile'),{file:text('nativeArtifactFile'),sha256:text('nativeSha256'),byteLength:agentPodInteger(raw.get('nativeByteLength'))}):null
+    const terminalDistribution = hasTerminal ? readAgentTerminalDistribution(text('terminalDistributionFile')) : null
     const nativeArtifact = Object.freeze({ sha256: text('nativeSha256'), byteLength: agentPodInteger(raw.get('nativeByteLength')),
+      ...(terminalDistribution ? { terminal: { platform: terminalDistribution.platform, arch: terminalDistribution.arch, nodeAbi: terminalDistribution.nodeAbi,
+        runtime: { sha256: terminalDistribution.runtime.sha256, byteLength: terminalDistribution.runtime.byteLength },
+        addon: { sha256: terminalDistribution.addon.sha256, byteLength: terminalDistribution.addon.byteLength } } } : {}),
       ...(nativeDistribution?{codeModeHost:{sha256:nativeDistribution.host.sha256,byteLength:nativeDistribution.host.byteLength},sandboxBwrap:{sha256:nativeDistribution.bwrap.sha256,byteLength:nativeDistribution.bwrap.byteLength}}:{}) })
     // The control bundle (with the Claude SDK) is larger than a config file; the transport caps it at 4 MiB.
     const bootstrapBytes = readPrivateOrcadControllerConfigBytes(text('controlArtifactFile'), 4 * 1024 * 1024)
@@ -139,6 +146,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
     // Same launch/env/policy for the cold path and for adoption of this exact Pod.
     function agentDeployment(pod: Readonly<{ podName: string; podUid: string; runtimeUnitId: string; operationId: string
       executionEpoch: string; specHash: string }>, paths: InitialProviderPaths) {
+      if (!claude) { readCodexCredential?.(paths.agentId, rewake===undefined || rewake.existingCheckout===false) }
       const native = captureManagedCodexNativePolicy(readSettings())
       if (native.env.HOME !== undefined && native.env.HOME !== paths.home ||
           native.env.CODEX_HOME !== undefined && native.env.CODEX_HOME !== `${paths.home}/.codex`) { return deny() }
@@ -148,11 +156,12 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
         ? Object.freeze({ command: `${paths.home}/.orca-native/claude`, args: rewake?.nativeSessionRef ? ['--dangerously-skip-permissions', '--resume', rewake.nativeSessionRef]
           : ['--dangerously-skip-permissions', '--session-id', claudeSessionIdForOrcaSession(initial.sessionId)],
           cwd: paths.checkout, env: { HOME: paths.home, PATH: '/usr/local/bin:/usr/bin:/bin', CLAUDE_CODE_OAUTH_TOKEN: claudeToken } })
-        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, 'app-server'], cwd: paths.checkout,
+        : Object.freeze({ command: `${paths.home}/.orca-native/codex`, args: [...native.args, '-c', 'cli_auth_credentials_store="ephemeral"', 'app-server'], cwd: paths.checkout,
           env: { ...native.env, HOME: paths.home, CODEX_HOME: `${paths.home}/.codex`, PATH: native.env.PATH ?? '/usr/local/bin:/usr/bin:/bin' } })
       return Object.freeze({ native, agent: Object.freeze({ apiOrigin, ca: Buffer.from(ca), namespace, container: 'agent', timeoutMs, bootstrapBytes,
         bootstrapSha256, nativeArtifactFile,
-        ...(!claude&&readCodexCredential?{readManagedCredential:()=>readCodexCredential(paths.agentId,rewake===undefined)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}), podAuthenticator, readReviewerBearer,
+        ...(!claude&&readCodexCredential?{readManagedAccess:orcadManagedAccountAccess(pool,config,readCodexCredential,paths.agentId)} : {}), journal:createAgentControlJournal(pool,pod.podUid), ...(nativeDistribution?{nativeCompanionFile:nativeDistribution.host.file,nativeBwrapFile:nativeDistribution.bwrap.file}:{}),
+        ...(terminalDistribution ? { terminalSupply: { runtime: terminalDistribution.runtime, addon: terminalDistribution.addon } } : {}), podAuthenticator, readReviewerBearer,
         expected: Object.freeze({ serviceAccountName, serviceAccountUid, ...pod }),
         onProviderChildExit:(exit:Readonly<{controlId:string;hostSeq:number}>)=>recordProviderChildExit(pool,pod,exit),
         policy: Object.freeze({ ...(claude ? { provider: 'claude' as const } : {}), protectedRoot: '/agent', launch, nativeArtifact, codexAuth,
@@ -232,6 +241,7 @@ export function prepareOrcadFirstColdProvider(config: OrcadControllerConfig, poo
       // Owned while a cold start runs or a provider owner is held; a lost owner no longer claims the Session.
       ownsSession: (sessionId: string) => sessionId === initial.sessionId &&
         (current() !== null || !['UNUSED', 'READY', 'RETAINED_UNCONFIRMED'].includes(originalExecutor.phase())),
+      currentTerminalRuntime: (sessionId: string) => sessionId === initial.sessionId ? current() : null,
       onTerminalInputCommitted: inputRuntime.committed,
       assertOutputAvailable(): void {
         const state = output.snapshot()

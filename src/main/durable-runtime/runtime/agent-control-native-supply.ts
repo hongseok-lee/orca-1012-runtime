@@ -1,13 +1,19 @@
 import { constants, openSync, fstatSync, readSync, closeSync } from 'node:fs'
 
 const fail = (): Error => new Error('AGENT_CODEX_CONTROL_UNCONFIRMED')
+export type AgentTerminalSupply = Readonly<{
+  runtime: Readonly<{ file: string; byteLength: number }>
+  addon: Readonly<{ file: string; byteLength: number }>
+}>
 
 /** Pin every deployment file before preparation; stream all siblings directly
  * into protected HOME. COLD is unreachable until the Agent verifies all files. */
 export async function supplyNativeAndCold(request: (method: string, params?: Record<string, unknown>) => Promise<unknown>,
-  file: string, byteLength: number, companion?: Readonly<{file:string;byteLength:number;sandboxBwrap?:Readonly<{file:string;byteLength:number}>}>): Promise<number | null> {
+  file: string, byteLength: number, companion?: Readonly<{file:string;byteLength:number;sandboxBwrap?:Readonly<{file:string;byteLength:number}>}>,
+  terminal?: AgentTerminalSupply): Promise<number | null> {
   const inputs=[{file,byteLength,name:undefined},...(companion?[{file:companion.file,byteLength:companion.byteLength,name:'codex-code-mode-host'}]:[]),
-    ...(companion?.sandboxBwrap?[{...companion.sandboxBwrap,name:'codex-resources/bwrap'}]:[])]
+    ...(companion?.sandboxBwrap?[{...companion.sandboxBwrap,name:'codex-resources/bwrap'}]:[]),
+    ...(terminal ? [{...terminal.runtime,name:'terminal-runtime.cjs'},{...terminal.addon,name:'terminal-pty.node'}] : [])]
   const opened:{fd:number;name:string|undefined}[]=[]
   try {
     for(const input of inputs) {

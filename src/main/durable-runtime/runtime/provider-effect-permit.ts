@@ -1,3 +1,5 @@
+import {nativeInitializationHistorySql} from './native-initialization-history.ts'
+import { assertProviderCancelTarget } from './provider-cancel-target.ts'
 import { assertInitialWakeDeadline } from './initial-wake-deadline.ts'
 import { isDeepStrictEqual } from 'node:util'
 import path from 'node:path'
@@ -66,7 +68,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
   // Private SQL-only target guard owned by the authenticated intake adapter.
   // Capture before await; it neither replaces grants nor supplies an effect.
   const commitGuard = originalCommitGuard
-  if (identity.kind !== 'COLD' && identity.kind !== 'DISPATCH') { deny('PROVIDER_EFFECT_KIND') }
+  if (identity.kind !== 'COLD' && identity.kind !== 'DISPATCH' && identity.kind !== 'CANCEL') { deny('PROVIDER_EFFECT_KIND') }
   if (!Object.isFrozen(protectionOwner)) { deny('PROVIDER_PROTECTION_OWNER_REQUIRED') }
   const take = protectionOwner.takePreparedProtection, connect = pool.connect
   if (typeof take !== 'function' || typeof connect !== 'function') { deny('PROVIDER_PROTECTION_OWNER_REQUIRED') }
@@ -170,7 +172,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
         if (context.runtimeUnitId !== binding.runtimeUnitId || row.state !== 'EXECUTING' ||
             row.execution_token !== claim.executionToken || row.executor_id !== claim.executorId ||
             row.owner_controller_term !== context.controller.term || claim.controllerTerm !== context.controller.term ||
-            row.command_name !== (identity.kind === 'COLD' ? 'releaseGate' : 'dispatchInput')) { deny('PROVIDER_COMMAND_NOT_CURRENT') }
+            row.command_name !== (identity.kind === 'COLD' ? 'releaseGate' : identity.kind === 'CANCEL' ? 'cancel' : 'dispatchInput')) { deny('PROVIDER_COMMAND_NOT_CURRENT') }
         await gateway.assertExecutionTarget(claim.identity.originalEnvelope, false)
         if (identity.kind === 'COLD') {
           const gate = captureReleaseGateInput(row.input)
@@ -185,20 +187,10 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
                 plan.plan.identity.unitId !== binding.runtimeUnitId || plan.plan.identity.executionEpoch !== binding.executionEpoch) {
               deny('PROVIDER_NEW_GATE_PLAN')
             }
-            const history = resumed ? { rowCount: 0 } : await tx.query(`SELECT id FROM durable_runtime.attempts WHERE runtime_unit_id=$1 AND id<>$2 AND stopped_at IS NULL
-              UNION ALL SELECT id FROM durable_runtime.provider_context_deliveries WHERE session_id=$3
-              UNION ALL SELECT id FROM durable_runtime.delivery_attempts WHERE session_id=$3
-                AND (provider_ref IS NOT NULL OR state IN ('EFFECT_POSSIBLE','ADMITTED','SETTLED','UNKNOWN','INTERRUPTED'))
-              UNION ALL SELECT id FROM durable_runtime.runtime_commands WHERE runtime_unit_id=$1
-                AND command_name='releaseGate' AND id<>$4
-                AND NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e
-                  WHERE e.kind='INITIAL_NATIVE_CHECKPOINT_GUARDED' AND e.attempt_id::text=runtime_commands.input->>'attemptId'
-                  AND e.next_state->>'protocolVersion'='1')
-              UNION ALL SELECT id FROM durable_runtime.runtime_audit_events WHERE runtime_unit_id=$1
-                AND kind IN ('INITIAL_PROVIDER_NATIVE_OBSERVED','INITIAL_PROVIDER_READY')
-              UNION ALL SELECT $2::uuid WHERE NOT EXISTS(SELECT 1 FROM durable_runtime.runtime_audit_events e
-                WHERE e.attempt_id=$2 AND e.kind='INITIAL_NATIVE_CHECKPOINT_GUARDED' AND e.next_state->>'state'='NONE')`,
-            [binding.runtimeUnitId, binding.attemptId, binding.sessionId, claim.commandId])
+            const initialization=coldPolicy.request.native.kind==='NEW'?coldPolicy.request.native.initialization??null:null
+            if(initialization&&coldPolicy.provider!=='codex') {deny('PROVIDER_INITIALIZATION_PROVIDER')}
+            const history = resumed ? {rowCount:0} : await tx.query(nativeInitializationHistorySql,
+              [binding.runtimeUnitId,binding.attemptId,binding.sessionId,claim.commandId,initialization===null?null:JSON.stringify(initialization)])
             if (history.rowCount) { deny('PROVIDER_NEW_GATE_HISTORY') }
             const oldWriters = await tx.query(`SELECT g.id FROM durable_runtime.storage_write_grants g
               JOIN durable_runtime.storage_bindings old ON old.id=g.storage_binding_id
@@ -221,7 +213,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
            AND u.execution_epoch=$5 AND g.execution_epoch=$5 AND g.state='ACTIVE'
            AND u.desired_mode='RUNNING' AND a.stopped_at IS NULL AND s.id=$6 AND s.lifecycle='OPEN'
            AND s.provider_binding_revision=$7 AND tab.id=$8 AND tab.terminal_handle=$9 AND tab.lifecycle='OPEN'
-           AND (($10='COLD' AND u.phase='REHYDRATING') OR ($10='DISPATCH' AND u.phase='READY'))`,
+           AND (($10='COLD' AND u.phase='REHYDRATING') OR ($10 IN ('DISPATCH','CANCEL') AND u.phase='READY'))`,
           [binding.runtimeUnitId, binding.attemptId, binding.podUid, target.incarnation, binding.executionEpoch,
             binding.sessionId, binding.providerBindingRevision, binding.tabId, binding.terminalHandle, identity.kind])
         if (active.rowCount !== 1) { deny('PROVIDER_EXECUTION_GRANT_REQUIRED') }
@@ -246,6 +238,7 @@ export function createProviderEffectPermit(pool: Pool, originalContext: GatewayC
           if (!entry || entry.evidence.evidenceRef !== stored.evidence_ref || !d || !directoryValid(d) ||
               !isDeepStrictEqual(d.candidate, entry.evidence.directory)) { deny('PROVIDER_DIRECTORY_PIN_REQUIRED') }
         }
+        if (identity.kind === 'CANCEL') { await assertProviderCancelTarget(tx, identity, row.input) }
         if (identity.kind === 'DISPATCH') {
           const delivery = await tx.query(
             `SELECT d.id FROM durable_runtime.delivery_attempts d JOIN durable_runtime.messages m ON m.id=d.message_id

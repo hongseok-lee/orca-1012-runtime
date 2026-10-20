@@ -175,6 +175,16 @@ export class DurableCodexDriver {
     return immutableSnapshot({ state: 'UNKNOWN', identity })
   }
 
+  cancelTarget(deliveryAttemptId: string, nativeTurnId: string): ProviderCancelTarget | null {
+    for (const [key, identity] of this.#submissions) {
+      const receipt = this.#receipts.get(key)
+      if (identity.deliveryAttemptId === deliveryAttemptId && receipt?.turnId === nativeTurnId) {
+        return immutableSnapshot({ identity, providerRef: this.#nativeRef(receipt) })
+      }
+    }
+    return null
+  }
+
   async cancel(target: ProviderCancelTarget, commandClaim: ProviderDispatchRequest['commandClaim'], permit: ProviderEffectPermit): Promise<ProviderCancelResult> {
     const fixed = immutableSnapshot({ target, commandClaim })
     const binding = this.#requireBinding()

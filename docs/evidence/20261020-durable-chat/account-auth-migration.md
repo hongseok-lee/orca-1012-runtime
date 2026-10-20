@@ -1,0 +1,85 @@
+# Account-owned Codex authentication migration
+
+The current resident refresh design copies the same rotating OAuth credential into independent Agent homes. Nfs2's native account/read returned refresh_token_reused401; the source account file retained its older revision. Refreshing each Agent independently is therefore not a valid multi-Agent ownership model.
+
+## Deployed authentication; runtime recovery still incomplete
+
+- managed-access-broker.ts accepts the existing selected account owner, coalesces same-account renewals and projects only accessToken/account scope/expiry. The refresh hook operates on the original account source. It requires an account lock and durable STARTED/COMPLETED rotation records; an unfinished rotation is not retried for the same source revision, including after broker replacement. No token bytes belong in PG records.
+- external-codex-auth.ts uses account/login/start(chatgptAuthTokens), handles the native refresh callback within its bounded deadline, validates the selected account, and supplies access-only results. The existing initialization handshake already advertises experimentalApi.
+- Broker concurrency/source-change/failed-renewal tests4PASS; external login/callback/foreign-account test1PASS. Source lint clean.
+- Actual installed Codex0.160.1 accepted external login with the selected account's access token, and account/read(refreshToken:false) reported chatgpt/requiresOpenaiAuth=true. Source credential metadata remained unchanged; refresh requests0, native threads0, inputs0. The isolated auth process closed with exit proof. This verifies the installed authentication contract, not inference or Agent integration.
+
+## Remaining implementation sequence
+
+1. Source-side composition now uses migrations033/034 and a PG account lock. STARTED commits before OAuth I/O; an unfinished native process blocks every later source revision for that account. Only the original live claim can record native stop proof, including cleanup after the requesting Agent expires. The service shares a broker between cold/adopted Agents and opens the verified installed native executable lazily on the original selected account HOME. Request validity is checked before native spawn and throughout renewal. Both migrations are applied only to the owned test database, not live orca_dev. Automatic recovery of an orphaned source process remains unfinished; no fabricated stop proof or fresh-file bypass is permitted.
+2. Private bootstrap/callback wiring is implemented. New Agent launches force cli_auth_credentials_store="ephemeral", omit copied auth.json/refresh credentials, and advertise account-owned-codex-auth-v1. Replies carry only access tokens on the private input channel. Reply handling bypasses the native command queue, so COLD/login cannot deadlock waiting for its own queued reply. Expired requests and disconnected owners cannot obtain a new supply; old hosts cannot fall back to copied-refresh renewal. Actual installed0.160.1 ephemeral login ignored an intentionally invalid legacy auth file without changing it, accepted external login, and reported chatgpt. Refresh requests/native threads/inputs all0; original source unchanged and isolated native close proven. This is an auth-contract check, not live Agent inference. Focused private bridge3PASS, actual isolated PG1PASS, changed-source lint18 files clean.
+3. Transition existing hosts through normal owned retirement/adoption rules, retain HOME/native identity, and reconcile the original UNKNOWN message without resending it. Recover the selected source credential with explicit provenance if its old refresh token is already spent; the successful access-only login does not prove future renewal.
+4. Publish the new control artifact once, verify actual Agent authentication and inference, then resume the remaining task05 Terminal/Chat work. Current deployed revision remains3d72af60; modules in this change are not activated.
+
+Official contract: https://learn.chatgpt.com/docs/app-server (authentication). The installed schema describes external tokens as unstable/internal; the actual installed authentication-only check above confirms protocol support. No provider/model route was replaced with the unrelated Sign-in-with-ChatGPT Responses API setup.
+
+## Live follow-up (2026-10-20 02:10 UTC)
+
+Backend ca67042f and live migrations033/034 are deployed. The same committed manual wake reached a new Pod through the corrected no-input manual-wake path. Its private access request, account/login/completed success=true, and account/updated authMode=chatgptAuthTokens are recorded in the authenticated control journal. This proves the actual Agent external login, not inference.
+
+The first forwarded native request failed with AGENT_NATIVE_REQUEST_UNCONFIRMED before READY. The old control discarded the upstream refusal details, so a missing native thread versus login-completion timing versus another provider rejection is not yet established. The run reached its original deadline and was normally retired; active attempt is now null. Original UNKNOWN input was not resent. A bounded native-error classifier now preserves only method, numeric RPC code, and category in the private journal; provider text/tokens remain excluded. This diagnostic update is not deployed yet. Next recover the exact native refusal and fix its cause, then verify READY/inference.
+
+## Confirmed missing native history (02:20 UTC)
+
+Diagnostic control d8d013f8 on backend97715b9c recorded the actual rejection: thread/resume, RPC code -32600, THREAD_UNAVAILABLE. The same protected Agent HOME retains Orca native-session.json naming the old native ID, but contains no sessions rollout for it; a read-only query of native state_5.sqlite threads also returned zero rows. Auth login success is independent of this failure.
+
+An isolated actual Codex0.160.1 reproduction explicitly used ephemeral:false for thread/start, returned a thread ID/path, and confirmed the rollout did not exist. After a proven close and restart on the same HOME, resume returned -32600/thread unavailable. Inputs/model calls0 and account source unchanged. An empty thread/inject_items request was rejected (-32600) and did not materialize history; it is not a usable flush workaround. No fabricated history or replacement native ID was applied to the live session. Evidence: empty-native-durability.json.
+
+The lifecycle must distinguish a native ID returned for an empty in-memory thread from a durable, resumable native session. The correct initialization/first-input persistence contract remains to be implemented. Existing UNKNOWN must remain truthful; a new native conversation must not silently stand in for the old one. The new diagnostic recovery operation24789c50 is retained with its original02:23:02 deadline; no input was resent.
+
+## Checkpoint classification implementation (not deployed)
+
+Codex checkpoint reads now verify the actual native rollout header ID inside the protected Agent HOME before returning FOUND. Missing history returns PROVISIONAL; IO/identity/ambiguity failures return UNKNOWN. Native thread responses can preserve a separate path hint; legacy checkpoints fall back to a bounded same-HOME rollout scan. Hints do not replace native identity evidence, and a previously observed file disappearing removes FOUND status. No provider files are created or repaired.
+
+Pre-open control decoding and cold startup propagate this distinction and reject a provisional resume explicitly. Focused reconstruction test1PASS covers promotion after actual history appears, missing history, wrong native ID, and symlink rejection; lint6 files clean. This is the classification foundation, not complete recovery: first-input persistence/READY semantics and safe treatment of historical missing native sessions remain unfinished. No deployment/restart was performed for this partial change.
+
+## Live-owner history observation (not deployed)
+
+The initial Codex owner now reads native history over its original authenticated control after READY and on real ADMITTED/COMPLETED/TARGET_STOPPED observations. Native-state reads remain available after opening; mount qualification remains pre-open. A separate PROVIDER_NATIVE_HISTORY_OBSERVED audit records the matching same-attempt HOME state. A thread response and input delivery do not themselves certify persistence. Observation failures do not replace the original input outcome. Owner loss and foreign native identities prevent publication; unchanged committed states are coalesced and failed commits remain retryable at the next provider event. There is no polling loop or synthetic input.
+
+Focused local tests3PASS cover provisional-to-found-to-missing transitions, commit retry, identity/ownership loss and the live native-read versus pre-open mount boundary. Changed-source lint7PASS; the first lint failed only because agent-control-session exceeded its 300-line limit by one line, corrected without behavior change. No full integration/deployment claim: adopted-owner observation, recovery selection and provisional first-start recovery still need integration. Existing historical UNKNOWN input is untouched. Live backend remains97715b9c/schema034.
+
+## Adoption and cold recovery evidence boundary (not deployed)
+
+Adopted Codex owners now record native history after attachment and their own input observations, and after successful orphan-turn settlement. The same authenticated control is used; no native process, conversation or input is created by these reads. New Agent controls advertise native-history-evidence-v1. The separate readNativeHistory contract rejects old hosts whose FOUND meant only an Orca identity file, preventing legacy responses from being promoted into persistence evidence.
+
+Cold Codex startup now requires this capability-backed current HOME read. nativeColdIdentity compares it with the historical expected native ID: matching FOUND can resume; missing expected history, provisional history, mismatches and ambiguity return distinct errors. NONE permits only genuinely unbound initialization, still subject to the existing PG effect-history guard. A historical READY ID is an identity to seek, not a persistence certificate.
+
+New focused tests: legacy capability rejection/loss1PASS and cold identity selection1PASS. Changed-source lint9PASS after correcting the session file line limit. No live deployment or inference test in this step. Safe recovery of empty provisional initialization remains unfinished; rejecting unavailable history alone does not satisfy the complete recovery requirement. Existing UNKNOWN delivery and historical IDs remain unchanged.
+
+## Native input write-ahead boundary (not deployed)
+
+A new Codex HOME registers the input-boundary protocol before native process entry. Only that explicit protocol, together with absence of the native-input marker, can report NOT_STARTED. Historical homes report UNTRACKED; initialization refuses to backfill an existing native identity or entered process. Before every turn/start reaches native, the Agent verifies the stored thread identity and writes/fsyncs an immutable native-input-entered record and its parent directory. A crash before the native reply therefore remains EFFECT_POSSIBLE. Reusing identical marker bytes repeats fsync, since a previous write could have failed while syncing. No provider conversation/history file is fabricated.
+
+The authenticated checkpoint decoder and separate history audit preserve inputState. The marker does not settle PG input, prove admission, authorize replay, or by itself allow a new conversation. Focused checkpoint tests2PASS; after correcting same-content fsync durability, the affected new-protocol test1PASS. Changed-source lint5PASS. No native input, backend deployment, or new wake in this step. The remaining recovery policy must combine this evidence with PG input/effect state and physical fencing, retain prior generations, and handle interruption before a native ID is returned. Legacy UNKNOWN remains unrecoverable automatically under this new evidence contract.
+
+## Safe empty-initialization recovery connected
+
+Cold recovery now distinguishes an explicitly tracked UNBOUND initialization (process may have opened but no thread ID returned) from legacy UNKNOWN. A PROVISIONAL thread or UNBOUND generation may propose a new initialization only with NOT_STARTED evidence. The same proposal is committed in the authenticated checkpoint guard, carried in the original cold request/permit, and rechecked by the Agent at COLD.
+
+Under the existing cold-permit locks, PG checks the exact generation proof and rejects nonstopped prior attempts, uninstrumented old release gates, provider context deliveries, possible/admitted/completed/unknown/interrupted input or delivery records. Existing physical mount/execution-grant and revoked-writer checks still apply. A historical READY alone cannot bypass these checks. Accepted DURABLE input remains unchanged.
+
+The Agent creates/fsyncs a complete new generation directory with an immutable link to the previous generation/native ID, then atomically publishes the active pointer and syncs its parent. Previous checkpoints and generations remain intact. A crash before switching leaves the previous generation active; a crash after switching but before receiving a new thread ID leaves a tracked UNBOUND generation that can be evaluated again. Any native input-entry marker prevents this rotation. No provider history is synthesized.
+
+Filesystem/cold selection tests4PASS; authenticated generation decoder1PASS; isolated PG query fixture covers restart authorization and refusal states. The PG fixture uses transaction-scoped isolated tables and rolls back; it does not represent a live Pod failure test. Changed-source lint17PASS. Deployment and real Agent behavior will be recorded separately; existing legacy UNKNOWN is not eligible for this recovery.
+
+## Development publication and actual fresh workspace
+
+Published343b6d01 at2026-10-20T03:00:37.986Z with control82caa7363bc0369a93a4c41ec2259f8f3c5ba31070a0802d1d72fe170efb7eb3; source reload only, no image build or migrations. Authenticated session.tabs.list succeeded03:02:16 on the new backend. Root used the actual Expo iPhone viewport to create Native recovery 1020 under Public initial recovery. Existing Nfs2 original text and Delivery unconfirmed remained unchanged.
+
+One normal Ops WAKE was accepted03:06:23 for the new empty workspace; no model input was sent. It failed during preparation before any Pod/attempt, exhausting its original three retries. Read-only source-owner inspection found the new Agent pinned to real-home/accountId null, but backend /home/orca-dev/.codex/auth.json does not exist. This is a source account-selection/configuration failure, not successful native recovery or a GCP permission failure. No manual owner rewrite or repeated wake was applied.
+
+Independent source inspection found a fresh-HOME regression in generation lookup: .orca-native is created by PREPARE_COLD, after the initial read. Corrected absent-directory reads to return the base NONE state without creating files; existing directories still require ownership and no symlink. Focused fresh-HOME test1PASS and lint2PASS. This correction is not yet deployed; combine it with the account-selection resolution. Actual Agent/inference/empty-generation restart remain unverified.
+
+## Headless account selection and source-owner capture
+
+Actual authenticated accounts.list returned “Account services are not configured on this runtime.” The Node entry point had no account-selection services, so the phone could not select the existing managed login. Added a selection-only runtime port wired by orcad: inventory uses original safe summaries, selection uses the original Store/runtime-lane helpers, and settings changes publish account snapshots. Desktop services continue to take precedence when installed. This Node port does not install desktop auth mirroring, interactive login, quota polling, account removal/import or quota reset; unavailable quota remains unknown. In particular, it cannot become another OAuth refresh owner beside the durable account broker.
+
+New Agent owner capture now verifies the selected source file before persisting its pin. A missing source yields CODEX_ACCOUNT_AUTH_MISSING without creating a durable owner; a later valid explicit selection can initialize that Agent. Existing pins continue to ignore later global selection changes. The already-failed trial pin is preserved, not silently reassigned.
+
+Focused actual persistent-owner test1PASS (includes missing-source no-pin then valid capture); headless account controller/Store test1PASS (lane selection, wrong-runtime refusal, subscribers, private HOME exclusion). The first Node test exposed a desktop Electron secret-storage import through unrelated quota flags; removed that dependency and used the shared unconfigured quota snapshot, then reran only the affected test. Changed-source lint9PASS. Development publication/account selection and provider outcomes follow separately.

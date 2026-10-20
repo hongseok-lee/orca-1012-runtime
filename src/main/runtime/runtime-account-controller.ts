@@ -26,6 +26,15 @@ export type AccountsSnapshot = {
   rateLimits: RateLimitState
 }
 
+/** Node hosts can expose existing account inventory/selection without starting
+ * desktop auth mirroring or a second OAuth refresh owner. */
+export type RuntimeAccountSelectionServices = {
+  getSnapshot(): AccountsSnapshot
+  selectClaude(accountId:string|null): Promise<ClaudeRateLimitAccountsState>
+  selectCodex(accountId:string|null,target?:CodexAccountSelectionTarget): Promise<CodexRateLimitAccountsState>
+  onChanged(listener:(snapshot:AccountsSnapshot)=>void):()=>void
+}
+
 export type CodexRateLimitResetRpcResult = {
   scope: CodexResetCreditExpectedScope
   snapshot: AccountsSnapshot
@@ -40,11 +49,13 @@ export type CodexRateLimitResetRpcResult = {
 
 export class RuntimeAccountController {
   private services: RuntimeAccountServices | null = null
+  private selectionServices: RuntimeAccountSelectionServices | null = null
   private commitMessageAgentEnvironment: CommitMessageAgentEnvironmentResolvers | null = null
 
   setServices(services: RuntimeAccountServices): void {
     this.services = services
   }
+  setSelectionServices(services:RuntimeAccountSelectionServices):void {this.selectionServices=services}
 
   setCommitMessageAgentEnvironment(resolvers: CommitMessageAgentEnvironmentResolvers): void {
     this.commitMessageAgentEnvironment = resolvers
@@ -59,6 +70,7 @@ export class RuntimeAccountController {
   }
 
   getSnapshot(): AccountsSnapshot {
+    if(!this.services&&this.selectionServices) {return this.selectionServices.getSnapshot()}
     const { claudeAccounts, codexAccounts, rateLimits } = this.requireServices()
     return {
       claude: claudeAccounts.listAccounts(),
@@ -68,6 +80,7 @@ export class RuntimeAccountController {
   }
 
   async refreshForMobile(): Promise<void> {
+    if(!this.services&&this.selectionServices) {return}
     const { rateLimits } = this.requireServices()
     await Promise.allSettled([
       rateLimits.refresh(),
@@ -77,6 +90,7 @@ export class RuntimeAccountController {
   }
 
   async refreshForMobileSubscriber(): Promise<void> {
+    if(!this.services&&this.selectionServices) {return}
     const { rateLimits } = this.requireServices()
     await Promise.allSettled([
       rateLimits.refreshIfStale(),
@@ -86,10 +100,12 @@ export class RuntimeAccountController {
   }
 
   selectClaude(accountId: string | null): Promise<ClaudeRateLimitAccountsState> {
+    if(!this.services&&this.selectionServices) {return this.selectionServices.selectClaude(accountId)}
     return this.requireServices().claudeAccounts.selectAccount(accountId)
   }
 
   selectCodex(accountId: string | null): Promise<CodexRateLimitAccountsState> {
+    if(!this.services&&this.selectionServices) {return this.selectionServices.selectCodex(accountId)}
     return this.requireServices().codexAccounts.selectAccount(accountId)
   }
 
@@ -97,6 +113,7 @@ export class RuntimeAccountController {
     accountId: string | null,
     target: CodexAccountSelectionTarget
   ): Promise<CodexRateLimitAccountsState> {
+    if(!this.services&&this.selectionServices) {return this.selectionServices.selectCodex(accountId,target)}
     return this.requireServices().codexAccounts.selectAccountForTarget(accountId, target)
   }
 
@@ -150,6 +167,7 @@ export class RuntimeAccountController {
   }
 
   onChanged(listener: (snapshot: AccountsSnapshot) => void): () => void {
+    if(!this.services&&this.selectionServices) {return this.selectionServices.onChanged(listener)}
     const services = this.requireServices()
     return services.rateLimits.onStateChange((rateLimits) => {
       listener({

@@ -159,7 +159,8 @@ export function MountedBottomDrawer({
     // keyboard before listeners attach. Seed only in fill mode so content-sized
     // outer sheets do not inherit a stale metrics height after an inner dismiss.
     if (fillAvailable) {
-      const existing = Keyboard.metrics()
+      // React Native Web has keyboard listeners but no native metrics API.
+      const existing = typeof Keyboard.metrics === 'function' ? Keyboard.metrics() : undefined
       if (existing != null && existing.height > 0) {
         applyKeyboardHeight(existing.height)
       }

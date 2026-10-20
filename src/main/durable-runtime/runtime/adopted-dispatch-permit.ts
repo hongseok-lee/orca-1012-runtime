@@ -1,3 +1,4 @@
+import { assertProviderCancelTarget } from './provider-cancel-target.ts'
 import { isDeepStrictEqual } from 'node:util'
 import type { Pool } from 'pg'
 import { DurableDatabaseError, runDurableTransaction } from '../db/connection.ts'
@@ -22,7 +23,7 @@ export function createAdoptedDispatchPermit(pool: Pool, originalContext: Gateway
   originalIdentity: ProviderEffectIdentity, control: Readonly<{ valid(): boolean }>,
   commitGuard?: (tx: DurableTransaction) => Promise<void>): Readonly<{ permit: ProviderEffectPermit }> {
   const context = immutableSnapshot(originalContext), identity = immutableSnapshot(originalIdentity)
-  if (identity.kind !== 'DISPATCH') { deny('ADOPTED_EFFECT_KIND') }
+  if (identity.kind !== 'DISPATCH' && identity.kind !== 'CANCEL') { deny('ADOPTED_EFFECT_KIND') }
   const valid = control.valid.bind(control), connect = pool.connect
   const borrowed: Pool = Object.create(pool, { connect: { value: () => Reflect.apply(connect, pool, []) } })
   let consumed = false
@@ -47,7 +48,7 @@ export function createAdoptedDispatchPermit(pool: Pool, originalContext: Gateway
         assertOriginal(row, claim.identity)
         if (context.runtimeUnitId !== binding.runtimeUnitId || row.state !== 'EXECUTING' || row.execution_token !== claim.executionToken ||
             row.executor_id !== claim.executorId || row.owner_controller_term !== context.controller.term ||
-            claim.controllerTerm !== context.controller.term || row.command_name !== 'dispatchInput') { deny('PROVIDER_COMMAND_NOT_CURRENT') }
+            claim.controllerTerm !== context.controller.term || row.command_name !== (identity.kind === 'CANCEL' ? 'cancel' : 'dispatchInput')) { deny('PROVIDER_COMMAND_NOT_CURRENT') }
         await gateway.assertExecutionTarget(claim.identity.originalEnvelope, false)
         const active = await tx.query(`SELECT a.id FROM durable_runtime.attempts a JOIN durable_runtime.runtime_units u ON u.active_attempt_id=a.id
           JOIN durable_runtime.execution_grants g ON g.attempt_id=a.id AND g.runtime_unit_id=u.id
@@ -70,6 +71,8 @@ export function createAdoptedDispatchPermit(pool: Pool, originalContext: Gateway
         if (writers.rowCount !== members.rowCount || members.rows.some(member => !writers.rows.some(row => row.id === member.storage_binding_id))) {
           deny('PROVIDER_ALL_PROTECTED_WRITERS_REQUIRED')
         }
+        if (identity.kind === 'CANCEL') { await assertProviderCancelTarget(tx, identity, row.input) }
+        else {
         const delivery = await tx.query(`SELECT d.id FROM durable_runtime.delivery_attempts d JOIN durable_runtime.messages m ON m.id=d.message_id
           JOIN durable_runtime.sessions s ON s.id=d.session_id
           WHERE d.id=$1 AND d.message_id=$2 AND d.session_id=$3 AND d.runtime_unit_id=$4 AND d.attempt_id=$5
@@ -78,6 +81,7 @@ export function createAdoptedDispatchPermit(pool: Pool, originalContext: Gateway
         [identity.deliveryAttemptId, identity.messageId, binding.sessionId, binding.runtimeUnitId, binding.attemptId,
           binding.executionEpoch, identity.sealedRevision, identity.sealedPayloadHash, identity.contextRevision])
         if (delivery.rowCount !== 1) { deny('PROVIDER_DELIVERY_NOT_CURRENT') }
+        }
         if (commitGuard) { await commitGuard(tx) }
         await gateway.assertCurrent()
         live()

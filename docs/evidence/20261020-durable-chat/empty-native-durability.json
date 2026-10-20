@@ -1,0 +1,46 @@
+{
+  "empty-native-durability": [
+    {
+      "at": "2026-10-20T02:19:17.884Z",
+      "installedVersion": "0.160.1",
+      "ephemeralThread": false,
+      "beforeClose": {
+        "threadId": "01a1571b-12f2-77e3-9448-36c84529fe30",
+        "pathReported": true,
+        "rolloutExists": false
+      },
+      "resumed": false,
+      "nativeCode": -32600,
+      "threadUnavailable": true,
+      "inputs": 0,
+      "inferenceCalls": 0,
+      "sourceUnchanged": true
+    },
+    {
+      "closed": true
+    }
+  ],
+  "empty-native-flush": [
+    {
+      "at": "2026-10-20T02:20:24.311Z",
+      "installedVersion": "0.160.1",
+      "ephemeralThread": false,
+      "beforeClose": {
+        "injected": false,
+        "injectCode": -32600,
+        "threadId": "01a1571c-19e6-73a0-9de8-fd3d95b8eaf5",
+        "pathReported": true,
+        "rolloutExists": false
+      },
+      "resumed": false,
+      "nativeCode": -32600,
+      "threadUnavailable": true,
+      "inputs": 0,
+      "inferenceCalls": 0,
+      "sourceUnchanged": true
+    },
+    {
+      "closed": true
+    }
+  ]
+}

@@ -63,6 +63,7 @@ export class ManagedCodexAuthRefreshState {
     const result=await control.refreshManagedAuth();this.latest=result;this.observe(result);return result
   }
   snapshot():ManagedCodexAuthRefresh|null {return this.latest}
+  dispatchReady():boolean {return this.latest?.state!=='FAILED'}
   assertDispatchAllowed():void {
     if(this.latest?.state==='FAILED') {throw new Error(`AGENT_MANAGED_AUTH_${this.latest.code}`)}
   }

@@ -77,7 +77,7 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
   if (value.isPinned !== undefined) {boolean(value, 'isPinned')}
   if (value.color !== undefined) {text(value, 'color', true)}
   if (value.type === 'terminal') {
-    if (Object.hasOwn(value, 'nativeChatSession')) {throw new CatalogError('CATALOG_NATIVE_SESSION_STORED_PAYLOAD')}
+    if (Object.hasOwn(value, 'nativeChatSession') || Object.hasOwn(value, 'durableChatSession')) {throw new CatalogError('CATALOG_NATIVE_SESSION_STORED_PAYLOAD')}
     text(value, 'parentTabId'); text(value, 'leafId')
     if (value.status === 'pending-handle') {
       if (value.terminal !== null) {throw new CatalogError('CATALOG_PAYLOAD')}
@@ -85,18 +85,23 @@ export function parseCatalogTab(row: CatalogTab): RuntimeMobileSessionClientTab 
       if (value.terminal !== row.terminal_handle || !value.terminal) {throw new CatalogError('CATALOG_PAYLOAD')}
     } else {throw new CatalogError('CATALOG_PAYLOAD')}
     if (value.viewMode !== undefined && !['terminal', 'chat'].includes(String(value.viewMode))) {throw new CatalogError('CATALOG_PAYLOAD')}
+    const durable = row.terminal_durable_chat_session
+    if (durable !== undefined && (!isRuntimeTerminalNativeChatSession(durable) ||
+        durable.sessionId !== row.session_id || !row.terminal_handle)) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
+    const history = durable ? {durableChatSession: durable, agentStatus: row.terminal_activity ?? null} : {}
     // An Agent tab is addressed by its durable handle even before its first READY:
     // input sent then is kept DURABLE and dispatched when the provider becomes READY.
     if (row.terminal_native_chat_session === undefined && value.status === 'pending-handle' && row.terminal_handle &&
         (value.launchAgent === 'codex' || value.launchAgent === 'claude')) {
-      return { ...value, status: 'ready', terminal: row.terminal_handle } as unknown as RuntimeMobileSessionClientTab
+      return { ...value, ...history, viewMode: value.viewMode ?? 'terminal', status: 'ready', terminal: row.terminal_handle } as unknown as RuntimeMobileSessionClientTab
     }
     if (row.terminal_native_chat_session !== undefined) {
       if (!isRuntimeTerminalNativeChatSession(row.terminal_native_chat_session) || !row.terminal_handle) {throw new CatalogError('CATALOG_NATIVE_SESSION_REFERENCE')}
       // A READY native session is addressed by its durable handle: clients take
       // the input lease and send through it even with no PTY in this process.
-      return { ...value, status: 'ready', terminal: row.terminal_handle, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
+      return { ...value, ...history, viewMode: value.viewMode ?? 'terminal', status: 'ready', terminal: row.terminal_handle, nativeChatSession: row.terminal_native_chat_session } as unknown as RuntimeMobileSessionClientTab
     }
+    return { ...value, ...history, viewMode: value.viewMode ?? 'terminal' } as unknown as RuntimeMobileSessionClientTab
   } else if (value.type === 'agent-session') {
     text(value, 'sessionId')
     if (!value.sessionId || !['claude', 'codex'].includes(String(value.agent))) {throw new CatalogError('CATALOG_PAYLOAD')}

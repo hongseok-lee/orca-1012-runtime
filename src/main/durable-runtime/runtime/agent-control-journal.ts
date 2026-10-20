@@ -19,7 +19,7 @@ export function createAgentControlJournal(pool:Pool,podUid:string):ControlJourna
     async load(controlId) {
       const row=await pool.query<{last_seq:string;pod_uid:string}>('SELECT last_seq::text,pod_uid FROM durable_runtime.agent_control_cursors WHERE control_id=$1',[controlId])
       if(row.rowCount && row.rows[0].pod_uid!==podUid) {deny()}
-      const frames=await pool.query<{body:ControlFrame}>(`SELECT body FROM durable_runtime.agent_control_frames WHERE control_id=$1 AND body->>'event'='NOTIFICATION' ORDER BY seq`,[controlId])
+      const frames=await pool.query<{body:ControlFrame}>(`SELECT body FROM durable_runtime.agent_control_frames WHERE control_id=$1 AND body->>'event' IN ('NOTIFICATION','PTY_OUTPUT','PTY_EXIT') ORDER BY seq`,[controlId])
       return {cursor:Number(row.rows[0]?.last_seq??0),notifications:frames.rows.map(x=>x.body)}
     },
     async record(controlId,frame) {

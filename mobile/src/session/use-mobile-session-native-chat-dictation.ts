@@ -62,6 +62,7 @@ export function useMobileSessionNativeChatDictation(
     connected: connState === 'connected'
   })
   const nativeChatController = useMobileNativeChatController({
+    sessionTabs: scope.sessionTabs,
     client,
     hostId,
     worktreeId,

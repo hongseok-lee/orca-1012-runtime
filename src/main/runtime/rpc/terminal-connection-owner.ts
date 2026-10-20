@@ -11,7 +11,7 @@ export type TerminalInputConnection = Readonly<{
   reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null, foreignOwner?: boolean) => TerminalLogicalFloorGrant
   runOrderedInput: <T>(handle: string, requestKey: string, operation: (resolveOnly: boolean) => Promise<T>) => Promise<T>
 }>
-export type TerminalLogicalTarget = Readonly<{handle: string; sessionId: string; mode: 'AGENT_CHAT_COMPAT'}>
+export type TerminalLogicalTarget = Readonly<{handle: string; sessionId: string; mode: 'AGENT_CHAT_COMPAT' | 'RAW_TERMINAL'}>
 export type TerminalLogicalFloorGrant = Readonly<{assertCurrent: () => void; commit: () => void; rollbackConfirmed: () => void}>
 type Connection = { pairedDeviceId: string; fingerprint: string | null; invalidated: boolean }
 type LogicalOwner = {target: TerminalLogicalTarget; connection: string; device: string; fingerprint: string; committed: boolean}
@@ -100,12 +100,12 @@ export class TerminalConnectionOwner {
       },
       reserveLogicalFloor: (target: TerminalLogicalTarget, previousConnection: string | null, foreignOwner = false): TerminalLogicalFloorGrant => {
         assertCurrent()
-        if (!target.handle || !target.sessionId || target.mode !== 'AGENT_CHAT_COMPAT') { throw new Error('TERMINAL_LOGICAL_TARGET_REQUIRED') }
+        if (!target.handle || !target.sessionId || !['AGENT_CHAT_COMPAT', 'RAW_TERMINAL'].includes(target.mode)) { throw new Error('TERMINAL_LOGICAL_TARGET_REQUIRED') }
         const fixed = Object.freeze({...target}), prior = this.logicalFloors.get(target.handle)
-        if (prior && (prior.target.sessionId !== fixed.sessionId || prior.target.mode !== fixed.mode)) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
+        if (prior && prior.target.sessionId !== fixed.sessionId) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
         // Another device or caller sending to the same session takes the floor
         // over (last sender wins); it must name the floor it read from PG.
-        const takeover = foreignOwner || !!prior && (prior.device !== pairedDeviceId || prior.fingerprint !== fingerprint)
+        const takeover = foreignOwner || !!prior && (prior.device !== pairedDeviceId || prior.fingerprint !== fingerprint || prior.target.mode !== fixed.mode)
         if (takeover && (previousConnection === null || prior && prior.connection !== previousConnection)) { throw new Error('TERMINAL_LOGICAL_FLOOR_OWNED') }
         if (previousConnection === null && prior) { throw new Error('TERMINAL_LOGICAL_FLOOR_ALREADY_RESERVED') }
         if (previousConnection !== null) {

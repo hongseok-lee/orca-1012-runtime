@@ -1,0 +1,25 @@
+Root direct: stable raw terminal stream across absent/replaced physical owners
+
+One stream ID and subscription remain through Pod0 -> PTY A -> Pod0 -> PTY B.
+Each attachment gets fresh authenticated Catalog/PG and physical pins. Retired actions
+close; no old raw input is replayed to the replacement. A late UNKNOWN from the old
+input reports its original incarnation. New snapshot uses the same existing binary
+wire and mobile decoder. SnapshotRequest re-reads the pinned source without input.
+Pod0 refresh still checks Catalog access; foreign workspace access is denied.
+
+Evidence:
+- Existing stream focused tests: four PASS (Korean boundary, abort cleanup,
+  explicit gap/backpressure, actual native PTY dimensions/output + mobile decoder).
+- New rebind test: PASS1; same stream ID, one subscribed/end, two physical sources,
+  old unresolved input, no replay, replacement output and SnapshotRequest.
+- Real isolated PG integration: PASS1 including Pod0 logical lookup + foreign scope.
+- Changed-source lint6: clean. No image build or dependency installation.
+
+The first new late-response assertion ran before the response microtask; it now waits
+for that specific error frame. Only the changed rebind case was rerun after that fix.
+No actual Agent Pod replacement, deployment or UI screenshot yet. Physical retirement
+code uses exact-UID delete, retained stop finalizer and observed sandbox-stop proof;
+this inspection is not live PTY shutdown evidence.
+Remaining: initial Pod0 binary retained snapshot, ANSI screen fidelity, binary
+clearBuffer/snapshot coordination, ACK/multiplex, viewport restore/ownership,
+raw idle integration, adopted old-turn cancellation, integrated dev/Expo evidence.

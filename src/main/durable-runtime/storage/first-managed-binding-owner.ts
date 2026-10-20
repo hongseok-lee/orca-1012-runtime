@@ -19,7 +19,7 @@ import { createFirstManagedObservationSource, requireFirstManagedObservation,
 
 export type { FirstManagedBindingOwnerConfig } from './first-managed-observation-source.ts';
 export type FirstManagedBindingInput = PreparedDirectoryObservationInput['scope'] & Readonly<{
-  pinId: string; ownerToken: string; leafId: string; refreshStopped?: boolean;
+  pinId: string; ownerToken: string; leafId: string; refreshStopped?: boolean; provisionLeaf?: boolean;
 }>;
 type SafeBindingResult = Readonly<{
   database: BindingVerificationTransactionResult['database'];
@@ -44,6 +44,7 @@ type Operation = {
   holdInput: NamespaceHoldInput;
   scope: PreparedDirectoryObservationInput['scope'];
   refreshStopped: boolean;
+  provisionLeaf: boolean;
   tokenHash: string;
   hold: NamespaceTransactionResult | null;
   audit: DurableTransactionResult<PreparedDirectoryObservationRecord> | null;
@@ -93,7 +94,11 @@ function captureCall(original: FirstManagedBindingInput) {
       expectedUnitRevision: counter('row:runtime-unit', original.expectedUnitRevision),
       expectedBindingRevision: counter('row:storage-binding', original.expectedBindingRevision), actorId: text(original.actorId) });
     const pinId = logicalId('storage-namespace-pin', original.pinId), ownerToken = text(original.ownerToken);
-    return Object.freeze({ scope, pinId, ownerToken, hash: tokenHash(ownerToken), leafId: managedLeafUuid(original.leafId) });
+    const provisionLeaf = original.provisionLeaf === true;
+    if (provisionLeaf && original.leafId !== scope.unitId) {
+      throw new FirstManagedBindingOwnerError('FIRST_MANAGED_PROVISION_SCOPE');
+    }
+    return Object.freeze({ scope, pinId, ownerToken, provisionLeaf, hash: tokenHash(ownerToken), leafId: managedLeafUuid(original.leafId) });
   } catch {
     // An accessor can throw a secret; never propagate its raw exception.
     throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_INVALID');
@@ -169,7 +174,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
     operation.pinState = 'HELD';
     let observation: AuthenticatedManagedLeafObservation;
     try {
-      observation = await collect(leafId, signal);
+      observation = await (operation.provisionLeaf ? source.ensureAndCollect : collect)(leafId, signal);
       operation.observationRef = observation.reference;
       requireFirstManagedObservation(profile, observation, leafId);
     } catch (error) {
@@ -248,7 +253,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
 
   return Object.freeze({
     verifyFirstBinding(originalInput: FirstManagedBindingInput, signal: AbortSignal): Promise<FirstManagedBindingResult> {
-      const { scope, pinId, ownerToken, hash, leafId } = captureCall(originalInput);
+      const { scope, pinId, ownerToken, provisionLeaf, hash, leafId } = captureCall(originalInput);
       if (leafId !== profile.leafId || !signal || typeof signal.addEventListener !== 'function') {
         throw new FirstManagedBindingOwnerError('FIRST_MANAGED_INPUT_SCOPE');
       }
@@ -259,7 +264,7 @@ export function createFirstManagedBindingOwner(pool: Pool, original: FirstManage
         }
         return Promise.resolve(result(existing, 'HOLD', 'RECONCILIATION_REQUIRED', 'FIRST_MANAGED_PIN_ALREADY_ATTEMPTED'));
       }
-      const operation: Operation = { refreshStopped: originalInput.refreshStopped === true, holdInput: Object.freeze({ ...profile.profile, digest: accepted.namespaceDigest,
+      const operation: Operation = { provisionLeaf, refreshStopped: originalInput.refreshStopped === true, holdInput: Object.freeze({ ...profile.profile, digest: accepted.namespaceDigest,
         actorId: scope.actorId, pinId, ownerToken }), scope, tokenHash: hash,
         hold: null, audit: null, binding: null, release: null, observationRef: null, evidenceRef: null,
         pinState: 'NOT_ACQUIRED', handedOff: false, releaseEligible: false, releaseAttempted: false, reconciliation: false,

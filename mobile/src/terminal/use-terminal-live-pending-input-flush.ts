@@ -79,7 +79,8 @@ export function useTerminalLivePendingInputFlush<TTabType extends string>({
   const clearPendingLiveInputCommit = useCallback(() => {
     resetMirrorState()
     setLiveInputCapture('')
-    liveInputRef.current?.setNativeProps({ text: '' })
+    // Web uses the controlled value above; native can also clear synchronously.
+    liveInputRef.current?.setNativeProps?.({ text: '' })
   }, [liveInputRef, resetMirrorState, setLiveInputCapture])
 
   const waitForPendingLiveInputFlush = useCallback(async (): Promise<boolean> => {

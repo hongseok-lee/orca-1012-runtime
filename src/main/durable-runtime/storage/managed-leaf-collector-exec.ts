@@ -22,21 +22,24 @@ check_hashes "$1" "$2"
 printf 'MOUNTINFO_AFTER\n%s\nORCA_MANAGED_LEAF_END\n' "$after"
 `
 
-export function managedLeafExecUrl(config: ManagedLeafCollectorConfig, leafId: string): URL {
+export function managedLeafExecUrl(config: ManagedLeafCollectorConfig, leafId: string, operation: 'inspect' | 'ensure' = 'inspect'): URL {
   const url = new URL(`/api/v1/namespaces/${encodeURIComponent(config.namespace)}/pods/${encodeURIComponent(config.podName)}/exec`, config.apiOrigin)
   url.protocol = 'wss:'
   for (const [key, value] of Object.entries({ container: config.containerName, stdin: 'false', tty: 'false', stdout: 'true', stderr: 'true' })) {
     url.searchParams.set(key, value)
   }
-  for (const argument of ['/bin/sh', '-ec', managedLeafInspectCommand, 'orca-managed-leaf-collector',
-    config.helperSha256, config.exportsSha256, config.podUid, config.dataset, leafId]) { url.searchParams.append('command', argument) }
+  const command = operation === 'ensure'
+    ? ['/bin/sh', '/opt/orca-nfs-tools/managed_storage.sh', 'ensure-leaf', config.podUid, config.dataset, leafId]
+    : ['/bin/sh', '-ec', managedLeafInspectCommand, 'orca-managed-leaf-collector',
+      config.helperSha256, config.exportsSha256, config.podUid, config.dataset, leafId]
+  for (const argument of command) { url.searchParams.append('command', argument) }
   return url
 }
 
 /** V5 close frames half-close streams; normal socket close supplies EOF for remaining streams. */
 export function collectManagedLeafExec(open: ManagedLeafCollectorDependencies['openWebSocket'],
   config: ManagedLeafCollectorConfig, leafId: string, reviewer: string, signal: AbortSignal,
-  absoluteDeadline: number): Promise<string> {
+  absoluteDeadline: number, operation: 'inspect' | 'ensure' = 'inspect'): Promise<string> {
   return new Promise((resolve, reject) => {
     let socket: ManagedLeafSocket | undefined, settled = false, handshake = false
     const streams = new Map([1, 2, 3].map(id => [id, { decoder: new TextDecoder('utf-8', { fatal: true }), text: '', closed: false }]))
@@ -105,7 +108,7 @@ export function collectManagedLeafExec(open: ManagedLeafCollectorDependencies['o
     signal.addEventListener('abort', aborted, { once: true })
     if (signal.aborted) { aborted(); return }
     try {
-      const url = managedLeafExecUrl(config, leafId), ca = Buffer.from(config.ca)
+      const url = managedLeafExecUrl(config, leafId, operation), ca = Buffer.from(config.ca)
       const remainingMs = absoluteDeadline - performance.now()
       if (!Number.isFinite(remainingMs) || remainingMs <= 0) { fail('TIMEOUT'); return }
       socket = open(url, 'v5.channel.k8s.io', {

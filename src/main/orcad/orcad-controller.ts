@@ -1,3 +1,4 @@
+import { createProviderCancelRuntime } from '../durable-runtime/input/runtime-cancel.ts'
 import type { LifecyclePolicy } from '../durable-runtime/lifecycle/types.ts'
 import type {ManagedCodexCredentialReader} from '../durable-runtime/providers/codex/managed-credential-owner.ts'
 import { readOrcadControllerCredential as credential } from './orcad-controller-credential.ts'
@@ -14,7 +15,7 @@ import type { ResourceWatchEvent } from '../durable-runtime/lifecycle/watch.ts'
 import { captureDurableCatalogReadConfig } from '../durable-runtime/rpc/config.ts'
 import type { OrcadDurableCatalog } from './orcad-durable-catalog.ts'
 import type { InitialCodexNativeSettings } from '../durable-runtime/runtime/initial-codex-native-policy.ts'
-import type { TerminalInputCommittedSink } from '../durable-runtime/input/runtime-input-types.ts'
+import type { TerminalInputCommittedSink, TerminalRuntimeLookup } from '../durable-runtime/input/runtime-input-types.ts'
 import type { prepareOrcadInputRecovery, OrcadInputRecoverySnapshot } from './orcad-input-recovery.ts'
 import { captureOrcadControllerConfig, invalidOrcadControllerConfig, OrcadControllerConfigurationError,
   type OrcadControllerConfig } from './orcad-controller-config.ts'
@@ -32,7 +33,7 @@ export type OrcadControllerObservation = Readonly<{
 export type OrcadControllerSnapshot = Readonly<{
   worker: ControllerWorkerSnapshot | null
   latestObservation: OrcadControllerObservation | null
-  lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY'; code: string }> | null
+  lastFailure: Readonly<{ stage: 'START' | 'STOP' | 'INVENTORY' | 'CANCEL'; code: string }> | null
   firstManagedInitial?: FirstManagedInitialDispatchSnapshot
   inputRecovery?: OrcadInputRecoverySnapshot
   adoptedRuntimes?: Readonly<{ adopted: number; failed: number; firstError: string | null; lastInput: string | null }>
@@ -43,6 +44,9 @@ export type OrcadControllerOwner = OrcadDurableCatalog & Readonly<{
   startController(config: OrcadControllerConfig): Promise<void>
   controllerSnapshot(): OrcadControllerSnapshot
   onTerminalInputCommitted: TerminalInputCommittedSink
+  managedProviders(): readonly ('codex' | 'claude')[]
+  onCancelRequested(sessionId: string): void
+  currentTerminalRuntime: TerminalRuntimeLookup
   assertTerminalOutputAvailable(sessionId: string): void
 }>
 
@@ -92,8 +96,20 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
   let rewake: ReturnType<typeof prepareOrcadRewake> = null
   let ownership: UnitOwnership | null = null
   let total = 0, list = 0, watch = 0
+  function currentTerminalRuntime(sessionId: string) {
+      if (closing) { return null }
+      const owner = ownership?.ownerOfSession(sessionId)
+      const current = owner === 'first-managed' ? firstManagedInitial?.currentTerminalRuntime?.(sessionId)
+        : owner === 'adopted' ? adoptedRuntimes?.currentTerminalRuntime(sessionId)
+        : owner === 'rewake' ? rewake?.currentTerminalRuntime(sessionId) : null
+      return current?.binding.sessionId === sessionId ? current : null
+    }
+  const cancellation = createProviderCancelRuntime(readConfig.pool, currentTerminalRuntime, code => { lastFailure = Object.freeze({stage:'CANCEL',code}) })
   return Object.freeze({
     readConfig,
+    currentTerminalRuntime,
+    onCancelRequested: cancellation.notify,
+    managedProviders: () => closing ? [] : rewake?.providers ?? [],
     onTerminalInputCommitted(input: Parameters<TerminalInputCommittedSink>[0]) {
       // Only the already authenticated ingress creates this value. No receipt
       // or PG principal is reconstructed into a new authenticated authority.
@@ -210,6 +226,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
           ...(adoptionHooks.length ? { adoptRuntimes: async (signal: AbortSignal, controller: Parameters<NonNullable<typeof adoptionHooks[0]>>[1]) => {
             let handled = 0
             for (const hook of adoptionHooks) { handled += await hook(signal, controller) }
+            void cancellation.sweep()
             return handled
           } } : {}),
           ...(orphans ? { reconcileOrphans: orphans.reconcileOrphans } : {}),
@@ -253,6 +270,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
     },
     stop(): Promise<void> {
       closing = true
+      cancellation.close()
       completion ??= Promise.resolve().then(async () => {
         try {
           if (starting) { await starting.catch(() => undefined) }
@@ -262,7 +280,7 @@ export function ownOrcadController(catalog: OrcadDurableCatalog, readProviderSet
             invalidOrcadControllerConfig('CONTROLLER_STOP_UNAVAILABLE')
           }
         } finally {
-          try { await firstManagedInitial?.close(); await adoptedRuntimes?.close(); await rewake?.close() } finally { await stopCatalog() }
+          try { await cancellation.drain(); await firstManagedInitial?.close(); await adoptedRuntimes?.close(); await rewake?.close() } finally { await stopCatalog() }
         }
       })
       return completion

@@ -2,8 +2,12 @@ import { useLayoutEffect, useRef, type MutableRefObject } from 'react'
 import { encodeNativeChatTranscriptIdentity } from '../../../src/shared/native-chat-transcript-retention'
 import { resolveMobileNativeChat, type MobileNativeChatTab } from './mobile-native-chat-eligibility'
 import { useMobileSessionViewMode } from './use-mobile-session-view-mode'
+import type { RpcClient } from '../transport/rpc-client'
 
 export function useMobileNativeChatActiveResolution(args: {
+  client?: RpcClient | null
+  sessionTabs?: readonly (MobileNativeChatTab & { id: string })[]
+  onModeError?: (message: string) => void
   hostId: string
   worktreeId: string
   activeSessionTab: MobileNativeChatTab | null
@@ -34,7 +38,8 @@ export function useMobileNativeChatActiveResolution(args: {
     nativeChatTranscriptIsLocalReadable,
     worktreeId
   } = args
-  const { isTabChatView, toggleTabChatView } = useMobileSessionViewMode({ hostId, worktreeId })
+  const { isTabChatView, toggleTabChatView } = useMobileSessionViewMode({ hostId, worktreeId, client: args.client,
+    serverTabs: args.sessionTabs, onModeError: args.onModeError })
   const tabWantsChat =
     activeSessionTab?.type === 'agent-session' ||
     (activeSessionTabId ? isTabChatView(activeSessionTabId) : false)
