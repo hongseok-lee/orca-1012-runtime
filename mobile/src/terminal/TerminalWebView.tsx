@@ -1,6 +1,7 @@
 import { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { Platform, View } from 'react-native'
-import { WebView, type WebViewMessageEvent } from 'react-native-webview'
+import type { WebViewMessageEvent } from 'react-native-webview'
+import { WebView, type TerminalWebSurfaceHandle } from './terminal-web-surface'
 import type { TerminalOscLinkRange } from '../../../src/shared/terminal-osc-link-ranges'
 import type { TerminalWebViewHandle, TerminalWebViewProps } from './terminal-webview-contract'
 import {
@@ -42,7 +43,7 @@ export const TerminalWebView = forwardRef<TerminalWebViewHandle, Props>(function
   },
   ref
 ) {
-  const webViewRef = useRef<WebView>(null)
+  const webViewRef = useRef<TerminalWebSurfaceHandle>(null)
   const isWebReadyRef = useRef(false)
   const pendingMessages = useMemo(() => createTerminalWebViewPendingMessages(), [])
   const messageIdRef = useRef(0)
