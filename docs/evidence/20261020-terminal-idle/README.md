@@ -89,3 +89,35 @@ Previously discarded projection text is not automatically reconstructed across
 possible user clear-buffer boundaries. The source journal is unchanged; newly
 projected output uses the corrected semantics. Installed iPhone/Desktop parity
 and full two-Serve HA remain separate tasks.
+
+## Controller budget blocker during DELETE preparation
+
+The dedicated manual WAKE was accepted once at 23:26:20Z. Its Pod became Ready,
+but the controller had already stopped with `CONTROLLER_EXTERNAL_TIMEOUT`;
+the cold executor was cancelled in `HELD_PROTECTION`. The code shared one
+wall-clock budget across the entire pass and every admitted external call,
+so work scheduled late inherited only earlier work's leftover time.
+
+The pass now stops admitting new items at its scheduling budget, while each
+admitted external call gets its own bounded I/O budget. PG operation deadlines,
+lease guards and true call timeout remain unchanged. A focused scheduling test
+proves two individually bounded calls can cross the pass scheduling deadline
+without killing the controller, while a genuinely timed-out call still stops.
+This is not a full two-Serve recovery claim or a diagnosis of the earlier DB_FAILURE.
+Product139d2fcb, including CR handling, was published at23:33:19Z without image
+or Agent control rebuild. Original unready attempt recovery remains in progress.
+
+## Accepted manual demand after a failed stop, 23:38 UTC
+
+The interrupted WAKE was physically stopped and recorded FAILED/REWAKE_OWNER_LOST.
+A later authenticated manual request joined that root, but its updated intent
+was excluded by the old root-intent-only demand selector. The selector now
+recognizes the actual receipt for the current intent. It also lets the claim
+path account an expired root rather than hiding demand before exhaustion can
+be recorded. Retry count/deadline and old receipts remain unchanged.
+
+The isolated PG manual-wake test verifies current-intent demand, expired-budget
+accounting, authenticated HTTP idempotence, linked explicit resumption, and
+preservation of UNKNOWN/pending inputs. Product107bc330 was published23:37:35Z.
+The old root exhausted normally; an explicit resume at23:38:40Z was QUEUED with
+a new linked operation. Running DELETE acceptance continues on that same run.
