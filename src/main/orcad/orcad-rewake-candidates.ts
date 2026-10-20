@@ -3,9 +3,11 @@ import { RECOVERY_CHAIN_HEAD_SQL } from '../durable-runtime/lifecycle/recovery-c
 
 export async function readRewakeCandidates(pool: Pool) {
     return (await pool.query<{ unit_id: string; unit_revision: string; intent_revision: string; session_id: string; provider: 'codex' | 'claude';
-      agent_id: string; workspace_id: string; reserved_path: string; binding_id: string; binding_revision: string; binding_epoch: string; canonical_directory: string }>(`
+      agent_id: string; workspace_id: string; reserved_path: string; launch_request: unknown; binding_id: string; binding_revision: string; binding_epoch: string; canonical_directory: string }>(`
       SELECT u.id AS unit_id,u.revision::text AS unit_revision,u.intent_revision::text,s.id AS session_id,g.provider,g.id AS agent_id,s.workspace_id,
-        w.reserved_path,b.id AS binding_id,b.revision::text AS binding_revision,b.epoch::text AS binding_epoch,b.canonical_directory
+        w.reserved_path,(SELECT tm.launch_request FROM durable_runtime.tabs t
+          JOIN durable_runtime.catalog_tab_metadata tm ON tm.tab_id=t.id
+          WHERE t.session_id=s.id AND t.kind='terminal' AND t.lifecycle='OPEN' LIMIT 1) AS launch_request,b.id AS binding_id,b.revision::text AS binding_revision,b.epoch::text AS binding_epoch,b.canonical_directory
       FROM durable_runtime.runtime_units u JOIN durable_runtime.runtime_members m ON m.runtime_unit_id=u.id
       JOIN durable_runtime.sessions s ON s.id=m.session_id AND s.lifecycle='OPEN' JOIN durable_runtime.agents g ON g.id=s.agent_id
       JOIN durable_runtime.catalog_workspace_metadata w ON w.workspace_id=s.workspace_id

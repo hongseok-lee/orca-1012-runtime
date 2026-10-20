@@ -1,3 +1,4 @@
+import { readCatalogUnitStorageAllocation } from '../durable-runtime/catalog/unit-storage-allocation.ts'
 import { RECOVERY_OPERATION_CURRENT_SQL } from '../durable-runtime/lifecycle/recovery-chain.ts'
 import { captureOrcadWakePolicy } from './orcad-wake-policy.ts'
 import type { LifecyclePolicy } from '../durable-runtime/lifecycle/types.ts'
@@ -162,25 +163,33 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       next_state->'observation'->>'leafId' AS leaf FROM durable_runtime.runtime_audit_events WHERE kind='STORAGE_DIRECTORY_OBSERVATION_PREPARED'
       AND next_state->'scope'->>'sessionId'=$1 AND next_state->'scope'->>'bindingId'=$2 ORDER BY occurred_at DESC LIMIT 1`,
     [row.session_id, row.binding_id])).rows[0]
+    const allocation = readCatalogUnitStorageAllocation(row.launch_request, row.unit_id, row.canonical_directory)
+    const templateDirectory = allocation?.templateCanonicalDirectory ?? row.canonical_directory
     const configured = raw.get('storageTargets')
     if(configured!==undefined && !Array.isArray(configured)) {throw new Error('REWAKE_STORAGE_CONFIG')}
-    const selected = configured?.find((item: {canonicalDirectory?:string})=>item.canonicalDirectory===row.canonical_directory)
+    const selected = configured?.find((item: {canonicalDirectory?:string})=>item.canonicalDirectory===templateDirectory)
     const deploymentTarget = selected ? agentPodFields(parseUniqueOrcadControllerJson(readPrivateOrcadControllerConfigBytes(agentPodText(selected.baseTargetFile)).toString('utf8')),
       [...baseTarget.keys()]) : baseTarget
     const deploymentProfile = selected ? JSON.parse(readPrivateOrcadControllerConfigBytes(agentPodText(selected.baseProfileFile)).toString('utf8')) as Record<string,unknown> : baseProfile
     const prototype = plan ? agentPodPlanSource(plan.plan) : {policy:deploymentTarget.get('policy'),request:deploymentTarget.get('request') as Record<string,unknown>}
     const templateRequest = prototype.request as {protectedBindings:Record<string,unknown>[];profile:unknown}
-    const leaf = original?.leaf ?? agentPodText(deploymentProfile.leafId)
+    const leaf = original?.leaf ?? allocation?.leafId ?? agentPodText(deploymentProfile.leafId)
+    if (allocation && (leaf !== allocation.leafId ||
+        templateDirectory !== `/${config.inventory.dataset}/${agentPodText(deploymentProfile.leafId)}` ||
+        !(deploymentProfile.profile as Record<string, unknown>)?.namespaceDigest)) {
+      throw new Error('REWAKE_STORAGE_ALLOCATION_PROFILE')
+    }
     if(row.canonical_directory!==`/${config.inventory.dataset}/${leaf}`) {throw new Error('REWAKE_STORAGE_UNCONFIGURED')}
     const configuredBinding = templateRequest.protectedBindings[0]
-    if(!configuredBinding || configuredBinding.leafId!==leaf) {throw new Error('REWAKE_STORAGE_UNCONFIGURED')}
+    if(templateRequest.protectedBindings.length!==1 || !configuredBinding ||
+        configuredBinding.leafId!==(plan ? leaf : agentPodText(deploymentProfile.leafId))) {throw new Error('REWAKE_STORAGE_UNCONFIGURED')}
 
     // The durable operation/budget claim precedes this external lookup.
     const nfs = await nfsPod()
     const source = plan ? prototype : {...prototype,policy:{...(prototype.policy as Record<string,unknown>),entrypoint:{command:CLOSED_AGENT_BOOTSTRAP.command,args:CLOSED_AGENT_BOOTSTRAP.args}}}
     const operationId=claim.operationId
     const op={external_resource_name:claim.resourceName,execution_epoch:claim.executionEpoch,intent_revision:claim.intentRevision}
-    const request = { ...templateRequest, protectedBindings: templateRequest.protectedBindings.map(b=>({...b,bindingId:row.binding_id})) }
+    const request = { ...templateRequest, protectedBindings: templateRequest.protectedBindings.map(b=>({...b,bindingId:row.binding_id,leafId:leaf})) }
     const descriptor = canonicalInput({ version: 'orca-first-managed-closed-bootstrap-v1', policy: source.policy,
       protectedBindings: request.protectedBindings, profile: request.profile } as never)
     const target = { ...request, identity: { unitId: row.unit_id, operationId, attemptId: randomUUID(), resourceName: op.external_resource_name,
@@ -190,7 +199,8 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       throw new Error('REWAKE_UNIT_OWNED')
     }
     // Exact bytes the binding was verified with: the namespace profile plus this leaf's qualification.
-    const profileBytes = `${JSON.stringify({ ...deploymentProfile, qualificationRef: original?.qualification ?? deploymentProfile.qualificationRef, leafId: leaf }, null, 2)}\n`
+    const profileBytes = `${JSON.stringify({ ...deploymentProfile, qualificationRef: original?.qualification ?? (allocation
+      ? `managed-unit-leaf:${row.unit_id}:${sha(JSON.stringify(deploymentProfile.profile))}` : deploymentProfile.qualificationRef), leafId: leaf }, null, 2)}\n`
     const dir = join(stateDirectory, row.session_id, operationId)
     mkdirSync(dir, { recursive: true, mode: 0o700 })
     const write = (name: string, value: unknown) => { const path = join(dir, name)
@@ -230,7 +240,7 @@ export function prepareOrcadRewake(pool: Pool, config: OrcadControllerConfig, re
       const current=(await pool.query<{revision:string}>('SELECT revision::text FROM durable_runtime.runtime_units WHERE id=$1',[row.unit_id])).rows[0]
       const verified=await dispatch.verifyFirstBinding({sessionId:logicalId('session',row.session_id),unitId:logicalId('runtime-unit',row.unit_id),bindingId:logicalId('storage-binding',row.binding_id),
         expectedUnitRevision:counter('row:runtime-unit',current.revision),expectedBindingRevision:counter('row:storage-binding',row.binding_revision),actorId,pinId:randomUUID(),
-        ownerToken:randomBytes(32).toString('hex'),leafId:leaf,refreshStopped:true},new AbortController().signal)
+        ownerToken:randomBytes(32).toString('hex'),leafId:leaf,refreshStopped:true,...(allocation && !original && !existingCheckout ? {provisionLeaf:true} : {})},new AbortController().signal)
       if(verified.outcome!=='VERIFIED' || !verified.audit?.ok) {throw new Error(verified.errorCode??'INITIAL_BINDING_UNCONFIRMED')}
       original={id:verified.audit.value.auditId,qualification:verified.qualificationRef,leaf}
       const binding=(await pool.query<{revision:string}>('SELECT revision::text FROM durable_runtime.storage_bindings WHERE id=$1',[row.binding_id])).rows[0]

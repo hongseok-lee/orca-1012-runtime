@@ -22,6 +22,7 @@ const defaults: ManagedLeafCollectorDependencies = Object.freeze({ https: defaul
 export function createManagedLeafCollector(caller: ManagedLeafCollectorConfig,
   dependencies: ManagedLeafCollectorDependencies = defaults): Readonly<{
     collect(leafId: string, signal: AbortSignal): Promise<AuthenticatedManagedLeafObservation>
+    ensureAndCollect(leafId: string, signal: AbortSignal): Promise<AuthenticatedManagedLeafObservation>
   }> {
   const config = captureManagedLeafConfig(caller)
   let transport: ManagedLeafCollectorDependencies['https'], open: ManagedLeafCollectorDependencies['openWebSocket']
@@ -30,7 +31,7 @@ export function createManagedLeafCollector(caller: ManagedLeafCollectorConfig,
     transport = Object.freeze({ request: https.request.bind(https) })
     open = dependencies.openWebSocket.bind(dependencies)
   } catch { throw new ManagedLeafCollectorError('CONFIG_INVALID') }
-  return Object.freeze({ async collect(input: string, signal: AbortSignal) {
+  async function collect(input: string, signal: AbortSignal, ensure = false): Promise<AuthenticatedManagedLeafObservation> {
     const deadline = performance.now() + config.timeoutMs, leafId = managedLeafUuid(input)
     const controller = new AbortController(), abort = () => controller.abort()
     const timer = setTimeout(abort, config.timeoutMs)
@@ -64,6 +65,12 @@ export function createManagedLeafCollector(caller: ManagedLeafCollectorConfig,
       const helper = await get(`${namespace}/configmaps/${encodeURIComponent(config.helperConfigMapName)}`)
       const storage = projectManagedLeafStorage(pvc, pv, helper, config)
       check()
+      if (ensure) {
+        // Existing fixed-argv helper is create-only: no repair/delete/overwrite.
+        // Its reply never supplies binding proof; inspect separately below.
+        await collectManagedLeafExec(open, config, leafId, reviewer, controller.signal, deadline, 'ensure')
+        check()
+      }
       const stdout = await collectManagedLeafExec(open, config, leafId, reviewer, controller.signal, deadline)
       check()
       const finalPod = projectManagedLeafPod(await get(podPath), config)
@@ -91,5 +98,7 @@ export function createManagedLeafCollector(caller: ManagedLeafCollectorConfig,
     } finally {
       clearTimeout(timer); signal.removeEventListener('abort', abort); controller.abort(); reviewer = ''
     }
-  } })
+  }
+  return Object.freeze({ collect: (leafId: string, signal: AbortSignal) => collect(leafId, signal),
+    ensureAndCollect: (leafId: string, signal: AbortSignal) => collect(leafId, signal, true) })
 }

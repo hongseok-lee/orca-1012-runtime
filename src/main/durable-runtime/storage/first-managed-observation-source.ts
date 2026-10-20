@@ -27,7 +27,7 @@ export function createFirstManagedObservationSource(original: FirstManagedBindin
   requireProfileCollectorIdentity(profile, collectorConfig, credential);
   const collector = createManagedLeafCollector(collectorConfig, dependencies);
   const holder = createManagedLeafPinHolder(collectorConfig, dependencies);
-  return Object.freeze({ accepted, collect: collector.collect.bind(collector), acquireHeld: holder.acquire.bind(holder) });
+  return Object.freeze({ accepted, collect: collector.collect.bind(collector), ensureAndCollect: collector.ensureAndCollect.bind(collector), acquireHeld: holder.acquire.bind(holder) });
 }
 
 export { requireFirstManagedObservation } from './first-managed-observation-identity.ts';

@@ -165,3 +165,25 @@ test('authenticated collector follows exact GET/exec/GET with one budget and own
     await tls.assertCleanup(); await f.assertCleanup()
   })
 })
+
+
+await test('provisioning uses exact create-only helper then independent authenticated inspection', async () => {
+  const f = fixture()
+  const observed = await createManagedLeafCollector(f.configuration, f.dependencies)
+    .ensureAndCollect(leafId, new AbortController().signal)
+  assert.equal(f.opened.length, 2)
+  assert.deepEqual(f.opened[0].url.searchParams.getAll('command'), ['/bin/sh',
+    '/opt/orca-nfs-tools/managed_storage.sh', 'ensure-leaf', f.configuration.podUid,
+    f.configuration.dataset, leafId])
+  assert.equal(f.opened[1].url.searchParams.getAll('command')[2], f.command)
+  assert.equal(observed.kind, 'AUTHENTICATED_MANAGED_LEAF_OBSERVATION')
+  assert.equal(observed.leafId, leafId)
+  assert.equal(observed.namespacePin, false)
+  await f.assertCleanup()
+  const wrongPod = pod(); wrongPod.metadata.uid = '00000000-0000-4000-8000-000000000099'
+  const bad = fixture([{ body: wrongPod }])
+  await assert.rejects(createManagedLeafCollector(bad.configuration, bad.dependencies)
+    .ensureAndCollect(leafId, new AbortController().signal), /POD_IDENTITY/)
+  assert.equal(bad.opened.length, 0)
+  await bad.assertCleanup()
+})
