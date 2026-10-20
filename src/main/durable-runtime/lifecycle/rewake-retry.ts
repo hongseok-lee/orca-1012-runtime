@@ -1,4 +1,4 @@
-import { RECOVERY_CHAIN_HEAD_SQL } from './recovery-chain.ts'
+import { RECOVERY_CHAIN_HEAD_SQL, manualWakeDemandSql } from './recovery-chain.ts'
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { counter, logicalId } from '../../../shared/durable-runtime/identity.ts'
@@ -68,7 +68,8 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
     if(!unit || unit.desired_mode==='DELETED') {return null}
     if(!(await tx.query(`SELECT 1 FROM durable_runtime.messages x JOIN durable_runtime.runtime_members m ON m.session_id=x.session_id
       JOIN durable_runtime.sessions s ON s.id=x.session_id WHERE m.runtime_unit_id=$1 AND s.lifecycle='OPEN'
-      AND x.intake_status='DURABLE' AND x.cancel_revision=0 LIMIT 1`,[unitId])).rowCount) {return null}
+      AND x.intake_status='DURABLE' AND x.cancel_revision=0
+      UNION ALL SELECT 1 WHERE ${manualWakeDemandSql('$1')} LIMIT 1`,[unitId])).rowCount) {return null}
     const clock=(await tx.query<{now:Date}>('SELECT clock_timestamp() AS now')).rows[0].now
     if(!(await tx.query(`SELECT 1 WHERE ${currentAuthoritySql}`,[controller.scope,controller.owner,controller.term])).rowCount) {return null}
     const anchor=(await tx.query<{id:string;execution_epoch:string}>(`SELECT id,execution_epoch::text FROM durable_runtime.attempts

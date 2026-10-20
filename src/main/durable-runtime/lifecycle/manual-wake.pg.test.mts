@@ -59,6 +59,8 @@ try{
  assert.equal(await settleRewakeOperation(pool,controller,old.operationId,'WAKE_DEADLINE_EXHAUSTED'),true)
  const oldRow=(await pool.query('SELECT to_jsonb(o) AS row FROM durable_runtime.operations o WHERE id=$1',[old.operationId])).rows[0].row
  assert.equal(oldRow.retry_exhausted_reason,'REWAKE_DEADLINE_EXHAUSTED')
+ await pool.query("UPDATE durable_runtime.messages SET intake_status='UNKNOWN' WHERE session_id=$1 AND intake_status='DURABLE'",[f.session])
+ assert.equal((await readRewakeCandidates(pool)).some(r=>r.unit_id===unit),false,'UNKNOWN alone cannot trigger automatic wake')
  const inputs=(await pool.query('SELECT to_jsonb(m) AS row FROM durable_runtime.messages m WHERE session_id=$1 ORDER BY seq',[f.session])).rows
  const request=async(key:string)=>{const u=(await pool.query('SELECT revision::text,intent_revision::text FROM durable_runtime.runtime_units WHERE id=$1',[unit])).rows[0];return {
    authority:{principalId:'fixture-authenticated-ops',runtimeUnitId:logicalId('runtime-unit',unit),scope:`ops:fixture:runtime-unit:${unit}`} as never,

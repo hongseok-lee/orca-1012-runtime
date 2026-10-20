@@ -1,5 +1,5 @@
 import type { Pool } from 'pg'
-import { RECOVERY_CHAIN_HEAD_SQL } from '../durable-runtime/lifecycle/recovery-chain.ts'
+import { RECOVERY_CHAIN_HEAD_SQL, manualWakeDemandSql } from '../durable-runtime/lifecycle/recovery-chain.ts'
 
 export async function readRewakeCandidates(pool: Pool) {
     return (await pool.query<{ unit_id: string; unit_revision: string; intent_revision: string; session_id: string; provider: 'codex' | 'claude';
@@ -17,7 +17,8 @@ export async function readRewakeCandidates(pool: Pool) {
       WHERE u.desired_mode IN ('RUNNING','SUSPENDED') AND u.active_attempt_id IS NULL AND g.provider IN ('codex','claude')
         AND b.access_state IN ('UNVERIFIED','VERIFIED') AND b.writer_attempt_id IS NULL
         AND NOT EXISTS(SELECT 1 FROM durable_runtime.attempts a WHERE a.runtime_unit_id=u.id AND a.stopped_at IS NULL)
-        AND EXISTS(SELECT 1 FROM durable_runtime.messages x WHERE x.session_id=s.id AND x.intake_status='DURABLE' AND x.cancel_revision=0)
+        AND (EXISTS(SELECT 1 FROM durable_runtime.messages x WHERE x.session_id=s.id AND x.intake_status='DURABLE' AND x.cancel_revision=0)
+          OR ${manualWakeDemandSql('u.id')})
         AND NOT EXISTS(SELECT 1 FROM durable_runtime.operations o WHERE o.runtime_unit_id=u.id AND o.kind='WAKE' AND o.result IS NULL
           AND o.step<>'INTENT_QUEUED')
         AND NOT EXISTS(SELECT 1 FROM durable_runtime.operations r WHERE r.runtime_unit_id=u.id AND ${RECOVERY_CHAIN_HEAD_SQL}
