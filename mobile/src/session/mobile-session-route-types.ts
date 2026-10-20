@@ -24,6 +24,7 @@ export type MobileSessionTab =
       terminal: string | null
       agentStatus?: AgentStatusEntry | null
       nativeChatSession?: RuntimeTerminalNativeChatSession
+      durableChatSession?: RuntimeTerminalNativeChatSession
       viewMode?: 'terminal' | 'chat'
       /** Agent Orca launched in this terminal, if any. This makes chat eligible
        *  before the first live agent-status update reaches the mobile client. */
