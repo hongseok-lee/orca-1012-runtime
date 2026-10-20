@@ -81,7 +81,8 @@ export async function claimRewakeOperation(pool:Pool,controller:VerifiedControll
       // Import distinguishable legacy operations after this READY generation.
       // Lost pre-operation Map failures/due times cannot be reconstructed.
       const legacy=(await tx.query<RecoveryOperation>(`SELECT * FROM durable_runtime.operations WHERE runtime_unit_id=$1 AND kind='WAKE'
-        AND ($2::bigint IS NULL OR execution_epoch>$2) AND recovery_root_id IS NULL ORDER BY execution_epoch,deadline_at NULLS LAST,id`,[unitId,anchor?.execution_epoch??null])).rows
+        AND ($2::bigint IS NULL OR execution_epoch>$2 OR (intent_revision=$3 AND step='INTENT_QUEUED' AND result IS NULL))
+        AND recovery_root_id IS NULL ORDER BY execution_epoch,deadline_at NULLS LAST,id`,[unitId,anchor?.execution_epoch??null,unit.intent_revision])).rows
       if(!legacy.length) {
         if(unit.active_attempt_id) {return null}
         unit=(await tx.query<RuntimeUnitRow>(`UPDATE durable_runtime.runtime_units SET desired_mode='RUNNING',

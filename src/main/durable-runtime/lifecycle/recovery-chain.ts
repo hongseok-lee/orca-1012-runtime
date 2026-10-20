@@ -16,8 +16,15 @@ export const RECOVERY_OPERATION_PLANNABLE_SQL = `(${RECOVERY_OPERATION_CURRENT_S
 export function manualWakeDemandSql(unit:'u.id'|'$1'):string {
   return `EXISTS(SELECT 1 FROM durable_runtime.operations r
     JOIN durable_runtime.runtime_units manual_unit ON manual_unit.id=r.runtime_unit_id
-    WHERE r.runtime_unit_id=${unit} AND r.kind='WAKE' AND ${RECOVERY_CHAIN_HEAD_SQL}
-      AND r.recovery_manual_receipt IS NOT NULL AND r.recovery_resolved_at IS NULL
+    WHERE r.runtime_unit_id=${unit} AND r.kind='WAKE'
+      AND (r.recovery_root_id IS NULL OR (${RECOVERY_CHAIN_HEAD_SQL}))
+      AND (r.recovery_manual_receipt IS NOT NULL OR EXISTS(
+        SELECT 1 FROM durable_runtime.rpc_receipts receipt
+        WHERE receipt.method='lifecycle.request-unit-intent'
+          AND receipt.session_scope LIKE 'ops:%:runtime-unit:'||r.runtime_unit_id::text
+          AND receipt.response->>'operationId'=r.id::text))
+      AND (r.result IS NULL OR r.recovery_root_id=r.id AND r.result->>'state'='FAILED')
+      AND r.recovery_resolved_at IS NULL
       AND r.retry_exhausted_reason IS NULL AND r.deadline_at>clock_timestamp()
       AND r.intent_revision=manual_unit.intent_revision AND manual_unit.desired_mode='RUNNING')`
 }
