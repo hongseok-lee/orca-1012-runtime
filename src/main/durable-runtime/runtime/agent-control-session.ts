@@ -2,7 +2,7 @@ import {AGENT_EXTERNAL_AUTH_SUPPLY,dispatchAgentExternalAuth,initializeAgentAuth
 import { managedCodexAuthControl, managedCodexAuthRefreshSupported } from './managed-codex-auth-refresh.ts'
 import type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
 export type { AgentControlIdentity, AgentControlSessionEnvironment, AuthenticatedAgentControl, AdoptedAgentControl } from './agent-control-session-types.ts'
-import { agentControlReaders } from './agent-control-readers.ts'
+import { agentControlReaders, nativeHistoryReader, supportsNativeHistoryEvidence } from './agent-control-readers.ts'
 import { AgentControlFrameCursor } from './agent-control-frame-cursor.ts'
 import { claudeResumeLaunch, type NativeSessionCheckpoint } from './native-session-checkpoint.ts'
 import { isDeepStrictEqual } from 'node:util'
@@ -33,9 +33,8 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
   let channel = createExecChannelDecoder(() => { throw fail() })
   const pending = new Map<string, Pending>()
   let nextId = 1, stopAcknowledged = false, managedAuthCapable=false
-  let terminalCapable = false, externalAuthCapable=false
-  // A host-capable control tags every frame with hostSeq; an older control
-  // without the Pod-local host keeps the original loss rule.
+  let terminalCapable = false, externalAuthCapable=false, historyCapable=false
+  // Host frames carry hostSeq; older controls keep the original loss rule.
   let hostCapable = false, sinceAck = 0, reconnecting = false
   const cursor=new AgentControlFrameCursor(env.journal,config.policy.provider!=='claude')
   let identity: AgentControlIdentity | undefined, pod: AuthenticatedPodObservation | undefined
@@ -43,11 +42,9 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
   let attachSettle: ((outcome: AttachOutcome) => void) | null = null
   let start: { resolve(value: unknown): void; reject(error: Error): void } | null = null
   let helloSignal: AbortSignal = new AbortController().signal
-  // The INITIALIZE nonce is known only to the owner that sent it.
   let challenge: string | null = config.policy.bindChallenge
   const queued: Buffer[] = []
-  let loss: string | null = null
-  let nativeCheckpoint:NativeSessionCheckpoint|null=null
+  let loss: string | null = null, nativeCheckpoint:NativeSessionCheckpoint|null=null
   function failure(reason = 'FAILURE'): void {
     loss ??= reason
     lost = true
@@ -114,6 +111,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
   const authControl=externalAgentAuthControl(!!env.readManagedAccess,()=>externalAuthCapable,valid,request,legacyAuthControl)
   const terminalControl = createAgentTerminalClient(() => terminalCapable, (method, params) => request(method, params, config.timeoutMs, true))
   const frameSequence = (): number => cursor.sequence
+  const readers=agentControlReaders(request,()=>!lost&&!socketClosed&&!closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value},()=>!openedNative&&!lost&&!socketClosed&&!closing)
   const connection: CodexAppServerConnection = Object.freeze({
     get pid() { return nativePid }, get closed() { return lost || socketClosed && !reconnecting },
     request: (method,params,options)=>cursor.request(controlId,method,params,pending.size,p=>request(method,p,options?.timeoutMs)),
@@ -128,13 +126,13 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
     if (lost || socketClosed || helloSignal.aborted || pod.pod.uid !== config.expected.podUid) { throw fail() }
     transferred = true;managedAuthCapable=managedCodexAuthRefreshSupported(record.capabilities)
     terminalCapable = supportsAgentTerminal(record.capabilities)
-    externalAuthCapable=supportsExternalAuth(record.capabilities)
+    externalAuthCapable=supportsExternalAuth(record.capabilities);historyCapable=supportsNativeHistoryEvidence(record.capabilities)
     identity = Object.freeze({ controlId, pid: checked.pid, startTicks: checked.startTicks, device: checked.device, inode: checked.inode })
     const control: AuthenticatedAgentControl = Object.freeze({ controlId, controlPid: checked.pid, startTicks: checked.startTicks,
       ...authControl, ...terminalControl,bindChallenge: config.policy.bindChallenge,
       root: Object.freeze({ path: config.policy.protectedRoot, device: identity.device, inode: identity.inode }),
       pod, valid, close, frameSequence, lossReason: () => valid() ? null : loss ?? (closing ? 'CLOSING' : 'UNKNOWN'), physicalPinIssued: false as const,
-      ...agentControlReaders(request,()=>!lost && !socketClosed && !closing,config.policy.provider??'codex',value=>{nativeCheckpoint=value},()=>!openedNative && !lost && !socketClosed && !closing),
+      ...readers,readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable),
       transport: Object.freeze({ async open(launch: Parameters<CodexProtocolDependencies['open']>[0], supplied: CodexAppServerConnectionHandlers) {
         const expectedLaunch=config.policy.provider==='claude' && nativeCheckpoint?.state==='FOUND' ? claudeResumeLaunch(config.policy.launch,nativeCheckpoint.nativeSessionRef) : config.policy.launch
         if (openedNative || lost || socketClosed || closing || !isDeepStrictEqual(launch, expectedLaunch)) { throw fail() }
@@ -247,7 +245,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       if (observed.pod.uid !== config.expected.podUid) { return 'FINAL' }
       pod = observed;managedAuthCapable=managedCodexAuthRefreshSupported(Reflect.get(record.hello as object,'capabilities'))
       terminalCapable = supportsAgentTerminal(Reflect.get(record.hello as object, 'capabilities'))
-      externalAuthCapable=supportsExternalAuth(Reflect.get(record.hello as object,'capabilities'))
+      externalAuthCapable=supportsExternalAuth(Reflect.get(record.hello as object,'capabilities'));historyCapable=supportsNativeHistoryEvidence(Reflect.get(record.hello as object,'capabilities'))
       if(check.gap) {
         cursor.quarantine(check.gap)
       }
@@ -269,7 +267,7 @@ export function createAgentControlSession(env: AgentControlSessionEnvironment, o
       for (const bytes of queued.splice(0)) { rawWrite(socket, bytes) }
       sinceAck = 0
       if(env.journal && cursor.gapThrough===null) {try { write({ hostAck: cursor.durable }) } catch { /* the next frame acknowledges */ }}
-      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, ...authControl, ...terminalControl })); start = null
+      start?.resolve(Object.freeze({ identity, pod, connection, valid, frameSequence, close, readNativeHistory:nativeHistoryReader(readers.readNativeSession,()=>historyCapable), ...authControl, ...terminalControl })); start = null
       return
     }
     queued.length = 0

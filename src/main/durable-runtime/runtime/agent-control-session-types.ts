@@ -33,6 +33,7 @@ export type AuthenticatedAgentControl = Readonly<{
   /** hostSeq of the control frame being delivered; stable across re-attach and backend processes. */
   frameSequence(): number
   readNativeSession(): Promise<NativeSessionCheckpoint>
+  readNativeHistory(): Promise<NativeSessionCheckpoint>
   readMountProbe(): Promise<string>
   close(): Promise<boolean>
   /** Fixed diagnostic code of why the control stopped being valid, if it did. */
@@ -44,4 +45,5 @@ export type AuthenticatedAgentControl = Readonly<{
 export type AdoptedAgentControl = Readonly<{
   identity: AgentControlIdentity; pod: AuthenticatedPodObservation; connection: CodexAppServerConnection
   valid(): boolean; frameSequence(): number; close(): Promise<boolean>
+  readNativeHistory(): Promise<NativeSessionCheckpoint>
 }> & ManagedCodexAuthControl & AgentTerminalControl

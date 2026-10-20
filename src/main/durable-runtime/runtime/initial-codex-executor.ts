@@ -32,6 +32,7 @@ import { createProviderEffectPermit } from './provider-effect-permit.ts'
 import type { ProviderProtectionOwner } from './provider-effect-permit.ts'
 import { recordInitialNativeObservation, recordNativeCheckpointGuard, recordNativeHistoryObservation } from './provider-start-observation.ts'
 import { createNativeHistoryObserver } from './native-history-observer.ts'
+import { nativeColdIdentity } from './native-cold-identity.ts'
 import { settleInitialProviderReady } from './initial-provider-ready.ts'
 import { captureFirstManagedBindingProfile } from '../storage/first-managed-binding-owner-profile.ts'
 import { readOriginalFirstManagedDirectory } from '../storage/initial-directory-revalidation-guard.ts'
@@ -219,12 +220,9 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         // A host-capable control already tagged its HELLO; its id and frame
         // sequence then name notifications identically for any later owner.
         const hosted = control.frameSequence() > 0
-        const checkpoint=await control.readNativeSession()
+        const checkpoint=await (claude?control.readNativeSession():control.readNativeHistory())
         if (!await recordNativeCheckpointGuard(borrowed, context, lease.target.attemptId, lease.target.podUid, checkpoint.state)) { return deny('NATIVE_CHECKPOINT_COMMIT_UNCONFIRMED') }
-        if(checkpoint.state==='UNKNOWN') {return deny('NATIVE_IDENTITY_UNCONFIRMED')}
-        if(checkpoint.state==='PROVISIONAL') {return deny('NATIVE_HISTORY_NOT_PERSISTED')}
-        if (selected.resume && checkpoint.state==='FOUND' && selected.resume.nativeSessionRef !== checkpoint.nativeSessionRef) { return deny('NATIVE_IDENTITY_MISMATCH') }
-        const resumeRef=selected.resume?.nativeSessionRef??(checkpoint?.state==='FOUND'?checkpoint.nativeSessionRef:null)
+        const resumeRef=nativeColdIdentity(claude?'claude':'codex',checkpoint,selected.resume?.nativeSessionRef)
         const originalLaunch=prepared.config.agent.policy.launch, home=source.value.paths.home
         const launch=claude && checkpoint?.state==='FOUND' ? claudeResumeLaunch(originalLaunch,checkpoint.nativeSessionRef) : originalLaunch
         const nativeRequest=(provider:'codex'|'claude')=>resumeRef ? {kind:'RESUME' as const,providerRef:{provider,nativeSessionRef:resumeRef} as ProviderRef} : nativeStart(provider)
@@ -292,7 +290,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
         readyProtection = owner; readyContext = context; readyExecutor = claim.executorId; ready = native; phase = 'READY'
         if(!claude) {
           const owns=()=>ready===native&&driver?.ownsReadyBinding(native)===true&&control.valid()
-          nativeHistory=createNativeHistoryObserver(native.providerRef.nativeSessionRef,()=>control.readNativeSession(),owns,
+          nativeHistory=createNativeHistoryObserver(native.providerRef.nativeSessionRef,()=>control.readNativeHistory(),owns,
             checkpoint=>recordNativeHistoryObservation(borrowed,context,native,checkpoint,owns))
           observeHistory()
         }

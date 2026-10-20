@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {createNativeHistoryObserver} from './native-history-observer.ts'
-import {agentControlReaders} from './agent-control-readers.ts'
+import {agentControlReaders,nativeHistoryReader,supportsNativeHistoryEvidence,NATIVE_HISTORY_EVIDENCE_CAPABILITY} from './agent-control-readers.ts'
 import type {NativeSessionCheckpoint} from './native-session-checkpoint.ts'
 
 test('live input history promotion and later loss are recorded separately; failed commits remain retryable',async()=>{
@@ -47,4 +47,18 @@ test('ownership lost during authenticated read cannot publish history evidence',
   },()=>owned,async()=>{records++;return true})
   await observer.observe()
   assert.equal(records,0)
+})
+
+test('legacy host FOUND is not accepted as persisted history; capability loss during read is rejected',async()=>{
+  let capability:unknown=[],reads=0,drop=false
+  const read=nativeHistoryReader(async()=>{
+    reads++;if(drop) {capability=[]}
+    return {state:'FOUND',provider:'codex',nativeSessionRef:'thread'}
+  },()=>supportsNativeHistoryEvidence(capability))
+  await assert.rejects(read(),/NATIVE_HISTORY_EVIDENCE_UNSUPPORTED/)
+  assert.equal(reads,0)
+  capability=[NATIVE_HISTORY_EVIDENCE_CAPABILITY]
+  assert.equal((await read()).state,'FOUND')
+  drop=true
+  await assert.rejects(read(),/NATIVE_HISTORY_EVIDENCE_UNSUPPORTED/)
 })

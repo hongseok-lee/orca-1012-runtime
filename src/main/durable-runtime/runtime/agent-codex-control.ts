@@ -6,6 +6,7 @@ import type {ManagedCodexCredential} from '../providers/codex/managed-credential
 import { readProtectedManagedCodexAuth } from './managed-codex-auth-file.ts'
 import { MANAGED_CODEX_AUTH_REFRESH_CAPABILITY, MANAGED_CODEX_AUTH_REFRESH_METHOD, handleManagedCodexAuthRefresh, createResidentManagedCodexAuthRefresh } from './managed-codex-auth-refresh.ts'
 import { readNativeSessionCheckpoint, markNativeEntered, recordNativeSessionCheckpoint, claudeResumeLaunch } from './native-session-checkpoint.ts'
+import {NATIVE_HISTORY_EVIDENCE_CAPABILITY} from './agent-control-readers.ts'
 import { randomUUID } from 'node:crypto'
 import { constants, openSync, fstatSync, closeSync, readFileSync, lstatSync } from 'node:fs'
 import { isDeepStrictEqual } from 'node:util'
@@ -122,7 +123,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
   const proc = readFileSync('/proc/self/stat', 'utf8'), startTicks = proc.slice(proc.lastIndexOf(')') + 2).split(' ')[19]
   send({ event: 'HELLO', controlId, pid: process.pid, startTicks, bindChallenge: policy.bindChallenge,
     root: { path: root, device: String(stat.dev), inode: String(stat.ino) }, podBearer,
-    capabilities:[...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
+    capabilities:[NATIVE_HISTORY_EVIDENCE_CAPABILITY,...(provider==='codex'?[policy.externalAuth?AGENT_EXTERNAL_AUTH_CAPABILITY:MANAGED_CODEX_AUTH_REFRESH_CAPABILITY]:[]), ...(terminal ? [AGENT_TERMINAL_CAPABILITY] : [])] })
   podBearer = ''
   let serial = Promise.resolve()
   reader.on('line', line => {
