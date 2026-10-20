@@ -1,7 +1,4 @@
-import {createHash} from 'node:crypto'
-import {chmodSync,mkdtempSync,readFileSync,writeFileSync} from 'node:fs'
-import {join} from 'node:path'
-import {tmpdir} from 'node:os'
+import {prepareAccountNativeArtifact} from './orcad-account-native-artifact.ts'
 import type {Pool} from 'pg'
 import {openCodexAppServerConnection} from '../codex/codex-app-server-connection.ts'
 import {createManagedAccountAccess} from '../durable-runtime/providers/codex/managed-account-access.ts'
@@ -27,15 +24,15 @@ export function orcadManagedAccountAccess(pool:Pool,config:OrcadControllerConfig
   let service=byScope.get(scope)
   if(service&&(service.read!==read||service.artifact!==artifact)) {throw fail()}
   if(!service) {
-    let executable:string|undefined
-    const access=createManagedAccountAccess({pool,scope,read,async openSource(codexHome,assertCurrent){
-      if(!executable) {
-        const bytes=readFileSync(source)
-        if(bytes.byteLength!==size||createHash('sha256').update(bytes).digest('hex')!==sha) {throw fail()}
-        const directory=mkdtempSync(join(tmpdir(),'orca-account-auth-'))
-        const target=join(directory,'codex')
-        writeFileSync(target,bytes,{flag:'wx',mode:0o500});chmodSync(target,0o500);executable=target
-      }
+    // Begin read-only preparation with service creation, not after a refresh
+    // claim commits inside the native callback's eight-second budget.
+    const prepared=prepareAccountNativeArtifact(source,sha,size)
+    void prepared.catch(()=>{}) // the opener below observes the original failure
+    const access=createManagedAccountAccess({pool,scope,read,
+      onSourceFailure:failure=>console.warn(JSON.stringify({event:'CODEX_ACCOUNT_SOURCE_FAILURE',...failure})),
+      async openSource(codexHome,assertCurrent){
+      assertCurrent()
+      const executable=await prepared
       assertCurrent()
       return openCodexAppServerConnection({command:executable,args:['-c','cli_auth_credentials_store="file"','app-server'],cwd:codexHome,
         env:{CODEX_HOME:codexHome},envToDelete:['OPENAI_API_KEY','CODEX_API_KEY','CODEX_ACCESS_TOKEN']})
