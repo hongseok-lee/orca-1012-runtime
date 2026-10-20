@@ -1,0 +1,43 @@
+{
+  "recorded_at_utc": "2026-10-20T23:48:02.438997+00:00",
+  "product": "107bc330",
+  "terminal": {
+    "new_raw_command": "printf \"TODO09_CR_RETAINED\\n\"",
+    "sent_once": true,
+    "visible_after_reload": true,
+    "asleep_unit_phase": "ABSENT",
+    "asleep_desired_mode": "SUSPENDED",
+    "asleep_active_attempt": null,
+    "last_work_at": "2026-10-20T23:43:28.433Z"
+  },
+  "idle_wake": {
+    "before": "IDLE_BEFORE_SLEEP",
+    "after": "IDLE_AFTER_WAKE",
+    "same_native_session": "01a15b99-4ed0-7f80-89ce-d7eeb00d2674",
+    "manual_wakes_for_automatic_flow": 0
+  },
+  "delete": {
+    "operation": "22d7651a-dd16-45cf-a98b-b4055d936171",
+    "step": "SUCCEEDED",
+    "stopped_at": "2026-10-20T23:46:38.031Z",
+    "execution_grants": [
+      "REVOKED"
+    ],
+    "write_grants": [
+      "REVOKED"
+    ],
+    "session": "CLOSED",
+    "tab": "CLOSED",
+    "desired": "DELETED",
+    "phase": "ABSENT",
+    "active_attempt": null
+  },
+  "test_policy_idle_ms": 60000,
+  "historical_unknown_replays": 0,
+  "limitations": [
+    "Installed iPhone/Desktop parity TODO15",
+    "Full two-Serve HA and original DB_FAILURE cause TODO14",
+    "Multi-member race evidence is isolated PG",
+    "Previously discarded projection text is not reconstructed across user clear boundaries"
+  ]
+}

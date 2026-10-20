@@ -1,6 +1,6 @@
 # TODO-09 / TODO-11 — Terminal and idle lifecycle
 
-Status: implementation in progress; live acceptance and merge pending.
+Status: TODO09/11 implementation and scoped acceptance complete; final PR review.
 
 ## Terminal diagnosis
 
@@ -47,7 +47,7 @@ is claimed here. This is separate from the browser pixel discrepancy.
 UNKNOWN cancel is retained as uncertain history, but no longer excludes new
 lifecycle commands through the unresolved-command index or pending-pass map.
 Migration 035 and isolated PG coverage verify that no historical result is
-invented or replayed. Running DELETE acceptance is still pending.
+invented or replayed. Running DELETE subsequently passed; see final acceptance below.
 
 ## Live Terminal, 23:07 UTC
 
@@ -121,3 +121,40 @@ accounting, authenticated HTTP idempotence, linked explicit resumption, and
 preservation of UNKNOWN/pending inputs. Product107bc330 was published23:37:35Z.
 The old root exhausted normally; an explicit resume at23:38:40Z was QUEUED with
 a new linked operation. Running DELETE acceptance continues on that same run.
+
+## Live CR output, reconnect and Pod0, 23:43–23:45 UTC
+
+The linked resume reached READY at23:42:46.750Z. One new raw PTY command,
+`printf "TODO09_CR_RETAINED\\n"`, produced visible output. `terminal.read` also
+returned its command/output/prompt correctly after CR/LF projection. Browser
+reload cleared the draft and restored the recorded output; no raw command was
+resent. With the screen open, the unit slept again: at23:45:17 it was
+ABSENT/SUSPENDED with active attempt null and last work still23:43:28.433Z.
+The Terminal retained the output. No further WAKE is needed for this unit.
+
+![Actual CR output](terminal-cr-live.png)
+![Retained output after sleep](terminal-pod0-retained.png)
+
+For running DELETE, the already READY `Stop fixed 1020` verification Agent is
+reused. Its Terminal was closed through the Expo tab menu once; the UI showed
+0 tabs and PG showed Session CLOSING/Tab CLOSED at23:46:01. Physical stop and writer revocation completed as recorded below.
+
+## Final acceptance, 23:47 UTC
+
+Running DELETE operation `22d7651a-dd16-45cf-a98b-b4055d936171` reached SUCCEEDED.
+The attempt stopped at23:46:38.031Z, both execution and write grants were REVOKED,
+Session/Tab CLOSED, Unit DELETED/ABSENT and active attempt null. Exact sandbox
+proof: `kubernetes-sandbox-stop:sha256:7c581b053ddf5ec5c1570c0f7f8f2897dfc41fd10dc88cab6a8f570c3de90d07`.
+
+![Closed tab after running DELETE](delete-tab-closed.png)
+
+The development environment retains its explicitly configured one-minute idle
+policy for new capability-aware Agents. Older control bundles are not assumed
+idle. This is a development setting, not a new hard-coded product default.
+
+Scoped TODO09/11 acceptance is complete: visible Terminal output/reconnect,
+read-only retained Pod0 display, actual idle/stop/grant revocation/same-native
+wake, and running close/DELETE. Existing PR182 binary/generation/raw no-replay
+fixtures are reused. Actual multi-member race coverage is isolated PG, not a
+claimed multi-Pod end-to-end run. Installed iPhone/Desktop parity remains TODO15;
+full HA and unexplained earlier DB_FAILURE remain TODO14. No image build.
