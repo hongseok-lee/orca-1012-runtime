@@ -2,7 +2,7 @@
 
 The current resident refresh design copies the same rotating OAuth credential into independent Agent homes. Nfs2's native account/read returned refresh_token_reused401; the source account file retained its older revision. Refreshing each Agent independently is therefore not a valid multi-Agent ownership model.
 
-## Implemented in source, not deployed to live Agents
+## Deployed authentication; runtime recovery still incomplete
 
 - managed-access-broker.ts accepts the existing selected account owner, coalesces same-account renewals and projects only accessToken/account scope/expiry. The refresh hook operates on the original account source. It requires an account lock and durable STARTED/COMPLETED rotation records; an unfinished rotation is not retried for the same source revision, including after broker replacement. No token bytes belong in PG records.
 - external-codex-auth.ts uses account/login/start(chatgptAuthTokens), handles the native refresh callback within its bounded deadline, validates the selected account, and supplies access-only results. The existing initialization handshake already advertises experimentalApi.
@@ -17,3 +17,9 @@ The current resident refresh design copies the same rotating OAuth credential in
 4. Publish the new control artifact once, verify actual Agent authentication and inference, then resume the remaining task05 Terminal/Chat work. Current deployed revision remains3d72af60; modules in this change are not activated.
 
 Official contract: https://learn.chatgpt.com/docs/app-server (authentication). The installed schema describes external tokens as unstable/internal; the actual installed authentication-only check above confirms protocol support. No provider/model route was replaced with the unrelated Sign-in-with-ChatGPT Responses API setup.
+
+## Live follow-up (2026-10-20 02:10 UTC)
+
+Backend ca67042f and live migrations033/034 are deployed. The same committed manual wake reached a new Pod through the corrected no-input manual-wake path. Its private access request, account/login/completed success=true, and account/updated authMode=chatgptAuthTokens are recorded in the authenticated control journal. This proves the actual Agent external login, not inference.
+
+The first forwarded native request failed with AGENT_NATIVE_REQUEST_UNCONFIRMED before READY. The old control discarded the upstream refusal details, so a missing native thread versus login-completion timing versus another provider rejection is not yet established. The run reached its original deadline and was normally retired; active attempt is now null. Original UNKNOWN input was not resent. A bounded native-error classifier now preserves only method, numeric RPC code, and category in the private journal; provider text/tokens remain excluded. This diagnostic update is not deployed yet. Next recover the exact native refusal and fix its cause, then verify READY/inference.

@@ -1,3 +1,4 @@
+import {nativeRequestFailure} from './native-request-failure.ts'
 import {createAgentExternalAuthBridge,AGENT_EXTERNAL_AUTH_CAPABILITY,AGENT_EXTERNAL_AUTH_SUPPLY,AGENT_EXTERNAL_AUTH_STATUS} from './agent-external-auth.ts'
 import {createExternalCodexAuth} from './external-codex-auth.ts'
 import { captureManagedCodexCredential,supplyProtectedManagedCodexCredential } from './managed-codex-credential-supply.ts'
@@ -254,7 +255,7 @@ export function runAgentCodexControl(original: AgentCodexControlPolicy,
           recordNativeSessionCheckpoint(paths.home,'codex',native)
         }
         response(id,result)
-      } catch { failure(id, 'AGENT_NATIVE_REQUEST_UNCONFIRMED') }
+      } catch(error) { send({id,controlId,error:{code:'AGENT_NATIVE_REQUEST_UNCONFIRMED',method:request.method,...nativeRequestFailure(error)}}) }
     }).catch(() => { uncertain = true; phase = 'UNCONFIRMED' })
   })
   return Object.freeze({ phase: () => phase, closed })

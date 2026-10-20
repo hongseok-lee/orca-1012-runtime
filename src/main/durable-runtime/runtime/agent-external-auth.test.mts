@@ -1,3 +1,5 @@
+import {nativeRequestFailure} from './native-request-failure.ts'
+import {CodexAppServerRequestError} from '../../codex/codex-app-server-request-error.ts'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {createAgentExternalAuthBridge,supplyAgentExternalAuth,captureManagedCodexAccess,externalAgentAuthControl} from './agent-external-auth.ts'
@@ -32,4 +34,11 @@ test('renewal receives a live owner/deadline guard and cannot supply after owner
     return access
   },()=>owned,async p=>{replies.push(p)},()=>now)
   assert.ok(guard);assert.deepEqual(replies,[])
+})
+
+test('native failure journal keeps numeric refusal and category without provider text or credentials',()=>{
+ const refused=nativeRequestFailure(new CodexAppServerRequestError('thread/resume',-32600,'thread not found: secret-user-input bearer-token'))
+ assert.deepEqual(refused,{nativeCode:-32600,category:'THREAD_UNAVAILABLE'})
+ assert.equal(JSON.stringify(refused).includes('secret-user-input'),false)
+ assert.deepEqual(nativeRequestFailure({message:'secret',code:100}),{nativeCode:null,category:'TRANSPORT_OR_LOCAL_FAILURE'})
 })
