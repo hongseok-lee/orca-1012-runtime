@@ -122,6 +122,7 @@ export function createInitialCodexExecutor(pool: Pool, original: InitialCodexExe
       providerReady: ready !== null && driver !== null && driver.ownsReadyBinding(ready) }),
     current: () => ready && driver?.ownsReadyBinding(ready) && readyProtection && readyContext && readyExecutor
       ? Object.freeze({ binding: ready, driver, protection: readyProtection, context: readyContext, executorId: readyExecutor, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: protection?.control()?.terminal,
+        dispatchReady:()=>claude || authRefresh.dispatchReady(),
         refreshManagedAuth:()=>{const control=protection?.control();return control?authRefresh.refresh(control):Promise.resolve({state:'FAILED' as const,code:'REFRESH_UNCONFIRMED' as const})} }) : null,
     async continueAssigned(originalClaim: CommandClaim, signal: AbortSignal, originalContext: GatewayContext): Promise<void> {
       if (used) { return deny('ALREADY_USED') }

@@ -97,6 +97,7 @@ export function createAdoptedCodexExecutor(pool: Pool, original: AdoptedCodexExe
     phase: () => phase, authRefreshSnapshot:()=>authRefresh.snapshot(),
     current: () => ready && driver?.ownsReadyBinding(ready) && control?.valid() && context && workload
       ? Object.freeze({ binding: ready, driver, context, executorId: selected.executorId, dispatch, cancel, cancelTarget: driver.cancelTarget.bind(driver), terminal: control.terminal,
+        dispatchReady:()=>provider==='claude' || authRefresh.dispatchReady(),
         refreshManagedAuth:()=>authRefresh.refresh(control!),
         protection: Object.freeze({ takePreparedProtection: () => Object.freeze({ workloadIdentity: workload! }) }) }) : null,
     async adopt(controller: GatewayContext['controller']): Promise<void> {

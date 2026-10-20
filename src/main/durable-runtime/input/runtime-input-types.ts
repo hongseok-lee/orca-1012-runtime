@@ -25,6 +25,8 @@ export type ReadyTerminalInputPort = Readonly<{
   terminal?: AgentTerminalControl['terminal']
   context: GatewayContext
   executorId: ExecutorId
+  /** Known provider/auth prerequisites; false keeps accepted input DURABLE. */
+  dispatchReady?(): boolean
   cancelTarget?(deliveryAttemptId: string, nativeTurnId: string): ProviderCancelTarget | null
   cancel?(context: GatewayContext, target: ProviderCancelTarget, claim: CommandClaim,
     guard: (tx: DurableTransaction) => Promise<void>): Promise<ProviderCancelResult>

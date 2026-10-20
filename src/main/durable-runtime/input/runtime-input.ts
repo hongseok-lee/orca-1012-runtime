@@ -56,6 +56,8 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
   }
   const execute = async (input: CommittedTerminalInput, port: ReadyTerminalInputPort): Promise<void> => {
     assertReady(port)
+    // Recheck when this queued continuation starts, before allocating an effect.
+    if (port.dispatchReady?.() === false) { return }
     const stagedOutcome = await runDurableTransaction(pool, tx => stageTerminalRuntimeInput(tx, input, port))
     if (!stagedOutcome.ok) { throw stagedOutcome.error }
     const staged = stagedOutcome.value
@@ -88,7 +90,7 @@ export function createTerminalInputRuntime(poolOwner: Pool, host: TerminalInputR
   const pump = (): void => {
     if (closed || launching || active) { return }
     const port = current()
-    if (!port) { return }
+    if (!port || port.dispatchReady?.() === false) { return }
     for (const [key, input] of waiting) {
       if (input.authority.sessionId !== port.binding.sessionId) { continue }
       const target = messageKey(input)
