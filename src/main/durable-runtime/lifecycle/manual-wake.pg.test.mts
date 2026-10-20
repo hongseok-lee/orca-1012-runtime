@@ -64,7 +64,23 @@ try{
  assert.ok((await readRewakeCandidates(pool)).some(r=>r.unit_id===unit),'first manual wake needs its original Ops receipt, not an exhausted predecessor')
  const old=await claimRewakeOperation(pool,controller,unit,policy);assert.ok(old)
  assert.equal(old.operationId,body(firstManual).receipt.response.operationId,'claim must consume the original explicit request, not create a second wake')
+ await pool.query(`UPDATE durable_runtime.operations SET step='FAILED',result='{"state":"FAILED","reason":"REWAKE_OWNER_LOST"}'::jsonb WHERE id=$1`,[old.operationId])
+ // A new explicit wake can join a failed root after stop changed the intent.
+ // It keeps the same retry budget and must still be discoverable after expiry
+ // so the controller records exhaustion instead of silently losing demand.
+ await pool.query("UPDATE durable_runtime.runtime_units SET desired_mode='SUSPENDED',intent_revision=intent_revision+1 WHERE id=$1",[unit])
+ const stoppedUnit=(await pool.query('SELECT revision::text,intent_revision::text FROM durable_runtime.runtime_units WHERE id=$1',[unit])).rows[0]
+ const joined=await requestManualUnitWake(pool,{
+   authority:{principalId:'fixture-authenticated-ops',runtimeUnitId:logicalId('runtime-unit',unit),scope:`ops:fixture:runtime-unit:${unit}`},
+   operationKey:randomUUID(),desired:'RUNNING',expectedRevision:counter('row:runtime-unit',stoppedUnit.revision),
+   expectedIntentRevision:counter('intent-revision',stoppedUnit.intent_revision),policy})
+ assert.notEqual(joined.status,'UNCERTAIN')
+ assert.equal(body(joined).receipt.response.operationId,old.operationId)
+ const {manualWakeDemandSql}=await import('./recovery-chain.ts')
+ assert.equal((await pool.query(`SELECT ${manualWakeDemandSql('$1')} AS demand`,[unit])).rows[0].demand,true)
+
  await pool.query("UPDATE durable_runtime.operations SET deadline_at=clock_timestamp()-interval '1 second' WHERE id=$1",[old.operationId])
+ assert.equal((await pool.query(`SELECT ${manualWakeDemandSql('$1')} AS demand`,[unit])).rows[0].demand,true)
  assert.equal(await settleRewakeOperation(pool,controller,old.operationId,'WAKE_DEADLINE_EXHAUSTED'),true)
  const oldRow=(await pool.query('SELECT to_jsonb(o) AS row FROM durable_runtime.operations o WHERE id=$1',[old.operationId])).rows[0].row
  assert.equal(oldRow.retry_exhausted_reason,'REWAKE_DEADLINE_EXHAUSTED')
